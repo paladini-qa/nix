@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Transaction, TransactionType } from "../types";
-import { X, Repeat } from "lucide-react";
+import { X, Repeat, CreditCard } from "lucide-react";
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -28,6 +28,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState<"monthly" | "yearly">("monthly");
 
+  // Installments state
+  const [hasInstallments, setHasInstallments] = useState(false);
+  const [installments, setInstallments] = useState("1");
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -43,6 +47,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       date,
       isRecurring,
       frequency: isRecurring ? frequency : undefined,
+      installments: hasInstallments ? parseInt(installments) : undefined,
+      currentInstallment: hasInstallments ? 1 : undefined,
     });
 
     // Reset form
@@ -53,6 +59,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     setPaymentMethod("");
     setIsRecurring(false);
     setFrequency("monthly");
+    setHasInstallments(false);
+    setInstallments("1");
     onClose();
   };
 
@@ -243,6 +251,68 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 <option value="monthly">Monthly</option>
                 <option value="yearly">Yearly</option>
               </select>
+            </div>
+          )}
+
+          {/* Installments Toggle - Only for expenses */}
+          {type === "expense" && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
+                  Installments
+                </label>
+                <div
+                  className={`w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl flex items-center justify-between cursor-pointer transition-colors ${
+                    hasInstallments
+                      ? "bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-500/30"
+                      : "bg-white dark:bg-white/5"
+                  }`}
+                  onClick={() => setHasInstallments(!hasInstallments)}
+                >
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
+                    <CreditCard
+                      size={16}
+                      className={
+                        hasInstallments
+                          ? "text-indigo-600 dark:text-indigo-400"
+                          : "text-gray-400"
+                      }
+                    />
+                    <span>Split?</span>
+                  </div>
+                  <div
+                    className={`w-10 h-5 rounded-full relative transition-colors ${
+                      hasInstallments
+                        ? "bg-indigo-600"
+                        : "bg-gray-300 dark:bg-slate-600"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-transform ${
+                        hasInstallments ? "translate-x-5" : ""
+                      }`}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Installments Number Input */}
+              {hasInstallments && (
+                <div className="animate-fade-in">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
+                    # of Installments
+                  </label>
+                  <input
+                    type="number"
+                    min="2"
+                    max="48"
+                    value={installments}
+                    onChange={(e) => setInstallments(e.target.value)}
+                    className="w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-white/5 text-gray-900 dark:text-white transition-colors"
+                    placeholder="2"
+                  />
+                </div>
+              )}
             </div>
           )}
 

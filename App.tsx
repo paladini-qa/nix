@@ -115,6 +115,8 @@ const App: React.FC = () => {
           createdAt: new Date(t.created_at).getTime(),
           isRecurring: t.is_recurring,
           frequency: t.frequency,
+          installments: t.installments,
+          currentInstallment: t.current_installment,
         }));
         setTransactions(mappedTxs);
       }
@@ -220,6 +222,8 @@ const App: React.FC = () => {
         date: newTx.date,
         is_recurring: newTx.isRecurring,
         frequency: newTx.frequency,
+        installments: newTx.installments,
+        current_installment: newTx.currentInstallment,
       };
 
       const { data, error } = await supabase
@@ -242,6 +246,8 @@ const App: React.FC = () => {
           createdAt: new Date(data.created_at).getTime(),
           isRecurring: data.is_recurring,
           frequency: data.frequency,
+          installments: data.installments,
+          currentInstallment: data.current_installment,
         };
         setTransactions((prev) => [transaction, ...prev]);
         setInsight(null);

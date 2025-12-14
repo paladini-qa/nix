@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     date DATE NOT NULL,
     is_recurring BOOLEAN DEFAULT FALSE,
     frequency TEXT CHECK (frequency IN ('monthly', 'yearly') OR frequency IS NULL),
+    installments INTEGER CHECK (installments IS NULL OR installments >= 1),
+    current_installment INTEGER CHECK (current_installment IS NULL OR current_installment >= 1),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -32,6 +34,8 @@ CREATE INDEX IF NOT EXISTS idx_transactions_type ON public.transactions(type);
 COMMENT ON TABLE public.transactions IS 'Transações financeiras dos usuários';
 COMMENT ON COLUMN public.transactions.type IS 'Tipo: income (receita) ou expense (despesa)';
 COMMENT ON COLUMN public.transactions.frequency IS 'Frequência de recorrência: monthly ou yearly';
+COMMENT ON COLUMN public.transactions.installments IS 'Número total de parcelas';
+COMMENT ON COLUMN public.transactions.current_installment IS 'Número da parcela atual';
 
 -- =============================================
 -- 2. TABELA: user_settings

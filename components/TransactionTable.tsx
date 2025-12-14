@@ -1,6 +1,12 @@
 import React from "react";
 import { Transaction } from "../types";
-import { Trash2, ArrowUpCircle, ArrowDownCircle, Repeat } from "lucide-react";
+import {
+  Trash2,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Repeat,
+  CreditCard,
+} from "lucide-react";
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -104,6 +110,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                               : "Yearly"}
                           </span>
                         )}
+                        {transaction.installments &&
+                          transaction.installments > 1 && (
+                            <span className="flex items-center text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wide mt-0.5">
+                              <CreditCard size={10} className="mr-1" />
+                              {transaction.currentInstallment || 1}/
+                              {transaction.installments}x
+                            </span>
+                          )}
                       </div>
                     </div>
                   </td>

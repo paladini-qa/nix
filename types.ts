@@ -1,4 +1,4 @@
-export type TransactionType = 'income' | 'expense';
+export type TransactionType = "income" | "expense";
 
 export interface Transaction {
   id: string;
@@ -10,7 +10,9 @@ export interface Transaction {
   date: string; // ISO String YYYY-MM-DD
   createdAt: number;
   isRecurring?: boolean;
-  frequency?: 'monthly' | 'yearly';
+  frequency?: "monthly" | "yearly";
+  installments?: number; // Number of installments (parcelas)
+  currentInstallment?: number; // Current installment number (1, 2, 3...)
 }
 
 export interface FinancialSummary {
