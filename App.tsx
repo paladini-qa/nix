@@ -475,25 +475,23 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                <div className="xl:col-span-2">
-                  <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    <Filter
-                      size={18}
-                      className="text-gray-500 dark:text-slate-400"
-                    />
-                    Transaction History
-                  </h2>
-                  <TransactionTable
-                    transactions={filteredTransactions}
-                    onDelete={handleDeleteTransaction}
+              {/* Transaction History - Full Width */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                  <Filter
+                    size={18}
+                    className="text-gray-500 dark:text-slate-400"
                   />
-                </div>
-
-                <div className="xl:col-span-1">
-                  <Charts transactions={filteredTransactions} />
-                </div>
+                  Transaction History
+                </h2>
+                <TransactionTable
+                  transactions={filteredTransactions}
+                  onDelete={handleDeleteTransaction}
+                />
               </div>
+
+              {/* Charts Section */}
+              <Charts transactions={filteredTransactions} />
             </>
           ) : currentView === "transactions" ? (
             <TransactionsView
