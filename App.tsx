@@ -1,5 +1,16 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Plus, Sparkles, Filter, Moon, Sun, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Sparkles,
+  Filter,
+  Moon,
+  Sun,
+  Loader2,
+  LogOut,
+  LayoutDashboard,
+  Wallet,
+  Settings,
+} from "lucide-react";
 import {
   Transaction,
   FilterState,
@@ -358,26 +369,34 @@ const App: React.FC = () => {
       />
 
       {/* Mobile Header */}
-      <header className="lg:hidden bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 sticky top-0 z-30 px-4 h-16 flex items-center justify-between">
+      <header className="lg:hidden bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 sticky top-0 z-30 px-4 h-14 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <div className="bg-indigo-600 p-2 rounded-lg">
-            <span className="text-white font-bold text-lg">SF</span>
+          <div className="bg-indigo-600 p-1.5 rounded-lg">
+            <span className="text-white font-bold text-sm">N</span>
           </div>
           <h1 className="text-lg font-bold text-gray-800 dark:text-white">
-            Finance
+            Nix
           </h1>
         </div>
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="p-2 text-gray-500 dark:text-slate-400"
-        >
-          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+          >
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
       </header>
 
       {/* Main Content */}
-      <main className="lg:ml-64 p-4 lg:p-8 transition-all duration-300">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <main className="lg:ml-64 p-4 lg:p-6 xl:p-8 transition-all duration-300">
+        <div className="space-y-6 lg:space-y-8">
           {currentView === "dashboard" ? (
             <>
               {/* Dashboard Header / Controls */}
@@ -516,6 +535,50 @@ const App: React.FC = () => {
           )}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900/95 backdrop-blur-md border-t border-gray-200 dark:border-white/10 z-40 safe-area-inset-bottom">
+        <div className="flex items-center justify-around h-16 px-2">
+          {[
+            {
+              icon: LayoutDashboard,
+              label: "Dashboard",
+              id: "dashboard" as const,
+            },
+            {
+              icon: Wallet,
+              label: "Transactions",
+              id: "transactions" as const,
+            },
+            { icon: Settings, label: "Settings", id: "settings" as const },
+          ].map((item) => {
+            const isActive = currentView === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setCurrentView(item.id)}
+                className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+                  isActive
+                    ? "text-indigo-600 dark:text-indigo-400"
+                    : "text-gray-500 dark:text-slate-400"
+                }`}
+              >
+                <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span
+                  className={`text-[10px] mt-1 ${
+                    isActive ? "font-semibold" : "font-medium"
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Add padding for mobile bottom nav */}
+      <div className="lg:hidden h-16" />
 
       <TransactionForm
         isOpen={isFormOpen}

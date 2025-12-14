@@ -1,4 +1,4 @@
-/* Finanças Inteligentes - Custom Styles */
+/* Nix - Custom Styles */
 
 /* Smooth scrollbar */
 ::-webkit-scrollbar {
@@ -75,4 +75,51 @@ html {
 /* Better table scrolling on mobile */
 .overflow-x-auto {
   -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area for mobile devices (notch, home indicator) */
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Hide scrollbar on mobile nav */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Responsive text utilities */
+@media (max-width: 640px) {
+  .text-responsive-lg {
+    font-size: 1.5rem;
+  }
+
+  .text-responsive-xl {
+    font-size: 1.75rem;
+  }
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 768px) {
+  button,
+  select,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+  }
+
+  select {
+    min-height: 40px;
+  }
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
 }

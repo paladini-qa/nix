@@ -48,7 +48,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-5xl mx-auto">
+    <div className="space-y-6 lg:space-y-8 animate-fade-in">
       <div>
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
           Settings
@@ -58,7 +58,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
         {/* Section: Income Categories */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10">
           <div className="flex items-center gap-2 mb-6">
@@ -148,7 +148,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         {/* Section: Payment Methods */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10">
+        <div className="md:col-span-2 xl:col-span-1 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10">
           <div className="flex items-center gap-2 mb-6">
             <CreditCard className="text-indigo-500" size={24} />
             <h3 className="text-lg font-bold text-gray-800 dark:text-white">
@@ -156,7 +156,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </h3>
           </div>
 
-          <div className="flex gap-2 mb-4 max-w-md">
+          <div className="flex gap-2 mb-4">
             <input
               type="text"
               value={newPaymentMethod}

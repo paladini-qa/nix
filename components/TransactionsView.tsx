@@ -299,22 +299,23 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+          {/* New Transaction Button */}
           <button
             onClick={onNewTransaction}
-            className="flex-1 sm:flex-none flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition-all shadow-sm font-medium whitespace-nowrap mr-2"
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white px-3 sm:px-4 py-2 rounded-lg transition-all shadow-sm font-medium whitespace-nowrap"
           >
             <Plus size={18} />
-            <span>New Transaction</span>
+            <span className="hidden sm:inline">New Transaction</span>
           </button>
 
-          {/* Search */}
-          <div className="relative flex-grow sm:flex-grow-0">
+          {/* Search - Full width on mobile */}
+          <div className="relative flex-1 sm:flex-initial order-last sm:order-none w-full sm:w-auto mt-2 sm:mt-0">
             <input
               type="text"
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white w-full sm:w-48"
+              className="pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white w-full sm:w-40 lg:w-48"
             />
             <Search
               size={16}
@@ -322,15 +323,15 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             />
           </div>
 
-          {/* Filters */}
+          {/* Filters - Compact on mobile */}
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white cursor-pointer"
+            className="px-2 sm:px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white cursor-pointer"
           >
             {MONTHS.map((m, i) => (
               <option key={i} value={i}>
-                {m}
+                {m.substring(0, 3)}
               </option>
             ))}
           </select>
@@ -338,7 +339,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white cursor-pointer"
+            className="px-2 sm:px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white cursor-pointer"
           >
             {years.map((y) => (
               <option key={y} value={y}>
