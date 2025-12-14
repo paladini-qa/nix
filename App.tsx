@@ -3,8 +3,6 @@ import {
   Plus,
   Sparkles,
   Filter,
-  Moon,
-  Sun,
   Loader2,
   LogOut,
   LayoutDashboard,
@@ -16,6 +14,7 @@ import {
   FilterState,
   FinancialSummary,
   TransactionType,
+  ThemePreference,
 } from "./types";
 import {
   MONTHS,
@@ -30,6 +29,7 @@ import Sidebar from "./components/Sidebar";
 import TransactionsView from "./components/TransactionsView";
 import SettingsView from "./components/SettingsView";
 import LoginView from "./components/LoginView";
+import ThemeSwitch from "./components/ThemeSwitch";
 import { getFinancialInsights } from "./services/geminiService";
 import { supabase } from "./services/supabaseClient";
 import ReactMarkdown from "react-markdown";
@@ -61,23 +61,49 @@ const App: React.FC = () => {
   const [insight, setInsight] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem("darkMode");
-    return (
-      saved === "true" ||
-      (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)
-    );
-  });
+  // Theme preference state
+  const [themePreference, setThemePreference] = useState<ThemePreference>(
+    () => {
+      const saved = localStorage.getItem("themePreference") as ThemePreference;
+      return saved || "system";
+    }
+  );
 
-  // Dark Mode
+  // Computed dark mode based on preference
+  const darkMode = useMemo(() => {
+    if (themePreference === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+    return themePreference === "dark";
+  }, [themePreference]);
+
+  // Listen for system theme changes
   useEffect(() => {
-    localStorage.setItem("darkMode", darkMode.toString());
+    if (themePreference !== "system") return;
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => {
+      // Force re-render by toggling a dummy state or just apply directly
+      if (mediaQuery.matches) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    };
+
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, [themePreference]);
+
+  // Apply dark mode class
+  useEffect(() => {
+    localStorage.setItem("themePreference", themePreference);
     if (darkMode) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }, [darkMode]);
+  }, [darkMode, themePreference]);
 
   // Auth & Data Fetching
   useEffect(() => {
@@ -150,6 +176,9 @@ const App: React.FC = () => {
           expense: settings.categories_expense || DEFAULT_CATEGORIES.expense,
         });
         setPaymentMethods(settings.payment_methods || DEFAULT_PAYMENT_METHODS);
+        if (settings.theme_preference) {
+          setThemePreference(settings.theme_preference as ThemePreference);
+        }
       } else {
         // Initialize default settings if none exist
         await supabase.from("user_settings").insert({
@@ -157,6 +186,7 @@ const App: React.FC = () => {
           categories_income: DEFAULT_CATEGORIES.income,
           categories_expense: DEFAULT_CATEGORIES.expense,
           payment_methods: DEFAULT_PAYMENT_METHODS,
+          theme_preference: "system",
         });
       }
     } catch (error) {
@@ -181,7 +211,20 @@ const App: React.FC = () => {
       if (error) throw error;
     } catch (err) {
       console.error("Error saving settings:", err);
-      // Optional: Revert local state on error
+    }
+  };
+
+  const updateThemePreference = async (newTheme: ThemePreference) => {
+    setThemePreference(newTheme);
+    if (!session) return;
+    try {
+      const { error } = await supabase.from("user_settings").upsert({
+        user_id: session.user.id,
+        theme_preference: newTheme,
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Error saving theme preference:", err);
     }
   };
 
@@ -361,15 +404,15 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-gradient-to-br dark:from-slate-900 dark:to-indigo-950 dark:text-slate-200 transition-colors duration-500">
       {/* Sidebar - Desktop Only */}
       <Sidebar
-        darkMode={darkMode}
-        toggleTheme={() => setDarkMode(!darkMode)}
+        themePreference={themePreference}
+        onThemeChange={updateThemePreference}
         currentView={currentView}
         onNavigate={setCurrentView}
         onLogout={handleLogout}
       />
 
       {/* Mobile Header */}
-      <header className="lg:hidden bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 sticky top-0 z-30 px-4 h-14 flex items-center justify-between">
+      <header className="lg:hidden bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 sticky top-0 z-30 px-3 h-14 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <div className="bg-indigo-600 p-1.5 rounded-lg">
             <span className="text-white font-bold text-sm">N</span>
@@ -379,12 +422,11 @@ const App: React.FC = () => {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-          >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <ThemeSwitch
+            value={themePreference}
+            onChange={updateThemePreference}
+            compact
+          />
           <button
             onClick={handleLogout}
             className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"

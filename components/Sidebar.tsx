@@ -1,24 +1,19 @@
 import React from "react";
-import {
-  LayoutDashboard,
-  Wallet,
-  Settings,
-  LogOut,
-  Sun,
-  Moon,
-} from "lucide-react";
+import { LayoutDashboard, Wallet, Settings, LogOut } from "lucide-react";
+import { ThemePreference } from "../types";
+import ThemeSwitch from "./ThemeSwitch";
 
 interface SidebarProps {
-  darkMode: boolean;
-  toggleTheme: () => void;
+  themePreference: ThemePreference;
+  onThemeChange: (theme: ThemePreference) => void;
   currentView: "dashboard" | "transactions" | "settings";
   onNavigate: (view: "dashboard" | "transactions" | "settings") => void;
   onLogout: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  darkMode,
-  toggleTheme,
+  themePreference,
+  onThemeChange,
   currentView,
   onNavigate,
   onLogout,
@@ -76,16 +71,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Bottom Actions */}
-      <div className="p-4 border-t border-gray-100 dark:border-white/5 space-y-2">
-        <button
-          onClick={toggleTheme}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-        >
-          <div className="flex items-center space-x-3">
-            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
-          </div>
-        </button>
+      <div className="p-4 border-t border-gray-100 dark:border-white/5 space-y-4">
+        <ThemeSwitch value={themePreference} onChange={onThemeChange} />
 
         <button
           onClick={onLogout}

@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     categories_income TEXT[] DEFAULT ARRAY['Salary', 'Investments', 'Freelance', 'Gifts', 'Other'],
     categories_expense TEXT[] DEFAULT ARRAY['Food', 'Housing', 'Transportation', 'Healthcare', 'Entertainment', 'Education', 'Shopping', 'Subscriptions', 'Other'],
     payment_methods TEXT[] DEFAULT ARRAY['Credit Card', 'Debit Card', 'Pix', 'Cash', 'Bank Transfer', 'Boleto'],
+    theme_preference TEXT DEFAULT 'system' CHECK (theme_preference IN ('light', 'dark', 'system')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -56,6 +57,7 @@ COMMENT ON TABLE public.user_settings IS 'Configurações personalizadas do usu�
 COMMENT ON COLUMN public.user_settings.categories_income IS 'Lista de categorias de receita personalizadas';
 COMMENT ON COLUMN public.user_settings.categories_expense IS 'Lista de categorias de despesa personalizadas';
 COMMENT ON COLUMN public.user_settings.payment_methods IS 'Lista de métodos de pagamento personalizados';
+COMMENT ON COLUMN public.user_settings.theme_preference IS 'Preferência de tema: light, dark ou system';
 
 -- =============================================
 -- 3. ROW LEVEL SECURITY (RLS)

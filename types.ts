@@ -1,4 +1,5 @@
 export type TransactionType = "income" | "expense";
+export type ThemePreference = "light" | "dark" | "system";
 
 export interface Transaction {
   id: string;
