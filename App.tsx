@@ -435,61 +435,59 @@ const App: React.FC = () => {
 
               <SummaryCards summary={summary} />
 
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                <div className="xl:col-span-2 space-y-8">
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800/40 dark:to-indigo-900/20 rounded-2xl p-6 border border-indigo-100 dark:border-white/10 relative overflow-hidden transition-all duration-200 backdrop-blur-sm">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 dark:opacity-20">
-                      <Sparkles
-                        size={100}
-                        className="text-indigo-600 dark:text-indigo-400"
-                      />
+              {/* Smart Analysis - Full Width */}
+              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800/40 dark:to-indigo-900/20 rounded-2xl p-6 border border-indigo-100 dark:border-white/10 relative overflow-hidden transition-all duration-200 backdrop-blur-sm">
+                <div className="absolute top-0 right-0 p-4 opacity-10 dark:opacity-20">
+                  <Sparkles
+                    size={100}
+                    className="text-indigo-600 dark:text-indigo-400"
+                  />
+                </div>
+                <div className="relative z-10">
+                  <div className="flex flex-wrap justify-between items-start mb-4 gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-indigo-900 dark:text-white flex items-center gap-2">
+                        <Sparkles
+                          size={18}
+                          className="text-indigo-600 dark:text-indigo-400"
+                        />
+                        Smart Analysis
+                      </h3>
+                      <p className="text-sm text-indigo-700 dark:text-slate-400 mt-1">
+                        Use AI to analyze your {MONTHS[filters.month]} spending.
+                      </p>
                     </div>
-                    <div className="relative z-10">
-                      <div className="flex flex-wrap justify-between items-start mb-4 gap-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-indigo-900 dark:text-white flex items-center gap-2">
-                            <Sparkles
-                              size={18}
-                              className="text-indigo-600 dark:text-indigo-400"
-                            />
-                            Smart Analysis
-                          </h3>
-                          <p className="text-sm text-indigo-700 dark:text-slate-400 mt-1">
-                            Use AI to analyze your {MONTHS[filters.month]}{" "}
-                            spending.
-                          </p>
-                        </div>
-                        <button
-                          onClick={handleGenerateInsight}
-                          disabled={
-                            isAnalyzing || filteredTransactions.length === 0
-                          }
-                          className="px-4 py-2 bg-white dark:bg-white/10 text-indigo-600 dark:text-white border border-indigo-200 dark:border-white/10 rounded-lg text-sm font-medium hover:bg-indigo-50 dark:hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                        >
-                          {isAnalyzing ? "Analyzing..." : "Generate Insights"}
-                        </button>
-                      </div>
-                      {insight && (
-                        <div className="bg-white/80 dark:bg-black/30 backdrop-blur-md rounded-xl p-5 text-indigo-900 dark:text-slate-200 text-sm leading-relaxed border border-indigo-100 dark:border-white/5 shadow-sm prose prose-indigo dark:prose-invert max-w-none">
-                          <ReactMarkdown>{insight}</ReactMarkdown>
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      onClick={handleGenerateInsight}
+                      disabled={
+                        isAnalyzing || filteredTransactions.length === 0
+                      }
+                      className="px-4 py-2 bg-white dark:bg-white/10 text-indigo-600 dark:text-white border border-indigo-200 dark:border-white/10 rounded-lg text-sm font-medium hover:bg-indigo-50 dark:hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                    >
+                      {isAnalyzing ? "Analyzing..." : "Generate Insights"}
+                    </button>
                   </div>
+                  {insight && (
+                    <div className="bg-white/80 dark:bg-black/30 backdrop-blur-md rounded-xl p-5 text-indigo-900 dark:text-slate-200 text-sm leading-relaxed border border-indigo-100 dark:border-white/5 shadow-sm prose prose-indigo dark:prose-invert max-w-none">
+                      <ReactMarkdown>{insight}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                      <Filter
-                        size={18}
-                        className="text-gray-500 dark:text-slate-400"
-                      />
-                      Transaction History
-                    </h2>
-                    <TransactionTable
-                      transactions={filteredTransactions}
-                      onDelete={handleDeleteTransaction}
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                <div className="xl:col-span-2">
+                  <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                    <Filter
+                      size={18}
+                      className="text-gray-500 dark:text-slate-400"
                     />
-                  </div>
+                    Transaction History
+                  </h2>
+                  <TransactionTable
+                    transactions={filteredTransactions}
+                    onDelete={handleDeleteTransaction}
+                  />
                 </div>
 
                 <div className="xl:col-span-1">
