@@ -8,6 +8,8 @@ import {
   Chip,
   Grid,
   InputAdornment,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -36,6 +38,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   onAddPaymentMethod,
   onRemovePaymentMethod,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [newIncomeCat, setNewIncomeCat] = useState("");
   const [newExpenseCat, setNewExpenseCat] = useState("");
   const [newPaymentMethod, setNewPaymentMethod] = useState("");
@@ -58,25 +63,40 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box
+      sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}
+    >
       <Box>
-        <Typography variant="h5" fontWeight="bold">
+        <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
           Settings
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Manage your categories and payment methods.
+          {isMobile
+            ? "Categories & payment methods"
+            : "Manage your categories and payment methods."}
         </Typography>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={isMobile ? 2 : 3}>
         {/* Income Categories */}
         <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-          <Paper sx={{ p: 3 }}>
+          <Paper sx={{ p: isMobile ? 2 : 3 }}>
             <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                mb: isMobile ? 2 : 3,
+              }}
             >
-              <ArrowUpIcon color="success" />
-              <Typography variant="h6" fontWeight={600}>
+              <ArrowUpIcon
+                color="success"
+                fontSize={isMobile ? "small" : "medium"}
+              />
+              <Typography
+                variant={isMobile ? "subtitle1" : "h6"}
+                fontWeight={600}
+              >
                 Income Categories
               </Typography>
             </Box>
@@ -120,12 +140,23 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Expense Categories */}
         <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-          <Paper sx={{ p: 3 }}>
+          <Paper sx={{ p: isMobile ? 2 : 3 }}>
             <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                mb: isMobile ? 2 : 3,
+              }}
             >
-              <ArrowDownIcon color="secondary" />
-              <Typography variant="h6" fontWeight={600}>
+              <ArrowDownIcon
+                color="secondary"
+                fontSize={isMobile ? "small" : "medium"}
+              />
+              <Typography
+                variant={isMobile ? "subtitle1" : "h6"}
+                fontWeight={600}
+              >
                 Expense Categories
               </Typography>
             </Box>
@@ -169,12 +200,23 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Payment Methods */}
         <Grid size={{ xs: 12, md: 12, xl: 4 }}>
-          <Paper sx={{ p: 3 }}>
+          <Paper sx={{ p: isMobile ? 2 : 3 }}>
             <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                mb: isMobile ? 2 : 3,
+              }}
             >
-              <CreditCardIcon color="primary" />
-              <Typography variant="h6" fontWeight={600}>
+              <CreditCardIcon
+                color="primary"
+                fontSize={isMobile ? "small" : "medium"}
+              />
+              <Typography
+                variant={isMobile ? "subtitle1" : "h6"}
+                fontWeight={600}
+              >
                 Payment Methods
               </Typography>
             </Box>

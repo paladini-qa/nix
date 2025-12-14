@@ -11,6 +11,8 @@ import {
   Box,
   Chip,
   LinearProgress,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   ArrowUpward as ArrowUpIcon,
@@ -27,6 +29,9 @@ interface TransactionTableProps {
 const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -36,6 +41,11 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   const formatDate = (dateString: string) => {
     const [year, month, day] = dateString.split("-");
+    return `${day}/${month}`;
+  };
+
+  const formatDateFull = (dateString: string) => {
+    const [year, month, day] = dateString.split("-");
     return `${month}/${day}/${year}`;
   };
 
@@ -43,7 +53,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   if (transactions.length === 0) {
     return (
-      <Paper sx={{ p: 6, textAlign: "center" }}>
+      <Paper sx={{ p: 4, textAlign: "center" }}>
         <Typography color="text.secondary">
           No transactions found for this period.
         </Typography>
@@ -51,6 +61,142 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     );
   }
 
+  // Mobile Card View
+  if (isMobile) {
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        {transactions.map((transaction) => {
+          const isIncome = transaction.type === "income";
+
+          return (
+            <Paper
+              key={transaction.id}
+              sx={{
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+              }}
+            >
+              {/* Icon */}
+              <Box
+                sx={{
+                  p: 1,
+                  borderRadius: 2,
+                  bgcolor: isIncome ? "success.light" : "error.light",
+                  color: isIncome ? "success.dark" : "error.dark",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                {isIncome ? (
+                  <ArrowUpIcon fontSize="small" />
+                ) : (
+                  <ArrowDownIcon fontSize="small" />
+                )}
+              </Box>
+
+              {/* Content */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    gap: 1,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {transaction.description}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight={700}
+                    color={isIncome ? "success.main" : "error.main"}
+                    sx={{ flexShrink: 0 }}
+                  >
+                    {isIncome ? "+" : "-"} {formatCurrency(transaction.amount)}
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mt: 0.5,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    {formatDate(transaction.date)}
+                  </Typography>
+                  <Typography variant="caption" color="text.disabled">
+                    •
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {transaction.category}
+                  </Typography>
+                  {transaction.isRecurring && (
+                    <Chip
+                      icon={<RepeatIcon sx={{ fontSize: 12 }} />}
+                      label={
+                        transaction.frequency === "monthly" ? "Mensal" : "Anual"
+                      }
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      sx={{
+                        height: 18,
+                        fontSize: 10,
+                        "& .MuiChip-icon": { ml: 0.5 },
+                      }}
+                    />
+                  )}
+                  {transaction.installments && transaction.installments > 1 && (
+                    <Chip
+                      icon={<CreditCardIcon sx={{ fontSize: 12 }} />}
+                      label={`${transaction.currentInstallment || 1}/${
+                        transaction.installments
+                      }x`}
+                      size="small"
+                      color="warning"
+                      variant="outlined"
+                      sx={{
+                        height: 18,
+                        fontSize: 10,
+                        "& .MuiChip-icon": { ml: 0.5 },
+                      }}
+                    />
+                  )}
+                </Box>
+              </Box>
+            </Paper>
+          );
+        })}
+      </Box>
+    );
+  }
+
+  // Desktop Table View
   return (
     <TableContainer component={Paper}>
       <Table>
@@ -76,7 +222,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               >
                 <TableCell>
                   <Typography variant="body2" fontWeight={500}>
-                    {formatDate(transaction.date)}
+                    {formatDateFull(transaction.date)}
                   </Typography>
                 </TableCell>
                 <TableCell>

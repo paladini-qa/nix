@@ -1,5 +1,13 @@
 import React from "react";
-import { Box, Card, CardContent, Typography, Grid } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
@@ -12,7 +20,18 @@ interface SummaryCardsProps {
 }
 
 const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const formatCurrencyFull = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -23,7 +42,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
   const isPositiveBalance = summary.balance >= 0;
 
   return (
-    <Grid container spacing={2}>
+    <Grid container spacing={isMobile ? 1.5 : 2}>
       {/* Balance Card */}
       <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
         <Card
@@ -37,7 +56,9 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
             overflow: "hidden",
           }}
         >
-          <CardContent sx={{ position: "relative", zIndex: 1 }}>
+          <CardContent
+            sx={{ position: "relative", zIndex: 1, p: isMobile ? 2 : 3 }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -48,23 +69,29 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
               <Box>
                 <Typography
                   variant="overline"
-                  sx={{ opacity: 0.9, letterSpacing: 1 }}
+                  sx={{
+                    opacity: 0.9,
+                    letterSpacing: 1,
+                    fontSize: isMobile ? 10 : 12,
+                  }}
                 >
-                  Current Balance
+                  Balance
                 </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  {formatCurrency(summary.balance)}
+                <Typography variant={isMobile ? "h5" : "h4"} fontWeight="bold">
+                  {isMobile
+                    ? formatCurrency(summary.balance)
+                    : formatCurrencyFull(summary.balance)}
                 </Typography>
               </Box>
               <Box
                 sx={{
-                  p: 1.5,
+                  p: isMobile ? 1 : 1.5,
                   bgcolor: "rgba(255,255,255,0.2)",
                   borderRadius: 2,
                   backdropFilter: "blur(10px)",
                 }}
               >
-                <WalletIcon />
+                <WalletIcon fontSize={isMobile ? "small" : "medium"} />
               </Box>
             </Box>
           </CardContent>
@@ -93,7 +120,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
       </Grid>
 
       {/* Income Card */}
-      <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+      <Grid size={{ xs: 6, sm: 6, lg: 4 }}>
         <Card
           sx={{
             height: "100%",
@@ -103,7 +130,9 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
             overflow: "hidden",
           }}
         >
-          <CardContent sx={{ position: "relative", zIndex: 1 }}>
+          <CardContent
+            sx={{ position: "relative", zIndex: 1, p: isMobile ? 2 : 3 }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -111,26 +140,41 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
                 alignItems: "flex-start",
               }}
             >
-              <Box>
+              <Box sx={{ minWidth: 0 }}>
                 <Typography
                   variant="overline"
-                  sx={{ opacity: 0.9, letterSpacing: 1 }}
+                  sx={{
+                    opacity: 0.9,
+                    letterSpacing: 1,
+                    fontSize: isMobile ? 10 : 12,
+                  }}
                 >
                   Income
                 </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  {formatCurrency(summary.totalIncome)}
+                <Typography
+                  variant={isMobile ? "h6" : "h4"}
+                  fontWeight="bold"
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {isMobile
+                    ? formatCurrency(summary.totalIncome)
+                    : formatCurrencyFull(summary.totalIncome)}
                 </Typography>
               </Box>
               <Box
                 sx={{
-                  p: 1.5,
+                  p: isMobile ? 1 : 1.5,
                   bgcolor: "rgba(255,255,255,0.2)",
                   borderRadius: 2,
                   backdropFilter: "blur(10px)",
+                  flexShrink: 0,
                 }}
               >
-                <TrendingUpIcon />
+                <TrendingUpIcon fontSize={isMobile ? "small" : "medium"} />
               </Box>
             </Box>
           </CardContent>
@@ -159,7 +203,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
       </Grid>
 
       {/* Expense Card */}
-      <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+      <Grid size={{ xs: 6, sm: 6, lg: 4 }}>
         <Card
           sx={{
             height: "100%",
@@ -169,7 +213,9 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
             overflow: "hidden",
           }}
         >
-          <CardContent sx={{ position: "relative", zIndex: 1 }}>
+          <CardContent
+            sx={{ position: "relative", zIndex: 1, p: isMobile ? 2 : 3 }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -177,26 +223,41 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
                 alignItems: "flex-start",
               }}
             >
-              <Box>
+              <Box sx={{ minWidth: 0 }}>
                 <Typography
                   variant="overline"
-                  sx={{ opacity: 0.9, letterSpacing: 1 }}
+                  sx={{
+                    opacity: 0.9,
+                    letterSpacing: 1,
+                    fontSize: isMobile ? 10 : 12,
+                  }}
                 >
                   Expenses
                 </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  {formatCurrency(summary.totalExpense)}
+                <Typography
+                  variant={isMobile ? "h6" : "h4"}
+                  fontWeight="bold"
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {isMobile
+                    ? formatCurrency(summary.totalExpense)
+                    : formatCurrencyFull(summary.totalExpense)}
                 </Typography>
               </Box>
               <Box
                 sx={{
-                  p: 1.5,
+                  p: isMobile ? 1 : 1.5,
                   bgcolor: "rgba(255,255,255,0.2)",
                   borderRadius: 2,
                   backdropFilter: "blur(10px)",
+                  flexShrink: 0,
                 }}
               >
-                <TrendingDownIcon />
+                <TrendingDownIcon fontSize={isMobile ? "small" : "medium"} />
               </Box>
             </Box>
           </CardContent>

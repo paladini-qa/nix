@@ -12,6 +12,7 @@ import {
   BottomNavigationAction,
   Paper,
   useMediaQuery,
+  Fab,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -604,23 +605,6 @@ const App: React.FC = () => {
                 elevation={0}
               >
                 <Toolbar>
-                  <Box
-                    sx={{
-                      bgcolor: "primary.main",
-                      p: 1,
-                      borderRadius: 1.5,
-                      mr: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Typography
-                      sx={{ color: "white", fontWeight: "bold", fontSize: 14 }}
-                    >
-                      N
-                    </Typography>
-                  </Box>
                   <Typography
                     variant="h6"
                     sx={{
@@ -684,13 +668,15 @@ const App: React.FC = () => {
                       >
                         <Box>
                           <Typography
-                            variant="h5"
+                            variant={isMobile ? "h6" : "h5"}
                             sx={{ fontWeight: "bold", color: "text.primary" }}
                           >
-                            General Dashboard
+                            Dashboard
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Welcome, {displayName || session.user.email}
+                            {isMobile
+                              ? displayName || session.user.email?.split("@")[0]
+                              : `Welcome, ${displayName || session.user.email}`}
                           </Typography>
                         </Box>
 
@@ -698,7 +684,7 @@ const App: React.FC = () => {
                           sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 2,
+                            gap: 1.5,
                             width: { xs: "100%", sm: "auto" },
                           }}
                         >
@@ -709,36 +695,40 @@ const App: React.FC = () => {
                               setFilters({ ...filters, month, year })
                             }
                             showIcon
+                            compact={isMobile}
                           />
-                          <Box
-                            component="button"
-                            onClick={() => {
-                              setEditingTransaction(null);
-                              setIsFormOpen(true);
-                            }}
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              px: 2,
-                              py: 1,
-                              bgcolor: "primary.main",
-                              color: "white",
-                              border: "none",
-                              borderRadius: 2,
-                              fontSize: 14,
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                              whiteSpace: "nowrap",
-                              "&:hover": {
-                                bgcolor: "primary.dark",
-                              },
-                            }}
-                          >
-                            <AddIcon fontSize="small" />
-                            New Transaction
-                          </Box>
+                          {/* Desktop New Transaction Button */}
+                          {!isMobile && (
+                            <Box
+                              component="button"
+                              onClick={() => {
+                                setEditingTransaction(null);
+                                setIsFormOpen(true);
+                              }}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                px: 2,
+                                py: 1,
+                                bgcolor: "primary.main",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 2,
+                                fontSize: 14,
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                                whiteSpace: "nowrap",
+                                "&:hover": {
+                                  bgcolor: "primary.dark",
+                                },
+                              }}
+                            >
+                              <AddIcon fontSize="small" />
+                              New Transaction
+                            </Box>
+                          )}
                         </Box>
                       </Box>
 
@@ -766,6 +756,25 @@ const App: React.FC = () => {
                           setSelectedPaymentMethod(method)
                         }
                       />
+
+                      {/* Mobile FAB for Dashboard */}
+                      {isMobile && (
+                        <Fab
+                          color="primary"
+                          onClick={() => {
+                            setEditingTransaction(null);
+                            setIsFormOpen(true);
+                          }}
+                          sx={{
+                            position: "fixed",
+                            bottom: 80,
+                            right: 16,
+                            zIndex: 1100,
+                          }}
+                        >
+                          <AddIcon />
+                        </Fab>
+                      )}
                     </>
                   )
                 ) : currentView === "transactions" ? (

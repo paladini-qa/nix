@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -21,6 +21,10 @@ import {
   Chip,
   Grid,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
+  Fab,
+  SwipeableDrawer,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -35,6 +39,7 @@ import {
   Description as FileTextIcon,
   TableChart as FileSpreadsheetIcon,
   ExpandMore as ChevronDownIcon,
+  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
@@ -59,9 +64,15 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   selectedYear,
   onDateChange,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [searchTerm, setSearchTerm] = useState("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [mobileActionAnchor, setMobileActionAnchor] = useState<{
+    element: HTMLElement | null;
+    transaction: Transaction | null;
+  }>({ element: null, transaction: null });
 
   const filteredData = useMemo(() => {
     return transactions
@@ -276,43 +287,60 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     }
   };
 
+  const formatDateShort = (dateString: string) => {
+    const [year, month, day] = dateString.split("-");
+    return `${day}/${month}`;
+  };
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box
+      sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}
+    >
       {/* Header */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", xl: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", xl: "center" },
+          flexDirection: "column",
           gap: 2,
         }}
       >
-        <Box>
-          <Typography variant="h5" fontWeight="bold">
-            All Transactions
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Transactions for {MONTHS[selectedMonth]} {selectedYear}
-          </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
+        >
+          <Box>
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
+              All Transactions
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {MONTHS[selectedMonth]} {selectedYear}
+            </Typography>
+          </Box>
+
+          {/* Desktop New Transaction Button */}
+          {!isMobile && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onNewTransaction}
+            >
+              New Transaction
+            </Button>
+          )}
         </Box>
 
+        {/* Controls Row */}
         <Box
           sx={{
             display: "flex",
             flexWrap: "wrap",
             alignItems: "center",
-            gap: 1.5,
+            gap: 1,
           }}
         >
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onNewTransaction}
-          >
-            New Transaction
-          </Button>
-
           <TextField
             size="small"
             placeholder="Search..."
@@ -325,7 +353,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 </InputAdornment>
               ),
             }}
-            sx={{ width: { xs: "100%", sm: 180 } }}
+            sx={{ flex: 1, minWidth: 120, maxWidth: { xs: "100%", sm: 200 } }}
           />
 
           <DateFilter
@@ -335,16 +363,18 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             compact
           />
 
-          <Button
-            variant="outlined"
-            endIcon={
-              isExporting ? <CircularProgress size={16} /> : <ChevronDownIcon />
-            }
+          <IconButton
             onClick={(e) => setAnchorEl(e.currentTarget)}
             disabled={isExporting || filteredData.length === 0}
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 2,
+            }}
           >
-            <DownloadIcon />
-          </Button>
+            {isExporting ? <CircularProgress size={20} /> : <DownloadIcon />}
+          </IconButton>
+
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
@@ -434,165 +464,410 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         </Grid>
       </Grid>
 
-      {/* Table */}
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow sx={{ bgcolor: "action.hover" }}>
-              <TableCell sx={{ fontWeight: 600, width: 100 }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: 140 }}>
-                Category
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600, width: 140 }}>Method</TableCell>
-              <TableCell
-                sx={{ fontWeight: 600, width: 80, textAlign: "center" }}
-              >
-                Type
-              </TableCell>
-              <TableCell
-                sx={{ fontWeight: 600, width: 130, textAlign: "right" }}
-              >
-                Amount
-              </TableCell>
-              <TableCell
-                sx={{ fontWeight: 600, width: 100, textAlign: "center" }}
-              >
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredData.length > 0 ? (
-              filteredData.map((t, index) => (
-                <TableRow
-                  key={t.id}
-                  hover
-                  sx={{
-                    bgcolor: index % 2 === 0 ? "transparent" : "action.hover",
-                  }}
-                >
-                  <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
-                    {formatDate(t.date)}
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: "flex", flexDirection: "column" }}>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Typography variant="body2" fontWeight={500}>
-                          {t.description}
-                        </Typography>
-                        {t.isRecurring && (
-                          <RepeatIcon fontSize="small" color="primary" />
-                        )}
-                      </Box>
-                      {t.installments && t.installments > 1 && (
-                        <Chip
-                          icon={<CreditCardIcon />}
-                          label={`${t.currentInstallment || 1}/${
-                            t.installments
-                          }x`}
-                          size="small"
-                          color="warning"
-                          variant="outlined"
-                          sx={{
-                            height: 18,
-                            fontSize: 10,
-                            mt: 0.5,
-                            width: "fit-content",
-                          }}
-                        />
+      {/* Mobile Card View */}
+      {isMobile ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {filteredData.length > 0 ? (
+            <>
+              {filteredData.map((t) => {
+                const isIncome = t.type === "income";
+                return (
+                  <Paper
+                    key={t.id}
+                    sx={{
+                      p: 2,
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 1.5,
+                    }}
+                  >
+                    {/* Icon */}
+                    <Box
+                      sx={{
+                        p: 1,
+                        borderRadius: 2,
+                        bgcolor: isIncome ? "success.light" : "error.light",
+                        color: isIncome ? "success.dark" : "error.dark",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {isIncome ? (
+                        <ArrowUpIcon fontSize="small" />
+                      ) : (
+                        <ArrowDownIcon fontSize="small" />
                       )}
                     </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={t.category} size="small" variant="outlined" />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="caption" color="text.secondary">
-                      {t.paymentMethod}
+
+                    {/* Content */}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          gap: 1,
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          sx={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {t.description}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          fontWeight={700}
+                          color={isIncome ? "success.main" : "error.main"}
+                          sx={{ flexShrink: 0 }}
+                        >
+                          {isIncome ? "+" : "-"} {formatCurrency(t.amount)}
+                        </Typography>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mt: 0.5,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDateShort(t.date)}
+                        </Typography>
+                        <Typography variant="caption" color="text.disabled">
+                          •
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {t.category}
+                        </Typography>
+                        <Typography variant="caption" color="text.disabled">
+                          •
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {t.paymentMethod}
+                        </Typography>
+                      </Box>
+
+                      {/* Tags */}
+                      {(t.isRecurring ||
+                        (t.installments && t.installments > 1)) && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 0.5,
+                            mt: 1,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {t.isRecurring && (
+                            <Chip
+                              icon={<RepeatIcon sx={{ fontSize: 12 }} />}
+                              label={
+                                t.frequency === "monthly" ? "Mensal" : "Anual"
+                              }
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                              sx={{
+                                height: 20,
+                                fontSize: 10,
+                                "& .MuiChip-icon": { ml: 0.5 },
+                              }}
+                            />
+                          )}
+                          {t.installments && t.installments > 1 && (
+                            <Chip
+                              icon={<CreditCardIcon sx={{ fontSize: 12 }} />}
+                              label={`${t.currentInstallment || 1}/${
+                                t.installments
+                              }x`}
+                              size="small"
+                              color="warning"
+                              variant="outlined"
+                              sx={{
+                                height: 20,
+                                fontSize: 10,
+                                "& .MuiChip-icon": { ml: 0.5 },
+                              }}
+                            />
+                          )}
+                        </Box>
+                      )}
+                    </Box>
+
+                    {/* Actions */}
+                    <IconButton
+                      size="small"
+                      onClick={(e) =>
+                        setMobileActionAnchor({
+                          element: e.currentTarget,
+                          transaction: t,
+                        })
+                      }
+                    >
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                  </Paper>
+                );
+              })}
+
+              {/* Summary Footer */}
+              <Paper
+                sx={{
+                  p: 2,
+                  bgcolor: "action.hover",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  Balance
+                </Typography>
+                <Typography
+                  variant="body1"
+                  fontWeight={700}
+                  color={balance >= 0 ? "success.main" : "error.main"}
+                >
+                  {formatCurrency(balance)}
+                </Typography>
+              </Paper>
+            </>
+          ) : (
+            <Paper sx={{ p: 4, textAlign: "center" }}>
+              <Typography color="text.secondary" fontStyle="italic">
+                No transactions found.
+              </Typography>
+            </Paper>
+          )}
+
+          {/* Mobile Action Menu */}
+          <Menu
+            anchorEl={mobileActionAnchor.element}
+            open={Boolean(mobileActionAnchor.element)}
+            onClose={() =>
+              setMobileActionAnchor({ element: null, transaction: null })
+            }
+          >
+            <MenuItem
+              onClick={() => {
+                if (mobileActionAnchor.transaction) {
+                  onEdit(mobileActionAnchor.transaction);
+                }
+                setMobileActionAnchor({ element: null, transaction: null });
+              }}
+            >
+              <ListItemIcon>
+                <EditIcon fontSize="small" color="primary" />
+              </ListItemIcon>
+              <ListItemText>Edit</ListItemText>
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                if (mobileActionAnchor.transaction) {
+                  onDelete(mobileActionAnchor.transaction.id);
+                }
+                setMobileActionAnchor({ element: null, transaction: null });
+              }}
+            >
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>Delete</ListItemText>
+            </MenuItem>
+          </Menu>
+
+          {/* Mobile FAB */}
+          <Fab
+            color="primary"
+            onClick={onNewTransaction}
+            sx={{
+              position: "fixed",
+              bottom: 80,
+              right: 16,
+              zIndex: 1100,
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        </Box>
+      ) : (
+        /* Desktop Table View */
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow sx={{ bgcolor: "action.hover" }}>
+                <TableCell sx={{ fontWeight: 600, width: 100 }}>Date</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 140 }}>
+                  Category
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 140 }}>
+                  Method
+                </TableCell>
+                <TableCell
+                  sx={{ fontWeight: 600, width: 80, textAlign: "center" }}
+                >
+                  Type
+                </TableCell>
+                <TableCell
+                  sx={{ fontWeight: 600, width: 130, textAlign: "right" }}
+                >
+                  Amount
+                </TableCell>
+                <TableCell
+                  sx={{ fontWeight: 600, width: 100, textAlign: "center" }}
+                >
+                  Actions
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredData.length > 0 ? (
+                filteredData.map((t, index) => (
+                  <TableRow
+                    key={t.id}
+                    hover
+                    sx={{
+                      bgcolor: index % 2 === 0 ? "transparent" : "action.hover",
+                    }}
+                  >
+                    <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
+                      {formatDate(t.date)}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", flexDirection: "column" }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Typography variant="body2" fontWeight={500}>
+                            {t.description}
+                          </Typography>
+                          {t.isRecurring && (
+                            <RepeatIcon fontSize="small" color="primary" />
+                          )}
+                        </Box>
+                        {t.installments && t.installments > 1 && (
+                          <Chip
+                            icon={<CreditCardIcon />}
+                            label={`${t.currentInstallment || 1}/${
+                              t.installments
+                            }x`}
+                            size="small"
+                            color="warning"
+                            variant="outlined"
+                            sx={{
+                              height: 18,
+                              fontSize: 10,
+                              mt: 0.5,
+                              width: "fit-content",
+                            }}
+                          />
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={t.category}
+                        size="small"
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="caption" color="text.secondary">
+                        {t.paymentMethod}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "center" }}>
+                      {t.type === "income" ? (
+                        <ArrowUpIcon fontSize="small" color="success" />
+                      ) : (
+                        <ArrowDownIcon fontSize="small" color="error" />
+                      )}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        textAlign: "right",
+                        fontFamily: "monospace",
+                        fontWeight: 600,
+                        color:
+                          t.type === "income" ? "success.main" : "error.main",
+                      }}
+                    >
+                      {t.type === "expense" && "- "}
+                      {formatCurrency(t.amount)}
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "center" }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => onEdit(t)}
+                        color="primary"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => onDelete(t.id)}
+                        color="error"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} sx={{ textAlign: "center", py: 6 }}>
+                    <Typography color="text.secondary" fontStyle="italic">
+                      No transactions found with the current filters.
                     </Typography>
                   </TableCell>
-                  <TableCell sx={{ textAlign: "center" }}>
-                    {t.type === "income" ? (
-                      <ArrowUpIcon fontSize="small" color="success" />
-                    ) : (
-                      <ArrowDownIcon fontSize="small" color="error" />
-                    )}
+                </TableRow>
+              )}
+            </TableBody>
+            {filteredData.length > 0 && (
+              <TableFooter>
+                <TableRow sx={{ bgcolor: "action.hover" }}>
+                  <TableCell
+                    colSpan={5}
+                    sx={{ textAlign: "right", fontWeight: 600 }}
+                  >
+                    Filtered Total:
                   </TableCell>
                   <TableCell
                     sx={{
                       textAlign: "right",
                       fontFamily: "monospace",
                       fontWeight: 600,
-                      color:
-                        t.type === "income" ? "success.main" : "error.main",
                     }}
                   >
-                    {t.type === "expense" && "- "}
-                    {formatCurrency(t.amount)}
+                    {formatCurrency(
+                      filteredData.reduce(
+                        (acc, curr) =>
+                          curr.type === "income"
+                            ? acc + curr.amount
+                            : acc - curr.amount,
+                        0
+                      )
+                    )}
                   </TableCell>
-                  <TableCell sx={{ textAlign: "center" }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => onEdit(t)}
-                      color="primary"
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => onDelete(t.id)}
-                      color="error"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
+                  <TableCell />
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} sx={{ textAlign: "center", py: 6 }}>
-                  <Typography color="text.secondary" fontStyle="italic">
-                    No transactions found with the current filters.
-                  </Typography>
-                </TableCell>
-              </TableRow>
+              </TableFooter>
             )}
-          </TableBody>
-          {filteredData.length > 0 && (
-            <TableFooter>
-              <TableRow sx={{ bgcolor: "action.hover" }}>
-                <TableCell
-                  colSpan={5}
-                  sx={{ textAlign: "right", fontWeight: 600 }}
-                >
-                  Filtered Total:
-                </TableCell>
-                <TableCell
-                  sx={{
-                    textAlign: "right",
-                    fontFamily: "monospace",
-                    fontWeight: 600,
-                  }}
-                >
-                  {formatCurrency(
-                    filteredData.reduce(
-                      (acc, curr) =>
-                        curr.type === "income"
-                          ? acc + curr.amount
-                          : acc - curr.amount,
-                      0
-                    )
-                  )}
-                </TableCell>
-                <TableCell />
-              </TableRow>
-            </TableFooter>
-          )}
-        </Table>
-      </TableContainer>
+          </Table>
+        </TableContainer>
+      )}
     </Box>
   );
 };

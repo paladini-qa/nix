@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Box } from "@mui/material";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -20,6 +20,8 @@ const DateFilter: React.FC<DateFilterProps> = ({
   onDateChange,
   compact = false,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   // Cria um objeto dayjs com o mês e ano selecionados usando useMemo para garantir estabilidade
   const selectedDate = useMemo(
     () => dayjs().year(year).month(month).date(1),
@@ -51,14 +53,17 @@ const DateFilter: React.FC<DateFilterProps> = ({
           openTo="month"
           value={selectedDate}
           onChange={handleDateChange}
-          format="MMMM YYYY"
+          format={isMobile ? "MMM YYYY" : "MMMM YYYY"}
           slotProps={{
             textField: {
               size: "small",
               sx: {
-                minWidth: compact ? 180 : 220,
+                minWidth: isMobile ? 130 : compact ? 180 : 220,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
+                },
+                "& .MuiOutlinedInput-input": {
+                  fontSize: isMobile ? 14 : 16,
                 },
               },
             },

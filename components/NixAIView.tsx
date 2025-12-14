@@ -7,6 +7,8 @@ import {
   Typography,
   CircularProgress,
   Avatar,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Send as SendIcon,
@@ -29,6 +31,9 @@ interface NixAIViewProps {
 }
 
 const NixAIView: React.FC<NixAIViewProps> = ({ transactions }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -112,9 +117,9 @@ const NixAIView: React.FC<NixAIViewProps> = ({ transactions }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: isMobile ? 2 : 3 }}>
         <Typography
-          variant="h5"
+          variant={isMobile ? "h6" : "h5"}
           sx={{
             fontWeight: "bold",
             color: "text.primary",
@@ -123,11 +128,16 @@ const NixAIView: React.FC<NixAIViewProps> = ({ transactions }) => {
             gap: 1,
           }}
         >
-          <SparklesIcon color="primary" />
+          <SparklesIcon
+            color="primary"
+            fontSize={isMobile ? "small" : "medium"}
+          />
           NixAI
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Your personal AI financial assistant
+          {isMobile
+            ? "AI financial assistant"
+            : "Your personal AI financial assistant"}
         </Typography>
       </Box>
 
@@ -179,18 +189,18 @@ const NixAIView: React.FC<NixAIViewProps> = ({ transactions }) => {
               </Avatar>
               <Paper
                 sx={{
-                  p: 2,
-                  maxWidth: "75%",
+                  p: isMobile ? 1.5 : 2,
+                  maxWidth: isMobile ? "85%" : "75%",
                   bgcolor:
                     message.role === "user"
                       ? "primary.main"
                       : "background.default",
                   color: message.role === "user" ? "white" : "text.primary",
                   borderRadius: 2,
-                  "& p": { m: 0, mb: 1 },
+                  "& p": { m: 0, mb: 1, fontSize: isMobile ? 14 : 16 },
                   "& p:last-child": { mb: 0 },
                   "& ul, & ol": { m: 0, pl: 2.5 },
-                  "& li": { mb: 0.5 },
+                  "& li": { mb: 0.5, fontSize: isMobile ? 14 : 16 },
                   "& strong": {
                     fontWeight: 600,
                   },

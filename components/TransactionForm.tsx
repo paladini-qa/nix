@@ -19,15 +19,30 @@ import {
   IconButton,
   InputAdornment,
   Grid,
+  useMediaQuery,
+  useTheme,
+  Slide,
+  AppBar,
+  Toolbar,
 } from "@mui/material";
+import { TransitionProps } from "@mui/material/transitions";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import {
   Close as CloseIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
+  ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import { Transaction, TransactionType } from "../types";
+
+// Mobile slide transition
+const SlideTransition = React.forwardRef(function Transition(
+  props: TransitionProps & { children: React.ReactElement },
+  ref: React.Ref<unknown>
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -49,6 +64,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   paymentMethods,
   editTransaction,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<TransactionType>("expense");
@@ -129,27 +147,59 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      fullScreen={isMobile}
+      TransitionComponent={isMobile ? SlideTransition : undefined}
       PaperProps={{
-        sx: { borderRadius: 3 },
+        sx: { borderRadius: isMobile ? 0 : 3 },
       }}
     >
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Typography variant="h6" fontWeight={600}>
-          {editTransaction ? "Edit Transaction" : "New Transaction"}
-        </Typography>
-        <IconButton onClick={onClose} size="small">
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
+      {/* Mobile Header */}
+      {isMobile ? (
+        <AppBar
+          position="sticky"
+          color="default"
+          elevation={0}
+          sx={{ borderBottom: 1, borderColor: "divider" }}
+        >
+          <Toolbar>
+            <IconButton edge="start" onClick={onClose} sx={{ mr: 2 }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
+              {editTransaction ? "Edit Transaction" : "New Transaction"}
+            </Typography>
+            <Button
+              type="submit"
+              form="transaction-form"
+              variant="contained"
+              size="small"
+            >
+              Save
+            </Button>
+          </Toolbar>
+        </AppBar>
+      ) : (
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            {editTransaction ? "Edit Transaction" : "New Transaction"}
+          </Typography>
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+      )}
 
-      <form onSubmit={handleSubmit}>
-        <DialogContent dividers>
+      <form id="transaction-form" onSubmit={handleSubmit}>
+        <DialogContent
+          dividers={!isMobile}
+          sx={{ pt: isMobile ? 3 : undefined }}
+        >
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* Type Toggle */}
             <ToggleButtonGroup
@@ -402,14 +452,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={onClose} color="inherit">
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" size="large">
-            Save Transaction
-          </Button>
-        </DialogActions>
+        {/* Desktop Actions */}
+        {!isMobile && (
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={onClose} color="inherit">
+              Cancel
+            </Button>
+            <Button type="submit" variant="contained" size="large">
+              Save Transaction
+            </Button>
+          </DialogActions>
+        )}
       </form>
     </Dialog>
   );
