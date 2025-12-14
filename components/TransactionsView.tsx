@@ -15,12 +15,17 @@ import {
   Trash2,
   CreditCard,
 } from "lucide-react";
+import DateFilter from "./DateFilter";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
   onNewTransaction: () => void;
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
+  selectedMonth: number;
+  selectedYear: number;
+  onMonthChange: (month: number) => void;
+  onYearChange: (year: number) => void;
 }
 
 const TransactionsView: React.FC<TransactionsViewProps> = ({
@@ -28,22 +33,15 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   onNewTransaction,
   onEdit,
   onDelete,
+  selectedMonth,
+  selectedYear,
+  onMonthChange,
+  onYearChange,
 }) => {
-  const [selectedMonth, setSelectedMonth] = useState<number>(
-    new Date().getMonth()
-  );
-  const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear()
-  );
   const [searchTerm, setSearchTerm] = useState("");
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
-
-  const years = Array.from(
-    { length: 5 },
-    (_, i) => new Date().getFullYear() - i
-  );
 
   // Close export menu when clicking outside
   React.useEffect(() => {
@@ -330,30 +328,14 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             />
           </div>
 
-          {/* Filters - Compact on mobile */}
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="px-2 sm:px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white cursor-pointer"
-          >
-            {MONTHS.map((m, i) => (
-              <option key={i} value={i}>
-                {m.substring(0, 3)}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="px-2 sm:px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white cursor-pointer"
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
+          {/* Date Filter */}
+          <DateFilter
+            month={selectedMonth}
+            year={selectedYear}
+            onMonthChange={onMonthChange}
+            onYearChange={onYearChange}
+            compact
+          />
 
           {/* Export Dropdown */}
           <div className="relative" ref={exportMenuRef}>

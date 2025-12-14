@@ -31,6 +31,7 @@ import TransactionsView from "./components/TransactionsView";
 import SettingsView from "./components/SettingsView";
 import LoginView from "./components/LoginView";
 import ThemeSwitch from "./components/ThemeSwitch";
+import DateFilter from "./components/DateFilter";
 import { getFinancialInsights } from "./services/geminiService";
 import { supabase } from "./services/supabaseClient";
 import ReactMarkdown from "react-markdown";
@@ -462,11 +463,6 @@ const App: React.FC = () => {
     }
   };
 
-  const years = Array.from(
-    { length: 5 },
-    (_, i) => new Date().getFullYear() - i
-  );
-
   if (loadingInitial) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-slate-900 flex items-center justify-center">
@@ -539,41 +535,13 @@ const App: React.FC = () => {
 
                 <div className="flex items-center space-x-3 w-full sm:w-auto">
                   {/* Filter Controls */}
-                  <div className="flex bg-white dark:bg-slate-800/50 border border-gray-200 dark:border-white/10 rounded-lg p-1 space-x-1 shadow-sm">
-                    <select
-                      value={filters.month}
-                      onChange={(e) =>
-                        setFilters({
-                          ...filters,
-                          month: parseInt(e.target.value),
-                        })
-                      }
-                      className="bg-transparent text-sm font-medium text-gray-700 dark:text-slate-300 px-2 py-1.5 rounded focus:outline-none cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 [&>option]:dark:bg-slate-800"
-                    >
-                      {MONTHS.map((m, i) => (
-                        <option key={i} value={i}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="w-px bg-gray-200 dark:bg-white/10 my-1"></div>
-                    <select
-                      value={filters.year}
-                      onChange={(e) =>
-                        setFilters({
-                          ...filters,
-                          year: parseInt(e.target.value),
-                        })
-                      }
-                      className="bg-transparent text-sm font-medium text-gray-700 dark:text-slate-300 px-2 py-1.5 rounded focus:outline-none cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 [&>option]:dark:bg-slate-800"
-                    >
-                      {years.map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <DateFilter
+                    month={filters.month}
+                    year={filters.year}
+                    onMonthChange={(month) => setFilters({ ...filters, month })}
+                    onYearChange={(year) => setFilters({ ...filters, year })}
+                    showIcon
+                  />
 
                   <button
                     onClick={() => {
@@ -654,6 +622,10 @@ const App: React.FC = () => {
               }}
               onEdit={handleEditTransaction}
               onDelete={handleDeleteTransaction}
+              selectedMonth={filters.month}
+              selectedYear={filters.year}
+              onMonthChange={(month) => setFilters({ ...filters, month })}
+              onYearChange={(year) => setFilters({ ...filters, year })}
             />
           ) : (
             <SettingsView
