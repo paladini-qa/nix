@@ -1,5 +1,5 @@
 -- =============================================
--- FINANÇAS INTELIGENTES - Script de Criação do Banco de Dados Supabase
+-- NIX - Script de Criação do Banco de Dados Supabase
 -- =============================================
 -- Execute este script no SQL Editor do Supabase Dashboard
 -- https://supabase.com/dashboard/project/[seu-projeto]/sql

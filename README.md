@@ -1,7 +1,7 @@
 <div align="center">
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 
-# Smart Finance
+# Nix
 
 Aplicação moderna de gerenciamento de finanças pessoais com análise inteligente usando Gemini AI.
 
@@ -80,7 +80,7 @@ Acesse [http://localhost:3000](http://localhost:3000) 🎉
 ## 📁 Estrutura do Projeto
 
 ```
-smart-finance/
+nix/
 ├── components/               # Componentes React
 │   ├── Charts.tsx            # Gráficos de receitas/despesas
 │   ├── LoginView.tsx         # Tela de login/cadastro
