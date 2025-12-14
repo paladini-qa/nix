@@ -62,6 +62,8 @@ const App: React.FC = () => {
     "dashboard" | "transactions" | "settings"
   >("dashboard");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [insight, setInsight] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -300,7 +302,8 @@ const App: React.FC = () => {
   };
 
   const handleAddTransaction = async (
-    newTx: Omit<Transaction, "id" | "createdAt">
+    newTx: Omit<Transaction, "id" | "createdAt">,
+    editId?: string
   ) => {
     if (!session) return;
 
@@ -319,36 +322,76 @@ const App: React.FC = () => {
         current_installment: newTx.currentInstallment,
       };
 
-      const { data, error } = await supabase
-        .from("transactions")
-        .insert(dbPayload)
-        .select()
-        .single();
+      if (editId) {
+        // Update existing transaction
+        const { data, error } = await supabase
+          .from("transactions")
+          .update(dbPayload)
+          .eq("id", editId)
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data) {
-        const transaction: Transaction = {
-          id: data.id,
-          description: data.description,
-          amount: data.amount,
-          type: data.type,
-          category: data.category,
-          paymentMethod: data.payment_method,
-          date: data.date,
-          createdAt: new Date(data.created_at).getTime(),
-          isRecurring: data.is_recurring,
-          frequency: data.frequency,
-          installments: data.installments,
-          currentInstallment: data.current_installment,
-        };
-        setTransactions((prev) => [transaction, ...prev]);
-        setInsight(null);
+        if (data) {
+          const transaction: Transaction = {
+            id: data.id,
+            description: data.description,
+            amount: data.amount,
+            type: data.type,
+            category: data.category,
+            paymentMethod: data.payment_method,
+            date: data.date,
+            createdAt: new Date(data.created_at).getTime(),
+            isRecurring: data.is_recurring,
+            frequency: data.frequency,
+            installments: data.installments,
+            currentInstallment: data.current_installment,
+          };
+          setTransactions((prev) =>
+            prev.map((t) => (t.id === editId ? transaction : t))
+          );
+        }
+      } else {
+        // Insert new transaction
+        const { data, error } = await supabase
+          .from("transactions")
+          .insert(dbPayload)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const transaction: Transaction = {
+            id: data.id,
+            description: data.description,
+            amount: data.amount,
+            type: data.type,
+            category: data.category,
+            paymentMethod: data.payment_method,
+            date: data.date,
+            createdAt: new Date(data.created_at).getTime(),
+            isRecurring: data.is_recurring,
+            frequency: data.frequency,
+            installments: data.installments,
+            currentInstallment: data.current_installment,
+          };
+          setTransactions((prev) => [transaction, ...prev]);
+        }
       }
+
+      setEditingTransaction(null);
+      setInsight(null);
     } catch (err) {
-      console.error("Error adding transaction:", err);
+      console.error("Error saving transaction:", err);
       alert("Error saving transaction.");
     }
+  };
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setIsFormOpen(true);
   };
 
   const handleDeleteTransaction = async (id: string) => {
@@ -533,7 +576,10 @@ const App: React.FC = () => {
                   </div>
 
                   <button
-                    onClick={() => setIsFormOpen(true)}
+                    onClick={() => {
+                      setEditingTransaction(null);
+                      setIsFormOpen(true);
+                    }}
                     className="flex-1 sm:flex-none flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg transition-all shadow-sm dark:shadow-indigo-500/30 font-medium whitespace-nowrap"
                   >
                     <Plus size={18} />
@@ -593,10 +639,7 @@ const App: React.FC = () => {
                   />
                   Transaction History
                 </h2>
-                <TransactionTable
-                  transactions={filteredTransactions}
-                  onDelete={handleDeleteTransaction}
-                />
+                <TransactionTable transactions={filteredTransactions} />
               </div>
 
               {/* Category & Payment Breakdown */}
@@ -605,7 +648,12 @@ const App: React.FC = () => {
           ) : currentView === "transactions" ? (
             <TransactionsView
               transactions={transactions}
-              onNewTransaction={() => setIsFormOpen(true)}
+              onNewTransaction={() => {
+                setEditingTransaction(null);
+                setIsFormOpen(true);
+              }}
+              onEdit={handleEditTransaction}
+              onDelete={handleDeleteTransaction}
             />
           ) : (
             <SettingsView
@@ -666,10 +714,14 @@ const App: React.FC = () => {
 
       <TransactionForm
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingTransaction(null);
+        }}
         onSave={handleAddTransaction}
         categories={categories}
         paymentMethods={paymentMethods}
+        editTransaction={editingTransaction}
       />
 
       <ProfileModal

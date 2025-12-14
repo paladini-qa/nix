@@ -11,16 +11,23 @@ import {
   FileSpreadsheet,
   FileText,
   ChevronDown,
+  Pencil,
+  Trash2,
+  CreditCard,
 } from "lucide-react";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
   onNewTransaction: () => void;
+  onEdit: (transaction: Transaction) => void;
+  onDelete: (id: string) => void;
 }
 
 const TransactionsView: React.FC<TransactionsViewProps> = ({
   transactions,
   onNewTransaction,
+  onEdit,
+  onDelete,
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<number>(
     new Date().getMonth()
@@ -399,22 +406,25 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           <table className="w-full text-sm border-collapse">
             <thead className="bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 font-semibold border-b-2 border-gray-300 dark:border-slate-600">
               <tr>
-                <th className="p-2 text-left border-r border-gray-300 dark:border-slate-700 w-32">
+                <th className="p-2 text-left border-r border-gray-300 dark:border-slate-700 w-28">
                   Date
                 </th>
                 <th className="p-2 text-left border-r border-gray-300 dark:border-slate-700">
                   Description
                 </th>
-                <th className="p-2 text-left border-r border-gray-300 dark:border-slate-700 w-40">
+                <th className="p-2 text-left border-r border-gray-300 dark:border-slate-700 w-36">
                   Category
                 </th>
-                <th className="p-2 text-left border-r border-gray-300 dark:border-slate-700 w-40">
+                <th className="p-2 text-left border-r border-gray-300 dark:border-slate-700 w-36">
                   Method
                 </th>
-                <th className="p-2 text-center border-r border-gray-300 dark:border-slate-700 w-24">
+                <th className="p-2 text-center border-r border-gray-300 dark:border-slate-700 w-20">
                   Type
                 </th>
-                <th className="p-2 text-right w-40">Amount</th>
+                <th className="p-2 text-right border-r border-gray-300 dark:border-slate-700 w-32">
+                  Amount
+                </th>
+                <th className="p-2 text-center w-24">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
@@ -428,20 +438,28 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                         : "bg-gray-50 dark:bg-slate-800/50"
                     } hover:bg-blue-50 dark:hover:bg-indigo-900/20 transition-colors`}
                   >
-                    <td className="p-2 border-r border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 font-mono">
+                    <td className="p-2 border-r border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 font-mono text-xs">
                       {formatDate(t.date)}
                     </td>
-                    <td className="p-2 border-r border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-200 font-medium truncate max-w-xs">
-                      <div className="flex items-center">
-                        {t.description}
-                        {t.isRecurring && (
-                          <span
-                            title={`Recurring: ${
-                              t.frequency === "monthly" ? "Monthly" : "Yearly"
-                            }`}
-                            className="ml-2 text-indigo-500"
-                          >
-                            <Repeat size={14} />
+                    <td className="p-2 border-r border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-200 font-medium">
+                      <div className="flex flex-col">
+                        <div className="flex items-center truncate max-w-xs">
+                          {t.description}
+                          {t.isRecurring && (
+                            <span
+                              title={`Recurring: ${
+                                t.frequency === "monthly" ? "Monthly" : "Yearly"
+                              }`}
+                              className="ml-2 text-indigo-500"
+                            >
+                              <Repeat size={14} />
+                            </span>
+                          )}
+                        </div>
+                        {t.installments && t.installments > 1 && (
+                          <span className="flex items-center text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wide mt-0.5">
+                            <CreditCard size={10} className="mr-1" />
+                            {t.currentInstallment || 1}/{t.installments}x
                           </span>
                         )}
                       </div>
@@ -451,7 +469,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                         {t.category}
                       </span>
                     </td>
-                    <td className="p-2 border-r border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400">
+                    <td className="p-2 border-r border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 text-xs">
                       {t.paymentMethod}
                     </td>
                     <td className="p-2 border-r border-gray-200 dark:border-slate-700 text-center">
@@ -466,7 +484,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       )}
                     </td>
                     <td
-                      className={`p-2 text-right font-mono font-medium ${
+                      className={`p-2 text-right font-mono font-medium border-r border-gray-200 dark:border-slate-700 ${
                         t.type === "income"
                           ? "text-emerald-700 dark:text-emerald-400"
                           : "text-red-700 dark:text-fuchsia-400"
@@ -475,12 +493,30 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       {t.type === "expense" && "- "}
                       {formatCurrency(t.amount)}
                     </td>
+                    <td className="p-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => onEdit(t)}
+                          className="p-1.5 text-gray-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-md transition-colors"
+                          title="Edit"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => onDelete(t.id)}
+                          className="p-1.5 text-gray-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="p-12 text-center text-gray-500 dark:text-slate-400 italic"
                   >
                     No transactions found with the current filters.
@@ -497,7 +533,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   >
                     Filtered Total:
                   </td>
-                  <td className="p-2 text-right text-gray-900 dark:text-white">
+                  <td className="p-2 text-right border-r border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white font-mono">
                     {formatCurrency(
                       filteredData.reduce(
                         (acc, curr) =>
@@ -508,6 +544,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       )
                     )}
                   </td>
+                  <td className="p-2"></td>
                 </tr>
               </tfoot>
             )}

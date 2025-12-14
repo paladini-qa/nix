@@ -1,7 +1,6 @@
 import React from "react";
 import { Transaction } from "../types";
 import {
-  Trash2,
   ArrowUpCircle,
   ArrowDownCircle,
   Repeat,
@@ -10,12 +9,10 @@ import {
 
 interface TransactionTableProps {
   transactions: Transaction[];
-  onDelete: (id: string) => void;
 }
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
-  onDelete,
 }) => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -62,9 +59,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               </th>
               <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-48">
                 Amount
-              </th>
-              <th className="text-center p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                Actions
               </th>
             </tr>
           </thead>
@@ -151,16 +145,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         ></div>
                       </div>
                     </div>
-                  </td>
-
-                  <td className="p-4 text-center">
-                    <button
-                      onClick={() => onDelete(transaction.id)}
-                      className="text-gray-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 transition-colors p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
                   </td>
                 </tr>
               );

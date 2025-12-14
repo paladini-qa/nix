@@ -1,13 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Transaction, TransactionType } from "../types";
 import { X, Repeat, CreditCard } from "lucide-react";
 
 interface TransactionFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (transaction: Omit<Transaction, "id" | "createdAt">) => void;
+  onSave: (
+    transaction: Omit<Transaction, "id" | "createdAt">,
+    editId?: string
+  ) => void;
   categories: { income: string[]; expense: string[] };
   paymentMethods: string[];
+  editTransaction?: Transaction | null;
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = ({
@@ -16,6 +20,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   onSave,
   categories,
   paymentMethods,
+  editTransaction,
 }) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -31,6 +36,37 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   // Installments state
   const [hasInstallments, setHasInstallments] = useState(false);
   const [installments, setInstallments] = useState("2");
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editTransaction) {
+      setDescription(editTransaction.description);
+      setAmount(editTransaction.amount.toString());
+      setType(editTransaction.type);
+      setCategory(editTransaction.category);
+      setPaymentMethod(editTransaction.paymentMethod);
+      setDate(editTransaction.date);
+      setIsRecurring(editTransaction.isRecurring || false);
+      setFrequency(editTransaction.frequency || "monthly");
+      setHasInstallments(
+        editTransaction.installments !== undefined &&
+          editTransaction.installments > 1
+      );
+      setInstallments(editTransaction.installments?.toString() || "2");
+    } else {
+      // Reset form for new transaction
+      setDescription("");
+      setAmount("");
+      setType("expense");
+      setCategory("");
+      setPaymentMethod("");
+      setDate(new Date().toISOString().split("T")[0]);
+      setIsRecurring(false);
+      setFrequency("monthly");
+      setHasInstallments(false);
+      setInstallments("2");
+    }
+  }, [editTransaction, isOpen]);
 
   if (!isOpen) return null;
 
@@ -48,29 +84,24 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       return;
     }
 
-    onSave({
-      description,
-      amount: parseFloat(amount),
-      type,
-      category,
-      paymentMethod,
-      date,
-      isRecurring,
-      frequency: isRecurring ? frequency : undefined,
-      installments: hasInstallments ? installmentsValue : undefined,
-      currentInstallment: hasInstallments ? 1 : undefined,
-    });
+    onSave(
+      {
+        description,
+        amount: parseFloat(amount),
+        type,
+        category,
+        paymentMethod,
+        date,
+        isRecurring,
+        frequency: isRecurring ? frequency : undefined,
+        installments: hasInstallments ? installmentsValue : undefined,
+        currentInstallment: hasInstallments
+          ? editTransaction?.currentInstallment || 1
+          : undefined,
+      },
+      editTransaction?.id
+    );
 
-    // Reset form
-    setDescription("");
-    setAmount("");
-    setType("expense");
-    setCategory("");
-    setPaymentMethod("");
-    setIsRecurring(false);
-    setFrequency("monthly");
-    setHasInstallments(false);
-    setInstallments("2");
     onClose();
   };
 
@@ -79,7 +110,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl dark:shadow-indigo-900/20 w-full max-w-md overflow-hidden border dark:border-white/10">
         <div className="flex justify-between items-center p-5 border-b border-gray-100 dark:border-white/10">
           <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-            New Transaction
+            {editTransaction ? "Edit Transaction" : "New Transaction"}
           </h2>
           <button
             onClick={onClose}
