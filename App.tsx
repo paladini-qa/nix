@@ -32,6 +32,7 @@ import SettingsView from "./components/SettingsView";
 import LoginView from "./components/LoginView";
 import ThemeSwitch from "./components/ThemeSwitch";
 import DateFilter from "./components/DateFilter";
+import PaymentMethodDetailView from "./components/PaymentMethodDetailView";
 import { getFinancialInsights } from "./services/geminiService";
 import { supabase } from "./services/supabaseClient";
 import ReactMarkdown from "react-markdown";
@@ -66,6 +67,9 @@ const App: React.FC = () => {
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    string | null
+  >(null);
   const [insight, setInsight] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -521,98 +525,118 @@ const App: React.FC = () => {
       <main className="lg:ml-64 p-4 lg:p-6 xl:p-8 transition-all duration-300">
         <div className="space-y-6 lg:space-y-8">
           {currentView === "dashboard" ? (
-            <>
-              {/* Dashboard Header / Controls */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-                    General Dashboard
-                  </h2>
-                  <p className="text-gray-500 dark:text-slate-400 text-sm">
-                    Welcome, {displayName || session.user.email}
-                  </p>
-                </div>
+            selectedPaymentMethod ? (
+              <PaymentMethodDetailView
+                paymentMethod={selectedPaymentMethod}
+                transactions={transactions}
+                selectedMonth={filters.month}
+                selectedYear={filters.year}
+                onMonthChange={(month) => setFilters({ ...filters, month })}
+                onYearChange={(year) => setFilters({ ...filters, year })}
+                onBack={() => setSelectedPaymentMethod(null)}
+              />
+            ) : (
+              <>
+                {/* Dashboard Header / Controls */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+                      General Dashboard
+                    </h2>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm">
+                      Welcome, {displayName || session.user.email}
+                    </p>
+                  </div>
 
-                <div className="flex items-center space-x-3 w-full sm:w-auto">
-                  {/* Filter Controls */}
-                  <DateFilter
-                    month={filters.month}
-                    year={filters.year}
-                    onMonthChange={(month) => setFilters({ ...filters, month })}
-                    onYearChange={(year) => setFilters({ ...filters, year })}
-                    showIcon
-                  />
-
-                  <button
-                    onClick={() => {
-                      setEditingTransaction(null);
-                      setIsFormOpen(true);
-                    }}
-                    className="flex-1 sm:flex-none flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg transition-all shadow-sm dark:shadow-indigo-500/30 font-medium whitespace-nowrap"
-                  >
-                    <Plus size={18} />
-                    <span>New Transaction</span>
-                  </button>
-                </div>
-              </div>
-
-              <SummaryCards summary={summary} />
-
-              {/* Smart Analysis - Full Width */}
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800/40 dark:to-indigo-900/20 rounded-2xl p-6 border border-indigo-100 dark:border-white/10 relative overflow-hidden transition-all duration-200 backdrop-blur-sm">
-                <div className="absolute top-0 right-0 p-4 opacity-10 dark:opacity-20">
-                  <Sparkles
-                    size={100}
-                    className="text-indigo-600 dark:text-indigo-400"
-                  />
-                </div>
-                <div className="relative z-10">
-                  <div className="flex flex-wrap justify-between items-start mb-4 gap-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-indigo-900 dark:text-white flex items-center gap-2">
-                        <Sparkles
-                          size={18}
-                          className="text-indigo-600 dark:text-indigo-400"
-                        />
-                        Smart Analysis
-                      </h3>
-                      <p className="text-sm text-indigo-700 dark:text-slate-400 mt-1">
-                        Use AI to analyze your {MONTHS[filters.month]} spending.
-                      </p>
-                    </div>
-                    <button
-                      onClick={handleGenerateInsight}
-                      disabled={
-                        isAnalyzing || filteredTransactions.length === 0
+                  <div className="flex items-center space-x-3 w-full sm:w-auto">
+                    {/* Filter Controls */}
+                    <DateFilter
+                      month={filters.month}
+                      year={filters.year}
+                      onMonthChange={(month) =>
+                        setFilters({ ...filters, month })
                       }
-                      className="px-4 py-2 bg-white dark:bg-white/10 text-indigo-600 dark:text-white border border-indigo-200 dark:border-white/10 rounded-lg text-sm font-medium hover:bg-indigo-50 dark:hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                      onYearChange={(year) => setFilters({ ...filters, year })}
+                      showIcon
+                    />
+
+                    <button
+                      onClick={() => {
+                        setEditingTransaction(null);
+                        setIsFormOpen(true);
+                      }}
+                      className="flex-1 sm:flex-none flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg transition-all shadow-sm dark:shadow-indigo-500/30 font-medium whitespace-nowrap"
                     >
-                      {isAnalyzing ? "Analyzing..." : "Generate Insights"}
+                      <Plus size={18} />
+                      <span>New Transaction</span>
                     </button>
                   </div>
-                  {insight && (
-                    <div className="bg-white/80 dark:bg-black/30 backdrop-blur-md rounded-xl p-5 text-indigo-900 dark:text-slate-200 text-sm leading-relaxed border border-indigo-100 dark:border-white/5 shadow-sm prose prose-indigo dark:prose-invert max-w-none">
-                      <ReactMarkdown>{insight}</ReactMarkdown>
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              {/* Transaction History - Full Width */}
-              <div>
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                  <Filter
-                    size={18}
-                    className="text-gray-500 dark:text-slate-400"
-                  />
-                  Transaction History
-                </h2>
-                <TransactionTable transactions={filteredTransactions} />
-              </div>
+                <SummaryCards summary={summary} />
 
-              {/* Category & Payment Breakdown */}
-              <CategoryBreakdown transactions={filteredTransactions} />
-            </>
+                {/* Smart Analysis - Full Width */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800/40 dark:to-indigo-900/20 rounded-2xl p-6 border border-indigo-100 dark:border-white/10 relative overflow-hidden transition-all duration-200 backdrop-blur-sm">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 dark:opacity-20">
+                    <Sparkles
+                      size={100}
+                      className="text-indigo-600 dark:text-indigo-400"
+                    />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="flex flex-wrap justify-between items-start mb-4 gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-indigo-900 dark:text-white flex items-center gap-2">
+                          <Sparkles
+                            size={18}
+                            className="text-indigo-600 dark:text-indigo-400"
+                          />
+                          Smart Analysis
+                        </h3>
+                        <p className="text-sm text-indigo-700 dark:text-slate-400 mt-1">
+                          Use AI to analyze your {MONTHS[filters.month]}{" "}
+                          spending.
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleGenerateInsight}
+                        disabled={
+                          isAnalyzing || filteredTransactions.length === 0
+                        }
+                        className="px-4 py-2 bg-white dark:bg-white/10 text-indigo-600 dark:text-white border border-indigo-200 dark:border-white/10 rounded-lg text-sm font-medium hover:bg-indigo-50 dark:hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                      >
+                        {isAnalyzing ? "Analyzing..." : "Generate Insights"}
+                      </button>
+                    </div>
+                    {insight && (
+                      <div className="bg-white/80 dark:bg-black/30 backdrop-blur-md rounded-xl p-5 text-indigo-900 dark:text-slate-200 text-sm leading-relaxed border border-indigo-100 dark:border-white/5 shadow-sm prose prose-indigo dark:prose-invert max-w-none">
+                        <ReactMarkdown>{insight}</ReactMarkdown>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Transaction History - Full Width */}
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                    <Filter
+                      size={18}
+                      className="text-gray-500 dark:text-slate-400"
+                    />
+                    Transaction History
+                  </h2>
+                  <TransactionTable transactions={filteredTransactions} />
+                </div>
+
+                {/* Category & Payment Breakdown */}
+                <CategoryBreakdown
+                  transactions={filteredTransactions}
+                  onPaymentMethodClick={(method) =>
+                    setSelectedPaymentMethod(method)
+                  }
+                />
+              </>
+            )
           ) : currentView === "transactions" ? (
             <TransactionsView
               transactions={transactions}

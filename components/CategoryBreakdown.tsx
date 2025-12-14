@@ -9,10 +9,12 @@ import {
 
 interface CategoryBreakdownProps {
   transactions: Transaction[];
+  onPaymentMethodClick?: (paymentMethod: string) => void;
 }
 
 const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   transactions,
+  onPaymentMethodClick,
 }) => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -254,9 +256,10 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
             {sortedPaymentMethods.map(([method, data], index) => {
               const total = data.income + data.expense;
               return (
-                <div
+                <button
                   key={method}
-                  className="p-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5"
+                  onClick={() => onPaymentMethodClick?.(method)}
+                  className="w-full p-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all cursor-pointer text-left group"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -265,13 +268,13 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                           PAYMENT_COLORS[index % PAYMENT_COLORS.length]
                         }`}
                       />
-                      <span className="text-sm font-medium text-gray-700 dark:text-slate-300">
+                      <span className="text-sm font-medium text-gray-700 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                         {method}
                       </span>
                     </div>
                     <ChevronRight
                       size={14}
-                      className="text-gray-400 dark:text-slate-500"
+                      className="text-gray-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors"
                     />
                   </div>
                   <div className="flex items-center justify-between text-xs">
@@ -291,7 +294,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       {formatCurrency(total)}
                     </span>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
