@@ -231,6 +231,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
+                min={`${new Date().getFullYear() - 50}-01-01`}
+                max={`${new Date().getFullYear() + 50}-12-31`}
                 className="w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-white/5 text-gray-900 dark:text-white transition-colors [color-scheme:light] dark:[color-scheme:dark]"
               />
             </div>
