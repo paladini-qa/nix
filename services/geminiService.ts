@@ -3,44 +3,48 @@ import { Transaction } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export const getFinancialInsights = async (transactions: Transaction[], month: string, year: number): Promise<string> => {
+export const getFinancialInsights = async (
+  transactions: Transaction[],
+  month: string,
+  year: number
+): Promise<string> => {
   if (transactions.length === 0) {
-    return "Não há transações suficientes neste período para gerar uma análise.";
+    return "There are not enough transactions in this period to generate an analysis.";
   }
 
   // Simplify data to reduce token usage and noise
-  const simpleData = transactions.map(t => ({
+  const simpleData = transactions.map((t) => ({
     desc: t.description,
     val: t.amount,
     type: t.type,
     cat: t.category,
-    date: t.date
+    date: t.date,
   }));
 
   const prompt = `
-    Atue como um consultor financeiro pessoal experiente.
-    Analise os seguintes dados financeiros referentes a ${month} de ${year}.
+    Act as an experienced personal financial consultant.
+    Analyze the following financial data for ${month} ${year}.
     
-    Dados (JSON):
+    Data (JSON):
     ${JSON.stringify(simpleData)}
 
-    Por favor, forneça:
-    1. Um breve resumo da saúde financeira (saldo, maiores gastos).
-    2. Duas observações sobre padrões de gastos.
-    3. Uma recomendação acionável para economizar dinheiro no próximo mês.
+    Please provide:
+    1. A brief summary of financial health (balance, biggest expenses).
+    2. Two observations about spending patterns.
+    3. One actionable recommendation to save money next month.
 
-    Formate a resposta em Markdown, use bullet points e mantenha um tom profissional mas amigável. Use emojis onde apropriado.
-    Se o saldo for negativo, dê conselhos específicos para sair do vermelho.
+    Format the response in Markdown, use bullet points and maintain a professional but friendly tone. Use emojis where appropriate.
+    If the balance is negative, give specific advice to get out of the red.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: "gemini-2.5-flash",
       contents: prompt,
     });
-    return response.text || "Não foi possível gerar insights no momento.";
+    return response.text || "Unable to generate insights at this time.";
   } catch (error) {
     console.error("Error fetching Gemini insights:", error);
-    return "Ocorreu um erro ao conectar com a inteligência artificial. Tente novamente mais tarde.";
+    return "An error occurred while connecting to the AI. Please try again later.";
   }
 };

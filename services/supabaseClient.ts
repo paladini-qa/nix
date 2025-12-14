@@ -1,7 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-// Ensure these environment variables are set in your project
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+// Environment variables are injected by Vite (see vite.config.ts)
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    "⚠️ Supabase não configurado!\n" +
+      "Crie um arquivo .env na raiz do projeto com:\n" +
+      "SUPABASE_URL=sua_url_do_supabase\n" +
+      "SUPABASE_ANON_KEY=sua_anon_key"
+  );
+}
+
+export const supabase: SupabaseClient = createClient(
+  supabaseUrl || "",
+  supabaseAnonKey || ""
+);
