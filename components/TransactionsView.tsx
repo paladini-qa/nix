@@ -81,8 +81,19 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   const formatDate = (dateString: string) => {
     const [year, month, day] = dateString.split("-");
-    return `${month}/${day}/${year}`;
+    return `${day}/${month}/${year}`;
   };
+
+  // Calculate totals for summary cards
+  const totalIncome = filteredData
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalExpense = filteredData
+    .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const balance = totalIncome - totalExpense;
 
   const getFileName = () => {
     return `nix-transactions-${MONTHS[selectedMonth]}-${selectedYear}`;
@@ -299,7 +310,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             All Transactions
           </h2>
           <p className="text-gray-500 dark:text-slate-400 text-sm">
-            Detailed spreadsheet view.
+            Transactions for {MONTHS[selectedMonth]} {selectedYear}
           </p>
         </div>
 
@@ -382,8 +393,59 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         </div>
       </div>
 
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Current Balance */}
+        <div
+          className={`${
+            balance >= 0
+              ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-500/20"
+              : "bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-500/20"
+          } border rounded-xl p-4`}
+        >
+          <p
+            className={`text-xs font-medium uppercase tracking-wide mb-1 ${
+              balance >= 0
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            Current Balance
+          </p>
+          <p
+            className={`text-xl font-bold ${
+              balance >= 0
+                ? "text-emerald-700 dark:text-emerald-300"
+                : "text-red-700 dark:text-red-300"
+            }`}
+          >
+            {formatCurrency(balance)}
+          </p>
+        </div>
+
+        {/* Income */}
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4">
+          <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">
+            Income
+          </p>
+          <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+            {formatCurrency(totalIncome)}
+          </p>
+        </div>
+
+        {/* Expenses */}
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-500/20 rounded-xl p-4">
+          <p className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">
+            Expenses
+          </p>
+          <p className="text-xl font-bold text-red-700 dark:text-red-300">
+            {formatCurrency(totalExpense)}
+          </p>
+        </div>
+      </div>
+
       {/* Spreadsheet Style Table */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 shadow-sm overflow-hidden rounded-md">
+      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden rounded-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead className="bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 font-semibold border-b-2 border-gray-300 dark:border-slate-600">
