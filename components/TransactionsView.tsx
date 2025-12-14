@@ -478,7 +478,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                           <ArrowUpCircle size={16} />
                         </span>
                       ) : (
-                        <span className="flex items-center justify-center text-red-600 dark:text-fuchsia-400">
+                        <span className="flex items-center justify-center text-red-600 dark:text-red-400">
                           <ArrowDownCircle size={16} />
                         </span>
                       )}
@@ -486,8 +486,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     <td
                       className={`p-2 text-right font-mono font-medium border-r border-gray-200 dark:border-slate-700 ${
                         t.type === "income"
-                          ? "text-emerald-700 dark:text-emerald-400"
-                          : "text-red-700 dark:text-fuchsia-400"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-red-600 dark:text-red-400"
                       }`}
                     >
                       {t.type === "expense" && "- "}
