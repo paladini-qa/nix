@@ -19,6 +19,7 @@ import {
   Logout as LogOutIcon,
   Person as UserIcon,
   ChevronRight as ChevronRightIcon,
+  AutoAwesome as SparklesIcon,
 } from "@mui/icons-material";
 import { ThemePreference } from "../types";
 import ThemeSwitch from "./ThemeSwitch";
@@ -26,8 +27,10 @@ import ThemeSwitch from "./ThemeSwitch";
 interface SidebarProps {
   themePreference: ThemePreference;
   onThemeChange: (theme: ThemePreference) => void;
-  currentView: "dashboard" | "transactions" | "settings";
-  onNavigate: (view: "dashboard" | "transactions" | "settings") => void;
+  currentView: "dashboard" | "transactions" | "nixai" | "settings";
+  onNavigate: (
+    view: "dashboard" | "transactions" | "nixai" | "settings"
+  ) => void;
   onLogout: () => void;
   displayName: string;
   userEmail: string;
@@ -49,6 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { icon: DashboardIcon, label: "Dashboard", id: "dashboard" as const },
     { icon: WalletIcon, label: "Transactions", id: "transactions" as const },
+    { icon: SparklesIcon, label: "NixAI", id: "nixai" as const },
     { icon: SettingsIcon, label: "Settings", id: "settings" as const },
   ];
 

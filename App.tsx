@@ -15,11 +15,11 @@ import {
 } from "@mui/material";
 import {
   Add as AddIcon,
-  AutoAwesome as SparklesIcon,
   Logout as LogOutIcon,
   Dashboard as DashboardIcon,
   AccountBalanceWallet as WalletIcon,
   Settings as SettingsIcon,
+  AutoAwesome as SparklesIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -33,7 +33,6 @@ import {
   ThemePreference,
 } from "./types";
 import {
-  MONTHS,
   CATEGORIES as DEFAULT_CATEGORIES,
   PAYMENT_METHODS as DEFAULT_PAYMENT_METHODS,
 } from "./constants";
@@ -49,9 +48,8 @@ import LoginView from "./components/LoginView";
 import ThemeSwitch from "./components/ThemeSwitch";
 import DateFilter from "./components/DateFilter";
 import PaymentMethodDetailView from "./components/PaymentMethodDetailView";
-import { getFinancialInsights } from "./services/geminiService";
+import NixAIView from "./components/NixAIView";
 import { supabase } from "./services/supabaseClient";
-import ReactMarkdown from "react-markdown";
 import { Session } from "@supabase/supabase-js";
 
 // Context para o tema
@@ -86,7 +84,7 @@ const App: React.FC = () => {
   });
 
   const [currentView, setCurrentView] = useState<
-    "dashboard" | "transactions" | "settings"
+    "dashboard" | "transactions" | "nixai" | "settings"
   >("dashboard");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
@@ -95,8 +93,6 @@ const App: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     string | null
   >(null);
-  const [insight, setInsight] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Theme preference state
   const [themePreference, setThemePreference] = useState<ThemePreference>(
@@ -468,7 +464,6 @@ const App: React.FC = () => {
       }
 
       setEditingTransaction(null);
-      setInsight(null);
     } catch (err) {
       console.error("Error saving transaction:", err);
       alert("Error saving transaction.");
@@ -489,24 +484,11 @@ const App: React.FC = () => {
           .eq("id", id);
         if (error) throw error;
         setTransactions((prev) => prev.filter((t) => t.id !== id));
-        setInsight(null);
       } catch (err) {
         console.error("Error deleting transaction:", err);
         alert("Error deleting.");
       }
     }
-  };
-
-  const handleGenerateInsight = async () => {
-    setIsAnalyzing(true);
-    setInsight(null);
-    const result = await getFinancialInsights(
-      filteredTransactions,
-      MONTHS[filters.month],
-      filters.year
-    );
-    setInsight(result);
-    setIsAnalyzing(false);
   };
 
   // Configuration Handlers
@@ -762,118 +744,6 @@ const App: React.FC = () => {
 
                       <SummaryCards summary={summary} />
 
-                      {/* Smart Analysis */}
-                      <Paper
-                        sx={{
-                          p: 3,
-                          background: (theme) =>
-                            theme.palette.mode === "dark"
-                              ? "linear-gradient(135deg, rgba(30,41,59,0.8) 0%, rgba(49,46,129,0.3) 100%)"
-                              : "linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%)",
-                          border: 1,
-                          borderColor: "divider",
-                          position: "relative",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: 0,
-                            right: 0,
-                            p: 2,
-                            opacity: 0.1,
-                          }}
-                        >
-                          <SparklesIcon
-                            sx={{ fontSize: 100 }}
-                            color="primary"
-                          />
-                        </Box>
-                        <Box sx={{ position: "relative", zIndex: 1 }}>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              flexWrap: "wrap",
-                              justifyContent: "space-between",
-                              alignItems: "flex-start",
-                              mb: 2,
-                              gap: 2,
-                            }}
-                          >
-                            <Box>
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: 600,
-                                  color: "text.primary",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                }}
-                              >
-                                <SparklesIcon
-                                  fontSize="small"
-                                  color="primary"
-                                />
-                                Smart Analysis
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                Use AI to analyze your {MONTHS[filters.month]}{" "}
-                                spending.
-                              </Typography>
-                            </Box>
-                            <Box
-                              component="button"
-                              onClick={handleGenerateInsight}
-                              disabled={
-                                isAnalyzing || filteredTransactions.length === 0
-                              }
-                              sx={{
-                                px: 3,
-                                py: 1.5,
-                                bgcolor: "background.paper",
-                                color: "primary.main",
-                                border: 1,
-                                borderColor: "divider",
-                                borderRadius: 2,
-                                fontSize: 14,
-                                fontWeight: 500,
-                                cursor: "pointer",
-                                "&:hover": {
-                                  bgcolor: "action.hover",
-                                },
-                                "&:disabled": {
-                                  opacity: 0.5,
-                                  cursor: "not-allowed",
-                                },
-                              }}
-                            >
-                              {isAnalyzing
-                                ? "Analyzing..."
-                                : "Generate Insights"}
-                            </Box>
-                          </Box>
-                          {insight && (
-                            <Paper
-                              sx={{
-                                p: 2.5,
-                                bgcolor:
-                                  theme.palette.mode === "dark"
-                                    ? "rgba(0,0,0,0.3)"
-                                    : "rgba(255,255,255,0.8)",
-                                backdropFilter: "blur(10px)",
-                              }}
-                            >
-                              <ReactMarkdown>{insight}</ReactMarkdown>
-                            </Paper>
-                          )}
-                        </Box>
-                      </Paper>
-
                       {/* Transaction History */}
                       <Box>
                         <Typography
@@ -913,6 +783,8 @@ const App: React.FC = () => {
                       setFilters({ ...filters, month, year })
                     }
                   />
+                ) : currentView === "nixai" ? (
+                  <NixAIView transactions={transactions} />
                 ) : (
                   <SettingsView
                     categories={categories}
@@ -954,6 +826,11 @@ const App: React.FC = () => {
                     label="Transactions"
                     value="transactions"
                     icon={<WalletIcon />}
+                  />
+                  <BottomNavigationAction
+                    label="NixAI"
+                    value="nixai"
+                    icon={<SparklesIcon />}
                   />
                   <BottomNavigationAction
                     label="Settings"
