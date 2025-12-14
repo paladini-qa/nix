@@ -1,10 +1,18 @@
 import React, { useState } from "react";
-import { Sparkles, ArrowRight, Lock, Mail, AlertCircle } from "lucide-react";
+import {
+  Sparkles,
+  ArrowRight,
+  Lock,
+  Mail,
+  AlertCircle,
+  User,
+} from "lucide-react";
 import { supabase } from "../services/supabaseClient";
 
 const LoginView: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -13,6 +21,10 @@ const LoginView: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
+    if (isSignUp && !displayName.trim()) {
+      setError("Please enter your name.");
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -20,15 +32,25 @@ const LoginView: React.FC = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });
         if (error) throw error;
+
+        // Save display name to user_settings if signup successful
+        if (data.user) {
+          await supabase.from("user_settings").upsert({
+            user_id: data.user.id,
+            display_name: displayName.trim(),
+          });
+        }
+
         setMessage(
           "Account created! Check your email to confirm (or log in if confirmation is disabled)."
         );
         setIsSignUp(false); // Switch back to login for UX
+        setDisplayName("");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -58,14 +80,14 @@ const LoginView: React.FC = () => {
           <div className="px-8 pt-8 pb-6 text-center">
             <div className="inline-flex items-center justify-center p-3 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/30 mb-6">
               <span className="text-white font-bold text-2xl leading-none">
-                SF
+                N
               </span>
             </div>
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
               {isSignUp ? "Create Account" : "Welcome Back"}
             </h1>
             <p className="text-gray-500 dark:text-slate-400 text-sm">
-              Access your smart financial dashboard.
+              Access your financial dashboard.
             </p>
           </div>
 
@@ -82,6 +104,29 @@ const LoginView: React.FC = () => {
               <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm rounded-lg flex items-center gap-2">
                 <Sparkles size={16} />
                 <span>{message}</span>
+              </div>
+            )}
+
+            {/* Name field - only for signup */}
+            {isSignUp && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">
+                  Your Name
+                </label>
+                <div className="relative group">
+                  <User
+                    className="absolute left-3 top-3 text-gray-400 group-focus-within:text-indigo-500 transition-colors"
+                    size={18}
+                  />
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
               </div>
             )}
 

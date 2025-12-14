@@ -1,5 +1,12 @@
 import React from "react";
-import { LayoutDashboard, Wallet, Settings, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  Wallet,
+  Settings,
+  LogOut,
+  User,
+  ChevronRight,
+} from "lucide-react";
 import { ThemePreference } from "../types";
 import ThemeSwitch from "./ThemeSwitch";
 
@@ -9,6 +16,9 @@ interface SidebarProps {
   currentView: "dashboard" | "transactions" | "settings";
   onNavigate: (view: "dashboard" | "transactions" | "settings") => void;
   onLogout: () => void;
+  displayName: string;
+  userEmail: string;
+  onOpenProfile: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -17,6 +27,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   onNavigate,
   onLogout,
+  displayName,
+  userEmail,
+  onOpenProfile,
 }) => {
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" as const },
@@ -71,8 +84,35 @@ const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Bottom Actions */}
-      <div className="p-4 border-t border-gray-100 dark:border-white/5 space-y-4">
+      <div className="p-4 border-t border-gray-100 dark:border-white/5 space-y-3">
         <ThemeSwitch value={themePreference} onChange={onThemeChange} />
+
+        {/* Profile Button */}
+        <button
+          onClick={onOpenProfile}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+              <User
+                size={16}
+                className="text-indigo-600 dark:text-indigo-400"
+              />
+            </div>
+            <div className="text-left min-w-0">
+              <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                {displayName || "User"}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-slate-500 truncate">
+                {userEmail}
+              </p>
+            </div>
+          </div>
+          <ChevronRight
+            size={16}
+            className="text-gray-400 dark:text-slate-500 group-hover:text-gray-600 dark:group-hover:text-slate-300 flex-shrink-0 transition-colors"
+          />
+        </button>
 
         <button
           onClick={onLogout}

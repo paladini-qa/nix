@@ -44,6 +44,7 @@ COMMENT ON COLUMN public.transactions.current_installment IS 'Número da parcela
 
 CREATE TABLE IF NOT EXISTS public.user_settings (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    display_name TEXT,
     categories_income TEXT[] DEFAULT ARRAY['Salary', 'Investments', 'Freelance', 'Gifts', 'Other'],
     categories_expense TEXT[] DEFAULT ARRAY['Food', 'Housing', 'Transportation', 'Healthcare', 'Entertainment', 'Education', 'Shopping', 'Subscriptions', 'Other'],
     payment_methods TEXT[] DEFAULT ARRAY['Credit Card', 'Debit Card', 'Pix', 'Cash', 'Bank Transfer', 'Boleto'],
@@ -54,6 +55,7 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
 
 -- Comentários na tabela
 COMMENT ON TABLE public.user_settings IS 'Configurações personalizadas do usuário';
+COMMENT ON COLUMN public.user_settings.display_name IS 'Nome de exibição do usuário';
 COMMENT ON COLUMN public.user_settings.categories_income IS 'Lista de categorias de receita personalizadas';
 COMMENT ON COLUMN public.user_settings.categories_expense IS 'Lista de categorias de despesa personalizadas';
 COMMENT ON COLUMN public.user_settings.payment_methods IS 'Lista de métodos de pagamento personalizados';

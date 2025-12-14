@@ -26,6 +26,7 @@ import TransactionTable from "./components/TransactionTable";
 import TransactionForm from "./components/TransactionForm";
 import CategoryBreakdown from "./components/CategoryBreakdown";
 import Sidebar from "./components/Sidebar";
+import ProfileModal from "./components/ProfileModal";
 import TransactionsView from "./components/TransactionsView";
 import SettingsView from "./components/SettingsView";
 import LoginView from "./components/LoginView";
@@ -48,6 +49,9 @@ const App: React.FC = () => {
     DEFAULT_PAYMENT_METHODS
   );
 
+  // State for user profile
+  const [displayName, setDisplayName] = useState<string>("");
+
   // State for Filters
   const [filters, setFilters] = useState<FilterState>({
     month: new Date().getMonth(),
@@ -58,6 +62,7 @@ const App: React.FC = () => {
     "dashboard" | "transactions" | "settings"
   >("dashboard");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [insight, setInsight] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -179,6 +184,9 @@ const App: React.FC = () => {
         if (settings.theme_preference) {
           setThemePreference(settings.theme_preference as ThemePreference);
         }
+        if (settings.display_name) {
+          setDisplayName(settings.display_name);
+        }
       } else {
         // Initialize default settings if none exist
         await supabase.from("user_settings").insert({
@@ -228,6 +236,20 @@ const App: React.FC = () => {
     }
   };
 
+  const updateDisplayName = async (newName: string) => {
+    setDisplayName(newName);
+    if (!session) return;
+    try {
+      const { error } = await supabase.from("user_settings").upsert({
+        user_id: session.user.id,
+        display_name: newName.trim() || null,
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Error saving display name:", err);
+    }
+  };
+
   // Derived State: Filtered Transactions
   const filteredTransactions = useMemo(() => {
     return transactions
@@ -258,6 +280,23 @@ const App: React.FC = () => {
   // Handlers
   const handleLogout = async () => {
     await supabase.auth.signOut();
+  };
+
+  const handleChangeEmail = async (newEmail: string): Promise<void> => {
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+    if (error) throw error;
+  };
+
+  const handleResetPassword = async (): Promise<void> => {
+    if (!session?.user?.email) throw new Error("No email found");
+
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      session.user.email,
+      {
+        redirectTo: window.location.origin,
+      }
+    );
+    if (error) throw error;
   };
 
   const handleAddTransaction = async (
@@ -409,6 +448,9 @@ const App: React.FC = () => {
         currentView={currentView}
         onNavigate={setCurrentView}
         onLogout={handleLogout}
+        displayName={displayName}
+        userEmail={session.user.email || ""}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
       />
 
       {/* Mobile Header */}
@@ -448,7 +490,7 @@ const App: React.FC = () => {
                     General Dashboard
                   </h2>
                   <p className="text-gray-500 dark:text-slate-400 text-sm">
-                    Welcome, {session.user.email}
+                    Welcome, {displayName || session.user.email}
                   </p>
                 </div>
 
@@ -628,6 +670,16 @@ const App: React.FC = () => {
         onSave={handleAddTransaction}
         categories={categories}
         paymentMethods={paymentMethods}
+      />
+
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        displayName={displayName}
+        userEmail={session.user.email || ""}
+        onUpdateDisplayName={updateDisplayName}
+        onChangeEmail={handleChangeEmail}
+        onResetPassword={handleResetPassword}
       />
     </div>
   );
