@@ -30,13 +30,23 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
   // Installments state
   const [hasInstallments, setHasInstallments] = useState(false);
-  const [installments, setInstallments] = useState("1");
+  const [installments, setInstallments] = useState("2");
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !amount || !category || !paymentMethod) return;
+
+    // Validate installments if enabled
+    const installmentsValue = parseInt(installments);
+    if (
+      hasInstallments &&
+      (isNaN(installmentsValue) || installmentsValue < 2)
+    ) {
+      alert("Installments must be at least 2.");
+      return;
+    }
 
     onSave({
       description,
@@ -47,7 +57,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       date,
       isRecurring,
       frequency: isRecurring ? frequency : undefined,
-      installments: hasInstallments ? parseInt(installments) : undefined,
+      installments: hasInstallments ? installmentsValue : undefined,
       currentInstallment: hasInstallments ? 1 : undefined,
     });
 
@@ -60,7 +70,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     setIsRecurring(false);
     setFrequency("monthly");
     setHasInstallments(false);
-    setInstallments("1");
+    setInstallments("2");
     onClose();
   };
 

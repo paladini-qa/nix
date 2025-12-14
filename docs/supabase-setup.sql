@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     date DATE NOT NULL,
     is_recurring BOOLEAN DEFAULT FALSE,
     frequency TEXT CHECK (frequency IN ('monthly', 'yearly') OR frequency IS NULL),
-    installments INTEGER CHECK (installments IS NULL OR installments >= 1),
+    installments INTEGER CHECK (installments IS NULL OR installments >= 2),
     current_installment INTEGER CHECK (current_installment IS NULL OR current_installment >= 1),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
