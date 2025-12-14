@@ -1,34 +1,38 @@
 export const CATEGORIES = {
-  income: [
-    'Salário',
-    'Investimentos',
-    'Freelance',
-    'Presente',
-    'Outros'
-  ],
+  income: ["Salary", "Investments", "Freelance", "Gifts", "Other"],
   expense: [
-    'Alimentação',
-    'Moradia',
-    'Transporte',
-    'Saúde',
-    'Lazer',
-    'Educação',
-    'Compras',
-    'Assinaturas',
-    'Outros'
-  ]
+    "Food",
+    "Housing",
+    "Transportation",
+    "Healthcare",
+    "Entertainment",
+    "Education",
+    "Shopping",
+    "Subscriptions",
+    "Other",
+  ],
 };
 
 export const PAYMENT_METHODS = [
-  'Cartão de Crédito',
-  'Cartão de Débito',
-  'Pix',
-  'Dinheiro',
-  'Transferência',
-  'Boleto'
+  "Credit Card",
+  "Debit Card",
+  "Pix",
+  "Cash",
+  "Bank Transfer",
+  "Boleto",
 ];
 
 export const MONTHS = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
