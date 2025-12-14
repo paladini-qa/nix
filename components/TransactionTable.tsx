@@ -67,9 +67,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               // Calculate width percentage for data bar
               const barWidth = `${(transaction.amount / maxAmount) * 100}%`;
               const barColor =
-                transaction.type === "income"
-                  ? "bg-emerald-500"
-                  : "bg-fuchsia-500";
+                transaction.type === "income" ? "bg-emerald-500" : "bg-red-500";
 
               return (
                 <tr
@@ -85,7 +83,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         className={`p-1.5 rounded-full ${
                           transaction.type === "income"
                             ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                            : "bg-red-100 dark:bg-fuchsia-500/20 text-red-600 dark:text-fuchsia-400"
+                            : "bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400"
                         }`}
                       >
                         {transaction.type === "income" ? (
@@ -131,7 +129,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         className={`${
                           transaction.type === "income"
                             ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-red-600 dark:text-fuchsia-400"
+                            : "text-red-600 dark:text-red-400"
                         } z-10 relative mb-1`}
                       >
                         {transaction.type === "expense" ? "-" : "+"}{" "}

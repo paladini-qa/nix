@@ -76,14 +76,14 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   ];
 
   const EXPENSE_COLORS = [
-    "bg-fuchsia-500",
-    "bg-pink-500",
-    "bg-rose-500",
     "bg-red-500",
-    "bg-orange-500",
-    "bg-amber-500",
-    "bg-purple-500",
-    "bg-violet-500",
+    "bg-red-600",
+    "bg-rose-500",
+    "bg-rose-600",
+    "bg-red-400",
+    "bg-rose-400",
+    "bg-red-700",
+    "bg-rose-700",
   ];
 
   const PAYMENT_COLORS = [
@@ -168,10 +168,10 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
       {/* Expense by Category */}
       <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-5 transition-all duration-200 backdrop-blur-md">
         <div className="flex items-center gap-2 mb-4">
-          <div className="p-2 rounded-lg bg-fuchsia-100 dark:bg-fuchsia-500/20">
+          <div className="p-2 rounded-lg bg-red-100 dark:bg-red-500/20">
             <TrendingDown
               size={18}
-              className="text-fuchsia-600 dark:text-fuchsia-400"
+              className="text-red-600 dark:text-red-400"
             />
           </div>
           <h3 className="text-base font-semibold text-gray-800 dark:text-white">
@@ -202,7 +202,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-fuchsia-600 dark:text-fuchsia-400">
+                      <span className="text-sm font-semibold text-red-600 dark:text-red-400">
                         {formatCurrency(amount)}
                       </span>
                       <span className="text-xs text-gray-400 dark:text-slate-500">
@@ -225,7 +225,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
               <span className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Total
               </span>
-              <span className="text-sm font-bold text-fuchsia-600 dark:text-fuchsia-400">
+              <span className="text-sm font-bold text-red-600 dark:text-red-400">
                 {formatCurrency(totalExpense)}
               </span>
             </div>
@@ -285,7 +285,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         </span>
                       )}
                       {data.expense > 0 && (
-                        <span className="text-fuchsia-600 dark:text-fuchsia-400">
+                        <span className="text-red-600 dark:text-red-400">
                           -{formatCurrency(data.expense)}
                         </span>
                       )}
