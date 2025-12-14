@@ -14,7 +14,7 @@ import {
 import SummaryCards from "./components/SummaryCards";
 import TransactionTable from "./components/TransactionTable";
 import TransactionForm from "./components/TransactionForm";
-import Charts from "./components/Charts";
+import CategoryBreakdown from "./components/CategoryBreakdown";
 import Sidebar from "./components/Sidebar";
 import TransactionsView from "./components/TransactionsView";
 import SettingsView from "./components/SettingsView";
@@ -496,8 +496,8 @@ const App: React.FC = () => {
                 />
               </div>
 
-              {/* Charts Section */}
-              <Charts transactions={filteredTransactions} />
+              {/* Category & Payment Breakdown */}
+              <CategoryBreakdown transactions={filteredTransactions} />
             </>
           ) : currentView === "transactions" ? (
             <TransactionsView

@@ -2,7 +2,6 @@ import React from "react";
 import {
   LayoutDashboard,
   Wallet,
-  PieChart,
   Settings,
   LogOut,
   Sun,
@@ -27,29 +26,18 @@ const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" as const },
     { icon: Wallet, label: "Transactions", id: "transactions" as const },
-    {
-      icon: Settings,
-      label: "Settings",
-      id: "settings" as const,
-      disabled: false,
-    },
-    {
-      icon: PieChart,
-      label: "Reports",
-      id: "reports" as const,
-      disabled: true,
-    }, // Placeholder
+    { icon: Settings, label: "Settings", id: "settings" as const },
   ];
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border-r border-gray-200 dark:border-white/10 hidden lg:flex flex-col transition-colors duration-300">
       {/* Logo Area */}
       <div className="h-20 flex items-center px-8 border-b border-gray-100 dark:border-white/5">
-        <div className="bg-indigo-600 dark:bg-indigo-500 p-2 rounded-lg shadow-lg dark:shadow-indigo-500/20 mr-3">
-          <span className="text-white font-bold text-xl leading-none">SF</span>
+        <div className="bg-indigo-600 dark:bg-indigo-500 p-2.5 rounded-lg shadow-lg dark:shadow-indigo-500/20 mr-3">
+          <span className="text-white font-bold text-xl leading-none">N</span>
         </div>
-        <span className="text-lg font-bold text-gray-800 dark:text-white tracking-tight">
-          Finance
+        <span className="text-xl font-bold text-gray-800 dark:text-white tracking-tight">
+          Nix
         </span>
       </div>
 
@@ -63,13 +51,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={item.label}
-              onClick={() => !item.disabled && onNavigate(item.id as any)}
-              disabled={item.disabled}
+              onClick={() => onNavigate(item.id)}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 isActive
                   ? "bg-indigo-50 dark:bg-white/10 text-indigo-600 dark:text-white font-medium shadow-sm"
-                  : item.disabled
-                  ? "text-gray-300 dark:text-slate-700 cursor-not-allowed"
                   : "text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-slate-200"
               }`}
             >
