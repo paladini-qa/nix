@@ -8,11 +8,11 @@ Este é um aplicativo de gerenciamento de finanças pessoais construído com Rea
 
 - **Frontend**: React 19, TypeScript 5.8+
 - **Build Tool**: Vite 6
-- **Estilização**: Tailwind CSS (dark mode suportado)
+- **Estilização**: MUI (Material-UI) v6 com suporte a dark/light mode
 - **Backend**: Supabase (PostgreSQL, Auth, RLS)
 - **Gráficos**: Recharts
 - **IA**: Google Gemini AI (@google/genai)
-- **Ícones**: Lucide React
+- **Ícones**: MUI Icons (@mui/icons-material)
 - **Markdown**: react-markdown
 
 ## Estrutura de Pastas
@@ -22,6 +22,7 @@ Este é um aplicativo de gerenciamento de finanças pessoais construído com Rea
 ├── components/          # Componentes React
 ├── services/            # Serviços (Supabase, Gemini)
 ├── docs/                # Documentação e scripts SQL
+├── theme.ts             # Configuração do tema MUI
 ├── App.tsx              # Componente principal
 ├── types.ts             # Tipos TypeScript
 ├── constants.ts         # Constantes da aplicação
@@ -62,40 +63,112 @@ const data: any = fetchData();
 const MyComponent: React.FC<Props> = ({ prop1, prop2 }) => {
   const [state, setState] = useState<Type>(initialValue);
 
-  return <div>...</div>;
+  return <Box>...</Box>;
 };
 
 export default MyComponent;
 ```
 
-### Estilização com Tailwind CSS
+### Estilização com MUI
 
-- Use classes Tailwind diretamente nos elementos
-- Suporte dark mode com prefixo `dark:`
-- Use classes de gradiente para fundos: `bg-gradient-to-br`
-- Cores principais:
-  - Primária: `indigo-600` / `dark:indigo-400`
-  - Background: `gray-100` / `dark:slate-900`
-  - Cards: `white` / `dark:slate-800`
-  - Texto: `gray-800` / `dark:slate-200`
-- Bordas: `border-gray-200` / `dark:border-white/10`
-- Transições: `transition-all duration-300`
+- Use o sistema `sx` prop para estilos inline
+- Use componentes MUI em vez de elementos HTML nativos
+- O tema suporta dark/light mode automaticamente
+- Cores principais definidas em `theme.ts`:
+  - Primary: Indigo (#6366f1)
+  - Secondary: Pink (#ec4899)
+  - Success: Emerald (#10b981)
+  - Error: Red (#ef4444)
+  - Warning: Amber (#f59e0b)
 
 ```typescript
-// ✅ Padrão de estilização
-<div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-sm">
+// ✅ Padrão de estilização MUI
+<Box
+  sx={{
+    bgcolor: 'background.paper',
+    borderRadius: 2,
+    p: 3,
+    border: 1,
+    borderColor: 'divider',
+  }}
+>
+  <Typography variant="h6" color="text.primary">
+    Título
+  </Typography>
+</Box>
+
+// ✅ Uso do tema em sx
+<Paper
+  sx={{
+    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
+  }}
+/>
 ```
 
-### Ícones (Lucide React)
+### Ícones (MUI Icons)
 
-- Importe ícones individualmente
-- Use prop `size` para dimensões
-- Combine com classes Tailwind para cores
+- Importe ícones de `@mui/icons-material`
+- Use nomes descritivos ao renomear imports
 
 ```typescript
-import { Plus, Settings, Trash2 } from "lucide-react";
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+} from "@mui/icons-material";
 
-<Plus size={18} className="text-indigo-600 dark:text-indigo-400" />;
+<AddIcon fontSize="small" color="primary" />;
+```
+
+### Componentes MUI Comuns
+
+```typescript
+// Botões
+<Button variant="contained" color="primary">Primary</Button>
+<Button variant="outlined" color="secondary">Secondary</Button>
+<Button variant="text" color="error">Danger</Button>
+
+// Inputs
+<TextField
+  label="Email"
+  fullWidth
+  size="small"
+  InputProps={{
+    startAdornment: <InputAdornment position="start"><EmailIcon /></InputAdornment>
+  }}
+/>
+
+// Select
+<FormControl fullWidth>
+  <InputLabel>Category</InputLabel>
+  <Select value={value} label="Category" onChange={onChange}>
+    <MenuItem value="option1">Option 1</MenuItem>
+  </Select>
+</FormControl>
+
+// Cards
+<Card>
+  <CardContent>
+    <Typography variant="h6">Title</Typography>
+  </CardContent>
+</Card>
+
+// Dialogs
+<Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+  <DialogTitle>Title</DialogTitle>
+  <DialogContent>Content</DialogContent>
+  <DialogActions>
+    <Button onClick={onClose}>Cancel</Button>
+    <Button variant="contained">Confirm</Button>
+  </DialogActions>
+</Dialog>
+
+// Grid (MUI v6)
+<Grid container spacing={2}>
+  <Grid size={{ xs: 12, md: 6 }}>
+    Content
+  </Grid>
+</Grid>
 ```
 
 ### Supabase
@@ -126,6 +199,7 @@ if (error) throw error;
 
 ```typescript
 type TransactionType = "income" | "expense";
+type ThemePreference = "light" | "dark" | "system";
 
 interface Transaction {
   id: string;
@@ -138,6 +212,8 @@ interface Transaction {
   createdAt: number;
   isRecurring?: boolean;
   frequency?: "monthly" | "yearly";
+  installments?: number;
+  currentInstallment?: number;
 }
 
 interface FinancialSummary {
@@ -147,37 +223,20 @@ interface FinancialSummary {
 }
 ```
 
-## Padrões de UI
+## Tema MUI
 
-### Cards
-
-```typescript
-<div className="bg-white dark:bg-slate-800/50 rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-sm backdrop-blur-sm">
-```
-
-### Botões
+O tema está configurado em `theme.ts` com suporte a dark/light mode:
 
 ```typescript
-// Primário
-<button className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg transition-all shadow-sm font-medium">
+// Acessar cores do tema
+<Box sx={{ color: 'primary.main' }} />
+<Box sx={{ bgcolor: 'background.paper' }} />
+<Box sx={{ borderColor: 'divider' }} />
 
-// Secundário
-<button className="bg-white dark:bg-white/10 text-indigo-600 dark:text-white border border-indigo-200 dark:border-white/10 rounded-lg hover:bg-indigo-50 dark:hover:bg-white/20 transition-colors">
-
-// Perigo
-<button className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
-```
-
-### Inputs
-
-```typescript
-<input className="w-full px-4 py-2 border border-gray-200 dark:border-white/10 rounded-lg bg-white dark:bg-slate-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-```
-
-### Selects
-
-```typescript
-<select className="bg-transparent text-sm font-medium text-gray-700 dark:text-slate-300 px-2 py-1.5 rounded focus:outline-none cursor-pointer [&>option]:dark:bg-slate-800">
+// Acesso condicional por modo
+<Box sx={{
+  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'
+}} />
 ```
 
 ## Boas Práticas
@@ -185,10 +244,10 @@ interface FinancialSummary {
 1. **Estado**: Use `useMemo` para computações derivadas (filtros, somas)
 2. **Efeitos**: Limpe subscriptions em `useEffect` com cleanup function
 3. **Formulários**: Valide inputs antes de enviar ao Supabase
-4. **Loading**: Mostre estados de carregamento com `Loader2` do Lucide
-5. **Erros**: Use `console.error` para logs e `alert` para feedback ao usuário
+4. **Loading**: Use `CircularProgress` do MUI para estados de carregamento
+5. **Erros**: Use `console.error` para logs e `Alert` do MUI para feedback
 6. **Datas**: Use formato ISO `YYYY-MM-DD` para datas
-7. **Moeda**: Formate valores com `Intl.NumberFormat` ou similar
+7. **Moeda**: Formate valores com `Intl.NumberFormat`
 
 ## Variáveis de Ambiente
 
@@ -298,7 +357,7 @@ dist-ssr/            # Build SSR
 - ❌ Não use `any` em TypeScript
 - ❌ Não faça queries sem verificar `session`
 - ❌ Não commite arquivos `.env` ou outros arquivos do `.gitignore`
-- ❌ Não use estilos inline, prefira Tailwind
+- ❌ Não use elementos HTML nativos quando há componentes MUI equivalentes
 - ❌ Não crie componentes de classe, use funcionais
 - ❌ Não ignore erros do Supabase
 - ❌ Não faça commits em português (use inglês)

@@ -1,6 +1,33 @@
 import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Box,
+  ToggleButton,
+  ToggleButtonGroup,
+  Switch,
+  Typography,
+  Paper,
+  IconButton,
+  InputAdornment,
+  Grid,
+} from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs, { Dayjs } from "dayjs";
+import {
+  Close as CloseIcon,
+  Repeat as RepeatIcon,
+  CreditCard as CreditCardIcon,
+} from "@mui/icons-material";
 import { Transaction, TransactionType } from "../types";
-import { X, Repeat, CreditCard } from "lucide-react";
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -27,17 +54,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [type, setType] = useState<TransactionType>("expense");
   const [category, setCategory] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-
-  // Recurring state
+  const [date, setDate] = useState<Dayjs | null>(dayjs());
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState<"monthly" | "yearly">("monthly");
-
-  // Installments state
   const [hasInstallments, setHasInstallments] = useState(false);
   const [installments, setInstallments] = useState("2");
 
-  // Populate form when editing
   useEffect(() => {
     if (editTransaction) {
       setDescription(editTransaction.description);
@@ -45,7 +67,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setType(editTransaction.type);
       setCategory(editTransaction.category);
       setPaymentMethod(editTransaction.paymentMethod);
-      setDate(editTransaction.date);
+      setDate(dayjs(editTransaction.date));
       setIsRecurring(editTransaction.isRecurring || false);
       setFrequency(editTransaction.frequency || "monthly");
       setHasInstallments(
@@ -54,13 +76,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       );
       setInstallments(editTransaction.installments?.toString() || "2");
     } else {
-      // Reset form for new transaction
       setDescription("");
       setAmount("");
       setType("expense");
       setCategory("");
       setPaymentMethod("");
-      setDate(new Date().toISOString().split("T")[0]);
+      setDate(dayjs());
       setIsRecurring(false);
       setFrequency("monthly");
       setHasInstallments(false);
@@ -68,13 +89,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   }, [editTransaction, isOpen]);
 
-  if (!isOpen) return null;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description || !amount || !category || !paymentMethod) return;
+    if (!description || !amount || !category || !paymentMethod || !date) return;
 
-    // Validate installments if enabled
     const installmentsValue = parseInt(installments);
     if (
       hasInstallments &&
@@ -91,7 +109,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         type,
         category,
         paymentMethod,
-        date,
+        date: date.format("YYYY-MM-DD"),
         isRecurring,
         frequency: isRecurring ? frequency : undefined,
         installments: hasInstallments ? installmentsValue : undefined,
@@ -106,295 +124,294 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm transition-all">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl dark:shadow-indigo-900/20 w-full max-w-md overflow-hidden border dark:border-white/10">
-        <div className="flex justify-between items-center p-5 border-b border-gray-100 dark:border-white/10">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-            {editTransaction ? "Edit Transaction" : "New Transaction"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-white transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 3 },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="h6" fontWeight={600}>
+          {editTransaction ? "Edit Transaction" : "New Transaction"}
+        </Typography>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          <div className="flex space-x-3 p-1 bg-gray-100 dark:bg-white/5 rounded-xl">
-            <button
-              type="button"
-              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all duration-200 ${
-                type === "income"
-                  ? "bg-emerald-100 dark:bg-emerald-600 text-emerald-700 dark:text-white shadow-sm"
-                  : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
-              }`}
-              onClick={() => {
-                setType("income");
-                setCategory("");
+      <form onSubmit={handleSubmit}>
+        <DialogContent dividers>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* Type Toggle */}
+            <ToggleButtonGroup
+              value={type}
+              exclusive
+              onChange={(_, newType) => {
+                if (newType) {
+                  setType(newType);
+                  setCategory("");
+                }
+              }}
+              fullWidth
+              sx={{
+                "& .MuiToggleButton-root": {
+                  py: 1.5,
+                  fontWeight: 600,
+                },
               }}
             >
-              Income
-            </button>
-            <button
-              type="button"
-              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all duration-200 ${
-                type === "expense"
-                  ? "bg-red-100 dark:bg-red-600 text-red-700 dark:text-white shadow-sm"
-                  : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
-              }`}
-              onClick={() => {
-                setType("expense");
-                setCategory("");
-              }}
-            >
-              Expense
-            </button>
-          </div>
+              <ToggleButton
+                value="income"
+                sx={{
+                  "&.Mui-selected": {
+                    bgcolor: "success.main",
+                    color: "white",
+                    "&:hover": {
+                      bgcolor: "success.dark",
+                    },
+                  },
+                }}
+              >
+                Income
+              </ToggleButton>
+              <ToggleButton
+                value="expense"
+                sx={{
+                  "&.Mui-selected": {
+                    bgcolor: "error.main",
+                    color: "white",
+                    "&:hover": {
+                      bgcolor: "error.dark",
+                    },
+                  },
+                }}
+              >
+                Expense
+              </ToggleButton>
+            </ToggleButtonGroup>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-              Description
-            </label>
-            <input
-              type="text"
+            <TextField
+              label="Description"
               required
+              fullWidth
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 transition-colors"
               placeholder="e.g., Groceries"
             />
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-              Amount (R$)
-            </label>
-            <input
+            <TextField
+              label="Amount (R$)"
               type="number"
               required
-              min="0.01"
-              step="0.01"
+              fullWidth
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 transition-colors"
               placeholder="0.00"
+              inputProps={{ min: 0.01, step: 0.01 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">R$</InputAdornment>
+                ),
+              }}
             />
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                Category
-              </label>
-              <select
-                required
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-white/5 text-gray-900 dark:text-white transition-colors [&>option]:dark:bg-slate-900"
-              >
-                <option value="">Select</option>
-                {categories[type].map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                Payment
-              </label>
-              <select
-                required
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-white/5 text-gray-900 dark:text-white transition-colors [&>option]:dark:bg-slate-900"
-              >
-                <option value="">Select</option>
-                {paymentMethods.map((method) => (
-                  <option key={method} value={method}>
-                    {method}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                Date
-              </label>
-              <input
-                type="date"
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                min={`${new Date().getFullYear() - 50}-01-01`}
-                max={`${new Date().getFullYear() + 50}-12-31`}
-                className="w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-white/5 text-gray-900 dark:text-white transition-colors [color-scheme:light] dark:[color-scheme:dark]"
-              />
-            </div>
-
-            {/* Recurring Toggle */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                Recurrence
-              </label>
-              <div
-                className={`w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl flex items-center justify-between cursor-pointer transition-colors ${
-                  isRecurring
-                    ? "bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-500/30"
-                    : "bg-white dark:bg-white/5"
-                }`}
-                onClick={() => setIsRecurring(!isRecurring)}
-              >
-                <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
-                  <Repeat
-                    size={16}
-                    className={
-                      isRecurring
-                        ? "text-indigo-600 dark:text-indigo-400"
-                        : "text-gray-400"
-                    }
-                  />
-                  <span>Recurring?</span>
-                </div>
-                <div
-                  className={`w-10 h-5 rounded-full relative transition-colors ${
-                    isRecurring
-                      ? "bg-indigo-600"
-                      : "bg-gray-300 dark:bg-slate-600"
-                  }`}
-                >
-                  <div
-                    className={`absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-transform ${
-                      isRecurring ? "translate-x-5" : ""
-                    }`}
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Conditional Frequency Input */}
-          {isRecurring && (
-            <div className="animate-fade-in">
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                Frequency
-              </label>
-              <select
-                value={frequency}
-                onChange={(e) =>
-                  setFrequency(e.target.value as "monthly" | "yearly")
-                }
-                className="w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-white/5 text-gray-900 dark:text-white transition-colors [&>option]:dark:bg-slate-900"
-              >
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-            </div>
-          )}
-
-          {/* Installments Toggle - Only for expenses */}
-          {type === "expense" && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                  Installments
-                </label>
-                <div
-                  className={`w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl flex items-center justify-between cursor-pointer transition-colors ${
-                    hasInstallments
-                      ? "bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-500/30"
-                      : "bg-white dark:bg-white/5"
-                  }`}
-                  onClick={() => setHasInstallments(!hasInstallments)}
-                >
-                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
-                    <CreditCard
-                      size={16}
-                      className={
-                        hasInstallments
-                          ? "text-indigo-600 dark:text-indigo-400"
-                          : "text-gray-400"
-                      }
-                    />
-                    <span>Split?</span>
-                  </div>
-                  <div
-                    className={`w-10 h-5 rounded-full relative transition-colors ${
-                      hasInstallments
-                        ? "bg-indigo-600"
-                        : "bg-gray-300 dark:bg-slate-600"
-                    }`}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    value={category}
+                    label="Category"
+                    onChange={(e) => setCategory(e.target.value)}
                   >
-                    <div
-                      className={`absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-transform ${
-                        hasInstallments ? "translate-x-5" : ""
-                      }`}
-                    ></div>
-                  </div>
-                </div>
-              </div>
+                    {categories[type].map((cat) => (
+                      <MenuItem key={cat} value={cat}>
+                        {cat}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Payment Method</InputLabel>
+                  <Select
+                    value={paymentMethod}
+                    label="Payment Method"
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                  >
+                    {paymentMethods.map((method) => (
+                      <MenuItem key={method} value={method}>
+                        {method}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
 
-              {/* Installments Number Input */}
-              {hasInstallments && (
-                <div className="animate-fade-in">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                    # of Installments
-                  </label>
-                  <input
-                    type="number"
-                    min="2"
-                    max="48"
-                    value={installments}
-                    onChange={(e) => setInstallments(e.target.value)}
-                    className="w-full p-3 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-white/5 text-gray-900 dark:text-white transition-colors"
-                    placeholder="2"
-                  />
-                </div>
-              )}
-            </div>
-          )}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <DatePicker
+                  label="Date"
+                  value={date}
+                  onChange={(newValue) => setDate(newValue)}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      required: true,
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 1.5,
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    cursor: "pointer",
+                    bgcolor: isRecurring ? "primary.50" : "transparent",
+                    borderColor: isRecurring ? "primary.main" : "divider",
+                  }}
+                  onClick={() => setIsRecurring(!isRecurring)}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <RepeatIcon
+                      fontSize="small"
+                      color={isRecurring ? "primary" : "action"}
+                    />
+                    <Typography variant="body2">Recurring?</Typography>
+                  </Box>
+                  <Switch checked={isRecurring} size="small" />
+                </Paper>
+              </Grid>
+            </Grid>
 
-          {/* Installment Amount Preview */}
-          {type === "expense" &&
-            hasInstallments &&
-            amount &&
-            parseInt(installments) >= 2 && (
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-xl p-3 animate-fade-in">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-amber-700 dark:text-amber-400">
-                    {installments}x of
-                  </span>
-                  <span className="text-lg font-bold text-amber-700 dark:text-amber-300">
+            {isRecurring && (
+              <FormControl fullWidth>
+                <InputLabel>Frequency</InputLabel>
+                <Select
+                  value={frequency}
+                  label="Frequency"
+                  onChange={(e) =>
+                    setFrequency(e.target.value as "monthly" | "yearly")
+                  }
+                >
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                  <MenuItem value="yearly">Yearly</MenuItem>
+                </Select>
+              </FormControl>
+            )}
+
+            {type === "expense" && (
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      cursor: "pointer",
+                      bgcolor: hasInstallments ? "primary.50" : "transparent",
+                      borderColor: hasInstallments ? "primary.main" : "divider",
+                    }}
+                    onClick={() => setHasInstallments(!hasInstallments)}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <CreditCardIcon
+                        fontSize="small"
+                        color={hasInstallments ? "primary" : "action"}
+                      />
+                      <Typography variant="body2">Split?</Typography>
+                    </Box>
+                    <Switch checked={hasInstallments} size="small" />
+                  </Paper>
+                </Grid>
+                {hasInstallments && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      label="# of Installments"
+                      type="number"
+                      fullWidth
+                      value={installments}
+                      onChange={(e) => setInstallments(e.target.value)}
+                      inputProps={{ min: 2, max: 48 }}
+                    />
+                  </Grid>
+                )}
+              </Grid>
+            )}
+
+            {type === "expense" &&
+              hasInstallments &&
+              amount &&
+              parseInt(installments) >= 2 && (
+                <Paper
+                  sx={{
+                    p: 2,
+                    bgcolor: "warning.50",
+                    borderColor: "warning.main",
+                    border: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Typography variant="body2" color="warning.dark">
+                      {installments}x of
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      fontWeight={600}
+                      color="warning.dark"
+                    >
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(parseFloat(amount) / parseInt(installments))}
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="warning.main">
+                    Total:{" "}
                     {new Intl.NumberFormat("pt-BR", {
                       style: "currency",
                       currency: "BRL",
-                    }).format(parseFloat(amount) / parseInt(installments))}
-                  </span>
-                </div>
-                <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">
-                  Total:{" "}
-                  {new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(parseFloat(amount))}
-                </p>
-              </div>
-            )}
+                    }).format(parseFloat(amount))}
+                  </Typography>
+                </Paper>
+              )}
+          </Box>
+        </DialogContent>
 
-          <button
-            type="submit"
-            className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg dark:shadow-indigo-500/20 mt-2"
-          >
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={onClose} color="inherit">
+            Cancel
+          </Button>
+          <Button type="submit" variant="contained" size="large">
             Save Transaction
-          </button>
-        </form>
-      </div>
-    </div>
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 

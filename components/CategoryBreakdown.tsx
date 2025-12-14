@@ -1,11 +1,22 @@
 import React from "react";
-import { Transaction } from "../types";
 import {
-  TrendingUp,
-  TrendingDown,
-  CreditCard,
-  ChevronRight,
-} from "lucide-react";
+  Box,
+  Paper,
+  Typography,
+  LinearProgress,
+  Grid,
+  List,
+  ListItemButton,
+  ListItemText,
+  ListItemIcon,
+} from "@mui/material";
+import {
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  CreditCard as CreditCardIcon,
+  ChevronRight as ChevronRightIcon,
+} from "@mui/icons-material";
+import { Transaction } from "../types";
 
 interface CategoryBreakdownProps {
   transactions: Transaction[];
@@ -52,7 +63,6 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     return acc;
   }, {} as Record<string, { income: number; expense: number }>);
 
-  // Sort by value descending
   const sortedIncome = Object.entries(incomeByCategory).sort(
     ([, a], [, b]) => b - a
   );
@@ -63,244 +73,364 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     ([, a], [, b]) => b.expense + b.income - (a.expense + a.income)
   );
 
-  // Calculate totals for percentages
   const totalIncome = sortedIncome.reduce((sum, [, val]) => sum + val, 0);
   const totalExpense = sortedExpense.reduce((sum, [, val]) => sum + val, 0);
 
-  const INCOME_COLORS = [
-    "bg-emerald-500",
-    "bg-emerald-400",
-    "bg-teal-500",
-    "bg-green-500",
-    "bg-lime-500",
-  ];
-
+  const INCOME_COLORS = ["#10b981", "#34d399", "#14b8a6", "#22c55e", "#84cc16"];
   const EXPENSE_COLORS = [
-    "bg-red-500",
-    "bg-red-600",
-    "bg-rose-500",
-    "bg-rose-600",
-    "bg-red-400",
-    "bg-rose-400",
-    "bg-red-700",
-    "bg-rose-700",
+    "#ef4444",
+    "#dc2626",
+    "#f43f5e",
+    "#e11d48",
+    "#f87171",
+    "#fb7185",
+    "#b91c1c",
+    "#be123c",
   ];
-
   const PAYMENT_COLORS = [
-    "bg-indigo-500",
-    "bg-blue-500",
-    "bg-cyan-500",
-    "bg-sky-500",
-    "bg-violet-500",
-    "bg-purple-500",
+    "#6366f1",
+    "#3b82f6",
+    "#06b6d4",
+    "#0ea5e9",
+    "#8b5cf6",
+    "#a855f7",
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <Grid container spacing={3}>
       {/* Income by Category */}
-      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-5 transition-all duration-200 backdrop-blur-md">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-500/20">
-            <TrendingUp
-              size={18}
-              className="text-emerald-600 dark:text-emerald-400"
-            />
-          </div>
-          <h3 className="text-base font-semibold text-gray-800 dark:text-white">
-            Income by Category
-          </h3>
-        </div>
+      <Grid size={{ xs: 12, md: 6, xl: 4 }}>
+        <Paper sx={{ p: 2.5, height: "100%" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: 2,
+                bgcolor: "success.light",
+                display: "flex",
+              }}
+            >
+              <TrendingUpIcon fontSize="small" sx={{ color: "success.dark" }} />
+            </Box>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Income by Category
+            </Typography>
+          </Box>
 
-        {sortedIncome.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-4">
-            No income for this period
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {sortedIncome.map(([category, amount], index) => {
-              const percentage =
-                totalIncome > 0 ? (amount / totalIncome) * 100 : 0;
-              return (
-                <div key={category} className="group">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          INCOME_COLORS[index % INCOME_COLORS.length]
-                        }`}
-                      />
-                      <span className="text-sm text-gray-700 dark:text-slate-300">
-                        {category}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                        {formatCurrency(amount)}
-                      </span>
-                      <span className="text-xs text-gray-400 dark:text-slate-500">
-                        {percentage.toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-100 dark:bg-white/5 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${
-                        INCOME_COLORS[index % INCOME_COLORS.length]
-                      } opacity-70 transition-all duration-500`}
-                      style={{ width: `${percentage}%` }}
+          {sortedIncome.length === 0 ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ textAlign: "center", py: 3 }}
+            >
+              No income for this period
+            </Typography>
+          ) : (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {sortedIncome.map(([category, amount], index) => {
+                const percentage =
+                  totalIncome > 0 ? (amount / totalIncome) * 100 : 0;
+                return (
+                  <Box key={category}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 0.5,
+                      }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            bgcolor:
+                              INCOME_COLORS[index % INCOME_COLORS.length],
+                          }}
+                        />
+                        <Typography variant="body2">{category}</Typography>
+                      </Box>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          color="success.main"
+                        >
+                          {formatCurrency(amount)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {percentage.toFixed(0)}%
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={percentage}
+                      sx={{
+                        height: 6,
+                        borderRadius: 3,
+                        bgcolor: "action.hover",
+                        "& .MuiLinearProgress-bar": {
+                          borderRadius: 3,
+                          bgcolor: INCOME_COLORS[index % INCOME_COLORS.length],
+                          opacity: 0.7,
+                        },
+                      }}
                     />
-                  </div>
-                </div>
-              );
-            })}
-            <div className="pt-2 border-t border-gray-100 dark:border-white/5 flex justify-between items-center">
-              <span className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-                Total
-              </span>
-              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(totalIncome)}
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
+                  </Box>
+                );
+              })}
+              <Box
+                sx={{
+                  pt: 1.5,
+                  borderTop: 1,
+                  borderColor: "divider",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight={500}
+                  color="text.secondary"
+                  sx={{ textTransform: "uppercase" }}
+                >
+                  Total
+                </Typography>
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  color="success.main"
+                >
+                  {formatCurrency(totalIncome)}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </Paper>
+      </Grid>
 
       {/* Expense by Category */}
-      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-5 transition-all duration-200 backdrop-blur-md">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="p-2 rounded-lg bg-red-100 dark:bg-red-500/20">
-            <TrendingDown
-              size={18}
-              className="text-red-600 dark:text-red-400"
-            />
-          </div>
-          <h3 className="text-base font-semibold text-gray-800 dark:text-white">
-            Expenses by Category
-          </h3>
-        </div>
+      <Grid size={{ xs: 12, md: 6, xl: 4 }}>
+        <Paper sx={{ p: 2.5, height: "100%" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: 2,
+                bgcolor: "error.light",
+                display: "flex",
+              }}
+            >
+              <TrendingDownIcon fontSize="small" sx={{ color: "error.dark" }} />
+            </Box>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Expenses by Category
+            </Typography>
+          </Box>
 
-        {sortedExpense.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-4">
-            No expenses for this period
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {sortedExpense.map(([category, amount], index) => {
-              const percentage =
-                totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
-              return (
-                <div key={category} className="group">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          EXPENSE_COLORS[index % EXPENSE_COLORS.length]
-                        }`}
-                      />
-                      <span className="text-sm text-gray-700 dark:text-slate-300">
-                        {category}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-red-600 dark:text-red-400">
-                        {formatCurrency(amount)}
-                      </span>
-                      <span className="text-xs text-gray-400 dark:text-slate-500">
-                        {percentage.toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-100 dark:bg-white/5 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${
-                        EXPENSE_COLORS[index % EXPENSE_COLORS.length]
-                      } opacity-70 transition-all duration-500`}
-                      style={{ width: `${percentage}%` }}
+          {sortedExpense.length === 0 ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ textAlign: "center", py: 3 }}
+            >
+              No expenses for this period
+            </Typography>
+          ) : (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {sortedExpense.map(([category, amount], index) => {
+                const percentage =
+                  totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
+                return (
+                  <Box key={category}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 0.5,
+                      }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            bgcolor:
+                              EXPENSE_COLORS[index % EXPENSE_COLORS.length],
+                          }}
+                        />
+                        <Typography variant="body2">{category}</Typography>
+                      </Box>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          color="error.main"
+                        >
+                          {formatCurrency(amount)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {percentage.toFixed(0)}%
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={percentage}
+                      sx={{
+                        height: 6,
+                        borderRadius: 3,
+                        bgcolor: "action.hover",
+                        "& .MuiLinearProgress-bar": {
+                          borderRadius: 3,
+                          bgcolor:
+                            EXPENSE_COLORS[index % EXPENSE_COLORS.length],
+                          opacity: 0.7,
+                        },
+                      }}
                     />
-                  </div>
-                </div>
-              );
-            })}
-            <div className="pt-2 border-t border-gray-100 dark:border-white/5 flex justify-between items-center">
-              <span className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-                Total
-              </span>
-              <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                {formatCurrency(totalExpense)}
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
+                  </Box>
+                );
+              })}
+              <Box
+                sx={{
+                  pt: 1.5,
+                  borderTop: 1,
+                  borderColor: "divider",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight={500}
+                  color="text.secondary"
+                  sx={{ textTransform: "uppercase" }}
+                >
+                  Total
+                </Typography>
+                <Typography variant="body2" fontWeight={600} color="error.main">
+                  {formatCurrency(totalExpense)}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </Paper>
+      </Grid>
 
       {/* By Payment Method */}
-      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-5 transition-all duration-200 backdrop-blur-md">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-500/20">
-            <CreditCard
-              size={18}
-              className="text-indigo-600 dark:text-indigo-400"
-            />
-          </div>
-          <h3 className="text-base font-semibold text-gray-800 dark:text-white">
-            By Payment Method
-          </h3>
-        </div>
+      <Grid size={{ xs: 12, md: 12, xl: 4 }}>
+        <Paper sx={{ p: 2.5, height: "100%" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: 2,
+                bgcolor: "primary.light",
+                display: "flex",
+              }}
+            >
+              <CreditCardIcon fontSize="small" sx={{ color: "primary.dark" }} />
+            </Box>
+            <Typography variant="subtitle1" fontWeight={600}>
+              By Payment Method
+            </Typography>
+          </Box>
 
-        {sortedPaymentMethods.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-4">
-            No transactions for this period
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {sortedPaymentMethods.map(([method, data], index) => {
-              const total = data.income + data.expense;
-              return (
-                <button
-                  key={method}
-                  onClick={() => onPaymentMethodClick?.(method)}
-                  className="w-full p-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all cursor-pointer text-left group"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          PAYMENT_COLORS[index % PAYMENT_COLORS.length]
-                        }`}
+          {sortedPaymentMethods.length === 0 ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ textAlign: "center", py: 3 }}
+            >
+              No transactions for this period
+            </Typography>
+          ) : (
+            <List disablePadding>
+              {sortedPaymentMethods.map(([method, data], index) => {
+                const total = data.income + data.expense;
+                return (
+                  <ListItemButton
+                    key={method}
+                    onClick={() => onPaymentMethodClick?.(method)}
+                    sx={{
+                      borderRadius: 2,
+                      mb: 1,
+                      border: 1,
+                      borderColor: "divider",
+                      "&:hover": {
+                        bgcolor: "primary.50",
+                        borderColor: "primary.main",
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          bgcolor:
+                            PAYMENT_COLORS[index % PAYMENT_COLORS.length],
+                        }}
                       />
-                      <span className="text-sm font-medium text-gray-700 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                        {method}
-                      </span>
-                    </div>
-                    <ChevronRight
-                      size={14}
-                      className="text-gray-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors"
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={method}
+                      secondary={
+                        <Box
+                          component="span"
+                          sx={{ display: "flex", gap: 2, mt: 0.5 }}
+                        >
+                          {data.income > 0 && (
+                            <Typography
+                              component="span"
+                              variant="caption"
+                              color="success.main"
+                            >
+                              +{formatCurrency(data.income)}
+                            </Typography>
+                          )}
+                          {data.expense > 0 && (
+                            <Typography
+                              component="span"
+                              variant="caption"
+                              color="error.main"
+                            >
+                              -{formatCurrency(data.expense)}
+                            </Typography>
+                          )}
+                        </Box>
+                      }
+                      primaryTypographyProps={{ fontWeight: 500 }}
                     />
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-3">
-                      {data.income > 0 && (
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                          +{formatCurrency(data.income)}
-                        </span>
-                      )}
-                      {data.expense > 0 && (
-                        <span className="text-red-600 dark:text-red-400">
-                          -{formatCurrency(data.expense)}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-semibold text-gray-600 dark:text-slate-300">
+                    <Typography variant="body2" fontWeight={600}>
                       {formatCurrency(total)}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
+                    </Typography>
+                    <ChevronRightIcon
+                      fontSize="small"
+                      color="action"
+                      sx={{ ml: 1 }}
+                    />
+                  </ListItemButton>
+                );
+              })}
+            </List>
+          )}
+        </Paper>
+      </Grid>
+    </Grid>
   );
 };
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { Paper, Typography, Box } from "@mui/material";
 import {
   PieChart,
   Pie,
@@ -44,11 +45,11 @@ const Charts: React.FC<ChartsProps> = ({ transactions }) => {
   data.sort((a, b) => b.value - a.value);
 
   return (
-    <div className="bg-white dark:bg-white/5 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 h-full transition-all duration-200 backdrop-blur-md">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+    <Paper sx={{ p: 3, height: "100%" }}>
+      <Typography variant="h6" fontWeight={600} gutterBottom>
         Expenses by Category
-      </h3>
-      <div className="h-64 w-full">
+      </Typography>
+      <Box sx={{ height: 280, width: "100%" }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -76,7 +77,7 @@ const Charts: React.FC<ChartsProps> = ({ transactions }) => {
                 }).format(value)
               }
               contentStyle={{
-                borderRadius: "0.75rem",
+                borderRadius: "12px",
                 border: "none",
                 backgroundColor: "rgba(15, 23, 42, 0.9)",
                 color: "#fff",
@@ -88,12 +89,12 @@ const Charts: React.FC<ChartsProps> = ({ transactions }) => {
               layout="vertical"
               verticalAlign="middle"
               align="right"
-              wrapperStyle={{ fontSize: "12px", opacity: 0.8 }}
+              wrapperStyle={{ fontSize: "12px" }}
             />
           </PieChart>
         </ResponsiveContainer>
-      </div>
-    </div>
+      </Box>
+    </Paper>
   );
 };
 

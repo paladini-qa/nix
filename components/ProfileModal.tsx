@@ -1,13 +1,26 @@
 import React, { useState } from "react";
 import {
-  X,
-  User,
-  Mail,
-  KeyRound,
-  Check,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Avatar,
+  IconButton,
+  Alert,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
+import {
+  Close as CloseIcon,
+  Person as UserIcon,
+  Email as MailIcon,
+  Key as KeyIcon,
+  Check as CheckIcon,
+  ErrorOutline as AlertCircleIcon,
+} from "@mui/icons-material";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -40,8 +53,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     "idle" | "sending" | "sent" | "error"
   >("idle");
   const [errorMessage, setErrorMessage] = useState("");
-
-  if (!isOpen) return null;
 
   const handleSaveName = async () => {
     if (localDisplayName.trim() && localDisplayName !== displayName) {
@@ -86,178 +97,178 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 3 },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Avatar sx={{ bgcolor: "primary.main" }}>
+            <UserIcon />
+          </Avatar>
+          <Box>
+            <Typography variant="h6" fontWeight={600}>
+              Profile
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {userEmail}
+            </Typography>
+          </Box>
+        </Box>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
-      {/* Modal */}
-      <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-white/10">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
-              <User
-                size={20}
-                className="text-indigo-600 dark:text-indigo-400"
-              />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-800 dark:text-white">
-                Profile
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-slate-400">
-                {userEmail}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-slate-400" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
+      <DialogContent dividers>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {/* Error Message */}
           {errorMessage && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg text-red-600 dark:text-red-400 text-sm">
-              <AlertCircle size={16} />
-              <span>{errorMessage}</span>
-            </div>
+            <Alert severity="error" icon={<AlertCircleIcon fontSize="small" />}>
+              {errorMessage}
+            </Alert>
           )}
 
           {/* Display Name Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
-              <User size={18} />
-              <span className="font-medium">Display Name</span>
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
+          <Box>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}
+            >
+              <UserIcon fontSize="small" />
+              <Typography variant="subtitle2" fontWeight={600}>
+                Display Name
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", gap: 1.5 }}>
+              <TextField
+                fullWidth
+                size="small"
                 value={localDisplayName}
                 onChange={(e) => setLocalDisplayName(e.target.value)}
                 placeholder="Enter your name..."
-                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
                 onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
               />
-              <button
+              <Button
+                variant={nameStatus === "saved" ? "contained" : "contained"}
+                color={nameStatus === "saved" ? "success" : "primary"}
                 onClick={handleSaveName}
                 disabled={
                   localDisplayName === displayName || nameStatus === "saving"
                 }
-                className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 min-w-[80px] justify-center ${
-                  nameStatus === "saved"
-                    ? "bg-emerald-600 text-white"
-                    : localDisplayName !== displayName
-                    ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                    : "bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed"
-                }`}
+                startIcon={
+                  nameStatus === "saving" ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : nameStatus === "saved" ? (
+                    <CheckIcon />
+                  ) : null
+                }
+                sx={{ minWidth: 100 }}
               >
-                {nameStatus === "saving" ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : nameStatus === "saved" ? (
-                  <>
-                    <Check size={16} />
-                    <span>Saved</span>
-                  </>
-                ) : (
-                  <span>Save</span>
-                )}
-              </button>
-            </div>
-          </div>
+                {nameStatus === "saved" ? "Saved" : "Save"}
+              </Button>
+            </Box>
+          </Box>
 
-          {/* Divider */}
-          <div className="border-t border-gray-100 dark:border-white/10" />
+          <Divider />
 
           {/* Change Email Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
-              <Mail size={18} />
-              <span className="font-medium">Change Email</span>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-slate-400">
+          <Box>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
+            >
+              <MailIcon fontSize="small" />
+              <Typography variant="subtitle2" fontWeight={600}>
+                Change Email
+              </Typography>
+            </Box>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mb: 1.5 }}
+            >
               A confirmation will be sent to both your current and new email.
-            </p>
-            <div className="flex gap-2">
-              <input
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1.5 }}>
+              <TextField
+                fullWidth
+                size="small"
                 type="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 placeholder="Enter new email..."
-                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
                 onKeyDown={(e) => e.key === "Enter" && handleChangeEmail()}
               />
-              <button
+              <Button
+                variant="contained"
+                color={emailStatus === "sent" ? "success" : "primary"}
                 onClick={handleChangeEmail}
                 disabled={!newEmail.trim() || emailStatus === "saving"}
-                className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 min-w-[100px] justify-center ${
-                  emailStatus === "sent"
-                    ? "bg-emerald-600 text-white"
-                    : newEmail.trim()
-                    ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                    : "bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed"
-                }`}
+                startIcon={
+                  emailStatus === "saving" ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : emailStatus === "sent" ? (
+                    <CheckIcon />
+                  ) : null
+                }
+                sx={{ minWidth: 100 }}
               >
-                {emailStatus === "saving" ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : emailStatus === "sent" ? (
-                  <>
-                    <Check size={16} />
-                    <span>Sent!</span>
-                  </>
-                ) : (
-                  <span>Change</span>
-                )}
-              </button>
-            </div>
-          </div>
+                {emailStatus === "sent" ? "Sent!" : "Change"}
+              </Button>
+            </Box>
+          </Box>
 
-          {/* Divider */}
-          <div className="border-t border-gray-100 dark:border-white/10" />
+          <Divider />
 
           {/* Reset Password Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
-              <KeyRound size={18} />
-              <span className="font-medium">Reset Password</span>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-slate-400">
+          <Box>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
+            >
+              <KeyIcon fontSize="small" />
+              <Typography variant="subtitle2" fontWeight={600}>
+                Reset Password
+              </Typography>
+            </Box>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mb: 1.5 }}
+            >
               A password reset link will be sent to {userEmail}
-            </p>
-            <button
+            </Typography>
+            <Button
+              fullWidth
+              variant="contained"
+              color={passwordStatus === "sent" ? "success" : "warning"}
               onClick={handleResetPassword}
               disabled={passwordStatus === "sending"}
-              className={`w-full px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 ${
-                passwordStatus === "sent"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-amber-500 hover:bg-amber-600 text-white"
-              }`}
+              startIcon={
+                passwordStatus === "sending" ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : passwordStatus === "sent" ? (
+                  <CheckIcon />
+                ) : (
+                  <KeyIcon />
+                )
+              }
             >
-              {passwordStatus === "sending" ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : passwordStatus === "sent" ? (
-                <>
-                  <Check size={16} />
-                  <span>Email Sent!</span>
-                </>
-              ) : (
-                <>
-                  <KeyRound size={16} />
-                  <span>Send Reset Email</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+              {passwordStatus === "sent" ? "Email Sent!" : "Send Reset Email"}
+            </Button>
+          </Box>
+        </Box>
+      </DialogContent>
+    </Dialog>
   );
 };
 

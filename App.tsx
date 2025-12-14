@@ -1,14 +1,30 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, createContext } from "react";
 import {
-  Plus,
-  Sparkles,
-  Filter,
-  Loader2,
-  LogOut,
-  LayoutDashboard,
-  Wallet,
-  Settings,
-} from "lucide-react";
+  ThemeProvider,
+  CssBaseline,
+  Box,
+  CircularProgress,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  BottomNavigation,
+  BottomNavigationAction,
+  Paper,
+  useMediaQuery,
+} from "@mui/material";
+import {
+  Add as AddIcon,
+  AutoAwesome as SparklesIcon,
+  Logout as LogOutIcon,
+  Dashboard as DashboardIcon,
+  AccountBalanceWallet as WalletIcon,
+  Settings as SettingsIcon,
+} from "@mui/icons-material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import "dayjs/locale/pt-br";
+import { lightTheme, darkTheme } from "./theme";
 import {
   Transaction,
   FilterState,
@@ -37,6 +53,15 @@ import { getFinancialInsights } from "./services/geminiService";
 import { supabase } from "./services/supabaseClient";
 import ReactMarkdown from "react-markdown";
 import { Session } from "@supabase/supabase-js";
+
+// Context para o tema
+export const ThemeContext = createContext<{
+  themePreference: ThemePreference;
+  setThemePreference: (theme: ThemePreference) => void;
+}>({
+  themePreference: "system",
+  setThemePreference: () => {},
+});
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -81,41 +106,29 @@ const App: React.FC = () => {
     }
   );
 
+  // Detecta preferência do sistema
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+
   // Computed dark mode based on preference
   const darkMode = useMemo(() => {
     if (themePreference === "system") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+      return prefersDarkMode;
     }
     return themePreference === "dark";
-  }, [themePreference]);
+  }, [themePreference, prefersDarkMode]);
 
-  // Listen for system theme changes
-  useEffect(() => {
-    if (themePreference !== "system") return;
+  // Seleciona o tema MUI
+  const theme = useMemo(() => {
+    return darkMode ? darkTheme : lightTheme;
+  }, [darkMode]);
 
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => {
-      // Force re-render by toggling a dummy state or just apply directly
-      if (mediaQuery.matches) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    };
+  // Detecta se é mobile
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
 
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, [themePreference]);
-
-  // Apply dark mode class
+  // Salva preferência de tema no localStorage
   useEffect(() => {
     localStorage.setItem("themePreference", themePreference);
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode, themePreference]);
+  }, [themePreference]);
 
   // Auth & Data Fetching
   useEffect(() => {
@@ -152,7 +165,6 @@ const App: React.FC = () => {
       if (txError) throw txError;
 
       if (txs) {
-        // Map Supabase columns to our TS type (snake_case to camelCase mapping needed if columns differ, but we kept them mostly consistent or need simple map)
         const mappedTxs: Transaction[] = txs.map((t: any) => ({
           id: t.id,
           description: t.description,
@@ -178,7 +190,6 @@ const App: React.FC = () => {
         .single();
 
       if (settingsError && settingsError.code !== "PGRST116") {
-        // PGRST116 is "no rows found"
         throw settingsError;
       }
 
@@ -195,7 +206,6 @@ const App: React.FC = () => {
           setDisplayName(settings.display_name);
         }
       } else {
-        // Initialize default settings if none exist
         await supabase.from("user_settings").insert({
           user_id: userId,
           categories_income: DEFAULT_CATEGORIES.income,
@@ -313,7 +323,6 @@ const App: React.FC = () => {
     if (!session) return;
 
     try {
-      // Helper function to add months to a date
       const addMonths = (dateStr: string, months: number): string => {
         const date = new Date(dateStr);
         date.setMonth(date.getMonth() + months);
@@ -321,7 +330,6 @@ const App: React.FC = () => {
       };
 
       if (editId) {
-        // Update existing transaction (single update, no splitting)
         const dbPayload = {
           user_id: session.user.id,
           description: newTx.description,
@@ -365,19 +373,16 @@ const App: React.FC = () => {
           );
         }
       } else if (newTx.installments && newTx.installments > 1) {
-        // Create multiple transactions for installments
         const totalInstallments = newTx.installments;
         const installmentAmount =
           Math.round((newTx.amount / totalInstallments) * 100) / 100;
 
-        // Calculate remainder to add to first installment (to ensure total matches)
         const totalFromInstallments = installmentAmount * totalInstallments;
         const remainder =
           Math.round((newTx.amount - totalFromInstallments) * 100) / 100;
 
         const installmentPayloads = [];
         for (let i = 0; i < totalInstallments; i++) {
-          // Add remainder to first installment to maintain exact total
           const amount =
             i === 0 ? installmentAmount + remainder : installmentAmount;
 
@@ -421,7 +426,6 @@ const App: React.FC = () => {
           setTransactions((prev) => [...newTransactions, ...prev]);
         }
       } else {
-        // Insert single new transaction (no installments)
         const dbPayload = {
           user_id: session.user.id,
           description: newTx.description,
@@ -544,269 +548,447 @@ const App: React.FC = () => {
     }
   };
 
+  // Loading screen
   if (loadingInitial) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-slate-900 flex items-center justify-center">
-        <Loader2
-          className="animate-spin text-indigo-600 dark:text-indigo-400"
-          size={48}
-        />
-      </div>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+          <Box
+            sx={{
+              minHeight: "100vh",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "background.default",
+            }}
+          >
+            <CircularProgress color="primary" size={48} />
+          </Box>
+        </LocalizationProvider>
+      </ThemeProvider>
     );
   }
 
+  // Login screen
   if (!session) {
-    return <LoginView />;
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+          <LoginView />
+        </LocalizationProvider>
+      </ThemeProvider>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gradient-to-br dark:from-slate-900 dark:to-indigo-950 dark:text-slate-200 transition-colors duration-500">
-      {/* Sidebar - Desktop Only */}
-      <Sidebar
-        themePreference={themePreference}
-        onThemeChange={updateThemePreference}
-        currentView={currentView}
-        onNavigate={setCurrentView}
-        onLogout={handleLogout}
-        displayName={displayName}
-        userEmail={session.user.email || ""}
-        onOpenProfile={() => setIsProfileModalOpen(true)}
-      />
-
-      {/* Mobile Header */}
-      <header className="lg:hidden bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 sticky top-0 z-30 px-3 h-14 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="bg-indigo-600 p-1.5 rounded-lg">
-            <span className="text-white font-bold text-sm">N</span>
-          </div>
-          <h1 className="text-lg font-bold text-gray-800 dark:text-white">
-            Nix
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeSwitch
-            value={themePreference}
-            onChange={updateThemePreference}
-            compact
-          />
-          <button
-            onClick={handleLogout}
-            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+        <ThemeContext.Provider
+          value={{ themePreference, setThemePreference: updateThemePreference }}
+        >
+          <Box
+            sx={{
+              minHeight: "100vh",
+              bgcolor: "background.default",
+              display: "flex",
+            }}
           >
-            <LogOut size={18} />
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="lg:ml-64 p-4 lg:p-6 xl:p-8 transition-all duration-300">
-        <div className="space-y-6 lg:space-y-8">
-          {currentView === "dashboard" ? (
-            selectedPaymentMethod ? (
-              <PaymentMethodDetailView
-                paymentMethod={selectedPaymentMethod}
-                transactions={transactions}
-                selectedMonth={filters.month}
-                selectedYear={filters.year}
-                onMonthChange={(month) => setFilters({ ...filters, month })}
-                onYearChange={(year) => setFilters({ ...filters, year })}
-                onBack={() => setSelectedPaymentMethod(null)}
+            {/* Sidebar - Desktop Only */}
+            {!isMobile && (
+              <Sidebar
+                themePreference={themePreference}
+                onThemeChange={updateThemePreference}
+                currentView={currentView}
+                onNavigate={setCurrentView}
+                onLogout={handleLogout}
+                displayName={displayName}
+                userEmail={session.user.email || ""}
+                onOpenProfile={() => setIsProfileModalOpen(true)}
               />
-            ) : (
-              <>
-                {/* Dashboard Header / Controls */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-                      General Dashboard
-                    </h2>
-                    <p className="text-gray-500 dark:text-slate-400 text-sm">
-                      Welcome, {displayName || session.user.email}
-                    </p>
-                  </div>
+            )}
 
-                  <div className="flex items-center space-x-3 w-full sm:w-auto">
-                    {/* Filter Controls */}
-                    <DateFilter
-                      month={filters.month}
-                      year={filters.year}
-                      onMonthChange={(month) =>
-                        setFilters({ ...filters, month })
-                      }
-                      onYearChange={(year) => setFilters({ ...filters, year })}
-                      showIcon
-                    />
-
-                    <button
-                      onClick={() => {
-                        setEditingTransaction(null);
-                        setIsFormOpen(true);
-                      }}
-                      className="flex-1 sm:flex-none flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg transition-all shadow-sm dark:shadow-indigo-500/30 font-medium whitespace-nowrap"
+            {/* Mobile Header */}
+            {isMobile && (
+              <AppBar
+                position="fixed"
+                sx={{
+                  bgcolor: "background.paper",
+                  borderBottom: 1,
+                  borderColor: "divider",
+                }}
+                elevation={0}
+              >
+                <Toolbar>
+                  <Box
+                    sx={{
+                      bgcolor: "primary.main",
+                      p: 1,
+                      borderRadius: 1.5,
+                      mr: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography
+                      sx={{ color: "white", fontWeight: "bold", fontSize: 14 }}
                     >
-                      <Plus size={18} />
-                      <span>New Transaction</span>
-                    </button>
-                  </div>
-                </div>
+                      N
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      flexGrow: 1,
+                      fontWeight: "bold",
+                      color: "text.primary",
+                    }}
+                  >
+                    Nix
+                  </Typography>
+                  <ThemeSwitch
+                    value={themePreference}
+                    onChange={updateThemePreference}
+                    compact
+                  />
+                  <IconButton
+                    onClick={handleLogout}
+                    color="error"
+                    sx={{ ml: 1 }}
+                  >
+                    <LogOutIcon />
+                  </IconButton>
+                </Toolbar>
+              </AppBar>
+            )}
 
-                <SummaryCards summary={summary} />
-
-                {/* Smart Analysis - Full Width */}
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800/40 dark:to-indigo-900/20 rounded-2xl p-6 border border-indigo-100 dark:border-white/10 relative overflow-hidden transition-all duration-200 backdrop-blur-sm">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 dark:opacity-20">
-                    <Sparkles
-                      size={100}
-                      className="text-indigo-600 dark:text-indigo-400"
-                    />
-                  </div>
-                  <div className="relative z-10">
-                    <div className="flex flex-wrap justify-between items-start mb-4 gap-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-indigo-900 dark:text-white flex items-center gap-2">
-                          <Sparkles
-                            size={18}
-                            className="text-indigo-600 dark:text-indigo-400"
-                          />
-                          Smart Analysis
-                        </h3>
-                        <p className="text-sm text-indigo-700 dark:text-slate-400 mt-1">
-                          Use AI to analyze your {MONTHS[filters.month]}{" "}
-                          spending.
-                        </p>
-                      </div>
-                      <button
-                        onClick={handleGenerateInsight}
-                        disabled={
-                          isAnalyzing || filteredTransactions.length === 0
-                        }
-                        className="px-4 py-2 bg-white dark:bg-white/10 text-indigo-600 dark:text-white border border-indigo-200 dark:border-white/10 rounded-lg text-sm font-medium hover:bg-indigo-50 dark:hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                      >
-                        {isAnalyzing ? "Analyzing..." : "Generate Insights"}
-                      </button>
-                    </div>
-                    {insight && (
-                      <div className="bg-white/80 dark:bg-black/30 backdrop-blur-md rounded-xl p-5 text-indigo-900 dark:text-slate-200 text-sm leading-relaxed border border-indigo-100 dark:border-white/5 shadow-sm prose prose-indigo dark:prose-invert max-w-none">
-                        <ReactMarkdown>{insight}</ReactMarkdown>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Transaction History - Full Width */}
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    <Filter
-                      size={18}
-                      className="text-gray-500 dark:text-slate-400"
-                    />
-                    Transaction History
-                  </h2>
-                  <TransactionTable transactions={filteredTransactions} />
-                </div>
-
-                {/* Category & Payment Breakdown */}
-                <CategoryBreakdown
-                  transactions={filteredTransactions}
-                  onPaymentMethodClick={(method) =>
-                    setSelectedPaymentMethod(method)
-                  }
-                />
-              </>
-            )
-          ) : currentView === "transactions" ? (
-            <TransactionsView
-              transactions={transactions}
-              onNewTransaction={() => {
-                setEditingTransaction(null);
-                setIsFormOpen(true);
+            {/* Main Content */}
+            <Box
+              component="main"
+              sx={{
+                flexGrow: 1,
+                p: { xs: 2, lg: 4 },
+                mt: { xs: "64px", lg: 0 },
+                mb: { xs: "72px", lg: 0 },
               }}
-              onEdit={handleEditTransaction}
-              onDelete={handleDeleteTransaction}
-              selectedMonth={filters.month}
-              selectedYear={filters.year}
-              onMonthChange={(month) => setFilters({ ...filters, month })}
-              onYearChange={(year) => setFilters({ ...filters, year })}
-            />
-          ) : (
-            <SettingsView
+            >
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                {currentView === "dashboard" ? (
+                  selectedPaymentMethod ? (
+                    <PaymentMethodDetailView
+                      paymentMethod={selectedPaymentMethod}
+                      transactions={transactions}
+                      selectedMonth={filters.month}
+                      selectedYear={filters.year}
+                      onDateChange={(month, year) =>
+                        setFilters({ ...filters, month, year })
+                      }
+                      onBack={() => setSelectedPaymentMethod(null)}
+                    />
+                  ) : (
+                    <>
+                      {/* Dashboard Header / Controls */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: { xs: "column", sm: "row" },
+                          justifyContent: "space-between",
+                          alignItems: { xs: "flex-start", sm: "center" },
+                          gap: 2,
+                        }}
+                      >
+                        <Box>
+                          <Typography
+                            variant="h5"
+                            sx={{ fontWeight: "bold", color: "text.primary" }}
+                          >
+                            General Dashboard
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Welcome, {displayName || session.user.email}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2,
+                            width: { xs: "100%", sm: "auto" },
+                          }}
+                        >
+                          <DateFilter
+                            month={filters.month}
+                            year={filters.year}
+                            onDateChange={(month, year) =>
+                              setFilters({ ...filters, month, year })
+                            }
+                            showIcon
+                          />
+                          <Box
+                            component="button"
+                            onClick={() => {
+                              setEditingTransaction(null);
+                              setIsFormOpen(true);
+                            }}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              px: 2,
+                              py: 1,
+                              bgcolor: "primary.main",
+                              color: "white",
+                              border: "none",
+                              borderRadius: 2,
+                              fontSize: 14,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              transition: "all 0.2s",
+                              whiteSpace: "nowrap",
+                              "&:hover": {
+                                bgcolor: "primary.dark",
+                              },
+                            }}
+                          >
+                            <AddIcon fontSize="small" />
+                            New Transaction
+                          </Box>
+                        </Box>
+                      </Box>
+
+                      <SummaryCards summary={summary} />
+
+                      {/* Smart Analysis */}
+                      <Paper
+                        sx={{
+                          p: 3,
+                          background: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "linear-gradient(135deg, rgba(30,41,59,0.8) 0%, rgba(49,46,129,0.3) 100%)"
+                              : "linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%)",
+                          border: 1,
+                          borderColor: "divider",
+                          position: "relative",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: 0,
+                            right: 0,
+                            p: 2,
+                            opacity: 0.1,
+                          }}
+                        >
+                          <SparklesIcon
+                            sx={{ fontSize: 100 }}
+                            color="primary"
+                          />
+                        </Box>
+                        <Box sx={{ position: "relative", zIndex: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              justifyContent: "space-between",
+                              alignItems: "flex-start",
+                              mb: 2,
+                              gap: 2,
+                            }}
+                          >
+                            <Box>
+                              <Typography
+                                variant="h6"
+                                sx={{
+                                  fontWeight: 600,
+                                  color: "text.primary",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                }}
+                              >
+                                <SparklesIcon
+                                  fontSize="small"
+                                  color="primary"
+                                />
+                                Smart Analysis
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                Use AI to analyze your {MONTHS[filters.month]}{" "}
+                                spending.
+                              </Typography>
+                            </Box>
+                            <Box
+                              component="button"
+                              onClick={handleGenerateInsight}
+                              disabled={
+                                isAnalyzing || filteredTransactions.length === 0
+                              }
+                              sx={{
+                                px: 3,
+                                py: 1.5,
+                                bgcolor: "background.paper",
+                                color: "primary.main",
+                                border: 1,
+                                borderColor: "divider",
+                                borderRadius: 2,
+                                fontSize: 14,
+                                fontWeight: 500,
+                                cursor: "pointer",
+                                "&:hover": {
+                                  bgcolor: "action.hover",
+                                },
+                                "&:disabled": {
+                                  opacity: 0.5,
+                                  cursor: "not-allowed",
+                                },
+                              }}
+                            >
+                              {isAnalyzing
+                                ? "Analyzing..."
+                                : "Generate Insights"}
+                            </Box>
+                          </Box>
+                          {insight && (
+                            <Paper
+                              sx={{
+                                p: 2.5,
+                                bgcolor:
+                                  theme.palette.mode === "dark"
+                                    ? "rgba(0,0,0,0.3)"
+                                    : "rgba(255,255,255,0.8)",
+                                backdropFilter: "blur(10px)",
+                              }}
+                            >
+                              <ReactMarkdown>{insight}</ReactMarkdown>
+                            </Paper>
+                          )}
+                        </Box>
+                      </Paper>
+
+                      {/* Transaction History */}
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 600,
+                            color: "text.primary",
+                            mb: 2,
+                          }}
+                        >
+                          Transaction History
+                        </Typography>
+                        <TransactionTable transactions={filteredTransactions} />
+                      </Box>
+
+                      {/* Category & Payment Breakdown */}
+                      <CategoryBreakdown
+                        transactions={filteredTransactions}
+                        onPaymentMethodClick={(method) =>
+                          setSelectedPaymentMethod(method)
+                        }
+                      />
+                    </>
+                  )
+                ) : currentView === "transactions" ? (
+                  <TransactionsView
+                    transactions={transactions}
+                    onNewTransaction={() => {
+                      setEditingTransaction(null);
+                      setIsFormOpen(true);
+                    }}
+                    onEdit={handleEditTransaction}
+                    onDelete={handleDeleteTransaction}
+                    selectedMonth={filters.month}
+                    selectedYear={filters.year}
+                    onDateChange={(month, year) =>
+                      setFilters({ ...filters, month, year })
+                    }
+                  />
+                ) : (
+                  <SettingsView
+                    categories={categories}
+                    paymentMethods={paymentMethods}
+                    onAddCategory={handleAddCategory}
+                    onRemoveCategory={handleRemoveCategory}
+                    onAddPaymentMethod={handleAddPaymentMethod}
+                    onRemovePaymentMethod={handleRemovePaymentMethod}
+                  />
+                )}
+              </Box>
+            </Box>
+
+            {/* Mobile Bottom Navigation */}
+            {isMobile && (
+              <Paper
+                sx={{
+                  position: "fixed",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 1200,
+                  borderTop: 1,
+                  borderColor: "divider",
+                }}
+                elevation={3}
+              >
+                <BottomNavigation
+                  value={currentView}
+                  onChange={(_, newValue) => setCurrentView(newValue)}
+                  showLabels
+                >
+                  <BottomNavigationAction
+                    label="Dashboard"
+                    value="dashboard"
+                    icon={<DashboardIcon />}
+                  />
+                  <BottomNavigationAction
+                    label="Transactions"
+                    value="transactions"
+                    icon={<WalletIcon />}
+                  />
+                  <BottomNavigationAction
+                    label="Settings"
+                    value="settings"
+                    icon={<SettingsIcon />}
+                  />
+                </BottomNavigation>
+              </Paper>
+            )}
+
+            <TransactionForm
+              isOpen={isFormOpen}
+              onClose={() => {
+                setIsFormOpen(false);
+                setEditingTransaction(null);
+              }}
+              onSave={handleAddTransaction}
               categories={categories}
               paymentMethods={paymentMethods}
-              onAddCategory={handleAddCategory}
-              onRemoveCategory={handleRemoveCategory}
-              onAddPaymentMethod={handleAddPaymentMethod}
-              onRemovePaymentMethod={handleRemovePaymentMethod}
+              editTransaction={editingTransaction}
             />
-          )}
-        </div>
-      </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900/95 backdrop-blur-md border-t border-gray-200 dark:border-white/10 z-40 safe-area-inset-bottom">
-        <div className="flex items-center justify-around h-16 px-2">
-          {[
-            {
-              icon: LayoutDashboard,
-              label: "Dashboard",
-              id: "dashboard" as const,
-            },
-            {
-              icon: Wallet,
-              label: "Transactions",
-              id: "transactions" as const,
-            },
-            { icon: Settings, label: "Settings", id: "settings" as const },
-          ].map((item) => {
-            const isActive = currentView === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setCurrentView(item.id)}
-                className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-                  isActive
-                    ? "text-indigo-600 dark:text-indigo-400"
-                    : "text-gray-500 dark:text-slate-400"
-                }`}
-              >
-                <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span
-                  className={`text-[10px] mt-1 ${
-                    isActive ? "font-semibold" : "font-medium"
-                  }`}
-                >
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-
-      {/* Add padding for mobile bottom nav */}
-      <div className="lg:hidden h-16" />
-
-      <TransactionForm
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setEditingTransaction(null);
-        }}
-        onSave={handleAddTransaction}
-        categories={categories}
-        paymentMethods={paymentMethods}
-        editTransaction={editingTransaction}
-      />
-
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        displayName={displayName}
-        userEmail={session.user.email || ""}
-        onUpdateDisplayName={updateDisplayName}
-        onChangeEmail={handleChangeEmail}
-        onResetPassword={handleResetPassword}
-      />
-    </div>
+            <ProfileModal
+              isOpen={isProfileModalOpen}
+              onClose={() => setIsProfileModalOpen(false)}
+              displayName={displayName}
+              userEmail={session.user.email || ""}
+              onUpdateDisplayName={updateDisplayName}
+              onChangeEmail={handleChangeEmail}
+              onResetPassword={handleResetPassword}
+            />
+          </Box>
+        </ThemeContext.Provider>
+      </LocalizationProvider>
+    </ThemeProvider>
   );
 };
 

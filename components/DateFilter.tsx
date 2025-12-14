@@ -1,12 +1,15 @@
-import React from "react";
-import { Calendar, ChevronDown } from "lucide-react";
-import { MONTHS } from "../constants";
+import React, { useMemo } from "react";
+import { Box } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs, { Dayjs } from "dayjs";
+import "dayjs/locale/en";
 
 interface DateFilterProps {
   month: number;
   year: number;
-  onMonthChange: (month: number) => void;
-  onYearChange: (year: number) => void;
+  onDateChange: (month: number, year: number) => void;
   compact?: boolean;
   showIcon?: boolean;
 }
@@ -14,77 +17,55 @@ interface DateFilterProps {
 const DateFilter: React.FC<DateFilterProps> = ({
   month,
   year,
-  onMonthChange,
-  onYearChange,
+  onDateChange,
   compact = false,
-  showIcon = false,
 }) => {
-  // Generate years: 50 years in the past and 50 years in the future
-  const currentYear = new Date().getFullYear();
-  const startYear = currentYear - 50;
-  const endYear = currentYear + 50;
-  const years = Array.from(
-    { length: endYear - startYear + 1 },
-    (_, i) => startYear + i
+  // Cria um objeto dayjs com o mês e ano selecionados usando useMemo para garantir estabilidade
+  const selectedDate = useMemo(
+    () => dayjs().year(year).month(month).date(1),
+    [month, year]
   );
 
+  const handleDateChange = (newValue: Dayjs | null) => {
+    if (newValue && newValue.isValid()) {
+      const newMonth = newValue.month();
+      const newYear = newValue.year();
+      // Só atualiza se realmente mudou
+      if (newMonth !== month || newYear !== year) {
+        onDateChange(newMonth, newYear);
+      }
+    }
+  };
+
   return (
-    <div
-      className={`flex items-center bg-white dark:bg-slate-800/50 border border-gray-200 dark:border-white/10 rounded-xl shadow-sm ${
-        compact ? "p-0.5" : "p-1"
-      }`}
-    >
-      {showIcon && (
-        <div className="pl-3 pr-2 text-gray-400 dark:text-slate-500">
-          <Calendar size={16} />
-        </div>
-      )}
-
-      {/* Month Select */}
-      <div className="relative">
-        <select
-          value={month}
-          onChange={(e) => onMonthChange(parseInt(e.target.value))}
-          className={`appearance-none bg-transparent font-medium text-gray-700 dark:text-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors pr-7 ${
-            compact ? "text-xs px-2 py-1.5" : "text-sm px-3 py-2"
-          } [&>option]:dark:bg-slate-800`}
-        >
-          {MONTHS.map((m, i) => (
-            <option key={i} value={i}>
-              {compact ? m.substring(0, 3) : m}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          size={12}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 pointer-events-none"
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+        }}
+      >
+        <DatePicker
+          views={["year", "month"]}
+          openTo="month"
+          value={selectedDate}
+          onChange={handleDateChange}
+          format="MMMM YYYY"
+          slotProps={{
+            textField: {
+              size: "small",
+              sx: {
+                minWidth: compact ? 180 : 220,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                },
+              },
+            },
+          }}
         />
-      </div>
-
-      {/* Divider */}
-      <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-1"></div>
-
-      {/* Year Select */}
-      <div className="relative">
-        <select
-          value={year}
-          onChange={(e) => onYearChange(parseInt(e.target.value))}
-          className={`appearance-none bg-transparent font-medium text-gray-700 dark:text-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors pr-7 ${
-            compact ? "text-xs px-2 py-1.5" : "text-sm px-3 py-2"
-          } [&>option]:dark:bg-slate-800`}
-        >
-          {years.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          size={12}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 pointer-events-none"
-        />
-      </div>
-    </div>
+      </Box>
+    </LocalizationProvider>
   );
 };
 

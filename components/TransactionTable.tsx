@@ -1,11 +1,24 @@
 import React from "react";
-import { Transaction } from "../types";
 import {
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Repeat,
-  CreditCard,
-} from "lucide-react";
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+  Box,
+  Chip,
+  LinearProgress,
+} from "@mui/material";
+import {
+  ArrowUpward as ArrowUpIcon,
+  ArrowDownward as ArrowDownIcon,
+  Repeat as RepeatIcon,
+  CreditCard as CreditCardIcon,
+} from "@mui/icons-material";
+import { Transaction } from "../types";
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -26,131 +39,147 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     return `${month}/${day}/${year}`;
   };
 
-  // Find max value for data bar calculation
   const maxAmount = Math.max(...transactions.map((t) => t.amount), 0.01);
 
   if (transactions.length === 0) {
     return (
-      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-12 text-center transition-colors duration-200 backdrop-blur-md">
-        <p className="text-gray-500 dark:text-slate-400">
+      <Paper sx={{ p: 6, textAlign: "center" }}>
+        <Typography color="text.secondary">
           No transactions found for this period.
-        </p>
-      </div>
+        </Typography>
+      </Paper>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden transition-all duration-200 backdrop-blur-md">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-transparent border-b border-gray-100 dark:border-white/5">
-            <tr>
-              <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                Description
-              </th>
-              <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                Category
-              </th>
-              <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                Payment
-              </th>
-              <th className="text-left p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-48">
-                Amount
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-            {transactions.map((transaction) => {
-              // Calculate width percentage for data bar
-              const barWidth = `${(transaction.amount / maxAmount) * 100}%`;
-              const barColor =
-                transaction.type === "income" ? "bg-emerald-500" : "bg-red-500";
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead>
+          <TableRow sx={{ bgcolor: "action.hover" }}>
+            <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>Payment</TableCell>
+            <TableCell sx={{ fontWeight: 600, width: 200 }}>Amount</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {transactions.map((transaction) => {
+            const barWidth = (transaction.amount / maxAmount) * 100;
+            const isIncome = transaction.type === "income";
 
-              return (
-                <tr
-                  key={transaction.id}
-                  className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
-                >
-                  <td className="p-4 text-sm text-gray-600 dark:text-slate-300 whitespace-nowrap font-medium">
+            return (
+              <TableRow
+                key={transaction.id}
+                hover
+                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+              >
+                <TableCell>
+                  <Typography variant="body2" fontWeight={500}>
                     {formatDate(transaction.date)}
-                  </td>
-                  <td className="p-4 text-sm font-medium text-gray-900 dark:text-white">
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className={`p-1.5 rounded-full ${
-                          transaction.type === "income"
-                            ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                            : "bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400"
-                        }`}
-                      >
-                        {transaction.type === "income" ? (
-                          <ArrowUpCircle size={14} />
-                        ) : (
-                          <ArrowDownCircle size={14} />
-                        )}
-                      </div>
-                      <div className="flex flex-col">
-                        <span>{transaction.description}</span>
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        p: 0.75,
+                        borderRadius: "50%",
+                        bgcolor: isIncome ? "success.light" : "error.light",
+                        color: isIncome ? "success.dark" : "error.dark",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {isIncome ? (
+                        <ArrowUpIcon fontSize="small" />
+                      ) : (
+                        <ArrowDownIcon fontSize="small" />
+                      )}
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>
+                        {transaction.description}
+                      </Typography>
+                      <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
                         {transaction.isRecurring && (
-                          <span className="flex items-center text-[10px] text-indigo-500 font-bold uppercase tracking-wide mt-0.5">
-                            <Repeat size={10} className="mr-1" />
-                            {transaction.frequency === "monthly"
-                              ? "Monthly"
-                              : "Yearly"}
-                          </span>
+                          <Chip
+                            icon={<RepeatIcon />}
+                            label={
+                              transaction.frequency === "monthly"
+                                ? "Monthly"
+                                : "Yearly"
+                            }
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                            sx={{ height: 20, fontSize: 10 }}
+                          />
                         )}
                         {transaction.installments &&
                           transaction.installments > 1 && (
-                            <span className="flex items-center text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wide mt-0.5">
-                              <CreditCard size={10} className="mr-1" />
-                              {transaction.currentInstallment || 1}/
-                              {transaction.installments}x
-                            </span>
+                            <Chip
+                              icon={<CreditCardIcon />}
+                              label={`${transaction.currentInstallment || 1}/${
+                                transaction.installments
+                              }x`}
+                              size="small"
+                              color="warning"
+                              variant="outlined"
+                              sx={{ height: 20, fontSize: 10 }}
+                            />
                           )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-gray-600 dark:text-slate-300">
-                    <span className="px-2 py-1 rounded-md text-xs bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-white/5">
-                      {transaction.category}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm text-gray-600 dark:text-slate-400">
+                      </Box>
+                    </Box>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={transaction.category}
+                    size="small"
+                    variant="outlined"
+                    sx={{ fontWeight: 500 }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" color="text.secondary">
                     {transaction.paymentMethod}
-                  </td>
-
-                  {/* Value Column with Data Bar */}
-                  <td className="p-4 text-sm font-bold align-middle">
-                    <div className="flex flex-col justify-center h-full">
-                      <span
-                        className={`${
-                          transaction.type === "income"
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-red-600 dark:text-red-400"
-                        } z-10 relative mb-1`}
-                      >
-                        {transaction.type === "expense" ? "-" : "+"}{" "}
-                        {formatCurrency(transaction.amount)}
-                      </span>
-                      {/* Data Bar */}
-                      <div className="w-full bg-gray-100 dark:bg-white/5 h-1.5 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${barColor} opacity-50 dark:opacity-70`}
-                          style={{ width: barWidth }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color={isIncome ? "success.main" : "error.main"}
+                      sx={{ mb: 0.5 }}
+                    >
+                      {isIncome ? "+" : "-"}{" "}
+                      {formatCurrency(transaction.amount)}
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={barWidth}
+                      sx={{
+                        height: 4,
+                        borderRadius: 2,
+                        bgcolor: "action.hover",
+                        "& .MuiLinearProgress-bar": {
+                          borderRadius: 2,
+                          bgcolor: isIncome ? "success.main" : "error.main",
+                          opacity: 0.6,
+                        },
+                      }}
+                    />
+                  </Box>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 
