@@ -359,6 +359,33 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             </div>
           )}
 
+          {/* Installment Amount Preview */}
+          {type === "expense" &&
+            hasInstallments &&
+            amount &&
+            parseInt(installments) >= 2 && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-xl p-3 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-amber-700 dark:text-amber-400">
+                    {installments}x of
+                  </span>
+                  <span className="text-lg font-bold text-amber-700 dark:text-amber-300">
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(parseFloat(amount) / parseInt(installments))}
+                  </span>
+                </div>
+                <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">
+                  Total:{" "}
+                  {new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(parseFloat(amount))}
+                </p>
+              </div>
+            )}
+
           <button
             type="submit"
             className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg dark:shadow-indigo-500/20 mt-2"

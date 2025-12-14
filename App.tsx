@@ -313,22 +313,29 @@ const App: React.FC = () => {
     if (!session) return;
 
     try {
-      const dbPayload = {
-        user_id: session.user.id,
-        description: newTx.description,
-        amount: newTx.amount,
-        type: newTx.type,
-        category: newTx.category,
-        payment_method: newTx.paymentMethod,
-        date: newTx.date,
-        is_recurring: newTx.isRecurring,
-        frequency: newTx.frequency,
-        installments: newTx.installments,
-        current_installment: newTx.currentInstallment,
+      // Helper function to add months to a date
+      const addMonths = (dateStr: string, months: number): string => {
+        const date = new Date(dateStr);
+        date.setMonth(date.getMonth() + months);
+        return date.toISOString().split("T")[0];
       };
 
       if (editId) {
-        // Update existing transaction
+        // Update existing transaction (single update, no splitting)
+        const dbPayload = {
+          user_id: session.user.id,
+          description: newTx.description,
+          amount: newTx.amount,
+          type: newTx.type,
+          category: newTx.category,
+          payment_method: newTx.paymentMethod,
+          date: newTx.date,
+          is_recurring: newTx.isRecurring,
+          frequency: newTx.frequency,
+          installments: newTx.installments,
+          current_installment: newTx.currentInstallment,
+        };
+
         const { data, error } = await supabase
           .from("transactions")
           .update(dbPayload)
@@ -357,8 +364,78 @@ const App: React.FC = () => {
             prev.map((t) => (t.id === editId ? transaction : t))
           );
         }
+      } else if (newTx.installments && newTx.installments > 1) {
+        // Create multiple transactions for installments
+        const totalInstallments = newTx.installments;
+        const installmentAmount =
+          Math.round((newTx.amount / totalInstallments) * 100) / 100;
+
+        // Calculate remainder to add to first installment (to ensure total matches)
+        const totalFromInstallments = installmentAmount * totalInstallments;
+        const remainder =
+          Math.round((newTx.amount - totalFromInstallments) * 100) / 100;
+
+        const installmentPayloads = [];
+        for (let i = 0; i < totalInstallments; i++) {
+          // Add remainder to first installment to maintain exact total
+          const amount =
+            i === 0 ? installmentAmount + remainder : installmentAmount;
+
+          installmentPayloads.push({
+            user_id: session.user.id,
+            description: newTx.description,
+            amount: amount,
+            type: newTx.type,
+            category: newTx.category,
+            payment_method: newTx.paymentMethod,
+            date: addMonths(newTx.date, i),
+            is_recurring: newTx.isRecurring,
+            frequency: newTx.frequency,
+            installments: totalInstallments,
+            current_installment: i + 1,
+          });
+        }
+
+        const { data, error } = await supabase
+          .from("transactions")
+          .insert(installmentPayloads)
+          .select();
+
+        if (error) throw error;
+
+        if (data) {
+          const newTransactions: Transaction[] = data.map((d: any) => ({
+            id: d.id,
+            description: d.description,
+            amount: d.amount,
+            type: d.type,
+            category: d.category,
+            paymentMethod: d.payment_method,
+            date: d.date,
+            createdAt: new Date(d.created_at).getTime(),
+            isRecurring: d.is_recurring,
+            frequency: d.frequency,
+            installments: d.installments,
+            currentInstallment: d.current_installment,
+          }));
+          setTransactions((prev) => [...newTransactions, ...prev]);
+        }
       } else {
-        // Insert new transaction
+        // Insert single new transaction (no installments)
+        const dbPayload = {
+          user_id: session.user.id,
+          description: newTx.description,
+          amount: newTx.amount,
+          type: newTx.type,
+          category: newTx.category,
+          payment_method: newTx.paymentMethod,
+          date: newTx.date,
+          is_recurring: newTx.isRecurring,
+          frequency: newTx.frequency,
+          installments: newTx.installments,
+          current_installment: newTx.currentInstallment,
+        };
+
         const { data, error } = await supabase
           .from("transactions")
           .insert(dbPayload)
