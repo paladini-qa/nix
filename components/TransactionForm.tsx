@@ -126,7 +126,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               type="button"
               className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all duration-200 ${
                 type === "income"
-                  ? "bg-white dark:bg-emerald-600 text-emerald-700 dark:text-white shadow-sm"
+                  ? "bg-emerald-100 dark:bg-emerald-600 text-emerald-700 dark:text-white shadow-sm"
                   : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
               }`}
               onClick={() => {
@@ -140,7 +140,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               type="button"
               className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all duration-200 ${
                 type === "expense"
-                  ? "bg-white dark:bg-fuchsia-600 text-red-700 dark:text-white shadow-sm"
+                  ? "bg-red-100 dark:bg-red-600 text-red-700 dark:text-white shadow-sm"
                   : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
               }`}
               onClick={() => {
