@@ -37,6 +37,15 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
+      - name: Debug - List dist contents
+        run: |
+          echo "=== Contents of dist folder ==="
+          ls -la dist/
+          echo "=== Contents of dist/assets ==="
+          ls -la dist/assets/ || echo "No assets folder"
+          echo "=== index.html content ==="
+          cat dist/index.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
