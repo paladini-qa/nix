@@ -20,6 +20,7 @@ import {
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
   Repeat as RepeatIcon,
+  AutorenewOutlined as AutorenewIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
@@ -42,14 +43,63 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   onDateChange,
   onBack,
 }) => {
-  const filteredTransactions = transactions
-    .filter((t) => {
+  // Gera transações recorrentes virtuais para este método de pagamento
+  const generateRecurringForMethod = (): Transaction[] => {
+    const virtualTransactions: Transaction[] = [];
+    const targetMonth = selectedMonth + 1; // 1-12
+    const targetYear = selectedYear;
+
+    transactions.forEach((t) => {
+      // Só processa transações recorrentes deste método de pagamento
+      if (!t.isRecurring || !t.frequency || t.paymentMethod !== paymentMethod) return;
+
+      const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
+      const origDate = new Date(origYear, origMonth - 1, origDay);
+      const targetDate = new Date(targetYear, targetMonth - 1, 1);
+
+      // Não gera ocorrências para datas anteriores à transação original
+      if (targetDate < new Date(origYear, origMonth - 1, 1)) return;
+
+      // Verifica se já existe a transação original para este mês
+      const isOriginalMonth =
+        origYear === targetYear && origMonth === targetMonth;
+      if (isOriginalMonth) return;
+
+      let shouldAppear = false;
+
+      if (t.frequency === "monthly") {
+        shouldAppear = true;
+      } else if (t.frequency === "yearly") {
+        shouldAppear = origMonth === targetMonth && targetYear > origYear;
+      }
+
+      if (shouldAppear) {
+        const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
+        const adjustedDay = Math.min(origDay, daysInTargetMonth);
+        const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+
+        virtualTransactions.push({
+          ...t,
+          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(2, "0")}`,
+          date: virtualDate,
+          isVirtual: true,
+          originalTransactionId: t.id,
+        });
+      }
+    });
+
+    return virtualTransactions;
+  };
+
+  const filteredTransactions = [
+    ...transactions.filter((t) => {
       const [y, m] = t.date.split("-");
       const matchesDate =
         parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
       return t.paymentMethod === paymentMethod && matchesDate;
-    })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }),
+    ...generateRecurringForMethod(),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -217,6 +267,16 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                       </Typography>
                       {t.isRecurring && (
                         <RepeatIcon fontSize="small" color="primary" />
+                      )}
+                      {t.isVirtual && (
+                        <Chip
+                          icon={<AutorenewIcon />}
+                          label="Auto"
+                          size="small"
+                          color="info"
+                          variant="outlined"
+                          sx={{ height: 18, fontSize: 10 }}
+                        />
                       )}
                     </Box>
                     {t.installments && t.installments > 1 && (

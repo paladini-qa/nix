@@ -264,17 +264,81 @@ const App: React.FC = () => {
     }
   };
 
-  // Derived State: Filtered Transactions
-  const filteredTransactions = useMemo(() => {
-    return transactions
-      .filter((t) => {
-        const [y, m] = t.date.split("-");
-        return (
-          parseInt(y) === filters.year && parseInt(m) === filters.month + 1
-        );
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Helper: Gera transações recorrentes virtuais para o mês/ano selecionado
+  const generateRecurringTransactions = useMemo(() => {
+    const virtualTransactions: Transaction[] = [];
+    const targetMonth = filters.month + 1; // 1-12
+    const targetYear = filters.year;
+
+    transactions.forEach((t) => {
+      // Só processa transações recorrentes
+      if (!t.isRecurring || !t.frequency) return;
+
+      const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
+      const origDate = new Date(origYear, origMonth - 1, origDay);
+      const targetDate = new Date(targetYear, targetMonth - 1, 1);
+
+      // Não gera ocorrências para datas anteriores à transação original
+      if (targetDate < new Date(origYear, origMonth - 1, 1)) return;
+
+      // Verifica se já existe a transação original para este mês
+      const isOriginalMonth =
+        origYear === targetYear && origMonth === targetMonth;
+      if (isOriginalMonth) return; // A transação original já vai aparecer
+
+      let shouldAppear = false;
+
+      if (t.frequency === "monthly") {
+        // Recorrência mensal: aparece todo mês após a data original
+        shouldAppear = true;
+      } else if (t.frequency === "yearly") {
+        // Recorrência anual: aparece no mesmo mês todo ano
+        shouldAppear = origMonth === targetMonth && targetYear > origYear;
+      }
+
+      if (shouldAppear) {
+        // Calcula a data para este mês (mantém o dia original ou último dia do mês)
+        const daysInTargetMonth = new Date(
+          targetYear,
+          targetMonth,
+          0
+        ).getDate();
+        const adjustedDay = Math.min(origDay, daysInTargetMonth);
+        const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+
+        virtualTransactions.push({
+          ...t,
+          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(2, "0")}`,
+          date: virtualDate,
+          isVirtual: true,
+          originalTransactionId: t.id,
+        });
+      }
+    });
+
+    return virtualTransactions;
   }, [transactions, filters]);
+
+  // Derived State: Filtered Transactions (inclui transações recorrentes virtuais)
+  const filteredTransactions = useMemo(() => {
+    // Filtra transações do mês atual
+    const currentMonthTransactions = transactions.filter((t) => {
+      const [y, m] = t.date.split("-");
+      return (
+        parseInt(y) === filters.year && parseInt(m) === filters.month + 1
+      );
+    });
+
+    // Combina com transações recorrentes virtuais
+    const allTransactions = [
+      ...currentMonthTransactions,
+      ...generateRecurringTransactions,
+    ];
+
+    return allTransactions.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, [transactions, filters, generateRecurringTransactions]);
 
   // Derived State: Summary
   const summary = useMemo<FinancialSummary>(() => {
