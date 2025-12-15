@@ -32,6 +32,9 @@ import {
   FinancialSummary,
   TransactionType,
   ThemePreference,
+  ColorConfig,
+  CategoryColors,
+  PaymentMethodColors,
 } from "./types";
 import {
   CATEGORIES as DEFAULT_CATEGORIES,
@@ -62,6 +65,24 @@ export const ThemeContext = createContext<{
   setThemePreference: () => {},
 });
 
+// Cores padrão
+const DEFAULT_INCOME_COLORS: ColorConfig = { primary: "#10b981", secondary: "#059669" };
+const DEFAULT_EXPENSE_COLORS: ColorConfig = { primary: "#ef4444", secondary: "#dc2626" };
+const DEFAULT_PAYMENT_COLORS: ColorConfig = { primary: "#6366f1", secondary: "#4f46e5" };
+
+// Context para cores
+export const ColorsContext = createContext<{
+  categoryColors: CategoryColors;
+  paymentMethodColors: PaymentMethodColors;
+  getCategoryColor: (type: TransactionType, category: string) => ColorConfig;
+  getPaymentMethodColor: (method: string) => ColorConfig;
+}>({
+  categoryColors: { income: {}, expense: {} },
+  paymentMethodColors: {},
+  getCategoryColor: () => DEFAULT_INCOME_COLORS,
+  getPaymentMethodColor: () => DEFAULT_PAYMENT_COLORS,
+});
+
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loadingInitial, setLoadingInitial] = useState(true);
@@ -74,6 +95,13 @@ const App: React.FC = () => {
   const [paymentMethods, setPaymentMethods] = useState<string[]>(
     DEFAULT_PAYMENT_METHODS
   );
+
+  // State for Colors
+  const [categoryColors, setCategoryColors] = useState<CategoryColors>({
+    income: {},
+    expense: {},
+  });
+  const [paymentMethodColors, setPaymentMethodColors] = useState<PaymentMethodColors>({});
 
   // State for user profile
   const [displayName, setDisplayName] = useState<string>("");
@@ -118,6 +146,24 @@ const App: React.FC = () => {
   const theme = useMemo(() => {
     return darkMode ? darkTheme : lightTheme;
   }, [darkMode]);
+
+  // Helper functions para cores
+  const getCategoryColor = (type: TransactionType, category: string): ColorConfig => {
+    const colors = categoryColors[type][category];
+    if (colors) return colors;
+    return type === "income" ? DEFAULT_INCOME_COLORS : DEFAULT_EXPENSE_COLORS;
+  };
+
+  const getPaymentMethodColor = (method: string): ColorConfig => {
+    return paymentMethodColors[method] || DEFAULT_PAYMENT_COLORS;
+  };
+
+  const colorsContextValue = useMemo(() => ({
+    categoryColors,
+    paymentMethodColors,
+    getCategoryColor,
+    getPaymentMethodColor,
+  }), [categoryColors, paymentMethodColors]);
 
   // Detecta se é mobile
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
@@ -201,6 +247,13 @@ const App: React.FC = () => {
         }
         if (settings.display_name) {
           setDisplayName(settings.display_name);
+        }
+        // Load colors
+        if (settings.category_colors) {
+          setCategoryColors(settings.category_colors);
+        }
+        if (settings.payment_method_colors) {
+          setPaymentMethodColors(settings.payment_method_colors);
         }
       } else {
         await supabase.from("user_settings").insert({
@@ -595,6 +648,55 @@ const App: React.FC = () => {
     }
   };
 
+  // Color Handlers
+  const handleUpdateCategoryColor = async (
+    type: TransactionType,
+    category: string,
+    colors: ColorConfig
+  ) => {
+    const newCategoryColors = {
+      ...categoryColors,
+      [type]: {
+        ...categoryColors[type],
+        [category]: colors,
+      },
+    };
+    setCategoryColors(newCategoryColors);
+
+    if (session) {
+      try {
+        await supabase.from("user_settings").upsert({
+          user_id: session.user.id,
+          category_colors: newCategoryColors,
+        });
+      } catch (err) {
+        console.error("Error saving category colors:", err);
+      }
+    }
+  };
+
+  const handleUpdatePaymentMethodColor = async (
+    method: string,
+    colors: ColorConfig
+  ) => {
+    const newPaymentMethodColors = {
+      ...paymentMethodColors,
+      [method]: colors,
+    };
+    setPaymentMethodColors(newPaymentMethodColors);
+
+    if (session) {
+      try {
+        await supabase.from("user_settings").upsert({
+          user_id: session.user.id,
+          payment_method_colors: newPaymentMethodColors,
+        });
+      } catch (err) {
+        console.error("Error saving payment method colors:", err);
+      }
+    }
+  };
+
   // Loading screen
   if (loadingInitial) {
     return (
@@ -636,6 +738,7 @@ const App: React.FC = () => {
         <ThemeContext.Provider
           value={{ themePreference, setThemePreference: updateThemePreference }}
         >
+          <ColorsContext.Provider value={colorsContextValue}>
           <Box
             sx={{
               minHeight: "100vh",
@@ -862,10 +965,14 @@ const App: React.FC = () => {
                   <SettingsView
                     categories={categories}
                     paymentMethods={paymentMethods}
+                    categoryColors={categoryColors}
+                    paymentMethodColors={paymentMethodColors}
                     onAddCategory={handleAddCategory}
                     onRemoveCategory={handleRemoveCategory}
                     onAddPaymentMethod={handleAddPaymentMethod}
                     onRemovePaymentMethod={handleRemovePaymentMethod}
+                    onUpdateCategoryColor={handleUpdateCategoryColor}
+                    onUpdatePaymentMethodColor={handleUpdatePaymentMethodColor}
                   />
                 )}
               </Box>
@@ -936,6 +1043,7 @@ const App: React.FC = () => {
               onResetPassword={handleResetPassword}
             />
           </Box>
+          </ColorsContext.Provider>
         </ThemeContext.Provider>
       </LocalizationProvider>
     </ThemeProvider>

@@ -10,6 +10,7 @@ import {
   InputAdornment,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -18,25 +19,40 @@ import {
   ArrowDownward as ArrowDownIcon,
   CreditCard as CreditCardIcon,
   LocalOffer as TagIcon,
+  Palette as PaletteIcon,
 } from "@mui/icons-material";
-import { TransactionType } from "../types";
+import { TransactionType, ColorConfig, CategoryColors, PaymentMethodColors } from "../types";
+import ColorPicker from "./ColorPicker";
+
+// Cores padrão para novas categorias
+const DEFAULT_INCOME_COLORS: ColorConfig = { primary: "#10b981", secondary: "#059669" };
+const DEFAULT_EXPENSE_COLORS: ColorConfig = { primary: "#ef4444", secondary: "#dc2626" };
+const DEFAULT_PAYMENT_COLORS: ColorConfig = { primary: "#6366f1", secondary: "#4f46e5" };
 
 interface SettingsViewProps {
   categories: { income: string[]; expense: string[] };
   paymentMethods: string[];
+  categoryColors: CategoryColors;
+  paymentMethodColors: PaymentMethodColors;
   onAddCategory: (type: TransactionType, category: string) => void;
   onRemoveCategory: (type: TransactionType, category: string) => void;
   onAddPaymentMethod: (method: string) => void;
   onRemovePaymentMethod: (method: string) => void;
+  onUpdateCategoryColor: (type: TransactionType, category: string, colors: ColorConfig) => void;
+  onUpdatePaymentMethodColor: (method: string, colors: ColorConfig) => void;
 }
 
 const SettingsView: React.FC<SettingsViewProps> = ({
   categories,
   paymentMethods,
+  categoryColors,
+  paymentMethodColors,
   onAddCategory,
   onRemoveCategory,
   onAddPaymentMethod,
   onRemovePaymentMethod,
+  onUpdateCategoryColor,
+  onUpdatePaymentMethodColor,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -123,17 +139,49 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               </IconButton>
             </Box>
 
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {categories.income.map((cat) => (
-                <Chip
-                  key={cat}
-                  label={cat}
-                  color="success"
-                  variant="outlined"
-                  onDelete={() => onRemoveCategory("income", cat)}
-                  deleteIcon={<DeleteIcon />}
-                />
-              ))}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {categories.income.map((cat) => {
+                const colors = categoryColors.income[cat] || DEFAULT_INCOME_COLORS;
+                return (
+                  <Box
+                    key={cat}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      p: 1,
+                      borderRadius: 2,
+                      bgcolor: "action.hover",
+                    }}
+                  >
+                    <ColorPicker
+                      value={colors}
+                      onChange={(newColors) => onUpdateCategoryColor("income", cat, newColors)}
+                      size="small"
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        flex: 1,
+                        fontWeight: 500,
+                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      {cat}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => onRemoveCategory("income", cat)}
+                      color="error"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                );
+              })}
             </Box>
           </Paper>
         </Grid>
@@ -183,17 +231,49 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               </IconButton>
             </Box>
 
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {categories.expense.map((cat) => (
-                <Chip
-                  key={cat}
-                  label={cat}
-                  color="secondary"
-                  variant="outlined"
-                  onDelete={() => onRemoveCategory("expense", cat)}
-                  deleteIcon={<DeleteIcon />}
-                />
-              ))}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {categories.expense.map((cat) => {
+                const colors = categoryColors.expense[cat] || DEFAULT_EXPENSE_COLORS;
+                return (
+                  <Box
+                    key={cat}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      p: 1,
+                      borderRadius: 2,
+                      bgcolor: "action.hover",
+                    }}
+                  >
+                    <ColorPicker
+                      value={colors}
+                      onChange={(newColors) => onUpdateCategoryColor("expense", cat, newColors)}
+                      size="small"
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        flex: 1,
+                        fontWeight: 500,
+                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      {cat}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => onRemoveCategory("expense", cat)}
+                      color="error"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                );
+              })}
             </Box>
           </Paper>
         </Grid>
@@ -243,18 +323,56 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               </IconButton>
             </Box>
 
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {paymentMethods.map((method) => (
-                <Chip
-                  key={method}
-                  label={method}
-                  color="primary"
-                  variant="outlined"
-                  icon={<TagIcon />}
-                  onDelete={() => onRemovePaymentMethod(method)}
-                  deleteIcon={<DeleteIcon />}
-                />
-              ))}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {paymentMethods.map((method) => {
+                const colors = paymentMethodColors[method] || DEFAULT_PAYMENT_COLORS;
+                return (
+                  <Box
+                    key={method}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      p: 1,
+                      borderRadius: 2,
+                      bgcolor: "action.hover",
+                    }}
+                  >
+                    <ColorPicker
+                      value={colors}
+                      onChange={(newColors) => onUpdatePaymentMethodColor(method, newColors)}
+                      size="small"
+                    />
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
+                      <CreditCardIcon
+                        fontSize="small"
+                        sx={{
+                          color: colors.primary,
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                        }}
+                      >
+                        {method}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      onClick={() => onRemovePaymentMethod(method)}
+                      color="error"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                );
+              })}
             </Box>
           </Paper>
         </Grid>

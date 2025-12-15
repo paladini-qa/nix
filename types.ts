@@ -29,3 +29,19 @@ export interface FilterState {
   month: number;
   year: number;
 }
+
+// Configuração de cores com duas cores (gradiente)
+export interface ColorConfig {
+  primary: string; // Cor principal
+  secondary: string; // Cor secundária (para gradiente)
+}
+
+// Mapa de cores para categorias e métodos de pagamento
+export interface CategoryColors {
+  income: Record<string, ColorConfig>;
+  expense: Record<string, ColorConfig>;
+}
+
+export interface PaymentMethodColors {
+  [method: string]: ColorConfig;
+}

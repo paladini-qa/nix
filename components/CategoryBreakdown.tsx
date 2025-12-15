@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   Box,
   Paper,
@@ -17,6 +17,7 @@ import {
   ChevronRight as ChevronRightIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
+import { ColorsContext } from "../App";
 
 interface CategoryBreakdownProps {
   transactions: Transaction[];
@@ -27,6 +28,8 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   transactions,
   onPaymentMethodClick,
 }) => {
+  const { getCategoryColor, getPaymentMethodColor } = useContext(ColorsContext);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -76,8 +79,9 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   const totalIncome = sortedIncome.reduce((sum, [, val]) => sum + val, 0);
   const totalExpense = sortedExpense.reduce((sum, [, val]) => sum + val, 0);
 
-  const INCOME_COLORS = ["#10b981", "#34d399", "#14b8a6", "#22c55e", "#84cc16"];
-  const EXPENSE_COLORS = [
+  // Fallback colors (usados quando não há cor personalizada)
+  const FALLBACK_INCOME_COLORS = ["#10b981", "#34d399", "#14b8a6", "#22c55e", "#84cc16"];
+  const FALLBACK_EXPENSE_COLORS = [
     "#ef4444",
     "#dc2626",
     "#f43f5e",
@@ -87,7 +91,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     "#b91c1c",
     "#be123c",
   ];
-  const PAYMENT_COLORS = [
+  const FALLBACK_PAYMENT_COLORS = [
     "#6366f1",
     "#3b82f6",
     "#06b6d4",
@@ -130,6 +134,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
               {sortedIncome.map(([category, amount], index) => {
                 const percentage =
                   totalIncome > 0 ? (amount / totalIncome) * 100 : 0;
+                const colors = getCategoryColor("income", category);
                 return (
                   <Box key={category}>
                     <Box
@@ -144,11 +149,10 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       >
                         <Box
                           sx={{
-                            width: 8,
-                            height: 8,
+                            width: 12,
+                            height: 12,
                             borderRadius: "50%",
-                            bgcolor:
-                              INCOME_COLORS[index % INCOME_COLORS.length],
+                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                           }}
                         />
                         <Typography variant="body2">{category}</Typography>
@@ -159,7 +163,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         <Typography
                           variant="body2"
                           fontWeight={600}
-                          color="success.main"
+                          sx={{ color: colors.primary }}
                         >
                           {formatCurrency(amount)}
                         </Typography>
@@ -177,8 +181,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         bgcolor: "action.hover",
                         "& .MuiLinearProgress-bar": {
                           borderRadius: 3,
-                          bgcolor: INCOME_COLORS[index % INCOME_COLORS.length],
-                          opacity: 0.7,
+                          background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
                         },
                       }}
                     />
@@ -247,6 +250,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
               {sortedExpense.map(([category, amount], index) => {
                 const percentage =
                   totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
+                const colors = getCategoryColor("expense", category);
                 return (
                   <Box key={category}>
                     <Box
@@ -261,11 +265,10 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       >
                         <Box
                           sx={{
-                            width: 8,
-                            height: 8,
+                            width: 12,
+                            height: 12,
                             borderRadius: "50%",
-                            bgcolor:
-                              EXPENSE_COLORS[index % EXPENSE_COLORS.length],
+                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                           }}
                         />
                         <Typography variant="body2">{category}</Typography>
@@ -276,7 +279,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         <Typography
                           variant="body2"
                           fontWeight={600}
-                          color="error.main"
+                          sx={{ color: colors.primary }}
                         >
                           {formatCurrency(amount)}
                         </Typography>
@@ -294,9 +297,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         bgcolor: "action.hover",
                         "& .MuiLinearProgress-bar": {
                           borderRadius: 3,
-                          bgcolor:
-                            EXPENSE_COLORS[index % EXPENSE_COLORS.length],
-                          opacity: 0.7,
+                          background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
                         },
                       }}
                     />
@@ -360,6 +361,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
             <List disablePadding>
               {sortedPaymentMethods.map(([method, data], index) => {
                 const total = data.income + data.expense;
+                const colors = getPaymentMethodColor(method);
                 return (
                   <ListItemButton
                     key={method}
@@ -370,19 +372,18 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       border: 1,
                       borderColor: "divider",
                       "&:hover": {
-                        bgcolor: "primary.50",
-                        borderColor: "primary.main",
+                        bgcolor: `${colors.primary}10`,
+                        borderColor: colors.primary,
                       },
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 32 }}>
                       <Box
                         sx={{
-                          width: 8,
-                          height: 8,
+                          width: 12,
+                          height: 12,
                           borderRadius: "50%",
-                          bgcolor:
-                            PAYMENT_COLORS[index % PAYMENT_COLORS.length],
+                          background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                         }}
                       />
                     </ListItemIcon>
@@ -413,15 +414,22 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                           )}
                         </Box>
                       }
-                      primaryTypographyProps={{ fontWeight: 500 }}
+                      primaryTypographyProps={{ 
+                        fontWeight: 500,
+                        sx: {
+                          background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                        }
+                      }}
                     />
-                    <Typography variant="body2" fontWeight={600}>
+                    <Typography variant="body2" fontWeight={600} sx={{ color: colors.primary }}>
                       {formatCurrency(total)}
                     </Typography>
                     <ChevronRightIcon
                       fontSize="small"
-                      color="action"
-                      sx={{ ml: 1 }}
+                      sx={{ ml: 1, color: colors.secondary }}
                     />
                   </ListItemButton>
                 );
