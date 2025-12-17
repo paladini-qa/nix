@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   Box,
-  Paper,
   TextField,
   IconButton,
   Typography,
@@ -9,6 +8,7 @@ import {
   Avatar,
   useMediaQuery,
   useTheme,
+  InputAdornment,
 } from "@mui/material";
 import {
   Send as SendIcon,
@@ -70,7 +70,6 @@ const NixAIView: React.FC<NixAIViewProps> = ({ transactions }) => {
     setIsLoading(true);
 
     try {
-      // Build conversation history for context
       const conversationHistory = messages
         .filter((m) => m.id !== "welcome")
         .map((m) => ({
@@ -115,197 +114,234 @@ const NixAIView: React.FC<NixAIViewProps> = ({ transactions }) => {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* Header */}
-      <Box sx={{ mb: isMobile ? 2 : 3 }}>
-        <Typography
-          variant={isMobile ? "h6" : "h5"}
-          sx={{
-            fontWeight: "bold",
-            color: "text.primary",
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
-          <SparklesIcon
-            color="primary"
-            fontSize={isMobile ? "small" : "medium"}
-          />
-          NixAI
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {isMobile
-            ? "AI financial assistant"
-            : "Your personal AI financial assistant"}
-        </Typography>
-      </Box>
-
-      {/* Chat Container */}
-      <Paper
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: isMobile ? "calc(100vh - 180px)" : "calc(100vh - 64px)",
+        position: "relative",
+        mx: isMobile ? -2 : -4,
+        mt: isMobile ? -2 : -4,
+      }}
+    >
+      {/* Messages Area */}
+      <Box
         sx={{
           flex: 1,
+          overflow: "auto",
+          px: isMobile ? 2 : 4,
+          pt: isMobile ? 2 : 4,
+          pb: 12,
           display: "flex",
           flexDirection: "column",
-          overflow: "hidden",
-          border: 1,
-          borderColor: "divider",
-          minHeight: { xs: "calc(100vh - 280px)", lg: "calc(100vh - 200px)" },
+          gap: 2,
         }}
       >
-        {/* Messages Area */}
-        <Box
-          sx={{
-            flex: 1,
-            overflow: "auto",
-            p: 2,
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
-          {messages.map((message) => (
-            <Box
-              key={message.id}
+        {messages.map((message) => (
+          <Box
+            key={message.id}
+            sx={{
+              display: "flex",
+              gap: 1.5,
+              flexDirection: message.role === "user" ? "row-reverse" : "row",
+              alignItems: "flex-start",
+            }}
+          >
+            <Avatar
               sx={{
-                display: "flex",
-                gap: 1.5,
-                flexDirection: message.role === "user" ? "row-reverse" : "row",
+                width: 32,
+                height: 32,
+                bgcolor:
+                  message.role === "assistant" ? "primary.main" : "grey.600",
+                flexShrink: 0,
               }}
             >
-              <Avatar
-                sx={{
-                  width: 36,
-                  height: 36,
-                  bgcolor:
-                    message.role === "assistant" ? "primary.main" : "grey.500",
-                }}
-              >
-                {message.role === "assistant" ? (
-                  <SparklesIcon fontSize="small" />
-                ) : (
-                  <PersonIcon fontSize="small" />
-                )}
-              </Avatar>
-              <Paper
-                sx={{
-                  p: isMobile ? 1.5 : 2,
-                  maxWidth: isMobile ? "85%" : "75%",
+              {message.role === "assistant" ? (
+                <SparklesIcon sx={{ fontSize: 18 }} />
+              ) : (
+                <PersonIcon sx={{ fontSize: 18 }} />
+              )}
+            </Avatar>
+            <Box
+              sx={{
+                maxWidth: isMobile ? "80%" : "70%",
+                p: isMobile ? 1.5 : 2,
+                borderRadius: 3,
+                bgcolor:
+                  message.role === "user"
+                    ? "primary.main"
+                    : (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(255,255,255,0.08)"
+                          : "rgba(0,0,0,0.04)",
+                color: message.role === "user" ? "white" : "text.primary",
+                "& p": {
+                  m: 0,
+                  mb: 1,
+                  fontSize: isMobile ? 14 : 15,
+                  lineHeight: 1.6,
+                },
+                "& p:last-child": { mb: 0 },
+                "& ul, & ol": { m: 0, pl: 2.5, mb: 1 },
+                "& ul:last-child, & ol:last-child": { mb: 0 },
+                "& li": { mb: 0.5, fontSize: isMobile ? 14 : 15 },
+                "& strong": { fontWeight: 600 },
+                "& code": {
                   bgcolor:
                     message.role === "user"
-                      ? "primary.main"
-                      : "background.default",
-                  color: message.role === "user" ? "white" : "text.primary",
-                  borderRadius: 2,
-                  "& p": { m: 0, mb: 1, fontSize: isMobile ? 14 : 16 },
-                  "& p:last-child": { mb: 0 },
-                  "& ul, & ol": { m: 0, pl: 2.5 },
-                  "& li": { mb: 0.5, fontSize: isMobile ? 14 : 16 },
-                  "& strong": {
-                    fontWeight: 600,
-                  },
-                }}
-              >
-                {message.role === "assistant" ? (
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
-                ) : (
-                  <Typography variant="body2">{message.content}</Typography>
-                )}
-              </Paper>
-            </Box>
-          ))}
-          {isLoading && (
-            <Box sx={{ display: "flex", gap: 1.5 }}>
-              <Avatar
-                sx={{
-                  width: 36,
-                  height: 36,
-                  bgcolor: "primary.main",
-                }}
-              >
-                <SparklesIcon fontSize="small" />
-              </Avatar>
-              <Paper
-                sx={{
-                  p: 2,
-                  bgcolor: "background.default",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                <CircularProgress size={16} />
-                <Typography variant="body2" color="text.secondary">
-                  Thinking...
-                </Typography>
-              </Paper>
-            </Box>
-          )}
-          <div ref={messagesEndRef} />
-        </Box>
-
-        {/* Input Area */}
-        <Box
-          sx={{
-            p: 2,
-            borderTop: 1,
-            borderColor: "divider",
-            bgcolor: "background.paper",
-          }}
-        >
-          <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
-            <TextField
-              fullWidth
-              multiline
-              maxRows={4}
-              placeholder="Ask about your finances..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isLoading}
-              size="small"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                },
-              }}
-            />
-            <IconButton
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
-              color="primary"
-              sx={{
-                bgcolor: "primary.main",
-                color: "white",
-                "&:hover": {
-                  bgcolor: "primary.dark",
-                },
-                "&.Mui-disabled": {
-                  bgcolor: "action.disabledBackground",
-                  color: "action.disabled",
+                      ? "rgba(255,255,255,0.2)"
+                      : "action.hover",
+                  px: 0.75,
+                  py: 0.25,
+                  borderRadius: 1,
+                  fontSize: 13,
                 },
               }}
             >
-              <SendIcon />
-            </IconButton>
+              {message.role === "assistant" ? (
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              ) : (
+                <Typography sx={{ fontSize: isMobile ? 14 : 15 }}>
+                  {message.content}
+                </Typography>
+              )}
+            </Box>
           </Box>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ mt: 1, display: "block" }}
+        ))}
+
+        {isLoading && (
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1.5,
+              alignItems: "flex-start",
+            }}
           >
-            Press Enter to send, Shift+Enter for new line
-          </Typography>
+            <Avatar
+              sx={{
+                width: 32,
+                height: 32,
+                bgcolor: "primary.main",
+                flexShrink: 0,
+              }}
+            >
+              <SparklesIcon sx={{ fontSize: 18 }} />
+            </Avatar>
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                bgcolor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.08)"
+                    : "rgba(0,0,0,0.04)",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+              }}
+            >
+              <CircularProgress size={16} color="primary" />
+              <Typography variant="body2" color="text.secondary">
+                Thinking...
+              </Typography>
+            </Box>
+          </Box>
+        )}
+        <div ref={messagesEndRef} />
+      </Box>
+
+      {/* Gradient overlay for blur effect */}
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 120,
+          background: (theme) =>
+            theme.palette.mode === "dark"
+              ? "linear-gradient(to top, rgba(15, 23, 42, 1) 0%, rgba(15, 23, 42, 0.95) 40%, rgba(15, 23, 42, 0) 100%)"
+              : "linear-gradient(to top, rgba(248, 250, 252, 1) 0%, rgba(248, 250, 252, 0.95) 40%, rgba(248, 250, 252, 0) 100%)",
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      />
+
+      {/* Input Area */}
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          px: isMobile ? 2 : 4,
+          pb: isMobile ? 2 : 3,
+          pt: 2,
+          zIndex: 2,
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 800,
+            mx: "auto",
+          }}
+        >
+          <TextField
+            fullWidth
+            multiline
+            maxRows={4}
+            placeholder="Ask about your finances..."
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={isLoading}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={handleSendMessage}
+                    disabled={!inputValue.trim() || isLoading}
+                    color="primary"
+                    sx={{
+                      bgcolor: inputValue.trim() ? "primary.main" : "transparent",
+                      color: inputValue.trim() ? "white" : "text.disabled",
+                      "&:hover": {
+                        bgcolor: inputValue.trim() ? "primary.dark" : "transparent",
+                      },
+                      "&.Mui-disabled": {
+                        bgcolor: "transparent",
+                        color: "text.disabled",
+                      },
+                    }}
+                  >
+                    <SendIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+              sx: {
+                borderRadius: 3,
+                bgcolor: "background.paper",
+                boxShadow: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "0 4px 20px rgba(0,0,0,0.4)"
+                    : "0 4px 20px rgba(0,0,0,0.1)",
+                "& fieldset": {
+                  borderColor: "divider",
+                },
+                "&:hover fieldset": {
+                  borderColor: "primary.main",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "primary.main",
+                },
+              },
+            }}
+          />
         </Box>
-      </Paper>
+      </Box>
     </Box>
   );
 };
 
 export default NixAIView;
-
-
-
-
 
