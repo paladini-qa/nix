@@ -28,6 +28,8 @@ import {
   InputLabel,
   Select,
   SelectChangeEvent,
+  Checkbox,
+  Tooltip,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -54,6 +56,7 @@ interface TransactionsViewProps {
   onNewTransaction: () => void;
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
+  onTogglePaid: (id: string, isPaid: boolean) => void;
   selectedMonth: number;
   selectedYear: number;
   onDateChange: (month: number, year: number) => void;
@@ -64,6 +67,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   onNewTransaction,
   onEdit,
   onDelete,
+  onTogglePaid,
   selectedMonth,
   selectedYear,
   onDateChange,
@@ -538,9 +542,20 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       p: 2,
                       display: "flex",
                       alignItems: "flex-start",
-                      gap: 1.5,
+                      gap: 1,
+                      opacity: t.isPaid === false ? 0.6 : 1,
                     }}
                   >
+                    {/* Checkbox */}
+                    {!t.isVirtual && (
+                      <Checkbox
+                        checked={t.isPaid !== false}
+                        onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                        size="small"
+                        color="success"
+                        sx={{ mt: -0.5, ml: -1 }}
+                      />
+                    )}
                     {/* Icon */}
                     <Box
                       sx={{
@@ -796,6 +811,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           <Table size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: "action.hover" }}>
+                <TableCell
+                  sx={{ fontWeight: 600, width: 50, textAlign: "center" }}
+                >
+                  Paid
+                </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 100 }}>Date</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 140 }}>
@@ -829,8 +849,25 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     hover
                     sx={{
                       bgcolor: index % 2 === 0 ? "transparent" : "action.hover",
+                      opacity: t.isPaid === false ? 0.6 : 1,
                     }}
                   >
+                    <TableCell sx={{ textAlign: "center" }}>
+                      {!t.isVirtual && (
+                        <Tooltip
+                          title={t.isPaid !== false ? "Paid" : "Not paid"}
+                        >
+                          <Checkbox
+                            checked={t.isPaid !== false}
+                            onChange={(e) =>
+                              onTogglePaid(t.id, e.target.checked)
+                            }
+                            size="small"
+                            color="success"
+                          />
+                        </Tooltip>
+                      )}
+                    </TableCell>
                     <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
                       {formatDate(t.date)}
                     </TableCell>
@@ -941,7 +978,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} sx={{ textAlign: "center", py: 6 }}>
+                  <TableCell colSpan={8} sx={{ textAlign: "center", py: 6 }}>
                     <Typography color="text.secondary" fontStyle="italic">
                       No transactions found with the current filters.
                     </Typography>
@@ -953,7 +990,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               <TableFooter>
                 <TableRow sx={{ bgcolor: "action.hover" }}>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     sx={{ textAlign: "right", fontWeight: 600 }}
                   >
                     Filtered Total:

@@ -22,8 +22,12 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     frequency TEXT CHECK (frequency IN ('monthly', 'yearly') OR frequency IS NULL),
     installments INTEGER CHECK (installments IS NULL OR installments >= 2),
     current_installment INTEGER CHECK (current_installment IS NULL OR current_installment >= 1),
+    is_paid BOOLEAN DEFAULT FALSE
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Para bancos existentes, adicione a coluna is_paid:
+-- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS is_paid BOOLEAN DEFAULT TRUE;
 
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);

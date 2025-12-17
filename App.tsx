@@ -226,6 +226,7 @@ const App: React.FC = () => {
           frequency: t.frequency,
           installments: t.installments,
           currentInstallment: t.current_installment,
+          isPaid: t.is_paid ?? true, // Default true para transações existentes
         }));
         setTransactions(mappedTxs);
       }
@@ -614,6 +615,21 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTogglePaid = async (id: string, isPaid: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("transactions")
+        .update({ is_paid: isPaid })
+        .eq("id", id);
+      if (error) throw error;
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, isPaid } : t))
+      );
+    } catch (err) {
+      console.error("Error updating transaction:", err);
+    }
+  };
+
   // Configuration Handlers
   const handleAddCategory = (type: TransactionType, category: string) => {
     if (!categories[type].includes(category)) {
@@ -939,6 +955,7 @@ const App: React.FC = () => {
                     }}
                     onEdit={handleEditTransaction}
                     onDelete={handleDeleteTransaction}
+                    onTogglePaid={handleTogglePaid}
                     selectedMonth={filters.month}
                     selectedYear={filters.year}
                     onDateChange={(month, year) =>
