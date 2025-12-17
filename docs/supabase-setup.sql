@@ -49,9 +49,15 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     categories_expense TEXT[] DEFAULT ARRAY['Food', 'Housing', 'Transportation', 'Healthcare', 'Entertainment', 'Education', 'Shopping', 'Subscriptions', 'Other'],
     payment_methods TEXT[] DEFAULT ARRAY['Credit Card', 'Debit Card', 'Pix', 'Cash', 'Bank Transfer', 'Boleto'],
     theme_preference TEXT DEFAULT 'system' CHECK (theme_preference IN ('light', 'dark', 'system')),
+    category_colors JSONB DEFAULT '{}'::jsonb,
+    payment_method_colors JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Para usuários existentes, adicione as colunas de cores:
+-- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS category_colors JSONB DEFAULT '{}'::jsonb;
+-- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS payment_method_colors JSONB DEFAULT '{}'::jsonb;
 
 -- Comentários na tabela
 COMMENT ON TABLE public.user_settings IS 'Configurações personalizadas do usuário';
@@ -60,6 +66,8 @@ COMMENT ON COLUMN public.user_settings.categories_income IS 'Lista de categorias
 COMMENT ON COLUMN public.user_settings.categories_expense IS 'Lista de categorias de despesa personalizadas';
 COMMENT ON COLUMN public.user_settings.payment_methods IS 'Lista de métodos de pagamento personalizados';
 COMMENT ON COLUMN public.user_settings.theme_preference IS 'Preferência de tema: light, dark ou system';
+COMMENT ON COLUMN public.user_settings.category_colors IS 'Cores personalizadas para categorias (JSONB com primary e secondary)';
+COMMENT ON COLUMN public.user_settings.payment_method_colors IS 'Cores personalizadas para métodos de pagamento (JSONB com primary e secondary)';
 
 -- =============================================
 -- 3. ROW LEVEL SECURITY (RLS)

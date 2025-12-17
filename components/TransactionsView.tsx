@@ -40,6 +40,7 @@ import {
   TableChart as FileSpreadsheetIcon,
   ExpandMore as ChevronDownIcon,
   MoreVert as MoreVertIcon,
+  AutorenewOutlined as AutorenewIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
@@ -560,6 +561,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
                       {/* Tags */}
                       {(t.isRecurring ||
+                        t.isVirtual ||
                         (t.installments && t.installments > 1)) && (
                         <Box
                           sx={{
@@ -577,6 +579,20 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                               }
                               size="small"
                               color="primary"
+                              variant="outlined"
+                              sx={{
+                                height: 20,
+                                fontSize: 10,
+                                "& .MuiChip-icon": { ml: 0.5 },
+                              }}
+                            />
+                          )}
+                          {t.isVirtual && (
+                            <Chip
+                              icon={<AutorenewIcon sx={{ fontSize: 12 }} />}
+                              label="Auto"
+                              size="small"
+                              color="info"
                               variant="outlined"
                               sx={{
                                 height: 20,
@@ -659,32 +675,46 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               setMobileActionAnchor({ element: null, transaction: null })
             }
           >
-            <MenuItem
-              onClick={() => {
-                if (mobileActionAnchor.transaction) {
-                  onEdit(mobileActionAnchor.transaction);
-                }
-                setMobileActionAnchor({ element: null, transaction: null });
-              }}
-            >
-              <ListItemIcon>
-                <EditIcon fontSize="small" color="primary" />
-              </ListItemIcon>
-              <ListItemText>Edit</ListItemText>
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                if (mobileActionAnchor.transaction) {
-                  onDelete(mobileActionAnchor.transaction.id);
-                }
-                setMobileActionAnchor({ element: null, transaction: null });
-              }}
-            >
-              <ListItemIcon>
-                <DeleteIcon fontSize="small" color="error" />
-              </ListItemIcon>
-              <ListItemText>Delete</ListItemText>
-            </MenuItem>
+            {mobileActionAnchor.transaction?.isVirtual ? (
+              <MenuItem disabled>
+                <ListItemIcon>
+                  <AutorenewIcon fontSize="small" color="disabled" />
+                </ListItemIcon>
+                <ListItemText 
+                  primary="Auto-generated" 
+                  secondary="Edit the original transaction"
+                />
+              </MenuItem>
+            ) : (
+              <>
+                <MenuItem
+                  onClick={() => {
+                    if (mobileActionAnchor.transaction) {
+                      onEdit(mobileActionAnchor.transaction);
+                    }
+                    setMobileActionAnchor({ element: null, transaction: null });
+                  }}
+                >
+                  <ListItemIcon>
+                    <EditIcon fontSize="small" color="primary" />
+                  </ListItemIcon>
+                  <ListItemText>Edit</ListItemText>
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    if (mobileActionAnchor.transaction) {
+                      onDelete(mobileActionAnchor.transaction.id);
+                    }
+                    setMobileActionAnchor({ element: null, transaction: null });
+                  }}
+                >
+                  <ListItemIcon>
+                    <DeleteIcon fontSize="small" color="error" />
+                  </ListItemIcon>
+                  <ListItemText>Delete</ListItemText>
+                </MenuItem>
+              </>
+            )}
           </Menu>
 
           {/* Mobile FAB */}
@@ -756,6 +786,19 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                           {t.isRecurring && (
                             <RepeatIcon fontSize="small" color="primary" />
                           )}
+                          {t.isVirtual && (
+                            <Chip
+                              icon={<AutorenewIcon />}
+                              label="Auto"
+                              size="small"
+                              color="info"
+                              variant="outlined"
+                              sx={{
+                                height: 18,
+                                fontSize: 10,
+                              }}
+                            />
+                          )}
                         </Box>
                         {t.installments && t.installments > 1 && (
                           <Chip
@@ -808,20 +851,32 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       {formatCurrency(t.amount)}
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
-                      <IconButton
-                        size="small"
-                        onClick={() => onEdit(t)}
-                        color="primary"
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => onDelete(t.id)}
-                        color="error"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
+                      {t.isVirtual ? (
+                        <Chip
+                          label="Auto-generated"
+                          size="small"
+                          color="info"
+                          variant="outlined"
+                          sx={{ fontSize: 10 }}
+                        />
+                      ) : (
+                        <>
+                          <IconButton
+                            size="small"
+                            onClick={() => onEdit(t)}
+                            color="primary"
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => onDelete(t.id)}
+                            color="error"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

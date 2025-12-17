@@ -19,6 +19,7 @@ import {
   ArrowDownward as ArrowDownIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
+  AutorenewOutlined as AutorenewIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 
@@ -171,6 +172,20 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                       }}
                     />
                   )}
+                  {transaction.isVirtual && (
+                    <Chip
+                      icon={<AutorenewIcon sx={{ fontSize: 12 }} />}
+                      label="Auto"
+                      size="small"
+                      color="info"
+                      variant="outlined"
+                      sx={{
+                        height: 18,
+                        fontSize: 10,
+                        "& .MuiChip-icon": { ml: 0.5 },
+                      }}
+                    />
+                  )}
                   {transaction.installments && transaction.installments > 1 && (
                     <Chip
                       icon={<CreditCardIcon sx={{ fontSize: 12 }} />}
@@ -259,6 +274,16 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                             }
                             size="small"
                             color="primary"
+                            variant="outlined"
+                            sx={{ height: 20, fontSize: 10 }}
+                          />
+                        )}
+                        {transaction.isVirtual && (
+                          <Chip
+                            icon={<AutorenewIcon />}
+                            label="Auto"
+                            size="small"
+                            color="info"
                             variant="outlined"
                             sx={{ height: 20, fontSize: 10 }}
                           />
