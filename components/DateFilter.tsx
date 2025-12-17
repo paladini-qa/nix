@@ -1,10 +1,14 @@
 import React, { useMemo } from "react";
-import { Box, useMediaQuery, useTheme } from "@mui/material";
+import { Box, IconButton, useMediaQuery, useTheme } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/en";
+import {
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+} from "@mui/icons-material";
 
 interface DateFilterProps {
   month: number;
@@ -39,15 +43,44 @@ const DateFilter: React.FC<DateFilterProps> = ({
     }
   };
 
+  // Navega para o mês anterior
+  const handlePreviousMonth = () => {
+    const newDate = selectedDate.subtract(1, "month");
+    onDateChange(newDate.month(), newDate.year());
+  };
+
+  // Navega para o próximo mês
+  const handleNextMonth = () => {
+    const newDate = selectedDate.add(1, "month");
+    onDateChange(newDate.month(), newDate.year());
+  };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 1,
+          gap: 0.5,
         }}
       >
+        <IconButton
+          onClick={handlePreviousMonth}
+          size="small"
+          sx={{
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 1.5,
+            "&:hover": {
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+              borderColor: "primary.main",
+            },
+          }}
+        >
+          <ChevronLeftIcon fontSize="small" />
+        </IconButton>
+
         <DatePicker
           views={["year", "month"]}
           openTo="month"
@@ -58,22 +91,39 @@ const DateFilter: React.FC<DateFilterProps> = ({
             textField: {
               size: "small",
               sx: {
-                minWidth: isMobile ? 130 : compact ? 180 : 220,
+                minWidth: isMobile ? 120 : compact ? 160 : 200,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                 },
                 "& .MuiOutlinedInput-input": {
                   fontSize: isMobile ? 14 : 16,
+                  textAlign: "center",
                 },
               },
             },
           }}
         />
+
+        <IconButton
+          onClick={handleNextMonth}
+          size="small"
+          sx={{
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 1.5,
+            "&:hover": {
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+              borderColor: "primary.main",
+            },
+          }}
+        >
+          <ChevronRightIcon fontSize="small" />
+        </IconButton>
       </Box>
     </LocalizationProvider>
   );
 };
 
 export default DateFilter;
-
 

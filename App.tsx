@@ -149,8 +149,10 @@ const App: React.FC = () => {
 
   // Helper functions para cores
   const getCategoryColor = (type: TransactionType, category: string): ColorConfig => {
-    const colors = categoryColors[type][category];
-    if (colors) return colors;
+    const typeColors = categoryColors[type];
+    if (typeColors && typeColors[category]) {
+      return typeColors[category];
+    }
     return type === "income" ? DEFAULT_INCOME_COLORS : DEFAULT_EXPENSE_COLORS;
   };
 
