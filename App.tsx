@@ -13,6 +13,7 @@ import {
   Paper,
   useMediaQuery,
   Fab,
+  Button,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -870,35 +871,16 @@ const App: React.FC = () => {
                           />
                           {/* Desktop New Transaction Button */}
                           {!isMobile && (
-                            <Box
-                              component="button"
+                            <Button
+                              variant="contained"
+                              startIcon={<AddIcon />}
                               onClick={() => {
                                 setEditingTransaction(null);
                                 setIsFormOpen(true);
                               }}
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                                px: 2,
-                                py: 1,
-                                bgcolor: "primary.main",
-                                color: "white",
-                                border: "none",
-                                borderRadius: 2,
-                                fontSize: 14,
-                                fontWeight: 600,
-                                cursor: "pointer",
-                                transition: "all 0.2s",
-                                whiteSpace: "nowrap",
-                                "&:hover": {
-                                  bgcolor: "primary.dark",
-                                },
-                              }}
                             >
-                              <AddIcon fontSize="small" />
                               New Transaction
-                            </Box>
+                            </Button>
                           )}
                         </Box>
                       </Box>
@@ -968,6 +950,10 @@ const App: React.FC = () => {
                     transactions={transactions}
                     onEdit={handleEditTransaction}
                     onDelete={handleDeleteTransaction}
+                    onNewTransaction={() => {
+                      setEditingTransaction(null);
+                      setIsFormOpen(true);
+                    }}
                   />
                 ) : currentView === "nixai" ? (
                   <NixAIView transactions={transactions} />

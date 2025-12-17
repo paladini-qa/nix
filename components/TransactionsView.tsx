@@ -24,7 +24,10 @@ import {
   useMediaQuery,
   useTheme,
   Fab,
-  SwipeableDrawer,
+  FormControl,
+  InputLabel,
+  Select,
+  SelectChangeEvent,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -68,12 +71,23 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
+    "all"
+  );
+  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [mobileActionAnchor, setMobileActionAnchor] = useState<{
     element: HTMLElement | null;
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
+
+  // Extrai categorias únicas das transações
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+    transactions.forEach((t) => categories.add(t.category));
+    return Array.from(categories).sort();
+  }, [transactions]);
 
   const filteredData = useMemo(() => {
     return transactions
@@ -83,11 +97,22 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
         const matchesSearch =
           t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.category.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesDate && matchesSearch;
+          t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          t.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesType = filterType === "all" || t.type === filterType;
+        const matchesCategory =
+          filterCategory === "all" || t.category === filterCategory;
+        return matchesDate && matchesSearch && matchesType && matchesCategory;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, selectedMonth, selectedYear, searchTerm]);
+  }, [
+    transactions,
+    selectedMonth,
+    selectedYear,
+    searchTerm,
+    filterType,
+    filterCategory,
+  ]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -332,75 +357,6 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             </Button>
           )}
         </Box>
-
-        {/* Controls Row */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
-          <TextField
-            size="small"
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ flex: 1, minWidth: 120, maxWidth: { xs: "100%", sm: 200 } }}
-          />
-
-          <DateFilter
-            month={selectedMonth}
-            year={selectedYear}
-            onDateChange={onDateChange}
-            compact
-          />
-
-          <IconButton
-            onClick={(e) => setAnchorEl(e.currentTarget)}
-            disabled={isExporting || filteredData.length === 0}
-            sx={{
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 2,
-            }}
-          >
-            {isExporting ? <CircularProgress size={20} /> : <DownloadIcon />}
-          </IconButton>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={() => setAnchorEl(null)}
-          >
-            <MenuItem onClick={exportToCSV}>
-              <ListItemIcon>
-                <FileTextIcon fontSize="small" color="success" />
-              </ListItemIcon>
-              <ListItemText>Export as CSV</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={exportToXLSX}>
-              <ListItemIcon>
-                <FileSpreadsheetIcon fontSize="small" color="success" />
-              </ListItemIcon>
-              <ListItemText>Export as XLSX</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={exportToPDF}>
-              <ListItemIcon>
-                <FileTextIcon fontSize="small" color="error" />
-              </ListItemIcon>
-              <ListItemText>Export as PDF</ListItemText>
-            </MenuItem>
-          </Menu>
-        </Box>
       </Box>
 
       {/* Summary Cards */}
@@ -464,6 +420,109 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Filters */}
+      <Paper
+        sx={{
+          p: 2,
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
+        <TextField
+          size="small"
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ flex: 1, minWidth: 150 }}
+        />
+
+        <FormControl size="small" sx={{ minWidth: 100 }}>
+          <InputLabel>Type</InputLabel>
+          <Select
+            value={filterType}
+            label="Type"
+            onChange={(e: SelectChangeEvent) =>
+              setFilterType(e.target.value as "all" | "income" | "expense")
+            }
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="income">Income</MenuItem>
+            <MenuItem value="expense">Expense</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Category</InputLabel>
+          <Select
+            value={filterCategory}
+            label="Category"
+            onChange={(e: SelectChangeEvent) =>
+              setFilterCategory(e.target.value)
+            }
+          >
+            <MenuItem value="all">All</MenuItem>
+            {availableCategories.map((cat) => (
+              <MenuItem key={cat} value={cat}>
+                {cat}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <DateFilter
+          month={selectedMonth}
+          year={selectedYear}
+          onDateChange={onDateChange}
+          compact
+        />
+
+        <IconButton
+          onClick={(e) => setAnchorEl(e.currentTarget)}
+          disabled={isExporting || filteredData.length === 0}
+          sx={{
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 2,
+          }}
+        >
+          {isExporting ? <CircularProgress size={20} /> : <DownloadIcon />}
+        </IconButton>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={() => setAnchorEl(null)}
+        >
+          <MenuItem onClick={exportToCSV}>
+            <ListItemIcon>
+              <FileTextIcon fontSize="small" color="success" />
+            </ListItemIcon>
+            <ListItemText>Export as CSV</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={exportToXLSX}>
+            <ListItemIcon>
+              <FileSpreadsheetIcon fontSize="small" color="success" />
+            </ListItemIcon>
+            <ListItemText>Export as XLSX</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={exportToPDF}>
+            <ListItemIcon>
+              <FileTextIcon fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>Export as PDF</ListItemText>
+          </MenuItem>
+        </Menu>
+      </Paper>
 
       {/* Mobile Card View */}
       {isMobile ? (
@@ -680,8 +739,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 <ListItemIcon>
                   <AutorenewIcon fontSize="small" color="disabled" />
                 </ListItemIcon>
-                <ListItemText 
-                  primary="Auto-generated" 
+                <ListItemText
+                  primary="Auto-generated"
                   secondary="Edit the original transaction"
                 />
               </MenuItem>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -13,6 +13,13 @@ import {
   TableFooter,
   Chip,
   Grid,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
@@ -21,6 +28,7 @@ import {
   ArrowDownward as ArrowDownIcon,
   Repeat as RepeatIcon,
   AutorenewOutlined as AutorenewIcon,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
@@ -43,6 +51,10 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   onDateChange,
   onBack,
 }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+
   // Gera transações recorrentes virtuais para este método de pagamento
   const generateRecurringForMethod = (): Transaction[] => {
     const virtualTransactions: Transaction[] = [];
@@ -91,15 +103,37 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
     return virtualTransactions;
   };
 
-  const filteredTransactions = [
-    ...transactions.filter((t) => {
-      const [y, m] = t.date.split("-");
-      const matchesDate =
-        parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
-      return t.paymentMethod === paymentMethod && matchesDate;
-    }),
-    ...generateRecurringForMethod(),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Extrai categorias únicas das transações deste método de pagamento
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+    transactions
+      .filter((t) => t.paymentMethod === paymentMethod)
+      .forEach((t) => categories.add(t.category));
+    return Array.from(categories).sort();
+  }, [transactions, paymentMethod]);
+
+  const filteredTransactions = useMemo(() => {
+    const baseTransactions = [
+      ...transactions.filter((t) => {
+        const [y, m] = t.date.split("-");
+        const matchesDate =
+          parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+        return t.paymentMethod === paymentMethod && matchesDate;
+      }),
+      ...generateRecurringForMethod(),
+    ];
+
+    return baseTransactions
+      .filter((t) => {
+        const matchesSearch =
+          t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          t.category.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesType = filterType === "all" || t.type === filterType;
+        const matchesCategory = filterCategory === "all" || t.category === filterCategory;
+        return matchesSearch && matchesType && matchesCategory;
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [transactions, selectedMonth, selectedYear, paymentMethod, searchTerm, filterType, filterCategory]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -231,6 +265,63 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
         </Grid>
       </Grid>
 
+      {/* Filters */}
+      <Paper
+        sx={{
+          p: 2,
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
+        <TextField
+          size="small"
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ flex: 1, minWidth: 150 }}
+        />
+
+        <FormControl size="small" sx={{ minWidth: 100 }}>
+          <InputLabel>Type</InputLabel>
+          <Select
+            value={filterType}
+            label="Type"
+            onChange={(e: SelectChangeEvent) =>
+              setFilterType(e.target.value as "all" | "income" | "expense")
+            }
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="income">Income</MenuItem>
+            <MenuItem value="expense">Expense</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Category</InputLabel>
+          <Select
+            value={filterCategory}
+            label="Category"
+            onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}
+          >
+            <MenuItem value="all">All</MenuItem>
+            {availableCategories.map((cat) => (
+              <MenuItem key={cat} value={cat}>
+                {cat}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Paper>
+
       {/* Transactions Table */}
       <TableContainer component={Paper}>
         <Table>
@@ -355,6 +446,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
 };
 
 export default PaymentMethodDetailView;
+
 
 
 

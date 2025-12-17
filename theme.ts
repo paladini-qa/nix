@@ -67,6 +67,15 @@ const baseThemeOptions: ThemeOptions = {
           textTransform: "none",
           fontWeight: 600,
           borderRadius: 8,
+          paddingLeft: 16,
+          paddingRight: 16,
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
         },
       },
     },
@@ -88,6 +97,14 @@ const baseThemeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           textTransform: "none",
+          borderRadius: 12,
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
         },
       },
     },

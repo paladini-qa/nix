@@ -87,8 +87,11 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
                 sx={{
                   p: isMobile ? 1 : 1.5,
                   bgcolor: "rgba(255,255,255,0.2)",
-                  borderRadius: 2,
+                  borderRadius: "50%",
                   backdropFilter: "blur(10px)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <WalletIcon fontSize={isMobile ? "small" : "medium"} />
@@ -169,9 +172,12 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
                 sx={{
                   p: isMobile ? 1 : 1.5,
                   bgcolor: "rgba(255,255,255,0.2)",
-                  borderRadius: 2,
+                  borderRadius: "50%",
                   backdropFilter: "blur(10px)",
                   flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <TrendingUpIcon fontSize={isMobile ? "small" : "medium"} />
@@ -252,9 +258,12 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
                 sx={{
                   p: isMobile ? 1 : 1.5,
                   bgcolor: "rgba(255,255,255,0.2)",
-                  borderRadius: 2,
+                  borderRadius: "50%",
                   backdropFilter: "blur(10px)",
                   flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <TrendingDownIcon fontSize={isMobile ? "small" : "medium"} />

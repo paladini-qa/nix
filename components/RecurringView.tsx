@@ -29,6 +29,8 @@ import {
   Select,
   SelectChangeEvent,
   Alert,
+  Button,
+  Fab,
 } from "@mui/material";
 import {
   Repeat as RepeatIcon,
@@ -40,7 +42,7 @@ import {
   TrendingDown as TrendingDownIcon,
   CalendarMonth as CalendarIcon,
   AllInclusive as InfiniteIcon,
-  FilterList as FilterIcon,
+  Add as AddIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 
@@ -48,12 +50,14 @@ interface RecurringViewProps {
   transactions: Transaction[];
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
+  onNewTransaction: () => void;
 }
 
 const RecurringView: React.FC<RecurringViewProps> = ({
   transactions,
   onEdit,
   onDelete,
+  onNewTransaction,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -183,13 +187,32 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* Header */}
-      <Box>
-        <Typography variant="h5" fontWeight="bold" gutterBottom>
-          Recurring Transactions
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Manage your recurring income and expenses
-        </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
+            Recurring Transactions
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage your recurring income and expenses
+          </Typography>
+        </Box>
+        {!isMobile && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={onNewTransaction}
+          >
+            New Recurring
+          </Button>
+        )}
       </Box>
 
       {/* Summary Cards */}
@@ -618,6 +641,22 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           <ListItemText>Delete</ListItemText>
         </MenuItem>
       </Menu>
+
+      {/* Mobile FAB */}
+      {isMobile && (
+        <Fab
+          color="primary"
+          onClick={onNewTransaction}
+          sx={{
+            position: "fixed",
+            bottom: 80,
+            right: 16,
+            zIndex: 1100,
+          }}
+        >
+          <AddIcon />
+        </Fab>
+      )}
     </Box>
   );
 };
