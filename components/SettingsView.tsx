@@ -141,7 +141,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {categories.income.map((cat) => {
-                const colors = categoryColors.income[cat] || DEFAULT_INCOME_COLORS;
+                const colors = categoryColors.income?.[cat] || DEFAULT_INCOME_COLORS;
                 return (
                   <Box
                     key={cat}
@@ -233,7 +233,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {categories.expense.map((cat) => {
-                const colors = categoryColors.expense[cat] || DEFAULT_EXPENSE_COLORS;
+                const colors = categoryColors.expense?.[cat] || DEFAULT_EXPENSE_COLORS;
                 return (
                   <Box
                     key={cat}

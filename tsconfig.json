@@ -1,5 +1,4 @@
 {
-  "include": ["**/*.ts", "**/*.tsx", "vite-env.d.ts"],
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,
@@ -12,8 +11,7 @@
     ],
     "skipLibCheck": true,
     "types": [
-      "node",
-      "vite/client"
+      "node"
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,

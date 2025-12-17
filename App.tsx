@@ -21,6 +21,7 @@ import {
   AccountBalanceWallet as WalletIcon,
   Settings as SettingsIcon,
   AutoAwesome as SparklesIcon,
+  Repeat as RepeatIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -53,6 +54,7 @@ import ThemeSwitch from "./components/ThemeSwitch";
 import DateFilter from "./components/DateFilter";
 import PaymentMethodDetailView from "./components/PaymentMethodDetailView";
 import NixAIView from "./components/NixAIView";
+import RecurringView from "./components/RecurringView";
 import { supabase } from "./services/supabaseClient";
 import { Session } from "@supabase/supabase-js";
 
@@ -113,7 +115,7 @@ const App: React.FC = () => {
   });
 
   const [currentView, setCurrentView] = useState<
-    "dashboard" | "transactions" | "nixai" | "settings"
+    "dashboard" | "transactions" | "recurring" | "nixai" | "settings"
   >("dashboard");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
@@ -961,6 +963,12 @@ const App: React.FC = () => {
                       setFilters({ ...filters, month, year })
                     }
                   />
+                ) : currentView === "recurring" ? (
+                  <RecurringView
+                    transactions={transactions}
+                    onEdit={handleEditTransaction}
+                    onDelete={handleDeleteTransaction}
+                  />
                 ) : currentView === "nixai" ? (
                   <NixAIView transactions={transactions} />
                 ) : (
@@ -1008,6 +1016,11 @@ const App: React.FC = () => {
                     label="Transactions"
                     value="transactions"
                     icon={<WalletIcon />}
+                  />
+                  <BottomNavigationAction
+                    label="Recurring"
+                    value="recurring"
+                    icon={<RepeatIcon />}
                   />
                   <BottomNavigationAction
                     label="NixAI"

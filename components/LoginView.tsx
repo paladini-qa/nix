@@ -1,29 +1,15 @@
 import React, { useState } from "react";
 import {
-  Box,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  InputAdornment,
-  CircularProgress,
-  Link,
-  useTheme,
-} from "@mui/material";
-import {
-  AutoAwesome as SparklesIcon,
-  ArrowForward as ArrowRightIcon,
-  Lock as LockIcon,
-  Email as MailIcon,
-  Person as UserIcon,
-  ErrorOutline as AlertCircleIcon,
-} from "@mui/icons-material";
+  Sparkles,
+  ArrowRight,
+  Lock,
+  Mail,
+  AlertCircle,
+  User,
+} from "lucide-react";
 import { supabase } from "../services/supabaseClient";
 
 const LoginView: React.FC = () => {
-  const theme = useTheme();
-  const isDarkMode = theme.palette.mode === "dark";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -52,6 +38,7 @@ const LoginView: React.FC = () => {
         });
         if (error) throw error;
 
+        // Save display name to user_settings if signup successful
         if (data.user) {
           await supabase.from("user_settings").upsert({
             user_id: data.user.id,
@@ -62,7 +49,7 @@ const LoginView: React.FC = () => {
         setMessage(
           "Account created! Check your email to confirm (or log in if confirmation is disabled)."
         );
-        setIsSignUp(false);
+        setIsSignUp(false); // Switch back to login for UX
         setDisplayName("");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -70,6 +57,7 @@ const LoginView: React.FC = () => {
           password,
         });
         if (error) throw error;
+        // Auth state change is handled in App.tsx
       }
     } catch (err: any) {
       setError(err.message || "An error occurred.");
@@ -79,244 +67,156 @@ const LoginView: React.FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "background.default",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 dark:bg-slate-900 transition-colors duration-500 overflow-hidden relative">
       {/* Background Decor */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: "-10%",
-          left: "-10%",
-          width: "50%",
-          height: "50%",
-          bgcolor: "primary.main",
-          opacity: 0.15,
-          borderRadius: "50%",
-          filter: "blur(120px)",
-        }}
-      />
-      <Box
-        sx={{
-          position: "absolute",
-          bottom: "-10%",
-          right: "-10%",
-          width: "50%",
-          height: "50%",
-          bgcolor: "secondary.main",
-          opacity: 0.15,
-          borderRadius: "50%",
-          filter: "blur(120px)",
-        }}
-      />
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/20 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/20 rounded-full blur-[120px]"></div>
+      </div>
 
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: 420,
-          p: 2,
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <Paper
-          elevation={8}
-          sx={{
-            overflow: "hidden",
-            border: 1,
-            borderColor: "divider",
-          }}
-        >
+      <div className="w-full max-w-md p-4 relative z-10">
+        <div className="bg-white dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-2xl dark:shadow-indigo-500/10 border border-gray-200 dark:border-white/10 overflow-hidden">
           {/* Header */}
-          <Box sx={{ px: 4, pt: 4, pb: 3, textAlign: "center" }}>
-            <Box
-              sx={{
-                width: 130,
-                height: 130,
-                borderRadius: "50%",
-                bgcolor: isDarkMode ? "white" : "transparent",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mx: "auto",
-                mb: 2,
-              }}
-            >
-              <Box
-                component="img"
-                src={`${import.meta.env.BASE_URL}logo.png`}
-                alt="Nix Logo"
-                sx={{
-                  width: 120,
-                  height: 120,
-                  objectFit: "contain",
-                }}
-              />
-            </Box>
-            <Typography
-              variant="h5"
-              fontWeight="bold"
-              color="text.primary"
-              gutterBottom
-            >
+          <div className="px-8 pt-8 pb-6 text-center">
+            <div className="inline-flex items-center justify-center p-3 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/30 mb-6">
+              <span className="text-white font-bold text-2xl leading-none">
+                N
+              </span>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
               {isSignUp ? "Create Account" : "Welcome Back"}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+            </h1>
+            <p className="text-gray-500 dark:text-slate-400 text-sm">
               Access your financial dashboard.
-            </Typography>
-          </Box>
+            </p>
+          </div>
 
           {/* Form */}
-          <Box component="form" onSubmit={handleSubmit} sx={{ px: 4, pb: 4 }}>
+          <form onSubmit={handleSubmit} className="px-8 pb-8 space-y-5">
             {error && (
-              <Alert
-                severity="error"
-                icon={<AlertCircleIcon fontSize="small" />}
-                sx={{ mb: 2 }}
-              >
-                {error}
-              </Alert>
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg flex items-center gap-2">
+                <AlertCircle size={16} />
+                <span>{error}</span>
+              </div>
             )}
 
             {message && (
-              <Alert
-                severity="success"
-                icon={<SparklesIcon fontSize="small" />}
-                sx={{ mb: 2 }}
-              >
-                {message}
-              </Alert>
+              <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm rounded-lg flex items-center gap-2">
+                <Sparkles size={16} />
+                <span>{message}</span>
+              </div>
             )}
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-              {isSignUp && (
-                <TextField
-                  label="Your Name"
-                  type="text"
-                  fullWidth
-                  required
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="John Doe"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <UserIcon color="action" />
-                      </InputAdornment>
-                    ),
-                  }}
+            {/* Name field - only for signup */}
+            {isSignUp && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">
+                  Your Name
+                </label>
+                <div className="relative group">
+                  <User
+                    className="absolute left-3 top-3 text-gray-400 group-focus-within:text-indigo-500 transition-colors"
+                    size={18}
+                  />
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">
+                Email
+              </label>
+              <div className="relative group">
+                <Mail
+                  className="absolute left-3 top-3 text-gray-400 group-focus-within:text-indigo-500 transition-colors"
+                  size={18}
                 />
-              )}
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  placeholder="your@email.com"
+                  required
+                />
+              </div>
+            </div>
 
-              <TextField
-                label="Email"
-                type="email"
-                fullWidth
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <MailIcon color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">
+                Password
+              </label>
+              <div className="relative group">
+                <Lock
+                  className="absolute left-3 top-3 text-gray-400 group-focus-within:text-indigo-500 transition-colors"
+                  size={18}
+                />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                />
+              </div>
+            </div>
 
-              <TextField
-                label="Password"
-                type="password"
-                fullWidth
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                inputProps={{ minLength: 6 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockIcon color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
-              <Button
-                type="submit"
-                variant="contained"
-                fullWidth
-                size="large"
-                disabled={isLoading}
-                endIcon={
-                  isLoading ? (
-                    <CircularProgress size={18} color="inherit" />
-                  ) : (
-                    <ArrowRightIcon />
-                  )
-                }
-                sx={{ py: 1.5, mt: 1 }}
-              >
-                {isSignUp ? "Sign Up" : "Sign In"}
-              </Button>
-
-              <Box sx={{ textAlign: "center" }}>
-                <Link
-                  component="button"
-                  type="button"
-                  variant="body2"
-                  onClick={() => {
-                    setIsSignUp(!isSignUp);
-                    setError(null);
-                    setMessage(null);
-                  }}
-                  sx={{ cursor: "pointer" }}
-                >
-                  {isSignUp
-                    ? "Already have an account? Sign in here."
-                    : "Don't have an account? Sign up."}
-                </Link>
-              </Box>
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              bgcolor: "action.hover",
-              borderTop: 1,
-              borderColor: "divider",
-              px: 4,
-              py: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 0.5,
-              }}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed group"
             >
-              <SparklesIcon sx={{ fontSize: 14 }} color="primary" />
-              Financial analysis powered by Gemini AI
-            </Typography>
-          </Box>
-        </Paper>
-      </Box>
-    </Box>
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <span>{isSignUp ? "Sign Up" : "Sign In"}</span>
+                  <ArrowRight
+                    size={18}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
+                </>
+              )}
+            </button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError(null);
+                  setMessage(null);
+                }}
+                className="text-sm text-gray-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+              >
+                {isSignUp
+                  ? "Already have an account? Sign in here."
+                  : "Don't have an account? Sign up."}
+              </button>
+            </div>
+          </form>
+
+          <div className="bg-gray-50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-white/5 px-8 py-4 text-center">
+            <p className="text-xs text-gray-500 dark:text-slate-400">
+              <span className="flex items-center justify-center gap-1">
+                <Sparkles size={12} className="text-indigo-500" />
+                Financial analysis powered by Gemini AI
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
