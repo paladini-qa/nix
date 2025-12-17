@@ -304,3 +304,5 @@ const NixAIView: React.FC<NixAIViewProps> = ({ transactions }) => {
 };
 
 export default NixAIView;
+
+

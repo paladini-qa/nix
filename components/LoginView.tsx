@@ -9,6 +9,7 @@ import {
   InputAdornment,
   CircularProgress,
   Link,
+  useTheme,
 } from "@mui/material";
 import {
   AutoAwesome as SparklesIcon,
@@ -21,6 +22,8 @@ import {
 import { supabase } from "../services/supabaseClient";
 
 const LoginView: React.FC = () => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -137,21 +140,27 @@ const LoginView: React.FC = () => {
           <Box sx={{ px: 4, pt: 4, pb: 3, textAlign: "center" }}>
             <Box
               sx={{
-                display: "inline-flex",
+                width: 130,
+                height: 130,
+                borderRadius: "50%",
+                bgcolor: isDarkMode ? "white" : "transparent",
+                display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                p: 1.5,
-                bgcolor: "primary.main",
-                borderRadius: 2,
-                boxShadow: 4,
-                mb: 3,
+                mx: "auto",
+                mb: 2,
               }}
             >
-              <Typography
-                sx={{ color: "white", fontWeight: "bold", fontSize: 24 }}
-              >
-                N
-              </Typography>
+              <Box
+                component="img"
+                src={`${import.meta.env.BASE_URL}logo.png`}
+                alt="Nix Logo"
+                sx={{
+                  width: 120,
+                  height: 120,
+                  objectFit: "contain",
+                }}
+              />
             </Box>
             <Typography
               variant="h5"

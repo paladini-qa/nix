@@ -98,9 +98,9 @@ export const lightTheme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#6366f1", // Indigo
-      light: "#818cf8",
-      dark: "#4f46e5",
+      main: "#7c3aed", // Violet (combina com a logo)
+      light: "#a78bfa",
+      dark: "#6d28d9",
       contrastText: "#ffffff",
     },
     secondary: {
@@ -145,9 +145,9 @@ export const darkTheme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: "#818cf8", // Indigo-400
-      light: "#a5b4fc",
-      dark: "#6366f1",
+      main: "#a78bfa", // Violet-400 (combina com a logo)
+      light: "#c4b5fd",
+      dark: "#7c3aed",
       contrastText: "#ffffff",
     },
     secondary: {
@@ -185,3 +185,6 @@ export const darkTheme = createTheme({
     divider: "rgba(255, 255, 255, 0.1)",
   },
 });
+
+
+

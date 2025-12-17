@@ -295,3 +295,5 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
 };
 
 export default PaymentMethodDetailView;
+
+

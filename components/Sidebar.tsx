@@ -11,6 +11,7 @@ import {
   Divider,
   IconButton,
   Avatar,
+  useTheme,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -49,6 +50,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   userEmail,
   onOpenProfile,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+
   const navItems = [
     { icon: DashboardIcon, label: "Dashboard", id: "dashboard" as const },
     { icon: WalletIcon, label: "Transactions", id: "transactions" as const },
@@ -77,11 +81,35 @@ const Sidebar: React.FC<SidebarProps> = ({
           height: 80,
           display: "flex",
           alignItems: "center",
+          gap: 1.5,
           px: 3,
           borderBottom: 1,
           borderColor: "divider",
         }}
       >
+        <Box
+          sx={{
+            width: 58,
+            height: 58,
+            borderRadius: "50%",
+            bgcolor: isDarkMode ? "white" : "transparent",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Box
+            component="img"
+            src={`${import.meta.env.BASE_URL}logo.png`}
+            alt="Nix Logo"
+            sx={{
+              width: 52,
+              height: 52,
+              objectFit: "contain",
+            }}
+          />
+        </Box>
         <Typography
           variant="h5"
           sx={{
