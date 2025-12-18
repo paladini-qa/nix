@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, createContext } from "react";
+import React, { useState, useEffect, useMemo, createContext, lazy, Suspense } from "react";
 import {
   ThemeProvider,
   CssBaseline,
@@ -43,22 +43,40 @@ import {
   CATEGORIES as DEFAULT_CATEGORIES,
   PAYMENT_METHODS as DEFAULT_PAYMENT_METHODS,
 } from "./constants";
+// Core components (loaded immediately)
 import SummaryCards from "./components/SummaryCards";
 import TransactionTable from "./components/TransactionTable";
 import TransactionForm from "./components/TransactionForm";
 import CategoryBreakdown from "./components/CategoryBreakdown";
 import Sidebar from "./components/Sidebar";
 import ProfileModal from "./components/ProfileModal";
-import TransactionsView from "./components/TransactionsView";
-import SettingsView from "./components/SettingsView";
 import LoginView from "./components/LoginView";
 import ThemeSwitch from "./components/ThemeSwitch";
 import DateFilter from "./components/DateFilter";
-import PaymentMethodDetailView from "./components/PaymentMethodDetailView";
-import NixAIView from "./components/NixAIView";
-import RecurringView from "./components/RecurringView";
-import SplitsView from "./components/SplitsView";
+
+// Lazy loaded components (loaded on demand)
+const TransactionsView = lazy(() => import("./components/TransactionsView"));
+const SettingsView = lazy(() => import("./components/SettingsView"));
+const PaymentMethodDetailView = lazy(() => import("./components/PaymentMethodDetailView"));
+const NixAIView = lazy(() => import("./components/NixAIView"));
+const RecurringView = lazy(() => import("./components/RecurringView"));
+const SplitsView = lazy(() => import("./components/SplitsView"));
+
+// Loading fallback component
+const ViewLoading: React.FC = () => (
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      py: 8,
+    }}
+  >
+    <CircularProgress color="primary" />
+  </Box>
+);
 import { supabase } from "./services/supabaseClient";
+import { NotificationProvider, ConfirmDialogProvider } from "./contexts";
 import { Session } from "@supabase/supabase-js";
 
 // Context para o tema
@@ -762,11 +780,13 @@ const App: React.FC = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
-        <ThemeContext.Provider
-          value={{ themePreference, setThemePreference: updateThemePreference }}
-        >
-          <ColorsContext.Provider value={colorsContextValue}>
-          <Box
+        <NotificationProvider>
+          <ConfirmDialogProvider>
+            <ThemeContext.Provider
+              value={{ themePreference, setThemePreference: updateThemePreference }}
+            >
+              <ColorsContext.Provider value={colorsContextValue}>
+              <Box
             sx={{
               minHeight: "100vh",
               bgcolor: "background.default",
@@ -838,16 +858,18 @@ const App: React.FC = () => {
               <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {currentView === "dashboard" ? (
                   selectedPaymentMethod ? (
-                    <PaymentMethodDetailView
-                      paymentMethod={selectedPaymentMethod}
-                      transactions={transactions}
-                      selectedMonth={filters.month}
-                      selectedYear={filters.year}
-                      onDateChange={(month, year) =>
-                        setFilters({ ...filters, month, year })
-                      }
-                      onBack={() => setSelectedPaymentMethod(null)}
-                    />
+                    <Suspense fallback={<ViewLoading />}>
+                      <PaymentMethodDetailView
+                        paymentMethod={selectedPaymentMethod}
+                        transactions={transactions}
+                        selectedMonth={filters.month}
+                        selectedYear={filters.year}
+                        onDateChange={(month, year) =>
+                          setFilters({ ...filters, month, year })
+                        }
+                        onBack={() => setSelectedPaymentMethod(null)}
+                      />
+                    </Suspense>
                   ) : (
                     <>
                       {/* Dashboard Header / Controls */}
@@ -953,57 +975,67 @@ const App: React.FC = () => {
                     </>
                   )
                 ) : currentView === "transactions" ? (
-                  <TransactionsView
-                    transactions={transactions}
-                    onNewTransaction={() => {
-                      setEditingTransaction(null);
-                      setIsFormOpen(true);
-                    }}
-                    onEdit={handleEditTransaction}
-                    onDelete={handleDeleteTransaction}
-                    onTogglePaid={handleTogglePaid}
-                    selectedMonth={filters.month}
-                    selectedYear={filters.year}
-                    onDateChange={(month, year) =>
-                      setFilters({ ...filters, month, year })
-                    }
-                  />
+                  <Suspense fallback={<ViewLoading />}>
+                    <TransactionsView
+                      transactions={transactions}
+                      onNewTransaction={() => {
+                        setEditingTransaction(null);
+                        setIsFormOpen(true);
+                      }}
+                      onEdit={handleEditTransaction}
+                      onDelete={handleDeleteTransaction}
+                      onTogglePaid={handleTogglePaid}
+                      selectedMonth={filters.month}
+                      selectedYear={filters.year}
+                      onDateChange={(month, year) =>
+                        setFilters({ ...filters, month, year })
+                      }
+                    />
+                  </Suspense>
                 ) : currentView === "splits" ? (
-                  <SplitsView
-                    transactions={transactions}
-                    onNewTransaction={() => {
-                      setEditingTransaction(null);
-                      setIsFormOpen(true);
-                    }}
-                    onEdit={handleEditTransaction}
-                    onDelete={handleDeleteTransaction}
-                    onTogglePaid={handleTogglePaid}
-                  />
+                  <Suspense fallback={<ViewLoading />}>
+                    <SplitsView
+                      transactions={transactions}
+                      onNewTransaction={() => {
+                        setEditingTransaction(null);
+                        setIsFormOpen(true);
+                      }}
+                      onEdit={handleEditTransaction}
+                      onDelete={handleDeleteTransaction}
+                      onTogglePaid={handleTogglePaid}
+                    />
+                  </Suspense>
                 ) : currentView === "recurring" ? (
-                  <RecurringView
-                    transactions={transactions}
-                    onEdit={handleEditTransaction}
-                    onDelete={handleDeleteTransaction}
-                    onNewTransaction={() => {
-                      setEditingTransaction(null);
-                      setIsFormOpen(true);
-                    }}
-                  />
+                  <Suspense fallback={<ViewLoading />}>
+                    <RecurringView
+                      transactions={transactions}
+                      onEdit={handleEditTransaction}
+                      onDelete={handleDeleteTransaction}
+                      onNewTransaction={() => {
+                        setEditingTransaction(null);
+                        setIsFormOpen(true);
+                      }}
+                    />
+                  </Suspense>
                 ) : currentView === "nixai" ? (
-                  <NixAIView transactions={transactions} />
+                  <Suspense fallback={<ViewLoading />}>
+                    <NixAIView transactions={transactions} />
+                  </Suspense>
                 ) : (
-                  <SettingsView
-                    categories={categories}
-                    paymentMethods={paymentMethods}
-                    categoryColors={categoryColors}
-                    paymentMethodColors={paymentMethodColors}
-                    onAddCategory={handleAddCategory}
-                    onRemoveCategory={handleRemoveCategory}
-                    onAddPaymentMethod={handleAddPaymentMethod}
-                    onRemovePaymentMethod={handleRemovePaymentMethod}
-                    onUpdateCategoryColor={handleUpdateCategoryColor}
-                    onUpdatePaymentMethodColor={handleUpdatePaymentMethodColor}
-                  />
+                  <Suspense fallback={<ViewLoading />}>
+                    <SettingsView
+                      categories={categories}
+                      paymentMethods={paymentMethods}
+                      categoryColors={categoryColors}
+                      paymentMethodColors={paymentMethodColors}
+                      onAddCategory={handleAddCategory}
+                      onRemoveCategory={handleRemoveCategory}
+                      onAddPaymentMethod={handleAddPaymentMethod}
+                      onRemovePaymentMethod={handleRemovePaymentMethod}
+                      onUpdateCategoryColor={handleUpdateCategoryColor}
+                      onUpdatePaymentMethodColor={handleUpdatePaymentMethodColor}
+                    />
+                  </Suspense>
                 )}
               </Box>
             </Box>
@@ -1077,9 +1109,11 @@ const App: React.FC = () => {
               onChangeEmail={handleChangeEmail}
               onResetPassword={handleResetPassword}
             />
-          </Box>
-          </ColorsContext.Provider>
-        </ThemeContext.Provider>
+              </Box>
+              </ColorsContext.Provider>
+            </ThemeContext.Provider>
+          </ConfirmDialogProvider>
+        </NotificationProvider>
       </LocalizationProvider>
     </ThemeProvider>
   );

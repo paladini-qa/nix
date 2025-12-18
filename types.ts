@@ -46,3 +46,77 @@ export interface CategoryColors {
 export interface PaymentMethodColors {
   [method: string]: ColorConfig;
 }
+
+// Sistema de Orçamentos
+export interface Budget {
+  id: string;
+  category: string;
+  type: TransactionType;
+  limitAmount: number;
+  month: number; // 1-12
+  year: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface BudgetWithSpending extends Budget {
+  spent: number;
+  remaining: number;
+  percentage: number;
+  isOverBudget: boolean;
+}
+
+// Sistema de Metas Financeiras
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: string; // ISO Date
+  category?: string;
+  color: string;
+  icon: string;
+  isCompleted: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GoalProgress extends Goal {
+  percentage: number;
+  remainingAmount: number;
+  daysRemaining?: number;
+  isOverdue?: boolean;
+}
+
+// Sistema de Contas/Carteiras
+export type AccountType = 'checking' | 'savings' | 'credit_card' | 'cash' | 'investment' | 'other';
+
+export interface Account {
+  id: string;
+  name: string;
+  type: AccountType;
+  initialBalance: number;
+  color: string;
+  icon: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AccountWithBalance extends Account {
+  currentBalance: number;
+  totalIncome: number;
+  totalExpense: number;
+}
+
+// Sistema de Tags
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  createdAt?: string;
+}
+
+export interface TagWithCount extends Tag {
+  transactionCount: number;
+}
