@@ -117,12 +117,67 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
 
+  // Gera transações recorrentes virtuais para o mês/ano selecionado
+  const generateRecurringTransactions = useMemo(() => {
+    const virtualTransactions: Transaction[] = [];
+    const targetMonth = selectedMonth + 1;
+    const targetYear = selectedYear;
+
+    transactions.forEach((t) => {
+      if (!t.isRecurring || !t.frequency) return;
+
+      const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
+      const targetDate = new Date(targetYear, targetMonth - 1, 1);
+
+      // Não gera virtuais para datas anteriores à original
+      if (targetDate < new Date(origYear, origMonth - 1, 1)) return;
+
+      // Não duplica no mês original
+      const isOriginalMonth = origYear === targetYear && origMonth === targetMonth;
+      if (isOriginalMonth) return;
+
+      let shouldAppear = false;
+
+      if (t.frequency === "monthly") {
+        shouldAppear = true;
+      } else if (t.frequency === "yearly") {
+        shouldAppear = origMonth === targetMonth && targetYear > origYear;
+      }
+
+      if (shouldAppear) {
+        const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
+        const adjustedDay = Math.min(origDay, daysInTargetMonth);
+        const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+
+        virtualTransactions.push({
+          ...t,
+          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(2, "0")}`,
+          date: virtualDate,
+          isVirtual: true,
+          originalTransactionId: t.id,
+        });
+      }
+    });
+
+    return virtualTransactions;
+  }, [transactions, selectedMonth, selectedYear]);
+
+  // Combina transações reais + virtuais
+  const allTransactions = useMemo(() => {
+    const currentMonthTransactions = transactions.filter((t) => {
+      const [y, m] = t.date.split("-");
+      return parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+    });
+
+    return [...currentMonthTransactions, ...generateRecurringTransactions];
+  }, [transactions, selectedMonth, selectedYear, generateRecurringTransactions]);
+
   // Extrai categorias únicas das transações
   const availableCategories = useMemo(() => {
     const categories = new Set<string>();
-    transactions.forEach((t) => categories.add(t.category));
+    allTransactions.forEach((t) => categories.add(t.category));
     return Array.from(categories).sort();
-  }, [transactions]);
+  }, [allTransactions]);
 
   // Conta filtros ativos
   const activeFiltersCount = useMemo(() => {
@@ -135,10 +190,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   // Filtra e ordena dados
   const filteredData = useMemo(() => {
-    let result = transactions.filter((t) => {
-      const [y, m] = t.date.split("-");
-      const matchesDate =
-        parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+    let result = allTransactions.filter((t) => {
       const matchesSearch =
         t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -150,7 +202,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         filterShared === "all" ||
         (filterShared === "shared" && t.isShared) ||
         (filterShared === "not_shared" && !t.isShared);
-      return matchesDate && matchesSearch && matchesType && matchesCategory && matchesShared;
+      return matchesSearch && matchesType && matchesCategory && matchesShared;
     });
 
     // Ordenação
@@ -194,9 +246,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
     return result;
   }, [
-    transactions,
-    selectedMonth,
-    selectedYear,
+    allTransactions,
     searchTerm,
     filterType,
     filterCategory,
