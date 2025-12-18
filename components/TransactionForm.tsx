@@ -33,6 +33,7 @@ import {
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
   ArrowBack as ArrowBackIcon,
+  Group as GroupIcon,
 } from "@mui/icons-material";
 import { Transaction, TransactionType } from "../types";
 
@@ -77,6 +78,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [frequency, setFrequency] = useState<"monthly" | "yearly">("monthly");
   const [hasInstallments, setHasInstallments] = useState(false);
   const [installments, setInstallments] = useState("2");
+  const [isShared, setIsShared] = useState(false);
 
   useEffect(() => {
     if (editTransaction) {
@@ -93,6 +95,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           editTransaction.installments > 1
       );
       setInstallments(editTransaction.installments?.toString() || "2");
+      setIsShared(editTransaction.isShared || false);
     } else {
       setDescription("");
       setAmount("");
@@ -104,6 +107,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setFrequency("monthly");
       setHasInstallments(false);
       setInstallments("2");
+      setIsShared(false);
     }
   }, [editTransaction, isOpen]);
 
@@ -134,6 +138,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         currentInstallment: hasInstallments
           ? editTransaction?.currentInstallment || 1
           : undefined,
+        isShared,
       },
       editTransaction?.id
     );
@@ -349,6 +354,39 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 </Paper>
               </Grid>
             </Grid>
+
+            {/* Shared Expense Toggle */}
+            {type === "expense" && (
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 1.5,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  cursor: "pointer",
+                  bgcolor: isShared ? "info.50" : "transparent",
+                  borderColor: isShared ? "info.main" : "divider",
+                }}
+                onClick={() => setIsShared(!isShared)}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <GroupIcon
+                    fontSize="small"
+                    color={isShared ? "info" : "action"}
+                  />
+                  <Box>
+                    <Typography variant="body2">Shared? (50/50)</Typography>
+                    {isShared && (
+                      <Typography variant="caption" color="text.secondary">
+                        Split equally with a friend
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+                <Switch checked={isShared} size="small" color="info" />
+              </Paper>
+            )}
 
             {isRecurring && (
               <FormControl fullWidth>

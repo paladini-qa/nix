@@ -73,6 +73,11 @@ export default {
     unpaid: "Unpaid",
     noTransactions: "No transactions found",
     addFirst: "Add your first transaction",
+    shared: "Shared",
+    notShared: "Not Shared",
+    sharedExpense: "Shared Expense (50/50)",
+    friendOwes: "Friend Owes You",
+    sharedExpenses: "shared expenses",
   },
 
   // Budgets

@@ -15,6 +15,7 @@ export interface Transaction {
   installments?: number; // Number of installments (parcelas)
   currentInstallment?: number; // Current installment number (1, 2, 3...)
   isPaid?: boolean; // Status de pagamento (pago/não pago)
+  isShared?: boolean; // Gasto compartilhado 50/50 com outra pessoa
   // Campos para transações recorrentes virtuais (geradas automaticamente)
   isVirtual?: boolean; // Indica se é uma ocorrência virtual de transação recorrente
   originalTransactionId?: string; // ID da transação original (para virtuais)

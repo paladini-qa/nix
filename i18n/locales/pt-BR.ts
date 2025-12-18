@@ -73,6 +73,11 @@ export default {
     unpaid: "Não Pago",
     noTransactions: "Nenhuma transação encontrada",
     addFirst: "Adicione sua primeira transação",
+    shared: "Compartilhado",
+    notShared: "Não Compartilhado",
+    sharedExpense: "Gasto Compartilhado (50/50)",
+    friendOwes: "Seu Amigo Deve",
+    sharedExpenses: "gastos compartilhados",
   },
 
   // Budgets

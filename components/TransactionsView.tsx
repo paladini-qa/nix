@@ -46,6 +46,7 @@ import {
   ExpandMore as ChevronDownIcon,
   MoreVert as MoreVertIcon,
   AutorenewOutlined as AutorenewIcon,
+  Group as GroupIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
@@ -79,6 +80,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     "all"
   );
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterShared, setFilterShared] = useState<"all" | "shared" | "not_shared">("all");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [mobileActionAnchor, setMobileActionAnchor] = useState<{
@@ -106,7 +108,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         const matchesType = filterType === "all" || t.type === filterType;
         const matchesCategory =
           filterCategory === "all" || t.category === filterCategory;
-        return matchesDate && matchesSearch && matchesType && matchesCategory;
+        const matchesShared =
+          filterShared === "all" ||
+          (filterShared === "shared" && t.isShared) ||
+          (filterShared === "not_shared" && !t.isShared);
+        return matchesDate && matchesSearch && matchesType && matchesCategory && matchesShared;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [
@@ -116,6 +122,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     searchTerm,
     filterType,
     filterCategory,
+    filterShared,
   ]);
 
   const formatCurrency = (value: number) => {
@@ -483,6 +490,26 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           </Select>
         </FormControl>
 
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Shared</InputLabel>
+          <Select
+            value={filterShared}
+            label="Shared"
+            onChange={(e: SelectChangeEvent) =>
+              setFilterShared(e.target.value as "all" | "shared" | "not_shared")
+            }
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="shared">
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <GroupIcon fontSize="small" color="info" />
+                Shared
+              </Box>
+            </MenuItem>
+            <MenuItem value="not_shared">Not Shared</MenuItem>
+          </Select>
+        </FormControl>
+
         <DateFilter
           month={selectedMonth}
           year={selectedYear}
@@ -637,6 +664,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       {/* Tags */}
                       {(t.isRecurring ||
                         t.isVirtual ||
+                        t.isShared ||
                         (t.installments && t.installments > 1)) && (
                         <Box
                           sx={{
@@ -646,6 +674,20 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                             flexWrap: "wrap",
                           }}
                         >
+                          {t.isShared && (
+                            <Chip
+                              icon={<GroupIcon sx={{ fontSize: 12 }} />}
+                              label="50/50"
+                              size="small"
+                              color="info"
+                              variant="filled"
+                              sx={{
+                                height: 20,
+                                fontSize: 10,
+                                "& .MuiChip-icon": { ml: 0.5 },
+                              }}
+                            />
+                          )}
                           {t.isRecurring && (
                             <Chip
                               icon={<RepeatIcon sx={{ fontSize: 12 }} />}
@@ -912,6 +954,21 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                             size="small"
                             color="warning"
                             variant="outlined"
+                            sx={{
+                              height: 18,
+                              fontSize: 10,
+                              mt: 0.5,
+                              width: "fit-content",
+                            }}
+                          />
+                        )}
+                        {t.isShared && (
+                          <Chip
+                            icon={<GroupIcon />}
+                            label="50/50"
+                            size="small"
+                            color="info"
+                            variant="filled"
                             sx={{
                               height: 18,
                               fontSize: 10,

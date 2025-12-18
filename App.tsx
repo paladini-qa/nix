@@ -1027,7 +1027,7 @@ const App: React.FC = () => {
                         </Box>
                       </Box>
 
-                      <SummaryCards summary={summary} />
+                      <SummaryCards summary={summary} transactions={filteredTransactions} />
 
                       {/* Transaction History */}
                       <Box>
