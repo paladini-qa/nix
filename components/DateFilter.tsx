@@ -70,7 +70,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
           sx={{
             border: 1,
             borderColor: "divider",
-            borderRadius: 1.5,
+            borderRadius: 1,
             "&:hover": {
               bgcolor: "primary.main",
               color: "primary.contrastText",
@@ -110,7 +110,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
           sx={{
             border: 1,
             borderColor: "divider",
-            borderRadius: 1.5,
+            borderRadius: 1,
             "&:hover": {
               bgcolor: "primary.main",
               color: "primary.contrastText",

@@ -28,6 +28,7 @@ import {
   ListSubheader,
   Alert,
   Collapse,
+  alpha,
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -39,6 +40,7 @@ import {
   ArrowBack as ArrowBackIcon,
   Group as GroupIcon,
   PersonAdd as PersonAddIcon,
+  SaveAlt as SaveIcon,
 } from "@mui/icons-material";
 import { Transaction, TransactionType } from "../types";
 
@@ -64,6 +66,78 @@ interface TransactionFormProps {
   onAddFriend: (friend: string) => void;
 }
 
+// Estilos do input customizado - soft e orgânico
+const getInputSx = (theme: any, isDarkMode: boolean) => ({
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 1,
+    bgcolor: isDarkMode
+      ? alpha(theme.palette.background.default, 0.5)
+      : alpha(theme.palette.primary.main, 0.02),
+    transition: "all 0.2s ease-in-out",
+    "& fieldset": {
+      borderColor: isDarkMode
+        ? alpha("#FFFFFF", 0.08)
+        : alpha(theme.palette.primary.main, 0.1),
+      borderWidth: 1.5,
+      transition: "all 0.2s ease-in-out",
+    },
+    "&:hover fieldset": {
+      borderColor: isDarkMode
+        ? alpha("#FFFFFF", 0.15)
+        : alpha(theme.palette.primary.main, 0.2),
+    },
+    "&.Mui-focused": {
+      bgcolor: isDarkMode
+        ? alpha(theme.palette.primary.main, 0.08)
+        : alpha(theme.palette.primary.main, 0.04),
+      boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: theme.palette.primary.main,
+      borderWidth: 1.5,
+    },
+  },
+  "& .MuiInputLabel-root": {
+    fontWeight: 500,
+  },
+});
+
+// Estilos do toggle button/paper - premium feel
+const getTogglePaperSx = (isActive: boolean, accentColor: string, theme: any, isDarkMode: boolean) => ({
+  p: 2,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  cursor: "pointer",
+  borderRadius: 1,
+  transition: "all 0.2s ease-in-out",
+  border: `1.5px solid ${isActive
+    ? alpha(accentColor, 0.4)
+    : isDarkMode
+      ? alpha("#FFFFFF", 0.08)
+      : alpha("#000000", 0.08)}`,
+  bgcolor: isActive
+    ? isDarkMode
+      ? alpha(accentColor, 0.1)
+      : alpha(accentColor, 0.06)
+    : isDarkMode
+      ? alpha(theme.palette.background.default, 0.3)
+      : alpha("#FFFFFF", 0.6),
+  boxShadow: isActive
+    ? `0 4px 12px -4px ${alpha(accentColor, 0.25)}`
+    : "none",
+  "&:hover": {
+    bgcolor: isActive
+      ? isDarkMode
+        ? alpha(accentColor, 0.15)
+        : alpha(accentColor, 0.1)
+      : isDarkMode
+        ? alpha(theme.palette.background.default, 0.5)
+        : alpha(theme.palette.primary.main, 0.04),
+    transform: "translateY(-1px)",
+  },
+});
+
 const TransactionForm: React.FC<TransactionFormProps> = ({
   isOpen,
   onClose,
@@ -76,6 +150,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isDarkMode = theme.palette.mode === "dark";
 
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -92,6 +167,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [newFriendName, setNewFriendName] = useState("");
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  const inputSx = getInputSx(theme, isDarkMode);
 
   useEffect(() => {
     if (editTransaction) {
@@ -192,31 +269,81 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       fullScreen={isMobile}
       TransitionComponent={isMobile ? SlideTransition : undefined}
       PaperProps={{
-        sx: { borderRadius: isMobile ? 0 : 3 },
+        sx: {
+          borderRadius: isMobile ? 0 : 1,
+          // Glassmorphism no modal
+          bgcolor: isDarkMode
+            ? alpha(theme.palette.background.paper, 0.85)
+            : alpha("#FFFFFF", 0.95),
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: isMobile
+            ? "none"
+            : `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
+          boxShadow: isDarkMode
+            ? `0 24px 80px -20px ${alpha("#000000", 0.6)}`
+            : `0 24px 80px -20px ${alpha(theme.palette.primary.main, 0.2)}`,
+        },
+      }}
+      slotProps={{
+        backdrop: {
+          sx: {
+            bgcolor: isDarkMode
+              ? alpha("#0F172A", 0.8)
+              : alpha("#64748B", 0.4),
+            backdropFilter: "blur(8px)",
+          },
+        },
       }}
     >
       {/* Mobile Header */}
       {isMobile ? (
         <AppBar
           position="sticky"
-          color="default"
           elevation={0}
-          sx={{ borderBottom: 1, borderColor: "divider" }}
+          sx={{
+            bgcolor: isDarkMode
+              ? alpha(theme.palette.background.paper, 0.9)
+              : alpha("#FFFFFF", 0.9),
+            backdropFilter: "blur(20px)",
+            borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+            color: "text.primary",
+          }}
         >
           <Toolbar>
-            <IconButton edge="start" onClick={onClose} sx={{ mr: 2 }}>
+            <IconButton
+              edge="start"
+              onClick={onClose}
+              sx={{
+                mr: 2,
+                bgcolor: isDarkMode
+                  ? alpha("#FFFFFF", 0.05)
+                  : alpha("#000000", 0.04),
+                "&:hover": {
+                  bgcolor: isDarkMode
+                    ? alpha("#FFFFFF", 0.1)
+                    : alpha("#000000", 0.08),
+                },
+              }}
+            >
               <ArrowBackIcon />
             </IconButton>
-            <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
-              {editTransaction ? "Edit Transaction" : "New Transaction"}
+            <Typography variant="h6" fontWeight={700} sx={{ flex: 1, letterSpacing: "-0.01em" }}>
+              {editTransaction ? "Editar Transação" : "Nova Transação"}
             </Typography>
             <Button
               type="submit"
               form="transaction-form"
               variant="contained"
               size="small"
+              sx={{
+                borderRadius: 1,
+                px: 2.5,
+                fontWeight: 600,
+                boxShadow: `0 4px 14px -4px ${alpha(theme.palette.primary.main, 0.4)}`,
+              }}
             >
-              Save
+              Salvar
             </Button>
           </Toolbar>
         </AppBar>
@@ -226,12 +353,25 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            pb: 2,
           }}
         >
-          <Typography variant="h6" fontWeight={600}>
-            {editTransaction ? "Edit Transaction" : "New Transaction"}
+          <Typography variant="h5" fontWeight={700} letterSpacing="-0.02em">
+            {editTransaction ? "Editar Transação" : "Nova Transação"}
           </Typography>
-          <IconButton onClick={onClose} size="small">
+          <IconButton
+            onClick={onClose}
+            sx={{
+              bgcolor: isDarkMode
+                ? alpha("#FFFFFF", 0.05)
+                : alpha("#000000", 0.04),
+              "&:hover": {
+                bgcolor: isDarkMode
+                  ? alpha("#FFFFFF", 0.1)
+                  : alpha("#000000", 0.08),
+              },
+            }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -239,22 +379,31 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
       <form id="transaction-form" onSubmit={handleSubmit}>
         <DialogContent
-          dividers={!isMobile}
-          sx={{ pt: isMobile ? 3 : undefined }}
+          sx={{
+            pt: isMobile ? 3 : 1,
+            pb: 3,
+            // Removido dividers - mais clean
+            borderTop: "none",
+            borderBottom: "none",
+          }}
         >
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          {/* Breathing Room - gap aumentado para 3.5 */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
             {/* Validation Error Alert */}
             <Collapse in={!!validationError}>
               <Alert 
                 severity="error" 
                 onClose={() => setValidationError(null)}
-                sx={{ mb: 1 }}
+                sx={{
+                  borderRadius: 1,
+                  border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
+                }}
               >
                 {validationError}
               </Alert>
             </Collapse>
 
-            {/* Type Toggle */}
+            {/* Type Toggle - Premium Style */}
             <ToggleButtonGroup
               value={type}
               exclusive
@@ -266,9 +415,25 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               }}
               fullWidth
               sx={{
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.background.default, 0.3)
+                  : alpha("#000000", 0.02),
+                borderRadius: 1,
+                p: 0.5,
+                "& .MuiToggleButtonGroup-grouped": {
+                  border: 0,
+                  borderRadius: "10px !important",
+                  mx: 0.25,
+                },
                 "& .MuiToggleButton-root": {
                   py: 1.5,
                   fontWeight: 600,
+                  fontSize: "0.95rem",
+                  textTransform: "none",
+                  transition: "all 0.2s ease-in-out",
+                  "&:not(.Mui-selected)": {
+                    color: "text.secondary",
+                  },
                 },
               }}
             >
@@ -276,64 +441,70 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 value="income"
                 sx={{
                   "&.Mui-selected": {
-                    bgcolor: "success.main",
-                    color: "white",
+                    bgcolor: alpha(theme.palette.success.main, isDarkMode ? 0.2 : 0.15),
+                    color: theme.palette.success.main,
+                    boxShadow: `0 4px 12px -4px ${alpha(theme.palette.success.main, 0.3)}`,
                     "&:hover": {
-                      bgcolor: "success.dark",
+                      bgcolor: alpha(theme.palette.success.main, isDarkMode ? 0.25 : 0.2),
                     },
                   },
                 }}
               >
-                Income
+                💰 Receita
               </ToggleButton>
               <ToggleButton
                 value="expense"
                 sx={{
                   "&.Mui-selected": {
-                    bgcolor: "error.main",
-                    color: "white",
+                    bgcolor: alpha(theme.palette.error.main, isDarkMode ? 0.2 : 0.15),
+                    color: theme.palette.error.main,
+                    boxShadow: `0 4px 12px -4px ${alpha(theme.palette.error.main, 0.3)}`,
                     "&:hover": {
-                      bgcolor: "error.dark",
+                      bgcolor: alpha(theme.palette.error.main, isDarkMode ? 0.25 : 0.2),
                     },
                   },
                 }}
               >
-                Expense
+                💸 Despesa
               </ToggleButton>
             </ToggleButtonGroup>
 
             <TextField
-              label="Description"
+              label="Descrição"
               required
               fullWidth
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g., Groceries"
+              placeholder="Ex: Mercado, Aluguel, Salário..."
+              sx={inputSx}
             />
 
             <TextField
-              label="Amount (R$)"
+              label="Valor (R$)"
               type="number"
               required
               fullWidth
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
+              placeholder="0,00"
               inputProps={{ min: 0.01, step: 0.01 }}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start">R$</InputAdornment>
+                  <InputAdornment position="start">
+                    <Typography fontWeight={600} color="text.secondary">R$</Typography>
+                  </InputAdornment>
                 ),
               }}
+              sx={inputSx}
             />
 
-            <Grid container spacing={2}>
+            <Grid container spacing={2.5}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
+                <FormControl fullWidth required sx={inputSx}>
+                  <InputLabel>Categoria</InputLabel>
                   <Select
                     value={category}
-                    label="Category"
+                    label="Categoria"
                     onChange={(e) => setCategory(e.target.value)}
                   >
                     {categories[type].map((cat) => (
@@ -345,11 +516,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 </FormControl>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormControl fullWidth required>
-                  <InputLabel>Payment Method</InputLabel>
+                <FormControl fullWidth required sx={inputSx}>
+                  <InputLabel>Forma de Pagamento</InputLabel>
                   <Select
                     value={paymentMethod}
-                    label="Payment Method"
+                    label="Forma de Pagamento"
                     onChange={(e) => setPaymentMethod(e.target.value)}
                   >
                     {paymentMethods.map((method) => (
@@ -362,61 +533,73 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Grid>
             </Grid>
 
-            <Grid container spacing={2}>
+            <Grid container spacing={2.5}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <DatePicker
-                  label="Date"
+                  label="Data"
                   value={date}
                   onChange={(newValue) => setDate(newValue)}
                   slotProps={{
                     textField: {
                       fullWidth: true,
                       required: true,
+                      sx: inputSx,
                     },
                   }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 1.5,
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    cursor: "pointer",
-                    bgcolor: isRecurring ? "primary.50" : "transparent",
-                    borderColor: isRecurring ? "primary.main" : "divider",
-                  }}
+                  elevation={0}
+                  sx={getTogglePaperSx(isRecurring, theme.palette.primary.main, theme, isDarkMode)}
                   onClick={() => setIsRecurring(!isRecurring)}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <RepeatIcon
-                      fontSize="small"
-                      color={isRecurring ? "primary" : "action"}
-                    />
-                    <Typography variant="body2">Recurring?</Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: isRecurring
+                          ? alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.12)
+                          : alpha("#64748B", 0.1),
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      <RepeatIcon
+                        fontSize="small"
+                        sx={{
+                          color: isRecurring ? "primary.main" : "text.secondary",
+                          transition: "color 0.2s ease",
+                        }}
+                      />
+                    </Box>
+                    <Typography variant="body2" fontWeight={500}>
+                      Recorrente?
+                    </Typography>
                   </Box>
-                  <Switch checked={isRecurring} size="small" />
+                  <Switch
+                    checked={isRecurring}
+                    size="small"
+                    sx={{
+                      "& .MuiSwitch-thumb": {
+                        boxShadow: `0 2px 4px ${alpha("#000000", 0.2)}`,
+                      },
+                    }}
+                  />
                 </Paper>
               </Grid>
             </Grid>
 
             {/* Shared Expense Toggle */}
             {type === "expense" && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
                 <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 1.5,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    cursor: "pointer",
-                    bgcolor: isShared ? "info.50" : "transparent",
-                    borderColor: isShared ? "info.main" : "divider",
-                  }}
+                  elevation={0}
+                  sx={getTogglePaperSx(isShared, theme.palette.info.main, theme, isDarkMode)}
                   onClick={() => {
                     setIsShared(!isShared);
                     if (isShared) {
@@ -424,16 +607,36 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     }
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <GroupIcon
-                      fontSize="small"
-                      color={isShared ? "info" : "action"}
-                    />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: isShared
+                          ? alpha(theme.palette.info.main, isDarkMode ? 0.2 : 0.12)
+                          : alpha("#64748B", 0.1),
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      <GroupIcon
+                        fontSize="small"
+                        sx={{
+                          color: isShared ? "info.main" : "text.secondary",
+                          transition: "color 0.2s ease",
+                        }}
+                      />
+                    </Box>
                     <Box>
-                      <Typography variant="body2">Shared? (50/50)</Typography>
+                      <Typography variant="body2" fontWeight={500}>
+                        Dividir 50/50?
+                      </Typography>
                       {isShared && (
                         <Typography variant="caption" color="text.secondary">
-                          Split equally with a friend - creates income for reimbursement
+                          Cria receita automática para reembolso
                         </Typography>
                       )}
                     </Box>
@@ -443,12 +646,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
                 {/* Friend Selection */}
                 {isShared && (
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Select Friend</InputLabel>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <FormControl fullWidth size="small" sx={inputSx}>
+                      <InputLabel>Selecionar Amigo</InputLabel>
                       <Select
                         value={sharedWith}
-                        label="Select Friend"
+                        label="Selecionar Amigo"
                         onChange={(e) => {
                           if (e.target.value === "__add_new__") {
                             setShowAddFriend(true);
@@ -458,7 +661,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         }}
                       >
                         {friends.length > 0 && (
-                          <ListSubheader>Friends</ListSubheader>
+                          <ListSubheader>Amigos</ListSubheader>
                         )}
                         {friends.map((friend) => (
                           <MenuItem key={friend} value={friend}>
@@ -469,7 +672,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         <MenuItem value="__add_new__">
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                             <PersonAddIcon fontSize="small" color="primary" />
-                            <Typography color="primary">Add new friend...</Typography>
+                            <Typography color="primary" fontWeight={500}>
+                              Adicionar novo amigo...
+                            </Typography>
                           </Box>
                         </MenuItem>
                       </Select>
@@ -478,16 +683,23 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     {/* Add New Friend Form */}
                     {showAddFriend && (
                       <Paper
-                        variant="outlined"
-                        sx={{ p: 2, bgcolor: "action.hover" }}
+                        elevation={0}
+                        sx={{
+                          p: 2.5,
+                          borderRadius: 1,
+                          bgcolor: isDarkMode
+                            ? alpha(theme.palette.primary.main, 0.08)
+                            : alpha(theme.palette.primary.main, 0.04),
+                          border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+                        }}
                       >
-                        <Typography variant="subtitle2" gutterBottom>
-                          Add New Friend
+                        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                          Novo Amigo
                         </Typography>
-                        <Box sx={{ display: "flex", gap: 1 }}>
+                        <Box sx={{ display: "flex", gap: 1.5 }}>
                           <TextField
                             size="small"
-                            placeholder="Friend's name"
+                            placeholder="Nome do amigo"
                             value={newFriendName}
                             onChange={(e) => setNewFriendName(e.target.value)}
                             onKeyDown={(e) => {
@@ -498,12 +710,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             }}
                             fullWidth
                             autoFocus
+                            sx={inputSx}
                           />
                           <Button
                             variant="contained"
                             size="small"
                             onClick={handleAddNewFriend}
                             disabled={!newFriendName.trim()}
+                            sx={{ borderRadius: 1, px: 2.5 }}
                           >
                             Add
                           </Button>
@@ -514,8 +728,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                               setShowAddFriend(false);
                               setNewFriendName("");
                             }}
+                            sx={{ borderRadius: 1 }}
                           >
-                            Cancel
+                            Cancelar
                           </Button>
                         </Box>
                       </Paper>
@@ -524,20 +739,23 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     {/* Preview of income that will be created */}
                     {sharedWith && amount && (
                       <Paper
+                        elevation={0}
                         sx={{
-                          p: 2,
-                          bgcolor: "success.50",
-                          borderColor: "success.main",
-                          border: 1,
+                          p: 2.5,
+                          borderRadius: 1,
+                          bgcolor: isDarkMode
+                            ? alpha(theme.palette.success.main, 0.1)
+                            : alpha(theme.palette.success.main, 0.06),
+                          border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
                         }}
                       >
-                        <Typography variant="body2" color="success.dark" fontWeight={500}>
-                          Will create income:
+                        <Typography variant="body2" color="success.main" fontWeight={600}>
+                          ✨ Receita automática:
                         </Typography>
-                        <Typography variant="body2" color="success.dark">
-                          "{description || "Transaction"} - {sharedWith}"
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          "{description || "Transação"} - {sharedWith}"
                         </Typography>
-                        <Typography variant="h6" fontWeight={600} color="success.dark">
+                        <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
                           +{new Intl.NumberFormat("pt-BR", {
                             style: "currency",
                             currency: "BRL",
@@ -551,56 +769,69 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             )}
 
             {isRecurring && (
-              <FormControl fullWidth>
-                <InputLabel>Frequency</InputLabel>
+              <FormControl fullWidth sx={inputSx}>
+                <InputLabel>Frequência</InputLabel>
                 <Select
                   value={frequency}
-                  label="Frequency"
+                  label="Frequência"
                   onChange={(e) =>
                     setFrequency(e.target.value as "monthly" | "yearly")
                   }
                 >
-                  <MenuItem value="monthly">Monthly</MenuItem>
-                  <MenuItem value="yearly">Yearly</MenuItem>
+                  <MenuItem value="monthly">Mensal</MenuItem>
+                  <MenuItem value="yearly">Anual</MenuItem>
                 </Select>
               </FormControl>
             )}
 
             {type === "expense" && (
-              <Grid container spacing={2}>
+              <Grid container spacing={2.5}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Paper
-                    variant="outlined"
-                    sx={{
-                      p: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      cursor: "pointer",
-                      bgcolor: hasInstallments ? "primary.50" : "transparent",
-                      borderColor: hasInstallments ? "primary.main" : "divider",
-                    }}
+                    elevation={0}
+                    sx={getTogglePaperSx(hasInstallments, theme.palette.warning.main, theme, isDarkMode)}
                     onClick={() => setHasInstallments(!hasInstallments)}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <CreditCardIcon
-                        fontSize="small"
-                        color={hasInstallments ? "primary" : "action"}
-                      />
-                      <Typography variant="body2">Split?</Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: hasInstallments
+                            ? alpha(theme.palette.warning.main, isDarkMode ? 0.2 : 0.12)
+                            : alpha("#64748B", 0.1),
+                          transition: "all 0.2s ease",
+                        }}
+                      >
+                        <CreditCardIcon
+                          fontSize="small"
+                          sx={{
+                            color: hasInstallments ? "warning.main" : "text.secondary",
+                            transition: "color 0.2s ease",
+                          }}
+                        />
+                      </Box>
+                      <Typography variant="body2" fontWeight={500}>
+                        Parcelado?
+                      </Typography>
                     </Box>
-                    <Switch checked={hasInstallments} size="small" />
+                    <Switch checked={hasInstallments} size="small" color="warning" />
                   </Paper>
                 </Grid>
                 {hasInstallments && (
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
-                      label="# of Installments"
+                      label="Nº de Parcelas"
                       type="number"
                       fullWidth
                       value={installments}
                       onChange={(e) => setInstallments(e.target.value)}
                       inputProps={{ min: 2, max: 48 }}
+                      sx={inputSx}
                     />
                   </Grid>
                 )}
@@ -612,11 +843,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               amount &&
               parseInt(installments) >= 2 && (
                 <Paper
+                  elevation={0}
                   sx={{
-                    p: 2,
-                    bgcolor: "warning.50",
-                    borderColor: "warning.main",
-                    border: 1,
+                    p: 2.5,
+                    borderRadius: 1,
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.warning.main, 0.1)
+                      : alpha(theme.palette.warning.main, 0.06),
+                    border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
                   }}
                 >
                   <Box
@@ -626,13 +860,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       justifyContent: "space-between",
                     }}
                   >
-                    <Typography variant="body2" color="warning.dark">
-                      {installments}x of
+                    <Typography variant="body2" color="warning.main" fontWeight={500}>
+                      {installments}x de
                     </Typography>
                     <Typography
-                      variant="h6"
-                      fontWeight={600}
-                      color="warning.dark"
+                      variant="h5"
+                      fontWeight={700}
+                      color="warning.main"
                     >
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
@@ -640,7 +874,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       }).format(parseFloat(amount) / parseInt(installments))}
                     </Typography>
                   </Box>
-                  <Typography variant="caption" color="warning.main">
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
                     Total:{" "}
                     {new Intl.NumberFormat("pt-BR", {
                       style: "currency",
@@ -652,14 +886,59 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           </Box>
         </DialogContent>
 
-        {/* Desktop Actions */}
+        {/* Desktop Actions - Prominent Save Button */}
         {!isMobile && (
-          <DialogActions sx={{ p: 2.5 }}>
-            <Button onClick={onClose} color="inherit">
-              Cancel
+          <DialogActions
+            sx={{
+              p: 3,
+              pt: 0,
+              gap: 1.5,
+            }}
+          >
+            <Button
+              onClick={onClose}
+              color="inherit"
+              sx={{
+                borderRadius: 1,
+                px: 3,
+                py: 1.25,
+                fontWeight: 500,
+                color: "text.secondary",
+                bgcolor: isDarkMode
+                  ? alpha("#FFFFFF", 0.05)
+                  : alpha("#000000", 0.04),
+                "&:hover": {
+                  bgcolor: isDarkMode
+                    ? alpha("#FFFFFF", 0.1)
+                    : alpha("#000000", 0.08),
+                },
+              }}
+            >
+              Cancelar
             </Button>
-            <Button type="submit" variant="contained" size="large">
-              Save Transaction
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              startIcon={<SaveIcon />}
+              sx={{
+                flex: 1,
+                borderRadius: 1,
+                py: 1.5,
+                fontWeight: 600,
+                fontSize: "1rem",
+                boxShadow: `0 8px 24px -8px ${alpha(theme.palette.primary.main, 0.4)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                  boxShadow: `0 12px 32px -8px ${alpha(theme.palette.primary.main, 0.5)}`,
+                },
+                "&:active": {
+                  transform: "translateY(0)",
+                },
+              }}
+            >
+              Salvar Transação
             </Button>
           </DialogActions>
         )}

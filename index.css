@@ -1,9 +1,113 @@
-/* Nix - Custom Styles */
+/* Nix - Human & Organic Design System */
 
-/* Smooth scrollbar */
+/* ============================================
+   TYPOGRAPHY - Plus Jakarta Sans from Google Fonts
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+/* ============================================
+   CSS CUSTOM PROPERTIES (Design Tokens)
+   ============================================ */
+:root {
+  /* Primary palette */
+  --nix-primary: #4F46E5;
+  --nix-primary-light: #6366F1;
+  --nix-secondary: #A855F7;
+  
+  /* Semantic colors */
+  --nix-success: #059669;
+  --nix-error: #DC2626;
+  --nix-warning: #D97706;
+  
+  /* Background - Light mode */
+  --nix-bg-base: #F8FAFC;
+  --nix-bg-subtle: #F1F5F9;
+  --nix-bg-paper: #FFFFFF;
+  
+  /* Mesh gradient colors */
+  --nix-mesh-1: rgba(79, 70, 229, 0.08);
+  --nix-mesh-2: rgba(168, 85, 247, 0.06);
+  --nix-mesh-3: rgba(5, 150, 105, 0.04);
+}
+
+/* Dark mode variables */
+[data-theme="dark"],
+.dark {
+  --nix-bg-base: #0F172A;
+  --nix-bg-subtle: #1E293B;
+  --nix-bg-paper: #1E293B;
+  
+  --nix-mesh-1: rgba(99, 102, 241, 0.12);
+  --nix-mesh-2: rgba(168, 85, 247, 0.08);
+  --nix-mesh-3: rgba(16, 185, 129, 0.06);
+}
+
+/* ============================================
+   BASE STYLES - Body & HTML
+   ============================================ */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', sans-serif;
+  background-color: var(--nix-bg-base);
+  min-height: 100vh;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+/* ============================================
+   MESH GRADIENT BACKGROUND
+   Creates a subtle, organic feel that makes 
+   glassmorphism cards pop beautifully
+   ============================================ */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: 
+    /* Blob superior esquerdo - Indigo */
+    radial-gradient(
+      ellipse 80% 50% at 10% 20%,
+      var(--nix-mesh-1) 0%,
+      transparent 50%
+    ),
+    /* Blob superior direito - Violet */
+    radial-gradient(
+      ellipse 60% 60% at 85% 15%,
+      var(--nix-mesh-2) 0%,
+      transparent 45%
+    ),
+    /* Blob inferior - Emerald */
+    radial-gradient(
+      ellipse 70% 50% at 50% 90%,
+      var(--nix-mesh-3) 0%,
+      transparent 50%
+    ),
+    /* Base gradient suave */
+    linear-gradient(
+      180deg,
+      var(--nix-bg-base) 0%,
+      var(--nix-bg-subtle) 100%
+    );
+}
+
+/* ============================================
+   SCROLLBAR - Smooth & Modern
+   ============================================ */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -11,27 +115,52 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #CBD5E1 0%, #94A3B8 100%);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: linear-gradient(180deg, #94A3B8 0%, #64748B 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #475569;
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb,
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #475569 0%, #334155 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+.dark ::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #64748B 0%, #475569 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-/* Animations */
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #94A3B8 transparent;
+}
+
+.dark *,
+[data-theme="dark"] * {
+  scrollbar-color: #475569 transparent;
+}
+
+/* ============================================
+   ANIMATIONS - Smooth & Organic
+   ============================================ */
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -39,10 +168,75 @@
   }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(79, 70, 229, 0.25);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Skeleton loading effect */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.1) 25%,
+    rgba(148, 163, 184, 0.2) 50%,
+    rgba(148, 163, 184, 0.1) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ============================================
+   FORM ELEMENTS
+   ============================================ */
 /* Number input - hide spinners */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -54,12 +248,22 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Custom focus styles */
+/* Custom focus styles - usando cor primária */
 *:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--nix-primary);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
+/* Selection color */
+::selection {
+  background-color: rgba(79, 70, 229, 0.2);
+  color: inherit;
+}
+
+/* ============================================
+   INTERACTIVE ELEMENTS
+   ============================================ */
 /* Prevent text selection on buttons and interactive elements */
 button,
 [role="button"],
@@ -67,11 +271,18 @@ select {
   user-select: none;
 }
 
-/* Smooth transitions for dark mode */
-html {
-  transition: background-color 0.3s ease, color 0.3s ease;
+/* Global transition for interactive elements */
+button,
+a,
+input,
+select,
+textarea {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
 /* Better table scrolling on mobile */
 .overflow-x-auto {
   -webkit-overflow-scrolling: touch;
@@ -82,7 +293,7 @@ html {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Hide scrollbar on mobile nav */
+/* Hide scrollbar */
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -92,7 +303,36 @@ html {
   display: none;
 }
 
-/* Responsive text utilities */
+/* Glass effect utility */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass,
+[data-theme="dark"] .glass {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Tinted shadow utilities */
+.shadow-primary {
+  box-shadow: 0 10px 40px -10px rgba(79, 70, 229, 0.2);
+}
+
+.shadow-success {
+  box-shadow: 0 10px 40px -10px rgba(5, 150, 105, 0.2);
+}
+
+.shadow-error {
+  box-shadow: 0 10px 40px -10px rgba(220, 38, 38, 0.2);
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
 @media (max-width: 640px) {
   .text-responsive-lg {
     font-size: 1.5rem;
@@ -117,9 +357,37 @@ html {
   }
 }
 
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   MODAL STATES
+   ============================================ */
 /* Prevent body scroll when modal is open */
 body.modal-open {
   overflow: hidden;
   position: fixed;
   width: 100%;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+  body::before {
+    display: none;
+  }
+  
+  * {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
 }

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Box,
-  Paper,
   Typography,
   TextField,
   Button,
@@ -9,6 +8,8 @@ import {
   InputAdornment,
   CircularProgress,
   Link,
+  useTheme,
+  alpha,
 } from "@mui/material";
 import {
   AutoAwesome as SparklesIcon,
@@ -16,10 +17,14 @@ import {
   Lock as LockIcon,
   Person as PersonIcon,
   ArrowForward as ArrowForwardIcon,
+  Fingerprint as FingerprintIcon,
 } from "@mui/icons-material";
 import { supabase } from "../services/supabaseClient";
 
 const LoginView: React.FC = () => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -28,11 +33,47 @@ const LoginView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  // Estilos de input premium
+  const inputSx = {
+    "& .MuiOutlinedInput-root": {
+      borderRadius: 2.5,
+      bgcolor: isDarkMode
+        ? alpha(theme.palette.background.paper, 0.4)
+        : alpha("#FFFFFF", 0.7),
+      backdropFilter: "blur(8px)",
+      transition: "all 0.2s ease-in-out",
+      "& fieldset": {
+        borderColor: isDarkMode
+          ? alpha("#FFFFFF", 0.1)
+          : alpha(theme.palette.primary.main, 0.15),
+        borderWidth: 1.5,
+      },
+      "&:hover fieldset": {
+        borderColor: isDarkMode
+          ? alpha("#FFFFFF", 0.2)
+          : alpha(theme.palette.primary.main, 0.3),
+      },
+      "&.Mui-focused": {
+        bgcolor: isDarkMode
+          ? alpha(theme.palette.primary.main, 0.1)
+          : alpha("#FFFFFF", 0.9),
+        boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.15)}`,
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: theme.palette.primary.main,
+        borderWidth: 2,
+      },
+    },
+    "& .MuiInputLabel-root": {
+      fontWeight: 500,
+    },
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
     if (isSignUp && !displayName.trim()) {
-      setError("Please enter your name.");
+      setError("Por favor, digite seu nome.");
       return;
     }
 
@@ -57,7 +98,7 @@ const LoginView: React.FC = () => {
         }
 
         setMessage(
-          "Account created! Check your email to confirm (or log in if confirmation is disabled)."
+          "Conta criada! Verifique seu email para confirmar (ou faça login se a confirmação estiver desabilitada)."
         );
         setIsSignUp(false);
         setDisplayName("");
@@ -69,7 +110,7 @@ const LoginView: React.FC = () => {
         if (error) throw error;
       }
     } catch (err: any) {
-      setError(err.message || "An error occurred.");
+      setError(err.message || "Ocorreu um erro.");
     } finally {
       setIsLoading(false);
     }
@@ -83,63 +124,123 @@ const LoginView: React.FC = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: "background.default",
         position: "relative",
         overflow: "hidden",
+        // Gradiente de fundo premium
+        background: isDarkMode
+          ? `linear-gradient(135deg, ${theme.palette.background.default} 0%, #1a1a2e 50%, ${alpha(theme.palette.primary.dark, 0.2)} 100%)`
+          : `linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E0E7FF 100%)`,
       }}
     >
-      {/* Background Decorations */}
+      {/* Mesh Gradient Blobs */}
       <Box
         sx={{
           position: "absolute",
-          top: "-10%",
-          left: "-10%",
-          width: "50%",
-          height: "50%",
-          bgcolor: "primary.main",
-          opacity: 0.1,
-          borderRadius: "50%",
-          filter: "blur(120px)",
+          top: "-20%",
+          left: "-15%",
+          width: "60%",
+          height: "60%",
+          background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.2)} 0%, transparent 70%)`,
+          filter: "blur(80px)",
           pointerEvents: "none",
+          animation: "float 8s ease-in-out infinite",
+          "@keyframes float": {
+            "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+            "50%": { transform: "translate(30px, 20px) scale(1.05)" },
+          },
         }}
       />
       <Box
         sx={{
           position: "absolute",
-          bottom: "-10%",
+          bottom: "-15%",
           right: "-10%",
           width: "50%",
           height: "50%",
-          bgcolor: "secondary.main",
-          opacity: 0.1,
-          borderRadius: "50%",
-          filter: "blur(120px)",
+          background: `radial-gradient(circle, ${alpha(theme.palette.secondary.main, isDarkMode ? 0.12 : 0.15)} 0%, transparent 70%)`,
+          filter: "blur(80px)",
+          pointerEvents: "none",
+          animation: "float2 10s ease-in-out infinite",
+          "@keyframes float2": {
+            "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+            "50%": { transform: "translate(-20px, -30px) scale(1.08)" },
+          },
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          top: "40%",
+          right: "20%",
+          width: "30%",
+          height: "30%",
+          background: `radial-gradient(circle, ${alpha(theme.palette.success.main, isDarkMode ? 0.08 : 0.1)} 0%, transparent 70%)`,
+          filter: "blur(60px)",
           pointerEvents: "none",
         }}
       />
 
-      <Box sx={{ width: "100%", maxWidth: 420, p: 3, zIndex: 1 }}>
-        <Paper
-          elevation={8}
+      {/* Login Card */}
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: 440,
+          p: 3,
+          zIndex: 1,
+        }}
+      >
+        <Box
           sx={{
-            borderRadius: 4,
+            borderRadius: 2.5,
             overflow: "hidden",
-            border: 1,
-            borderColor: "divider",
+            // Glassmorphism Premium
+            bgcolor: isDarkMode
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha("#FFFFFF", 0.75),
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#FFFFFF", 0.5)}`,
+            boxShadow: isDarkMode
+              ? `0 32px 100px -24px ${alpha("#000000", 0.6)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.05)}`
+              : `0 32px 100px -24px ${alpha(theme.palette.primary.main, 0.2)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
+            transition: "all 0.3s ease-in-out",
+            "&:hover": {
+              boxShadow: isDarkMode
+                ? `0 40px 120px -24px ${alpha("#000000", 0.7)}`
+                : `0 40px 120px -24px ${alpha(theme.palette.primary.main, 0.25)}`,
+            },
           }}
         >
           {/* Header */}
-          <Box sx={{ px: 4, pt: 4, pb: 3, textAlign: "center" }}>
+          <Box
+            sx={{
+              px: 5,
+              pt: 5,
+              pb: 4,
+              textAlign: "center",
+              position: "relative",
+            }}
+          >
+            {/* Logo Container Premium */}
             <Box
               sx={{
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                p: 1.5,
-                bgcolor: (theme) =>
-                  theme.palette.mode === "dark" ? "white" : "transparent",
-                borderRadius: "50%",
+                width: 80,
+                height: 80,
+                borderRadius: 2.5,
                 mb: 3,
+                bgcolor: isDarkMode
+                  ? alpha("#FFFFFF", 0.08)
+                  : alpha(theme.palette.primary.main, 0.08),
+                boxShadow: isDarkMode
+                  ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}, 0 8px 32px -8px ${alpha("#000000", 0.3)}`
+                  : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 8px 32px -8px ${alpha(theme.palette.primary.main, 0.2)}`,
+                transition: "all 0.3s ease-in-out",
+                "&:hover": {
+                  transform: "scale(1.05) rotate(-2deg)",
+                },
               }}
             >
               <Box
@@ -152,11 +253,31 @@ const LoginView: React.FC = () => {
                 }}
               />
             </Box>
-            <Typography variant="h5" fontWeight="bold" gutterBottom>
-              {isSignUp ? "Create Account" : "Welcome Back"}
+
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              sx={{
+                letterSpacing: "-0.03em",
+                mb: 1,
+                background: isDarkMode
+                  ? `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${alpha(theme.palette.primary.light, 0.9)} 100%)`
+                  : `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.primary.main} 100%)`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              {isSignUp ? "Criar Conta" : "Bem-vindo de Volta"}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Access your financial dashboard.
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ fontWeight: 500 }}
+            >
+              {isSignUp
+                ? "Comece a gerenciar suas finanças hoje"
+                : "Acesse seu dashboard financeiro"}
             </Typography>
           </Box>
 
@@ -164,16 +285,34 @@ const LoginView: React.FC = () => {
           <Box
             component="form"
             onSubmit={handleSubmit}
-            sx={{ px: 4, pb: 4, display: "flex", flexDirection: "column", gap: 2.5 }}
+            sx={{
+              px: 5,
+              pb: 5,
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+            }}
           >
             {error && (
-              <Alert severity="error" sx={{ borderRadius: 2 }}>
+              <Alert
+                severity="error"
+                sx={{
+                  borderRadius: 2.5,
+                  border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
+                }}
+              >
                 {error}
               </Alert>
             )}
 
             {message && (
-              <Alert severity="success" sx={{ borderRadius: 2 }}>
+              <Alert
+                severity="success"
+                sx={{
+                  borderRadius: 2.5,
+                  border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                }}
+              >
                 {message}
               </Alert>
             )}
@@ -182,19 +321,20 @@ const LoginView: React.FC = () => {
             {isSignUp && (
               <TextField
                 fullWidth
-                label="Your Name"
+                label="Seu Nome"
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="John Doe"
+                placeholder="João Silva"
                 required
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonIcon color="action" />
+                      <PersonIcon sx={{ color: "text.secondary" }} />
                     </InputAdornment>
                   ),
                 }}
+                sx={inputSx}
               />
             )}
 
@@ -204,20 +344,21 @@ const LoginView: React.FC = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
+              placeholder="seu@email.com"
               required
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <MailIcon color="action" />
+                    <MailIcon sx={{ color: "text.secondary" }} />
                   </InputAdornment>
                 ),
               }}
+              sx={inputSx}
             />
 
             <TextField
               fullWidth
-              label="Password"
+              label="Senha"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -227,12 +368,14 @@ const LoginView: React.FC = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockIcon color="action" />
+                    <LockIcon sx={{ color: "text.secondary" }} />
                   </InputAdornment>
                 ),
               }}
+              sx={inputSx}
             />
 
+            {/* Submit Button - Premium & Inviting */}
             <Button
               type="submit"
               variant="contained"
@@ -247,17 +390,40 @@ const LoginView: React.FC = () => {
                 )
               }
               sx={{
-                py: 1.5,
+                py: 2,
                 mt: 1,
-                fontWeight: "bold",
-                borderRadius: 3,
-                boxShadow: "0 4px 14px rgba(99, 102, 241, 0.25)",
+                borderRadius: 2.5,
+                fontWeight: 700,
+                fontSize: "1.05rem",
+                letterSpacing: "0.01em",
+                textTransform: "none",
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                boxShadow: `0 8px 32px -8px ${alpha(theme.palette.primary.main, 0.5)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                  boxShadow: `0 12px 40px -8px ${alpha(theme.palette.primary.main, 0.6)}`,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+                },
+                "&:active": {
+                  transform: "translateY(0)",
+                },
+                "&:disabled": {
+                  background: isDarkMode
+                    ? alpha("#FFFFFF", 0.1)
+                    : alpha("#000000", 0.1),
+                },
               }}
             >
-              {isLoading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+              {isLoading
+                ? "Carregando..."
+                : isSignUp
+                  ? "Criar Conta"
+                  : "Entrar"}
             </Button>
 
-            <Box sx={{ textAlign: "center" }}>
+            {/* Toggle Link */}
+            <Box sx={{ textAlign: "center", mt: 1 }}>
               <Link
                 component="button"
                 type="button"
@@ -267,36 +433,92 @@ const LoginView: React.FC = () => {
                   setError(null);
                   setMessage(null);
                 }}
-                sx={{ cursor: "pointer" }}
+                sx={{
+                  cursor: "pointer",
+                  fontWeight: 500,
+                  color: "primary.main",
+                  textDecoration: "none",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    textDecoration: "underline",
+                    color: "primary.dark",
+                  },
+                }}
               >
                 {isSignUp
-                  ? "Already have an account? Sign in here."
-                  : "Don't have an account? Sign up."}
+                  ? "Já tem uma conta? Entre aqui"
+                  : "Não tem conta? Cadastre-se"}
               </Link>
             </Box>
           </Box>
 
-          {/* Footer */}
+          {/* Footer - AI Badge */}
           <Box
             sx={{
-              bgcolor: "action.hover",
-              borderTop: 1,
-              borderColor: "divider",
-              px: 4,
-              py: 2,
+              px: 5,
+              py: 2.5,
               textAlign: "center",
+              borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+              bgcolor: isDarkMode
+                ? alpha(theme.palette.background.default, 0.3)
+                : alpha(theme.palette.grey[50], 0.5),
             }}
           >
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 1,
+                px: 2.5,
+                py: 1,
+                borderRadius: 2.5,
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.primary.main, 0.1)
+                  : alpha(theme.palette.primary.main, 0.06),
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+              }}
             >
-              <SparklesIcon sx={{ fontSize: 14, color: "primary.main" }} />
-              Financial analysis powered by Gemini AI
-            </Typography>
+              <SparklesIcon
+                sx={{
+                  fontSize: 16,
+                  color: "primary.main",
+                  animation: "sparkle 2s ease-in-out infinite",
+                  "@keyframes sparkle": {
+                    "0%, 100%": { opacity: 1, transform: "scale(1)" },
+                    "50%": { opacity: 0.7, transform: "scale(1.1)" },
+                  },
+                }}
+              />
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  color: "primary.main",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                Análises financeiras com Gemini AI
+              </Typography>
+            </Box>
           </Box>
-        </Paper>
+        </Box>
+
+        {/* Security Badge */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            mt: 3,
+            opacity: 0.7,
+          }}
+        >
+          <FingerprintIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+          <Typography variant="caption" color="text.secondary" fontWeight={500}>
+            Seus dados estão protegidos com criptografia de ponta
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );
