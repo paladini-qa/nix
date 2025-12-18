@@ -79,6 +79,8 @@ const GoalsView = lazy(() => import("./components/GoalsView"));
 const AccountsView = lazy(() => import("./components/AccountsView"));
 const AnalyticsView = lazy(() => import("./components/AnalyticsView"));
 const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
+const PaymentMethodsView = lazy(() => import("./components/PaymentMethodsView"));
+const CategoriesView = lazy(() => import("./components/CategoriesView"));
 
 // Loading fallback component
 const ViewLoading: React.FC = () => (
@@ -206,6 +208,8 @@ const AppContent: React.FC<{
     | "accounts"
     | "analytics"
     | "settings"
+    | "paymentMethods"
+    | "categories"
   >("dashboard");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -227,6 +231,14 @@ const AppContent: React.FC<{
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     string | null
   >(null);
+
+  // Reset selectedPaymentMethod quando sair da view paymentMethods
+  useEffect(() => {
+    if (currentView !== "paymentMethods") {
+      setSelectedPaymentMethod(null);
+    }
+  }, [currentView]);
+
   const [editOptionsDialogOpen, setEditOptionsDialogOpen] = useState(false);
   const [pendingEditTransaction, setPendingEditTransaction] =
     useState<Transaction | null>(null);
@@ -1237,6 +1249,63 @@ const AppContent: React.FC<{
     }
   };
 
+  // Handler para marcar todas as transações de um método de pagamento como pagas
+  const handlePayAllTransactions = async (
+    paymentMethod: string,
+    month: number,
+    year: number
+  ) => {
+    if (!session) return;
+
+    const confirmed = await confirm({
+      title: "Pagar Fatura Completa",
+      message: `Deseja marcar todas as despesas não pagas de "${paymentMethod}" em ${month + 1}/${year} como pagas?`,
+      confirmText: "Pagar Tudo",
+      cancelText: "Cancelar",
+      severity: "info",
+    });
+
+    if (!confirmed) return;
+
+    try {
+      // Encontra transações não pagas do mês/ano para este método
+      const targetMonth = month + 1;
+      const unpaidIds = transactions
+        .filter((t) => {
+          const [y, m] = t.date.split("-");
+          return (
+            t.paymentMethod === paymentMethod &&
+            parseInt(y) === year &&
+            parseInt(m) === targetMonth &&
+            t.type === "expense" &&
+            !t.isPaid &&
+            !t.isVirtual
+          );
+        })
+        .map((t) => t.id);
+
+      if (unpaidIds.length === 0) return;
+
+      // Atualiza no banco
+      const { error } = await supabase
+        .from("transactions")
+        .update({ is_paid: true })
+        .in("id", unpaidIds);
+
+      if (error) throw error;
+
+      // Atualiza estado local
+      setTransactions((prev) =>
+        prev.map((t) =>
+          unpaidIds.includes(t.id) ? { ...t, isPaid: true } : t
+        )
+      );
+    } catch (err) {
+      console.error("Error paying all transactions:", err);
+      showError("Erro ao marcar transações como pagas");
+    }
+  };
+
   const handleUpdateDisplayName = async (newName: string) => {
     setDisplayName(newName);
     if (!session) return;
@@ -1528,6 +1597,47 @@ const AppContent: React.FC<{
               ) : currentView === "analytics" ? (
                 <Suspense fallback={<ViewLoading />}>
                   <AnalyticsView transactions={transactions} />
+                </Suspense>
+              ) : currentView === "paymentMethods" ? (
+                selectedPaymentMethod ? (
+                  <Suspense fallback={<ViewLoading />}>
+                    <PaymentMethodDetailView
+                      paymentMethod={selectedPaymentMethod}
+                      transactions={transactions}
+                      selectedMonth={filters.month}
+                      selectedYear={filters.year}
+                      onDateChange={(month, year) =>
+                        setFilters({ ...filters, month, year })
+                      }
+                      onBack={() => setSelectedPaymentMethod(null)}
+                      onPayAll={handlePayAllTransactions}
+                      onTogglePaid={handleTogglePaid}
+                    />
+                  </Suspense>
+                ) : (
+                  <Suspense fallback={<ViewLoading />}>
+                    <PaymentMethodsView
+                      transactions={transactions}
+                      paymentMethods={paymentMethods}
+                      selectedMonth={filters.month}
+                      selectedYear={filters.year}
+                      onDateChange={(month, year) =>
+                        setFilters({ ...filters, month, year })
+                      }
+                      onSelectPaymentMethod={setSelectedPaymentMethod}
+                      onPayAll={handlePayAllTransactions}
+                    />
+                  </Suspense>
+                )
+              ) : currentView === "categories" ? (
+                <Suspense fallback={<ViewLoading />}>
+                  <CategoriesView
+                    categories={categories}
+                    categoryColors={categoryColors}
+                    onAddCategory={handleAddCategory}
+                    onRemoveCategory={handleRemoveCategory}
+                    onUpdateCategoryColor={handleUpdateCategoryColor}
+                  />
                 </Suspense>
               ) : (
                 <Suspense fallback={<ViewLoading />}>

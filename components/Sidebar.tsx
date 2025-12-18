@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Drawer,
@@ -11,6 +11,7 @@ import {
   Avatar,
   useTheme,
   alpha,
+  Collapse,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -27,33 +28,55 @@ import {
   Flag as GoalIcon,
   AccountBalance as AccountIcon,
   Analytics as AnalyticsIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Folder as FolderIcon,
+  Assessment as ReportIcon,
+  Category as CategoryIcon,
+  Payment as PaymentIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { ThemePreference } from "../types";
 import ThemeSwitch from "./ThemeSwitch";
 
+// Tipo para todas as views disponíveis
+type ViewType =
+  | "dashboard"
+  | "transactions"
+  | "splits"
+  | "shared"
+  | "recurring"
+  | "nixai"
+  | "budgets"
+  | "goals"
+  | "accounts"
+  | "analytics"
+  | "settings"
+  | "paymentMethods"
+  | "categories";
+
 interface SidebarProps {
   themePreference: ThemePreference;
   onThemeChange: (theme: ThemePreference) => void;
-  currentView:
-    | "dashboard"
-    | "transactions"
-    | "splits"
-    | "shared"
-    | "recurring"
-    | "nixai"
-    | "budgets"
-    | "goals"
-    | "accounts"
-    | "analytics"
-    | "settings";
-  onNavigate: (
-    view: "dashboard" | "transactions" | "splits" | "shared" | "recurring" | "nixai" | "budgets" | "goals" | "accounts" | "analytics" | "settings"
-  ) => void;
+  currentView: ViewType;
+  onNavigate: (view: ViewType) => void;
   onLogout: () => void;
   displayName: string;
   userEmail: string;
   onOpenProfile: () => void;
+}
+
+interface NavItem {
+  icon: React.ElementType;
+  label: string;
+  id: ViewType;
+}
+
+interface NavGroup {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  items: NavItem[];
 }
 
 const DRAWER_WIDTH = 280;
@@ -72,19 +95,241 @@ const Sidebar: React.FC<SidebarProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
-  const navItems = [
-    { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" as const },
-    { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" as const },
-    { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" as const },
-    { icon: PeopleIcon, label: t("nav.shared"), id: "shared" as const },
-    { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" as const },
-    { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" as const },
-    { icon: GoalIcon, label: t("nav.goals"), id: "goals" as const },
-    { icon: AccountIcon, label: t("nav.accounts"), id: "accounts" as const },
-    { icon: AnalyticsIcon, label: "Analytics", id: "analytics" as const },
-    { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" as const },
-    { icon: SettingsIcon, label: t("nav.settings"), id: "settings" as const },
+  // Estado para controlar menus expandidos
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set(["cadastro", "relatorios"]));
+
+  const toggleMenu = (menuId: string) => {
+    setExpandedMenus((prev) => {
+      const next = new Set(prev);
+      if (next.has(menuId)) {
+        next.delete(menuId);
+      } else {
+        next.add(menuId);
+      }
+      return next;
+    });
+  };
+
+  // Itens de menu principais (sem grupo)
+  const mainNavItems: NavItem[] = [
+    { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
+    { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
+    { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
+    { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
+    { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
   ];
+
+  // Grupos de menu com dropdown
+  const navGroups: NavGroup[] = [
+    {
+      id: "cadastro",
+      label: "Cadastro",
+      icon: FolderIcon,
+      items: [
+        { icon: PaymentIcon, label: "Payment Methods", id: "paymentMethods" },
+        { icon: CategoryIcon, label: "Categorias", id: "categories" },
+        { icon: AccountIcon, label: t("nav.accounts"), id: "accounts" },
+      ],
+    },
+    {
+      id: "relatorios",
+      label: "Relatórios",
+      icon: ReportIcon,
+      items: [
+        { icon: AnalyticsIcon, label: "Analytics", id: "analytics" },
+        { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" },
+        { icon: GoalIcon, label: t("nav.goals"), id: "goals" },
+      ],
+    },
+  ];
+
+  // Itens de menu no final
+  const footerNavItems: NavItem[] = [
+    { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" },
+    { icon: SettingsIcon, label: t("nav.settings"), id: "settings" },
+  ];
+
+  // Verifica se algum item do grupo está ativo
+  const isGroupActive = (group: NavGroup) => {
+    return group.items.some((item) => item.id === currentView);
+  };
+
+  // Renderiza um item de navegação
+  const renderNavItem = (item: NavItem, isSubItem: boolean = false) => {
+    const isActive = currentView === item.id;
+    return (
+      <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
+        <ListItemButton
+          onClick={() => onNavigate(item.id)}
+          sx={{
+            borderRadius: 2.5,
+            py: isSubItem ? 1 : 1.5,
+            px: 2,
+            ml: isSubItem ? 2 : 0,
+            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            position: "relative",
+            overflow: "hidden",
+            ...(isActive && {
+              bgcolor: isDarkMode
+                ? alpha(theme.palette.primary.main, 0.15)
+                : alpha(theme.palette.primary.main, 0.08),
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                left: 0,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 4,
+                height: 24,
+                borderRadius: "0 4px 4px 0",
+                bgcolor: "primary.main",
+                boxShadow: `2px 0 8px ${alpha(theme.palette.primary.main, 0.4)}`,
+              },
+            }),
+            "&:hover": {
+              bgcolor: isDarkMode
+                ? alpha(theme.palette.primary.main, 0.1)
+                : alpha(theme.palette.primary.main, 0.05),
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <ListItemIcon
+            sx={{
+              minWidth: isSubItem ? 36 : 44,
+              color: isActive ? "primary.main" : "text.secondary",
+              transition: "color 0.2s ease",
+            }}
+          >
+            <Box
+              sx={{
+                width: isSubItem ? 28 : 36,
+                height: isSubItem ? 28 : 36,
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: isActive
+                  ? isDarkMode
+                    ? alpha(theme.palette.primary.main, 0.2)
+                    : alpha(theme.palette.primary.main, 0.12)
+                  : "transparent",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <item.icon fontSize={isSubItem ? "small" : "small"} />
+            </Box>
+          </ListItemIcon>
+          <ListItemText
+            primary={item.label}
+            primaryTypographyProps={{
+              fontWeight: isActive ? 600 : 500,
+              fontSize: isSubItem ? 13 : 14,
+              color: isActive ? "primary.main" : "text.primary",
+              sx: { transition: "all 0.2s ease" },
+            }}
+          />
+          {isActive && (
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                bgcolor: "primary.main",
+                boxShadow: `0 0 8px ${alpha(theme.palette.primary.main, 0.6)}`,
+              }}
+            />
+          )}
+        </ListItemButton>
+      </ListItem>
+    );
+  };
+
+  // Renderiza um grupo de navegação com dropdown
+  const renderNavGroup = (group: NavGroup) => {
+    const isExpanded = expandedMenus.has(group.id);
+    const hasActiveItem = isGroupActive(group);
+
+    return (
+      <Box key={group.id} sx={{ mb: 0.5 }}>
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => toggleMenu(group.id)}
+            sx={{
+              borderRadius: 2.5,
+              py: 1.5,
+              px: 2,
+              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+              ...(hasActiveItem && {
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.primary.main, 0.08)
+                  : alpha(theme.palette.primary.main, 0.04),
+              }),
+              "&:hover": {
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.primary.main, 0.1)
+                  : alpha(theme.palette.primary.main, 0.05),
+              },
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 44,
+                color: hasActiveItem ? "primary.main" : "text.secondary",
+                transition: "color 0.2s ease",
+              }}
+            >
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 2.5,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: hasActiveItem
+                    ? isDarkMode
+                      ? alpha(theme.palette.primary.main, 0.15)
+                      : alpha(theme.palette.primary.main, 0.08)
+                    : "transparent",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <group.icon fontSize="small" />
+              </Box>
+            </ListItemIcon>
+            <ListItemText
+              primary={group.label}
+              primaryTypographyProps={{
+                fontWeight: hasActiveItem ? 600 : 500,
+                fontSize: 14,
+                color: hasActiveItem ? "primary.main" : "text.primary",
+                sx: { transition: "all 0.2s ease" },
+              }}
+            />
+            <Box
+              sx={{
+                transition: "transform 0.2s ease",
+                transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                color: "text.secondary",
+              }}
+            >
+              {isExpanded ? (
+                <ExpandLessIcon fontSize="small" />
+              ) : (
+                <ExpandMoreIcon fontSize="small" />
+              )}
+            </Box>
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+          <List disablePadding sx={{ pl: 1 }}>
+            {group.items.map((item) => renderNavItem(item, true))}
+          </List>
+        </Collapse>
+      </Box>
+    );
+  };
 
   return (
     <Drawer
@@ -95,12 +340,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         "& .MuiDrawer-paper": {
           width: DRAWER_WIDTH,
           boxSizing: "border-box",
-          // Removido border harsh - usando sombra suave com tonalidade
           border: "none",
           boxShadow: isDarkMode
             ? `1px 0 24px -8px ${alpha("#000000", 0.4)}`
             : `1px 0 24px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
-          // Background mais suave - levemente diferente do conteúdo principal
           bgcolor: isDarkMode
             ? alpha(theme.palette.background.paper, 0.7)
             : alpha("#FFFFFF", 0.85),
@@ -109,7 +352,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
       }}
     >
-      {/* Logo Area - Clean & Premium */}
+      {/* Logo Area */}
       <Box
         sx={{
           height: 88,
@@ -117,7 +360,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           alignItems: "center",
           gap: 1.5,
           px: 3,
-          // Substituído border por gradiente sutil
           position: "relative",
           "&::after": {
             content: '""',
@@ -184,8 +426,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         </Box>
       </Box>
 
-      {/* Navigation - Generous padding & Soft Pill style */}
-      <Box sx={{ flex: 1, px: 2, py: 3 }}>
+      {/* Navigation */}
+      <Box sx={{ flex: 1, px: 2, py: 2, overflowY: "auto" }}>
+        {/* Main Menu Label */}
         <Typography
           variant="overline"
           sx={{
@@ -196,109 +439,43 @@ const Sidebar: React.FC<SidebarProps> = ({
             fontSize: 10,
           }}
         >
-          Main Menu
+          Menu Principal
         </Typography>
-        <List sx={{ mt: 1.5 }}>
-          {navItems.map((item) => {
-            const isActive = currentView === item.id;
-            return (
-              <ListItem key={item.id} disablePadding sx={{ mb: 0.75 }}>
-                <ListItemButton
-                  onClick={() => onNavigate(item.id)}
-                  sx={{
-                    borderRadius: 2.5,
-                    py: 1.5,
-                    px: 2,
-                    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                    position: "relative",
-                    overflow: "hidden",
-                    // Estado ativo - Soft Pill com Left Border Marker
-                    ...(isActive && {
-                      bgcolor: isDarkMode
-                        ? alpha(theme.palette.primary.main, 0.15)
-                        : alpha(theme.palette.primary.main, 0.08),
-                      // Left Border Marker
-                      "&::before": {
-                        content: '""',
-                        position: "absolute",
-                        left: 0,
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        width: 4,
-                        height: 24,
-                        borderRadius: "0 4px 4px 0",
-                        bgcolor: "primary.main",
-                        boxShadow: `2px 0 8px ${alpha(theme.palette.primary.main, 0.4)}`,
-                      },
-                    }),
-                    // Hover state
-                    "&:hover": {
-                      bgcolor: isDarkMode
-                        ? alpha(theme.palette.primary.main, 0.1)
-                        : alpha(theme.palette.primary.main, 0.05),
-                      transform: "translateX(4px)",
-                    },
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 44,
-                      color: isActive ? "primary.main" : "text.secondary",
-                      transition: "color 0.2s ease",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 2.5,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor: isActive
-                          ? isDarkMode
-                            ? alpha(theme.palette.primary.main, 0.2)
-                            : alpha(theme.palette.primary.main, 0.12)
-                          : "transparent",
-                        transition: "all 0.2s ease",
-                      }}
-                    >
-                      <item.icon fontSize="small" />
-                    </Box>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.label}
-                    primaryTypographyProps={{
-                      fontWeight: isActive ? 600 : 500,
-                      fontSize: 14,
-                      color: isActive ? "primary.main" : "text.primary",
-                      sx: { transition: "all 0.2s ease" },
-                    }}
-                  />
-                  {/* Indicador sutil no estado ativo */}
-                  {isActive && (
-                    <Box
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        bgcolor: "primary.main",
-                        boxShadow: `0 0 8px ${alpha(theme.palette.primary.main, 0.6)}`,
-                      }}
-                    />
-                  )}
-                </ListItemButton>
-              </ListItem>
-            );
-          })}
+
+        {/* Main Navigation Items */}
+        <List sx={{ mt: 1 }}>
+          {mainNavItems.map((item) => renderNavItem(item))}
         </List>
+
+        {/* Dropdown Groups */}
+        <Box sx={{ mt: 2 }}>
+          {navGroups.map((group) => renderNavGroup(group))}
+        </Box>
+
+        {/* Footer Items */}
+        <Box sx={{ mt: 2 }}>
+          <Typography
+            variant="overline"
+            sx={{
+              px: 2,
+              color: "text.secondary",
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              fontSize: 10,
+            }}
+          >
+            Ferramentas
+          </Typography>
+          <List sx={{ mt: 1 }}>
+            {footerNavItems.map((item) => renderNavItem(item))}
+          </List>
+        </Box>
       </Box>
 
-      {/* Bottom Actions - Mini Card Style */}
+      {/* Bottom Actions */}
       <Box
         sx={{
           p: 2,
-          // Gradiente sutil ao invés de border
           position: "relative",
           "&::before": {
             content: '""',
@@ -335,7 +512,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             borderRadius: 2.5,
             cursor: "pointer",
             transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-            // Glassmorphism card
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.default, 0.6)
               : alpha("#FFFFFF", 0.8),
@@ -343,7 +519,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             boxShadow: isDarkMode
               ? `0 4px 16px -4px ${alpha("#000000", 0.3)}`
               : `0 4px 16px -4px ${alpha(theme.palette.primary.main, 0.1)}`,
-            // Hover
             "&:hover": {
               transform: "translateY(-2px)",
               boxShadow: isDarkMode
@@ -367,7 +542,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 color: "primary.main",
                 fontWeight: 600,
                 fontSize: 16,
-                // Efeito 3D sutil
                 boxShadow: `inset 0 -2px 4px ${alpha("#000000", 0.1)}, 0 2px 8px -2px ${alpha(theme.palette.primary.main, 0.3)}`,
               }}
             >
