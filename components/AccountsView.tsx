@@ -40,7 +40,12 @@ import {
   Archive as ArchiveIcon,
   Unarchive as UnarchiveIcon,
 } from "@mui/icons-material";
-import { Account, AccountType, AccountWithBalance, Transaction } from "../types";
+import {
+  Account,
+  AccountType,
+  AccountWithBalance,
+  Transaction,
+} from "../types";
 import { accountService } from "../services/api";
 import { useNotification, useConfirmDialog } from "../contexts";
 
@@ -69,7 +74,10 @@ const ACCOUNT_COLORS = [
   "#84cc16", // lime
 ];
 
-const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => {
+const AccountsView: React.FC<AccountsViewProps> = ({
+  userId,
+  transactions,
+}) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { showSuccess, showError } = useNotification();
@@ -131,7 +139,12 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
       .filter((a) => a.currentBalance < 0)
       .reduce((sum, a) => sum + a.currentBalance, 0);
 
-    return { totalBalance, positiveBalance, negativeBalance, count: active.length };
+    return {
+      totalBalance,
+      positiveBalance,
+      negativeBalance,
+      count: active.length,
+    };
   }, [accountsWithBalance]);
 
   const handleOpenForm = (account?: Account) => {
@@ -146,7 +159,9 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
       setFormName("");
       setFormType("checking");
       setFormBalance("0");
-      setFormColor(ACCOUNT_COLORS[Math.floor(Math.random() * ACCOUNT_COLORS.length)]);
+      setFormColor(
+        ACCOUNT_COLORS[Math.floor(Math.random() * ACCOUNT_COLORS.length)]
+      );
     }
     setIsFormOpen(true);
   };
@@ -228,7 +243,9 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}>
+    <Box
+      sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}
+    >
       {/* Header */}
       <Box
         sx={{
@@ -354,7 +371,13 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
                           mb: 2,
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
+                        >
                           <Avatar
                             sx={{
                               bgcolor: account.color,
@@ -378,7 +401,10 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
                         </Box>
                         <Box>
                           <Tooltip title="Edit">
-                            <IconButton size="small" onClick={() => handleOpenForm(account)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleOpenForm(account)}
+                            >
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -409,7 +435,11 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
                         <Typography
                           variant="h5"
                           fontWeight="bold"
-                          color={account.currentBalance >= 0 ? "success.main" : "error.main"}
+                          color={
+                            account.currentBalance >= 0
+                              ? "success.main"
+                              : "error.main"
+                          }
                         >
                           {formatCurrency(account.currentBalance)}
                         </Typography>
@@ -444,7 +474,13 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
                             alignItems: "center",
                           }}
                         >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                            }}
+                          >
                             <Avatar
                               sx={{
                                 bgcolor: "grey.500",
@@ -455,8 +491,13 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
                               {ACCOUNT_ICONS[account.type]}
                             </Avatar>
                             <Box>
-                              <Typography variant="subtitle2">{account.name}</Typography>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography variant="subtitle2">
+                                {account.name}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
                                 {formatCurrency(account.currentBalance)}
                               </Typography>
                             </Box>
@@ -516,9 +557,13 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle>{editingAccount ? "Edit Account" : "New Account"}</DialogTitle>
+        <DialogTitle>
+          {editingAccount ? "Edit Account" : "New Account"}
+        </DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
+          <Box
+            sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}
+          >
             <TextField
               label="Account Name"
               value={formName}
@@ -552,7 +597,9 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
               value={formBalance}
               onChange={(e) => setFormBalance(e.target.value)}
               InputProps={{
-                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                startAdornment: (
+                  <InputAdornment position="start">R$</InputAdornment>
+                ),
               }}
               inputProps={{ step: 0.01 }}
               fullWidth
@@ -561,7 +608,11 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
 
             {/* Color Picker */}
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 1, display: "block" }}
+              >
                 Color
               </Typography>
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -577,7 +628,8 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
                       cursor: "pointer",
                       border: formColor === color ? 3 : 0,
                       borderColor: "common.white",
-                      outline: formColor === color ? `2px solid ${color}` : "none",
+                      outline:
+                        formColor === color ? `2px solid ${color}` : "none",
                       transition: "transform 0.2s",
                       "&:hover": { transform: "scale(1.1)" },
                     }}
@@ -601,4 +653,3 @@ const AccountsView: React.FC<AccountsViewProps> = ({ userId, transactions }) => 
 };
 
 export default AccountsView;
-

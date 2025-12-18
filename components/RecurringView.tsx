@@ -48,6 +48,7 @@ import {
   ExpandLess as ExpandLessIcon,
   Event as EventIcon,
   Schedule as ScheduleIcon,
+  People as PeopleIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 
@@ -298,6 +299,15 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 <Typography variant="caption" color="text.secondary">
                   {t.paymentMethod}
                 </Typography>
+                {t.isShared && t.sharedWith && (
+                  <Chip
+                    icon={<PeopleIcon sx={{ fontSize: 14 }} />}
+                    label={t.sharedWith}
+                    size="small"
+                    color="info"
+                    variant="filled"
+                  />
+                )}
               </Box>
             </Box>
 

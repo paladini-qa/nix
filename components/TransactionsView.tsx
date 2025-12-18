@@ -666,7 +666,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       {/* Tags */}
                       {(t.isRecurring ||
                         t.isVirtual ||
-                        t.isShared ||
+                        (t.isShared && t.sharedWith) ||
                         (t.installments && t.installments > 1)) && (
                         <Box
                           sx={{
@@ -676,10 +676,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                             flexWrap: "wrap",
                           }}
                         >
-                          {t.isShared && (
+                          {t.isShared && t.sharedWith && (
                             <Chip
                               icon={<GroupIcon sx={{ fontSize: 12 }} />}
-                              label="50/50"
+                              label={t.sharedWith}
                               size="small"
                               color="info"
                               variant="filled"
@@ -964,10 +964,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                             }}
                           />
                         )}
-                        {t.isShared && (
+                        {t.isShared && t.sharedWith && (
                           <Chip
                             icon={<GroupIcon />}
-                            label="50/50"
+                            label={t.sharedWith}
                             size="small"
                             color="info"
                             variant="filled"

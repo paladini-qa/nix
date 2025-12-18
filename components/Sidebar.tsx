@@ -23,6 +23,7 @@ import {
   AutoAwesome as SparklesIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
+  People as PeopleIcon,
 } from "@mui/icons-material";
 import { ThemePreference } from "../types";
 import ThemeSwitch from "./ThemeSwitch";
@@ -34,11 +35,12 @@ interface SidebarProps {
     | "dashboard"
     | "transactions"
     | "splits"
+    | "shared"
     | "recurring"
     | "nixai"
     | "settings";
   onNavigate: (
-    view: "dashboard" | "transactions" | "splits" | "recurring" | "nixai" | "settings"
+    view: "dashboard" | "transactions" | "splits" | "shared" | "recurring" | "nixai" | "settings"
   ) => void;
   onLogout: () => void;
   displayName: string;
@@ -65,6 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: DashboardIcon, label: "Dashboard", id: "dashboard" as const },
     { icon: WalletIcon, label: "Transactions", id: "transactions" as const },
     { icon: CreditCardIcon, label: "Installments", id: "splits" as const },
+    { icon: PeopleIcon, label: "Shared", id: "shared" as const },
     { icon: RepeatIcon, label: "Recurring", id: "recurring" as const },
     { icon: SparklesIcon, label: "NixAI", id: "nixai" as const },
     { icon: SettingsIcon, label: "Settings", id: "settings" as const },

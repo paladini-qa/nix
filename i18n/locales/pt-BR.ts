@@ -39,6 +39,7 @@ export default {
     accounts: "Contas",
     recurring: "Recorrentes",
     splits: "Parcelas",
+    shared: "Compartilhado",
     settings: "Configurações",
     nixai: "NixAI",
     logout: "Sair",
@@ -188,6 +189,27 @@ export default {
     thinking: "Pensando...",
     welcome:
       "Olá! Sou a NixAI, sua assistente financeira pessoal. Posso ajudá-lo a analisar padrões de gastos, fornecer recomendações de orçamento e responder perguntas sobre suas finanças.",
+  },
+
+  // Gastos Compartilhados
+  shared: {
+    title: "Gastos Compartilhados",
+    subtitle: "Acompanhe gastos compartilhados com amigos",
+    newSharedExpense: "Novo Gasto Compartilhado",
+    friends: "Amigos",
+    totalOwed: "Total Devido",
+    received: "Recebido",
+    pending: "Pendente",
+    balanceByFriend: "Saldo por Amigo",
+    allFriends: "Todos os Amigos",
+    sharedExpenses: "gastos compartilhados",
+    friendOwes: "Amigo Deve",
+    noSharedExpenses: "Nenhum gasto compartilhado ainda. Crie um gasto compartilhado para acompanhar saldos com amigos!",
+    noResults: "Nenhum gasto compartilhado encontrado com os filtros atuais.",
+    createSharedExpense: "Criar Gasto Compartilhado",
+    clearFilter: "Limpar Filtro",
+    total: "Total",
+    owes: "Deve",
   },
 
   // Errors

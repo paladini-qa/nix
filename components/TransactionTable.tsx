@@ -20,6 +20,7 @@ import {
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
   AutorenewOutlined as AutorenewIcon,
+  People as PeopleIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 
@@ -202,6 +203,20 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                       }}
                     />
                   )}
+                  {transaction.isShared && transaction.sharedWith && (
+                    <Chip
+                      icon={<PeopleIcon sx={{ fontSize: 12 }} />}
+                      label={transaction.sharedWith}
+                      size="small"
+                      color="info"
+                      variant="outlined"
+                      sx={{
+                        height: 18,
+                        fontSize: 10,
+                        "& .MuiChip-icon": { ml: 0.5 },
+                      }}
+                    />
+                  )}
                 </Box>
               </Box>
             </Paper>
@@ -301,6 +316,16 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                               sx={{ height: 20, fontSize: 10 }}
                             />
                           )}
+                        {transaction.isShared && transaction.sharedWith && (
+                          <Chip
+                            icon={<PeopleIcon />}
+                            label={transaction.sharedWith}
+                            size="small"
+                            color="info"
+                            variant="outlined"
+                            sx={{ height: 20, fontSize: 10 }}
+                          />
+                        )}
                       </Box>
                     </Box>
                   </Box>

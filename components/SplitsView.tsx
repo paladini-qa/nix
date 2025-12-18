@@ -48,6 +48,7 @@ import {
   Add as AddIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  People as PeopleIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 
@@ -74,6 +75,8 @@ interface InstallmentGroup {
   installments: Transaction[];
   startDate: string;
   endDate: string;
+  isShared?: boolean;
+  sharedWith?: string;
 }
 
 const SplitsView: React.FC<SplitsViewProps> = ({
@@ -120,6 +123,8 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           installments: [],
           startDate: t.date,
           endDate: t.date,
+          isShared: t.isShared,
+          sharedWith: t.sharedWith,
         });
       }
 
@@ -261,6 +266,15 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 <Typography variant="caption" color="text.secondary">
                   {group.paymentMethod}
                 </Typography>
+                {group.isShared && group.sharedWith && (
+                  <Chip
+                    icon={<PeopleIcon sx={{ fontSize: 14 }} />}
+                    label={group.sharedWith}
+                    size="small"
+                    color="info"
+                    variant="filled"
+                  />
+                )}
               </Box>
             </Box>
 

@@ -32,6 +32,7 @@ import {
   AutoAwesome as SparklesIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
+  People as PeopleIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -72,6 +73,7 @@ const PaymentMethodDetailView = lazy(
 const NixAIView = lazy(() => import("./components/NixAIView"));
 const RecurringView = lazy(() => import("./components/RecurringView"));
 const SplitsView = lazy(() => import("./components/SplitsView"));
+const SharedView = lazy(() => import("./components/SharedView"));
 
 // Loading fallback component
 const ViewLoading: React.FC = () => (
@@ -188,7 +190,13 @@ const AppContent: React.FC<{
   const { confirm, choice } = useConfirmDialog();
 
   const [currentView, setCurrentView] = useState<
-    "dashboard" | "transactions" | "splits" | "recurring" | "nixai" | "settings"
+    | "dashboard"
+    | "transactions"
+    | "splits"
+    | "shared"
+    | "recurring"
+    | "nixai"
+    | "settings"
   >("dashboard");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
@@ -369,6 +377,8 @@ const AppContent: React.FC<{
           payment_method: newTx.paymentMethod,
           is_recurring: newTx.isRecurring,
           frequency: newTx.frequency,
+          is_shared: newTx.isShared,
+          shared_with: newTx.sharedWith,
         };
 
         if (editMode === "all" || editMode === "all_future") {
@@ -410,12 +420,106 @@ const AppContent: React.FC<{
 
           const idsToUpdate = relatedTxs.map((t) => t.id);
 
+          // Verificar mudança de estado shared
+          const wasShared = originalTx.isShared && originalTx.sharedWith;
+          const isNowShared = newTx.isShared && newTx.sharedWith;
+
           const { error } = await supabase
             .from("transactions")
             .update(dbPayload)
             .in("id", idsToUpdate);
 
           if (error) throw error;
+
+          // Se agora é compartilhado e antes não era, criar income para a transação principal
+          if (isNowShared && !wasShared && newTx.type === "expense") {
+            const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+            const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+
+            const incomePayload = {
+              user_id: session.user.id,
+              description: incomeDescription,
+              amount: incomeAmount,
+              type: "income" as const,
+              category: "Other",
+              payment_method: newTx.paymentMethod,
+              date: originalTx.date,
+              is_recurring: newTx.isRecurring,
+              frequency: newTx.frequency,
+              is_paid: false,
+              related_transaction_id: editId,
+            };
+
+            const { data: incomeData, error: incomeError } = await supabase
+              .from("transactions")
+              .insert(incomePayload)
+              .select()
+              .single();
+
+            if (!incomeError && incomeData) {
+              // Atualizar a transação original com o related_transaction_id
+              await supabase
+                .from("transactions")
+                .update({ related_transaction_id: incomeData.id })
+                .eq("id", editId);
+
+              const incomeTransaction: Transaction = {
+                id: incomeData.id,
+                description: incomeData.description,
+                amount: incomeData.amount,
+                type: incomeData.type,
+                category: incomeData.category,
+                paymentMethod: incomeData.payment_method,
+                date: incomeData.date,
+                createdAt: new Date(incomeData.created_at).getTime(),
+                isRecurring: incomeData.is_recurring,
+                frequency: incomeData.frequency,
+                isPaid: incomeData.is_paid ?? false,
+                relatedTransactionId: editId,
+              };
+              setTransactions((prev) => [incomeTransaction, ...prev]);
+            }
+          }
+
+          // Se antes era compartilhado e agora não é, remover income relacionada
+          if (wasShared && !isNowShared && originalTx.relatedTransactionId) {
+            await supabase
+              .from("transactions")
+              .delete()
+              .eq("id", originalTx.relatedTransactionId);
+
+            setTransactions((prev) =>
+              prev.filter((t) => t.id !== originalTx.relatedTransactionId)
+            );
+          }
+
+          // Se era e continua sendo compartilhado, atualizar a income existente
+          if (wasShared && isNowShared && originalTx.relatedTransactionId) {
+            const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+            const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+
+            await supabase
+              .from("transactions")
+              .update({
+                description: incomeDescription,
+                amount: incomeAmount,
+                payment_method: newTx.paymentMethod,
+              })
+              .eq("id", originalTx.relatedTransactionId);
+
+            setTransactions((prev) =>
+              prev.map((t) =>
+                t.id === originalTx.relatedTransactionId
+                  ? {
+                      ...t,
+                      description: incomeDescription,
+                      amount: incomeAmount,
+                      paymentMethod: newTx.paymentMethod,
+                    }
+                  : t
+              )
+            );
+          }
 
           setTransactions((prev) =>
             prev.map((t) => {
@@ -429,6 +533,10 @@ const AppContent: React.FC<{
                   paymentMethod: newTx.paymentMethod,
                   isRecurring: newTx.isRecurring,
                   frequency: newTx.frequency,
+                  isShared: newTx.isShared,
+                  sharedWith: newTx.sharedWith,
+                  relatedTransactionId:
+                    t.id === editId ? t.relatedTransactionId : undefined,
                 };
               }
               return t;
@@ -440,6 +548,8 @@ const AppContent: React.FC<{
             date: newTx.date,
             installments: newTx.installments,
             current_installment: newTx.currentInstallment,
+            is_shared: newTx.isShared,
+            shared_with: newTx.sharedWith,
           };
 
           const { data, error } = await supabase
@@ -452,6 +562,113 @@ const AppContent: React.FC<{
           if (error) throw error;
 
           if (data) {
+            const oldTransaction = editingTransaction;
+            const wasShared =
+              oldTransaction?.isShared && oldTransaction?.sharedWith;
+            const isNowShared = newTx.isShared && newTx.sharedWith;
+
+            // Se antes era compartilhado e agora não é, remover income relacionada
+            if (
+              wasShared &&
+              !isNowShared &&
+              oldTransaction?.relatedTransactionId
+            ) {
+              await supabase
+                .from("transactions")
+                .delete()
+                .eq("id", oldTransaction.relatedTransactionId);
+
+              setTransactions((prev) =>
+                prev.filter((t) => t.id !== oldTransaction.relatedTransactionId)
+              );
+            }
+
+            // Se agora é compartilhado e antes não era, criar income
+            if (isNowShared && !wasShared) {
+              const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+              const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+
+              const incomePayload = {
+                user_id: session.user.id,
+                description: incomeDescription,
+                amount: incomeAmount,
+                type: "income" as const,
+                category: "Other",
+                payment_method: newTx.paymentMethod,
+                date: newTx.date,
+                is_recurring: false,
+                is_paid: false,
+                related_transaction_id: data.id,
+              };
+
+              const { data: incomeData, error: incomeError } = await supabase
+                .from("transactions")
+                .insert(incomePayload)
+                .select()
+                .single();
+
+              if (!incomeError && incomeData) {
+                // Atualizar a transação original com o related_transaction_id
+                await supabase
+                  .from("transactions")
+                  .update({ related_transaction_id: incomeData.id })
+                  .eq("id", data.id);
+
+                const incomeTransaction: Transaction = {
+                  id: incomeData.id,
+                  description: incomeData.description,
+                  amount: incomeData.amount,
+                  type: incomeData.type,
+                  category: incomeData.category,
+                  paymentMethod: incomeData.payment_method,
+                  date: incomeData.date,
+                  createdAt: new Date(incomeData.created_at).getTime(),
+                  isRecurring: incomeData.is_recurring,
+                  frequency: incomeData.frequency,
+                  isPaid: incomeData.is_paid ?? false,
+                  relatedTransactionId: data.id,
+                };
+                setTransactions((prev) => [incomeTransaction, ...prev]);
+
+                // Atualizar o relatedTransactionId no estado
+                data.related_transaction_id = incomeData.id;
+              }
+            }
+
+            // Se era e continua sendo compartilhado, atualizar a income existente
+            if (
+              wasShared &&
+              isNowShared &&
+              oldTransaction?.relatedTransactionId
+            ) {
+              const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+              const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+
+              await supabase
+                .from("transactions")
+                .update({
+                  description: incomeDescription,
+                  amount: incomeAmount,
+                  date: newTx.date,
+                  payment_method: newTx.paymentMethod,
+                })
+                .eq("id", oldTransaction.relatedTransactionId);
+
+              setTransactions((prev) =>
+                prev.map((t) =>
+                  t.id === oldTransaction.relatedTransactionId
+                    ? {
+                        ...t,
+                        description: incomeDescription,
+                        amount: incomeAmount,
+                        date: newTx.date,
+                        paymentMethod: newTx.paymentMethod,
+                      }
+                    : t
+                )
+              );
+            }
+
             const transaction: Transaction = {
               id: data.id,
               description: data.description,
@@ -466,6 +683,9 @@ const AppContent: React.FC<{
               installments: data.installments,
               currentInstallment: data.current_installment,
               isPaid: data.is_paid ?? true,
+              isShared: data.is_shared,
+              sharedWith: data.shared_with,
+              relatedTransactionId: data.related_transaction_id,
             };
             setTransactions((prev) =>
               prev.map((t) => (t.id === editId ? transaction : t))
@@ -1141,6 +1361,20 @@ const AppContent: React.FC<{
                     onTogglePaid={handleTogglePaid}
                   />
                 </Suspense>
+              ) : currentView === "shared" ? (
+                <Suspense fallback={<ViewLoading />}>
+                  <SharedView
+                    transactions={transactions}
+                    friends={friends}
+                    onNewTransaction={() => {
+                      setEditingTransaction(null);
+                      setIsFormOpen(true);
+                    }}
+                    onEdit={handleEditTransaction}
+                    onDelete={handleDeleteTransaction}
+                    onTogglePaid={handleTogglePaid}
+                  />
+                </Suspense>
               ) : currentView === "recurring" ? (
                 <Suspense fallback={<ViewLoading />}>
                   <RecurringView
@@ -1206,9 +1440,9 @@ const AppContent: React.FC<{
                   icon={<WalletIcon />}
                 />
                 <BottomNavigationAction
-                  label="Splits"
-                  value="splits"
-                  icon={<CreditCardIcon />}
+                  label="Shared"
+                  value="shared"
+                  icon={<PeopleIcon />}
                 />
                 <BottomNavigationAction
                   label="Recurring"
