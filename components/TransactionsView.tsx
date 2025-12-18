@@ -642,7 +642,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       <Paper
         elevation={0}
         sx={{
-          borderRadius: 3,
+          borderRadius: "20px",
           overflow: "hidden",
           bgcolor: isDarkMode
             ? alpha(theme.palette.background.paper, 0.7)
@@ -686,7 +686,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               minWidth: 200,
               maxWidth: 320,
               "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
+                borderRadius: "20px",
                 bgcolor: isDarkMode
                   ? alpha(theme.palette.background.default, 0.4)
                   : alpha(theme.palette.grey[100], 0.6),
@@ -708,7 +708,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             onClick={() => setShowFilters(!showFilters)}
             startIcon={<FilterIcon />}
             sx={{
-              borderRadius: 2,
+              borderRadius: "20px",
               minWidth: 100,
               ...(activeFiltersCount > 0 && !showFilters && {
                 borderColor: theme.palette.primary.main,
@@ -742,7 +742,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             sx={{
               border: 1,
               borderColor: "divider",
-              borderRadius: 2,
+              borderRadius: "20px",
             }}
           >
             {isExporting ? <CircularProgress size={20} /> : <DownloadIcon />}
@@ -902,7 +902,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     <Box
                       sx={{
                         p: 1,
-                        borderRadius: 2,
+                        borderRadius: "20px",
                         bgcolor: isIncome ? "success.light" : "error.light",
                         color: isIncome ? "success.dark" : "error.dark",
                         display: "flex",
@@ -1182,7 +1182,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         <Paper
           elevation={0}
           sx={{
-            borderRadius: 3,
+            borderRadius: "20px",
             overflow: "hidden",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.paper, 0.7)
