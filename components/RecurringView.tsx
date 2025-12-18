@@ -390,7 +390,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         {/* Occurrences List */}
         <Collapse in={isExpanded}>
           <Divider />
-          <Box sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.3) }}>
+          <Box sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.08) }}>
             {/* Actions */}
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2 }}>
               <Button

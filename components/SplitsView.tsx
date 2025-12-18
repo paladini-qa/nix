@@ -343,7 +343,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         {/* Installments List */}
         <Collapse in={isExpanded}>
           <Divider />
-          <Box sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.3) }}>
+          <Box sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.08) }}>
             {isMobile ? (
               // Mobile: Cards compactos
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>

@@ -470,8 +470,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       : index % 2 === 0
         ? "transparent"
         : isDarkMode
-          ? alpha(theme.palette.action.hover, 0.3)
-          : alpha(theme.palette.action.hover, 0.5),
+          ? alpha(theme.palette.action.hover, 0.08)
+          : alpha(theme.palette.action.hover, 0.06),
     "&:hover": {
       bgcolor: isDarkMode
         ? alpha(theme.palette.primary.main, 0.08)
