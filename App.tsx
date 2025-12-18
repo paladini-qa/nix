@@ -23,6 +23,7 @@ import {
   Settings as SettingsIcon,
   AutoAwesome as SparklesIcon,
   Repeat as RepeatIcon,
+  CreditCard as CreditCardIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -56,6 +57,7 @@ import DateFilter from "./components/DateFilter";
 import PaymentMethodDetailView from "./components/PaymentMethodDetailView";
 import NixAIView from "./components/NixAIView";
 import RecurringView from "./components/RecurringView";
+import SplitsView from "./components/SplitsView";
 import { supabase } from "./services/supabaseClient";
 import { Session } from "@supabase/supabase-js";
 
@@ -116,7 +118,7 @@ const App: React.FC = () => {
   });
 
   const [currentView, setCurrentView] = useState<
-    "dashboard" | "transactions" | "recurring" | "nixai" | "settings"
+    "dashboard" | "transactions" | "splits" | "recurring" | "nixai" | "settings"
   >("dashboard");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
@@ -518,6 +520,7 @@ const App: React.FC = () => {
             frequency: newTx.frequency,
             installments: totalInstallments,
             current_installment: i + 1,
+            is_paid: false,
           });
         }
 
@@ -542,6 +545,7 @@ const App: React.FC = () => {
             frequency: d.frequency,
             installments: d.installments,
             currentInstallment: d.current_installment,
+            isPaid: d.is_paid ?? false,
           }));
           setTransactions((prev) => [...newTransactions, ...prev]);
         }
@@ -558,6 +562,7 @@ const App: React.FC = () => {
           frequency: newTx.frequency,
           installments: newTx.installments,
           current_installment: newTx.currentInstallment,
+          is_paid: false,
         };
 
         const { data, error } = await supabase
@@ -582,6 +587,7 @@ const App: React.FC = () => {
             frequency: data.frequency,
             installments: data.installments,
             currentInstallment: data.current_installment,
+            isPaid: data.is_paid ?? false,
           };
           setTransactions((prev) => [transaction, ...prev]);
         }
@@ -962,6 +968,17 @@ const App: React.FC = () => {
                       setFilters({ ...filters, month, year })
                     }
                   />
+                ) : currentView === "splits" ? (
+                  <SplitsView
+                    transactions={transactions}
+                    onNewTransaction={() => {
+                      setEditingTransaction(null);
+                      setIsFormOpen(true);
+                    }}
+                    onEdit={handleEditTransaction}
+                    onDelete={handleDeleteTransaction}
+                    onTogglePaid={handleTogglePaid}
+                  />
                 ) : currentView === "recurring" ? (
                   <RecurringView
                     transactions={transactions}
@@ -1021,14 +1038,14 @@ const App: React.FC = () => {
                     icon={<WalletIcon />}
                   />
                   <BottomNavigationAction
+                    label="Splits"
+                    value="splits"
+                    icon={<CreditCardIcon />}
+                  />
+                  <BottomNavigationAction
                     label="Recurring"
                     value="recurring"
                     icon={<RepeatIcon />}
-                  />
-                  <BottomNavigationAction
-                    label="NixAI"
-                    value="nixai"
-                    icon={<SparklesIcon />}
                   />
                   <BottomNavigationAction
                     label="Settings"

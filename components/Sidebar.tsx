@@ -22,6 +22,7 @@ import {
   ChevronRight as ChevronRightIcon,
   AutoAwesome as SparklesIcon,
   Repeat as RepeatIcon,
+  CreditCard as CreditCardIcon,
 } from "@mui/icons-material";
 import { ThemePreference } from "../types";
 import ThemeSwitch from "./ThemeSwitch";
@@ -32,11 +33,12 @@ interface SidebarProps {
   currentView:
     | "dashboard"
     | "transactions"
+    | "splits"
     | "recurring"
     | "nixai"
     | "settings";
   onNavigate: (
-    view: "dashboard" | "transactions" | "recurring" | "nixai" | "settings"
+    view: "dashboard" | "transactions" | "splits" | "recurring" | "nixai" | "settings"
   ) => void;
   onLogout: () => void;
   displayName: string;
@@ -62,6 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { icon: DashboardIcon, label: "Dashboard", id: "dashboard" as const },
     { icon: WalletIcon, label: "Transactions", id: "transactions" as const },
+    { icon: CreditCardIcon, label: "Installments", id: "splits" as const },
     { icon: RepeatIcon, label: "Recurring", id: "recurring" as const },
     { icon: SparklesIcon, label: "NixAI", id: "nixai" as const },
     { icon: SettingsIcon, label: "Settings", id: "settings" as const },
