@@ -24,6 +24,10 @@ import {
   Slide,
   AppBar,
   Toolbar,
+  Divider,
+  ListSubheader,
+  Alert,
+  Collapse,
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -34,6 +38,7 @@ import {
   CreditCard as CreditCardIcon,
   ArrowBack as ArrowBackIcon,
   Group as GroupIcon,
+  PersonAdd as PersonAddIcon,
 } from "@mui/icons-material";
 import { Transaction, TransactionType } from "../types";
 
@@ -55,6 +60,8 @@ interface TransactionFormProps {
   categories: { income: string[]; expense: string[] };
   paymentMethods: string[];
   editTransaction?: Transaction | null;
+  friends: string[];
+  onAddFriend: (friend: string) => void;
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = ({
@@ -64,6 +71,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   categories,
   paymentMethods,
   editTransaction,
+  friends,
+  onAddFriend,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -79,6 +88,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [hasInstallments, setHasInstallments] = useState(false);
   const [installments, setInstallments] = useState("2");
   const [isShared, setIsShared] = useState(false);
+  const [sharedWith, setSharedWith] = useState("");
+  const [newFriendName, setNewFriendName] = useState("");
+  const [showAddFriend, setShowAddFriend] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (editTransaction) {
@@ -96,6 +109,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       );
       setInstallments(editTransaction.installments?.toString() || "2");
       setIsShared(editTransaction.isShared || false);
+      setSharedWith(editTransaction.sharedWith || "");
     } else {
       setDescription("");
       setAmount("");
@@ -108,11 +122,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setHasInstallments(false);
       setInstallments("2");
       setIsShared(false);
+      setSharedWith("");
     }
+    setNewFriendName("");
+    setShowAddFriend(false);
+    setValidationError(null);
   }, [editTransaction, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError(null);
+    
     if (!description || !amount || !category || !paymentMethod || !date) return;
 
     const installmentsValue = parseInt(installments);
@@ -120,7 +140,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       hasInstallments &&
       (isNaN(installmentsValue) || installmentsValue < 2)
     ) {
-      alert("Installments must be at least 2.");
+      setValidationError("Installments must be at least 2.");
+      return;
+    }
+
+    // Validação: se isShared, precisa selecionar um amigo
+    if (isShared && !sharedWith) {
+      setValidationError("Please select a friend to share with.");
       return;
     }
 
@@ -139,11 +165,22 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           ? editTransaction?.currentInstallment || 1
           : undefined,
         isShared,
+        sharedWith: isShared ? sharedWith : undefined,
       },
       editTransaction?.id
     );
 
     onClose();
+  };
+
+  const handleAddNewFriend = () => {
+    const trimmedName = newFriendName.trim();
+    if (trimmedName && !friends.includes(trimmedName)) {
+      onAddFriend(trimmedName);
+      setSharedWith(trimmedName);
+      setNewFriendName("");
+      setShowAddFriend(false);
+    }
   };
 
   return (
@@ -206,6 +243,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           sx={{ pt: isMobile ? 3 : undefined }}
         >
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* Validation Error Alert */}
+            <Collapse in={!!validationError}>
+              <Alert 
+                severity="error" 
+                onClose={() => setValidationError(null)}
+                sx={{ mb: 1 }}
+              >
+                {validationError}
+              </Alert>
+            </Collapse>
+
             {/* Type Toggle */}
             <ToggleButtonGroup
               value={type}
@@ -357,35 +405,149 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
             {/* Shared Expense Toggle */}
             {type === "expense" && (
-              <Paper
-                variant="outlined"
-                sx={{
-                  p: 1.5,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  cursor: "pointer",
-                  bgcolor: isShared ? "info.50" : "transparent",
-                  borderColor: isShared ? "info.main" : "divider",
-                }}
-                onClick={() => setIsShared(!isShared)}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <GroupIcon
-                    fontSize="small"
-                    color={isShared ? "info" : "action"}
-                  />
-                  <Box>
-                    <Typography variant="body2">Shared? (50/50)</Typography>
-                    {isShared && (
-                      <Typography variant="caption" color="text.secondary">
-                        Split equally with a friend
-                      </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 1.5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    cursor: "pointer",
+                    bgcolor: isShared ? "info.50" : "transparent",
+                    borderColor: isShared ? "info.main" : "divider",
+                  }}
+                  onClick={() => {
+                    setIsShared(!isShared);
+                    if (isShared) {
+                      setSharedWith("");
+                    }
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <GroupIcon
+                      fontSize="small"
+                      color={isShared ? "info" : "action"}
+                    />
+                    <Box>
+                      <Typography variant="body2">Shared? (50/50)</Typography>
+                      {isShared && (
+                        <Typography variant="caption" color="text.secondary">
+                          Split equally with a friend - creates income for reimbursement
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                  <Switch checked={isShared} size="small" color="info" />
+                </Paper>
+
+                {/* Friend Selection */}
+                {isShared && (
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Select Friend</InputLabel>
+                      <Select
+                        value={sharedWith}
+                        label="Select Friend"
+                        onChange={(e) => {
+                          if (e.target.value === "__add_new__") {
+                            setShowAddFriend(true);
+                          } else {
+                            setSharedWith(e.target.value);
+                          }
+                        }}
+                      >
+                        {friends.length > 0 && (
+                          <ListSubheader>Friends</ListSubheader>
+                        )}
+                        {friends.map((friend) => (
+                          <MenuItem key={friend} value={friend}>
+                            {friend}
+                          </MenuItem>
+                        ))}
+                        <Divider />
+                        <MenuItem value="__add_new__">
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <PersonAddIcon fontSize="small" color="primary" />
+                            <Typography color="primary">Add new friend...</Typography>
+                          </Box>
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    {/* Add New Friend Form */}
+                    {showAddFriend && (
+                      <Paper
+                        variant="outlined"
+                        sx={{ p: 2, bgcolor: "action.hover" }}
+                      >
+                        <Typography variant="subtitle2" gutterBottom>
+                          Add New Friend
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <TextField
+                            size="small"
+                            placeholder="Friend's name"
+                            value={newFriendName}
+                            onChange={(e) => setNewFriendName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleAddNewFriend();
+                              }
+                            }}
+                            fullWidth
+                            autoFocus
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={handleAddNewFriend}
+                            disabled={!newFriendName.trim()}
+                          >
+                            Add
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => {
+                              setShowAddFriend(false);
+                              setNewFriendName("");
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </Box>
+                      </Paper>
+                    )}
+
+                    {/* Preview of income that will be created */}
+                    {sharedWith && amount && (
+                      <Paper
+                        sx={{
+                          p: 2,
+                          bgcolor: "success.50",
+                          borderColor: "success.main",
+                          border: 1,
+                        }}
+                      >
+                        <Typography variant="body2" color="success.dark" fontWeight={500}>
+                          Will create income:
+                        </Typography>
+                        <Typography variant="body2" color="success.dark">
+                          "{description || "Transaction"} - {sharedWith}"
+                        </Typography>
+                        <Typography variant="h6" fontWeight={600} color="success.dark">
+                          +{new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(parseFloat(amount) / 2)}
+                        </Typography>
+                      </Paper>
                     )}
                   </Box>
-                </Box>
-                <Switch checked={isShared} size="small" color="info" />
-              </Paper>
+                )}
+              </Box>
             )}
 
             {isRecurring && (

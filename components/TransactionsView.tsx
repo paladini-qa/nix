@@ -51,6 +51,7 @@ import {
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
 import DateFilter from "./DateFilter";
+import { useNotification } from "../contexts";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -75,6 +76,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { showWarning, showError } = useNotification();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
     "all"
@@ -161,7 +163,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   const exportToCSV = () => {
     if (filteredData.length === 0) {
-      alert("No transactions to export.");
+      showWarning("No transactions to export.", "Export Failed");
       return;
     }
 
@@ -200,7 +202,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   const exportToXLSX = async () => {
     if (filteredData.length === 0) {
-      alert("No transactions to export.");
+      showWarning("No transactions to export.", "Export Failed");
       return;
     }
 
@@ -233,7 +235,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       XLSX.writeFile(workbook, `${getFileName()}.xlsx`);
     } catch (error) {
       console.error("Error exporting to XLSX:", error);
-      alert("Error exporting to XLSX. Please try again.");
+      showError("Error exporting to XLSX. Please try again.", "Export Error");
     } finally {
       setIsExporting(false);
       setAnchorEl(null);
@@ -242,7 +244,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   const exportToPDF = async () => {
     if (filteredData.length === 0) {
-      alert("No transactions to export.");
+      showWarning("No transactions to export.", "Export Failed");
       return;
     }
 
@@ -317,7 +319,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       doc.save(`${getFileName()}.pdf`);
     } catch (error) {
       console.error("Error exporting to PDF:", error);
-      alert("Error exporting to PDF. Please try again.");
+      showError("Error exporting to PDF. Please try again.", "Export Error");
     } finally {
       setIsExporting(false);
       setAnchorEl(null);

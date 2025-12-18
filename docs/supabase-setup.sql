@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     current_installment INTEGER CHECK (current_installment IS NULL OR current_installment >= 1),
     is_paid BOOLEAN DEFAULT FALSE,
     is_shared BOOLEAN DEFAULT FALSE,
+    shared_with TEXT,
+    related_transaction_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -32,6 +34,12 @@ CREATE TABLE IF NOT EXISTS public.transactions (
 
 -- Para bancos existentes, adicione a coluna is_shared (gastos compartilhados 50/50):
 -- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS is_shared BOOLEAN DEFAULT FALSE;
+
+-- Para bancos existentes, adicione a coluna shared_with (nome do amigo com quem dividiu):
+-- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS shared_with TEXT;
+
+-- Para bancos existentes, adicione a coluna related_transaction_id (link entre expense e income compartilhada):
+-- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS related_transaction_id UUID;
 
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);
@@ -45,6 +53,8 @@ COMMENT ON COLUMN public.transactions.frequency IS 'Frequência de recorrência:
 COMMENT ON COLUMN public.transactions.installments IS 'Número total de parcelas';
 COMMENT ON COLUMN public.transactions.current_installment IS 'Número da parcela atual';
 COMMENT ON COLUMN public.transactions.is_shared IS 'Gasto compartilhado 50/50 com outra pessoa';
+COMMENT ON COLUMN public.transactions.shared_with IS 'Nome do amigo com quem o gasto foi dividido';
+COMMENT ON COLUMN public.transactions.related_transaction_id IS 'ID da transação relacionada (link entre expense e income de shared expense)';
 
 -- =============================================
 -- 2. TABELA: user_settings
@@ -57,6 +67,7 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     categories_income TEXT[] DEFAULT ARRAY['Salary', 'Investments', 'Freelance', 'Gifts', 'Other'],
     categories_expense TEXT[] DEFAULT ARRAY['Food', 'Housing', 'Transportation', 'Healthcare', 'Entertainment', 'Education', 'Shopping', 'Subscriptions', 'Other'],
     payment_methods TEXT[] DEFAULT ARRAY['Credit Card', 'Debit Card', 'Pix', 'Cash', 'Bank Transfer', 'Boleto'],
+    friends TEXT[] DEFAULT ARRAY[]::TEXT[],
     theme_preference TEXT DEFAULT 'system' CHECK (theme_preference IN ('light', 'dark', 'system')),
     category_colors JSONB DEFAULT '{}'::jsonb,
     payment_method_colors JSONB DEFAULT '{}'::jsonb,
@@ -68,6 +79,9 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
 -- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS category_colors JSONB DEFAULT '{}'::jsonb;
 -- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS payment_method_colors JSONB DEFAULT '{}'::jsonb;
 
+-- Para usuários existentes, adicione a coluna friends (lista de amigos para shared expenses):
+-- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS friends TEXT[] DEFAULT ARRAY[]::TEXT[];
+
 -- Comentários na tabela
 COMMENT ON TABLE public.user_settings IS 'Configurações personalizadas do usuário';
 COMMENT ON COLUMN public.user_settings.display_name IS 'Nome de exibição do usuário';
@@ -77,6 +91,7 @@ COMMENT ON COLUMN public.user_settings.payment_methods IS 'Lista de métodos de 
 COMMENT ON COLUMN public.user_settings.theme_preference IS 'Preferência de tema: light, dark ou system';
 COMMENT ON COLUMN public.user_settings.category_colors IS 'Cores personalizadas para categorias (JSONB com primary e secondary)';
 COMMENT ON COLUMN public.user_settings.payment_method_colors IS 'Cores personalizadas para métodos de pagamento (JSONB com primary e secondary)';
+COMMENT ON COLUMN public.user_settings.friends IS 'Lista de amigos para shared expenses';
 
 -- =============================================
 -- 3. ROW LEVEL SECURITY (RLS)
