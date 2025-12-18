@@ -79,11 +79,21 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [filterFrequency, setFilterFrequency] = useState<"all" | "monthly" | "yearly">("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<{
     element: HTMLElement | null;
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
+
+  // Lista de todas as categorias únicas das transações recorrentes
+  const allCategories = useMemo(() => {
+    const categories = new Set<string>();
+    transactions
+      .filter((t) => t.isRecurring && !t.isVirtual)
+      .forEach((t) => categories.add(t.category));
+    return Array.from(categories).sort();
+  }, [transactions]);
 
   // Filtra apenas transações recorrentes (não virtuais)
   const recurringTransactions = useMemo(() => {
@@ -95,10 +105,11 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           t.category.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = filterType === "all" || t.type === filterType;
         const matchesFrequency = filterFrequency === "all" || t.frequency === filterFrequency;
-        return matchesSearch && matchesType && matchesFrequency;
+        const matchesCategory = filterCategory === "all" || t.category === filterCategory;
+        return matchesSearch && matchesType && matchesFrequency && matchesCategory;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, searchTerm, filterType, filterFrequency]);
+  }, [transactions, searchTerm, filterType, filterFrequency, filterCategory]);
 
   // Estatísticas
   const stats = useMemo(() => {
@@ -737,6 +748,22 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="monthly">Monthly</MenuItem>
               <MenuItem value="yearly">Yearly</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={filterCategory}
+              label="Category"
+              onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}
+            >
+              <MenuItem value="all">All</MenuItem>
+              {allCategories.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>
