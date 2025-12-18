@@ -1,20 +1,20 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import {
   Box,
   Paper,
   Typography,
   LinearProgress,
   Grid,
-  List,
-  ListItemButton,
-  ListItemText,
-  ListItemIcon,
+  Collapse,
+  Chip,
+  IconButton,
 } from "@mui/material";
 import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   CreditCard as CreditCardIcon,
-  ChevronRight as ChevronRightIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 import { ColorsContext } from "../App";
@@ -29,6 +29,47 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   onPaymentMethodClick,
 }) => {
   const { getCategoryColor, getPaymentMethodColor } = useContext(ColorsContext);
+  
+  // Estados para controlar expansão das seções
+  const [expandedIncomeCategories, setExpandedIncomeCategories] = useState<Set<string>>(new Set());
+  const [expandedExpenseCategories, setExpandedExpenseCategories] = useState<Set<string>>(new Set());
+  const [expandedPaymentMethods, setExpandedPaymentMethods] = useState<Set<string>>(new Set());
+
+  const toggleIncomeCategory = (category: string) => {
+    setExpandedIncomeCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
+
+  const toggleExpenseCategory = (category: string) => {
+    setExpandedExpenseCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
+
+  const togglePaymentMethod = (method: string) => {
+    setExpandedPaymentMethods(prev => {
+      const next = new Set(prev);
+      if (next.has(method)) {
+        next.delete(method);
+      } else {
+        next.add(method);
+      }
+      return next;
+    });
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -78,27 +119,37 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
 
   const totalIncome = sortedIncome.reduce((sum, [, val]) => sum + val, 0);
   const totalExpense = sortedExpense.reduce((sum, [, val]) => sum + val, 0);
+  const totalPaymentMethod = sortedPaymentMethods.reduce(
+    (sum, [, data]) => sum + data.income + data.expense, 0
+  );
 
-  // Fallback colors (usados quando não há cor personalizada)
-  const FALLBACK_INCOME_COLORS = ["#10b981", "#34d399", "#14b8a6", "#22c55e", "#84cc16"];
-  const FALLBACK_EXPENSE_COLORS = [
-    "#ef4444",
-    "#dc2626",
-    "#f43f5e",
-    "#e11d48",
-    "#f87171",
-    "#fb7185",
-    "#b91c1c",
-    "#be123c",
-  ];
-  const FALLBACK_PAYMENT_COLORS = [
-    "#6366f1",
-    "#3b82f6",
-    "#06b6d4",
-    "#0ea5e9",
-    "#8b5cf6",
-    "#a855f7",
-  ];
+  // Agrupa transações por categoria/método para exibição detalhada
+  const incomeTransactionsByCategory = transactions
+    .filter((t) => t.type === "income")
+    .reduce((acc, curr) => {
+      if (!acc[curr.category]) acc[curr.category] = [];
+      acc[curr.category].push(curr);
+      return acc;
+    }, {} as Record<string, Transaction[]>);
+
+  const expenseTransactionsByCategory = transactions
+    .filter((t) => t.type === "expense")
+    .reduce((acc, curr) => {
+      if (!acc[curr.category]) acc[curr.category] = [];
+      acc[curr.category].push(curr);
+      return acc;
+    }, {} as Record<string, Transaction[]>);
+
+  const transactionsByPaymentMethod = transactions.reduce((acc, curr) => {
+    if (!acc[curr.paymentMethod]) acc[curr.paymentMethod] = [];
+    acc[curr.paymentMethod].push(curr);
+    return acc;
+  }, {} as Record<string, Transaction[]>);
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr + "T00:00:00");
+    return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  };
 
   return (
     <Grid container spacing={3}>
@@ -130,61 +181,139 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
               No income for this period
             </Typography>
           ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {sortedIncome.map(([category, amount], index) => {
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {sortedIncome.map(([category, amount]) => {
                 const percentage =
                   totalIncome > 0 ? (amount / totalIncome) * 100 : 0;
                 const colors = getCategoryColor("income", category);
+                const isExpanded = expandedIncomeCategories.has(category);
+                const categoryTransactions = incomeTransactionsByCategory[category] || [];
+                
                 return (
                   <Box key={category}>
                     <Box
+                      onClick={() => toggleIncomeCategory(category)}
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 0.5,
+                        cursor: "pointer",
+                        p: 1.5,
+                        borderRadius: 2,
+                        border: 1,
+                        borderColor: isExpanded ? colors.primary : "divider",
+                        bgcolor: isExpanded ? `${colors.primary}08` : "transparent",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          bgcolor: `${colors.primary}12`,
+                          borderColor: colors.primary,
+                        },
                       }}
                     >
                       <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 0.5,
+                        }}
                       >
                         <Box
-                          sx={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: "50%",
-                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                          }}
-                        />
-                        <Typography variant="body2">{category}</Typography>
-                      </Box>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          sx={{ color: colors.primary }}
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         >
-                          {formatCurrency(amount)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {percentage.toFixed(0)}%
-                        </Typography>
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: "50%",
+                              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                            }}
+                          />
+                          <Typography variant="body2" fontWeight={500}>{category}</Typography>
+                          <Chip 
+                            label={categoryTransactions.length} 
+                            size="small" 
+                            sx={{ 
+                              height: 20, 
+                              fontSize: 11,
+                              bgcolor: `${colors.primary}20`,
+                              color: colors.primary,
+                            }} 
+                          />
+                        </Box>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            sx={{ color: colors.primary }}
+                          >
+                            {formatCurrency(amount)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {percentage.toFixed(0)}%
+                          </Typography>
+                          <IconButton size="small" sx={{ p: 0, ml: 0.5 }}>
+                            {isExpanded ? (
+                              <ExpandLessIcon fontSize="small" sx={{ color: colors.primary }} />
+                            ) : (
+                              <ExpandMoreIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                            )}
+                          </IconButton>
+                        </Box>
                       </Box>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={percentage}
-                      sx={{
-                        height: 6,
-                        borderRadius: 3,
-                        bgcolor: "action.hover",
-                        "& .MuiLinearProgress-bar": {
+                      <LinearProgress
+                        variant="determinate"
+                        value={percentage}
+                        sx={{
+                          height: 6,
                           borderRadius: 3,
-                          background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
-                        },
-                      }}
-                    />
+                          bgcolor: "action.hover",
+                          "& .MuiLinearProgress-bar": {
+                            borderRadius: 3,
+                            background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
+                          },
+                        }}
+                      />
+                    </Box>
+                    
+                    <Collapse in={isExpanded}>
+                      <Box sx={{ pl: 3, pr: 1, py: 1 }}>
+                        {categoryTransactions
+                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .map((tx) => (
+                          <Box
+                            key={tx.id}
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              py: 0.75,
+                              borderBottom: 1,
+                              borderColor: "divider",
+                              "&:last-child": { borderBottom: 0 },
+                            }}
+                          >
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 45 }}>
+                                {formatDate(tx.date)}
+                              </Typography>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  overflow: "hidden", 
+                                  textOverflow: "ellipsis", 
+                                  whiteSpace: "nowrap" 
+                                }}
+                              >
+                                {tx.description}
+                              </Typography>
+                            </Box>
+                            <Typography variant="body2" fontWeight={500} color="success.main">
+                              +{formatCurrency(tx.amount)}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Collapse>
                   </Box>
                 );
               })}
@@ -246,61 +375,139 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
               No expenses for this period
             </Typography>
           ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {sortedExpense.map(([category, amount], index) => {
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {sortedExpense.map(([category, amount]) => {
                 const percentage =
                   totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
                 const colors = getCategoryColor("expense", category);
+                const isExpanded = expandedExpenseCategories.has(category);
+                const categoryTransactions = expenseTransactionsByCategory[category] || [];
+                
                 return (
                   <Box key={category}>
                     <Box
+                      onClick={() => toggleExpenseCategory(category)}
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 0.5,
+                        cursor: "pointer",
+                        p: 1.5,
+                        borderRadius: 2,
+                        border: 1,
+                        borderColor: isExpanded ? colors.primary : "divider",
+                        bgcolor: isExpanded ? `${colors.primary}08` : "transparent",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          bgcolor: `${colors.primary}12`,
+                          borderColor: colors.primary,
+                        },
                       }}
                     >
                       <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 0.5,
+                        }}
                       >
                         <Box
-                          sx={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: "50%",
-                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                          }}
-                        />
-                        <Typography variant="body2">{category}</Typography>
-                      </Box>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          sx={{ color: colors.primary }}
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         >
-                          {formatCurrency(amount)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {percentage.toFixed(0)}%
-                        </Typography>
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: "50%",
+                              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                            }}
+                          />
+                          <Typography variant="body2" fontWeight={500}>{category}</Typography>
+                          <Chip 
+                            label={categoryTransactions.length} 
+                            size="small" 
+                            sx={{ 
+                              height: 20, 
+                              fontSize: 11,
+                              bgcolor: `${colors.primary}20`,
+                              color: colors.primary,
+                            }} 
+                          />
+                        </Box>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            sx={{ color: colors.primary }}
+                          >
+                            {formatCurrency(amount)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {percentage.toFixed(0)}%
+                          </Typography>
+                          <IconButton size="small" sx={{ p: 0, ml: 0.5 }}>
+                            {isExpanded ? (
+                              <ExpandLessIcon fontSize="small" sx={{ color: colors.primary }} />
+                            ) : (
+                              <ExpandMoreIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                            )}
+                          </IconButton>
+                        </Box>
                       </Box>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={percentage}
-                      sx={{
-                        height: 6,
-                        borderRadius: 3,
-                        bgcolor: "action.hover",
-                        "& .MuiLinearProgress-bar": {
+                      <LinearProgress
+                        variant="determinate"
+                        value={percentage}
+                        sx={{
+                          height: 6,
                           borderRadius: 3,
-                          background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
-                        },
-                      }}
-                    />
+                          bgcolor: "action.hover",
+                          "& .MuiLinearProgress-bar": {
+                            borderRadius: 3,
+                            background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
+                          },
+                        }}
+                      />
+                    </Box>
+                    
+                    <Collapse in={isExpanded}>
+                      <Box sx={{ pl: 3, pr: 1, py: 1 }}>
+                        {categoryTransactions
+                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .map((tx) => (
+                          <Box
+                            key={tx.id}
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              py: 0.75,
+                              borderBottom: 1,
+                              borderColor: "divider",
+                              "&:last-child": { borderBottom: 0 },
+                            }}
+                          >
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 45 }}>
+                                {formatDate(tx.date)}
+                              </Typography>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  overflow: "hidden", 
+                                  textOverflow: "ellipsis", 
+                                  whiteSpace: "nowrap" 
+                                }}
+                              >
+                                {tx.description}
+                              </Typography>
+                            </Box>
+                            <Typography variant="body2" fontWeight={500} color="error.main">
+                              -{formatCurrency(tx.amount)}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Collapse>
                   </Box>
                 );
               })}
@@ -358,83 +565,197 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
               No transactions for this period
             </Typography>
           ) : (
-            <List disablePadding>
-              {sortedPaymentMethods.map(([method, data], index) => {
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {sortedPaymentMethods.map(([method, data]) => {
                 const total = data.income + data.expense;
+                const percentage =
+                  totalPaymentMethod > 0 ? (total / totalPaymentMethod) * 100 : 0;
                 const colors = getPaymentMethodColor(method);
+                const isExpanded = expandedPaymentMethods.has(method);
+                const methodTransactions = transactionsByPaymentMethod[method] || [];
+                
                 return (
-                  <ListItemButton
-                    key={method}
-                    onClick={() => onPaymentMethodClick?.(method)}
-                    sx={{
-                      borderRadius: 2,
-                      mb: 1,
-                      border: 1,
-                      borderColor: "divider",
-                      "&:hover": {
-                        bgcolor: `${colors.primary}10`,
-                        borderColor: colors.primary,
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 32 }}>
+                  <Box key={method}>
+                    <Box
+                      onClick={() => togglePaymentMethod(method)}
+                      sx={{
+                        cursor: "pointer",
+                        p: 1.5,
+                        borderRadius: 2,
+                        border: 1,
+                        borderColor: isExpanded ? colors.primary : "divider",
+                        bgcolor: isExpanded ? `${colors.primary}08` : "transparent",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          bgcolor: `${colors.primary}12`,
+                          borderColor: colors.primary,
+                        },
+                      }}
+                    >
                       <Box
                         sx={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: "50%",
-                          background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 0.5,
+                        }}
+                      >
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: "50%",
+                              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                            }}
+                          />
+                          <Typography variant="body2" fontWeight={500}>{method}</Typography>
+                          <Chip 
+                            label={methodTransactions.length} 
+                            size="small" 
+                            sx={{ 
+                              height: 20, 
+                              fontSize: 11,
+                              bgcolor: `${colors.primary}20`,
+                              color: colors.primary,
+                            }} 
+                          />
+                        </Box>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Box sx={{ display: "flex", gap: 1.5, mr: 1 }}>
+                            {data.income > 0 && (
+                              <Typography variant="caption" color="success.main" fontWeight={500}>
+                                +{formatCurrency(data.income)}
+                              </Typography>
+                            )}
+                            {data.expense > 0 && (
+                              <Typography variant="caption" color="error.main" fontWeight={500}>
+                                -{formatCurrency(data.expense)}
+                              </Typography>
+                            )}
+                          </Box>
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            sx={{ color: colors.primary }}
+                          >
+                            {formatCurrency(total)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {percentage.toFixed(0)}%
+                          </Typography>
+                          <IconButton size="small" sx={{ p: 0, ml: 0.5 }}>
+                            {isExpanded ? (
+                              <ExpandLessIcon fontSize="small" sx={{ color: colors.primary }} />
+                            ) : (
+                              <ExpandMoreIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                            )}
+                          </IconButton>
+                        </Box>
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={percentage}
+                        sx={{
+                          height: 6,
+                          borderRadius: 3,
+                          bgcolor: "action.hover",
+                          "& .MuiLinearProgress-bar": {
+                            borderRadius: 3,
+                            background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
+                          },
                         }}
                       />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={method}
-                      secondary={
-                        <Box
-                          component="span"
-                          sx={{ display: "flex", gap: 2, mt: 0.5 }}
-                        >
-                          {data.income > 0 && (
-                            <Typography
-                              component="span"
-                              variant="caption"
-                              color="success.main"
+                    </Box>
+                    
+                    <Collapse in={isExpanded}>
+                      <Box sx={{ pl: 3, pr: 1, py: 1 }}>
+                        {methodTransactions
+                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .map((tx) => (
+                          <Box
+                            key={tx.id}
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              py: 0.75,
+                              borderBottom: 1,
+                              borderColor: "divider",
+                              "&:last-child": { borderBottom: 0 },
+                            }}
+                          >
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0, flex: 1 }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 45 }}>
+                                {formatDate(tx.date)}
+                              </Typography>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  overflow: "hidden", 
+                                  textOverflow: "ellipsis", 
+                                  whiteSpace: "nowrap",
+                                  flex: 1,
+                                }}
+                              >
+                                {tx.description}
+                              </Typography>
+                              <Chip 
+                                label={tx.category} 
+                                size="small" 
+                                sx={{ 
+                                  height: 18, 
+                                  fontSize: 10,
+                                  bgcolor: tx.type === "income" ? "success.light" : "error.light",
+                                  color: tx.type === "income" ? "success.dark" : "error.dark",
+                                }} 
+                              />
+                            </Box>
+                            <Typography 
+                              variant="body2" 
+                              fontWeight={500} 
+                              color={tx.type === "income" ? "success.main" : "error.main"}
+                              sx={{ ml: 1 }}
                             >
-                              +{formatCurrency(data.income)}
+                              {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
                             </Typography>
-                          )}
-                          {data.expense > 0 && (
-                            <Typography
-                              component="span"
-                              variant="caption"
-                              color="error.main"
-                            >
-                              -{formatCurrency(data.expense)}
-                            </Typography>
-                          )}
-                        </Box>
-                      }
-                      primaryTypographyProps={{ 
-                        fontWeight: 500,
-                        sx: {
-                          background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          backgroundClip: "text",
-                        }
-                      }}
-                    />
-                    <Typography variant="body2" fontWeight={600} sx={{ color: colors.primary }}>
-                      {formatCurrency(total)}
-                    </Typography>
-                    <ChevronRightIcon
-                      fontSize="small"
-                      sx={{ ml: 1, color: colors.secondary }}
-                    />
-                  </ListItemButton>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Collapse>
+                  </Box>
                 );
               })}
-            </List>
+              <Box
+                sx={{
+                  pt: 1.5,
+                  borderTop: 1,
+                  borderColor: "divider",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight={500}
+                  color="text.secondary"
+                  sx={{ textTransform: "uppercase" }}
+                >
+                  Total
+                </Typography>
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  color="primary.main"
+                >
+                  {formatCurrency(totalPaymentMethod)}
+                </Typography>
+              </Box>
+            </Box>
           )}
         </Paper>
       </Grid>
