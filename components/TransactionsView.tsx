@@ -543,7 +543,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       display: "flex",
                       alignItems: "flex-start",
                       gap: 1,
-                      opacity: t.isPaid === false ? 0.6 : 1,
+                      opacity: t.isPaid !== false ? 0.5 : 1,
+                      bgcolor: t.isPaid === false ? "background.paper" : "action.hover",
                     }}
                   >
                     {/* Checkbox */}
@@ -848,8 +849,14 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     key={t.id}
                     hover
                     sx={{
-                      bgcolor: index % 2 === 0 ? "transparent" : "action.hover",
-                      opacity: t.isPaid === false ? 0.6 : 1,
+                      bgcolor: t.isPaid !== false 
+                        ? "action.disabledBackground" 
+                        : (index % 2 === 0 ? "transparent" : "action.hover"),
+                      opacity: t.isPaid !== false ? 0.6 : 1,
+                      "& td": {
+                        textDecoration: t.isPaid !== false ? "line-through" : "none",
+                        textDecorationColor: "text.disabled",
+                      },
                     }}
                   >
                     <TableCell sx={{ textAlign: "center" }}>

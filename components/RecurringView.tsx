@@ -3,12 +3,8 @@ import {
   Box,
   Typography,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  TextField,
+  InputAdornment,
   Chip,
   IconButton,
   Menu,
@@ -20,10 +16,7 @@ import {
   Card,
   CardContent,
   Divider,
-  Tooltip,
   Grid,
-  TextField,
-  InputAdornment,
   FormControl,
   InputLabel,
   Select,
@@ -31,6 +24,14 @@ import {
   Alert,
   Button,
   Fab,
+  Collapse,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  TableHead,
+  alpha,
+  LinearProgress,
 } from "@mui/material";
 import {
   Repeat as RepeatIcon,
@@ -43,6 +44,10 @@ import {
   CalendarMonth as CalendarIcon,
   AllInclusive as InfiniteIcon,
   Add as AddIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Event as EventIcon,
+  Schedule as ScheduleIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 
@@ -51,6 +56,14 @@ interface RecurringViewProps {
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
   onNewTransaction: () => void;
+}
+
+interface RecurringOccurrence {
+  date: string;
+  month: string;
+  year: number;
+  isPast: boolean;
+  isCurrent: boolean;
 }
 
 const RecurringView: React.FC<RecurringViewProps> = ({
@@ -65,6 +78,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [filterFrequency, setFilterFrequency] = useState<"all" | "monthly" | "yearly">("all");
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<{
     element: HTMLElement | null;
     transaction: Transaction | null;
@@ -101,7 +115,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       .filter((t) => t.type === "expense" && t.frequency === "yearly")
       .reduce((sum, t) => sum + t.amount, 0);
 
-    // Impacto anualizado: mensais × 12 + anuais
     const annualizedIncome = monthlyIncome * 12 + yearlyOnlyIncome;
     const annualizedExpense = monthlyExpense * 12 + yearlyOnlyExpense;
 
@@ -118,13 +131,11 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     };
   }, [transactions]);
 
-  // Helper para parsear data YYYY-MM-DD sem problemas de timezone
   const parseLocalDate = (dateString: string): Date => {
     const [year, month, day] = dateString.split("-").map(Number);
     return new Date(year, month - 1, day);
   };
 
-  // Calcula quantas vezes a transação já ocorreu
   const calculateOccurrences = (transaction: Transaction): number => {
     const startDate = parseLocalDate(transaction.date);
     const today = new Date();
@@ -144,7 +155,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     return 1;
   };
 
-  // Calcula próxima ocorrência
   const getNextOccurrence = (transaction: Transaction): string => {
     const startDate = parseLocalDate(transaction.date);
     const today = new Date();
@@ -168,6 +178,54 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     });
   };
 
+  // Gera lista de ocorrências para exibição
+  const getOccurrencesList = (transaction: Transaction): RecurringOccurrence[] => {
+    const startDate = parseLocalDate(transaction.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const occurrences: RecurringOccurrence[] = [];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    // Mostra 12 ocorrências (6 passadas se existirem + atual + 5 futuras)
+    let currentDate = new Date(startDate);
+    const maxOccurrences = 12;
+    
+    for (let i = 0; i < maxOccurrences; i++) {
+      if (transaction.frequency === "monthly") {
+        const occDate = new Date(startDate);
+        occDate.setMonth(startDate.getMonth() + i);
+        
+        const isPast = occDate < new Date(today.getFullYear(), today.getMonth(), 1);
+        const isCurrent = occDate.getMonth() === today.getMonth() && occDate.getFullYear() === today.getFullYear();
+        
+        occurrences.push({
+          date: occDate.toISOString().split("T")[0],
+          month: months[occDate.getMonth()],
+          year: occDate.getFullYear(),
+          isPast,
+          isCurrent,
+        });
+      } else if (transaction.frequency === "yearly") {
+        const occDate = new Date(startDate);
+        occDate.setFullYear(startDate.getFullYear() + i);
+        
+        const isPast = occDate.getFullYear() < today.getFullYear() || 
+          (occDate.getFullYear() === today.getFullYear() && occDate.getMonth() < today.getMonth());
+        const isCurrent = occDate.getFullYear() === today.getFullYear() && occDate.getMonth() === today.getMonth();
+        
+        occurrences.push({
+          date: occDate.toISOString().split("T")[0],
+          month: months[occDate.getMonth()],
+          year: occDate.getFullYear(),
+          isPast,
+          isCurrent,
+        });
+      }
+    }
+    
+    return occurrences;
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -182,6 +240,253 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       month: "short",
       year: "numeric",
     });
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const renderRecurringCard = (t: Transaction) => {
+    const isExpanded = expandedItems.has(t.id);
+    const isIncome = t.type === "income";
+    const occurrences = calculateOccurrences(t);
+    const occurrencesList = getOccurrencesList(t);
+
+    return (
+      <Card
+        key={t.id}
+        sx={{
+          border: 1,
+          borderColor: "divider",
+          borderLeft: 4,
+          borderLeftColor: isIncome ? "success.main" : "error.main",
+          mb: 2,
+        }}
+      >
+        <CardContent sx={{ pb: 1 }}>
+          {/* Header */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              cursor: "pointer",
+            }}
+            onClick={() => toggleExpand(t.id)}
+          >
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+                {isIncome ? (
+                  <TrendingUpIcon fontSize="small" color="success" />
+                ) : (
+                  <TrendingDownIcon fontSize="small" color="error" />
+                )}
+                <Typography variant="subtitle1" fontWeight={600}>
+                  {t.description}
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                <Chip label={t.category} size="small" variant="outlined" />
+                <Typography variant="caption" color="text.secondary">
+                  {t.paymentMethod}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ textAlign: "right", minWidth: 120 }}>
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                color={isIncome ? "success.main" : "error.main"}
+              >
+                {isIncome ? "+" : "-"}{formatCurrency(t.amount)}
+              </Typography>
+              <Chip
+                icon={<RepeatIcon sx={{ fontSize: 14 }} />}
+                label={t.frequency === "monthly" ? "Monthly" : "Yearly"}
+                size="small"
+                color={t.frequency === "monthly" ? "info" : "warning"}
+                variant="outlined"
+                sx={{ mt: 0.5 }}
+              />
+            </Box>
+          </Box>
+
+          {/* Info Row */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 2,
+              flexWrap: "wrap",
+              gap: 1,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <CalendarIcon fontSize="small" color="action" />
+                <Typography variant="caption" color="text.secondary">
+                  Started: {formatDate(t.date)}
+                </Typography>
+              </Box>
+              <Chip
+                label={`${occurrences}x occurred`}
+                size="small"
+                color="default"
+                variant="outlined"
+              />
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <ScheduleIcon fontSize="small" color="primary" />
+              <Typography variant="body2" color="primary.main" fontWeight={500}>
+                Next: {getNextOccurrence(t)}
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Expand Button */}
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+            <Button
+              size="small"
+              onClick={() => toggleExpand(t.id)}
+              endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              sx={{ textTransform: "none" }}
+            >
+              {isExpanded ? "Hide occurrences" : "View occurrences"}
+            </Button>
+          </Box>
+        </CardContent>
+
+        {/* Occurrences List */}
+        <Collapse in={isExpanded}>
+          <Divider />
+          <Box sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.3) }}>
+            {/* Actions */}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<EditIcon />}
+                onClick={() => onEdit(t)}
+              >
+                Edit
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => onDelete(t.id)}
+              >
+                Delete
+              </Button>
+            </Box>
+
+            {/* Timeline/Grid of occurrences */}
+            <Typography variant="subtitle2" gutterBottom>
+              Upcoming occurrences
+            </Typography>
+            
+            {isMobile ? (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                {occurrencesList.slice(0, 6).map((occ, idx) => (
+                  <Paper
+                    key={idx}
+                    sx={{
+                      p: 1.5,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      opacity: occ.isPast ? 0.5 : 1,
+                      bgcolor: occ.isCurrent ? "primary.50" : "background.paper",
+                      border: occ.isCurrent ? 2 : 1,
+                      borderColor: occ.isCurrent ? "primary.main" : "divider",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <EventIcon fontSize="small" color={occ.isCurrent ? "primary" : "action"} />
+                      <Typography
+                        variant="body2"
+                        fontWeight={occ.isCurrent ? 600 : 400}
+                      >
+                        {occ.month} {occ.year}
+                      </Typography>
+                      {occ.isCurrent && (
+                        <Chip label="Current" size="small" color="primary" />
+                      )}
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color={isIncome ? "success.main" : "error.main"}
+                    >
+                      {formatCurrency(t.amount)}
+                    </Typography>
+                  </Paper>
+                ))}
+              </Box>
+            ) : (
+              <Grid container spacing={1}>
+                {occurrencesList.map((occ, idx) => (
+                  <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={idx}>
+                    <Paper
+                      sx={{
+                        p: 1.5,
+                        textAlign: "center",
+                        opacity: occ.isPast ? 0.5 : 1,
+                        bgcolor: occ.isCurrent ? "primary.50" : "background.paper",
+                        border: occ.isCurrent ? 2 : 1,
+                        borderColor: occ.isCurrent ? "primary.main" : "divider",
+                        textDecoration: occ.isPast ? "line-through" : "none",
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        fontWeight={occ.isCurrent ? 700 : 500}
+                        color={occ.isCurrent ? "primary.main" : "text.primary"}
+                      >
+                        {occ.month}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {occ.year}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+
+            {/* Annual Impact */}
+            <Paper sx={{ p: 2, mt: 2, bgcolor: "background.paper" }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Annual Impact
+              </Typography>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2" color="text.secondary">
+                  {t.frequency === "monthly" ? "12 months × " : "1 year × "}{formatCurrency(t.amount)}
+                </Typography>
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  color={isIncome ? "success.main" : "error.main"}
+                >
+                  {isIncome ? "+" : "-"}{formatCurrency(t.amount * (t.frequency === "monthly" ? 12 : 1))}
+                </Typography>
+              </Box>
+            </Paper>
+          </Box>
+        </Collapse>
+      </Card>
+    );
   };
 
   return (
@@ -217,7 +522,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
       {/* Summary Cards */}
       <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Card
             sx={{
               height: "100%",
@@ -238,7 +543,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               <Typography variant="h5" fontWeight="bold">
                 {stats.total}
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mt: 1 }}>
+              <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
                 <Typography variant="caption" color="success.main">
                   {stats.incomeCount} income
                 </Typography>
@@ -250,7 +555,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Card
             sx={{
               height: "100%",
@@ -265,29 +570,29 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                 <CalendarIcon color="info" fontSize="small" />
                 <Typography variant="body2" color="text.secondary">
-                  Monthly Balance
+                  Monthly
                 </Typography>
               </Box>
               <Typography
-                variant="h5"
+                variant={isMobile ? "h6" : "h5"}
                 fontWeight="bold"
                 color={stats.monthlyBalance >= 0 ? "success.main" : "error.main"}
               >
                 {formatCurrency(stats.monthlyBalance)}
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mt: 1 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 1 }}>
                 <Typography variant="caption" color="success.main">
-                  +{formatCurrency(stats.monthlyIncome)} income
+                  +{formatCurrency(stats.monthlyIncome)}
                 </Typography>
                 <Typography variant="caption" color="error.main">
-                  -{formatCurrency(stats.monthlyExpense)} expense
+                  -{formatCurrency(stats.monthlyExpense)}
                 </Typography>
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Card
             sx={{
               height: "100%",
@@ -302,29 +607,29 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                 <InfiniteIcon color="warning" fontSize="small" />
                 <Typography variant="body2" color="text.secondary">
-                  Yearly Balance
+                  Yearly
                 </Typography>
               </Box>
               <Typography
-                variant="h5"
+                variant={isMobile ? "h6" : "h5"}
                 fontWeight="bold"
                 color={stats.annualizedBalance >= 0 ? "success.main" : "error.main"}
               >
                 {formatCurrency(stats.annualizedBalance)}
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mt: 1 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 1 }}>
                 <Typography variant="caption" color="success.main">
-                  +{formatCurrency(stats.annualizedIncome)} income
+                  +{formatCurrency(stats.annualizedIncome)}
                 </Typography>
                 <Typography variant="caption" color="error.main">
-                  -{formatCurrency(stats.annualizedExpense)} expense
+                  -{formatCurrency(stats.annualizedExpense)}
                 </Typography>
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Card
             sx={{
               height: "100%",
@@ -341,17 +646,12 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                   Annual Impact
                 </Typography>
               </Box>
-              <Typography variant="h5" fontWeight="bold">
+              <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
                 {formatCurrency(stats.annualizedBalance)}
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mt: 1 }}>
-                <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                  Monthly × 12 + Yearly
-                </Typography>
-                <Typography variant="caption" sx={{ opacity: 0.6 }}>
-                  &nbsp;
-                </Typography>
-              </Box>
+              <Typography variant="caption" sx={{ opacity: 0.8, mt: 1 }}>
+                Monthly × 12 + Yearly
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -362,9 +662,10 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         sx={{
           p: 2,
           display: "flex",
+          flexDirection: isMobile ? "column" : "row",
           flexWrap: "wrap",
           gap: 2,
-          alignItems: "center",
+          alignItems: isMobile ? "stretch" : "center",
         }}
       >
         <TextField
@@ -382,230 +683,49 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           sx={{ minWidth: 200, flex: 1 }}
         />
 
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Type</InputLabel>
-          <Select
-            value={filterType}
-            label="Type"
-            onChange={(e: SelectChangeEvent) =>
-              setFilterType(e.target.value as "all" | "income" | "expense")
-            }
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="income">Income</MenuItem>
-            <MenuItem value="expense">Expense</MenuItem>
-          </Select>
-        </FormControl>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel>Type</InputLabel>
+            <Select
+              value={filterType}
+              label="Type"
+              onChange={(e: SelectChangeEvent) =>
+                setFilterType(e.target.value as "all" | "income" | "expense")
+              }
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="income">Income</MenuItem>
+              <MenuItem value="expense">Expense</MenuItem>
+            </Select>
+          </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Frequency</InputLabel>
-          <Select
-            value={filterFrequency}
-            label="Frequency"
-            onChange={(e: SelectChangeEvent) =>
-              setFilterFrequency(e.target.value as "all" | "monthly" | "yearly")
-            }
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="monthly">Monthly</MenuItem>
-            <MenuItem value="yearly">Yearly</MenuItem>
-          </Select>
-        </FormControl>
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel>Frequency</InputLabel>
+            <Select
+              value={filterFrequency}
+              label="Frequency"
+              onChange={(e: SelectChangeEvent) =>
+                setFilterFrequency(e.target.value as "all" | "monthly" | "yearly")
+              }
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="monthly">Monthly</MenuItem>
+              <MenuItem value="yearly">Yearly</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Paper>
 
-      {/* Table / List */}
+      {/* Recurring Items */}
       {recurringTransactions.length === 0 ? (
         <Alert severity="info" icon={<RepeatIcon />}>
           No recurring transactions found. Create a transaction and mark it as
           recurring to see it here.
         </Alert>
-      ) : isMobile ? (
-        // Mobile Card View
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {recurringTransactions.map((t) => (
-            <Card
-              key={t.id}
-              sx={{
-                border: 1,
-                borderColor: "divider",
-                borderLeft: 4,
-                borderLeftColor: t.type === "income" ? "success.main" : "error.main",
-              }}
-            >
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {t.description}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {t.category} • {t.paymentMethod}
-                    </Typography>
-                  </Box>
-                  <IconButton
-                    size="small"
-                    onClick={(e) =>
-                      setMobileMenuAnchor({ element: e.currentTarget, transaction: t })
-                    }
-                  >
-                    <MoreVertIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-
-                <Divider sx={{ my: 1.5 }} />
-
-                <Grid container spacing={1}>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Amount
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      fontWeight={600}
-                      color={t.type === "income" ? "success.main" : "error.main"}
-                    >
-                      {t.type === "income" ? "+" : "-"}
-                      {formatCurrency(t.amount)}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Frequency
-                    </Typography>
-                    <Chip
-                      size="small"
-                      label={t.frequency === "monthly" ? "Monthly" : "Yearly"}
-                      color={t.frequency === "monthly" ? "info" : "warning"}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Started
-                    </Typography>
-                    <Typography variant="body2">{formatDate(t.date)}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Occurrences
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      {calculateOccurrences(t)}x
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Next Occurrence
-                    </Typography>
-                    <Typography variant="body2" color="primary.main">
-                      {getNextOccurrence(t)}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          ))}
-        </Box>
       ) : (
-        // Desktop Table View
-        <TableContainer component={Paper} sx={{ border: 1, borderColor: "divider" }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "action.hover" }}>
-                <TableCell>Description</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Frequency</TableCell>
-                <TableCell>Started</TableCell>
-                <TableCell align="center">Occurrences</TableCell>
-                <TableCell>Next</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {recurringTransactions.map((t) => (
-                <TableRow
-                  key={t.id}
-                  sx={{
-                    "&:hover": { bgcolor: "action.hover" },
-                    borderLeft: 4,
-                    borderLeftColor: t.type === "income" ? "success.main" : "error.main",
-                  }}
-                >
-                  <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      {t.type === "income" ? (
-                        <TrendingUpIcon fontSize="small" color="success" />
-                      ) : (
-                        <TrendingDownIcon fontSize="small" color="error" />
-                      )}
-                      <Typography variant="body2" fontWeight={500}>
-                        {t.description}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip size="small" label={t.category} variant="outlined" />
-                  </TableCell>
-                  <TableCell>
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color={t.type === "income" ? "success.main" : "error.main"}
-                    >
-                      {t.type === "income" ? "+" : "-"}
-                      {formatCurrency(t.amount)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      icon={<RepeatIcon sx={{ fontSize: 14 }} />}
-                      label={t.frequency === "monthly" ? "Monthly" : "Yearly"}
-                      color={t.frequency === "monthly" ? "info" : "warning"}
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{formatDate(t.date)}</Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Tooltip title="Total occurrences since start">
-                      <Chip
-                        size="small"
-                        label={`${calculateOccurrences(t)}x`}
-                        color="default"
-                      />
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="primary.main" fontWeight={500}>
-                      {getNextOccurrence(t)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton size="small" onClick={() => onEdit(t)} color="primary">
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => onDelete(t.id)}
-                      color="error"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Box>
+          {recurringTransactions.map((t) => renderRecurringCard(t))}
+        </Box>
       )}
 
       {/* Mobile Action Menu */}
@@ -662,4 +782,3 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 };
 
 export default RecurringView;
-

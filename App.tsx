@@ -53,6 +53,7 @@ import ProfileModal from "./components/ProfileModal";
 import LoginView from "./components/LoginView";
 import ThemeSwitch from "./components/ThemeSwitch";
 import DateFilter from "./components/DateFilter";
+import EditOptionsDialog, { EditOption } from "./components/EditOptionsDialog";
 
 // Lazy loaded components (loaded on demand)
 const TransactionsView = lazy(() => import("./components/TransactionsView"));
@@ -145,6 +146,11 @@ const App: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     string | null
   >(null);
+  
+  // State para dialog de opções de edição
+  const [editOptionsDialogOpen, setEditOptionsDialogOpen] = useState(false);
+  const [pendingEditTransaction, setPendingEditTransaction] = useState<Transaction | null>(null);
+  const [currentEditMode, setCurrentEditMode] = useState<EditOption | null>(null);
 
   // Theme preference state
   const [themePreference, setThemePreference] = useState<ThemePreference>(
@@ -470,47 +476,119 @@ const App: React.FC = () => {
       };
 
       if (editId) {
+        // Verifica se há um modo de edição especial (para parcelas/recorrentes)
+        const editMode = currentEditMode;
+        
         const dbPayload = {
-          user_id: session.user.id,
           description: newTx.description,
           amount: newTx.amount,
           type: newTx.type,
           category: newTx.category,
           payment_method: newTx.paymentMethod,
-          date: newTx.date,
           is_recurring: newTx.isRecurring,
           frequency: newTx.frequency,
-          installments: newTx.installments,
-          current_installment: newTx.currentInstallment,
         };
 
-        const { data, error } = await supabase
-          .from("transactions")
-          .update(dbPayload)
-          .eq("id", editId)
-          .select()
-          .single();
+        if (editMode === "all" || editMode === "all_future") {
+          // Edita múltiplas transações (parcelas/recorrentes)
+          const originalTx = editingTransaction;
+          if (!originalTx) return;
 
-        if (error) throw error;
+          // Busca todas as transações relacionadas
+          const relatedTxs = transactions.filter((t) => {
+            const sameDescription = t.description === originalTx.description;
+            const samePaymentMethod = t.paymentMethod === originalTx.paymentMethod;
+            const sameCategory = t.category === originalTx.category;
+            const sameInstallments = t.installments === originalTx.installments;
+            const sameType = t.type === originalTx.type;
+            
+            if (!sameDescription || !samePaymentMethod || !sameCategory || !sameType) {
+              return false;
+            }
+            
+            if (originalTx.installments && originalTx.installments > 1) {
+              // Para parcelas, verifica se tem o mesmo número total de parcelas
+              if (!sameInstallments) return false;
+              
+              if (editMode === "all_future") {
+                // Apenas parcelas desta e futuras
+                return (t.currentInstallment || 1) >= (originalTx.currentInstallment || 1);
+              }
+              return true; // Todas as parcelas
+            } else if (originalTx.isRecurring) {
+              // Para recorrentes, apenas a transação original
+              return t.id === originalTx.id;
+            }
+            
+            return false;
+          });
 
-        if (data) {
-          const transaction: Transaction = {
-            id: data.id,
-            description: data.description,
-            amount: data.amount,
-            type: data.type,
-            category: data.category,
-            paymentMethod: data.payment_method,
-            date: data.date,
-            createdAt: new Date(data.created_at).getTime(),
-            isRecurring: data.is_recurring,
-            frequency: data.frequency,
-            installments: data.installments,
-            currentInstallment: data.current_installment,
-          };
+          // Atualiza todas as transações relacionadas
+          const idsToUpdate = relatedTxs.map((t) => t.id);
+          
+          const { error } = await supabase
+            .from("transactions")
+            .update(dbPayload)
+            .in("id", idsToUpdate);
+
+          if (error) throw error;
+
+          // Atualiza o state local
           setTransactions((prev) =>
-            prev.map((t) => (t.id === editId ? transaction : t))
+            prev.map((t) => {
+              if (idsToUpdate.includes(t.id)) {
+                return {
+                  ...t,
+                  description: newTx.description,
+                  amount: newTx.amount,
+                  type: newTx.type,
+                  category: newTx.category,
+                  paymentMethod: newTx.paymentMethod,
+                  isRecurring: newTx.isRecurring,
+                  frequency: newTx.frequency,
+                };
+              }
+              return t;
+            })
           );
+        } else {
+          // Edição normal (single)
+          const singlePayload = {
+            ...dbPayload,
+            date: newTx.date,
+            installments: newTx.installments,
+            current_installment: newTx.currentInstallment,
+          };
+
+          const { data, error } = await supabase
+            .from("transactions")
+            .update(singlePayload)
+            .eq("id", editId)
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            const transaction: Transaction = {
+              id: data.id,
+              description: data.description,
+              amount: data.amount,
+              type: data.type,
+              category: data.category,
+              paymentMethod: data.payment_method,
+              date: data.date,
+              createdAt: new Date(data.created_at).getTime(),
+              isRecurring: data.is_recurring,
+              frequency: data.frequency,
+              installments: data.installments,
+              currentInstallment: data.current_installment,
+              isPaid: data.is_paid ?? true,
+            };
+            setTransactions((prev) =>
+              prev.map((t) => (t.id === editId ? transaction : t))
+            );
+          }
         }
       } else if (newTx.installments && newTx.installments > 1) {
         const totalInstallments = newTx.installments;
@@ -612,6 +690,7 @@ const App: React.FC = () => {
       }
 
       setEditingTransaction(null);
+      setCurrentEditMode(null);
     } catch (err) {
       console.error("Error saving transaction:", err);
       alert("Error saving transaction.");
@@ -619,8 +698,27 @@ const App: React.FC = () => {
   };
 
   const handleEditTransaction = (transaction: Transaction) => {
-    setEditingTransaction(transaction);
+    // Se é uma transação recorrente ou parcelada, mostra o dialog de opções
+    const isRecurring = transaction.isRecurring && !transaction.isVirtual;
+    const isInstallment = transaction.installments && transaction.installments > 1;
+    
+    if (isRecurring || isInstallment) {
+      setPendingEditTransaction(transaction);
+      setEditOptionsDialogOpen(true);
+    } else {
+      setEditingTransaction(transaction);
+      setIsFormOpen(true);
+    }
+  };
+
+  const handleEditOptionSelect = async (option: EditOption) => {
+    if (!pendingEditTransaction || !session) return;
+    
+    setEditOptionsDialogOpen(false);
+    setCurrentEditMode(option);
+    setEditingTransaction(pendingEditTransaction);
     setIsFormOpen(true);
+    setPendingEditTransaction(null);
   };
 
   const handleDeleteTransaction = async (id: string) => {
@@ -1093,6 +1191,7 @@ const App: React.FC = () => {
               onClose={() => {
                 setIsFormOpen(false);
                 setEditingTransaction(null);
+                setCurrentEditMode(null);
               }}
               onSave={handleAddTransaction}
               categories={categories}
@@ -1108,6 +1207,16 @@ const App: React.FC = () => {
               onUpdateDisplayName={updateDisplayName}
               onChangeEmail={handleChangeEmail}
               onResetPassword={handleResetPassword}
+            />
+
+            <EditOptionsDialog
+              isOpen={editOptionsDialogOpen}
+              onClose={() => {
+                setEditOptionsDialogOpen(false);
+                setPendingEditTransaction(null);
+              }}
+              onSelect={handleEditOptionSelect}
+              transaction={pendingEditTransaction}
             />
               </Box>
               </ColorsContext.Provider>
