@@ -123,3 +123,17 @@ export interface Tag {
 export interface TagWithCount extends Tag {
   transactionCount: number;
 }
+
+// Smart Input - Cadastro inteligente via IA
+export type SmartInputMode = 'text' | 'audio' | 'image';
+
+export interface ParsedTransaction {
+  description: string;
+  amount: number | null;
+  type: TransactionType;
+  category: string;
+  paymentMethod: string;
+  date: string; // ISO String YYYY-MM-DD
+  confidence: number; // 0-1, nível de confiança da IA
+  rawInput: string; // input original para debug
+}

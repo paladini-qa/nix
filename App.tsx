@@ -47,6 +47,7 @@ import {
   ColorConfig,
   CategoryColors,
   PaymentMethodColors,
+  ParsedTransaction,
 } from "./types";
 import {
   CATEGORIES as DEFAULT_CATEGORIES,
@@ -81,6 +82,7 @@ const AnalyticsView = lazy(() => import("./components/AnalyticsView"));
 const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
 const PaymentMethodsView = lazy(() => import("./components/PaymentMethodsView"));
 const CategoriesView = lazy(() => import("./components/CategoriesView"));
+const SmartInputFAB = lazy(() => import("./components/SmartInputFAB"));
 
 // Loading fallback component
 const ViewLoading: React.FC = () => (
@@ -1320,6 +1322,24 @@ const AppContent: React.FC<{
     }
   };
 
+  // Handler para transações criadas via Smart Input (IA)
+  const handleSmartInputTransaction = (
+    parsedTx: Omit<ParsedTransaction, "confidence" | "rawInput">
+  ) => {
+    // Converte o ParsedTransaction para o formato esperado pelo handleAddTransaction
+    const transaction: Omit<Transaction, "id" | "createdAt"> = {
+      description: parsedTx.description,
+      amount: parsedTx.amount || 0,
+      type: parsedTx.type,
+      category: parsedTx.category,
+      paymentMethod: parsedTx.paymentMethod,
+      date: parsedTx.date,
+      isRecurring: false,
+      isPaid: false,
+    };
+    handleAddTransaction(transaction);
+  };
+
   return (
     <ThemeContext.Provider
       value={{ themePreference, setThemePreference: updateThemePreference }}
@@ -1568,7 +1588,12 @@ const AppContent: React.FC<{
                 </Suspense>
               ) : currentView === "nixai" ? (
                 <Suspense fallback={<ViewLoading />}>
-                  <NixAIView transactions={transactions} />
+                  <NixAIView
+                    transactions={transactions}
+                    categories={categories}
+                    paymentMethods={paymentMethods}
+                    onTransactionCreate={handleSmartInputTransaction}
+                  />
                 </Suspense>
               ) : currentView === "budgets" ? (
                 <Suspense fallback={<ViewLoading />}>
@@ -1751,6 +1776,16 @@ const AppContent: React.FC<{
                 setEditingTransaction(tx);
                 setIsFormOpen(true);
               }}
+            />
+          </Suspense>
+
+          {/* Smart Input FAB - Cadastro inteligente via IA */}
+          <Suspense fallback={null}>
+            <SmartInputFAB
+              onTransactionCreate={handleSmartInputTransaction}
+              categories={categories}
+              paymentMethods={paymentMethods}
+              visible={!isMobile || currentView === "dashboard"}
             />
           </Suspense>
         </Box>
