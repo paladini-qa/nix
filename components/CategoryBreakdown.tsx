@@ -113,14 +113,16 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   const sortedExpense = Object.entries(expenseByCategory).sort(
     ([, a], [, b]) => b - a
   );
+  // Ordena por despesas (do maior para menor)
   const sortedPaymentMethods = Object.entries(byPaymentMethod).sort(
-    ([, a], [, b]) => b.expense + b.income - (a.expense + a.income)
+    ([, a], [, b]) => b.expense - a.expense
   );
 
   const totalIncome = sortedIncome.reduce((sum, [, val]) => sum + val, 0);
   const totalExpense = sortedExpense.reduce((sum, [, val]) => sum + val, 0);
-  const totalPaymentMethod = sortedPaymentMethods.reduce(
-    (sum, [, data]) => sum + data.income + data.expense, 0
+  // Total de despesas por método de pagamento
+  const totalPaymentMethodExpense = sortedPaymentMethods.reduce(
+    (sum, [, data]) => sum + data.expense, 0
   );
 
   // Agrupa transações por categoria/método para exibição detalhada
@@ -537,7 +539,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
         </Paper>
       </Grid>
 
-      {/* By Payment Method */}
+      {/* Expenses by Payment Method */}
       <Grid size={{ xs: 12, md: 12, xl: 4 }}>
         <Paper sx={{ p: 2.5, height: "100%", borderRadius: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
@@ -545,34 +547,39 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
               sx={{
                 p: 1,
                 borderRadius: 1,
-                bgcolor: "primary.light",
+                bgcolor: "error.light",
                 display: "flex",
               }}
             >
-              <CreditCardIcon fontSize="small" sx={{ color: "primary.dark" }} />
+              <CreditCardIcon fontSize="small" sx={{ color: "error.dark" }} />
             </Box>
             <Typography variant="subtitle1" fontWeight={600}>
-              By Payment Method
+              Expenses by Payment Method
             </Typography>
           </Box>
 
-          {sortedPaymentMethods.length === 0 ? (
+          {totalPaymentMethodExpense === 0 ? (
             <Typography
               variant="body2"
               color="text.secondary"
               sx={{ textAlign: "center", py: 3 }}
             >
-              No transactions for this period
+              No expenses for this period
             </Typography>
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {sortedPaymentMethods.map(([method, data]) => {
-                const total = data.income + data.expense;
+                // Mostra apenas despesas para métodos de pagamento
                 const percentage =
-                  totalPaymentMethod > 0 ? (total / totalPaymentMethod) * 100 : 0;
+                  totalPaymentMethodExpense > 0 ? (data.expense / totalPaymentMethodExpense) * 100 : 0;
                 const colors = getPaymentMethodColor(method);
                 const isExpanded = expandedPaymentMethods.has(method);
-                const methodTransactions = transactionsByPaymentMethod[method] || [];
+                // Filtra apenas transações de despesa para este método
+                const methodExpenseTransactions = (transactionsByPaymentMethod[method] || [])
+                  .filter(tx => tx.type === "expense");
+                
+                // Não mostra métodos de pagamento sem despesas
+                if (data.expense === 0) return null;
                 
                 return (
                   <Box key={method}>
@@ -613,7 +620,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                           />
                           <Typography variant="body2" fontWeight={500}>{method}</Typography>
                           <Chip 
-                            label={methodTransactions.length} 
+                            label={methodExpenseTransactions.length} 
                             size="small" 
                             sx={{ 
                               height: 20, 
@@ -626,24 +633,12 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         <Box
                           sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         >
-                          <Box sx={{ display: "flex", gap: 1.5, mr: 1 }}>
-                            {data.income > 0 && (
-                              <Typography variant="caption" color="success.main" fontWeight={500}>
-                                +{formatCurrency(data.income)}
-                              </Typography>
-                            )}
-                            {data.expense > 0 && (
-                              <Typography variant="caption" color="error.main" fontWeight={500}>
-                                -{formatCurrency(data.expense)}
-                              </Typography>
-                            )}
-                          </Box>
                           <Typography
                             variant="body2"
                             fontWeight={600}
-                            sx={{ color: colors.primary }}
+                            color="error.main"
                           >
-                            {formatCurrency(total)}
+                            {formatCurrency(data.expense)}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
                             {percentage.toFixed(0)}%
@@ -674,7 +669,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                     
                     <Collapse in={isExpanded}>
                       <Box sx={{ pl: 3, pr: 1, py: 1 }}>
-                        {methodTransactions
+                        {methodExpenseTransactions
                           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                           .map((tx) => (
                           <Box
@@ -710,18 +705,18 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                                 sx={{ 
                                   height: 18, 
                                   fontSize: 10,
-                                  bgcolor: tx.type === "income" ? "success.light" : "error.light",
-                                  color: tx.type === "income" ? "success.dark" : "error.dark",
+                                  bgcolor: "error.light",
+                                  color: "error.dark",
                                 }} 
                               />
                             </Box>
                             <Typography 
                               variant="body2" 
                               fontWeight={500} 
-                              color={tx.type === "income" ? "success.main" : "error.main"}
+                              color="error.main"
                               sx={{ ml: 1 }}
                             >
-                              {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount || 0)}
+                              -{formatCurrency(tx.amount || 0)}
                             </Typography>
                           </Box>
                         ))}
@@ -750,9 +745,9 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                 <Typography
                   variant="body2"
                   fontWeight={600}
-                  color="primary.main"
+                  color="error.main"
                 >
-                  {formatCurrency(totalPaymentMethod)}
+                  {formatCurrency(totalPaymentMethodExpense)}
                 </Typography>
               </Box>
             </Box>
