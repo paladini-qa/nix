@@ -586,3 +586,5 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
 
 export default AnalyticsView;
 
+
+
