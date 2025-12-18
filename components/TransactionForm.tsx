@@ -210,7 +210,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     e.preventDefault();
     setValidationError(null);
     
-    if (!description || !amount || !category || !paymentMethod || !date) return;
+    // Valor é opcional - pode ser definido depois
+    if (!description || !category || !paymentMethod || !date) {
+      return;
+    }
 
     const installmentsValue = parseInt(installments);
     if (
@@ -230,7 +233,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     onSave(
       {
         description,
-        amount: parseFloat(amount),
+        amount: amount ? parseFloat(amount) : 0,
         type,
         category,
         paymentMethod,
@@ -244,7 +247,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         isShared,
         sharedWith: isShared ? sharedWith : undefined,
       },
-      editTransaction?.id
+      editTransaction?.id || undefined // Passa undefined se id for vazio (para criar nova transação)
     );
 
     onClose();
@@ -482,12 +485,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             <TextField
               label="Valor (R$)"
               type="number"
-              required
               fullWidth
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="0,00"
-              inputProps={{ min: 0.01, step: 0.01 }}
+              placeholder="Opcional - pode definir depois"
+              helperText={!amount ? "Você pode adicionar o valor depois" : undefined}
+              inputProps={{ min: 0, step: 0.01 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

@@ -127,11 +127,12 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           return date.toISOString().split("T")[0];
         };
 
+        const txAmount = tx.amount || 0;
         const installmentAmount =
-          Math.round((tx.amount / installments) * 100) / 100;
+          Math.round((txAmount / installments) * 100) / 100;
         const totalFromInstallments = installmentAmount * installments;
         const remainder =
-          Math.round((tx.amount - totalFromInstallments) * 100) / 100;
+          Math.round((txAmount - totalFromInstallments) * 100) / 100;
 
         const payloads = [];
         for (let i = 0; i < installments; i++) {
@@ -302,10 +303,10 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     (filteredTxs: Transaction[]) => {
       const income = filteredTxs
         .filter((t) => t.type === "income")
-        .reduce((acc, t) => acc + t.amount, 0);
+        .reduce((acc, t) => acc + (t.amount || 0), 0);
       const expense = filteredTxs
         .filter((t) => t.type === "expense")
-        .reduce((acc, t) => acc + t.amount, 0);
+        .reduce((acc, t) => acc + (t.amount || 0), 0);
       return {
         totalIncome: income,
         totalExpense: expense,

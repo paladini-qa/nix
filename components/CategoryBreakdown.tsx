@@ -82,7 +82,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   const incomeByCategory = transactions
     .filter((t) => t.type === "income")
     .reduce((acc, curr) => {
-      acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+      acc[curr.category] = (acc[curr.category] || 0) + (curr.amount || 0);
       return acc;
     }, {} as Record<string, number>);
 
@@ -90,7 +90,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   const expenseByCategory = transactions
     .filter((t) => t.type === "expense")
     .reduce((acc, curr) => {
-      acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+      acc[curr.category] = (acc[curr.category] || 0) + (curr.amount || 0);
       return acc;
     }, {} as Record<string, number>);
 
@@ -100,9 +100,9 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
       acc[curr.paymentMethod] = { income: 0, expense: 0 };
     }
     if (curr.type === "income") {
-      acc[curr.paymentMethod].income += curr.amount;
+      acc[curr.paymentMethod].income += curr.amount || 0;
     } else {
-      acc[curr.paymentMethod].expense += curr.amount;
+      acc[curr.paymentMethod].expense += curr.amount || 0;
     }
     return acc;
   }, {} as Record<string, { income: number; expense: number }>);
@@ -155,12 +155,12 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     <Grid container spacing={3}>
       {/* Income by Category */}
       <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-        <Paper sx={{ p: 2.5, height: "100%" }}>
+        <Paper sx={{ p: 2.5, height: "100%", borderRadius: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: 1,
                 bgcolor: "success.light",
                 display: "flex",
               }}
@@ -196,7 +196,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       sx={{
                         cursor: "pointer",
                         p: 1.5,
-                        borderRadius: 2,
+                        borderRadius: 1,
                         border: 1,
                         borderColor: isExpanded ? colors.primary : "divider",
                         bgcolor: isExpanded ? `${colors.primary}08` : "transparent",
@@ -308,7 +308,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                               </Typography>
                             </Box>
                             <Typography variant="body2" fontWeight={500} color="success.main">
-                              +{formatCurrency(tx.amount)}
+                              +{formatCurrency(tx.amount || 0)}
                             </Typography>
                           </Box>
                         ))}
@@ -349,12 +349,12 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
 
       {/* Expense by Category */}
       <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-        <Paper sx={{ p: 2.5, height: "100%" }}>
+        <Paper sx={{ p: 2.5, height: "100%", borderRadius: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: 1,
                 bgcolor: "error.light",
                 display: "flex",
               }}
@@ -390,7 +390,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       sx={{
                         cursor: "pointer",
                         p: 1.5,
-                        borderRadius: 2,
+                        borderRadius: 1,
                         border: 1,
                         borderColor: isExpanded ? colors.primary : "divider",
                         bgcolor: isExpanded ? `${colors.primary}08` : "transparent",
@@ -502,7 +502,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                               </Typography>
                             </Box>
                             <Typography variant="body2" fontWeight={500} color="error.main">
-                              -{formatCurrency(tx.amount)}
+                              -{formatCurrency(tx.amount || 0)}
                             </Typography>
                           </Box>
                         ))}
@@ -539,12 +539,12 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
 
       {/* By Payment Method */}
       <Grid size={{ xs: 12, md: 12, xl: 4 }}>
-        <Paper sx={{ p: 2.5, height: "100%" }}>
+        <Paper sx={{ p: 2.5, height: "100%", borderRadius: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: 1,
                 bgcolor: "primary.light",
                 display: "flex",
               }}
@@ -581,7 +581,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       sx={{
                         cursor: "pointer",
                         p: 1.5,
-                        borderRadius: 2,
+                        borderRadius: 1,
                         border: 1,
                         borderColor: isExpanded ? colors.primary : "divider",
                         bgcolor: isExpanded ? `${colors.primary}08` : "transparent",
@@ -721,7 +721,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                               color={tx.type === "income" ? "success.main" : "error.main"}
                               sx={{ ml: 1 }}
                             >
-                              {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
+                              {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount || 0)}
                             </Typography>
                           </Box>
                         ))}

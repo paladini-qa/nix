@@ -120,7 +120,7 @@ const SharedView: React.FC<SharedViewProps> = ({
 
       if (t.type === "expense") {
         // Metade do gasto é o que o amigo deve
-        const friendShare = t.amount / 2;
+        const friendShare = (t.amount || 0) / 2;
         balance.totalOwed += friendShare;
         balance.expenses.push(t);
         balance.transactionCount++;
@@ -667,7 +667,7 @@ const SharedView: React.FC<SharedViewProps> = ({
             <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
               {filteredTransactions.map((t) => {
                 const isPaid = isTransactionPaid(t);
-                const friendShare = t.amount / 2;
+                const friendShare = (t.amount || 0) / 2;
 
                 return (
                   <Paper
@@ -742,7 +742,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                           color="text.secondary"
                           display="block"
                         >
-                          Total: {formatCurrency(t.amount)}
+                          Total: {formatCurrency(t.amount || 0)}
                         </Typography>
                         <Typography
                           variant="subtitle1"
@@ -789,7 +789,7 @@ const SharedView: React.FC<SharedViewProps> = ({
               <TableBody>
                 {filteredTransactions.map((t) => {
                   const isPaid = isTransactionPaid(t);
-                  const friendShare = t.amount / 2;
+                  const friendShare = (t.amount || 0) / 2;
 
                   return (
                     <TableRow
@@ -838,7 +838,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                       </TableCell>
                       <TableCell>{formatDate(t.date)}</TableCell>
                       <TableCell align="right" sx={{ fontFamily: "monospace" }}>
-                        {formatCurrency(t.amount)}
+                        {formatCurrency(t.amount || 0)}
                       </TableCell>
                       <TableCell
                         align="right"

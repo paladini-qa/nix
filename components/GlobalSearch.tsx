@@ -402,7 +402,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
                           color={tx.type === "income" ? "success.main" : "error.main"}
                         >
                           {tx.type === "expense" ? "-" : "+"}
-                          {formatCurrency(tx.amount)}
+                          {formatCurrency(tx.amount || 0)}
                         </Typography>
                       </ListItemButton>
                     </ListItem>

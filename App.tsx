@@ -313,10 +313,10 @@ const AppContent: React.FC<{
   const summary = useMemo<FinancialSummary>(() => {
     const income = filteredTransactions
       .filter((t) => t.type === "income")
-      .reduce((acc, curr) => acc + curr.amount, 0);
+      .reduce((acc, curr) => acc + (curr.amount || 0), 0);
     const expense = filteredTransactions
       .filter((t) => t.type === "expense")
-      .reduce((acc, curr) => acc + curr.amount, 0);
+      .reduce((acc, curr) => acc + (curr.amount || 0), 0);
     return {
       totalIncome: income,
       totalExpense: expense,
@@ -459,7 +459,7 @@ const AppContent: React.FC<{
           // Se agora é compartilhado e antes não era, criar income para a transação principal
           if (isNowShared && !wasShared && newTx.type === "expense") {
             const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-            const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+            const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
             const incomePayload = {
               user_id: session.user.id,
@@ -521,7 +521,7 @@ const AppContent: React.FC<{
           // Se era e continua sendo compartilhado, atualizar a income existente
           if (wasShared && isNowShared && originalTx.relatedTransactionId) {
             const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-            const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+            const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
             await supabase
               .from("transactions")
@@ -611,7 +611,7 @@ const AppContent: React.FC<{
             // Se agora é compartilhado e antes não era, criar income
             if (isNowShared && !wasShared) {
               const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-              const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+              const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
               const incomePayload = {
                 user_id: session.user.id,
@@ -667,7 +667,7 @@ const AppContent: React.FC<{
               oldTransaction?.relatedTransactionId
             ) {
               const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-              const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+              const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
               await supabase
                 .from("transactions")
@@ -719,11 +719,12 @@ const AppContent: React.FC<{
         }
       } else if (newTx.installments && newTx.installments > 1) {
         const totalInstallments = newTx.installments;
+        const txAmount = newTx.amount || 0;
         const installmentAmount =
-          Math.round((newTx.amount / totalInstallments) * 100) / 100;
+          Math.round((txAmount / totalInstallments) * 100) / 100;
         const totalFromInstallments = installmentAmount * totalInstallments;
         const remainder =
-          Math.round((newTx.amount - totalFromInstallments) * 100) / 100;
+          Math.round((txAmount - totalFromInstallments) * 100) / 100;
 
         const installmentPayloads = [];
         for (let i = 0; i < totalInstallments; i++) {
@@ -869,7 +870,7 @@ const AppContent: React.FC<{
           // Se é um gasto compartilhado, cria automaticamente uma income para o reembolso
           if (newTx.isShared && newTx.sharedWith && newTx.type === "expense") {
             const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-            const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+            const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
             const incomePayload = {
               user_id: session.user.id,
@@ -939,11 +940,13 @@ const AppContent: React.FC<{
   };
 
   const handleEditTransaction = (transaction: Transaction) => {
+    const isVirtual = transaction.isVirtual;
     const isRecurring = transaction.isRecurring && !transaction.isVirtual;
     const isInstallment =
       transaction.installments && transaction.installments > 1;
 
-    if (isRecurring || isInstallment) {
+    // Se for transação virtual, recorrente ou parcelada, mostra dialog de opções
+    if (isVirtual || isRecurring || isInstallment) {
       setPendingEditTransaction(transaction);
       setEditOptionsDialogOpen(true);
     } else {
@@ -957,7 +960,37 @@ const AppContent: React.FC<{
 
     setEditOptionsDialogOpen(false);
     setCurrentEditMode(option);
-    setEditingTransaction(pendingEditTransaction);
+
+    // Se for transação virtual e opção for "all" ou "all_future", edita a transação original
+    if (pendingEditTransaction.isVirtual && (option === "all" || option === "all_future")) {
+      const originalId = pendingEditTransaction.originalTransactionId;
+      const originalTransaction = transactions.find((t) => t.id === originalId);
+      
+      if (originalTransaction) {
+        setEditingTransaction(originalTransaction);
+      } else {
+        // Fallback: usa a transação virtual como base para criar nova
+        setEditingTransaction({
+          ...pendingEditTransaction,
+          id: "", // Remove o ID para criar nova transação
+          isVirtual: false,
+          originalTransactionId: undefined,
+        });
+      }
+    } else if (pendingEditTransaction.isVirtual && option === "single") {
+      // Para "single" em transação virtual, prepara para criar nova transação real
+      setEditingTransaction({
+        ...pendingEditTransaction,
+        id: "", // Remove o ID virtual para criar nova transação
+        isVirtual: false,
+        isRecurring: false, // Não é mais recorrente
+        frequency: undefined,
+        originalTransactionId: undefined,
+      });
+    } else {
+      setEditingTransaction(pendingEditTransaction);
+    }
+
     setIsFormOpen(true);
     setPendingEditTransaction(null);
   };

@@ -299,7 +299,7 @@ function DataTable<T>({
     <Paper
       elevation={0}
       sx={{
-        borderRadius: 3,
+        borderRadius: 1,
         overflow: "hidden",
         bgcolor: isDarkMode
           ? alpha(theme.palette.background.paper, 0.7)

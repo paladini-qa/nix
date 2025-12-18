@@ -44,7 +44,8 @@ const EditOptionsDialog: React.FC<EditOptionsDialogProps> = ({
 
   if (!transaction) return null;
 
-  const isRecurring = transaction.isRecurring;
+  const isVirtual = transaction.isVirtual;
+  const isRecurring = transaction.isRecurring || isVirtual;
   const isInstallment = transaction.installments && transaction.installments > 1;
   
   const typeLabel = isRecurring ? "recurring transaction" : "installment";
@@ -57,7 +58,7 @@ const EditOptionsDialog: React.FC<EditOptionsDialogProps> = ({
       maxWidth="xs"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 3 },
+        sx: { borderRadius: 1 },
       }}
     >
       <DialogTitle>
@@ -103,9 +104,11 @@ const EditOptionsDialog: React.FC<EditOptionsDialogProps> = ({
                 </Typography>
               }
               secondary={
-                isRecurring
-                  ? "Edit only this specific month's occurrence"
-                  : `Edit only installment ${transaction.currentInstallment || 1}/${transaction.installments}`
+                isVirtual
+                  ? "Create a new transaction for this specific month"
+                  : isRecurring
+                    ? "Edit only this specific month's occurrence"
+                    : `Edit only installment ${transaction.currentInstallment || 1}/${transaction.installments}`
               }
             />
           </ListItemButton>
@@ -133,9 +136,11 @@ const EditOptionsDialog: React.FC<EditOptionsDialogProps> = ({
                 </Typography>
               }
               secondary={
-                isRecurring
-                  ? "Changes will apply from this month onwards"
-                  : `Edit from installment ${transaction.currentInstallment || 1} to ${transaction.installments}`
+                isVirtual
+                  ? "Edit the original recurring transaction (affects all future)"
+                  : isRecurring
+                    ? "Changes will apply from this month onwards"
+                    : `Edit from installment ${transaction.currentInstallment || 1} to ${transaction.installments}`
               }
             />
           </ListItemButton>
@@ -162,9 +167,11 @@ const EditOptionsDialog: React.FC<EditOptionsDialogProps> = ({
                 </Typography>
               }
               secondary={
-                isRecurring
-                  ? "Edit all past and future occurrences"
-                  : `Edit all ${transaction.installments} installments`
+                isVirtual
+                  ? "Edit the original recurring transaction (affects all)"
+                  : isRecurring
+                    ? "Edit all past and future occurrences"
+                    : `Edit all ${transaction.installments} installments`
               }
             />
           </ListItemButton>

@@ -97,11 +97,11 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
 
     const prevIncome = prevMonthTxs
       .filter((t) => t.type === "income")
-      .reduce((acc, t) => acc + t.amount, 0);
+      .reduce((acc, t) => acc + (t.amount || 0), 0);
     
     const prevExpense = prevMonthTxs
       .filter((t) => t.type === "expense")
-      .reduce((acc, t) => acc + t.amount, 0);
+      .reduce((acc, t) => acc + (t.amount || 0), 0);
 
     // Porcentagem de mudança
     const incomeChange = prevIncome > 0 

@@ -116,16 +116,16 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     const recurring = transactions.filter((t) => t.isRecurring && !t.isVirtual);
     const monthlyIncome = recurring
       .filter((t) => t.type === "income" && t.frequency === "monthly")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
     const monthlyExpense = recurring
       .filter((t) => t.type === "expense" && t.frequency === "monthly")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
     const yearlyOnlyIncome = recurring
       .filter((t) => t.type === "income" && t.frequency === "yearly")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
     const yearlyOnlyExpense = recurring
       .filter((t) => t.type === "expense" && t.frequency === "yearly")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
 
     const annualizedIncome = monthlyIncome * 12 + yearlyOnlyIncome;
     const annualizedExpense = monthlyExpense * 12 + yearlyOnlyExpense;
@@ -339,7 +339,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 fontWeight={700}
                 color={isIncome ? "success.main" : "error.main"}
               >
-                {isIncome ? "+" : "-"}{formatCurrency(t.amount)}
+                {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
               </Typography>
               <Chip
                 icon={<RepeatIcon sx={{ fontSize: 14 }} />}
@@ -461,7 +461,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                       fontWeight={600}
                       color={isIncome ? "success.main" : "error.main"}
                     >
-                      {formatCurrency(t.amount)}
+                      {formatCurrency(t.amount || 0)}
                     </Typography>
                   </Paper>
                 ))}
@@ -504,14 +504,14 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               </Typography>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <Typography variant="body2" color="text.secondary">
-                  {t.frequency === "monthly" ? "12 months × " : "1 year × "}{formatCurrency(t.amount)}
+                  {t.frequency === "monthly" ? "12 months × " : "1 year × "}{formatCurrency(t.amount || 0)}
                 </Typography>
                 <Typography
                   variant="h6"
                   fontWeight={700}
                   color={isIncome ? "success.main" : "error.main"}
                 >
-                  {isIncome ? "+" : "-"}{formatCurrency(t.amount * (t.frequency === "monthly" ? 12 : 1))}
+                  {isIncome ? "+" : "-"}{formatCurrency((t.amount || 0) * (t.frequency === "monthly" ? 12 : 1))}
                 </Typography>
               </Box>
             </Paper>

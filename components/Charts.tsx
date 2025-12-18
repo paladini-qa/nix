@@ -32,7 +32,7 @@ const Charts: React.FC<ChartsProps> = ({ transactions }) => {
 
   // Group by category
   const dataMap = expenses.reduce((acc, curr) => {
-    acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+    acc[curr.category] = (acc[curr.category] || 0) + (curr.amount || 0);
     return acc;
   }, {} as Record<string, number>);
 

@@ -150,11 +150,11 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
 
   const totalIncome = filteredTransactions
     .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const totalExpense = filteredTransactions
     .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const balance = totalIncome - totalExpense;
 
@@ -404,7 +404,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     }}
                   >
                     {t.type === "expense" && "- "}
-                    {formatCurrency(t.amount)}
+                    {formatCurrency(t.amount || 0)}
                   </TableCell>
                 </TableRow>
               ))

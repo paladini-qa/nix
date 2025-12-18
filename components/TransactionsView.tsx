@@ -286,11 +286,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   const totalIncome = filteredData
     .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const totalExpense = filteredData
     .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const balance = totalIncome - totalExpense;
 
@@ -427,7 +427,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         t.category,
         t.paymentMethod,
         t.type === "income" ? "Income" : "Expense",
-        (t.type === "expense" ? "- " : "+ ") + formatCurrency(t.amount),
+        (t.type === "expense" ? "- " : "+ ") + formatCurrency(t.amount || 0),
       ]);
 
       (doc as any).autoTable({
@@ -948,7 +948,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                           color={isIncome ? "success.main" : "error.main"}
                           sx={{ flexShrink: 0 }}
                         >
-                          {isIncome ? "+" : "-"} {formatCurrency(t.amount)}
+                          {isIncome ? "+" : "-"} {formatCurrency(t.amount || 0)}
                         </Typography>
                       </Box>
 
@@ -1124,45 +1124,35 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               setMobileActionAnchor({ element: null, transaction: null })
             }
           >
-            {mobileActionAnchor.transaction?.isVirtual ? (
-              <MenuItem disabled>
+            <MenuItem
+              onClick={() => {
+                if (mobileActionAnchor.transaction) {
+                  onEdit(mobileActionAnchor.transaction);
+                }
+                setMobileActionAnchor({ element: null, transaction: null });
+              }}
+            >
+              <ListItemIcon>
+                <EditIcon fontSize="small" color="primary" />
+              </ListItemIcon>
+              <ListItemText>
+                {mobileActionAnchor.transaction?.isVirtual ? "Edit Recurring" : "Edit"}
+              </ListItemText>
+            </MenuItem>
+            {!mobileActionAnchor.transaction?.isVirtual && (
+              <MenuItem
+                onClick={() => {
+                  if (mobileActionAnchor.transaction) {
+                    onDelete(mobileActionAnchor.transaction.id);
+                  }
+                  setMobileActionAnchor({ element: null, transaction: null });
+                }}
+              >
                 <ListItemIcon>
-                  <AutorenewIcon fontSize="small" color="disabled" />
+                  <DeleteIcon fontSize="small" color="error" />
                 </ListItemIcon>
-                <ListItemText
-                  primary="Auto-generated"
-                  secondary="Edit the original transaction"
-                />
+                <ListItemText>Delete</ListItemText>
               </MenuItem>
-            ) : (
-              <>
-                <MenuItem
-                  onClick={() => {
-                    if (mobileActionAnchor.transaction) {
-                      onEdit(mobileActionAnchor.transaction);
-                    }
-                    setMobileActionAnchor({ element: null, transaction: null });
-                  }}
-                >
-                  <ListItemIcon>
-                    <EditIcon fontSize="small" color="primary" />
-                  </ListItemIcon>
-                  <ListItemText>Edit</ListItemText>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    if (mobileActionAnchor.transaction) {
-                      onDelete(mobileActionAnchor.transaction.id);
-                    }
-                    setMobileActionAnchor({ element: null, transaction: null });
-                  }}
-                >
-                  <ListItemIcon>
-                    <DeleteIcon fontSize="small" color="error" />
-                  </ListItemIcon>
-                  <ListItemText>Delete</ListItemText>
-                </MenuItem>
-              </>
             )}
           </Menu>
 
@@ -1342,19 +1332,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                         }}
                       >
                         {t.type === "expense" && "- "}
-                        {formatCurrency(t.amount)}
+                        {formatCurrency(t.amount || 0)}
                       </TableCell>
                       <TableCell sx={{ textAlign: "center" }}>
-                        {t.isVirtual ? (
-                          <Chip
-                            label="Auto-generated"
-                            size="small"
-                            color="info"
-                            variant="outlined"
-                            sx={{ fontSize: 10 }}
-                          />
-                        ) : (
-                          <>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
+                          <Tooltip title={t.isVirtual ? "Edit recurring transaction" : "Edit"}>
                             <IconButton
                               size="small"
                               onClick={() => onEdit(t)}
@@ -1362,15 +1344,19 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                             >
                               <EditIcon fontSize="small" />
                             </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => onDelete(t.id)}
-                              color="error"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </>
-                        )}
+                          </Tooltip>
+                          {!t.isVirtual && (
+                            <Tooltip title="Delete">
+                              <IconButton
+                                size="small"
+                                onClick={() => onDelete(t.id)}
+                                color="error"
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))

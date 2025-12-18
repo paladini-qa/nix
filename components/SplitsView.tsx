@@ -376,7 +376,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                         {t.currentInstallment}/{t.installments}x • {formatDate(t.date)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {formatCurrency(t.amount)}
+                        {formatCurrency(t.amount || 0)}
                       </Typography>
                     </Box>
                     <IconButton
@@ -434,7 +434,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                       </TableCell>
                       <TableCell>{formatDate(t.date)}</TableCell>
                       <TableCell align="right" sx={{ fontFamily: "monospace" }}>
-                        {formatCurrency(t.amount)}
+                        {formatCurrency(t.amount || 0)}
                       </TableCell>
                       <TableCell align="center">
                         <IconButton size="small" onClick={() => onEdit(t)} color="primary">

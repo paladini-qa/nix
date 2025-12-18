@@ -86,7 +86,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     return `${day}/${month}/${year}`;
   };
 
-  const maxAmount = Math.max(...transactions.map((t) => t.amount), 0.01);
+  const maxAmount = Math.max(...transactions.map((t) => t.amount || 0), 0.01);
 
   // Estilo base do Chip modernizado - cores mais suaves
   const getModernChipSx = (color: string) => ({
@@ -229,7 +229,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         : theme.palette.error.main,
                     }}
                   >
-                    {isIncome ? "+" : "-"} {formatCurrency(transaction.amount)}
+                    {isIncome ? "+" : "-"} {formatCurrency(transaction.amount || 0)}
                   </Typography>
                 </Box>
 
@@ -365,7 +365,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         </TableHead>
         <TableBody>
           {transactions.map((transaction, index) => {
-            const barWidth = (transaction.amount / maxAmount) * 100;
+            const barWidth = ((transaction.amount || 0) / maxAmount) * 100;
             const isIncome = transaction.type === "income";
             const catConfig = getCategoryConfig(transaction.category);
             const CategoryIcon = catConfig.icon;
@@ -536,7 +536,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                           : theme.palette.error.main,
                       }}
                     >
-                      {isIncome ? "+" : "-"} {formatCurrency(transaction.amount)}
+                      {isIncome ? "+" : "-"} {formatCurrency(transaction.amount || 0)}
                     </Typography>
                     <LinearProgress
                       variant="determinate"

@@ -84,11 +84,11 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
 
       const income = monthTxs
         .filter((tx) => tx.type === "income")
-        .reduce((acc, tx) => acc + tx.amount, 0);
+        .reduce((acc, tx) => acc + (tx.amount || 0), 0);
       
       const expense = monthTxs
         .filter((tx) => tx.type === "expense")
-        .reduce((acc, tx) => acc + tx.amount, 0);
+        .reduce((acc, tx) => acc + (tx.amount || 0), 0);
 
       months.push({
         month: monthStr.charAt(0).toUpperCase() + monthStr.slice(1),
@@ -118,7 +118,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
     sortedTxs.forEach((tx) => {
       const [year, month] = tx.date.split("-");
       const key = `${year}-${month}`;
-      const change = tx.type === "income" ? tx.amount : -tx.amount;
+      const change = tx.type === "income" ? (tx.amount || 0) : -(tx.amount || 0);
       monthlyBalances.set(key, (monthlyBalances.get(key) || 0) + change);
     });
 
@@ -153,11 +153,11 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
       
       const inflow = dayTxs
         .filter((tx) => tx.type === "income")
-        .reduce((acc, tx) => acc + tx.amount, 0);
+        .reduce((acc, tx) => acc + (tx.amount || 0), 0);
       
       const outflow = dayTxs
         .filter((tx) => tx.type === "expense")
-        .reduce((acc, tx) => acc + tx.amount, 0);
+        .reduce((acc, tx) => acc + (tx.amount || 0), 0);
 
       data.push({ day: dayLabel, inflow, outflow });
     }
@@ -169,7 +169,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
   const categoryData = useMemo(() => {
     const expenses = transactions.filter((t) => t.type === "expense");
     const dataMap = expenses.reduce((acc, curr) => {
-      acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+      acc[curr.category] = (acc[curr.category] || 0) + (curr.amount || 0);
       return acc;
     }, {} as Record<string, number>);
 
@@ -184,7 +184,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
   const incomeByCategory = useMemo(() => {
     const incomes = transactions.filter((t) => t.type === "income");
     const dataMap = incomes.reduce((acc, curr) => {
-      acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+      acc[curr.category] = (acc[curr.category] || 0) + (curr.amount || 0);
       return acc;
     }, {} as Record<string, number>);
 
@@ -199,11 +199,11 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
   const stats = useMemo(() => {
     const totalIncome = transactions
       .filter((t) => t.type === "income")
-      .reduce((acc, t) => acc + t.amount, 0);
+      .reduce((acc, t) => acc + (t.amount || 0), 0);
     
     const totalExpense = transactions
       .filter((t) => t.type === "expense")
-      .reduce((acc, t) => acc + t.amount, 0);
+      .reduce((acc, t) => acc + (t.amount || 0), 0);
 
     const avgMonthlyIncome = monthlyData.reduce((acc, m) => acc + m.income, 0) / 6;
     const avgMonthlyExpense = monthlyData.reduce((acc, m) => acc + m.expense, 0) / 6;
