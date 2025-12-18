@@ -24,6 +24,10 @@ import {
   alpha,
   useTheme,
   Tooltip,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  useMediaQuery,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
@@ -36,6 +40,9 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   RadioButtonUnchecked as UnpaidIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
@@ -51,6 +58,8 @@ interface PaymentMethodDetailViewProps {
   onBack: () => void;
   onPayAll?: (paymentMethod: string, month: number, year: number) => void;
   onTogglePaid?: (id: string, isPaid: boolean) => void;
+  onEdit?: (transaction: Transaction) => void;
+  onDelete?: (id: string) => void;
 }
 
 const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
@@ -62,9 +71,12 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   onBack,
   onPayAll,
   onTogglePaid,
+  onEdit,
+  onDelete,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { getPaymentMethodColor } = useContext(ColorsContext);
   const colors = getPaymentMethodColor(paymentMethod);
 
@@ -72,6 +84,12 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">("all");
+  
+  // Estado para menu de ações mobile
+  const [mobileActionAnchor, setMobileActionAnchor] = useState<{
+    element: HTMLElement | null;
+    transaction: Transaction | null;
+  }>({ element: null, transaction: null });
 
   // Gera transações recorrentes virtuais para este método de pagamento (apenas não-parceladas)
   const generateRecurringForMethod = (): Transaction[] => {
@@ -194,6 +212,20 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   const handleTogglePaid = (tx: Transaction) => {
     if (onTogglePaid && !tx.isVirtual) {
       onTogglePaid(tx.id, !tx.isPaid);
+    }
+  };
+
+  const handleEdit = (tx: Transaction) => {
+    if (onEdit) {
+      // Passa a transação diretamente para o handler
+      // O App.tsx vai tratar se é virtual/recorrente/parcelada e mostrar o dialog de opções
+      onEdit(tx);
+    }
+  };
+
+  const handleDelete = (tx: Transaction) => {
+    if (onDelete && !tx.isVirtual) {
+      onDelete(tx.id);
     }
   };
 
@@ -476,6 +508,11 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
                 Amount
               </TableCell>
+              {(onEdit || onDelete) && (
+                <TableCell sx={{ fontWeight: 600, textAlign: "center", width: 100 }}>
+                  Actions
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -581,11 +618,71 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     {t.type === "expense" && "- "}
                     {formatCurrency(t.amount || 0)}
                   </TableCell>
+                  {(onEdit || onDelete) && (
+                    <TableCell sx={{ textAlign: "center" }}>
+                      {isMobile ? (
+                        <IconButton
+                          size="small"
+                          onClick={(e) =>
+                            setMobileActionAnchor({
+                              element: e.currentTarget,
+                              transaction: t,
+                            })
+                          }
+                        >
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      ) : (
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
+                          {onEdit && (
+                            <Tooltip title={
+                              t.isVirtual 
+                                ? "Editar recorrência" 
+                                : t.isRecurring 
+                                  ? "Editar transação recorrente"
+                                  : t.installments && t.installments > 1
+                                    ? "Editar parcelas"
+                                    : "Editar"
+                            }>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEdit(t)}
+                                sx={{
+                                  color: colors.primary,
+                                  "&:hover": {
+                                    bgcolor: alpha(colors.primary, 0.1),
+                                  },
+                                }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {onDelete && !t.isVirtual && (
+                            <Tooltip title="Excluir">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDelete(t)}
+                                sx={{
+                                  color: "#ef4444",
+                                  "&:hover": {
+                                    bgcolor: alpha("#ef4444", 0.1),
+                                  },
+                                }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} sx={{ textAlign: "center", py: 6 }}>
+                <TableCell colSpan={onEdit || onDelete ? 7 : 6} sx={{ textAlign: "center", py: 6 }}>
                   <Typography color="text.secondary" fontStyle="italic">
                     No transactions with {paymentMethod} for this period.
                   </Typography>
@@ -612,11 +709,64 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                 >
                   {formatCurrency(balance)}
                 </TableCell>
+                {(onEdit || onDelete) && <TableCell />}
               </TableRow>
             </TableFooter>
           )}
         </Table>
       </TableContainer>
+
+      {/* Mobile Action Menu */}
+      <Menu
+        anchorEl={mobileActionAnchor.element}
+        open={Boolean(mobileActionAnchor.element)}
+        onClose={() => setMobileActionAnchor({ element: null, transaction: null })}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            minWidth: 160,
+          },
+        }}
+      >
+        {onEdit && (
+          <MenuItem
+            onClick={() => {
+              if (mobileActionAnchor.transaction) {
+                handleEdit(mobileActionAnchor.transaction);
+              }
+              setMobileActionAnchor({ element: null, transaction: null });
+            }}
+          >
+            <ListItemIcon>
+              <EditIcon fontSize="small" sx={{ color: colors.primary }} />
+            </ListItemIcon>
+            <ListItemText>
+              {mobileActionAnchor.transaction?.isVirtual 
+                ? "Editar Recorrência" 
+                : mobileActionAnchor.transaction?.isRecurring 
+                  ? "Editar Recorrente"
+                  : mobileActionAnchor.transaction?.installments && mobileActionAnchor.transaction.installments > 1
+                    ? "Editar Parcelas"
+                    : "Editar"}
+            </ListItemText>
+          </MenuItem>
+        )}
+        {onDelete && !mobileActionAnchor.transaction?.isVirtual && (
+          <MenuItem
+            onClick={() => {
+              if (mobileActionAnchor.transaction) {
+                handleDelete(mobileActionAnchor.transaction);
+              }
+              setMobileActionAnchor({ element: null, transaction: null });
+            }}
+          >
+            <ListItemIcon>
+              <DeleteIcon fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>Excluir</ListItemText>
+          </MenuItem>
+        )}
+      </Menu>
     </Box>
   );
 };

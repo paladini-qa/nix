@@ -389,3 +389,4 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
 
 export default CategoriesView;
 
+

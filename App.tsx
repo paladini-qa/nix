@@ -1423,6 +1423,9 @@ const AppContent: React.FC<{
                         setFilters({ ...filters, month, year })
                       }
                       onBack={() => setSelectedPaymentMethod(null)}
+                      onEdit={handleEditTransaction}
+                      onDelete={handleDeleteTransaction}
+                      onTogglePaid={handleTogglePaid}
                     />
                   </Suspense>
                 ) : (
@@ -1637,6 +1640,8 @@ const AppContent: React.FC<{
                       onBack={() => setSelectedPaymentMethod(null)}
                       onPayAll={handlePayAllTransactions}
                       onTogglePaid={handleTogglePaid}
+                      onEdit={handleEditTransaction}
+                      onDelete={handleDeleteTransaction}
                     />
                   </Suspense>
                 ) : (
