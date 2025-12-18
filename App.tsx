@@ -1744,6 +1744,8 @@ const AppContent: React.FC<{
             editTransaction={editingTransaction}
             friends={friends}
             onAddFriend={handleAddFriend}
+            transactions={transactions}
+            currentBalance={summary.balance}
           />
 
           <ProfileModal

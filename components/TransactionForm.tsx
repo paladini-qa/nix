@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -29,6 +29,10 @@ import {
   Alert,
   Collapse,
   alpha,
+  Chip,
+  Autocomplete,
+  Tooltip,
+  keyframes,
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -41,8 +45,32 @@ import {
   Group as GroupIcon,
   PersonAdd as PersonAddIcon,
   SaveAlt as SaveIcon,
+  History as HistoryIcon,
+  LocalOffer as TagIcon,
+  Bolt as BoltIcon,
+  Today as TodayIcon,
+  Warning as WarningIcon,
+  TrendingDown as TrendingDownIcon,
+  TrendingUp as TrendingUpIcon,
+  CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
-import { Transaction, TransactionType } from "../types";
+import { Transaction, TransactionType, FinancialSummary } from "../types";
+import { CATEGORY_KEYWORDS, QUICK_AMOUNTS } from "../constants";
+
+// Animação de sucesso
+const successPulse = keyframes`
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+`;
 
 // Mobile slide transition
 const SlideTransition = React.forwardRef(function Transition(
@@ -64,6 +92,18 @@ interface TransactionFormProps {
   editTransaction?: Transaction | null;
   friends: string[];
   onAddFriend: (friend: string) => void;
+  // Novas props para UX melhorada
+  transactions?: Transaction[];
+  currentBalance?: number;
+}
+
+// Interface para template de transação frequente
+interface FrequentTransaction {
+  description: string;
+  category: string;
+  paymentMethod: string;
+  type: TransactionType;
+  count: number;
 }
 
 // Estilos do input customizado - soft e orgânico
@@ -138,6 +178,88 @@ const getTogglePaperSx = (isActive: boolean, accentColor: string, theme: any, is
   },
 });
 
+// Função para sugerir categoria baseada em keywords
+const suggestCategory = (
+  description: string,
+  type: TransactionType,
+  availableCategories: string[]
+): string | null => {
+  const lowerDesc = description.toLowerCase().trim();
+  if (!lowerDesc) return null;
+
+  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (!availableCategories.includes(category)) continue;
+    
+    for (const keyword of keywords) {
+      if (lowerDesc.includes(keyword.toLowerCase())) {
+        return category;
+      }
+    }
+  }
+  return null;
+};
+
+// Função para parsear valor inteligente (suporta "1.5k", "50", etc.)
+const parseSmartAmount = (value: string): number | null => {
+  if (!value) return null;
+  
+  let cleanValue = value.trim().toLowerCase();
+  
+  // Remove "r$" e espaços
+  cleanValue = cleanValue.replace(/r\$\s*/gi, "").replace(/\s/g, "");
+  
+  // Suporte a "k" para milhares (ex: "1.5k" = 1500)
+  if (cleanValue.endsWith("k")) {
+    const num = parseFloat(cleanValue.slice(0, -1));
+    if (!isNaN(num)) return num * 1000;
+  }
+  
+  // Suporte a expressões simples (ex: "100+50")
+  if (/^[\d.+\-*/()]+$/.test(cleanValue)) {
+    try {
+      // Avaliação segura de expressão matemática
+      const result = Function(`"use strict"; return (${cleanValue})`)();
+      if (typeof result === "number" && !isNaN(result)) return result;
+    } catch {
+      // Ignora erro e tenta parse normal
+    }
+  }
+  
+  // Parse normal
+  const num = parseFloat(cleanValue.replace(",", "."));
+  return isNaN(num) ? null : num;
+};
+
+// Função para detectar transação duplicada
+const findDuplicateTransaction = (
+  transactions: Transaction[],
+  description: string,
+  amount: number,
+  type: TransactionType
+): Transaction | null => {
+  const now = dayjs();
+  const last24h = now.subtract(24, "hour");
+  
+  const lowerDesc = description.toLowerCase().trim();
+  
+  return transactions.find((t) => {
+    const transactionDate = dayjs(t.createdAt || t.date);
+    if (transactionDate.isBefore(last24h)) return false;
+    if (t.type !== type) return false;
+    
+    // Verifica similaridade de descrição
+    const similarity = t.description.toLowerCase().includes(lowerDesc) ||
+      lowerDesc.includes(t.description.toLowerCase());
+    
+    // Se descrição é similar e valor é igual (ou próximo)
+    if (similarity && Math.abs(t.amount - amount) < 0.01) {
+      return true;
+    }
+    
+    return false;
+  }) || null;
+};
+
 const TransactionForm: React.FC<TransactionFormProps> = ({
   isOpen,
   onClose,
@@ -147,6 +269,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   editTransaction,
   friends,
   onAddFriend,
+  transactions = [],
+  currentBalance = 0,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -167,8 +291,81 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [newFriendName, setNewFriendName] = useState("");
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  
+  // Novos estados para UX melhorada
+  const [suggestedCategory, setSuggestedCategory] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<Transaction | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const inputSx = getInputSx(theme, isDarkMode);
+
+  // Extrair transações frequentes do histórico
+  const frequentTransactions = useMemo<FrequentTransaction[]>(() => {
+    if (transactions.length === 0) return [];
+    
+    const frequencyMap = new Map<string, FrequentTransaction>();
+    
+    transactions.forEach((t) => {
+      const key = `${t.description.toLowerCase()}-${t.category}-${t.paymentMethod}`;
+      const existing = frequencyMap.get(key);
+      
+      if (existing) {
+        existing.count++;
+      } else {
+        frequencyMap.set(key, {
+          description: t.description,
+          category: t.category,
+          paymentMethod: t.paymentMethod,
+          type: t.type,
+          count: 1,
+        });
+      }
+    });
+    
+    // Retorna top 5 mais frequentes
+    return Array.from(frequencyMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [transactions]);
+
+  // Extrair descrições únicas para autocomplete
+  const uniqueDescriptions = useMemo(() => {
+    const descriptions = new Set<string>();
+    transactions.forEach((t) => descriptions.add(t.description));
+    return Array.from(descriptions).sort();
+  }, [transactions]);
+
+  // Valor parseado
+  const parsedAmount = useMemo(() => parseSmartAmount(amount), [amount]);
+
+  // Calcular saldo após transação
+  const balanceAfter = useMemo(() => {
+    if (parsedAmount === null) return currentBalance;
+    return type === "expense" 
+      ? currentBalance - parsedAmount 
+      : currentBalance + parsedAmount;
+  }, [currentBalance, parsedAmount, type]);
+
+  // Efeito para sugerir categoria quando descrição muda
+  useEffect(() => {
+    if (description && !category) {
+      const suggested = suggestCategory(description, type, categories[type]);
+      setSuggestedCategory(suggested);
+    } else {
+      setSuggestedCategory(null);
+    }
+  }, [description, type, category, categories]);
+
+  // Efeito para detectar duplicatas
+  useEffect(() => {
+    if (description && parsedAmount && parsedAmount > 0 && !editTransaction) {
+      const duplicate = findDuplicateTransaction(transactions, description, parsedAmount, type);
+      setDuplicateWarning(duplicate);
+    } else {
+      setDuplicateWarning(null);
+    }
+  }, [description, parsedAmount, type, transactions, editTransaction]);
 
   useEffect(() => {
     if (editTransaction) {
@@ -204,7 +401,64 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     setNewFriendName("");
     setShowAddFriend(false);
     setValidationError(null);
+    setSuggestedCategory(null);
+    setShowDatePicker(false);
+    setDuplicateWarning(null);
+    setShowSuccess(false);
   }, [editTransaction, isOpen]);
+
+  // Handler para aplicar template de transação frequente
+  const applyFrequentTransaction = useCallback((freq: FrequentTransaction) => {
+    setDescription(freq.description);
+    setCategory(freq.category);
+    setPaymentMethod(freq.paymentMethod);
+    setType(freq.type);
+    setSuggestedCategory(null);
+  }, []);
+
+  // Handler para aplicar sugestão de categoria
+  const applySuggestedCategory = useCallback(() => {
+    if (suggestedCategory) {
+      setCategory(suggestedCategory);
+      setSuggestedCategory(null);
+    }
+  }, [suggestedCategory]);
+
+  // Handler para aplicar valor rápido
+  const applyQuickAmount = useCallback((value: number) => {
+    setAmount(value.toString());
+  }, []);
+
+  // Handler para aplicar data rápida
+  const applyQuickDate = useCallback((option: "today" | "yesterday" | "lastWeek") => {
+    switch (option) {
+      case "today":
+        setDate(dayjs());
+        break;
+      case "yesterday":
+        setDate(dayjs().subtract(1, "day"));
+        break;
+      case "lastWeek":
+        setDate(dayjs().subtract(7, "day"));
+        break;
+    }
+    setShowDatePicker(false);
+  }, []);
+
+  // Handler para autocomplete de descrição
+  const handleDescriptionSelect = useCallback((selectedDescription: string) => {
+    // Encontrar transação com essa descrição para auto-preencher
+    const matchingTransaction = transactions.find(
+      (t) => t.description === selectedDescription
+    );
+    
+    if (matchingTransaction) {
+      setDescription(selectedDescription);
+      setCategory(matchingTransaction.category);
+      setPaymentMethod(matchingTransaction.paymentMethod);
+      setType(matchingTransaction.type);
+    }
+  }, [transactions]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,20 +474,22 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       hasInstallments &&
       (isNaN(installmentsValue) || installmentsValue < 2)
     ) {
-      setValidationError("Installments must be at least 2.");
+      setValidationError("Parcelas devem ser no mínimo 2.");
       return;
     }
 
     // Validação: se isShared, precisa selecionar um amigo
     if (isShared && !sharedWith) {
-      setValidationError("Please select a friend to share with.");
+      setValidationError("Selecione um amigo para dividir.");
       return;
     }
+
+    const finalAmount = parsedAmount || 0;
 
     onSave(
       {
         description,
-        amount: amount ? parseFloat(amount) : 0,
+        amount: finalAmount,
         type,
         category,
         paymentMethod,
@@ -247,10 +503,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         isShared,
         sharedWith: isShared ? sharedWith : undefined,
       },
-      editTransaction?.id || undefined // Passa undefined se id for vazio (para criar nova transação)
+      editTransaction?.id || undefined
     );
 
-    onClose();
+    // Mostrar animação de sucesso
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+      onClose();
+    }, 600);
   };
 
   const handleAddNewFriend = () => {
@@ -261,6 +522,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setNewFriendName("");
       setShowAddFriend(false);
     }
+  };
+
+  // Formatar moeda
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
   };
 
   return (
@@ -274,7 +543,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       PaperProps={{
         sx: {
           borderRadius: isMobile ? 0 : 1,
-          // Glassmorphism no modal
           bgcolor: isDarkMode
             ? alpha(theme.palette.background.paper, 0.85)
             : alpha("#FFFFFF", 0.95),
@@ -299,6 +567,37 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         },
       }}
     >
+      {/* Success Overlay */}
+      {showSuccess && (
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: alpha(theme.palette.success.main, 0.95),
+            zIndex: 9999,
+            borderRadius: isMobile ? 0 : 1,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              animation: `${successPulse} 0.4s ease-out`,
+            }}
+          >
+            <CheckCircleIcon sx={{ fontSize: 64, color: "#fff" }} />
+            <Typography variant="h6" fontWeight={700} color="#fff">
+              Transação salva!
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
       {/* Mobile Header */}
       {isMobile ? (
         <AppBar
@@ -383,15 +682,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       <form id="transaction-form" onSubmit={handleSubmit}>
         <DialogContent
           sx={{
-            pt: isMobile ? 3 : 1,
+            pt: isMobile ? 2 : 0,
             pb: 3,
-            // Removido dividers - mais clean
             borderTop: "none",
             borderBottom: "none",
           }}
         >
-          {/* Breathing Room - gap aumentado para 3.5 */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             {/* Validation Error Alert */}
             <Collapse in={!!validationError}>
               <Alert 
@@ -406,6 +703,67 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Alert>
             </Collapse>
 
+            {/* Duplicate Warning Alert */}
+            <Collapse in={!!duplicateWarning}>
+              <Alert 
+                severity="warning"
+                icon={<WarningIcon />}
+                onClose={() => setDuplicateWarning(null)}
+                sx={{
+                  borderRadius: 1,
+                  border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  Possível duplicata detectada!
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  "{duplicateWarning?.description}" - {formatCurrency(duplicateWarning?.amount || 0)} cadastrada recentemente
+                </Typography>
+              </Alert>
+            </Collapse>
+
+            {/* Quick Actions - Transações Frequentes */}
+            {!editTransaction && frequentTransactions.length > 0 && (
+              <Box>
+                <Typography 
+                  variant="caption" 
+                  color="text.secondary" 
+                  fontWeight={600}
+                  sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1.5 }}
+                >
+                  <BoltIcon sx={{ fontSize: 14 }} />
+                  ATALHOS RÁPIDOS
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {frequentTransactions.map((freq, index) => (
+                    <Chip
+                      key={index}
+                      label={freq.description}
+                      onClick={() => applyFrequentTransaction(freq)}
+                      icon={<HistoryIcon sx={{ fontSize: 16 }} />}
+                      size="small"
+                      sx={{
+                        borderRadius: 2,
+                        fontWeight: 500,
+                        bgcolor: isDarkMode
+                          ? alpha(theme.palette.primary.main, 0.1)
+                          : alpha(theme.palette.primary.main, 0.08),
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                        color: theme.palette.primary.main,
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          bgcolor: alpha(theme.palette.primary.main, 0.2),
+                          transform: "translateY(-1px)",
+                          boxShadow: `0 4px 12px -4px ${alpha(theme.palette.primary.main, 0.3)}`,
+                        },
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
             {/* Type Toggle - Premium Style */}
             <ToggleButtonGroup
               value={type}
@@ -414,6 +772,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 if (newType) {
                   setType(newType);
                   setCategory("");
+                  setSuggestedCategory(null);
                 }
               }}
               fullWidth
@@ -472,34 +831,147 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </ToggleButton>
             </ToggleButtonGroup>
 
-            <TextField
-              label="Descrição"
-              required
-              fullWidth
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ex: Mercado, Aluguel, Salário..."
-              sx={inputSx}
-            />
+            {/* Descrição com Autocomplete */}
+            <Box>
+              <Autocomplete
+                freeSolo
+                options={uniqueDescriptions}
+                value={description}
+                onInputChange={(_, newValue) => setDescription(newValue)}
+                onChange={(_, newValue) => {
+                  if (newValue) {
+                    handleDescriptionSelect(newValue);
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Descrição"
+                    required
+                    placeholder="Ex: Mercado, Aluguel, Salário..."
+                    sx={inputSx}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {uniqueDescriptions.length > 0 && (
+                            <InputAdornment position="end">
+                              <Tooltip title="Sugestões do histórico">
+                                <HistoryIcon 
+                                  sx={{ 
+                                    fontSize: 18, 
+                                    color: "text.disabled",
+                                    mr: 1,
+                                  }} 
+                                />
+                              </Tooltip>
+                            </InputAdornment>
+                          )}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+                renderOption={(props, option) => {
+                  const { key, ...otherProps } = props as any;
+                  return (
+                    <li key={key} {...otherProps}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <HistoryIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+                        <Typography variant="body2">{option}</Typography>
+                      </Box>
+                    </li>
+                  );
+                }}
+              />
 
-            <TextField
-              label="Valor (R$)"
-              type="number"
-              fullWidth
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Opcional - pode definir depois"
-              helperText={!amount ? "Você pode adicionar o valor depois" : undefined}
-              inputProps={{ min: 0, step: 0.01 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Typography fontWeight={600} color="text.secondary">R$</Typography>
-                  </InputAdornment>
-                ),
-              }}
-              sx={inputSx}
-            />
+              {/* Sugestão de Categoria */}
+              <Collapse in={!!suggestedCategory}>
+                <Chip
+                  label={`💡 Sugestão: ${suggestedCategory}`}
+                  onClick={applySuggestedCategory}
+                  onDelete={applySuggestedCategory}
+                  deleteIcon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
+                  size="small"
+                  sx={{
+                    mt: 1,
+                    borderRadius: 2,
+                    fontWeight: 500,
+                    bgcolor: alpha(theme.palette.info.main, 0.1),
+                    border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+                    color: theme.palette.info.main,
+                    "& .MuiChip-deleteIcon": {
+                      color: theme.palette.success.main,
+                    },
+                    "&:hover": {
+                      bgcolor: alpha(theme.palette.info.main, 0.2),
+                    },
+                  }}
+                />
+              </Collapse>
+            </Box>
+
+            {/* Valor com Quick Amounts */}
+            <Box>
+              <TextField
+                label="Valor (R$)"
+                fullWidth
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Ex: 150, 1.5k, 100+50"
+                helperText={
+                  parsedAmount && parsedAmount !== parseFloat(amount) 
+                    ? `= ${formatCurrency(parsedAmount)}` 
+                    : !amount 
+                      ? "Você pode adicionar o valor depois" 
+                      : undefined
+                }
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Typography fontWeight={600} color="text.secondary">R$</Typography>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={inputSx}
+              />
+
+              {/* Quick Amount Buttons */}
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
+                {QUICK_AMOUNTS.map((value) => (
+                  <Chip
+                    key={value}
+                    label={`R$${value}`}
+                    onClick={() => applyQuickAmount(value)}
+                    size="small"
+                    variant={parsedAmount === value ? "filled" : "outlined"}
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: 600,
+                      fontSize: "0.75rem",
+                      minWidth: 60,
+                      transition: "all 0.15s ease",
+                      ...(parsedAmount === value
+                        ? {
+                            bgcolor: theme.palette.primary.main,
+                            color: "#fff",
+                            borderColor: theme.palette.primary.main,
+                          }
+                        : {
+                            borderColor: isDarkMode
+                              ? alpha("#FFFFFF", 0.15)
+                              : alpha("#000000", 0.15),
+                            "&:hover": {
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              borderColor: theme.palette.primary.main,
+                            },
+                          }),
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
 
             <Grid container spacing={2.5}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -508,7 +980,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   <Select
                     value={category}
                     label="Categoria"
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) => {
+                      setCategory(e.target.value);
+                      setSuggestedCategory(null);
+                    }}
                   >
                     {categories[type].map((cat) => (
                       <MenuItem key={cat} value={cat}>
@@ -536,21 +1011,92 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Grid>
             </Grid>
 
-            <Grid container spacing={2.5}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <DatePicker
-                  label="Data"
-                  value={date}
-                  onChange={(newValue) => setDate(newValue)}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      required: true,
-                      sx: inputSx,
-                    },
+            {/* Data com Quick Picks */}
+            <Box>
+              <Typography 
+                variant="caption" 
+                color="text.secondary" 
+                fontWeight={600}
+                sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}
+              >
+                <TodayIcon sx={{ fontSize: 14 }} />
+                DATA
+              </Typography>
+              
+              {/* Quick Date Picks */}
+              <Box sx={{ display: "flex", gap: 1, mb: 1.5 }}>
+                <Chip
+                  label="Hoje"
+                  onClick={() => applyQuickDate("today")}
+                  size="small"
+                  variant={date?.isSame(dayjs(), "day") ? "filled" : "outlined"}
+                  sx={{
+                    borderRadius: 2,
+                    fontWeight: 500,
+                    ...(date?.isSame(dayjs(), "day")
+                      ? {
+                          bgcolor: theme.palette.primary.main,
+                          color: "#fff",
+                        }
+                      : {
+                          borderColor: isDarkMode
+                            ? alpha("#FFFFFF", 0.15)
+                            : alpha("#000000", 0.15),
+                        }),
                   }}
                 />
-              </Grid>
+                <Chip
+                  label="Ontem"
+                  onClick={() => applyQuickDate("yesterday")}
+                  size="small"
+                  variant={date?.isSame(dayjs().subtract(1, "day"), "day") ? "filled" : "outlined"}
+                  sx={{
+                    borderRadius: 2,
+                    fontWeight: 500,
+                    ...(date?.isSame(dayjs().subtract(1, "day"), "day")
+                      ? {
+                          bgcolor: theme.palette.primary.main,
+                          color: "#fff",
+                        }
+                      : {
+                          borderColor: isDarkMode
+                            ? alpha("#FFFFFF", 0.15)
+                            : alpha("#000000", 0.15),
+                        }),
+                  }}
+                />
+                <Chip
+                  label="Semana passada"
+                  onClick={() => applyQuickDate("lastWeek")}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 2,
+                    fontWeight: 500,
+                    borderColor: isDarkMode
+                      ? alpha("#FFFFFF", 0.15)
+                      : alpha("#000000", 0.15),
+                  }}
+                />
+              </Box>
+
+              <DatePicker
+                label="Personalizar data"
+                value={date}
+                onChange={(newValue) => setDate(newValue)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    required: true,
+                    size: "small",
+                    sx: inputSx,
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Recorrente Toggle */}
+            <Grid container spacing={2.5}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Paper
                   elevation={0}
@@ -558,7 +1104,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   onClick={() => {
                     const newValue = !isRecurring;
                     setIsRecurring(newValue);
-                    // Mutuamente exclusivo com parcelado
                     if (newValue) setHasInstallments(false);
                   }}
                 >
@@ -600,7 +1145,119 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   />
                 </Paper>
               </Grid>
+              {type === "expense" && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Paper
+                    elevation={0}
+                    sx={getTogglePaperSx(hasInstallments, theme.palette.warning.main, theme, isDarkMode)}
+                    onClick={() => {
+                      const newValue = !hasInstallments;
+                      setHasInstallments(newValue);
+                      if (newValue) setIsRecurring(false);
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: hasInstallments
+                            ? alpha(theme.palette.warning.main, isDarkMode ? 0.2 : 0.12)
+                            : alpha("#64748B", 0.1),
+                          transition: "all 0.2s ease",
+                        }}
+                      >
+                        <CreditCardIcon
+                          fontSize="small"
+                          sx={{
+                            color: hasInstallments ? "warning.main" : "text.secondary",
+                            transition: "color 0.2s ease",
+                          }}
+                        />
+                      </Box>
+                      <Typography variant="body2" fontWeight={500}>
+                        Parcelado?
+                      </Typography>
+                    </Box>
+                    <Switch checked={hasInstallments} size="small" color="warning" />
+                  </Paper>
+                </Grid>
+              )}
             </Grid>
+
+            {/* Frequência para Recorrente */}
+            {isRecurring && (
+              <FormControl fullWidth sx={inputSx}>
+                <InputLabel>Frequência</InputLabel>
+                <Select
+                  value={frequency}
+                  label="Frequência"
+                  onChange={(e) =>
+                    setFrequency(e.target.value as "monthly" | "yearly")
+                  }
+                >
+                  <MenuItem value="monthly">Mensal</MenuItem>
+                  <MenuItem value="yearly">Anual</MenuItem>
+                </Select>
+              </FormControl>
+            )}
+
+            {/* Número de Parcelas */}
+            {hasInstallments && (
+              <TextField
+                label="Nº de Parcelas"
+                type="number"
+                fullWidth
+                value={installments}
+                onChange={(e) => setInstallments(e.target.value)}
+                inputProps={{ min: 2, max: 48 }}
+                sx={inputSx}
+              />
+            )}
+
+            {/* Preview de Parcelas */}
+            {type === "expense" &&
+              hasInstallments &&
+              parsedAmount &&
+              parseInt(installments) >= 2 && (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 1,
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.warning.main, 0.1)
+                      : alpha(theme.palette.warning.main, 0.06),
+                    border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Typography variant="body2" color="warning.main" fontWeight={500}>
+                      {installments}x de
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      fontWeight={700}
+                      color="warning.main"
+                    >
+                      {formatCurrency(parsedAmount / parseInt(installments))}
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                    Total: {formatCurrency(parsedAmount)}
+                  </Typography>
+                </Paper>
+              )}
 
             {/* Shared Expense Toggle */}
             {type === "expense" && (
@@ -745,7 +1402,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     )}
 
                     {/* Preview of income that will be created */}
-                    {sharedWith && amount && (
+                    {sharedWith && parsedAmount && (
                       <Paper
                         elevation={0}
                         sx={{
@@ -764,10 +1421,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           "{description || "Transação"} - {sharedWith}"
                         </Typography>
                         <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
-                          +{new Intl.NumberFormat("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          }).format(parseFloat(amount) / 2)}
+                          +{formatCurrency(parsedAmount / 2)}
                         </Typography>
                       </Paper>
                     )}
@@ -776,126 +1430,91 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Box>
             )}
 
-            {isRecurring && (
-              <FormControl fullWidth sx={inputSx}>
-                <InputLabel>Frequência</InputLabel>
-                <Select
-                  value={frequency}
-                  label="Frequência"
-                  onChange={(e) =>
-                    setFrequency(e.target.value as "monthly" | "yearly")
-                  }
+            {/* Balance Impact Preview */}
+            {parsedAmount !== null && parsedAmount > 0 && currentBalance !== undefined && (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 1,
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.background.default, 0.5)
+                    : alpha("#000000", 0.02),
+                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                }}
+              >
+                <Typography 
+                  variant="caption" 
+                  color="text.secondary" 
+                  fontWeight={600}
+                  sx={{ display: "block", mb: 1.5 }}
                 >
-                  <MenuItem value="monthly">Mensal</MenuItem>
-                  <MenuItem value="yearly">Anual</MenuItem>
-                </Select>
-              </FormControl>
-            )}
-
-            {type === "expense" && (
-              <Grid container spacing={2.5}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Paper
-                    elevation={0}
-                    sx={getTogglePaperSx(hasInstallments, theme.palette.warning.main, theme, isDarkMode)}
-                    onClick={() => {
-                      const newValue = !hasInstallments;
-                      setHasInstallments(newValue);
-                      // Mutuamente exclusivo com recorrente
-                      if (newValue) setIsRecurring(false);
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <Box
-                        sx={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 1,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          bgcolor: hasInstallments
-                            ? alpha(theme.palette.warning.main, isDarkMode ? 0.2 : 0.12)
-                            : alpha("#64748B", 0.1),
-                          transition: "all 0.2s ease",
-                        }}
-                      >
-                        <CreditCardIcon
-                          fontSize="small"
-                          sx={{
-                            color: hasInstallments ? "warning.main" : "text.secondary",
-                            transition: "color 0.2s ease",
-                          }}
-                        />
-                      </Box>
-                      <Typography variant="body2" fontWeight={500}>
-                        Parcelado?
-                      </Typography>
-                    </Box>
-                    <Switch checked={hasInstallments} size="small" color="warning" />
-                  </Paper>
-                </Grid>
-                {hasInstallments && (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      label="Nº de Parcelas"
-                      type="number"
-                      fullWidth
-                      value={installments}
-                      onChange={(e) => setInstallments(e.target.value)}
-                      inputProps={{ min: 2, max: 48 }}
-                      sx={inputSx}
-                    />
-                  </Grid>
-                )}
-              </Grid>
-            )}
-
-            {type === "expense" &&
-              hasInstallments &&
-              amount &&
-              parseInt(installments) >= 2 && (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 1,
-                    bgcolor: isDarkMode
-                      ? alpha(theme.palette.warning.main, 0.1)
-                      : alpha(theme.palette.warning.main, 0.06),
-                    border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Typography variant="body2" color="warning.main" fontWeight={500}>
-                      {installments}x de
+                  IMPACTO NO SALDO
+                </Typography>
+                
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Saldo atual
                     </Typography>
-                    <Typography
-                      variant="h5"
-                      fontWeight={700}
-                      color="warning.main"
-                    >
-                      {new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      }).format(parseFloat(amount) / parseInt(installments))}
+                    <Typography variant="body2" fontWeight={600}>
+                      {formatCurrency(currentBalance)}
                     </Typography>
                   </Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                    Total:{" "}
-                    {new Intl.NumberFormat("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    }).format(parseFloat(amount))}
-                  </Typography>
-                </Paper>
-              )}
+                  
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      {type === "expense" ? (
+                        <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
+                      ) : (
+                        <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
+                      )}
+                      <Typography variant="body2" color="text.secondary">
+                        Esta transação
+                      </Typography>
+                    </Box>
+                    <Typography 
+                      variant="body2" 
+                      fontWeight={600}
+                      color={type === "expense" ? "error.main" : "success.main"}
+                    >
+                      {type === "expense" ? "-" : "+"}{formatCurrency(parsedAmount)}
+                    </Typography>
+                  </Box>
+                  
+                  <Divider sx={{ my: 0.5 }} />
+                  
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="body2" fontWeight={600}>
+                      Saldo após
+                    </Typography>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight={700}
+                      color={balanceAfter < 0 ? "error.main" : "text.primary"}
+                    >
+                      {formatCurrency(balanceAfter)}
+                    </Typography>
+                  </Box>
+                  
+                  {balanceAfter < 0 && (
+                    <Alert 
+                      severity="warning" 
+                      sx={{ 
+                        mt: 1, 
+                        py: 0.5, 
+                        borderRadius: 1,
+                        "& .MuiAlert-message": { py: 0 }
+                      }}
+                    >
+                      <Typography variant="caption">
+                        ⚠️ Saldo ficará negativo
+                      </Typography>
+                    </Alert>
+                  )}
+                </Box>
+              </Paper>
+            )}
           </Box>
         </DialogContent>
 
