@@ -667,6 +667,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       {(t.isRecurring ||
                         t.isVirtual ||
                         (t.isShared && t.sharedWith) ||
+                        (t.type === "income" && t.relatedTransactionId) ||
                         (t.installments && t.installments > 1)) && (
                         <Box
                           sx={{
@@ -729,6 +730,21 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                               size="small"
                               color="warning"
                               variant="outlined"
+                              sx={{
+                                height: 20,
+                                fontSize: 10,
+                                "& .MuiChip-icon": { ml: 0.5 },
+                              }}
+                            />
+                          )}
+                          {/* Income gerada de despesa compartilhada */}
+                          {t.type === "income" && t.relatedTransactionId && (
+                            <Chip
+                              icon={<GroupIcon sx={{ fontSize: 12 }} />}
+                              label="Shared"
+                              size="small"
+                              color="info"
+                              variant="filled"
                               sx={{
                                 height: 20,
                                 fontSize: 10,
@@ -968,6 +984,22 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                           <Chip
                             icon={<GroupIcon />}
                             label={t.sharedWith}
+                            size="small"
+                            color="info"
+                            variant="filled"
+                            sx={{
+                              height: 18,
+                              fontSize: 10,
+                              mt: 0.5,
+                              width: "fit-content",
+                            }}
+                          />
+                        )}
+                        {/* Income gerada de despesa compartilhada */}
+                        {t.type === "income" && t.relatedTransactionId && (
+                          <Chip
+                            icon={<GroupIcon />}
+                            label="Shared"
                             size="small"
                             color="info"
                             variant="filled"

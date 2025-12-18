@@ -77,6 +77,7 @@ interface InstallmentGroup {
   endDate: string;
   isShared?: boolean;
   sharedWith?: string;
+  relatedTransactionId?: string;
 }
 
 const SplitsView: React.FC<SplitsViewProps> = ({
@@ -125,6 +126,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           endDate: t.date,
           isShared: t.isShared,
           sharedWith: t.sharedWith,
+          relatedTransactionId: t.relatedTransactionId,
         });
       }
 
@@ -271,6 +273,16 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                   <Chip
                     icon={<PeopleIcon sx={{ fontSize: 14 }} />}
                     label={group.sharedWith}
+                    size="small"
+                    color="info"
+                    variant="filled"
+                  />
+                )}
+                {/* Income gerada de despesa compartilhada */}
+                {group.type === "income" && group.relatedTransactionId && (
+                  <Chip
+                    icon={<PeopleIcon sx={{ fontSize: 14 }} />}
+                    label="Shared"
                     size="small"
                     color="info"
                     variant="filled"

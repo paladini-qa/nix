@@ -322,6 +322,15 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                       sx={getModernChipSx(theme.palette.secondary.main)}
                     />
                   )}
+                  {/* Income gerada de despesa compartilhada */}
+                  {transaction.type === "income" && transaction.relatedTransactionId && (
+                    <Chip
+                      icon={<PeopleIcon />}
+                      label="Shared"
+                      size="small"
+                      sx={getModernChipSx(theme.palette.info.main)}
+                    />
+                  )}
                 </Box>
               </Box>
             </Paper>
@@ -485,6 +494,15 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                             label={transaction.sharedWith}
                             size="small"
                             sx={getModernChipSx(theme.palette.secondary.main)}
+                          />
+                        )}
+                        {/* Income gerada de despesa compartilhada */}
+                        {transaction.type === "income" && transaction.relatedTransactionId && (
+                          <Chip
+                            icon={<PeopleIcon />}
+                            label="Shared"
+                            size="small"
+                            sx={getModernChipSx(theme.palette.info.main)}
                           />
                         )}
                       </Box>

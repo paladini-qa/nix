@@ -309,6 +309,16 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                     variant="filled"
                   />
                 )}
+                {/* Income gerada de despesa compartilhada */}
+                {t.type === "income" && t.relatedTransactionId && (
+                  <Chip
+                    icon={<PeopleIcon sx={{ fontSize: 14 }} />}
+                    label="Shared"
+                    size="small"
+                    color="info"
+                    variant="filled"
+                  />
+                )}
               </Box>
             </Box>
 

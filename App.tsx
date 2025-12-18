@@ -718,6 +718,8 @@ const AppContent: React.FC<{
             installments: totalInstallments,
             current_installment: i + 1,
             is_paid: false,
+            is_shared: newTx.isShared,
+            shared_with: newTx.sharedWith,
           });
         }
 
@@ -743,8 +745,55 @@ const AppContent: React.FC<{
             installments: d.installments,
             currentInstallment: d.current_installment,
             isPaid: d.is_paid ?? false,
+            isShared: d.is_shared,
+            sharedWith: d.shared_with,
           }));
           setTransactions((prev) => [...newTransactions, ...prev]);
+
+          // Se é um gasto compartilhado com parcelas, criar income para cada parcela
+          if (newTx.isShared && newTx.sharedWith && newTx.type === "expense") {
+            const incomePayloads = data.map((d: any) => ({
+              user_id: session.user.id,
+              description: `${d.description} - ${newTx.sharedWith}`,
+              amount: Math.round((d.amount / 2) * 100) / 100,
+              type: "income" as const,
+              category: "Other",
+              payment_method: d.payment_method,
+              date: d.date,
+              is_recurring: false,
+              is_paid: false,
+              installments: totalInstallments,
+              current_installment: d.current_installment,
+              related_transaction_id: d.id,
+            }));
+
+            const { data: incomeData, error: incomeError } = await supabase
+              .from("transactions")
+              .insert(incomePayloads)
+              .select();
+
+            if (!incomeError && incomeData) {
+              const incomeTransactions: Transaction[] = incomeData.map(
+                (d: any) => ({
+                  id: d.id,
+                  description: d.description,
+                  amount: d.amount,
+                  type: d.type,
+                  category: d.category,
+                  paymentMethod: d.payment_method,
+                  date: d.date,
+                  createdAt: new Date(d.created_at).getTime(),
+                  isRecurring: d.is_recurring,
+                  frequency: d.frequency,
+                  installments: d.installments,
+                  currentInstallment: d.current_installment,
+                  isPaid: d.is_paid ?? false,
+                  relatedTransactionId: d.related_transaction_id,
+                })
+              );
+              setTransactions((prev) => [...incomeTransactions, ...prev]);
+            }
+          }
         }
       } else {
         const dbPayload = {
@@ -793,7 +842,7 @@ const AppContent: React.FC<{
           setTransactions((prev) => [transaction, ...prev]);
 
           // Se é um gasto compartilhado, cria automaticamente uma income para o reembolso
-          if (newTx.isShared && newTx.sharedWith) {
+          if (newTx.isShared && newTx.sharedWith && newTx.type === "expense") {
             const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
             const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
 
@@ -805,7 +854,8 @@ const AppContent: React.FC<{
               category: "Other",
               payment_method: newTx.paymentMethod,
               date: newTx.date,
-              is_recurring: false,
+              is_recurring: newTx.isRecurring,
+              frequency: newTx.frequency,
               is_paid: false,
               related_transaction_id: data.id,
             };
