@@ -20,17 +20,35 @@ interface ColorPickerProps {
 
 // Converte HSL para Hex
 const hslToHex = (h: number, s: number, l: number): string => {
-  s /= 100;
-  l /= 100;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color)
+  const sNorm = s / 100;
+  const lNorm = l / 100;
+
+  const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = lNorm - c / 2;
+
+  let r = 0, g = 0, b = 0;
+
+  if (h >= 0 && h < 60) {
+    r = c; g = x; b = 0;
+  } else if (h >= 60 && h < 120) {
+    r = x; g = c; b = 0;
+  } else if (h >= 120 && h < 180) {
+    r = 0; g = c; b = x;
+  } else if (h >= 180 && h < 240) {
+    r = 0; g = x; b = c;
+  } else if (h >= 240 && h < 300) {
+    r = x; g = 0; b = c;
+  } else if (h >= 300 && h < 360) {
+    r = c; g = 0; b = x;
+  }
+
+  const toHex = (val: number) =>
+    Math.round((val + m) * 255)
       .toString(16)
       .padStart(2, "0");
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
 
 // Converte Hex para HSL
@@ -79,20 +97,14 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
   const [saturation, setSaturation] = useState(70);
   const [lightness, setLightness] = useState(50);
   const wheelRef = useRef<HTMLCanvasElement>(null);
+  const isUserInteracting = useRef(false);
 
   const isSmall = size === "small";
   const wheelSize = isSmall ? 150 : 180;
+  const open = Boolean(anchorEl);
 
-  useEffect(() => {
-    const currentColor = activeColor === "primary" ? value.primary : value.secondary;
-    const hsl = hexToHsl(currentColor);
-    setHue(hsl.h);
-    setSaturation(hsl.s);
-    setLightness(hsl.l);
-  }, [activeColor, value]);
-
-  // Desenha o círculo de cores
-  useEffect(() => {
+  // Função para desenhar o canvas com valores HSL específicos
+  const drawColorWheel = React.useCallback((h: number, s: number, l: number) => {
     const canvas = wheelRef.current;
     if (!canvas) return;
 
@@ -117,12 +129,12 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
       ctx.arc(centerX, centerY, innerRadius, endAngle, startAngle, true);
       ctx.closePath();
 
-      ctx.fillStyle = hslToHex(angle, saturation, lightness);
+      ctx.fillStyle = hslToHex(angle, s, l);
       ctx.fill();
     }
 
     // Desenha o indicador de posição atual
-    const indicatorAngle = ((hue - 90) * Math.PI) / 180;
+    const indicatorAngle = (h * Math.PI) / 180;
     const indicatorRadius = (outerRadius + innerRadius) / 2;
     const indicatorX = centerX + indicatorRadius * Math.cos(indicatorAngle);
     const indicatorY = centerY + indicatorRadius * Math.sin(indicatorAngle);
@@ -132,9 +144,46 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 3;
     ctx.stroke();
-    ctx.fillStyle = hslToHex(hue, saturation, lightness);
+    ctx.fillStyle = hslToHex(h, s, l);
     ctx.fill();
-  }, [hue, saturation, lightness, wheelSize]);
+  }, [wheelSize]);
+
+  // Sincroniza HSL com o value quando activeColor muda ou quando o popover abre
+  useEffect(() => {
+    if (isUserInteracting.current) return;
+    
+    const currentColor = activeColor === "primary" ? value.primary : value.secondary;
+    const hsl = hexToHsl(currentColor);
+    setHue(hsl.h);
+    setSaturation(hsl.s);
+    setLightness(hsl.l);
+  }, [activeColor, value.primary, value.secondary]);
+
+  // Redesenha o canvas quando os valores HSL mudam
+  useEffect(() => {
+    drawColorWheel(hue, saturation, lightness);
+  }, [hue, saturation, lightness, drawColorWheel]);
+
+  // Redesenha o canvas quando o popover abre (com delay para garantir que o DOM está pronto)
+  useEffect(() => {
+    if (open) {
+      // Pega os valores HSL atuais do value prop diretamente
+      const currentColor = activeColor === "primary" ? value.primary : value.secondary;
+      const hsl = hexToHsl(currentColor);
+      
+      // Atualiza os estados
+      setHue(hsl.h);
+      setSaturation(hsl.s);
+      setLightness(hsl.l);
+      
+      // Usa requestAnimationFrame para garantir que o canvas está no DOM
+      const frameId = requestAnimationFrame(() => {
+        // Desenha com os valores corretos diretamente
+        drawColorWheel(hsl.h, hsl.s, hsl.l);
+      });
+      return () => cancelAnimationFrame(frameId);
+    }
+  }, [open, activeColor, value.primary, value.secondary, drawColorWheel]);
 
   const handleWheelClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = wheelRef.current;
@@ -144,20 +193,29 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
     const x = e.clientX - rect.left - wheelSize / 2;
     const y = e.clientY - rect.top - wheelSize / 2;
 
-    let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+    let angle = Math.atan2(y, x) * (180 / Math.PI);
     if (angle < 0) angle += 360;
 
-    setHue(Math.round(angle));
-    updateColor(Math.round(angle), saturation, lightness);
+    const newHue = Math.round(angle);
+    setHue(newHue);
+    updateColor(newHue, saturation, lightness);
   };
 
   const updateColor = (h: number, s: number, l: number) => {
+    // Marca que o usuário está interagindo para evitar ciclo de conversão
+    isUserInteracting.current = true;
+    
     const newHex = hslToHex(h, s, l);
     if (activeColor === "primary") {
       onChange({ ...value, primary: newHex });
     } else {
       onChange({ ...value, secondary: newHex });
     }
+    
+    // Reseta o flag após um curto período
+    setTimeout(() => {
+      isUserInteracting.current = false;
+    }, 100);
   };
 
   const handleOpen = (e: React.MouseEvent<HTMLElement>) => {
@@ -167,8 +225,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
   const handleClose = () => {
     setAnchorEl(null);
   };
-
-  const open = Boolean(anchorEl);
 
   return (
     <>
