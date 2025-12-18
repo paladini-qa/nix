@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -13,6 +13,8 @@ import {
   TableHead,
   TableRow,
   TableFooter,
+  TableSortLabel,
+  TablePagination,
   IconButton,
   Menu,
   MenuItem,
@@ -30,6 +32,7 @@ import {
   SelectChangeEvent,
   Checkbox,
   Tooltip,
+  alpha,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -43,10 +46,12 @@ import {
   Delete as DeleteIcon,
   Description as FileTextIcon,
   TableChart as FileSpreadsheetIcon,
-  ExpandMore as ChevronDownIcon,
   MoreVert as MoreVertIcon,
   AutorenewOutlined as AutorenewIcon,
   Group as GroupIcon,
+  UnfoldMore as UnsortedIcon,
+  Close as CloseIcon,
+  FilterList as FilterIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
@@ -64,6 +69,14 @@ interface TransactionsViewProps {
   onDateChange: (month: number, year: number) => void;
 }
 
+type SortDirection = "asc" | "desc";
+type SortColumn = "date" | "description" | "category" | "paymentMethod" | "type" | "amount";
+
+interface SortConfig {
+  column: SortColumn;
+  direction: SortDirection;
+}
+
 const TransactionsView: React.FC<TransactionsViewProps> = ({
   transactions,
   onNewTransaction,
@@ -76,13 +89,27 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isDarkMode = theme.palette.mode === "dark";
   const { showWarning, showError } = useNotification();
+
+  // Estados de busca e filtros
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
-    "all"
-  );
+  const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterShared, setFilterShared] = useState<"all" | "shared" | "not_shared">("all");
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Estado de ordenação
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    column: "date",
+    direction: "desc",
+  });
+
+  // Estado de paginação
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+
+  // Menus
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [mobileActionAnchor, setMobileActionAnchor] = useState<{
@@ -97,26 +124,75 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     return Array.from(categories).sort();
   }, [transactions]);
 
+  // Conta filtros ativos
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filterType !== "all") count++;
+    if (filterCategory !== "all") count++;
+    if (filterShared !== "all") count++;
+    return count;
+  }, [filterType, filterCategory, filterShared]);
+
+  // Filtra e ordena dados
   const filteredData = useMemo(() => {
-    return transactions
-      .filter((t) => {
-        const [y, m] = t.date.split("-");
-        const matchesDate =
-          parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
-        const matchesSearch =
-          t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesType = filterType === "all" || t.type === filterType;
-        const matchesCategory =
-          filterCategory === "all" || t.category === filterCategory;
-        const matchesShared =
-          filterShared === "all" ||
-          (filterShared === "shared" && t.isShared) ||
-          (filterShared === "not_shared" && !t.isShared);
-        return matchesDate && matchesSearch && matchesType && matchesCategory && matchesShared;
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    let result = transactions.filter((t) => {
+      const [y, m] = t.date.split("-");
+      const matchesDate =
+        parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+      const matchesSearch =
+        t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = filterType === "all" || t.type === filterType;
+      const matchesCategory =
+        filterCategory === "all" || t.category === filterCategory;
+      const matchesShared =
+        filterShared === "all" ||
+        (filterShared === "shared" && t.isShared) ||
+        (filterShared === "not_shared" && !t.isShared);
+      return matchesDate && matchesSearch && matchesType && matchesCategory && matchesShared;
+    });
+
+    // Ordenação
+    result = [...result].sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+
+      switch (sortConfig.column) {
+        case "date":
+          aValue = new Date(a.date).getTime();
+          bValue = new Date(b.date).getTime();
+          break;
+        case "description":
+          aValue = a.description.toLowerCase();
+          bValue = b.description.toLowerCase();
+          break;
+        case "category":
+          aValue = a.category.toLowerCase();
+          bValue = b.category.toLowerCase();
+          break;
+        case "paymentMethod":
+          aValue = a.paymentMethod.toLowerCase();
+          bValue = b.paymentMethod.toLowerCase();
+          break;
+        case "type":
+          aValue = a.type;
+          bValue = b.type;
+          break;
+        case "amount":
+          aValue = a.type === "expense" ? -a.amount : a.amount;
+          bValue = b.type === "expense" ? -b.amount : b.amount;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return result;
   }, [
     transactions,
     selectedMonth,
@@ -125,7 +201,23 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     filterType,
     filterCategory,
     filterShared,
+    sortConfig,
   ]);
+
+  // Dados paginados
+  const paginatedData = useMemo(() => {
+    if (isMobile) return filteredData;
+    const start = page * rowsPerPage;
+    return filteredData.slice(start, start + rowsPerPage);
+  }, [filteredData, page, rowsPerPage, isMobile]);
+
+  // Handler de ordenação
+  const handleSort = useCallback((column: SortColumn) => {
+    setSortConfig((prev) => ({
+      column,
+      direction: prev.column === column && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  }, []);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -327,9 +419,71 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   };
 
   const formatDateShort = (dateString: string) => {
-    const [year, month, day] = dateString.split("-");
+    const [, month, day] = dateString.split("-");
     return `${day}/${month}`;
   };
+
+  // Header com estilo de ordenação
+  const headerCellSx = {
+    fontWeight: 600,
+    fontSize: 11,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase" as const,
+    color: "text.secondary",
+    py: 2,
+    bgcolor: isDarkMode
+      ? alpha(theme.palette.background.default, 0.5)
+      : alpha(theme.palette.grey[50], 0.95),
+    borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.08)}`,
+    whiteSpace: "nowrap" as const,
+  };
+
+  const renderSortableHeader = (column: SortColumn, label: string, width?: number | string) => (
+    <TableCell sx={{ ...headerCellSx, width }}>
+      <TableSortLabel
+        active={sortConfig.column === column}
+        direction={sortConfig.column === column ? sortConfig.direction : "asc"}
+        onClick={() => handleSort(column)}
+        IconComponent={sortConfig.column === column ? undefined : UnsortedIcon}
+        sx={{
+          "& .MuiTableSortLabel-icon": {
+            opacity: sortConfig.column === column ? 1 : 0.4,
+            color: sortConfig.column === column ? "primary.main" : "text.disabled",
+          },
+          "&:hover": {
+            color: "primary.main",
+            "& .MuiTableSortLabel-icon": { opacity: 1 },
+          },
+        }}
+      >
+        {label}
+      </TableSortLabel>
+    </TableCell>
+  );
+
+  // Estilos de linha
+  const getRowSx = (t: Transaction, index: number) => ({
+    transition: "all 0.15s ease",
+    opacity: t.isPaid !== false ? 0.6 : 1,
+    bgcolor: t.isPaid !== false
+      ? "action.disabledBackground"
+      : index % 2 === 0
+        ? "transparent"
+        : isDarkMode
+          ? alpha(theme.palette.action.hover, 0.3)
+          : alpha(theme.palette.action.hover, 0.5),
+    "&:hover": {
+      bgcolor: isDarkMode
+        ? alpha(theme.palette.primary.main, 0.08)
+        : alpha(theme.palette.primary.main, 0.04),
+    },
+    "& td": {
+      textDecoration: t.isPaid !== false ? "line-through" : "none",
+      textDecorationColor: "text.disabled",
+      borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.04) : alpha("#000000", 0.04)}`,
+      py: 1.5,
+    },
+  });
 
   return (
     <Box
@@ -355,7 +509,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               All Transactions
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {MONTHS[selectedMonth]} {selectedYear}
+              {MONTHS[selectedMonth]} {selectedYear} • {filteredData.length} transactions
             </Typography>
           </Box>
 
@@ -434,135 +588,243 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         </Grid>
       </Grid>
 
-      {/* Filters */}
+      {/* Search & Filters Toolbar */}
       <Paper
+        elevation={0}
         sx={{
-          p: 2,
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: 2,
+          borderRadius: 3,
+          overflow: "hidden",
+          bgcolor: isDarkMode
+            ? alpha(theme.palette.background.paper, 0.7)
+            : alpha("#FFFFFF", 0.9),
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
         }}
       >
-        <TextField
-          size="small"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ flex: 1, minWidth: 150 }}
-        />
-
-        <FormControl size="small" sx={{ minWidth: 100 }}>
-          <InputLabel>Type</InputLabel>
-          <Select
-            value={filterType}
-            label="Type"
-            onChange={(e: SelectChangeEvent) =>
-              setFilterType(e.target.value as "all" | "income" | "expense")
-            }
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="income">Income</MenuItem>
-            <MenuItem value="expense">Expense</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Category</InputLabel>
-          <Select
-            value={filterCategory}
-            label="Category"
-            onChange={(e: SelectChangeEvent) =>
-              setFilterCategory(e.target.value)
-            }
-          >
-            <MenuItem value="all">All</MenuItem>
-            {availableCategories.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Shared</InputLabel>
-          <Select
-            value={filterShared}
-            label="Shared"
-            onChange={(e: SelectChangeEvent) =>
-              setFilterShared(e.target.value as "all" | "shared" | "not_shared")
-            }
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="shared">
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <GroupIcon fontSize="small" color="info" />
-                Shared
-              </Box>
-            </MenuItem>
-            <MenuItem value="not_shared">Not Shared</MenuItem>
-          </Select>
-        </FormControl>
-
-        <DateFilter
-          month={selectedMonth}
-          year={selectedYear}
-          onDateChange={onDateChange}
-          compact
-        />
-
-        <IconButton
-          onClick={(e) => setAnchorEl(e.currentTarget)}
-          disabled={isExporting || filteredData.length === 0}
+        {/* Toolbar principal */}
+        <Box
           sx={{
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 2,
+            p: 2,
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 2,
           }}
         >
-          {isExporting ? <CircularProgress size={20} /> : <DownloadIcon />}
-        </IconButton>
+          {/* Campo de busca */}
+          <TextField
+            size="small"
+            placeholder="Search transactions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" sx={{ color: "text.disabled" }} />
+                </InputAdornment>
+              ),
+              endAdornment: searchTerm && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearchTerm("")}>
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              flex: 1,
+              minWidth: 200,
+              maxWidth: 320,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.background.default, 0.4)
+                  : alpha(theme.palette.grey[100], 0.6),
+                "& fieldset": { borderColor: "transparent" },
+                "&:hover fieldset": {
+                  borderColor: alpha(theme.palette.primary.main, 0.3),
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: theme.palette.primary.main,
+                },
+              },
+            }}
+          />
 
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
-        >
-          <MenuItem onClick={exportToCSV}>
-            <ListItemIcon>
-              <FileTextIcon fontSize="small" color="success" />
-            </ListItemIcon>
-            <ListItemText>Export as CSV</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={exportToXLSX}>
-            <ListItemIcon>
-              <FileSpreadsheetIcon fontSize="small" color="success" />
-            </ListItemIcon>
-            <ListItemText>Export as XLSX</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={exportToPDF}>
-            <ListItemIcon>
-              <FileTextIcon fontSize="small" color="error" />
-            </ListItemIcon>
-            <ListItemText>Export as PDF</ListItemText>
-          </MenuItem>
-        </Menu>
+          {/* Botão de filtros */}
+          <Button
+            variant={showFilters ? "contained" : "outlined"}
+            size="small"
+            onClick={() => setShowFilters(!showFilters)}
+            startIcon={<FilterIcon />}
+            sx={{
+              borderRadius: 2,
+              minWidth: 100,
+              ...(activeFiltersCount > 0 && !showFilters && {
+                borderColor: theme.palette.primary.main,
+                color: theme.palette.primary.main,
+              }),
+            }}
+          >
+            Filters
+            {activeFiltersCount > 0 && (
+              <Chip
+                label={activeFiltersCount}
+                size="small"
+                color="primary"
+                sx={{ ml: 1, height: 20, fontSize: 11 }}
+              />
+            )}
+          </Button>
+
+          {/* Date Filter */}
+          <DateFilter
+            month={selectedMonth}
+            year={selectedYear}
+            onDateChange={onDateChange}
+            compact
+          />
+
+          {/* Export Button */}
+          <IconButton
+            onClick={(e) => setAnchorEl(e.currentTarget)}
+            disabled={isExporting || filteredData.length === 0}
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 2,
+            }}
+          >
+            {isExporting ? <CircularProgress size={20} /> : <DownloadIcon />}
+          </IconButton>
+
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={() => setAnchorEl(null)}
+          >
+            <MenuItem onClick={exportToCSV}>
+              <ListItemIcon>
+                <FileTextIcon fontSize="small" color="success" />
+              </ListItemIcon>
+              <ListItemText>Export as CSV</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={exportToXLSX}>
+              <ListItemIcon>
+                <FileSpreadsheetIcon fontSize="small" color="success" />
+              </ListItemIcon>
+              <ListItemText>Export as XLSX</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={exportToPDF}>
+              <ListItemIcon>
+                <FileTextIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>Export as PDF</ListItemText>
+            </MenuItem>
+          </Menu>
+        </Box>
+
+        {/* Área de filtros expandíveis */}
+        {showFilters && (
+          <Box
+            sx={{
+              p: 2,
+              pt: 0,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 2,
+              borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+              bgcolor: isDarkMode
+                ? alpha(theme.palette.background.default, 0.3)
+                : alpha(theme.palette.grey[50], 0.5),
+            }}
+          >
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>Type</InputLabel>
+              <Select
+                value={filterType}
+                label="Type"
+                onChange={(e: SelectChangeEvent) =>
+                  setFilterType(e.target.value as "all" | "income" | "expense")
+                }
+              >
+                <MenuItem value="all">All Types</MenuItem>
+                <MenuItem value="income">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <ArrowUpIcon fontSize="small" color="success" />
+                    Income
+                  </Box>
+                </MenuItem>
+                <MenuItem value="expense">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <ArrowDownIcon fontSize="small" color="error" />
+                    Expense
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={filterCategory}
+                label="Category"
+                onChange={(e: SelectChangeEvent) =>
+                  setFilterCategory(e.target.value)
+                }
+              >
+                <MenuItem value="all">All Categories</MenuItem>
+                {availableCategories.map((cat) => (
+                  <MenuItem key={cat} value={cat}>
+                    {cat}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 130 }}>
+              <InputLabel>Shared</InputLabel>
+              <Select
+                value={filterShared}
+                label="Shared"
+                onChange={(e: SelectChangeEvent) =>
+                  setFilterShared(e.target.value as "all" | "shared" | "not_shared")
+                }
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="shared">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <GroupIcon fontSize="small" color="info" />
+                    Shared
+                  </Box>
+                </MenuItem>
+                <MenuItem value="not_shared">Not Shared</MenuItem>
+              </Select>
+            </FormControl>
+
+            {activeFiltersCount > 0 && (
+              <Button
+                size="small"
+                onClick={() => {
+                  setFilterType("all");
+                  setFilterCategory("all");
+                  setFilterShared("all");
+                }}
+                sx={{ textTransform: "none" }}
+              >
+                Clear filters
+              </Button>
+            )}
+          </Box>
+        )}
       </Paper>
 
       {/* Mobile Card View */}
       {isMobile ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-          {filteredData.length > 0 ? (
+          {paginatedData.length > 0 ? (
             <>
-              {filteredData.map((t) => {
+              {paginatedData.map((t) => {
                 const isIncome = t.type === "income";
                 return (
                   <Paper
@@ -737,7 +999,6 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                               }}
                             />
                           )}
-                          {/* Income gerada de despesa compartilhada */}
                           {t.type === "income" && t.relatedTransactionId && (
                             <Chip
                               icon={<GroupIcon sx={{ fontSize: 12 }} />}
@@ -868,254 +1129,259 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         </Box>
       ) : (
         /* Desktop Table View */
-        <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ bgcolor: "action.hover" }}>
-                <TableCell
-                  sx={{ fontWeight: 600, width: 50, textAlign: "center" }}
-                >
-                  Paid
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600, width: 100 }}>Date</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-                <TableCell sx={{ fontWeight: 600, width: 140 }}>
-                  Category
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600, width: 140 }}>
-                  Method
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: 600, width: 80, textAlign: "center" }}
-                >
-                  Type
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: 600, width: 130, textAlign: "right" }}
-                >
-                  Amount
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: 600, width: 100, textAlign: "center" }}
-                >
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredData.length > 0 ? (
-                filteredData.map((t, index) => (
-                  <TableRow
-                    key={t.id}
-                    hover
-                    sx={{
-                      bgcolor: t.isPaid !== false 
-                        ? "action.disabledBackground" 
-                        : (index % 2 === 0 ? "transparent" : "action.hover"),
-                      opacity: t.isPaid !== false ? 0.6 : 1,
-                      "& td": {
-                        textDecoration: t.isPaid !== false ? "line-through" : "none",
-                        textDecorationColor: "text.disabled",
-                      },
-                    }}
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: 3,
+            overflow: "hidden",
+            bgcolor: isDarkMode
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha("#FFFFFF", 0.9),
+            backdropFilter: "blur(20px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          }}
+        >
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell
+                    sx={{ ...headerCellSx, width: 50, textAlign: "center" }}
                   >
-                    <TableCell sx={{ textAlign: "center" }}>
-                      {!t.isVirtual && (
-                        <Tooltip
-                          title={t.isPaid !== false ? "Paid" : "Not paid"}
-                        >
-                          <Checkbox
-                            checked={t.isPaid !== false}
-                            onChange={(e) =>
-                              onTogglePaid(t.id, e.target.checked)
-                            }
-                            size="small"
-                            color="success"
-                          />
-                        </Tooltip>
-                      )}
-                    </TableCell>
-                    <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
-                      {formatDate(t.date)}
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: "flex", flexDirection: "column" }}>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Typography variant="body2" fontWeight={500}>
-                            {t.description}
-                          </Typography>
-                          {t.isRecurring && (
-                            <RepeatIcon fontSize="small" color="primary" />
-                          )}
-                          {t.isVirtual && (
-                            <Chip
-                              icon={<AutorenewIcon />}
-                              label="Auto"
+                    Paid
+                  </TableCell>
+                  {renderSortableHeader("date", "Date", 100)}
+                  {renderSortableHeader("description", "Description")}
+                  {renderSortableHeader("category", "Category", 140)}
+                  {renderSortableHeader("paymentMethod", "Method", 140)}
+                  {renderSortableHeader("type", "Type", 80)}
+                  {renderSortableHeader("amount", "Amount", 130)}
+                  <TableCell
+                    sx={{ ...headerCellSx, width: 100, textAlign: "center" }}
+                  >
+                    Actions
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((t, index) => (
+                    <TableRow key={t.id} sx={getRowSx(t, index)}>
+                      <TableCell sx={{ textAlign: "center" }}>
+                        {!t.isVirtual && (
+                          <Tooltip
+                            title={t.isPaid !== false ? "Paid" : "Not paid"}
+                          >
+                            <Checkbox
+                              checked={t.isPaid !== false}
+                              onChange={(e) =>
+                                onTogglePaid(t.id, e.target.checked)
+                              }
                               size="small"
-                              color="info"
+                              color="success"
+                            />
+                          </Tooltip>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
+                        {formatDate(t.date)}
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: "flex", flexDirection: "column" }}>
+                          <Box
+                            sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                          >
+                            <Typography variant="body2" fontWeight={500}>
+                              {t.description}
+                            </Typography>
+                            {t.isRecurring && (
+                              <RepeatIcon fontSize="small" color="primary" />
+                            )}
+                            {t.isVirtual && (
+                              <Chip
+                                icon={<AutorenewIcon />}
+                                label="Auto"
+                                size="small"
+                                color="info"
+                                variant="outlined"
+                                sx={{
+                                  height: 18,
+                                  fontSize: 10,
+                                }}
+                              />
+                            )}
+                          </Box>
+                          {t.installments && t.installments > 1 && (
+                            <Chip
+                              icon={<CreditCardIcon />}
+                              label={`${t.currentInstallment || 1}/${
+                                t.installments
+                              }x`}
+                              size="small"
+                              color="warning"
                               variant="outlined"
                               sx={{
                                 height: 18,
                                 fontSize: 10,
+                                mt: 0.5,
+                                width: "fit-content",
+                              }}
+                            />
+                          )}
+                          {t.isShared && t.sharedWith && (
+                            <Chip
+                              icon={<GroupIcon />}
+                              label={t.sharedWith}
+                              size="small"
+                              color="info"
+                              variant="filled"
+                              sx={{
+                                height: 18,
+                                fontSize: 10,
+                                mt: 0.5,
+                                width: "fit-content",
+                              }}
+                            />
+                          )}
+                          {t.type === "income" && t.relatedTransactionId && (
+                            <Chip
+                              icon={<GroupIcon />}
+                              label="Shared"
+                              size="small"
+                              color="info"
+                              variant="filled"
+                              sx={{
+                                height: 18,
+                                fontSize: 10,
+                                mt: 0.5,
+                                width: "fit-content",
                               }}
                             />
                           )}
                         </Box>
-                        {t.installments && t.installments > 1 && (
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={t.category}
+                          size="small"
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption" color="text.secondary">
+                          {t.paymentMethod}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ textAlign: "center" }}>
+                        {t.type === "income" ? (
+                          <ArrowUpIcon fontSize="small" color="success" />
+                        ) : (
+                          <ArrowDownIcon fontSize="small" color="error" />
+                        )}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          textAlign: "right",
+                          fontFamily: "monospace",
+                          fontWeight: 600,
+                          color:
+                            t.type === "income" ? "success.main" : "error.main",
+                        }}
+                      >
+                        {t.type === "expense" && "- "}
+                        {formatCurrency(t.amount)}
+                      </TableCell>
+                      <TableCell sx={{ textAlign: "center" }}>
+                        {t.isVirtual ? (
                           <Chip
-                            icon={<CreditCardIcon />}
-                            label={`${t.currentInstallment || 1}/${
-                              t.installments
-                            }x`}
+                            label="Auto-generated"
                             size="small"
-                            color="warning"
+                            color="info"
                             variant="outlined"
-                            sx={{
-                              height: 18,
-                              fontSize: 10,
-                              mt: 0.5,
-                              width: "fit-content",
-                            }}
+                            sx={{ fontSize: 10 }}
                           />
+                        ) : (
+                          <>
+                            <IconButton
+                              size="small"
+                              onClick={() => onEdit(t)}
+                              color="primary"
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => onDelete(t.id)}
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </>
                         )}
-                        {t.isShared && t.sharedWith && (
-                          <Chip
-                            icon={<GroupIcon />}
-                            label={t.sharedWith}
-                            size="small"
-                            color="info"
-                            variant="filled"
-                            sx={{
-                              height: 18,
-                              fontSize: 10,
-                              mt: 0.5,
-                              width: "fit-content",
-                            }}
-                          />
-                        )}
-                        {/* Income gerada de despesa compartilhada */}
-                        {t.type === "income" && t.relatedTransactionId && (
-                          <Chip
-                            icon={<GroupIcon />}
-                            label="Shared"
-                            size="small"
-                            color="info"
-                            variant="filled"
-                            sx={{
-                              height: 18,
-                              fontSize: 10,
-                              mt: 0.5,
-                              width: "fit-content",
-                            }}
-                          />
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={t.category}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="caption" color="text.secondary">
-                        {t.paymentMethod}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} sx={{ textAlign: "center", py: 6 }}>
+                      <Typography color="text.secondary" fontStyle="italic">
+                        No transactions found with the current filters.
                       </Typography>
                     </TableCell>
-                    <TableCell sx={{ textAlign: "center" }}>
-                      {t.type === "income" ? (
-                        <ArrowUpIcon fontSize="small" color="success" />
-                      ) : (
-                        <ArrowDownIcon fontSize="small" color="error" />
-                      )}
+                  </TableRow>
+                )}
+              </TableBody>
+              {filteredData.length > 0 && (
+                <TableFooter>
+                  <TableRow
+                    sx={{
+                      bgcolor: isDarkMode
+                        ? alpha(theme.palette.background.default, 0.3)
+                        : alpha(theme.palette.grey[50], 0.5),
+                    }}
+                  >
+                    <TableCell
+                      colSpan={6}
+                      sx={{ textAlign: "right", fontWeight: 600 }}
+                    >
+                      Filtered Total:
                     </TableCell>
                     <TableCell
                       sx={{
                         textAlign: "right",
                         fontFamily: "monospace",
                         fontWeight: 600,
-                        color:
-                          t.type === "income" ? "success.main" : "error.main",
+                        color: balance >= 0 ? "success.main" : "error.main",
                       }}
                     >
-                      {t.type === "expense" && "- "}
-                      {formatCurrency(t.amount)}
+                      {formatCurrency(balance)}
                     </TableCell>
-                    <TableCell sx={{ textAlign: "center" }}>
-                      {t.isVirtual ? (
-                        <Chip
-                          label="Auto-generated"
-                          size="small"
-                          color="info"
-                          variant="outlined"
-                          sx={{ fontSize: 10 }}
-                        />
-                      ) : (
-                        <>
-                          <IconButton
-                            size="small"
-                            onClick={() => onEdit(t)}
-                            color="primary"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => onDelete(t.id)}
-                            color="error"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </>
-                      )}
-                    </TableCell>
+                    <TableCell />
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} sx={{ textAlign: "center", py: 6 }}>
-                    <Typography color="text.secondary" fontStyle="italic">
-                      No transactions found with the current filters.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                </TableFooter>
               )}
-            </TableBody>
-            {filteredData.length > 0 && (
-              <TableFooter>
-                <TableRow sx={{ bgcolor: "action.hover" }}>
-                  <TableCell
-                    colSpan={6}
-                    sx={{ textAlign: "right", fontWeight: 600 }}
-                  >
-                    Filtered Total:
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: "right",
-                      fontFamily: "monospace",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {formatCurrency(
-                      filteredData.reduce(
-                        (acc, curr) =>
-                          curr.type === "income"
-                            ? acc + curr.amount
-                            : acc - curr.amount,
-                        0
-                      )
-                    )}
-                  </TableCell>
-                  <TableCell />
-                </TableRow>
-              </TableFooter>
-            )}
-          </Table>
-        </TableContainer>
+            </Table>
+          </TableContainer>
+
+          {/* Paginação */}
+          {filteredData.length > 0 && (
+            <TablePagination
+              component="div"
+              count={filteredData.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[10, 25, 50, 100]}
+              sx={{
+                borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+              }}
+            />
+          )}
+        </Paper>
       )}
     </Box>
   );

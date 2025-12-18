@@ -574,3 +574,4 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
 
 export default BudgetsView;
 
+

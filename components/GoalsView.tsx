@@ -706,3 +706,4 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
 
 export default GoalsView;
 
+

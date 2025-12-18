@@ -56,3 +56,4 @@ export const availableLanguages = [
 // Tipo para idiomas
 export type Language = "en" | "pt-BR";
 
+

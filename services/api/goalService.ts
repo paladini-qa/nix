@@ -186,3 +186,4 @@ function mapDbToGoal(data: any): Goal {
 
 export default goalService;
 
+

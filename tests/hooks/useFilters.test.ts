@@ -136,3 +136,4 @@ describe("useFilters", () => {
     expect(result.current.isCurrentMonth).toBe(false);
   });
 });
+
