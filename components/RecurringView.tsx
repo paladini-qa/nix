@@ -129,6 +129,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       annualizedBalance: annualizedIncome - annualizedExpense,
       incomeCount: recurring.filter((t) => t.type === "income").length,
       expenseCount: recurring.filter((t) => t.type === "expense").length,
+      sharedCount: recurring.filter((t) => t.isShared).length,
     };
   }, [transactions]);
 
@@ -553,13 +554,18 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               <Typography variant="h5" fontWeight="bold">
                 {stats.total}
               </Typography>
-              <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
+              <Box sx={{ display: "flex", gap: 2, mt: 1, flexWrap: "wrap" }}>
                 <Typography variant="caption" color="success.main">
                   {stats.incomeCount} income
                 </Typography>
                 <Typography variant="caption" color="error.main">
                   {stats.expenseCount} expense
                 </Typography>
+                {stats.sharedCount > 0 && (
+                  <Typography variant="caption" color="info.main">
+                    {stats.sharedCount} shared
+                  </Typography>
+                )}
               </Box>
             </CardContent>
           </Card>

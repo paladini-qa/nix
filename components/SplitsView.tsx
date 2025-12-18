@@ -219,6 +219,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       completedCount: completedGroups.length,
       totalRemaining,
       totalPaid,
+      sharedCount: groupedSplits.filter((g) => g.isShared).length,
     };
   }, [groupedSplits]);
 
@@ -494,6 +495,11 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             <Typography variant="h5" fontWeight="bold" color="warning.dark">
               {stats.inProgressCount}
             </Typography>
+            {stats.sharedCount > 0 && (
+              <Typography variant="caption" color="info.main" sx={{ mt: 0.5 }}>
+                {stats.sharedCount} shared
+              </Typography>
+            )}
           </Paper>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
