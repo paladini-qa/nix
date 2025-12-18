@@ -9,15 +9,57 @@ import {
   useMediaQuery,
   useTheme,
   InputAdornment,
+  Chip,
+  alpha,
 } from "@mui/material";
 import {
   Send as SendIcon,
   AutoAwesome as SparklesIcon,
   Person as PersonIcon,
+  TrendingUp as TrendingUpIcon,
+  Savings as SavingsIcon,
+  Receipt as ReceiptIcon,
+  PieChart as PieChartIcon,
+  Lightbulb as LightbulbIcon,
+  CalendarMonth as CalendarIcon,
 } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
 import { Transaction } from "../types";
 import { chatWithNixAI } from "../services/geminiService";
+
+// Sugestões de perguntas pré-definidas
+const SUGGESTED_QUESTIONS = [
+  {
+    icon: <TrendingUpIcon sx={{ fontSize: 16 }} />,
+    text: "Como estão meus gastos este mês?",
+    color: "#6366f1",
+  },
+  {
+    icon: <SavingsIcon sx={{ fontSize: 16 }} />,
+    text: "Onde posso economizar dinheiro?",
+    color: "#10b981",
+  },
+  {
+    icon: <ReceiptIcon sx={{ fontSize: 16 }} />,
+    text: "Qual minha maior despesa?",
+    color: "#ef4444",
+  },
+  {
+    icon: <PieChartIcon sx={{ fontSize: 16 }} />,
+    text: "Analise meus gastos por categoria",
+    color: "#8b5cf6",
+  },
+  {
+    icon: <LightbulbIcon sx={{ fontSize: 16 }} />,
+    text: "Dicas para melhorar minhas finanças",
+    color: "#f59e0b",
+  },
+  {
+    icon: <CalendarIcon sx={{ fontSize: 16 }} />,
+    text: "Compare com o mês anterior",
+    color: "#06b6d4",
+  },
+];
 
 interface Message {
   id: string;
@@ -112,6 +154,51 @@ const NixAIView: React.FC<NixAIViewProps> = ({ transactions }) => {
       handleSendMessage();
     }
   };
+
+  const handleSuggestionClick = (text: string) => {
+    setInputValue(text);
+    // Auto-send the suggestion
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: text,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    chatWithNixAI(
+      text,
+      transactions,
+      messages.filter((m) => m.id !== "welcome").map((m) => ({ role: m.role, content: m.content }))
+    )
+      .then((response) => {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: response,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      })
+      .catch((error) => {
+        console.error("Error sending message:", error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "Sorry, I encountered an error processing your request. Please try again.",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setInputValue("");
+      });
+  };
+
+  // Mostra sugestões apenas quando há apenas a mensagem de boas-vindas
+  const showSuggestions = messages.length === 1 && messages[0].id === "welcome";
 
   return (
     <Box
@@ -208,6 +295,67 @@ const NixAIView: React.FC<NixAIViewProps> = ({ transactions }) => {
             </Box>
           </Box>
         ))}
+
+        {/* Sugestões de perguntas */}
+        {showSuggestions && !isLoading && (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              mt: 2,
+              mb: 3,
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+                fontWeight: 600,
+                letterSpacing: 0.5,
+                textTransform: "uppercase",
+              }}
+            >
+              Sugestões de perguntas
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1,
+              }}
+            >
+              {SUGGESTED_QUESTIONS.map((suggestion, index) => (
+                <Chip
+                  key={index}
+                  icon={suggestion.icon}
+                  label={suggestion.text}
+                  onClick={() => handleSuggestionClick(suggestion.text)}
+                  sx={{
+                    px: 1,
+                    py: 2.5,
+                    borderRadius: 2.5,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    bgcolor: alpha(suggestion.color, 0.1),
+                    color: suggestion.color,
+                    border: `1px solid ${alpha(suggestion.color, 0.2)}`,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease-in-out",
+                    "& .MuiChip-icon": {
+                      color: suggestion.color,
+                    },
+                    "&:hover": {
+                      bgcolor: alpha(suggestion.color, 0.2),
+                      transform: "translateY(-2px)",
+                      boxShadow: `0 4px 12px ${alpha(suggestion.color, 0.25)}`,
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+        )}
 
         {isLoading && (
           <Box

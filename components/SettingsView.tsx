@@ -11,6 +11,11 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  alpha,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -20,9 +25,12 @@ import {
   CreditCard as CreditCardIcon,
   LocalOffer as TagIcon,
   Palette as PaletteIcon,
+  Language as LanguageIcon,
 } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 import { TransactionType, ColorConfig, CategoryColors, PaymentMethodColors } from "../types";
 import ColorPicker from "./ColorPicker";
+import { availableLanguages, changeLanguage } from "../i18n";
 
 // Cores padrão para novas categorias
 const DEFAULT_INCOME_COLORS: ColorConfig = { primary: "#10b981", secondary: "#059669" };
@@ -54,12 +62,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   onUpdateCategoryColor,
   onUpdatePaymentMethodColor,
 }) => {
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [newIncomeCat, setNewIncomeCat] = useState("");
   const [newExpenseCat, setNewExpenseCat] = useState("");
   const [newPaymentMethod, setNewPaymentMethod] = useState("");
+
+  const handleLanguageChange = async (lang: string) => {
+    await changeLanguage(lang);
+  };
 
   const handleAddCat = (type: TransactionType) => {
     const val = type === "income" ? newIncomeCat : newExpenseCat;
@@ -84,14 +97,45 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     >
       <Box>
         <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-          Settings
+          {t("settings.title")}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {isMobile
-            ? "Categories & payment methods"
-            : "Manage your categories and payment methods."}
+          {t("settings.subtitle")}
         </Typography>
       </Box>
+
+      {/* Language Selector */}
+      <Paper
+        sx={{
+          p: isMobile ? 2 : 3,
+          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`,
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+          <LanguageIcon sx={{ color: "primary.main" }} />
+          <Typography variant="subtitle1" fontWeight={600}>
+            {t("settings.language")}
+          </Typography>
+        </Box>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>{t("settings.language")}</InputLabel>
+          <Select
+            value={i18n.language}
+            label={t("settings.language")}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+          >
+            {availableLanguages.map((lang) => (
+              <MenuItem key={lang.code} value={lang.code}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Typography variant="body1">{lang.flag}</Typography>
+                  <Typography>{lang.name}</Typography>
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Paper>
 
       <Grid container spacing={isMobile ? 2 : 3}>
         {/* Income Categories */}

@@ -23,7 +23,12 @@ import {
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
   People as PeopleIcon,
+  PieChart as BudgetIcon,
+  Flag as GoalIcon,
+  AccountBalance as AccountIcon,
+  Analytics as AnalyticsIcon,
 } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 import { ThemePreference } from "../types";
 import ThemeSwitch from "./ThemeSwitch";
 
@@ -37,9 +42,13 @@ interface SidebarProps {
     | "shared"
     | "recurring"
     | "nixai"
+    | "budgets"
+    | "goals"
+    | "accounts"
+    | "analytics"
     | "settings";
   onNavigate: (
-    view: "dashboard" | "transactions" | "splits" | "shared" | "recurring" | "nixai" | "settings"
+    view: "dashboard" | "transactions" | "splits" | "shared" | "recurring" | "nixai" | "budgets" | "goals" | "accounts" | "analytics" | "settings"
   ) => void;
   onLogout: () => void;
   displayName: string;
@@ -59,17 +68,22 @@ const Sidebar: React.FC<SidebarProps> = ({
   userEmail,
   onOpenProfile,
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
   const navItems = [
-    { icon: DashboardIcon, label: "Dashboard", id: "dashboard" as const },
-    { icon: WalletIcon, label: "Transactions", id: "transactions" as const },
-    { icon: CreditCardIcon, label: "Installments", id: "splits" as const },
-    { icon: PeopleIcon, label: "Shared", id: "shared" as const },
-    { icon: RepeatIcon, label: "Recurring", id: "recurring" as const },
-    { icon: SparklesIcon, label: "NixAI", id: "nixai" as const },
-    { icon: SettingsIcon, label: "Settings", id: "settings" as const },
+    { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" as const },
+    { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" as const },
+    { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" as const },
+    { icon: PeopleIcon, label: t("nav.shared"), id: "shared" as const },
+    { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" as const },
+    { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" as const },
+    { icon: GoalIcon, label: t("nav.goals"), id: "goals" as const },
+    { icon: AccountIcon, label: t("nav.accounts"), id: "accounts" as const },
+    { icon: AnalyticsIcon, label: "Analytics", id: "analytics" as const },
+    { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" as const },
+    { icon: SettingsIcon, label: t("nav.settings"), id: "settings" as const },
   ];
 
   return (
@@ -419,7 +433,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <LogOutIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText
-            primary="Sign Out"
+            primary={t("nav.logout")}
             primaryTypographyProps={{
               fontWeight: 500,
               fontSize: 14,

@@ -487,7 +487,6 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         onClose={handleCloseForm}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
       >
         <DialogTitle>
           {editingBudget ? "Edit Budget" : "New Budget"}

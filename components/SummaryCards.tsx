@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Box,
   Card,
@@ -8,16 +8,20 @@ import {
   useMediaQuery,
   useTheme,
   alpha,
+  Tooltip,
 } from "@mui/material";
 import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   AccountBalanceWallet as WalletIcon,
 } from "@mui/icons-material";
-import { FinancialSummary } from "../types";
+import { FinancialSummary, Transaction } from "../types";
 
 interface SummaryCardsProps {
   summary: FinancialSummary;
+  transactions: Transaction[];
+  selectedMonth?: number;
+  selectedYear?: number;
 }
 
 // Configuração de cores para os cards - paleta sofisticada
@@ -54,7 +58,7 @@ const cardStyles = {
   },
 };
 
-const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
+const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, selectedMonth, selectedYear }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDarkMode = theme.palette.mode === "dark";
@@ -74,6 +78,58 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
       maximumFractionDigits: 2,
     }).format(value);
   };
+
+  // Calcula comparação com mês anterior
+  const comparison = useMemo(() => {
+    const now = new Date();
+    const currentMonth = selectedMonth ?? now.getMonth();
+    const currentYear = selectedYear ?? now.getFullYear();
+    
+    // Mês anterior
+    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+    // Transações do mês anterior
+    const prevMonthTxs = transactions.filter((t) => {
+      const [y, m] = t.date.split("-");
+      return parseInt(y) === prevYear && parseInt(m) === prevMonth + 1;
+    });
+
+    const prevIncome = prevMonthTxs
+      .filter((t) => t.type === "income")
+      .reduce((acc, t) => acc + t.amount, 0);
+    
+    const prevExpense = prevMonthTxs
+      .filter((t) => t.type === "expense")
+      .reduce((acc, t) => acc + t.amount, 0);
+
+    // Porcentagem de mudança
+    const incomeChange = prevIncome > 0 
+      ? Math.round(((summary.totalIncome - prevIncome) / prevIncome) * 100) 
+      : summary.totalIncome > 0 ? 100 : 0;
+    
+    const expenseChange = prevExpense > 0 
+      ? Math.round(((summary.totalExpense - prevExpense) / prevExpense) * 100) 
+      : summary.totalExpense > 0 ? 100 : 0;
+
+    // Progresso relativo ao mês anterior (para barras)
+    const incomeProgress = prevIncome > 0 
+      ? Math.min((summary.totalIncome / prevIncome) * 100, 100) 
+      : summary.totalIncome > 0 ? 100 : 0;
+    
+    const expenseProgress = prevExpense > 0 
+      ? Math.min((summary.totalExpense / prevExpense) * 100, 100) 
+      : summary.totalExpense > 0 ? 100 : 0;
+
+    return {
+      prevIncome,
+      prevExpense,
+      incomeChange,
+      expenseChange,
+      incomeProgress,
+      expenseProgress,
+    };
+  }, [transactions, summary, selectedMonth, selectedYear]);
 
   const isPositiveBalance = summary.balance >= 0;
 
@@ -298,29 +354,51 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
                     ? formatCurrency(summary.totalIncome)
                     : formatCurrencyFull(summary.totalIncome)}
                 </Typography>
-                {/* Barra de progresso decorativa */}
-                <Box
-                  sx={{
-                    width: "100%",
-                    height: 4,
-                    borderRadius: 2.5,
-                    bgcolor: isDarkMode
-                      ? alpha(cardStyles.income.accentColor, 0.1)
-                      : alpha(cardStyles.income.accentColor, 0.15),
-                    mt: 1.5,
-                    overflow: "hidden",
-                  }}
+                {/* Barra de progresso comparativa */}
+                <Tooltip 
+                  title={comparison.prevIncome > 0 
+                    ? `${comparison.incomeChange >= 0 ? '+' : ''}${comparison.incomeChange}% vs mês anterior` 
+                    : 'Sem dados do mês anterior'}
+                  arrow
                 >
                   <Box
                     sx={{
-                      width: "70%",
-                      height: "100%",
+                      width: "100%",
+                      height: 4,
                       borderRadius: 2.5,
-                      bgcolor: cardStyles.income.accentColor,
-                      boxShadow: `0 0 8px ${alpha(cardStyles.income.accentColor, 0.4)}`,
+                      bgcolor: isDarkMode
+                        ? alpha(cardStyles.income.accentColor, 0.1)
+                        : alpha(cardStyles.income.accentColor, 0.15),
+                      mt: 1.5,
+                      overflow: "hidden",
                     }}
-                  />
-                </Box>
+                  >
+                    <Box
+                      sx={{
+                        width: `${comparison.incomeProgress}%`,
+                        height: "100%",
+                        borderRadius: 2.5,
+                        bgcolor: cardStyles.income.accentColor,
+                        boxShadow: `0 0 8px ${alpha(cardStyles.income.accentColor, 0.4)}`,
+                        transition: "width 0.5s ease-in-out",
+                      }}
+                    />
+                  </Box>
+                </Tooltip>
+                {/* Indicador de mudança */}
+                {comparison.prevIncome > 0 && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      mt: 0.5,
+                      display: "block",
+                      color: comparison.incomeChange >= 0 ? "success.main" : "error.main",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {comparison.incomeChange >= 0 ? "+" : ""}{comparison.incomeChange}% vs mês anterior
+                  </Typography>
+                )}
               </Box>
               <Box
                 sx={getIconContainerStyles(
@@ -394,29 +472,51 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
                     ? formatCurrency(summary.totalExpense)
                     : formatCurrencyFull(summary.totalExpense)}
                 </Typography>
-                {/* Barra de progresso decorativa */}
-                <Box
-                  sx={{
-                    width: "100%",
-                    height: 4,
-                    borderRadius: 2.5,
-                    bgcolor: isDarkMode
-                      ? alpha(cardStyles.expense.accentColor, 0.1)
-                      : alpha(cardStyles.expense.accentColor, 0.15),
-                    mt: 1.5,
-                    overflow: "hidden",
-                  }}
+                {/* Barra de progresso comparativa */}
+                <Tooltip 
+                  title={comparison.prevExpense > 0 
+                    ? `${comparison.expenseChange >= 0 ? '+' : ''}${comparison.expenseChange}% vs mês anterior` 
+                    : 'Sem dados do mês anterior'}
+                  arrow
                 >
                   <Box
                     sx={{
-                      width: "55%",
-                      height: "100%",
+                      width: "100%",
+                      height: 4,
                       borderRadius: 2.5,
-                      bgcolor: cardStyles.expense.accentColor,
-                      boxShadow: `0 0 8px ${alpha(cardStyles.expense.accentColor, 0.4)}`,
+                      bgcolor: isDarkMode
+                        ? alpha(cardStyles.expense.accentColor, 0.1)
+                        : alpha(cardStyles.expense.accentColor, 0.15),
+                      mt: 1.5,
+                      overflow: "hidden",
                     }}
-                  />
-                </Box>
+                  >
+                    <Box
+                      sx={{
+                        width: `${comparison.expenseProgress}%`,
+                        height: "100%",
+                        borderRadius: 2.5,
+                        bgcolor: cardStyles.expense.accentColor,
+                        boxShadow: `0 0 8px ${alpha(cardStyles.expense.accentColor, 0.4)}`,
+                        transition: "width 0.5s ease-in-out",
+                      }}
+                    />
+                  </Box>
+                </Tooltip>
+                {/* Indicador de mudança */}
+                {comparison.prevExpense > 0 && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      mt: 0.5,
+                      display: "block",
+                      color: comparison.expenseChange <= 0 ? "success.main" : "error.main",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {comparison.expenseChange >= 0 ? "+" : ""}{comparison.expenseChange}% vs mês anterior
+                  </Typography>
+                )}
               </Box>
               <Box
                 sx={getIconContainerStyles(

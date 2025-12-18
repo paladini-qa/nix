@@ -34,6 +34,7 @@ import {
   MoreHoriz as OtherIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
+import EmptyState from "./EmptyState";
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -111,8 +112,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       <Paper
         elevation={0}
         sx={{
-          p: 6,
-          textAlign: "center",
           borderRadius: 2.5,
           bgcolor: isDarkMode
             ? alpha(theme.palette.background.paper, 0.6)
@@ -121,35 +120,12 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
         }}
       >
-        <Box
-          sx={{
-            width: 64,
-            height: 64,
-            borderRadius: 2.5,
-            bgcolor: isDarkMode
-              ? alpha(theme.palette.primary.main, 0.1)
-              : alpha(theme.palette.primary.main, 0.08),
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mx: "auto",
-            mb: 2,
-          }}
-        >
-          <ShoppingIcon
-            sx={{
-              fontSize: 32,
-              color: "primary.main",
-              opacity: 0.6,
-            }}
-          />
-        </Box>
-        <Typography variant="h6" fontWeight={600} color="text.primary" gutterBottom>
-          Nenhuma transação encontrada
-        </Typography>
-        <Typography color="text.secondary" variant="body2">
-          Adicione sua primeira transação para começar a acompanhar suas finanças.
-        </Typography>
+        <EmptyState
+          type="transactions"
+          title="Nenhuma transação encontrada"
+          description="Adicione sua primeira transação para começar a acompanhar suas finanças."
+          compact
+        />
       </Paper>
     );
   }

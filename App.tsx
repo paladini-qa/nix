@@ -74,6 +74,11 @@ const NixAIView = lazy(() => import("./components/NixAIView"));
 const RecurringView = lazy(() => import("./components/RecurringView"));
 const SplitsView = lazy(() => import("./components/SplitsView"));
 const SharedView = lazy(() => import("./components/SharedView"));
+const BudgetsView = lazy(() => import("./components/BudgetsView"));
+const GoalsView = lazy(() => import("./components/GoalsView"));
+const AccountsView = lazy(() => import("./components/AccountsView"));
+const AnalyticsView = lazy(() => import("./components/AnalyticsView"));
+const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
 
 // Loading fallback component
 const ViewLoading: React.FC = () => (
@@ -196,11 +201,28 @@ const AppContent: React.FC<{
     | "shared"
     | "recurring"
     | "nixai"
+    | "budgets"
+    | "goals"
+    | "accounts"
+    | "analytics"
     | "settings"
   >("dashboard");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
+
+  // Global search shortcut (Ctrl+K / Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     string | null
@@ -1338,7 +1360,9 @@ const AppContent: React.FC<{
 
                     <SummaryCards
                       summary={summary}
-                      transactions={filteredTransactions}
+                      transactions={transactions}
+                      selectedMonth={filters.month}
+                      selectedYear={filters.year}
                     />
 
                     {/* Transaction History */}
@@ -1441,6 +1465,34 @@ const AppContent: React.FC<{
                 <Suspense fallback={<ViewLoading />}>
                   <NixAIView transactions={transactions} />
                 </Suspense>
+              ) : currentView === "budgets" ? (
+                <Suspense fallback={<ViewLoading />}>
+                  <BudgetsView
+                    transactions={transactions}
+                    categories={categories}
+                    userId={session.user.id}
+                    selectedMonth={filters.month}
+                    selectedYear={filters.year}
+                    onDateChange={(month, year) =>
+                      setFilters({ ...filters, month, year })
+                    }
+                  />
+                </Suspense>
+              ) : currentView === "goals" ? (
+                <Suspense fallback={<ViewLoading />}>
+                  <GoalsView userId={session.user.id} />
+                </Suspense>
+              ) : currentView === "accounts" ? (
+                <Suspense fallback={<ViewLoading />}>
+                  <AccountsView
+                    transactions={transactions}
+                    userId={session.user.id}
+                  />
+                </Suspense>
+              ) : currentView === "analytics" ? (
+                <Suspense fallback={<ViewLoading />}>
+                  <AnalyticsView transactions={transactions} />
+                </Suspense>
               ) : (
                 <Suspense fallback={<ViewLoading />}>
                   <SettingsView
@@ -1542,6 +1594,19 @@ const AppContent: React.FC<{
             onSelect={handleEditOptionSelect}
             transaction={pendingEditTransaction}
           />
+
+          <Suspense fallback={null}>
+            <GlobalSearch
+              open={isSearchOpen}
+              onClose={() => setIsSearchOpen(false)}
+              transactions={transactions}
+              onNavigate={(view) => setCurrentView(view as typeof currentView)}
+              onSelectTransaction={(tx) => {
+                setEditingTransaction(tx);
+                setIsFormOpen(true);
+              }}
+            />
+          </Suspense>
         </Box>
       </ColorsContext.Provider>
     </ThemeContext.Provider>
