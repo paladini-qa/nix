@@ -118,13 +118,16 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   }>({ element: null, transaction: null });
 
   // Gera transações recorrentes virtuais para o mês/ano selecionado
+  // Apenas para transações recorrentes SEM parcelas (parceladas já existem no banco)
   const generateRecurringTransactions = useMemo(() => {
     const virtualTransactions: Transaction[] = [];
     const targetMonth = selectedMonth + 1;
     const targetYear = selectedYear;
 
     transactions.forEach((t) => {
+      // Ignora se não é recorrente, não tem frequência, ou é parcelada
       if (!t.isRecurring || !t.frequency) return;
+      if (t.installments && t.installments > 1) return; // Parceladas não geram virtuais
 
       const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
       const targetDate = new Date(targetYear, targetMonth - 1, 1);
@@ -514,9 +517,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   // Estilos de linha
   const getRowSx = (t: Transaction, index: number) => ({
     transition: "all 0.15s ease",
-    opacity: t.isPaid !== false ? 0.6 : 1,
-    bgcolor: t.isPaid !== false
-      ? "action.disabledBackground"
+    opacity: t.isVirtual ? 0.75 : 1,
+    bgcolor: t.isVirtual
+      ? isDarkMode
+        ? alpha(theme.palette.info.main, 0.08)
+        : alpha(theme.palette.info.main, 0.05)
       : index % 2 === 0
         ? "transparent"
         : isDarkMode
@@ -528,8 +533,6 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         : alpha(theme.palette.primary.main, 0.04),
     },
     "& td": {
-      textDecoration: t.isPaid !== false ? "line-through" : "none",
-      textDecorationColor: "text.disabled",
       borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.04) : alpha("#000000", 0.04)}`,
       py: 1.5,
     },

@@ -552,7 +552,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 <Paper
                   elevation={0}
                   sx={getTogglePaperSx(isRecurring, theme.palette.primary.main, theme, isDarkMode)}
-                  onClick={() => setIsRecurring(!isRecurring)}
+                  onClick={() => {
+                    const newValue = !isRecurring;
+                    setIsRecurring(newValue);
+                    // Mutuamente exclusivo com parcelado
+                    if (newValue) setHasInstallments(false);
+                  }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                     <Box
@@ -790,7 +795,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   <Paper
                     elevation={0}
                     sx={getTogglePaperSx(hasInstallments, theme.palette.warning.main, theme, isDarkMode)}
-                    onClick={() => setHasInstallments(!hasInstallments)}
+                    onClick={() => {
+                      const newValue = !hasInstallments;
+                      setHasInstallments(newValue);
+                      // Mutuamente exclusivo com recorrente
+                      if (newValue) setIsRecurring(false);
+                    }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                       <Box

@@ -55,7 +55,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
 
-  // Gera transações recorrentes virtuais para este método de pagamento
+  // Gera transações recorrentes virtuais para este método de pagamento (apenas não-parceladas)
   const generateRecurringForMethod = (): Transaction[] => {
     const virtualTransactions: Transaction[] = [];
     const targetMonth = selectedMonth + 1; // 1-12
@@ -64,6 +64,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
     transactions.forEach((t) => {
       // Só processa transações recorrentes deste método de pagamento
       if (!t.isRecurring || !t.frequency || t.paymentMethod !== paymentMethod) return;
+      if (t.installments && t.installments > 1) return; // Parceladas não geram virtuais
 
       const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
       const origDate = new Date(origYear, origMonth - 1, origDay);

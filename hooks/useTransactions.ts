@@ -315,14 +315,16 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     []
   );
 
-  // Gera transações recorrentes virtuais
+  // Gera transações recorrentes virtuais (apenas para não-parceladas)
   const generateRecurringForMonth = useCallback(
     (month: number, year: number): Transaction[] => {
       const virtualTransactions: Transaction[] = [];
       const targetMonth = month + 1;
 
       transactions.forEach((t) => {
+        // Ignora se não é recorrente, não tem frequência, ou é parcelada
         if (!t.isRecurring || !t.frequency) return;
+        if (t.installments && t.installments > 1) return; // Parceladas não geram virtuais
 
         const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
         const origDate = new Date(origYear, origMonth - 1, origDay);

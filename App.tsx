@@ -235,13 +235,16 @@ const AppContent: React.FC<{
   );
 
   // Helper: Gera transações recorrentes virtuais para o mês/ano selecionado
+  // Apenas para transações recorrentes SEM parcelas (parceladas já existem no banco)
   const generateRecurringTransactions = useMemo(() => {
     const virtualTransactions: Transaction[] = [];
     const targetMonth = filters.month + 1;
     const targetYear = filters.year;
 
     transactions.forEach((t) => {
+      // Ignora se não é recorrente, não tem frequência, ou é parcelada
       if (!t.isRecurring || !t.frequency) return;
+      if (t.installments && t.installments > 1) return; // Parceladas não geram virtuais
 
       const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
       const origDate = new Date(origYear, origMonth - 1, origDay);
