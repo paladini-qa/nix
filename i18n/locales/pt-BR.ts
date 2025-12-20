@@ -153,6 +153,7 @@ export default {
     newMethod: "Novo método...",
     theme: "Tema",
     language: "Idioma",
+    languageAutoDetected: "Detectado automaticamente do navegador",
     profile: "Perfil",
     tags: "Tags",
   },

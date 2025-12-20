@@ -11,10 +11,6 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   alpha,
 } from "@mui/material";
 import {
@@ -30,7 +26,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { TransactionType, ColorConfig, CategoryColors, PaymentMethodColors } from "../types";
 import ColorPicker from "./ColorPicker";
-import { availableLanguages, changeLanguage } from "../i18n";
+import { availableLanguages } from "../i18n";
 
 // Cores padrão para novas categorias
 const DEFAULT_INCOME_COLORS: ColorConfig = { primary: "#10b981", secondary: "#059669" };
@@ -70,9 +66,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [newExpenseCat, setNewExpenseCat] = useState("");
   const [newPaymentMethod, setNewPaymentMethod] = useState("");
 
-  const handleLanguageChange = async (lang: string) => {
-    await changeLanguage(lang);
-  };
+  // Obtém o idioma atual detectado do navegador
+  const currentLanguage = availableLanguages.find(
+    (lang) => i18n.language.startsWith(lang.code.split("-")[0])
+  ) || availableLanguages[0];
 
   const handleAddCat = (type: TransactionType) => {
     const val = type === "income" ? newIncomeCat : newExpenseCat;
@@ -104,7 +101,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         </Typography>
       </Box>
 
-      {/* Language Selector */}
+      {/* Language Display - Segue o idioma do navegador */}
       <Paper
         sx={{
           p: isMobile ? 2 : 3,
@@ -118,23 +115,29 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             {t("settings.language")}
           </Typography>
         </Box>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>{t("settings.language")}</InputLabel>
-          <Select
-            value={i18n.language}
-            label={t("settings.language")}
-            onChange={(e) => handleLanguageChange(e.target.value)}
-          >
-            {availableLanguages.map((lang) => (
-              <MenuItem key={lang.code} value={lang.code}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Typography variant="body1">{lang.flag}</Typography>
-                  <Typography>{lang.name}</Typography>
-                </Box>
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            p: 1.5,
+            bgcolor: alpha(theme.palette.primary.main, 0.08),
+            borderRadius: 2,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+          }}
+        >
+          <Typography variant="h5" sx={{ lineHeight: 1 }}>
+            {currentLanguage.flag}
+          </Typography>
+          <Box>
+            <Typography variant="body1" fontWeight={500}>
+              {currentLanguage.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {t("settings.languageAutoDetected")}
+            </Typography>
+          </Box>
+        </Box>
       </Paper>
 
       <Grid container spacing={isMobile ? 2 : 3}>
