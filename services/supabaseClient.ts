@@ -4,8 +4,11 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
+// Flag para verificar se Supabase está configurado
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
+
+if (!isSupabaseConfigured) {
+  console.warn(
     "⚠️ Supabase não configurado!\n" +
       "Crie um arquivo .env na raiz do projeto com:\n" +
       "SUPABASE_URL=sua_url_do_supabase\n" +
@@ -13,7 +16,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Cria o cliente apenas se as credenciais estiverem disponíveis
+// Caso contrário, usa um placeholder URL para evitar crash
 export const supabase: SupabaseClient = createClient(
-  supabaseUrl || "",
-  supabaseAnonKey || ""
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-key"
 );

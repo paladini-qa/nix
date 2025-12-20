@@ -5,4 +5,6 @@ export { useFilters, type ExtendedFilterState } from "./useFilters";
 export { useTransactions } from "./useTransactions";
 export { useSettings, type UserSettings } from "./useSettings";
 export { useFormValidation } from "./useFormValidation";
+export { useTransactionHandlers } from "./useTransactionHandlers";
+export { useResponsiveModal, useModalProps } from "./useResponsiveModal";
 
