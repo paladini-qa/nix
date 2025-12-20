@@ -156,6 +156,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
   // Estilos base do card com Glassmorphism
   const getGlassCardStyles = (accentColor: string, gradient: string) => ({
     height: "100%",
+    minHeight: isMobile ? 120 : 140,
     position: "relative",
     overflow: "hidden",
     cursor: "pointer",
@@ -243,6 +244,21 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 p: isMobile ? 2 : 3,
               }}
             >
+              {/* Título acima de tudo */}
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "text.secondary",
+                  letterSpacing: "0.1em",
+                  fontSize: isMobile ? 10 : 11,
+                  fontWeight: 600,
+                  display: "block",
+                  mb: 1,
+                }}
+              >
+                Saldo Atual
+              </Typography>
+              
               <Box
                 sx={{
                   display: "flex",
@@ -252,18 +268,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 }}
               >
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography
-                    variant="overline"
-                    sx={{
-                      color: "text.secondary",
-                      letterSpacing: "0.1em",
-                      fontSize: isMobile ? 10 : 11,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Saldo Atual
-                  </Typography>
-                  
                   {/* Animated Balance Counter */}
                   <CountUp
                     value={summary.balance}
@@ -274,8 +278,10 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     sx={{
                       fontWeight: 700,
                       color: "text.primary",
-                      mt: 0.5,
                       letterSpacing: "-0.02em",
+                      fontVariantNumeric: "tabular-nums",
+                      minHeight: isMobile ? 28 : 36,
+                      display: "block",
                     }}
                   />
                   
@@ -371,6 +377,21 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 p: isMobile ? 2 : 3,
               }}
             >
+              {/* Título acima de tudo */}
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "text.secondary",
+                  letterSpacing: "0.1em",
+                  fontSize: isMobile ? 10 : 11,
+                  fontWeight: 600,
+                  display: "block",
+                  mb: 1,
+                }}
+              >
+                Receitas
+              </Typography>
+              
               <Box
                 sx={{
                   display: "flex",
@@ -380,18 +401,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 }}
               >
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography
-                    variant="overline"
-                    sx={{
-                      color: "text.secondary",
-                      letterSpacing: "0.1em",
-                      fontSize: isMobile ? 10 : 11,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Receitas
-                  </Typography>
-                  
                   {/* Animated Income Counter */}
                   <CountUp
                     value={summary.totalIncome}
@@ -402,8 +411,10 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     sx={{
                       fontWeight: 700,
                       color: "text.primary",
-                      mt: 0.5,
                       letterSpacing: "-0.02em",
+                      fontVariantNumeric: "tabular-nums",
+                      minHeight: isMobile ? 24 : 36,
+                      display: "block",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -443,26 +454,27 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     </Box>
                   </Tooltip>
                   
-                  {/* Indicador de mudança */}
-                  {comparison.prevIncome > 0 && (
-                    <MotionBox
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.7 }}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          mt: 0.5,
-                          display: "block",
-                          color: comparison.incomeChange >= 0 ? "success.main" : "error.main",
-                          fontWeight: 600,
-                        }}
+                  {/* Indicador de mudança - espaço reservado para manter altura consistente */}
+                  <Box sx={{ minHeight: 18, mt: 0.5 }}>
+                    {comparison.prevIncome > 0 && (
+                      <MotionBox
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.7 }}
                       >
-                        {comparison.incomeChange >= 0 ? "+" : ""}{comparison.incomeChange}% vs mês anterior
-                      </Typography>
-                    </MotionBox>
-                  )}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: "block",
+                            color: comparison.incomeChange >= 0 ? "success.main" : "error.main",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {comparison.incomeChange >= 0 ? "+" : ""}{comparison.incomeChange}% vs mês anterior
+                        </Typography>
+                      </MotionBox>
+                    )}
+                  </Box>
                 </Box>
                 
                 <MotionBox
@@ -514,6 +526,21 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 p: isMobile ? 2 : 3,
               }}
             >
+              {/* Título acima de tudo */}
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "text.secondary",
+                  letterSpacing: "0.1em",
+                  fontSize: isMobile ? 10 : 11,
+                  fontWeight: 600,
+                  display: "block",
+                  mb: 1,
+                }}
+              >
+                Despesas
+              </Typography>
+              
               <Box
                 sx={{
                   display: "flex",
@@ -523,18 +550,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 }}
               >
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography
-                    variant="overline"
-                    sx={{
-                      color: "text.secondary",
-                      letterSpacing: "0.1em",
-                      fontSize: isMobile ? 10 : 11,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Despesas
-                  </Typography>
-                  
                   {/* Animated Expense Counter */}
                   <CountUp
                     value={summary.totalExpense}
@@ -545,8 +560,10 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     sx={{
                       fontWeight: 700,
                       color: "text.primary",
-                      mt: 0.5,
                       letterSpacing: "-0.02em",
+                      fontVariantNumeric: "tabular-nums",
+                      minHeight: isMobile ? 24 : 36,
+                      display: "block",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -586,26 +603,27 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     </Box>
                   </Tooltip>
                   
-                  {/* Indicador de mudança */}
-                  {comparison.prevExpense > 0 && (
-                    <MotionBox
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.8 }}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          mt: 0.5,
-                          display: "block",
-                          color: comparison.expenseChange <= 0 ? "success.main" : "error.main",
-                          fontWeight: 600,
-                        }}
+                  {/* Indicador de mudança - espaço reservado para manter altura consistente */}
+                  <Box sx={{ minHeight: 18, mt: 0.5 }}>
+                    {comparison.prevExpense > 0 && (
+                      <MotionBox
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.8 }}
                       >
-                        {comparison.expenseChange >= 0 ? "+" : ""}{comparison.expenseChange}% vs mês anterior
-                      </Typography>
-                    </MotionBox>
-                  )}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: "block",
+                            color: comparison.expenseChange <= 0 ? "success.main" : "error.main",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {comparison.expenseChange >= 0 ? "+" : ""}{comparison.expenseChange}% vs mês anterior
+                        </Typography>
+                      </MotionBox>
+                    )}
+                  </Box>
                 </Box>
                 
                 <MotionBox
