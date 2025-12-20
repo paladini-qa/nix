@@ -84,6 +84,9 @@ const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
 const PaymentMethodsView = lazy(() => import("./components/PaymentMethodsView"));
 const CategoriesView = lazy(() => import("./components/CategoriesView"));
 const SmartInputFAB = lazy(() => import("./components/SmartInputFAB"));
+const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
+
+import type { AdvancedFiltersState } from "./components/AdvancedFilters";
 
 // Loading fallback component
 const ViewLoading: React.FC = () => (
@@ -209,7 +212,6 @@ const AppContent: React.FC<{
     | "budgets"
     | "goals"
     | "accounts"
-    | "analytics"
     | "settings"
     | "paymentMethods"
     | "categories"
@@ -248,6 +250,16 @@ const AppContent: React.FC<{
   const [currentEditMode, setCurrentEditMode] = useState<EditOption | null>(
     null
   );
+
+  // Estados para filtros avançados do Dashboard
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFiltersState>({
+    startDate: null,
+    endDate: null,
+    type: "all",
+    categories: [],
+    paymentMethods: [],
+  });
 
   // Estados para o dialog de delete
   const [deleteOptionsDialogOpen, setDeleteOptionsDialogOpen] = useState(false);
@@ -330,7 +342,7 @@ const AppContent: React.FC<{
     return virtualTransactions;
   }, [transactions, filters]);
 
-  // Filtered Transactions
+  // Filtered Transactions (by month/year)
   const filteredTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
       const [y, m] = t.date.split("-");
@@ -347,12 +359,71 @@ const AppContent: React.FC<{
     );
   }, [transactions, filters, generateRecurringTransactions]);
 
-  // Summary
+  // Apply advanced filters (for dashboard)
+  const dashboardFilteredTransactions = useMemo(() => {
+    // Se não há filtros avançados ativos, usa as transações do mês
+    const hasAdvancedFilters =
+      advancedFilters.startDate !== null ||
+      advancedFilters.endDate !== null ||
+      advancedFilters.type !== "all" ||
+      advancedFilters.categories.length > 0 ||
+      advancedFilters.paymentMethods.length > 0;
+
+    if (!hasAdvancedFilters) {
+      return filteredTransactions;
+    }
+
+    // Se há filtros de data, ignora o filtro de mês/ano e filtra todas as transações
+    const baseTransactions =
+      advancedFilters.startDate || advancedFilters.endDate
+        ? [...transactions, ...generateRecurringTransactions]
+        : filteredTransactions;
+
+    return baseTransactions.filter((tx) => {
+      // Filtro por data
+      if (advancedFilters.startDate) {
+        const txDate = new Date(tx.date);
+        const startDate = advancedFilters.startDate.toDate();
+        if (txDate < startDate) return false;
+      }
+      if (advancedFilters.endDate) {
+        const txDate = new Date(tx.date);
+        const endDate = advancedFilters.endDate.toDate();
+        endDate.setHours(23, 59, 59, 999);
+        if (txDate > endDate) return false;
+      }
+
+      // Filtro por tipo
+      if (advancedFilters.type !== "all" && tx.type !== advancedFilters.type) {
+        return false;
+      }
+
+      // Filtro por categoria
+      if (
+        advancedFilters.categories.length > 0 &&
+        !advancedFilters.categories.includes(tx.category)
+      ) {
+        return false;
+      }
+
+      // Filtro por método de pagamento
+      if (
+        advancedFilters.paymentMethods.length > 0 &&
+        !advancedFilters.paymentMethods.includes(tx.paymentMethod)
+      ) {
+        return false;
+      }
+
+      return true;
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [filteredTransactions, transactions, generateRecurringTransactions, advancedFilters]);
+
+  // Summary (based on filtered transactions for dashboard)
   const summary = useMemo<FinancialSummary>(() => {
-    const income = filteredTransactions
+    const income = dashboardFilteredTransactions
       .filter((t) => t.type === "income")
       .reduce((acc, curr) => acc + (curr.amount || 0), 0);
-    const expense = filteredTransactions
+    const expense = dashboardFilteredTransactions
       .filter((t) => t.type === "expense")
       .reduce((acc, curr) => acc + (curr.amount || 0), 0);
     return {
@@ -360,7 +431,7 @@ const AppContent: React.FC<{
       totalExpense: expense,
       balance: income - expense,
     };
-  }, [filteredTransactions]);
+  }, [dashboardFilteredTransactions]);
 
   // Colors Context Value
   const getCategoryColor = (
@@ -1853,6 +1924,17 @@ const AppContent: React.FC<{
                       </Box>
                     </Box>
 
+                    {/* Advanced Filters */}
+                    <Suspense fallback={null}>
+                      <AdvancedFilters
+                        transactions={transactions}
+                        filters={advancedFilters}
+                        onFiltersChange={setAdvancedFilters}
+                        showFilters={showAdvancedFilters}
+                        onToggleFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                      />
+                    </Suspense>
+
                     <SummaryCards
                       summary={summary}
                       transactions={transactions}
@@ -1868,16 +1950,21 @@ const AppContent: React.FC<{
                       >
                         Transaction History
                       </Typography>
-                      <TransactionTable transactions={filteredTransactions} />
+                      <TransactionTable transactions={dashboardFilteredTransactions} />
                     </Box>
 
                     {/* Category & Payment Breakdown */}
                     <CategoryBreakdown
-                      transactions={filteredTransactions}
+                      transactions={dashboardFilteredTransactions}
                       onPaymentMethodClick={(method) =>
                         setSelectedPaymentMethod(method)
                       }
                     />
+
+                    {/* Analytics Charts */}
+                    <Suspense fallback={<ViewLoading />}>
+                      <AnalyticsView transactions={dashboardFilteredTransactions} />
+                    </Suspense>
 
                     {/* Mobile FAB for Dashboard */}
                     {isMobile && (
@@ -1989,10 +2076,6 @@ const AppContent: React.FC<{
                     transactions={transactions}
                     userId={session.user.id}
                   />
-                </Suspense>
-              ) : currentView === "analytics" ? (
-                <Suspense fallback={<ViewLoading />}>
-                  <AnalyticsView transactions={transactions} />
                 </Suspense>
               ) : currentView === "paymentMethods" ? (
                 selectedPaymentMethod ? (

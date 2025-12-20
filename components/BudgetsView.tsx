@@ -246,6 +246,17 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
           </Typography>
         </Box>
 
+        {!isMobile && (
+          <Button
+            variant="outlined"
+            startIcon={<CopyIcon />}
+            onClick={handleCopyFromPreviousMonth}
+            size="small"
+          >
+            Copy Previous
+          </Button>
+        )}
+
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <DateFilter
             month={selectedMonth}
@@ -254,23 +265,13 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
             compact={isMobile}
           />
           {!isMobile && (
-            <>
-              <Button
-                variant="outlined"
-                startIcon={<CopyIcon />}
-                onClick={handleCopyFromPreviousMonth}
-                size="small"
-              >
-                Copy Previous
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => handleOpenForm()}
-              >
-                New Budget
-              </Button>
-            </>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenForm()}
+            >
+              New Budget
+            </Button>
           )}
         </Box>
       </Box>

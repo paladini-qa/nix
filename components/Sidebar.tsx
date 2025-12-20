@@ -27,7 +27,6 @@ import {
   PieChart as BudgetIcon,
   Flag as GoalIcon,
   AccountBalance as AccountIcon,
-  Analytics as AnalyticsIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Folder as FolderIcon,
@@ -55,7 +54,6 @@ type ViewType =
   | "budgets"
   | "goals"
   | "accounts"
-  | "analytics"
   | "settings"
   | "paymentMethods"
   | "categories";
@@ -170,7 +168,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       label: "Relatórios",
       icon: ReportIcon,
       items: [
-        { icon: AnalyticsIcon, label: "Analytics", id: "analytics" },
         { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" },
         { icon: GoalIcon, label: t("nav.goals"), id: "goals" },
       ],
