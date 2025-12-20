@@ -64,6 +64,7 @@ import LoginView from "./components/LoginView";
 import ThemeSwitch from "./components/ThemeSwitch";
 import DateFilter from "./components/DateFilter";
 import EditOptionsDialog, { EditOption } from "./components/EditOptionsDialog";
+import DeleteOptionsDialog, { DeleteOption } from "./components/DeleteOptionsDialog";
 
 // Lazy loaded components (loaded on demand)
 const TransactionsView = lazy(() => import("./components/TransactionsView"));
@@ -248,6 +249,11 @@ const AppContent: React.FC<{
     null
   );
 
+  // Estados para o dialog de delete
+  const [deleteOptionsDialogOpen, setDeleteOptionsDialogOpen] = useState(false);
+  const [pendingDeleteTransaction, setPendingDeleteTransaction] =
+    useState<Transaction | null>(null);
+
   // Helper: Gera transações recorrentes virtuais para o mês/ano selecionado
   // Apenas para transações recorrentes SEM parcelas (parceladas já existem no banco)
   const generateRecurringTransactions = useMemo(() => {
@@ -290,6 +296,23 @@ const AppContent: React.FC<{
           "0"
         )}-${String(adjustedDay).padStart(2, "0")}`;
 
+        // Verifica se já existe uma transação materializada para esta data
+        const hasMaterialized = transactions.some((mt) => {
+          if (mt.isRecurring || mt.isVirtual) return false;
+          if (mt.id === t.id) return false;
+          
+          const sameDescription = mt.description === t.description;
+          const sameCategory = mt.category === t.category;
+          const sameAmount = mt.amount === t.amount;
+          const sameDate = mt.date === virtualDate;
+          const sameType = mt.type === t.type;
+          
+          return sameDescription && sameCategory && sameAmount && sameDate && sameType;
+        });
+
+        // Se já existe materializada, não gera a virtual
+        if (hasMaterialized) return;
+
         virtualTransactions.push({
           ...t,
           id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
@@ -299,6 +322,7 @@ const AppContent: React.FC<{
           date: virtualDate,
           isVirtual: true,
           originalTransactionId: t.id,
+          isPaid: false, // Transações virtuais sempre começam como não pagas
         });
       }
     });
@@ -1010,12 +1034,45 @@ const AppContent: React.FC<{
   };
 
   const handleDeleteTransaction = async (id: string) => {
-    const transactionToDelete = transactions.find((t) => t.id === id);
-    if (!transactionToDelete) return;
+    // Verifica se é uma transação virtual (gerada automaticamente de recorrente)
+    const isVirtualTransaction = id.includes("_recurring_");
+    let transactionToDelete: Transaction | undefined;
 
+    if (isVirtualTransaction) {
+      // Para transações virtuais, extrai o ID original e cria um objeto representando a ocorrência virtual
+      const originalId = id.split("_recurring_")[0];
+      const virtualDatePart = id.split("_recurring_")[1]; // formato: YYYY-MM
+      const originalTransaction = transactions.find((t) => t.id === originalId);
+      
+      if (!originalTransaction) return;
+
+      // Cria um objeto de transação virtual para o dialog
+      transactionToDelete = {
+        ...originalTransaction,
+        id: id,
+        date: virtualDatePart ? `${virtualDatePart}-01` : originalTransaction.date,
+        isVirtual: true,
+        originalTransactionId: originalId,
+      };
+    } else {
+      transactionToDelete = transactions.find((t) => t.id === id);
+      if (!transactionToDelete) return;
+    }
+
+    // Se for recorrente ou parcelada, mostra dialog de opções
+    const isRecurring = transactionToDelete.isRecurring || isVirtualTransaction;
+    const isInstallment = transactionToDelete.installments && transactionToDelete.installments > 1;
+
+    if (isRecurring || isInstallment) {
+      setPendingDeleteTransaction(transactionToDelete);
+      setDeleteOptionsDialogOpen(true);
+      return;
+    }
+
+    // Para transações normais, confirmação simples
     const relatedTransaction = transactionToDelete.relatedTransactionId
       ? transactions.find(
-          (t) => t.id === transactionToDelete.relatedTransactionId
+          (t) => t.id === transactionToDelete!.relatedTransactionId
         )
       : null;
 
@@ -1110,16 +1167,158 @@ const AppContent: React.FC<{
     }
   };
 
+  // Handler para as opções de delete do dialog
+  const handleDeleteOptionSelect = async (option: DeleteOption) => {
+    if (!pendingDeleteTransaction || !session) return;
+
+    setDeleteOptionsDialogOpen(false);
+    
+    const isVirtual = pendingDeleteTransaction.isVirtual;
+    const originalId = isVirtual 
+      ? pendingDeleteTransaction.originalTransactionId 
+      : pendingDeleteTransaction.id;
+
+    if (!originalId) return;
+
+    try {
+      if (option === "single") {
+        if (isVirtual) {
+          // Para transação virtual, cria uma "exclusão" marcando com flag especial
+          // Na prática, criamos uma transação materializada com amount = 0 e isPaid = true
+          // Ou simplesmente não fazemos nada pois virtuais não existem no banco
+          // A melhor solução é criar um registro de "exclusão" ou "skip" para essa data
+          // Por simplicidade, vamos mostrar uma mensagem
+          showWarning(
+            "To exclude a single occurrence, edit it and change the amount to 0 or delete the recurring transaction.",
+            "Single Occurrence"
+          );
+        } else {
+          // Deleta apenas esta transação específica
+          const { error } = await supabase
+            .from("transactions")
+            .delete()
+            .eq("id", pendingDeleteTransaction.id);
+          if (error) throw error;
+
+          setTransactions((prev) =>
+            prev.filter((t) => t.id !== pendingDeleteTransaction.id)
+          );
+        }
+      } else if (option === "all_future" || option === "all") {
+        // Para "all_future" e "all", deletamos a transação original (que remove todas as ocorrências)
+        const confirmed = await confirm({
+          title: option === "all" ? "Delete All Occurrences" : "Delete Future Occurrences",
+          message: option === "all" 
+            ? "This will delete the recurring transaction and all its occurrences. Are you sure?"
+            : "This will delete the recurring transaction from this point forward. Are you sure?",
+          confirmText: "Delete",
+          cancelText: "Cancel",
+          variant: "danger",
+        });
+
+        if (!confirmed) return;
+
+        const { error } = await supabase
+          .from("transactions")
+          .delete()
+          .eq("id", originalId);
+        if (error) throw error;
+
+        setTransactions((prev) =>
+          prev.filter((t) => t.id !== originalId)
+        );
+      }
+    } catch (err) {
+      console.error("Error deleting transaction:", err);
+      showError(
+        "Error deleting transaction. Please try again.",
+        "Delete Error"
+      );
+    }
+
+    setPendingDeleteTransaction(null);
+  };
+
   const handleTogglePaid = async (id: string, isPaid: boolean) => {
     try {
-      const { error } = await supabase
-        .from("transactions")
-        .update({ is_paid: isPaid })
-        .eq("id", id);
-      if (error) throw error;
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, isPaid } : t))
-      );
+      // Verifica se é uma transação virtual (gerada automaticamente de recorrente)
+      const isVirtualTransaction = id.includes("_recurring_");
+
+      if (isVirtualTransaction) {
+        // Para transações virtuais, materializa criando uma nova transação no banco
+        const originalId = id.split("_recurring_")[0];
+        const virtualDatePart = id.split("_recurring_")[1]; // formato: YYYY-MM
+        const originalTransaction = transactions.find((t) => t.id === originalId);
+
+        if (!originalTransaction) return;
+
+        // Calcula a data correta para a ocorrência virtual
+        const [origYear, origMonth, origDay] = originalTransaction.date.split("-").map(Number);
+        const [targetYear, targetMonth] = virtualDatePart.split("-").map(Number);
+        const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
+        const adjustedDay = Math.min(origDay, daysInTargetMonth);
+        const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+
+        // Cria uma nova transação materializada (cópia da original com a data da ocorrência)
+        const newTransaction = {
+          description: originalTransaction.description,
+          amount: originalTransaction.amount,
+          type: originalTransaction.type,
+          category: originalTransaction.category,
+          payment_method: originalTransaction.paymentMethod,
+          date: virtualDate,
+          is_recurring: false, // Não é mais recorrente, é uma ocorrência única
+          frequency: null,
+          installments: null,
+          current_installment: null,
+          is_paid: isPaid,
+          is_shared: originalTransaction.isShared,
+          shared_with: originalTransaction.sharedWith,
+          related_transaction_id: originalTransaction.relatedTransactionId,
+          user_id: session?.user?.id,
+        };
+
+        const { data, error } = await supabase
+          .from("transactions")
+          .insert(newTransaction)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const mappedTransaction: Transaction = {
+            id: data.id,
+            description: data.description,
+            amount: data.amount,
+            type: data.type,
+            category: data.category,
+            paymentMethod: data.payment_method,
+            date: data.date,
+            createdAt: new Date(data.created_at).getTime(),
+            isRecurring: data.is_recurring,
+            frequency: data.frequency,
+            installments: data.installments,
+            currentInstallment: data.current_installment,
+            isPaid: data.is_paid ?? true,
+            isShared: data.is_shared,
+            sharedWith: data.shared_with,
+            relatedTransactionId: data.related_transaction_id,
+          };
+
+          setTransactions((prev) => [...prev, mappedTransaction]);
+        }
+      } else {
+        // Para transações normais, apenas atualiza o status
+        const { error } = await supabase
+          .from("transactions")
+          .update({ is_paid: isPaid })
+          .eq("id", id);
+        if (error) throw error;
+        setTransactions((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, isPaid } : t))
+        );
+      }
     } catch (err) {
       console.error("Error updating transaction:", err);
     }
@@ -1583,6 +1782,7 @@ const AppContent: React.FC<{
                     transactions={transactions}
                     onEdit={handleEditTransaction}
                     onDelete={handleDeleteTransaction}
+                    onTogglePaid={handleTogglePaid}
                     onNewTransaction={() => {
                       setEditingTransaction(null);
                       setIsFormOpen(true);
@@ -1771,6 +1971,16 @@ const AppContent: React.FC<{
             }}
             onSelect={handleEditOptionSelect}
             transaction={pendingEditTransaction}
+          />
+
+          <DeleteOptionsDialog
+            isOpen={deleteOptionsDialogOpen}
+            onClose={() => {
+              setDeleteOptionsDialogOpen(false);
+              setPendingDeleteTransaction(null);
+            }}
+            onSelect={handleDeleteOptionSelect}
+            transaction={pendingDeleteTransaction}
           />
 
           <Suspense fallback={null}>

@@ -32,6 +32,8 @@ import {
   TableHead,
   alpha,
   LinearProgress,
+  Switch,
+  Tooltip,
 } from "@mui/material";
 import {
   Repeat as RepeatIcon,
@@ -49,6 +51,8 @@ import {
   Event as EventIcon,
   Schedule as ScheduleIcon,
   People as PeopleIcon,
+  CheckCircle as CheckCircleIcon,
+  RadioButtonUnchecked as UnpaidIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 
@@ -56,6 +60,7 @@ interface RecurringViewProps {
   transactions: Transaction[];
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
+  onTogglePaid: (id: string, isPaid: boolean) => void;
   onNewTransaction: () => void;
 }
 
@@ -71,6 +76,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   transactions,
   onEdit,
   onDelete,
+  onTogglePaid,
   onNewTransaction,
 }) => {
   const theme = useTheme();
@@ -341,14 +347,35 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               >
                 {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
               </Typography>
-              <Chip
-                icon={<RepeatIcon sx={{ fontSize: 14 }} />}
-                label={t.frequency === "monthly" ? "Monthly" : "Yearly"}
-                size="small"
-                color={t.frequency === "monthly" ? "info" : "warning"}
-                variant="outlined"
-                sx={{ mt: 0.5 }}
-              />
+              <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end", mt: 0.5, flexWrap: "wrap" }}>
+                <Chip
+                  icon={<RepeatIcon sx={{ fontSize: 14 }} />}
+                  label={t.frequency === "monthly" ? "Monthly" : "Yearly"}
+                  size="small"
+                  color={t.frequency === "monthly" ? "info" : "warning"}
+                  variant="outlined"
+                />
+                <Tooltip title={t.isPaid ? "Paid" : "Unpaid"}>
+                  <Chip
+                    icon={t.isPaid ? <CheckCircleIcon sx={{ fontSize: 14 }} /> : <UnpaidIcon sx={{ fontSize: 14 }} />}
+                    label={t.isPaid ? "Paid" : "Unpaid"}
+                    size="small"
+                    color={t.isPaid ? "success" : "default"}
+                    variant={t.isPaid ? "filled" : "outlined"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTogglePaid(t.id, !t.isPaid);
+                    }}
+                    sx={{ 
+                      cursor: "pointer",
+                      transition: "all 0.2s ease-in-out",
+                      "&:hover": {
+                        transform: "scale(1.05)",
+                      }
+                    }}
+                  />
+                </Tooltip>
+              </Box>
             </Box>
           </Box>
 
@@ -403,7 +430,19 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           <Divider />
           <Box sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.08) }}>
             {/* Actions */}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2 }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2, flexWrap: "wrap" }}>
+              <Button
+                size="small"
+                variant={t.isPaid ? "outlined" : "contained"}
+                color={t.isPaid ? "default" : "success"}
+                startIcon={t.isPaid ? <UnpaidIcon /> : <CheckCircleIcon />}
+                onClick={() => onTogglePaid(t.id, !t.isPaid)}
+                sx={{
+                  transition: "all 0.2s ease-in-out",
+                }}
+              >
+                {t.isPaid ? "Mark as Unpaid" : "Mark as Paid"}
+              </Button>
               <Button
                 size="small"
                 variant="outlined"
@@ -787,6 +826,25 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         open={Boolean(mobileMenuAnchor.element)}
         onClose={() => setMobileMenuAnchor({ element: null, transaction: null })}
       >
+        <MenuItem
+          onClick={() => {
+            if (mobileMenuAnchor.transaction) {
+              onTogglePaid(mobileMenuAnchor.transaction.id, !mobileMenuAnchor.transaction.isPaid);
+            }
+            setMobileMenuAnchor({ element: null, transaction: null });
+          }}
+        >
+          <ListItemIcon>
+            {mobileMenuAnchor.transaction?.isPaid ? (
+              <UnpaidIcon fontSize="small" />
+            ) : (
+              <CheckCircleIcon fontSize="small" color="success" />
+            )}
+          </ListItemIcon>
+          <ListItemText>
+            {mobileMenuAnchor.transaction?.isPaid ? "Mark as Unpaid" : "Mark as Paid"}
+          </ListItemText>
+        </MenuItem>
         <MenuItem
           onClick={() => {
             if (mobileMenuAnchor.transaction) {

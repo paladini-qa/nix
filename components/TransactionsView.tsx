@@ -152,12 +152,31 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         const adjustedDay = Math.min(origDay, daysInTargetMonth);
         const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
 
+        // Verifica se já existe uma transação materializada para esta data
+        // (transação com mesma descrição, categoria, valor e data, mas não recorrente)
+        const hasMaterialized = transactions.some((mt) => {
+          if (mt.isRecurring || mt.isVirtual) return false;
+          if (mt.id === t.id) return false;
+          
+          const sameDescription = mt.description === t.description;
+          const sameCategory = mt.category === t.category;
+          const sameAmount = mt.amount === t.amount;
+          const sameDate = mt.date === virtualDate;
+          const sameType = mt.type === t.type;
+          
+          return sameDescription && sameCategory && sameAmount && sameDate && sameType;
+        });
+
+        // Se já existe materializada, não gera a virtual
+        if (hasMaterialized) return;
+
         virtualTransactions.push({
           ...t,
           id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(2, "0")}`,
           date: virtualDate,
           isVirtual: true,
           originalTransactionId: t.id,
+          isPaid: false, // Transações virtuais sempre começam como não pagas
         });
       }
     });
@@ -892,15 +911,15 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     }}
                   >
                     {/* Checkbox */}
-                    {!t.isVirtual && (
+                    <Tooltip title={t.isVirtual ? "Mark recurring occurrence as paid" : (t.isPaid !== false ? "Paid" : "Not paid")}>
                       <Checkbox
                         checked={t.isPaid !== false}
-                        onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                        onChange={(e) => onTogglePaid(t.isVirtual && t.originalTransactionId ? t.originalTransactionId : t.id, e.target.checked)}
                         size="small"
-                        color="success"
+                        color={t.isVirtual ? "info" : "success"}
                         sx={{ mt: -0.5, ml: -1 }}
                       />
-                    )}
+                    </Tooltip>
                     {/* Icon */}
                     <Box
                       sx={{
@@ -1139,21 +1158,21 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 {mobileActionAnchor.transaction?.isVirtual ? "Edit Recurring" : "Edit"}
               </ListItemText>
             </MenuItem>
-            {!mobileActionAnchor.transaction?.isVirtual && (
-              <MenuItem
-                onClick={() => {
-                  if (mobileActionAnchor.transaction) {
-                    onDelete(mobileActionAnchor.transaction.id);
-                  }
-                  setMobileActionAnchor({ element: null, transaction: null });
-                }}
-              >
-                <ListItemIcon>
-                  <DeleteIcon fontSize="small" color="error" />
-                </ListItemIcon>
-                <ListItemText>Delete</ListItemText>
-              </MenuItem>
-            )}
+            <MenuItem
+              onClick={() => {
+                if (mobileActionAnchor.transaction) {
+                  onDelete(mobileActionAnchor.transaction.id);
+                }
+                setMobileActionAnchor({ element: null, transaction: null });
+              }}
+            >
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>
+                {mobileActionAnchor.transaction?.isVirtual ? "Delete Recurring" : "Delete"}
+              </ListItemText>
+            </MenuItem>
           </Menu>
 
           {/* Mobile FAB */}
@@ -1211,20 +1230,18 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   paginatedData.map((t, index) => (
                     <TableRow key={t.id} sx={getRowSx(t, index)}>
                       <TableCell sx={{ textAlign: "center" }}>
-                        {!t.isVirtual && (
-                          <Tooltip
-                            title={t.isPaid !== false ? "Paid" : "Not paid"}
-                          >
-                            <Checkbox
-                              checked={t.isPaid !== false}
-                              onChange={(e) =>
-                                onTogglePaid(t.id, e.target.checked)
-                              }
-                              size="small"
-                              color="success"
-                            />
-                          </Tooltip>
-                        )}
+                        <Tooltip
+                          title={t.isVirtual ? "Mark recurring occurrence" : (t.isPaid !== false ? "Paid" : "Not paid")}
+                        >
+                          <Checkbox
+                            checked={t.isPaid !== false}
+                            onChange={(e) =>
+                              onTogglePaid(t.id, e.target.checked)
+                            }
+                            size="small"
+                            color={t.isVirtual ? "info" : "success"}
+                          />
+                        </Tooltip>
                       </TableCell>
                       <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
                         {formatDate(t.date)}
@@ -1345,17 +1362,15 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          {!t.isVirtual && (
-                            <Tooltip title="Delete">
-                              <IconButton
-                                size="small"
-                                onClick={() => onDelete(t.id)}
-                                color="error"
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )}
+                          <Tooltip title={t.isVirtual ? "Delete recurring transaction" : "Delete"}>
+                            <IconButton
+                              size="small"
+                              onClick={() => onDelete(t.id)}
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </Box>
                       </TableCell>
                     </TableRow>
