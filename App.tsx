@@ -1178,6 +1178,8 @@ const AppContent: React.FC<{
     setDeleteOptionsDialogOpen(false);
     
     const isVirtual = pendingDeleteTransaction.isVirtual;
+    const isInstallment = pendingDeleteTransaction.installments && pendingDeleteTransaction.installments > 1;
+    const isRecurring = pendingDeleteTransaction.isRecurring && !isInstallment;
     const originalId = isVirtual 
       ? pendingDeleteTransaction.originalTransactionId 
       : pendingDeleteTransaction.id;
@@ -1186,18 +1188,83 @@ const AppContent: React.FC<{
 
     try {
       if (option === "single") {
+        // Deletar apenas esta transação/ocorrência específica
         if (isVirtual) {
-          // Para transação virtual, cria uma "exclusão" marcando com flag especial
-          // Na prática, criamos uma transação materializada com amount = 0 e isPaid = true
-          // Ou simplesmente não fazemos nada pois virtuais não existem no banco
-          // A melhor solução é criar um registro de "exclusão" ou "skip" para essa data
-          // Por simplicidade, vamos mostrar uma mensagem
-          showWarning(
-            "To exclude a single occurrence, edit it and change the amount to 0 or delete the recurring transaction.",
-            "Single Occurrence"
+          // Para transação virtual (recorrente automática), não existe no banco
+          // Precisamos parar a recorrência a partir de agora (definir end_date) ou
+          // criar uma transação materializada "cancelada" para esta data específica
+          // Por simplicidade, criamos uma transação com valor 0 para "anular" esta ocorrência
+          const virtualDatePart = pendingDeleteTransaction.id.split("_recurring_")[1];
+          const originalTransaction = transactions.find((t) => t.id === originalId);
+          
+          if (originalTransaction && virtualDatePart) {
+            const [origYear, origMonth, origDay] = originalTransaction.date.split("-").map(Number);
+            const [targetYear, targetMonth] = virtualDatePart.split("-").map(Number);
+            const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
+            const adjustedDay = Math.min(origDay, daysInTargetMonth);
+            const skipDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+
+            // Cria uma transação materializada com valor 0 para "pular" esta ocorrência
+            const skipTransaction = {
+              user_id: session.user.id,
+              description: `[SKIPPED] ${originalTransaction.description}`,
+              amount: 0,
+              type: originalTransaction.type,
+              category: originalTransaction.category,
+              payment_method: originalTransaction.paymentMethod,
+              date: skipDate,
+              is_recurring: false,
+              is_paid: true,
+              is_shared: false,
+            };
+
+            const { data, error } = await supabase
+              .from("transactions")
+              .insert(skipTransaction)
+              .select()
+              .single();
+
+            if (error) throw error;
+
+            if (data) {
+              const mappedTransaction: Transaction = {
+                id: data.id,
+                description: data.description,
+                amount: data.amount,
+                type: data.type,
+                category: data.category,
+                paymentMethod: data.payment_method,
+                date: data.date,
+                createdAt: new Date(data.created_at).getTime(),
+                isRecurring: false,
+                isPaid: true,
+              };
+              setTransactions((prev) => [...prev, mappedTransaction]);
+            }
+          }
+        } else if (isInstallment) {
+          // Para parcela específica, deleta apenas esta parcela
+          const confirmed = await confirm({
+            title: "Delete This Installment",
+            message: `Delete only installment ${pendingDeleteTransaction.currentInstallment || 1}/${pendingDeleteTransaction.installments}?`,
+            confirmText: "Delete",
+            cancelText: "Cancel",
+            variant: "danger",
+          });
+
+          if (!confirmed) return;
+
+          const { error } = await supabase
+            .from("transactions")
+            .delete()
+            .eq("id", pendingDeleteTransaction.id);
+          if (error) throw error;
+
+          setTransactions((prev) =>
+            prev.filter((t) => t.id !== pendingDeleteTransaction.id)
           );
         } else {
-          // Deleta apenas esta transação específica
+          // Para transação recorrente real (não virtual), deleta apenas esta
           const { error } = await supabase
             .from("transactions")
             .delete()
@@ -1208,29 +1275,126 @@ const AppContent: React.FC<{
             prev.filter((t) => t.id !== pendingDeleteTransaction.id)
           );
         }
-      } else if (option === "all_future" || option === "all") {
-        // Para "all_future" e "all", deletamos a transação original (que remove todas as ocorrências)
-        const confirmed = await confirm({
-          title: option === "all" ? "Delete All Occurrences" : "Delete Future Occurrences",
-          message: option === "all" 
-            ? "This will delete the recurring transaction and all its occurrences. Are you sure?"
-            : "This will delete the recurring transaction from this point forward. Are you sure?",
-          confirmText: "Delete",
-          cancelText: "Cancel",
-          variant: "danger",
-        });
+      } else if (option === "all_future") {
+        // Deletar esta e todas as futuras
+        if (isInstallment) {
+          // Para parcelas, deleta esta e as próximas
+          const currentInstallment = pendingDeleteTransaction.currentInstallment || 1;
+          
+          // Encontra todas as parcelas relacionadas (mesma descrição, categoria, método, total de parcelas)
+          const relatedInstallments = transactions.filter((t) => {
+            const sameDescription = t.description === pendingDeleteTransaction.description;
+            const sameCategory = t.category === pendingDeleteTransaction.category;
+            const samePaymentMethod = t.paymentMethod === pendingDeleteTransaction.paymentMethod;
+            const sameInstallments = t.installments === pendingDeleteTransaction.installments;
+            const isFutureOrCurrent = (t.currentInstallment || 1) >= currentInstallment;
+            
+            return sameDescription && sameCategory && samePaymentMethod && sameInstallments && isFutureOrCurrent;
+          });
 
-        if (!confirmed) return;
+          const idsToDelete = relatedInstallments.map((t) => t.id);
 
-        const { error } = await supabase
-          .from("transactions")
-          .delete()
-          .eq("id", originalId);
-        if (error) throw error;
+          if (idsToDelete.length === 0) return;
 
-        setTransactions((prev) =>
-          prev.filter((t) => t.id !== originalId)
-        );
+          const confirmed = await confirm({
+            title: "Delete Future Installments",
+            message: `Delete installments ${currentInstallment} to ${pendingDeleteTransaction.installments}? (${idsToDelete.length} installment${idsToDelete.length > 1 ? 's' : ''})`,
+            confirmText: "Delete",
+            cancelText: "Cancel",
+            variant: "danger",
+          });
+
+          if (!confirmed) return;
+
+          const { error } = await supabase
+            .from("transactions")
+            .delete()
+            .in("id", idsToDelete);
+          if (error) throw error;
+
+          setTransactions((prev) =>
+            prev.filter((t) => !idsToDelete.includes(t.id))
+          );
+        } else {
+          // Para recorrentes, deleta a transação original (que para as virtuais futuras)
+          const confirmed = await confirm({
+            title: "Delete Future Occurrences",
+            message: "This will delete the recurring transaction and stop all future occurrences. Are you sure?",
+            confirmText: "Delete",
+            cancelText: "Cancel",
+            variant: "danger",
+          });
+
+          if (!confirmed) return;
+
+          const { error } = await supabase
+            .from("transactions")
+            .delete()
+            .eq("id", originalId);
+          if (error) throw error;
+
+          setTransactions((prev) =>
+            prev.filter((t) => t.id !== originalId)
+          );
+        }
+      } else if (option === "all") {
+        // Deletar todas as ocorrências/parcelas
+        if (isInstallment) {
+          // Para parcelas, deleta todas as parcelas relacionadas
+          const relatedInstallments = transactions.filter((t) => {
+            const sameDescription = t.description === pendingDeleteTransaction.description;
+            const sameCategory = t.category === pendingDeleteTransaction.category;
+            const samePaymentMethod = t.paymentMethod === pendingDeleteTransaction.paymentMethod;
+            const sameInstallments = t.installments === pendingDeleteTransaction.installments;
+            
+            return sameDescription && sameCategory && samePaymentMethod && sameInstallments;
+          });
+
+          const idsToDelete = relatedInstallments.map((t) => t.id);
+
+          if (idsToDelete.length === 0) return;
+
+          const confirmed = await confirm({
+            title: "Delete All Installments",
+            message: `Delete all ${idsToDelete.length} installments of "${pendingDeleteTransaction.description}"?`,
+            confirmText: "Delete All",
+            cancelText: "Cancel",
+            variant: "danger",
+          });
+
+          if (!confirmed) return;
+
+          const { error } = await supabase
+            .from("transactions")
+            .delete()
+            .in("id", idsToDelete);
+          if (error) throw error;
+
+          setTransactions((prev) =>
+            prev.filter((t) => !idsToDelete.includes(t.id))
+          );
+        } else {
+          // Para recorrentes, deleta a transação original
+          const confirmed = await confirm({
+            title: "Delete All Occurrences",
+            message: "This will delete the recurring transaction and all its occurrences. Are you sure?",
+            confirmText: "Delete All",
+            cancelText: "Cancel",
+            variant: "danger",
+          });
+
+          if (!confirmed) return;
+
+          const { error } = await supabase
+            .from("transactions")
+            .delete()
+            .eq("id", originalId);
+          if (error) throw error;
+
+          setTransactions((prev) =>
+            prev.filter((t) => t.id !== originalId)
+          );
+        }
       }
     } catch (err) {
       console.error("Error deleting transaction:", err);
