@@ -95,6 +95,7 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
           isPaid: t.is_paid ?? true,
           isShared: t.is_shared,
           sharedWith: t.shared_with,
+          iOwe: t.i_owe,
           relatedTransactionId: t.related_transaction_id,
         }));
         setTransactions(mappedTxs);

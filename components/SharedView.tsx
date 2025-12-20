@@ -64,9 +64,13 @@ type PaymentStatus = "all" | "pending" | "paid";
 
 interface FriendBalance {
   name: string;
-  totalOwed: number; // Quanto o amigo deve (despesas compartilhadas)
-  totalPaid: number; // Quanto já foi pago/recebido
-  pendingAmount: number; // Quanto ainda está pendente
+  totalOwed: number; // Quanto o amigo me deve (eu paguei)
+  totalIOwe: number; // Quanto eu devo ao amigo (amigo pagou)
+  totalPaid: number; // Quanto já foi pago/recebido (reembolsos recebidos)
+  totalIPaid: number; // Quanto eu já paguei (minhas dívidas quitadas)
+  pendingAmount: number; // Quanto ainda está pendente (amigo me deve)
+  pendingIOwe: number; // Quanto eu ainda devo (minhas dívidas pendentes)
+  netBalance: number; // Saldo líquido: positivo = amigo me deve, negativo = eu devo
   transactionCount: number;
   expenses: Transaction[]; // Despesas compartilhadas com esse amigo
   incomes: Transaction[]; // Reembolsos recebidos desse amigo
@@ -90,7 +94,7 @@ const SharedView: React.FC<SharedViewProps> = ({
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
 
-  // Filtra transações compartilhadas
+  // Filtra transações vinculadas a amigos (tanto expenses quanto incomes)
   const sharedTransactions = useMemo(() => {
     return transactions.filter((t) => t.isShared && t.sharedWith);
   }, [transactions]);
@@ -108,8 +112,12 @@ const SharedView: React.FC<SharedViewProps> = ({
         balances.set(friendName, {
           name: friendName,
           totalOwed: 0,
+          totalIOwe: 0,
           totalPaid: 0,
+          totalIPaid: 0,
           pendingAmount: 0,
+          pendingIOwe: 0,
+          netBalance: 0,
           transactionCount: 0,
           expenses: [],
           incomes: [],
@@ -118,23 +126,59 @@ const SharedView: React.FC<SharedViewProps> = ({
 
       const balance = balances.get(friendName)!;
 
-      if (t.type === "expense") {
-        // Metade do gasto é o que o amigo deve
-        const friendShare = (t.amount || 0) / 2;
-        balance.totalOwed += friendShare;
-        balance.expenses.push(t);
-        balance.transactionCount++;
+      const transactionAmount = t.amount || 0;
+      balance.transactionCount++;
 
-        // Se a transação relacionada (income do reembolso) está paga
-        const relatedIncome = transactions.find(
-          (inc) => inc.id === t.relatedTransactionId
-        );
-        if (relatedIncome?.isPaid) {
-          balance.totalPaid += friendShare;
+      if (t.type === "expense") {
+        balance.expenses.push(t);
+
+        if (t.iOwe) {
+          // EXPENSE + Conta Única: EU devo ao amigo - valor integral (100%)
+          balance.totalIOwe += transactionAmount;
+          
+          // Verifica se eu já paguei (isPaid na própria transação)
+          if (t.isPaid) {
+            balance.totalIPaid += transactionAmount;
+          } else {
+            balance.pendingIOwe += transactionAmount;
+          }
         } else {
-          balance.pendingAmount += friendShare;
+          // EXPENSE + Conta Dividida: Amigo me deve - 50% do valor
+          const halfAmount = transactionAmount / 2;
+          balance.totalOwed += halfAmount;
+          
+          // Se a transação relacionada (income do reembolso) está paga
+          const relatedIncome = transactions.find(
+            (inc) => inc.id === t.relatedTransactionId
+          );
+          if (relatedIncome?.isPaid) {
+            balance.totalPaid += halfAmount;
+          } else {
+            balance.pendingAmount += halfAmount;
+          }
         }
+      } else if (t.type === "income") {
+        balance.incomes.push(t);
+        
+        // INCOME vinculada a amigo: Amigo está me pagando
+        const paymentAmount = t.iOwe ? transactionAmount : transactionAmount / 2;
+        
+        if (t.isPaid) {
+          // Já recebi o pagamento
+          balance.totalPaid += paymentAmount;
+        } else {
+          // Ainda pendente de receber
+          balance.pendingAmount += paymentAmount;
+        }
+        // Aumenta o que o amigo me deve (será zerado quando marcar como pago)
+        balance.totalOwed += paymentAmount;
       }
+    });
+
+    // Calcula o saldo líquido para cada amigo
+    balances.forEach((balance) => {
+      // Positivo = amigo me deve | Negativo = eu devo ao amigo
+      balance.netBalance = balance.pendingAmount - balance.pendingIOwe;
     });
 
     return Array.from(balances.values()).sort((a, b) =>
@@ -195,17 +239,28 @@ const SharedView: React.FC<SharedViewProps> = ({
   // Estatísticas gerais
   const stats = useMemo(() => {
     const totalOwed = friendBalances.reduce((sum, f) => sum + f.totalOwed, 0);
+    const totalIOwe = friendBalances.reduce((sum, f) => sum + f.totalIOwe, 0);
     const totalPaid = friendBalances.reduce((sum, f) => sum + f.totalPaid, 0);
+    const totalIPaid = friendBalances.reduce((sum, f) => sum + f.totalIPaid, 0);
     const totalPending = friendBalances.reduce(
       (sum, f) => sum + f.pendingAmount,
       0
     );
+    const totalPendingIOwe = friendBalances.reduce(
+      (sum, f) => sum + f.pendingIOwe,
+      0
+    );
+    const netBalance = totalPending - totalPendingIOwe; // Positivo = a receber, Negativo = a pagar
     const friendCount = friendBalances.length;
 
     return {
       totalOwed,
+      totalIOwe,
       totalPaid,
+      totalIPaid,
       totalPending,
+      totalPendingIOwe,
+      netBalance,
       friendCount,
     };
   }, [friendBalances]);
@@ -219,8 +274,12 @@ const SharedView: React.FC<SharedViewProps> = ({
       return {
         name: selectedFriend,
         totalOwed: 0,
+        totalIOwe: 0,
         totalPaid: 0,
+        totalIPaid: 0,
         pendingAmount: 0,
+        pendingIOwe: 0,
+        netBalance: 0,
         transactionCount: 0,
         expenses: [],
         incomes: [],
@@ -275,6 +334,15 @@ const SharedView: React.FC<SharedViewProps> = ({
   };
 
   const isTransactionPaid = (transaction: Transaction) => {
+    if (transaction.type === "income") {
+      // Para INCOME, o status está na própria transação
+      return transaction.isPaid ?? false;
+    }
+    if (transaction.iOwe) {
+      // EXPENSE + Conta Única: status está na própria transação
+      return transaction.isPaid ?? false;
+    }
+    // EXPENSE + Conta Dividida: verifica a income relacionada
     const relatedIncome = transactions.find(
       (inc) => inc.id === transaction.relatedTransactionId
     );
@@ -282,7 +350,14 @@ const SharedView: React.FC<SharedViewProps> = ({
   };
 
   const handleToggleTransactionPaid = (transaction: Transaction) => {
-    if (transaction.relatedTransactionId) {
+    if (transaction.type === "income") {
+      // Para INCOME, atualiza a própria transação
+      onTogglePaid(transaction.id, !transaction.isPaid);
+    } else if (transaction.iOwe) {
+      // EXPENSE + Conta Única: atualiza a própria transação
+      onTogglePaid(transaction.id, !transaction.isPaid);
+    } else if (transaction.relatedTransactionId) {
+      // EXPENSE + Conta Dividida: atualiza a income relacionada
       const relatedIncome = transactions.find(
         (inc) => inc.id === transaction.relatedTransactionId
       );
@@ -306,10 +381,10 @@ const SharedView: React.FC<SharedViewProps> = ({
       >
         <Box>
           <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-            Shared Expenses
+            Despesas Compartilhadas
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Track expenses shared with friends
+            Gerencie contas divididas com amigos
           </Typography>
         </Box>
 
@@ -319,53 +394,13 @@ const SharedView: React.FC<SharedViewProps> = ({
             startIcon={<AddIcon />}
             onClick={onNewTransaction}
           >
-            New Shared Expense
+            Nova Despesa Compartilhada
           </Button>
         )}
       </Box>
 
       {/* Summary Cards */}
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <Paper
-            sx={{
-              p: 2,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              border: 1,
-              borderColor: alpha(theme.palette.primary.main, 0.3),
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <PeopleIcon fontSize="small" color="primary" />
-              <Typography variant="overline" color="primary.main">
-                Friends
-              </Typography>
-            </Box>
-            <Typography variant="h5" fontWeight="bold" color="primary.dark">
-              {stats.friendCount}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <Paper
-            sx={{
-              p: 2,
-              bgcolor: alpha(theme.palette.info.main, 0.1),
-              border: 1,
-              borderColor: alpha(theme.palette.info.main, 0.3),
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <BalanceIcon fontSize="small" color="info" />
-              <Typography variant="overline" color="info.main">
-                Total Owed
-              </Typography>
-            </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold" color="info.dark">
-              {formatCurrency(stats.totalOwed)}
-            </Typography>
-          </Paper>
-        </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
             sx={{
@@ -378,11 +413,14 @@ const SharedView: React.FC<SharedViewProps> = ({
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
               <TrendingUpIcon fontSize="small" color="success" />
               <Typography variant="overline" color="success.main">
-                Received
+                A Receber
               </Typography>
             </Box>
             <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold" color="success.dark">
-              {formatCurrency(stats.totalPaid)}
+              {formatCurrency(stats.totalPending)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Amigos me devem
             </Typography>
           </Paper>
         </Grid>
@@ -390,19 +428,84 @@ const SharedView: React.FC<SharedViewProps> = ({
           <Paper
             sx={{
               p: 2,
-              bgcolor: alpha(theme.palette.warning.main, 0.1),
+              bgcolor: alpha(theme.palette.error.main, 0.1),
               border: 1,
-              borderColor: alpha(theme.palette.warning.main, 0.3),
+              borderColor: alpha(theme.palette.error.main, 0.3),
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <ScheduleIcon fontSize="small" color="warning" />
-              <Typography variant="overline" color="warning.main">
-                Pending
+              <TrendingDownIcon fontSize="small" color="error" />
+              <Typography variant="overline" color="error.main">
+                A Pagar
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold" color="warning.dark">
-              {formatCurrency(stats.totalPending)}
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold" color="error.dark">
+              {formatCurrency(stats.totalPendingIOwe)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Eu devo
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 6, sm: 3 }}>
+          <Paper
+            sx={{
+              p: 2,
+              bgcolor: alpha(
+                stats.netBalance >= 0 ? theme.palette.success.main : theme.palette.error.main,
+                0.1
+              ),
+              border: 1,
+              borderColor: alpha(
+                stats.netBalance >= 0 ? theme.palette.success.main : theme.palette.error.main,
+                0.3
+              ),
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+              <BalanceIcon 
+                fontSize="small" 
+                sx={{ color: stats.netBalance >= 0 ? "success.main" : "error.main" }}
+              />
+              <Typography 
+                variant="overline" 
+                sx={{ color: stats.netBalance >= 0 ? "success.main" : "error.main" }}
+              >
+                Saldo
+              </Typography>
+            </Box>
+            <Typography 
+              variant={isMobile ? "h6" : "h5"} 
+              fontWeight="bold" 
+              sx={{ color: stats.netBalance >= 0 ? "success.dark" : "error.dark" }}
+            >
+              {stats.netBalance >= 0 ? "+" : ""}{formatCurrency(stats.netBalance)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {stats.netBalance >= 0 ? "A seu favor" : "Você deve"}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 6, sm: 3 }}>
+          <Paper
+            sx={{
+              p: 2,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              border: 1,
+              borderColor: alpha(theme.palette.primary.main, 0.3),
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+              <PeopleIcon fontSize="small" color="primary" />
+              <Typography variant="overline" color="primary.main">
+                Amigos
+              </Typography>
+            </Box>
+            <Typography variant="h5" fontWeight="bold" color="primary.dark">
+              {stats.friendCount}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Com transações
             </Typography>
           </Paper>
         </Grid>
@@ -412,7 +515,7 @@ const SharedView: React.FC<SharedViewProps> = ({
       {friendBalances.length > 0 && (
         <Box>
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-            Balance by Friend
+            Saldo por Amigo
           </Typography>
           <Grid container spacing={2}>
             {friendBalances.map((friend) => (
@@ -456,7 +559,8 @@ const SharedView: React.FC<SharedViewProps> = ({
                           {friend.name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {friend.transactionCount} shared expense
+                          {friend.transactionCount} despesa
+                          {friend.transactionCount !== 1 ? "s" : ""} compartilhada
                           {friend.transactionCount !== 1 ? "s" : ""}
                         </Typography>
                       </Box>
@@ -464,42 +568,68 @@ const SharedView: React.FC<SharedViewProps> = ({
 
                     <Divider sx={{ mb: 2 }} />
 
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Owed:
+                    {/* Saldo líquido em destaque */}
+                    <Box 
+                      sx={{ 
+                        display: "flex", 
+                        justifyContent: "space-between", 
+                        alignItems: "center",
+                        mb: 2,
+                        p: 1.5,
+                        borderRadius: 1,
+                        bgcolor: alpha(
+                          friend.netBalance >= 0 
+                            ? theme.palette.success.main 
+                            : theme.palette.error.main,
+                          0.1
+                        ),
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={600}>
+                        {friend.netBalance >= 0 ? "A receber:" : "Você deve:"}
                       </Typography>
-                      <Typography variant="body2" fontWeight={600} color="info.main">
-                        {formatCurrency(friend.totalOwed)}
+                      <Typography 
+                        variant="h6" 
+                        fontWeight={700} 
+                        color={friend.netBalance >= 0 ? "success.main" : "error.main"}
+                      >
+                        {formatCurrency(Math.abs(friend.netBalance))}
                       </Typography>
                     </Box>
 
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Received:
-                      </Typography>
-                      <Typography variant="body2" fontWeight={600} color="success.main">
-                        {formatCurrency(friend.totalPaid)}
-                      </Typography>
-                    </Box>
+                    {/* Detalhes */}
+                    {friend.pendingAmount > 0 && (
+                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          {friend.name} me deve:
+                        </Typography>
+                        <Typography variant="caption" fontWeight={600} color="success.main">
+                          {formatCurrency(friend.pendingAmount)}
+                        </Typography>
+                      </Box>
+                    )}
 
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Pending:
-                      </Typography>
-                      <Chip
-                        size="small"
-                        icon={
-                          friend.pendingAmount > 0 ? (
-                            <ScheduleIcon />
-                          ) : (
-                            <CheckCircleIcon />
-                          )
-                        }
-                        label={formatCurrency(friend.pendingAmount)}
-                        color={friend.pendingAmount > 0 ? "warning" : "success"}
-                        variant="outlined"
-                      />
-                    </Box>
+                    {friend.pendingIOwe > 0 && (
+                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Eu devo a {friend.name}:
+                        </Typography>
+                        <Typography variant="caption" fontWeight={600} color="error.main">
+                          {formatCurrency(friend.pendingIOwe)}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {(friend.totalPaid > 0 || friend.totalIPaid > 0) && (
+                      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Já acertado:
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatCurrency(friend.totalPaid + friend.totalIPaid)}
+                        </Typography>
+                      </Box>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
@@ -536,10 +666,10 @@ const SharedView: React.FC<SharedViewProps> = ({
 
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Friend</InputLabel>
+            <InputLabel>Amigo</InputLabel>
             <Select
               value={selectedFriend}
-              label="Friend"
+              label="Amigo"
               onChange={(e: SelectChangeEvent) =>
                 setSelectedFriend(e.target.value)
               }
@@ -547,7 +677,7 @@ const SharedView: React.FC<SharedViewProps> = ({
               <MenuItem value="all">
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <PeopleIcon fontSize="small" />
-                  All Friends
+                  Todos os Amigos
                 </Box>
               </MenuItem>
               {allFriends.map((friendName) => {
@@ -589,17 +719,17 @@ const SharedView: React.FC<SharedViewProps> = ({
                 setFilterStatus(e.target.value as PaymentStatus)
               }
             >
-              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="all">Todos</MenuItem>
               <MenuItem value="pending">
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <ScheduleIcon fontSize="small" color="warning" />
-                  Pending
+                  Pendentes
                 </Box>
               </MenuItem>
               <MenuItem value="paid">
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <CheckCircleIcon fontSize="small" color="success" />
-                  Received
+                  Quitados
                 </Box>
               </MenuItem>
             </Select>
@@ -612,9 +742,16 @@ const SharedView: React.FC<SharedViewProps> = ({
         <Paper
           sx={{
             p: 2,
-            bgcolor: alpha(theme.palette.primary.main, 0.05),
+            bgcolor: alpha(
+              selectedFriendStats.netBalance >= 0 
+                ? theme.palette.success.main 
+                : theme.palette.error.main, 
+              0.05
+            ),
             border: 1,
-            borderColor: "primary.light",
+            borderColor: selectedFriendStats.netBalance >= 0 
+              ? "success.light" 
+              : "error.light",
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -632,20 +769,23 @@ const SharedView: React.FC<SharedViewProps> = ({
                 {selectedFriendStats.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {selectedFriendStats.transactionCount} shared expense
-                {selectedFriendStats.transactionCount !== 1 ? "s" : ""} •
-                Pending:{" "}
+                {selectedFriendStats.transactionCount} despesa
+                {selectedFriendStats.transactionCount !== 1 ? "s" : ""} • Saldo:{" "}
                 <Typography
                   component="span"
                   fontWeight={600}
                   color={
-                    selectedFriendStats.pendingAmount > 0
-                      ? "warning.main"
-                      : "success.main"
+                    selectedFriendStats.netBalance >= 0
+                      ? "success.main"
+                      : "error.main"
                   }
                 >
-                  {formatCurrency(selectedFriendStats.pendingAmount)}
+                  {selectedFriendStats.netBalance >= 0 ? "+" : ""}
+                  {formatCurrency(selectedFriendStats.netBalance)}
                 </Typography>
+                {selectedFriendStats.netBalance >= 0 
+                  ? " (a receber)" 
+                  : " (você deve)"}
               </Typography>
             </Box>
             <Button
@@ -653,7 +793,7 @@ const SharedView: React.FC<SharedViewProps> = ({
               size="small"
               onClick={() => setSelectedFriend("all")}
             >
-              Clear Filter
+              Limpar Filtro
             </Button>
           </Box>
         </Paper>
@@ -667,7 +807,26 @@ const SharedView: React.FC<SharedViewProps> = ({
             <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
               {filteredTransactions.map((t) => {
                 const isPaid = isTransactionPaid(t);
-                const friendShare = (t.amount || 0) / 2;
+                const transactionAmount = t.amount || 0;
+                
+                // Calcula o valor de impacto no saldo
+                let displayAmount: number;
+                let isPositive: boolean;
+                let typeLabel: string;
+                
+                if (t.type === "income") {
+                  displayAmount = t.iOwe ? transactionAmount : transactionAmount / 2;
+                  isPositive = true;
+                  typeLabel = "Receber";
+                } else if (t.iOwe) {
+                  displayAmount = transactionAmount;
+                  isPositive = false;
+                  typeLabel = "Devo";
+                } else {
+                  displayAmount = transactionAmount / 2;
+                  isPositive = true;
+                  typeLabel = "Receber";
+                }
 
                 return (
                   <Paper
@@ -677,7 +836,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                       border: 1,
                       borderColor: "divider",
                       borderLeft: 4,
-                      borderLeftColor: isPaid ? "success.main" : "warning.main",
+                      borderLeftColor: isPaid ? "success.main" : (isPositive ? "warning.main" : "error.main"),
                     }}
                   >
                     <Box
@@ -703,6 +862,15 @@ const SharedView: React.FC<SharedViewProps> = ({
                           }}
                         >
                           {t.description}
+                          {t.type === "income" && (
+                            <Chip 
+                              label="Receita" 
+                              size="small" 
+                              color="success" 
+                              variant="outlined"
+                              sx={{ ml: 1, height: 16, fontSize: "0.6rem" }}
+                            />
+                          )}
                         </Typography>
                         <Box
                           sx={{
@@ -730,26 +898,23 @@ const SharedView: React.FC<SharedViewProps> = ({
                           <Chip label={t.category} size="small" variant="outlined" />
                           <Chip
                             icon={isPaid ? <CheckCircleIcon /> : <ScheduleIcon />}
-                            label={isPaid ? "Received" : "Pending"}
+                            label={
+                              isPaid 
+                                ? (isPositive ? "Recebido" : "Pago")
+                                : (isPositive ? "A receber" : "A pagar")
+                            }
                             size="small"
-                            color={isPaid ? "success" : "warning"}
+                            color={isPaid ? "success" : (isPositive ? "warning" : "error")}
                           />
                         </Box>
                       </Box>
                       <Box sx={{ textAlign: "right" }}>
                         <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          display="block"
-                        >
-                          Total: {formatCurrency(t.amount || 0)}
-                        </Typography>
-                        <Typography
                           variant="subtitle1"
                           fontWeight={700}
-                          color="warning.main"
+                          color={isPositive ? "success.main" : "error.main"}
                         >
-                          Owes: {formatCurrency(friendShare)}
+                          {typeLabel}: {formatCurrency(displayAmount)}
                         </Typography>
                         <IconButton
                           size="small"
@@ -769,27 +934,48 @@ const SharedView: React.FC<SharedViewProps> = ({
           ) : (
             // Desktop: Table
             <Table>
-              <TableHead>
+                <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: 50 }}>Paid</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Friend</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell align="right">Total</TableCell>
-                  <TableCell align="right">Friend Owes</TableCell>
+                  <TableCell sx={{ width: 50 }}>Pago</TableCell>
+                  <TableCell>Descrição</TableCell>
+                  <TableCell>Amigo</TableCell>
+                  <TableCell>Categoria</TableCell>
+                  <TableCell>Data</TableCell>
+                  <TableCell align="right">Valor</TableCell>
                   <TableCell align="center" sx={{ width: 120 }}>
                     Status
                   </TableCell>
                   <TableCell align="center" sx={{ width: 100 }}>
-                    Actions
+                    Ações
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredTransactions.map((t) => {
                   const isPaid = isTransactionPaid(t);
-                  const friendShare = (t.amount || 0) / 2;
+                  const transactionAmount = t.amount || 0;
+                  
+                  // Calcula o valor de impacto no saldo
+                  let displayAmount: number;
+                  let isPositive: boolean;
+                  let typeLabel: string;
+                  
+                  if (t.type === "income") {
+                    // INCOME: amigo está me pagando
+                    displayAmount = t.iOwe ? transactionAmount : transactionAmount / 2;
+                    isPositive = true;
+                    typeLabel = t.iOwe ? "Pagamento" : "Pagamento (50%)";
+                  } else if (t.iOwe) {
+                    // EXPENSE + Conta Única: eu devo ao amigo
+                    displayAmount = transactionAmount;
+                    isPositive = false;
+                    typeLabel = "Eu devo";
+                  } else {
+                    // EXPENSE + Conta Dividida: amigo me deve 50%
+                    displayAmount = transactionAmount / 2;
+                    isPositive = true;
+                    typeLabel = "Me devem (50%)";
+                  }
 
                   return (
                     <TableRow
@@ -817,6 +1003,15 @@ const SharedView: React.FC<SharedViewProps> = ({
                         >
                           {t.description}
                         </Typography>
+                        {t.type === "income" && (
+                          <Chip 
+                            label="Receita" 
+                            size="small" 
+                            color="success" 
+                            variant="outlined"
+                            sx={{ ml: 1, height: 18, fontSize: "0.65rem" }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -837,23 +1032,30 @@ const SharedView: React.FC<SharedViewProps> = ({
                         <Chip label={t.category} size="small" variant="outlined" />
                       </TableCell>
                       <TableCell>{formatDate(t.date)}</TableCell>
-                      <TableCell align="right" sx={{ fontFamily: "monospace" }}>
-                        {formatCurrency(t.amount || 0)}
-                      </TableCell>
                       <TableCell
                         align="right"
                         sx={{ fontFamily: "monospace", fontWeight: 600 }}
                       >
-                        <Typography color="warning.main" fontWeight={600}>
-                          {formatCurrency(friendShare)}
+                        <Typography 
+                          color={isPositive ? "success.main" : "error.main"} 
+                          fontWeight={600}
+                        >
+                          {isPositive ? "+" : "-"}{formatCurrency(displayAmount)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {typeLabel}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
                         <Chip
                           icon={isPaid ? <CheckCircleIcon /> : <ScheduleIcon />}
-                          label={isPaid ? "Received" : "Pending"}
+                          label={
+                            isPaid 
+                              ? (isPositive ? "Recebido" : "Pago")
+                              : (isPositive ? "A receber" : "A pagar")
+                          }
                           size="small"
-                          color={isPaid ? "success" : "warning"}
+                          color={isPaid ? "success" : (isPositive ? "warning" : "error")}
                         />
                       </TableCell>
                       <TableCell align="center">
@@ -884,8 +1086,8 @@ const SharedView: React.FC<SharedViewProps> = ({
           <PeopleIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
           <Typography color="text.secondary" fontStyle="italic">
             {sharedTransactions.length === 0
-              ? "No shared expenses yet. Create a shared expense to track balances with friends!"
-              : "No shared expenses found with the current filters."}
+              ? "Nenhuma despesa compartilhada ainda. Crie uma para gerenciar contas com amigos!"
+              : "Nenhuma despesa encontrada com os filtros atuais."}
           </Typography>
           {sharedTransactions.length === 0 && (
             <Button
@@ -894,7 +1096,7 @@ const SharedView: React.FC<SharedViewProps> = ({
               onClick={onNewTransaction}
               sx={{ mt: 2 }}
             >
-              Create Shared Expense
+              Criar Despesa Compartilhada
             </Button>
           )}
         </Paper>

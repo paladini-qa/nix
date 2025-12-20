@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     is_paid BOOLEAN DEFAULT FALSE,
     is_shared BOOLEAN DEFAULT FALSE,
     shared_with TEXT,
+    i_owe BOOLEAN DEFAULT FALSE,
     related_transaction_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -41,6 +42,9 @@ CREATE TABLE IF NOT EXISTS public.transactions (
 -- Para bancos existentes, adicione a coluna related_transaction_id (link entre expense e income compartilhada):
 -- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS related_transaction_id UUID;
 
+-- Para bancos existentes, adicione a coluna i_owe (true = amigo pagou e eu devo, false = eu paguei e amigo deve):
+-- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS i_owe BOOLEAN DEFAULT FALSE;
+
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.transactions(date DESC);
@@ -54,6 +58,7 @@ COMMENT ON COLUMN public.transactions.installments IS 'Número total de parcelas
 COMMENT ON COLUMN public.transactions.current_installment IS 'Número da parcela atual';
 COMMENT ON COLUMN public.transactions.is_shared IS 'Gasto compartilhado 50/50 com outra pessoa';
 COMMENT ON COLUMN public.transactions.shared_with IS 'Nome do amigo com quem o gasto foi dividido';
+COMMENT ON COLUMN public.transactions.i_owe IS 'Se true, amigo pagou e eu devo. Se false, eu paguei e amigo me deve';
 COMMENT ON COLUMN public.transactions.related_transaction_id IS 'ID da transação relacionada (link entre expense e income de shared expense)';
 
 -- =============================================

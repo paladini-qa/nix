@@ -875,6 +875,7 @@ const AppContent: React.FC<{
           is_paid: false,
           is_shared: newTx.isShared,
           shared_with: newTx.sharedWith,
+          i_owe: newTx.iOwe,
         };
 
         const { data, error } = await supabase
@@ -902,12 +903,15 @@ const AppContent: React.FC<{
             isPaid: data.is_paid ?? false,
             isShared: data.is_shared,
             sharedWith: data.shared_with,
+            iOwe: data.i_owe,
           };
           setTransactions((prev) => [transaction, ...prev]);
 
-          // Se é um gasto compartilhado, cria automaticamente uma income para o reembolso
-          if (newTx.isShared && newTx.sharedWith && newTx.type === "expense") {
+          // Se é uma DESPESA vinculada a amigo com conta dividida (não iOwe), cria income de 50%
+          // Se iOwe = true (conta única), significa que EU devo ao amigo, então não cria income
+          if (newTx.isShared && newTx.sharedWith && newTx.type === "expense" && !newTx.iOwe) {
             const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+            // Conta dividida: amigo me deve 50% do valor
             const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
             const incomePayload = {
@@ -2153,6 +2157,7 @@ const App: React.FC = () => {
           isPaid: t.is_paid ?? true, // Default true para transações existentes
           isShared: t.is_shared,
           sharedWith: t.shared_with,
+          iOwe: t.i_owe,
           relatedTransactionId: t.related_transaction_id,
         }));
         setTransactions(mappedTxs);

@@ -288,6 +288,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [installments, setInstallments] = useState("2");
   const [isShared, setIsShared] = useState(false);
   const [sharedWith, setSharedWith] = useState("");
+  const [iOwe, setIOwe] = useState(false); // true = amigo pagou, eu devo | false = eu paguei, amigo deve
   const [newFriendName, setNewFriendName] = useState("");
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -384,6 +385,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setInstallments(editTransaction.installments?.toString() || "2");
       setIsShared(editTransaction.isShared || false);
       setSharedWith(editTransaction.sharedWith || "");
+      setIOwe(editTransaction.iOwe || false);
     } else {
       setDescription("");
       setAmount("");
@@ -397,6 +399,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setInstallments("2");
       setIsShared(false);
       setSharedWith("");
+      setIOwe(false);
     }
     setNewFriendName("");
     setShowAddFriend(false);
@@ -502,6 +505,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           : undefined,
         isShared,
         sharedWith: isShared ? sharedWith : undefined,
+        iOwe: isShared ? iOwe : undefined,
       },
       editTransaction?.id || undefined
     );
@@ -1259,176 +1263,308 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 </Paper>
               )}
 
-            {/* Shared Expense Toggle */}
-            {type === "expense" && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-                <Paper
-                  elevation={0}
-                  sx={getTogglePaperSx(isShared, theme.palette.info.main, theme, isDarkMode)}
-                  onClick={() => {
-                    setIsShared(!isShared);
-                    if (isShared) {
-                      setSharedWith("");
-                    }
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Box
+            {/* Vincular a Amigo Toggle - Disponível para INCOME e EXPENSE */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+              <Paper
+                elevation={0}
+                sx={getTogglePaperSx(isShared, theme.palette.info.main, theme, isDarkMode)}
+                onClick={() => {
+                  setIsShared(!isShared);
+                  if (isShared) {
+                    setSharedWith("");
+                    setIOwe(false);
+                  }
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: isShared
+                        ? alpha(theme.palette.info.main, isDarkMode ? 0.2 : 0.12)
+                        : alpha("#64748B", 0.1),
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <GroupIcon
+                      fontSize="small"
                       sx={{
-                        width: 36,
-                        height: 36,
+                        color: isShared ? "info.main" : "text.secondary",
+                        transition: "color 0.2s ease",
+                      }}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>
+                      Vincular a amigo
+                    </Typography>
+                    {isShared && (
+                      <Typography variant="caption" color="text.secondary">
+                        Afeta o saldo com o amigo
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+                <Switch checked={isShared} size="small" color="info" />
+              </Paper>
+
+              {/* Friend Selection e Opções */}
+              {isShared && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {/* Tipo de conta: Dividida ou Única */}
+                  <Box>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary" 
+                      fontWeight={600}
+                      sx={{ display: "block", mb: 1 }}
+                    >
+                      TIPO DE CONTA
+                    </Typography>
+                    <ToggleButtonGroup
+                      value={iOwe ? "single" : "split"}
+                      exclusive
+                      onChange={(_, newValue) => {
+                        if (newValue) {
+                          setIOwe(newValue === "single");
+                        }
+                      }}
+                      fullWidth
+                      sx={{
+                        bgcolor: isDarkMode
+                          ? alpha(theme.palette.background.default, 0.3)
+                          : alpha("#000000", 0.02),
                         borderRadius: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor: isShared
-                          ? alpha(theme.palette.info.main, isDarkMode ? 0.2 : 0.12)
-                          : alpha("#64748B", 0.1),
-                        transition: "all 0.2s ease",
+                        p: 0.5,
+                        "& .MuiToggleButtonGroup-grouped": {
+                          border: 0,
+                          borderRadius: "10px !important",
+                          mx: 0.25,
+                        },
+                        "& .MuiToggleButton-root": {
+                          py: 1.25,
+                          fontWeight: 600,
+                          fontSize: "0.85rem",
+                          textTransform: "none",
+                          transition: "all 0.2s ease-in-out",
+                          "&:not(.Mui-selected)": {
+                            color: "text.secondary",
+                          },
+                        },
                       }}
                     >
-                      <GroupIcon
-                        fontSize="small"
+                      <ToggleButton
+                        value="split"
                         sx={{
-                          color: isShared ? "info.main" : "text.secondary",
-                          transition: "color 0.2s ease",
+                          "&.Mui-selected": {
+                            bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.15),
+                            color: theme.palette.primary.main,
+                            boxShadow: `0 4px 12px -4px ${alpha(theme.palette.primary.main, 0.3)}`,
+                            "&:hover": {
+                              bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.2),
+                            },
+                          },
                         }}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" fontWeight={500}>
-                        Dividir 50/50?
-                      </Typography>
-                      {isShared && (
-                        <Typography variant="caption" color="text.secondary">
-                          Cria receita automática para reembolso
-                        </Typography>
+                      >
+                        ✂️ Conta Dividida (50%)
+                      </ToggleButton>
+                      <ToggleButton
+                        value="single"
+                        sx={{
+                          "&.Mui-selected": {
+                            bgcolor: alpha(theme.palette.secondary.main, isDarkMode ? 0.2 : 0.15),
+                            color: theme.palette.secondary.main,
+                            boxShadow: `0 4px 12px -4px ${alpha(theme.palette.secondary.main, 0.3)}`,
+                            "&:hover": {
+                              bgcolor: alpha(theme.palette.secondary.main, isDarkMode ? 0.25 : 0.2),
+                            },
+                          },
+                        }}
+                      >
+                        💯 Conta Única (100%)
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                  </Box>
+
+                  <FormControl fullWidth size="small" sx={inputSx}>
+                    <InputLabel>Selecionar Amigo</InputLabel>
+                    <Select
+                      value={sharedWith}
+                      label="Selecionar Amigo"
+                      onChange={(e) => {
+                        if (e.target.value === "__add_new__") {
+                          setShowAddFriend(true);
+                        } else {
+                          setSharedWith(e.target.value);
+                        }
+                      }}
+                    >
+                      {friends.length > 0 && (
+                        <ListSubheader>Amigos</ListSubheader>
                       )}
-                    </Box>
-                  </Box>
-                  <Switch checked={isShared} size="small" color="info" />
-                </Paper>
-
-                {/* Friend Selection */}
-                {isShared && (
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <FormControl fullWidth size="small" sx={inputSx}>
-                      <InputLabel>Selecionar Amigo</InputLabel>
-                      <Select
-                        value={sharedWith}
-                        label="Selecionar Amigo"
-                        onChange={(e) => {
-                          if (e.target.value === "__add_new__") {
-                            setShowAddFriend(true);
-                          } else {
-                            setSharedWith(e.target.value);
-                          }
-                        }}
-                      >
-                        {friends.length > 0 && (
-                          <ListSubheader>Amigos</ListSubheader>
-                        )}
-                        {friends.map((friend) => (
-                          <MenuItem key={friend} value={friend}>
-                            {friend}
-                          </MenuItem>
-                        ))}
-                        <Divider />
-                        <MenuItem value="__add_new__">
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <PersonAddIcon fontSize="small" color="primary" />
-                            <Typography color="primary" fontWeight={500}>
-                              Adicionar novo amigo...
-                            </Typography>
-                          </Box>
+                      {friends.map((friend) => (
+                        <MenuItem key={friend} value={friend}>
+                          {friend}
                         </MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    {/* Add New Friend Form */}
-                    {showAddFriend && (
-                      <Paper
-                        elevation={0}
-                        sx={{
-                          p: 2.5,
-                          borderRadius: 1,
-                          bgcolor: isDarkMode
-                            ? alpha(theme.palette.primary.main, 0.08)
-                            : alpha(theme.palette.primary.main, 0.04),
-                          border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
-                        }}
-                      >
-                        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                          Novo Amigo
-                        </Typography>
-                        <Box sx={{ display: "flex", gap: 1.5 }}>
-                          <TextField
-                            size="small"
-                            placeholder="Nome do amigo"
-                            value={newFriendName}
-                            onChange={(e) => setNewFriendName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                handleAddNewFriend();
-                              }
-                            }}
-                            fullWidth
-                            autoFocus
-                            sx={inputSx}
-                          />
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={handleAddNewFriend}
-                            disabled={!newFriendName.trim()}
-                            sx={{ borderRadius: 1, px: 2.5 }}
-                          >
-                            Add
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => {
-                              setShowAddFriend(false);
-                              setNewFriendName("");
-                            }}
-                            sx={{ borderRadius: 1 }}
-                          >
-                            Cancelar
-                          </Button>
+                      ))}
+                      <Divider />
+                      <MenuItem value="__add_new__">
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <PersonAddIcon fontSize="small" color="primary" />
+                          <Typography color="primary" fontWeight={500}>
+                            Adicionar novo amigo...
+                          </Typography>
                         </Box>
-                      </Paper>
-                    )}
+                      </MenuItem>
+                    </Select>
+                  </FormControl>
 
-                    {/* Preview of income that will be created */}
-                    {sharedWith && parsedAmount && (
-                      <Paper
-                        elevation={0}
-                        sx={{
-                          p: 2.5,
-                          borderRadius: 1,
-                          bgcolor: isDarkMode
-                            ? alpha(theme.palette.success.main, 0.1)
-                            : alpha(theme.palette.success.main, 0.06),
-                          border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                        }}
-                      >
-                        <Typography variant="body2" color="success.main" fontWeight={600}>
-                          ✨ Receita automática:
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                          "{description || "Transação"} - {sharedWith}"
-                        </Typography>
-                        <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
-                          +{formatCurrency(parsedAmount / 2)}
-                        </Typography>
-                      </Paper>
-                    )}
-                  </Box>
-                )}
-              </Box>
-            )}
+                  {/* Add New Friend Form */}
+                  {showAddFriend && (
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 2.5,
+                        borderRadius: 1,
+                        bgcolor: isDarkMode
+                          ? alpha(theme.palette.primary.main, 0.08)
+                          : alpha(theme.palette.primary.main, 0.04),
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+                      }}
+                    >
+                      <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                        Novo Amigo
+                      </Typography>
+                      <Box sx={{ display: "flex", gap: 1.5 }}>
+                        <TextField
+                          size="small"
+                          placeholder="Nome do amigo"
+                          value={newFriendName}
+                          onChange={(e) => setNewFriendName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddNewFriend();
+                            }
+                          }}
+                          fullWidth
+                          autoFocus
+                          sx={inputSx}
+                        />
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={handleAddNewFriend}
+                          disabled={!newFriendName.trim()}
+                          sx={{ borderRadius: 1, px: 2.5 }}
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => {
+                            setShowAddFriend(false);
+                            setNewFriendName("");
+                          }}
+                          sx={{ borderRadius: 1 }}
+                        >
+                          Cancelar
+                        </Button>
+                      </Box>
+                    </Paper>
+                  )}
+
+                  {/* Preview do impacto no saldo */}
+                  {sharedWith && parsedAmount && (
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 2.5,
+                        borderRadius: 1,
+                        bgcolor: isDarkMode
+                          ? alpha(
+                              type === "income" 
+                                ? theme.palette.success.main 
+                                : (iOwe ? theme.palette.error.main : theme.palette.success.main), 
+                              0.1
+                            )
+                          : alpha(
+                              type === "income" 
+                                ? theme.palette.success.main 
+                                : (iOwe ? theme.palette.error.main : theme.palette.success.main), 
+                              0.06
+                            ),
+                        border: `1px solid ${alpha(
+                          type === "income" 
+                            ? theme.palette.success.main 
+                            : (iOwe ? theme.palette.error.main : theme.palette.success.main), 
+                          0.2
+                        )}`,
+                      }}
+                    >
+                      {type === "income" ? (
+                        // INCOME vinculada a amigo
+                        <>
+                          <Typography variant="body2" color="success.main" fontWeight={600}>
+                            💰 {sharedWith} está te pagando:
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            "{description || "Transação"}"
+                          </Typography>
+                          <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
+                            +{formatCurrency(iOwe ? parsedAmount : parsedAmount / 2)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                            {iOwe 
+                              ? `Valor integral será somado ao saldo de ${sharedWith}`
+                              : `Metade do valor (conta dividida) será somada ao saldo de ${sharedWith}`
+                            }
+                          </Typography>
+                        </>
+                      ) : iOwe ? (
+                        // EXPENSE + Conta Única - Eu devo ao amigo
+                        <>
+                          <Typography variant="body2" color="error.main" fontWeight={600}>
+                            💸 Você está pagando para {sharedWith}:
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            "{description || "Transação"}"
+                          </Typography>
+                          <Typography variant="h5" fontWeight={700} color="error.main" sx={{ mt: 1 }}>
+                            -{formatCurrency(parsedAmount)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                            Este valor será descontado do que {sharedWith} te deve
+                          </Typography>
+                        </>
+                      ) : (
+                        // EXPENSE + Conta Dividida - Amigo me deve metade
+                        <>
+                          <Typography variant="body2" color="success.main" fontWeight={600}>
+                            ✨ {sharedWith} te deve (metade):
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            "{description || "Transação"}"
+                          </Typography>
+                          <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
+                            +{formatCurrency(parsedAmount / 2)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                            Receita de reembolso será criada automaticamente
+                          </Typography>
+                        </>
+                      )}
+                    </Paper>
+                  )}
+                </Box>
+              )}
+            </Box>
 
             {/* Balance Impact Preview */}
             {parsedAmount !== null && parsedAmount > 0 && currentBalance !== undefined && (
