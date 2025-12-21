@@ -86,6 +86,7 @@ const SmartInputFAB = lazy(() => import("./components/SmartInputFAB"));
 const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
 
 import type { AdvancedFiltersState } from "./components/AdvancedFilters";
+import { AdvancedFiltersButton } from "./components/AdvancedFilters";
 
 // Loading fallback component
 const ViewLoading: React.FC = () => (
@@ -1901,6 +1902,24 @@ const AppContent: React.FC<{
                           width: { xs: "100%", sm: "auto" },
                         }}
                       >
+                        <AdvancedFiltersButton
+                          hasActiveFilters={
+                            advancedFilters.startDate !== null ||
+                            advancedFilters.endDate !== null ||
+                            advancedFilters.type !== "all" ||
+                            advancedFilters.categories.length > 0 ||
+                            advancedFilters.paymentMethods.length > 0
+                          }
+                          activeFiltersCount={
+                            (advancedFilters.startDate || advancedFilters.endDate ? 1 : 0) +
+                            (advancedFilters.type !== "all" ? 1 : 0) +
+                            advancedFilters.categories.length +
+                            advancedFilters.paymentMethods.length
+                          }
+                          showFilters={showAdvancedFilters}
+                          onToggleFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                          compact={isMobile}
+                        />
                         <DateFilter
                           month={filters.month}
                           year={filters.year}
@@ -1925,7 +1944,7 @@ const AppContent: React.FC<{
                       </Box>
                     </Box>
 
-                    {/* Advanced Filters */}
+                    {/* Advanced Filters Panel */}
                     <Suspense fallback={null}>
                       <AdvancedFilters
                         transactions={transactions}

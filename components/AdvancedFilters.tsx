@@ -50,6 +50,52 @@ interface AdvancedFiltersProps {
   onToggleFilters: () => void;
 }
 
+// Componente do botão de filtros exportado separadamente
+export const AdvancedFiltersButton: React.FC<{
+  hasActiveFilters: boolean;
+  activeFiltersCount: number;
+  showFilters: boolean;
+  onToggleFilters: () => void;
+  compact?: boolean;
+}> = ({ hasActiveFilters, activeFiltersCount, showFilters, onToggleFilters, compact }) => {
+  return (
+    <Button
+      variant={hasActiveFilters ? "contained" : "outlined"}
+      startIcon={<FilterListIcon />}
+      endIcon={!compact && (showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
+      onClick={onToggleFilters}
+      size={compact ? "small" : "medium"}
+      sx={{
+        borderRadius: 2,
+        textTransform: "none",
+        minWidth: compact ? "auto" : undefined,
+        px: compact ? 1.5 : 2,
+        ...(hasActiveFilters && {
+          background: `linear-gradient(135deg, ${alpha(
+            "#6366f1",
+            0.9
+          )} 0%, ${alpha("#8b5cf6", 0.9)} 100%)`,
+        }),
+      }}
+    >
+      {compact ? "" : "Filtros"}
+      {hasActiveFilters && (
+        <Chip
+          size="small"
+          label={activeFiltersCount}
+          sx={{
+            ml: compact ? 0 : 1,
+            height: 20,
+            minWidth: 20,
+            bgcolor: "rgba(255,255,255,0.2)",
+            color: "inherit",
+          }}
+        />
+      )}
+    </Button>
+  );
+};
+
 const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   transactions,
   filters,
@@ -125,47 +171,6 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {/* Botão de Filtros */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-          }}
-        >
-          <Button
-            variant={hasActiveFilters ? "contained" : "outlined"}
-            startIcon={<FilterListIcon />}
-            endIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            onClick={onToggleFilters}
-            sx={{
-              borderRadius: 2,
-              textTransform: "none",
-              ...(hasActiveFilters && {
-                background: `linear-gradient(135deg, ${alpha(
-                  "#6366f1",
-                  0.9
-                )} 0%, ${alpha("#8b5cf6", 0.9)} 100%)`,
-              }),
-            }}
-          >
-            Filtros Avançados
-            {hasActiveFilters && (
-              <Chip
-                size="small"
-                label={activeFiltersCount}
-                sx={{
-                  ml: 1,
-                  height: 20,
-                  minWidth: 20,
-                  bgcolor: "rgba(255,255,255,0.2)",
-                  color: "inherit",
-                }}
-              />
-            )}
-          </Button>
-        </Box>
-
         {/* Painel de Filtros */}
         <Collapse in={showFilters}>
           <Paper
@@ -468,7 +473,6 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             </Typography>
           </Paper>
         </Collapse>
-      </Box>
     </LocalizationProvider>
   );
 };
