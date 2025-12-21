@@ -27,7 +27,6 @@ type ViewType =
   | "nixai"
   | "budgets"
   | "goals"
-  | "accounts"
   | "analytics"
   | "settings"
   | "paymentMethods"

@@ -26,7 +26,6 @@ import {
   People as PeopleIcon,
   PieChart as BudgetIcon,
   Flag as GoalIcon,
-  AccountBalance as AccountIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Folder as FolderIcon,
@@ -53,7 +52,6 @@ type ViewType =
   | "nixai"
   | "budgets"
   | "goals"
-  | "accounts"
   | "settings"
   | "paymentMethods"
   | "categories";
@@ -160,7 +158,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { icon: PaymentIcon, label: "Payment Methods", id: "paymentMethods" },
         { icon: CategoryIcon, label: "Categorias", id: "categories" },
-        { icon: AccountIcon, label: t("nav.accounts"), id: "accounts" },
       ],
     },
     {
