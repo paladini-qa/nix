@@ -39,10 +39,10 @@ const LoginView: React.FC = () => {
     return localStorage.getItem("nix_remember_session") === "true";
   });
 
-  // Estilos de input premium
+  // Estilos de input premium - mais compactos
   const inputSx = {
     "& .MuiOutlinedInput-root": {
-      borderRadius: 2.5,
+      borderRadius: 2,
       bgcolor: isDarkMode
         ? alpha(theme.palette.background.paper, 0.4)
         : alpha("#FFFFFF", 0.7),
@@ -63,7 +63,7 @@ const LoginView: React.FC = () => {
         bgcolor: isDarkMode
           ? alpha(theme.palette.primary.main, 0.1)
           : alpha("#FFFFFF", 0.9),
-        boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.15)}`,
+        boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
       },
       "&.Mui-focused fieldset": {
         borderColor: theme.palette.primary.main,
@@ -72,6 +72,9 @@ const LoginView: React.FC = () => {
     },
     "& .MuiInputLabel-root": {
       fontWeight: 500,
+    },
+    "& .MuiInputBase-input": {
+      py: 1.5,
     },
   };
 
@@ -137,12 +140,14 @@ const LoginView: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        height: "100vh",
         width: "100%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        position: "relative",
+        position: "fixed",
+        top: 0,
+        left: 0,
         overflow: "hidden",
         // Gradiente de fundo premium
         background: isDarkMode
@@ -202,14 +207,14 @@ const LoginView: React.FC = () => {
       <Box
         sx={{
           width: "100%",
-          maxWidth: 440,
-          p: 3,
+          maxWidth: 400,
+          px: 2,
           zIndex: 1,
         }}
       >
         <Box
           sx={{
-            borderRadius: 2.5,
+            borderRadius: 3,
             overflow: "hidden",
             // Glassmorphism Premium
             bgcolor: isDarkMode
@@ -219,22 +224,22 @@ const LoginView: React.FC = () => {
             WebkitBackdropFilter: "blur(24px)",
             border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#FFFFFF", 0.5)}`,
             boxShadow: isDarkMode
-              ? `0 32px 100px -24px ${alpha("#000000", 0.6)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.05)}`
-              : `0 32px 100px -24px ${alpha(theme.palette.primary.main, 0.2)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
+              ? `0 24px 80px -20px ${alpha("#000000", 0.6)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.05)}`
+              : `0 24px 80px -20px ${alpha(theme.palette.primary.main, 0.2)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
             transition: "all 0.3s ease-in-out",
             "&:hover": {
               boxShadow: isDarkMode
-                ? `0 40px 120px -24px ${alpha("#000000", 0.7)}`
-                : `0 40px 120px -24px ${alpha(theme.palette.primary.main, 0.25)}`,
+                ? `0 32px 100px -24px ${alpha("#000000", 0.7)}`
+                : `0 32px 100px -24px ${alpha(theme.palette.primary.main, 0.25)}`,
             },
           }}
         >
           {/* Header */}
           <Box
             sx={{
-              px: 5,
-              pt: 5,
-              pb: 4,
+              px: 3.5,
+              pt: 3,
+              pb: 2,
               textAlign: "center",
               position: "relative",
             }}
@@ -245,16 +250,16 @@ const LoginView: React.FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 80,
-                height: 80,
-                borderRadius: 2.5,
-                mb: 3,
+                width: 56,
+                height: 56,
+                borderRadius: 2,
+                mb: 2,
                 bgcolor: isDarkMode
                   ? alpha("#FFFFFF", 0.08)
                   : alpha(theme.palette.primary.main, 0.08),
                 boxShadow: isDarkMode
-                  ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}, 0 8px 32px -8px ${alpha("#000000", 0.3)}`
-                  : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 8px 32px -8px ${alpha(theme.palette.primary.main, 0.2)}`,
+                  ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}, 0 6px 24px -6px ${alpha("#000000", 0.3)}`
+                  : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 6px 24px -6px ${alpha(theme.palette.primary.main, 0.2)}`,
                 transition: "all 0.3s ease-in-out",
                 "&:hover": {
                   transform: "scale(1.05) rotate(-2deg)",
@@ -266,18 +271,18 @@ const LoginView: React.FC = () => {
                 src={`${import.meta.env.BASE_URL}logo.png`}
                 alt="Nix Logo"
                 sx={{
-                  width: 56,
-                  height: 56,
+                  width: 36,
+                  height: 36,
                 }}
               />
             </Box>
 
             <Typography
-              variant="h4"
+              variant="h5"
               fontWeight={700}
               sx={{
                 letterSpacing: "-0.03em",
-                mb: 1,
+                mb: 0.5,
                 background: isDarkMode
                   ? `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${alpha(theme.palette.primary.light, 0.9)} 100%)`
                   : `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.primary.main} 100%)`,
@@ -289,7 +294,7 @@ const LoginView: React.FC = () => {
               {isSignUp ? "Criar Conta" : "Bem-vindo de Volta"}
             </Typography>
             <Typography
-              variant="body1"
+              variant="body2"
               color="text.secondary"
               sx={{ fontWeight: 500 }}
             >
@@ -304,19 +309,20 @@ const LoginView: React.FC = () => {
             component="form"
             onSubmit={handleSubmit}
             sx={{
-              px: 5,
-              pb: 5,
+              px: 3.5,
+              pb: 3,
               display: "flex",
               flexDirection: "column",
-              gap: 3,
+              gap: 2,
             }}
           >
             {error && (
               <Alert
                 severity="error"
                 sx={{
-                  borderRadius: 2.5,
+                  borderRadius: 2,
                   border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
+                  py: 0.5,
                 }}
               >
                 {error}
@@ -327,8 +333,9 @@ const LoginView: React.FC = () => {
               <Alert
                 severity="success"
                 sx={{
-                  borderRadius: 2.5,
+                  borderRadius: 2,
                   border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                  py: 0.5,
                 }}
               >
                 {message}
@@ -400,6 +407,7 @@ const LoginView: React.FC = () => {
                   <Checkbox
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
+                    size="small"
                     sx={{
                       color: isDarkMode
                         ? alpha("#FFFFFF", 0.5)
@@ -408,6 +416,7 @@ const LoginView: React.FC = () => {
                         color: "primary.main",
                       },
                       transition: "all 0.2s ease-in-out",
+                      p: 0.5,
                       "&:hover": {
                         bgcolor: alpha(theme.palette.primary.main, 0.08),
                       },
@@ -416,7 +425,7 @@ const LoginView: React.FC = () => {
                 }
                 label={
                   <Typography
-                    variant="body2"
+                    variant="caption"
                     sx={{
                       fontWeight: 500,
                       color: "text.secondary",
@@ -428,7 +437,7 @@ const LoginView: React.FC = () => {
                 }
                 sx={{
                   mx: 0,
-                  mt: -1,
+                  mt: -0.5,
                   "& .MuiFormControlLabel-label": {
                     ml: 0.5,
                   },
@@ -440,30 +449,30 @@ const LoginView: React.FC = () => {
             <Button
               type="submit"
               variant="contained"
-              size="large"
+              size="medium"
               disabled={isLoading}
               fullWidth
               endIcon={
                 isLoading ? (
-                  <CircularProgress size={20} color="inherit" />
+                  <CircularProgress size={18} color="inherit" />
                 ) : (
-                  <ArrowForwardIcon />
+                  <ArrowForwardIcon fontSize="small" />
                 )
               }
               sx={{
-                py: 2,
-                mt: 1,
-                borderRadius: 2.5,
-                fontWeight: 700,
-                fontSize: "1.05rem",
+                py: 1.5,
+                mt: 0.5,
+                borderRadius: 2,
+                fontWeight: 600,
+                fontSize: "0.95rem",
                 letterSpacing: "0.01em",
                 textTransform: "none",
                 background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                boxShadow: `0 8px 32px -8px ${alpha(theme.palette.primary.main, 0.5)}`,
+                boxShadow: `0 6px 24px -6px ${alpha(theme.palette.primary.main, 0.5)}`,
                 transition: "all 0.2s ease-in-out",
                 "&:hover": {
                   transform: "translateY(-2px)",
-                  boxShadow: `0 12px 40px -8px ${alpha(theme.palette.primary.main, 0.6)}`,
+                  boxShadow: `0 10px 32px -6px ${alpha(theme.palette.primary.main, 0.6)}`,
                   background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
                 },
                 "&:active": {
@@ -484,11 +493,11 @@ const LoginView: React.FC = () => {
             </Button>
 
             {/* Toggle Link */}
-            <Box sx={{ textAlign: "center", mt: 1 }}>
+            <Box sx={{ textAlign: "center", mt: 0.5 }}>
               <Link
                 component="button"
                 type="button"
-                variant="body2"
+                variant="caption"
                 onClick={() => {
                   setIsSignUp(!isSignUp);
                   setError(null);
@@ -516,8 +525,8 @@ const LoginView: React.FC = () => {
           {/* Footer - AI Badge */}
           <Box
             sx={{
-              px: 5,
-              py: 2.5,
+              px: 3.5,
+              py: 1.5,
               textAlign: "center",
               borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
               bgcolor: isDarkMode
@@ -529,10 +538,10 @@ const LoginView: React.FC = () => {
               sx={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 1,
-                px: 2.5,
-                py: 1,
-                borderRadius: 2.5,
+                gap: 0.75,
+                px: 2,
+                py: 0.75,
+                borderRadius: 2,
                 bgcolor: isDarkMode
                   ? alpha(theme.palette.primary.main, 0.1)
                   : alpha(theme.palette.primary.main, 0.06),
@@ -541,7 +550,7 @@ const LoginView: React.FC = () => {
             >
               <SparklesIcon
                 sx={{
-                  fontSize: 16,
+                  fontSize: 14,
                   color: "primary.main",
                   animation: "sparkle 2s ease-in-out infinite",
                   "@keyframes sparkle": {
@@ -556,9 +565,10 @@ const LoginView: React.FC = () => {
                   fontWeight: 600,
                   color: "primary.main",
                   letterSpacing: "0.02em",
+                  fontSize: "0.7rem",
                 }}
               >
-                Análises financeiras com Gemini AI
+                Análises com Gemini AI
               </Typography>
             </Box>
           </Box>
@@ -570,14 +580,19 @@ const LoginView: React.FC = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: 1,
-            mt: 3,
+            gap: 0.75,
+            mt: 2,
             opacity: 0.7,
           }}
         >
-          <FingerprintIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-          <Typography variant="caption" color="text.secondary" fontWeight={500}>
-            Seus dados estão protegidos com criptografia de ponta
+          <FingerprintIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            fontWeight={500}
+            sx={{ fontSize: "0.7rem" }}
+          >
+            Seus dados estão protegidos com criptografia
           </Typography>
         </Box>
       </Box>
