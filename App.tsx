@@ -1959,9 +1959,10 @@ const AppContent: React.FC<{
                     {/* Category & Payment Breakdown */}
                     <CategoryBreakdown
                       transactions={dashboardFilteredTransactions}
-                      onPaymentMethodClick={(method) =>
-                        setSelectedPaymentMethod(method)
-                      }
+                      onPaymentMethodClick={(method) => {
+                        setSelectedPaymentMethod(method);
+                        setCurrentView("paymentMethods");
+                      }}
                     />
 
                     {/* Analytics Charts */}

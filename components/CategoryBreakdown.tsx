@@ -15,6 +15,7 @@ import {
   CreditCard as CreditCardIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  OpenInNew as OpenInNewIcon,
 } from "@mui/icons-material";
 import { Transaction } from "../types";
 import { ColorsContext } from "../App";
@@ -33,7 +34,6 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   // Estados para controlar expansão das seções
   const [expandedIncomeCategories, setExpandedIncomeCategories] = useState<Set<string>>(new Set());
   const [expandedExpenseCategories, setExpandedExpenseCategories] = useState<Set<string>>(new Set());
-  const [expandedPaymentMethods, setExpandedPaymentMethods] = useState<Set<string>>(new Set());
 
   const toggleIncomeCategory = (category: string) => {
     setExpandedIncomeCategories(prev => {
@@ -54,18 +54,6 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
         next.delete(category);
       } else {
         next.add(category);
-      }
-      return next;
-    });
-  };
-
-  const togglePaymentMethod = (method: string) => {
-    setExpandedPaymentMethods(prev => {
-      const next = new Set(prev);
-      if (next.has(method)) {
-        next.delete(method);
-      } else {
-        next.add(method);
       }
       return next;
     });
@@ -573,7 +561,6 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                 const percentage =
                   totalPaymentMethodExpense > 0 ? (data.expense / totalPaymentMethodExpense) * 100 : 0;
                 const colors = getPaymentMethodColor(method);
-                const isExpanded = expandedPaymentMethods.has(method);
                 // Filtra apenas transações de despesa para este método
                 const methodExpenseTransactions = (transactionsByPaymentMethod[method] || [])
                   .filter(tx => tx.type === "expense");
@@ -584,18 +571,20 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                 return (
                   <Box key={method}>
                     <Box
-                      onClick={() => togglePaymentMethod(method)}
+                      onClick={() => onPaymentMethodClick && onPaymentMethodClick(method)}
                       sx={{
                         cursor: "pointer",
                         p: 1.5,
                         borderRadius: 1,
                         border: 1,
-                        borderColor: isExpanded ? colors.primary : "divider",
-                        bgcolor: isExpanded ? `${colors.primary}08` : "transparent",
+                        borderColor: "divider",
+                        bgcolor: "transparent",
                         transition: "all 0.2s ease",
                         "&:hover": {
                           bgcolor: `${colors.primary}12`,
                           borderColor: colors.primary,
+                          transform: "translateY(-2px)",
+                          boxShadow: `0 4px 12px -4px ${colors.primary}30`,
                         },
                       }}
                     >
@@ -608,7 +597,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         }}
                       >
                         <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                          sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}
                         >
                           <Box
                             sx={{
@@ -643,13 +632,9 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                           <Typography variant="caption" color="text.secondary">
                             {percentage.toFixed(0)}%
                           </Typography>
-                          <IconButton size="small" sx={{ p: 0, ml: 0.5 }}>
-                            {isExpanded ? (
-                              <ExpandLessIcon fontSize="small" sx={{ color: colors.primary }} />
-                            ) : (
-                              <ExpandMoreIcon fontSize="small" sx={{ color: "text.secondary" }} />
-                            )}
-                          </IconButton>
+                          {onPaymentMethodClick && (
+                            <OpenInNewIcon fontSize="small" sx={{ color: colors.primary, ml: 0.5 }} />
+                          )}
                         </Box>
                       </Box>
                       <LinearProgress
@@ -666,62 +651,6 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         }}
                       />
                     </Box>
-                    
-                    <Collapse in={isExpanded}>
-                      <Box sx={{ pl: 3, pr: 1, py: 1 }}>
-                        {methodExpenseTransactions
-                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                          .map((tx) => (
-                          <Box
-                            key={tx.id}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              py: 0.75,
-                              borderBottom: 1,
-                              borderColor: "divider",
-                              "&:last-child": { borderBottom: 0 },
-                            }}
-                          >
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0, flex: 1 }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 45 }}>
-                                {formatDate(tx.date)}
-                              </Typography>
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
-                                  overflow: "hidden", 
-                                  textOverflow: "ellipsis", 
-                                  whiteSpace: "nowrap",
-                                  flex: 1,
-                                }}
-                              >
-                                {tx.description}
-                              </Typography>
-                              <Chip 
-                                label={tx.category} 
-                                size="small" 
-                                sx={{ 
-                                  height: 18, 
-                                  fontSize: 10,
-                                  bgcolor: "error.light",
-                                  color: "error.dark",
-                                }} 
-                              />
-                            </Box>
-                            <Typography 
-                              variant="body2" 
-                              fontWeight={500} 
-                              color="error.main"
-                              sx={{ ml: 1 }}
-                            >
-                              -{formatCurrency(tx.amount || 0)}
-                            </Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Collapse>
                   </Box>
                 );
               })}
