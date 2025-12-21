@@ -468,6 +468,9 @@ const AppContent: React.FC<{
 
   // Handlers
   const handleLogout = async () => {
+    // Limpa flags de sessão ao fazer logout
+    localStorage.removeItem("nix_remember_session");
+    sessionStorage.removeItem("nix_temp_session");
     await supabase.auth.signOut();
   };
 
@@ -2355,7 +2358,23 @@ const App: React.FC = () => {
 
   // Auth & Data Fetching
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      // Verifica se a sessão era temporária (usuário não marcou "Manter-me conectado")
+      // Se tem sessão, não tem "remember_session" no localStorage, e não tem "temp_session" no sessionStorage
+      // significa que o navegador foi fechado e reaberto - devemos fazer signOut
+      if (session) {
+        const rememberSession = localStorage.getItem("nix_remember_session");
+        const tempSession = sessionStorage.getItem("nix_temp_session");
+
+        if (!rememberSession && !tempSession) {
+          // Sessão era temporária e navegador foi fechado - fazer signOut
+          await supabase.auth.signOut();
+          setSession(null);
+          setLoadingInitial(false);
+          return;
+        }
+      }
+
       setSession(session);
       if (session) fetchData(session.user.id);
       else setLoadingInitial(false);

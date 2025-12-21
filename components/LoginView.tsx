@@ -10,6 +10,8 @@ import {
   Link,
   useTheme,
   alpha,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import {
   AutoAwesome as SparklesIcon,
@@ -32,6 +34,10 @@ const LoginView: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(() => {
+    // Inicia marcado se usuário tinha escolhido lembrar antes
+    return localStorage.getItem("nix_remember_session") === "true";
+  });
 
   // Estilos de input premium
   const inputSx = {
@@ -108,6 +114,18 @@ const LoginView: React.FC = () => {
           password,
         });
         if (error) throw error;
+
+        // Controla persistência da sessão baseado no checkbox "Manter-me conectado"
+        if (rememberMe) {
+          // Salva flag para manter sessão persistente
+          localStorage.setItem("nix_remember_session", "true");
+        } else {
+          // Remove flag de persistência e marca sessão como temporária
+          localStorage.removeItem("nix_remember_session");
+          // Usa sessionStorage para indicar que é uma sessão temporária
+          // Quando o navegador fechar, sessionStorage é limpo e o App fará signOut
+          sessionStorage.setItem("nix_temp_session", "true");
+        }
       }
     } catch (err: any) {
       setError(err.message || "Ocorreu um erro.");
@@ -374,6 +392,49 @@ const LoginView: React.FC = () => {
               }}
               sx={inputSx}
             />
+
+            {/* Remember Me Checkbox - apenas no login */}
+            {!isSignUp && (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    sx={{
+                      color: isDarkMode
+                        ? alpha("#FFFFFF", 0.5)
+                        : alpha(theme.palette.primary.main, 0.5),
+                      "&.Mui-checked": {
+                        color: "primary.main",
+                      },
+                      transition: "all 0.2s ease-in-out",
+                      "&:hover": {
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      },
+                    }}
+                  />
+                }
+                label={
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      color: "text.secondary",
+                      userSelect: "none",
+                    }}
+                  >
+                    Manter-me conectado
+                  </Typography>
+                }
+                sx={{
+                  mx: 0,
+                  mt: -1,
+                  "& .MuiFormControlLabel-label": {
+                    ml: 0.5,
+                  },
+                }}
+              />
+            )}
 
             {/* Submit Button - Premium & Inviting */}
             <Button
