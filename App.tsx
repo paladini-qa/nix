@@ -355,6 +355,95 @@ const AppContent: React.FC<{
     );
   }, [transactions, filters, generateRecurringTransactions]);
 
+  // Helper: Gera transações recorrentes para um intervalo de meses
+  const generateRecurringForDateRange = (
+    startYear: number,
+    startMonth: number,
+    endYear: number,
+    endMonth: number
+  ): Transaction[] => {
+    const virtualTransactions: Transaction[] = [];
+    
+    // Itera por todos os meses no intervalo
+    let currentYear = startYear;
+    let currentMonth = startMonth;
+    
+    while (
+      currentYear < endYear ||
+      (currentYear === endYear && currentMonth <= endMonth)
+    ) {
+      transactions.forEach((t) => {
+        if (!t.isRecurring || !t.frequency) return;
+        if (t.installments && t.installments > 1) return;
+
+        const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
+        
+        // Não gera antes da data original
+        if (
+          currentYear < origYear ||
+          (currentYear === origYear && currentMonth < origMonth)
+        ) return;
+
+        // Não gera no mês original (já existe no banco)
+        const isOriginalMonth = origYear === currentYear && origMonth === currentMonth;
+        if (isOriginalMonth) return;
+
+        let shouldAppear = false;
+
+        if (t.frequency === "monthly") {
+          shouldAppear = true;
+        } else if (t.frequency === "yearly") {
+          shouldAppear = origMonth === currentMonth && currentYear > origYear;
+        }
+
+        if (shouldAppear) {
+          const daysInTargetMonth = new Date(currentYear, currentMonth, 0).getDate();
+          const adjustedDay = Math.min(origDay, daysInTargetMonth);
+          const virtualDate = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+
+          // Verifica se já existe uma transação materializada
+          const hasMaterialized = transactions.some((mt) => {
+            if (mt.isRecurring || mt.isVirtual) return false;
+            if (mt.id === t.id) return false;
+            
+            return (
+              mt.description === t.description &&
+              mt.category === t.category &&
+              mt.amount === t.amount &&
+              mt.date === virtualDate &&
+              mt.type === t.type
+            );
+          });
+
+          // Verifica se já foi adicionada ao array virtual
+          const alreadyAdded = virtualTransactions.some(
+            (vt) => vt.id === `${t.id}_recurring_${currentYear}-${String(currentMonth).padStart(2, "0")}`
+          );
+
+          if (!hasMaterialized && !alreadyAdded) {
+            virtualTransactions.push({
+              ...t,
+              id: `${t.id}_recurring_${currentYear}-${String(currentMonth).padStart(2, "0")}`,
+              date: virtualDate,
+              isVirtual: true,
+              originalTransactionId: t.id,
+              isPaid: false,
+            });
+          }
+        }
+      });
+
+      // Avança para o próximo mês
+      currentMonth++;
+      if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+      }
+    }
+
+    return virtualTransactions;
+  };
+
   // Apply advanced filters (for dashboard)
   const dashboardFilteredTransactions = useMemo(() => {
     // Se não há filtros avançados ativos, usa as transações do mês
@@ -369,24 +458,44 @@ const AppContent: React.FC<{
       return filteredTransactions;
     }
 
-    // Se há filtros de data, ignora o filtro de mês/ano e filtra todas as transações
-    const baseTransactions =
-      advancedFilters.startDate || advancedFilters.endDate
-        ? [...transactions, ...generateRecurringTransactions]
-        : filteredTransactions;
+    // Gera transações recorrentes para o intervalo de datas (se especificado)
+    let recurringForRange: Transaction[] = [];
+    if (advancedFilters.startDate || advancedFilters.endDate) {
+      const now = new Date();
+      const startYear = advancedFilters.startDate?.year() ?? now.getFullYear() - 1;
+      const startMonth = advancedFilters.startDate ? advancedFilters.startDate.month() + 1 : 1;
+      const endYear = advancedFilters.endDate?.year() ?? now.getFullYear() + 1;
+      const endMonth = advancedFilters.endDate ? advancedFilters.endDate.month() + 1 : 12;
+      
+      recurringForRange = generateRecurringForDateRange(startYear, startMonth, endYear, endMonth);
+    }
+
+    // Quando há filtros avançados ativos, usa todas as transações + recorrentes do período
+    const baseTransactions = [...transactions, ...recurringForRange];
 
     return baseTransactions.filter((tx) => {
-      // Filtro por data
+      // Filtro por data - normaliza para comparar apenas as datas (sem timezone)
       if (advancedFilters.startDate) {
-        const txDate = new Date(tx.date);
-        const startDate = advancedFilters.startDate.toDate();
-        if (txDate < startDate) return false;
+        const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
+        const startYear = advancedFilters.startDate.year();
+        const startMonth = advancedFilters.startDate.month() + 1;
+        const startDay = advancedFilters.startDate.date();
+        
+        const txDateNum = txYear * 10000 + txMonth * 100 + txDay;
+        const startDateNum = startYear * 10000 + startMonth * 100 + startDay;
+        
+        if (txDateNum < startDateNum) return false;
       }
       if (advancedFilters.endDate) {
-        const txDate = new Date(tx.date);
-        const endDate = advancedFilters.endDate.toDate();
-        endDate.setHours(23, 59, 59, 999);
-        if (txDate > endDate) return false;
+        const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
+        const endYear = advancedFilters.endDate.year();
+        const endMonth = advancedFilters.endDate.month() + 1;
+        const endDay = advancedFilters.endDate.date();
+        
+        const txDateNum = txYear * 10000 + txMonth * 100 + txDay;
+        const endDateNum = endYear * 10000 + endMonth * 100 + endDay;
+        
+        if (txDateNum > endDateNum) return false;
       }
 
       // Filtro por tipo
@@ -412,7 +521,7 @@ const AppContent: React.FC<{
 
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [filteredTransactions, transactions, generateRecurringTransactions, advancedFilters]);
+  }, [filteredTransactions, transactions, advancedFilters]);
 
   // Summary (based on filtered transactions for dashboard)
   const summary = useMemo<FinancialSummary>(() => {
@@ -1925,6 +2034,14 @@ const AppContent: React.FC<{
                           }
                           showIcon
                           compact={isMobile}
+                          disabled={
+                            advancedFilters.startDate !== null ||
+                            advancedFilters.endDate !== null ||
+                            advancedFilters.type !== "all" ||
+                            advancedFilters.categories.length > 0 ||
+                            advancedFilters.paymentMethods.length > 0
+                          }
+                          disabledMessage="Remova os filtros avançados para usar o filtro de mês"
                         />
                         {!isMobile && (
                           <Button

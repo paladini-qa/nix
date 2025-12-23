@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Box, IconButton, useMediaQuery, useTheme } from "@mui/material";
+import { Box, IconButton, useMediaQuery, useTheme, Tooltip } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -16,6 +16,8 @@ interface DateFilterProps {
   onDateChange: (month: number, year: number) => void;
   compact?: boolean;
   showIcon?: boolean;
+  disabled?: boolean;
+  disabledMessage?: string;
 }
 
 const DateFilter: React.FC<DateFilterProps> = ({
@@ -23,6 +25,8 @@ const DateFilter: React.FC<DateFilterProps> = ({
   year,
   onDateChange,
   compact = false,
+  disabled = false,
+  disabledMessage = "Filtros avançados ativos",
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -55,72 +59,87 @@ const DateFilter: React.FC<DateFilterProps> = ({
     onDateChange(newDate.month(), newDate.year());
   };
 
-  return (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
-      <Box
+  const filterContent = (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 0.5,
+        opacity: disabled ? 0.5 : 1,
+        transition: "opacity 0.2s ease-in-out",
+      }}
+    >
+      <IconButton
+        onClick={handlePreviousMonth}
+        size="small"
+        disabled={disabled}
         sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 0.5,
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+          "&:hover": {
+            bgcolor: disabled ? undefined : "primary.main",
+            color: disabled ? undefined : "primary.contrastText",
+            borderColor: disabled ? undefined : "primary.main",
+          },
         }}
       >
-        <IconButton
-          onClick={handlePreviousMonth}
-          size="small"
-          sx={{
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 1,
-            "&:hover": {
-              bgcolor: "primary.main",
-              color: "primary.contrastText",
-              borderColor: "primary.main",
-            },
-          }}
-        >
-          <ChevronLeftIcon fontSize="small" />
-        </IconButton>
+        <ChevronLeftIcon fontSize="small" />
+      </IconButton>
 
-        <DatePicker
-          views={["year", "month"]}
-          openTo="month"
-          value={selectedDate}
-          onChange={handleDateChange}
-          format={isMobile ? "MMM YYYY" : "MMMM YYYY"}
-          slotProps={{
-            textField: {
-              size: "small",
-              sx: {
-                minWidth: isMobile ? 120 : compact ? 160 : 200,
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                },
-                "& .MuiOutlinedInput-input": {
-                  fontSize: isMobile ? 14 : 16,
-                  textAlign: "center",
-                },
+      <DatePicker
+        views={["year", "month"]}
+        openTo="month"
+        value={selectedDate}
+        onChange={handleDateChange}
+        disabled={disabled}
+        format={isMobile ? "MMM YYYY" : "MMMM YYYY"}
+        slotProps={{
+          textField: {
+            size: "small",
+            sx: {
+              minWidth: isMobile ? 120 : compact ? 160 : 200,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+              },
+              "& .MuiOutlinedInput-input": {
+                fontSize: isMobile ? 14 : 16,
+                textAlign: "center",
               },
             },
-          }}
-        />
+          },
+        }}
+      />
 
-        <IconButton
-          onClick={handleNextMonth}
-          size="small"
-          sx={{
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 1,
-            "&:hover": {
-              bgcolor: "primary.main",
-              color: "primary.contrastText",
-              borderColor: "primary.main",
-            },
-          }}
-        >
-          <ChevronRightIcon fontSize="small" />
-        </IconButton>
-      </Box>
+      <IconButton
+        onClick={handleNextMonth}
+        size="small"
+        disabled={disabled}
+        sx={{
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+          "&:hover": {
+            bgcolor: disabled ? undefined : "primary.main",
+            color: disabled ? undefined : "primary.contrastText",
+            borderColor: disabled ? undefined : "primary.main",
+          },
+        }}
+      >
+        <ChevronRightIcon fontSize="small" />
+      </IconButton>
+    </Box>
+  );
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
+      {disabled ? (
+        <Tooltip title={disabledMessage} arrow>
+          <span>{filterContent}</span>
+        </Tooltip>
+      ) : (
+        filterContent
+      )}
     </LocalizationProvider>
   );
 };
