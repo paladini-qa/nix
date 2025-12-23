@@ -34,6 +34,7 @@ import {
   LinearProgress,
   Switch,
   Tooltip,
+  Checkbox,
 } from "@mui/material";
 import {
   Repeat as RepeatIcon,
@@ -52,6 +53,7 @@ import {
   Schedule as ScheduleIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as UnpaidIcon,
+  Visibility as VisibilityIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
@@ -66,10 +68,12 @@ interface RecurringViewProps {
 
 interface RecurringOccurrence {
   date: string;
+  formattedDate: string;
   month: string;
   year: number;
   isPast: boolean;
   isCurrent: boolean;
+  occurrenceNumber: number;
 }
 
 const RecurringView: React.FC<RecurringViewProps> = ({
@@ -91,6 +95,13 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     element: HTMLElement | null;
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
+
+  // Estado para o menu mobile de ocorrências
+  const [mobileOccurrenceMenuAnchor, setMobileOccurrenceMenuAnchor] = useState<{
+    element: HTMLElement | null;
+    transaction: Transaction | null;
+    occurrence: RecurringOccurrence | null;
+  }>({ element: null, transaction: null, occurrence: null });
 
   // Lista de todas as categorias únicas das transações recorrentes
   const allCategories = useMemo(() => {
@@ -197,7 +208,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     });
   };
 
-  // Gera lista de ocorrências para exibição
+  // Gera lista de ocorrências futuras para exibição (12 meses ou 1 ano à frente)
   const getOccurrencesList = (transaction: Transaction): RecurringOccurrence[] => {
     const startDate = parseLocalDate(transaction.date);
     const today = new Date();
@@ -205,39 +216,89 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     const occurrences: RecurringOccurrence[] = [];
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     
-    // Mostra 12 ocorrências (6 passadas se existirem + atual + 5 futuras)
-    let currentDate = new Date(startDate);
-    const maxOccurrences = 12;
+    // Calcula a próxima ocorrência a partir de hoje
+    let nextOccurrence = new Date(startDate);
     
-    for (let i = 0; i < maxOccurrences; i++) {
-      if (transaction.frequency === "monthly") {
-        const occDate = new Date(startDate);
-        occDate.setMonth(startDate.getMonth() + i);
+    if (transaction.frequency === "monthly") {
+      // Avança até a próxima ocorrência que ainda não passou
+      while (nextOccurrence < today) {
+        nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
+      }
+      
+      // Se a próxima ocorrência for este mês, voltamos uma posição para incluir o mês atual
+      const currentMonthOcc = new Date(nextOccurrence);
+      if (currentMonthOcc.getMonth() === today.getMonth() && currentMonthOcc.getFullYear() === today.getFullYear()) {
+        // Já está no mês atual, começamos daqui
+      } else {
+        // Verifica se o mês atual tem uma ocorrência
+        const thisMonthOcc = new Date(startDate);
+        while (thisMonthOcc.getFullYear() < today.getFullYear() || 
+               (thisMonthOcc.getFullYear() === today.getFullYear() && thisMonthOcc.getMonth() < today.getMonth())) {
+          thisMonthOcc.setMonth(thisMonthOcc.getMonth() + 1);
+        }
+        if (thisMonthOcc.getMonth() === today.getMonth() && thisMonthOcc.getFullYear() === today.getFullYear()) {
+          nextOccurrence = thisMonthOcc;
+        }
+      }
+      
+      // Calcula quantas ocorrências já passaram desde o início
+      const startOccurrenceNumber = Math.max(0, 
+        (nextOccurrence.getFullYear() - startDate.getFullYear()) * 12 + 
+        (nextOccurrence.getMonth() - startDate.getMonth())
+      ) + 1;
+      
+      // Gera 12 ocorrências a partir da próxima
+      for (let i = 0; i < 12; i++) {
+        const occDate = new Date(nextOccurrence);
+        occDate.setMonth(nextOccurrence.getMonth() + i);
         
-        const isPast = occDate < new Date(today.getFullYear(), today.getMonth(), 1);
+        const isPast = occDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const isCurrent = occDate.getMonth() === today.getMonth() && occDate.getFullYear() === today.getFullYear();
         
         occurrences.push({
           date: occDate.toISOString().split("T")[0],
+          formattedDate: occDate.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
           month: months[occDate.getMonth()],
           year: occDate.getFullYear(),
           isPast,
           isCurrent,
+          occurrenceNumber: startOccurrenceNumber + i,
         });
-      } else if (transaction.frequency === "yearly") {
-        const occDate = new Date(startDate);
-        occDate.setFullYear(startDate.getFullYear() + i);
+      }
+    } else if (transaction.frequency === "yearly") {
+      // Para anuais, mostra 12 ocorrências (12 anos à frente)
+      while (nextOccurrence < today) {
+        nextOccurrence.setFullYear(nextOccurrence.getFullYear() + 1);
+      }
+      
+      // Calcula quantas ocorrências já passaram desde o início
+      const startOccurrenceNumber = Math.max(0, nextOccurrence.getFullYear() - startDate.getFullYear()) + 1;
+      
+      // Gera 12 ocorrências anuais
+      for (let i = 0; i < 12; i++) {
+        const occDate = new Date(nextOccurrence);
+        occDate.setFullYear(nextOccurrence.getFullYear() + i);
         
-        const isPast = occDate.getFullYear() < today.getFullYear() || 
-          (occDate.getFullYear() === today.getFullYear() && occDate.getMonth() < today.getMonth());
-        const isCurrent = occDate.getFullYear() === today.getFullYear() && occDate.getMonth() === today.getMonth();
+        const isPast = occDate < today;
+        const isCurrent = occDate.getFullYear() === today.getFullYear() && 
+          occDate.getMonth() === today.getMonth();
         
         occurrences.push({
           date: occDate.toISOString().split("T")[0],
+          formattedDate: occDate.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
           month: months[occDate.getMonth()],
           year: occDate.getFullYear(),
           isPast,
           isCurrent,
+          occurrenceNumber: startOccurrenceNumber + i,
         });
       }
     }
@@ -271,6 +332,35 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       }
       return newSet;
     });
+  };
+
+  // Cria uma transação virtual para uma ocorrência específica
+  const createVirtualTransaction = (
+    baseTransaction: Transaction,
+    occurrence: RecurringOccurrence
+  ): Transaction => {
+    return {
+      ...baseTransaction,
+      date: occurrence.date,
+      isVirtual: true,
+      relatedTransactionId: baseTransaction.id,
+      currentInstallment: occurrence.occurrenceNumber,
+    };
+  };
+
+  // Handlers para ações nas ocorrências
+  const handleOccurrenceEdit = (transaction: Transaction, occurrence: RecurringOccurrence) => {
+    const virtualTransaction = createVirtualTransaction(transaction, occurrence);
+    onEdit(virtualTransaction);
+  };
+
+  const handleOccurrenceDelete = (transaction: Transaction, occurrence: RecurringOccurrence) => {
+    const virtualTransaction = createVirtualTransaction(transaction, occurrence);
+    onDelete(virtualTransaction.id);
+  };
+
+  const handleCloseMobileOccurrenceMenu = () => {
+    setMobileOccurrenceMenuAnchor({ element: null, transaction: null, occurrence: null });
   };
 
   const renderRecurringCard = (t: Transaction) => {
@@ -423,7 +513,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               sx={{ textTransform: "none" }}
             >
-              {isExpanded ? "Hide occurrences" : "View occurrences"}
+              {isExpanded ? "Hide transactions" : `View next 12 ${t.frequency === "monthly" ? "months" : "years"}`}
             </Button>
           </Box>
         </CardContent>
@@ -465,82 +555,260 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               </Button>
             </Box>
 
-            {/* Timeline/Grid of occurrences */}
-            <Typography variant="subtitle2" gutterBottom>
-              Upcoming occurrences
+            {/* Tabela de Ocorrências Futuras (similar ao SplitsView) */}
+            <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <VisibilityIcon fontSize="small" color="primary" />
+              Next 12 {t.frequency === "monthly" ? "Months" : "Years"}
             </Typography>
             
             {isMobile ? (
+              // Mobile: Cards compactos com ações
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {occurrencesList.slice(0, 6).map((occ, idx) => (
-                  <Paper
-                    key={idx}
-                    sx={{
-                      p: 1.5,
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      opacity: occ.isPast ? 0.5 : 1,
-                      bgcolor: occ.isCurrent ? "primary.50" : "background.paper",
-                      border: occ.isCurrent ? 2 : 1,
-                      borderColor: occ.isCurrent ? "primary.main" : "divider",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <EventIcon fontSize="small" color={occ.isCurrent ? "primary" : "action"} />
-                      <Typography
-                        variant="body2"
-                        fontWeight={occ.isCurrent ? 600 : 400}
-                      >
-                        {occ.month} {occ.year}
-                      </Typography>
-                      {occ.isCurrent && (
-                        <Chip label="Current" size="small" color="primary" />
-                      )}
-                    </Box>
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color={isIncome ? "success.main" : "error.main"}
-                    >
-                      {formatCurrency(t.amount || 0)}
-                    </Typography>
-                  </Paper>
-                ))}
-              </Box>
-            ) : (
-              <Grid container spacing={1}>
-                {occurrencesList.map((occ, idx) => (
-                  <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={idx}>
+                {occurrencesList.map((occ, idx) => {
+                  const isPaidOccurrence = occ.isCurrent && t.isPaid;
+                  
+                  return (
                     <Paper
+                      key={idx}
                       sx={{
                         p: 1.5,
-                        textAlign: "center",
-                        opacity: occ.isPast ? 0.5 : 1,
-                        bgcolor: occ.isCurrent ? "primary.50" : "background.paper",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        opacity: isPaidOccurrence ? 0.6 : 1,
+                        bgcolor: occ.isCurrent 
+                          ? alpha(theme.palette.primary.main, 0.08) 
+                          : isPaidOccurrence
+                            ? "action.disabledBackground"
+                            : "background.paper",
                         border: occ.isCurrent ? 2 : 1,
                         borderColor: occ.isCurrent ? "primary.main" : "divider",
-                        textDecoration: occ.isPast ? "line-through" : "none",
+                        borderRadius: "12px",
                       }}
                     >
+                      <Checkbox
+                        checked={isPaidOccurrence}
+                        onChange={(e) => {
+                          if (occ.isCurrent) {
+                            onTogglePaid(t.id, e.target.checked);
+                          }
+                        }}
+                        size="small"
+                        color="success"
+                        disabled={!occ.isCurrent}
+                        sx={{
+                          opacity: occ.isCurrent ? 1 : 0.3,
+                          p: 0.5,
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: occ.isCurrent 
+                            ? alpha(theme.palette.primary.main, 0.15) 
+                            : alpha(theme.palette.action.hover, 0.1),
+                          border: `1px solid ${occ.isCurrent ? theme.palette.primary.main : "transparent"}`,
+                        }}
+                      >
+                        <Typography 
+                          variant="caption" 
+                          fontWeight={700}
+                          color={occ.isCurrent ? "primary.main" : "text.secondary"}
+                          sx={{ fontSize: 10 }}
+                        >
+                          #{occ.occurrenceNumber}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                          <Typography 
+                            variant="body2" 
+                            fontWeight={occ.isCurrent ? 600 : 500}
+                            sx={{
+                              textDecoration: isPaidOccurrence ? "line-through" : "none",
+                            }}
+                          >
+                            {occ.formattedDate}
+                          </Typography>
+                          {occ.isCurrent && (
+                            <Chip 
+                              label={isPaidOccurrence ? "Paid" : "This Month"} 
+                              size="small" 
+                              color={isPaidOccurrence ? "success" : "primary"} 
+                              sx={{ height: 18, fontSize: 9 }} 
+                            />
+                          )}
+                        </Box>
+                        <Typography variant="caption" color="text.secondary">
+                          {occ.month} {occ.year}
+                        </Typography>
+                      </Box>
                       <Typography
                         variant="body2"
-                        fontWeight={occ.isCurrent ? 700 : 500}
-                        color={occ.isCurrent ? "primary.main" : "text.primary"}
+                        fontWeight={600}
+                        color={isIncome ? "success.main" : "error.main"}
+                        sx={{ 
+                          fontFamily: "monospace", 
+                          fontSize: 12,
+                          textDecoration: isPaidOccurrence ? "line-through" : "none",
+                        }}
                       >
-                        {occ.month}
+                        {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {occ.year}
-                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMobileOccurrenceMenuAnchor({ 
+                            element: e.currentTarget, 
+                            transaction: t, 
+                            occurrence: occ 
+                          });
+                        }}
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
                     </Paper>
-                  </Grid>
-                ))}
-              </Grid>
+                  );
+                })}
+              </Box>
+            ) : (
+              // Desktop: Tabela similar ao SplitsView
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ width: 50 }}>Paid</TableCell>
+                    <TableCell sx={{ width: 80 }}>#</TableCell>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Period</TableCell>
+                    <TableCell align="right">Amount</TableCell>
+                    <TableCell align="center" sx={{ width: 100 }}>Status</TableCell>
+                    <TableCell align="center" sx={{ width: 100 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {occurrencesList.map((occ, idx) => {
+                    // Verifica se esta ocorrência está paga (baseado no mês atual da transação base)
+                    const isPaidOccurrence = occ.isCurrent && t.isPaid;
+                    
+                    return (
+                      <TableRow
+                        key={idx}
+                        sx={{
+                          opacity: isPaidOccurrence ? 0.6 : 1,
+                          bgcolor: occ.isCurrent 
+                            ? alpha(theme.palette.primary.main, 0.08) 
+                            : isPaidOccurrence
+                              ? "action.disabledBackground"
+                              : "transparent",
+                          "&:hover": {
+                            bgcolor: alpha(theme.palette.action.hover, 0.08),
+                          },
+                          "& td": {
+                            textDecoration: isPaidOccurrence ? "line-through" : "none",
+                            textDecorationColor: "text.disabled",
+                          },
+                        }}
+                      >
+                        <TableCell>
+                          <Tooltip title={isPaidOccurrence ? "Mark as Unpaid" : "Mark as Paid"}>
+                            <Checkbox
+                              checked={isPaidOccurrence}
+                              onChange={(e) => {
+                                // Para a ocorrência atual, toggle o status de pago
+                                if (occ.isCurrent) {
+                                  onTogglePaid(t.id, e.target.checked);
+                                }
+                              }}
+                              size="small"
+                              color="success"
+                              disabled={!occ.isCurrent}
+                              sx={{
+                                opacity: occ.isCurrent ? 1 : 0.3,
+                              }}
+                            />
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={`#${occ.occurrenceNumber}`}
+                            size="small"
+                            variant="outlined"
+                            color={occ.isCurrent ? "primary" : "default"}
+                            sx={{ fontWeight: 600 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={occ.isCurrent ? 600 : 400}>
+                            {occ.formattedDate}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {occ.month} {occ.year}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontFamily: "monospace" }}>
+                          <Typography 
+                            variant="body2" 
+                            fontWeight={600}
+                            color={isIncome ? "success.main" : "error.main"}
+                          >
+                            {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          {occ.isCurrent ? (
+                            <Chip 
+                              label={isPaidOccurrence ? "Paid" : "Current"} 
+                              size="small" 
+                              color={isPaidOccurrence ? "success" : "primary"} 
+                              sx={{ fontWeight: 500 }}
+                            />
+                          ) : (
+                            <Chip 
+                              label="Scheduled" 
+                              size="small" 
+                              variant="outlined" 
+                              color="default"
+                              sx={{ opacity: 0.7 }}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Tooltip title="Edit">
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleOccurrenceEdit(t, occ)} 
+                              color="primary"
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleOccurrenceDelete(t, occ)} 
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             )}
 
             {/* Annual Impact */}
-            <Paper sx={{ p: 2, mt: 2, bgcolor: "background.paper" }}>
+            <Paper sx={{ p: 2, mt: 2, bgcolor: "background.paper", borderRadius: "12px" }}>
               <Typography variant="subtitle2" gutterBottom>
                 Annual Impact
               </Typography>
@@ -951,6 +1219,71 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           <AddIcon />
         </Fab>
       )}
+
+      {/* Mobile Menu para Ocorrências */}
+      <Menu
+        anchorEl={mobileOccurrenceMenuAnchor.element}
+        open={Boolean(mobileOccurrenceMenuAnchor.element)}
+        onClose={handleCloseMobileOccurrenceMenu}
+      >
+        {mobileOccurrenceMenuAnchor.occurrence?.isCurrent && (
+          <MenuItem
+            onClick={() => {
+              if (mobileOccurrenceMenuAnchor.transaction) {
+                onTogglePaid(
+                  mobileOccurrenceMenuAnchor.transaction.id, 
+                  !mobileOccurrenceMenuAnchor.transaction.isPaid
+                );
+              }
+              handleCloseMobileOccurrenceMenu();
+            }}
+          >
+            <ListItemIcon>
+              {mobileOccurrenceMenuAnchor.transaction?.isPaid ? (
+                <UnpaidIcon fontSize="small" />
+              ) : (
+                <CheckCircleIcon fontSize="small" color="success" />
+              )}
+            </ListItemIcon>
+            <ListItemText>
+              {mobileOccurrenceMenuAnchor.transaction?.isPaid ? "Mark as Unpaid" : "Mark as Paid"}
+            </ListItemText>
+          </MenuItem>
+        )}
+        <MenuItem
+          onClick={() => {
+            if (mobileOccurrenceMenuAnchor.transaction && mobileOccurrenceMenuAnchor.occurrence) {
+              handleOccurrenceEdit(
+                mobileOccurrenceMenuAnchor.transaction, 
+                mobileOccurrenceMenuAnchor.occurrence
+              );
+            }
+            handleCloseMobileOccurrenceMenu();
+          }}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" color="primary" />
+          </ListItemIcon>
+          <ListItemText>Edit</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (mobileOccurrenceMenuAnchor.transaction && mobileOccurrenceMenuAnchor.occurrence) {
+              handleOccurrenceDelete(
+                mobileOccurrenceMenuAnchor.transaction, 
+                mobileOccurrenceMenuAnchor.occurrence
+              );
+            }
+            handleCloseMobileOccurrenceMenu();
+          }}
+        >
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" color="error" />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+
     </Box>
   );
 };

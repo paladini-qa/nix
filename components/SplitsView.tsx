@@ -48,6 +48,8 @@ import {
   Add as AddIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  Visibility as VisibilityIcon,
+  RadioButtonUnchecked as UnpaidIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
@@ -189,6 +191,28 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
   const formatDateShort = (dateString: string) => {
     const [year, month, day] = dateString.split("-");
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[parseInt(month) - 1]} ${year}`;
+  };
+
+  const formatDateFull = (dateString: string) => {
+    const [year, month, day] = dateString.split("-");
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const isCurrentMonth = (dateString: string) => {
+    const today = new Date();
+    const [year, month] = dateString.split("-").map(Number);
+    return year === today.getFullYear() && month === today.getMonth() + 1;
+  };
+
+  const getPeriod = (dateString: string) => {
+    const [year, month] = dateString.split("-");
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     return `${months[parseInt(month) - 1]} ${year}`;
   };
@@ -357,111 +381,268 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         <Collapse in={isExpanded}>
           <Divider />
           <Box sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.08) }}>
+            {/* Título da Tabela */}
+            <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <VisibilityIcon fontSize="small" color="primary" />
+              All {group.totalInstallments} Installments
+            </Typography>
+
             {isMobile ? (
-              // Mobile: Cards compactos
+              // Mobile: Cards compactos com design melhorado
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {group.installments.map((t) => (
-                  <Paper
-                    key={t.id}
-                    sx={{
-                      p: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      opacity: t.isPaid !== false ? 0.6 : 1,
-                      bgcolor: t.isPaid !== false ? "action.disabledBackground" : "background.paper",
-                    }}
-                  >
-                    <Checkbox
-                      checked={t.isPaid !== false}
-                      onChange={(e) => onTogglePaid(t.id, e.target.checked)}
-                      size="small"
-                      color="success"
-                    />
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant="body2"
-                        fontWeight={500}
-                        sx={{
-                          textDecoration: t.isPaid !== false ? "line-through" : "none",
-                        }}
-                      >
-                        {t.currentInstallment}/{t.installments}x • {formatDate(t.date)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatCurrency(t.amount || 0)}
-                      </Typography>
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMobileActionAnchor({ element: e.currentTarget, transaction: t });
+                {group.installments.map((t) => {
+                  const isPaid = t.isPaid !== false;
+                  const isCurrent = isCurrentMonth(t.date);
+                  
+                  return (
+                    <Paper
+                      key={t.id}
+                      sx={{
+                        p: 1.5,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        opacity: isPaid ? 0.6 : 1,
+                        bgcolor: isCurrent && !isPaid
+                          ? alpha(theme.palette.primary.main, 0.08) 
+                          : isPaid
+                            ? "action.disabledBackground"
+                            : "background.paper",
+                        border: isCurrent && !isPaid ? 2 : 1,
+                        borderColor: isCurrent && !isPaid ? "primary.main" : "divider",
+                        borderRadius: "12px",
                       }}
                     >
-                      <MoreVertIcon fontSize="small" />
-                    </IconButton>
-                  </Paper>
-                ))}
+                      <Checkbox
+                        checked={isPaid}
+                        onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                        size="small"
+                        color="success"
+                        sx={{ p: 0.5 }}
+                      />
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: isCurrent && !isPaid
+                            ? alpha(theme.palette.primary.main, 0.15) 
+                            : alpha(theme.palette.action.hover, 0.1),
+                          border: `1px solid ${isCurrent && !isPaid ? theme.palette.primary.main : "transparent"}`,
+                        }}
+                      >
+                        <Typography 
+                          variant="caption" 
+                          fontWeight={700}
+                          color={isCurrent && !isPaid ? "primary.main" : "text.secondary"}
+                          sx={{ fontSize: 10 }}
+                        >
+                          #{t.currentInstallment}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                          <Typography 
+                            variant="body2" 
+                            fontWeight={isCurrent ? 600 : 500}
+                            sx={{
+                              textDecoration: isPaid ? "line-through" : "none",
+                            }}
+                          >
+                            {formatDateFull(t.date)}
+                          </Typography>
+                          {isCurrent && !isPaid && (
+                            <Chip 
+                              label="This Month" 
+                              size="small" 
+                              color="primary" 
+                              sx={{ height: 18, fontSize: 9 }} 
+                            />
+                          )}
+                          {isPaid && (
+                            <Chip 
+                              label="Paid" 
+                              size="small" 
+                              color="success" 
+                              sx={{ height: 18, fontSize: 9 }} 
+                            />
+                          )}
+                        </Box>
+                        <Typography variant="caption" color="text.secondary">
+                          {t.currentInstallment}/{t.installments}x • {getPeriod(t.date)}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        color={isIncome ? "success.main" : "error.main"}
+                        sx={{ 
+                          fontFamily: "monospace", 
+                          fontSize: 12,
+                          textDecoration: isPaid ? "line-through" : "none",
+                        }}
+                      >
+                        {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMobileActionAnchor({ element: e.currentTarget, transaction: t });
+                        }}
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </Paper>
+                  );
+                })}
               </Box>
             ) : (
-              // Desktop: Tabela
+              // Desktop: Tabela com design melhorado (igual ao RecurringView)
               <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ width: 50 }}>Paid</TableCell>
-                    <TableCell>Installment</TableCell>
+                    <TableCell sx={{ width: 80 }}>#</TableCell>
                     <TableCell>Date</TableCell>
+                    <TableCell>Period</TableCell>
                     <TableCell align="right">Amount</TableCell>
+                    <TableCell align="center" sx={{ width: 100 }}>Status</TableCell>
                     <TableCell align="center" sx={{ width: 100 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {group.installments.map((t) => (
-                    <TableRow
-                      key={t.id}
-                      sx={{
-                        opacity: t.isPaid !== false ? 0.6 : 1,
-                        bgcolor: t.isPaid !== false ? "action.disabledBackground" : "transparent",
-                        "& td": {
-                          textDecoration: t.isPaid !== false ? "line-through" : "none",
-                          textDecorationColor: "text.disabled",
-                        },
-                      }}
-                    >
-                      <TableCell>
-                        <Checkbox
-                          checked={t.isPaid !== false}
-                          onChange={(e) => onTogglePaid(t.id, e.target.checked)}
-                          size="small"
-                          color="success"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={`${t.currentInstallment}/${t.installments}x`}
-                          size="small"
-                          variant="outlined"
-                          color="warning"
-                        />
-                      </TableCell>
-                      <TableCell>{formatDate(t.date)}</TableCell>
-                      <TableCell align="right" sx={{ fontFamily: "monospace" }}>
-                        {formatCurrency(t.amount || 0)}
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton size="small" onClick={() => onEdit(t)} color="primary">
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" onClick={() => onDelete(t.id)} color="error">
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {group.installments.map((t) => {
+                    const isPaid = t.isPaid !== false;
+                    const isCurrent = isCurrentMonth(t.date);
+                    
+                    return (
+                      <TableRow
+                        key={t.id}
+                        sx={{
+                          opacity: isPaid ? 0.6 : 1,
+                          bgcolor: isCurrent && !isPaid
+                            ? alpha(theme.palette.primary.main, 0.08) 
+                            : isPaid
+                              ? "action.disabledBackground"
+                              : "transparent",
+                          "&:hover": {
+                            bgcolor: alpha(theme.palette.action.hover, 0.08),
+                          },
+                          "& td": {
+                            textDecoration: isPaid ? "line-through" : "none",
+                            textDecorationColor: "text.disabled",
+                          },
+                        }}
+                      >
+                        <TableCell>
+                          <Tooltip title={isPaid ? "Mark as Unpaid" : "Mark as Paid"}>
+                            <Checkbox
+                              checked={isPaid}
+                              onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                              size="small"
+                              color="success"
+                            />
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={`#${t.currentInstallment}`}
+                            size="small"
+                            variant="outlined"
+                            color={isCurrent && !isPaid ? "primary" : "default"}
+                            sx={{ fontWeight: 600 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={isCurrent ? 600 : 400}>
+                            {formatDateFull(t.date)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {getPeriod(t.date)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontFamily: "monospace" }}>
+                          <Typography 
+                            variant="body2" 
+                            fontWeight={600}
+                            color={isIncome ? "success.main" : "error.main"}
+                          >
+                            {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          {isPaid ? (
+                            <Chip 
+                              label="Paid" 
+                              size="small" 
+                              color="success" 
+                              sx={{ fontWeight: 500 }}
+                            />
+                          ) : isCurrent ? (
+                            <Chip 
+                              label="Current" 
+                              size="small" 
+                              color="primary" 
+                              sx={{ fontWeight: 500 }}
+                            />
+                          ) : (
+                            <Chip 
+                              label="Pending" 
+                              size="small" 
+                              variant="outlined" 
+                              color="default"
+                              sx={{ opacity: 0.7 }}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Tooltip title="Edit">
+                            <IconButton size="small" onClick={() => onEdit(t)} color="primary">
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <IconButton size="small" onClick={() => onDelete(t.id)} color="error">
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
+
+            {/* Resumo do Parcelamento */}
+            <Paper sx={{ p: 2, mt: 2, bgcolor: "background.paper", borderRadius: "12px" }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Installment Summary
+              </Typography>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2" color="text.secondary">
+                  {group.paidCount}/{group.totalInstallments} installments paid
+                </Typography>
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Remaining: {formatCurrency(group.totalAmount - group.paidAmount)}
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    color={isIncome ? "success.main" : "error.main"}
+                  >
+                    Total: {isIncome ? "+" : "-"}{formatCurrency(group.totalAmount)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
           </Box>
         </Collapse>
       </Card>
