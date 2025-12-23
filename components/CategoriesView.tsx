@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useContext } from "react";
+import React, { useState, useMemo, useContext, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -67,6 +67,8 @@ interface CategoriesViewProps {
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onEditTransaction: (transaction: Transaction) => void;
   onDeleteTransaction: (id: string) => void;
+  initialSelectedCategory?: { name: string; type: TransactionType } | null;
+  onClearInitialCategory?: () => void;
 }
 
 interface CategorySummary {
@@ -92,6 +94,8 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
   onTogglePaid,
   onEditTransaction,
   onDeleteTransaction,
+  initialSelectedCategory,
+  onClearInitialCategory,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -105,6 +109,14 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
   
   // Estado para categoria selecionada (detalhes)
   const [selectedCategory, setSelectedCategory] = useState<{ name: string; type: TransactionType } | null>(null);
+
+  // Sincroniza com categoria inicial externa
+  useEffect(() => {
+    if (initialSelectedCategory) {
+      setSelectedCategory(initialSelectedCategory);
+      onClearInitialCategory?.();
+    }
+  }, [initialSelectedCategory, onClearInitialCategory]);
   
   // Estado para menu de ações mobile
   const [mobileActionAnchor, setMobileActionAnchor] = useState<{

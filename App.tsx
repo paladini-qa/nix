@@ -232,11 +232,22 @@ const AppContent: React.FC<{
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     string | null
   >(null);
+  const [selectedCategoryNav, setSelectedCategoryNav] = useState<{
+    name: string;
+    type: "income" | "expense";
+  } | null>(null);
 
   // Reset selectedPaymentMethod quando sair da view paymentMethods
   useEffect(() => {
     if (currentView !== "paymentMethods") {
       setSelectedPaymentMethod(null);
+    }
+  }, [currentView]);
+
+  // Reset selectedCategoryNav quando sair da view categories
+  useEffect(() => {
+    if (currentView !== "categories") {
+      setSelectedCategoryNav(null);
     }
   }, [currentView]);
 
@@ -2094,6 +2105,10 @@ const AppContent: React.FC<{
                         setSelectedPaymentMethod(method);
                         setCurrentView("paymentMethods");
                       }}
+                      onCategoryClick={(category, type) => {
+                        setSelectedCategoryNav({ name: category, type });
+                        setCurrentView("categories");
+                      }}
                     />
 
                     {/* Analytics Charts */}
@@ -2259,6 +2274,8 @@ const AppContent: React.FC<{
                     onTogglePaid={handleTogglePaid}
                     onEditTransaction={handleEditTransaction}
                     onDeleteTransaction={handleDeleteTransaction}
+                    initialSelectedCategory={selectedCategoryNav}
+                    onClearInitialCategory={() => setSelectedCategoryNav(null)}
                   />
                 </Suspense>
               )}

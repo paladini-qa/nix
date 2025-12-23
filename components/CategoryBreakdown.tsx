@@ -1,63 +1,37 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import {
   Box,
   Paper,
   Typography,
   LinearProgress,
   Grid,
-  Collapse,
   Chip,
-  IconButton,
+  useTheme,
+  alpha,
 } from "@mui/material";
 import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   CreditCard as CreditCardIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
   OpenInNew as OpenInNewIcon,
 } from "@mui/icons-material";
-import { Transaction } from "../types";
+import { Transaction, TransactionType } from "../types";
 import { ColorsContext } from "../App";
 
 interface CategoryBreakdownProps {
   transactions: Transaction[];
   onPaymentMethodClick?: (paymentMethod: string) => void;
+  onCategoryClick?: (category: string, type: TransactionType) => void;
 }
 
 const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   transactions,
   onPaymentMethodClick,
+  onCategoryClick,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
   const { getCategoryColor, getPaymentMethodColor } = useContext(ColorsContext);
-  
-  // Estados para controlar expansão das seções
-  const [expandedIncomeCategories, setExpandedIncomeCategories] = useState<Set<string>>(new Set());
-  const [expandedExpenseCategories, setExpandedExpenseCategories] = useState<Set<string>>(new Set());
-
-  const toggleIncomeCategory = (category: string) => {
-    setExpandedIncomeCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(category)) {
-        next.delete(category);
-      } else {
-        next.add(category);
-      }
-      return next;
-    });
-  };
-
-  const toggleExpenseCategory = (category: string) => {
-    setExpandedExpenseCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(category)) {
-        next.delete(category);
-      } else {
-        next.add(category);
-      }
-      return next;
-    });
-  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -145,17 +119,32 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     <Grid container spacing={3}>
       {/* Income by Category */}
       <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-        <Paper sx={{ p: 2.5, height: "100%", borderRadius: 1 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            height: "100%",
+            position: "relative",
+            overflow: "hidden",
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+            backdropFilter: "blur(16px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            borderRadius: "20px",
+            boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
             <Box
               sx={{
                 p: 1,
-                borderRadius: 1,
-                bgcolor: "success.light",
+                borderRadius: 2,
+                bgcolor: alpha("#059669", 0.1),
                 display: "flex",
               }}
             >
-              <TrendingUpIcon fontSize="small" sx={{ color: "success.dark" }} />
+              <TrendingUpIcon fontSize="small" sx={{ color: "#059669" }} />
             </Box>
             <Typography variant="subtitle1" fontWeight={600}>
               Income by Category
@@ -176,25 +165,26 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                 const percentage =
                   totalIncome > 0 ? (amount / totalIncome) * 100 : 0;
                 const colors = getCategoryColor("income", category);
-                const isExpanded = expandedIncomeCategories.has(category);
                 const categoryTransactions = incomeTransactionsByCategory[category] || [];
                 
                 return (
                   <Box key={category}>
                     <Box
-                      onClick={() => toggleIncomeCategory(category)}
+                      onClick={() => onCategoryClick && onCategoryClick(category, "income")}
                       sx={{
-                        cursor: "pointer",
+                        cursor: onCategoryClick ? "pointer" : "default",
                         p: 1.5,
-                        borderRadius: 1,
+                        borderRadius: 2,
                         border: 1,
-                        borderColor: isExpanded ? colors.primary : "divider",
-                        bgcolor: isExpanded ? `${colors.primary}08` : "transparent",
+                        borderColor: "divider",
+                        bgcolor: "transparent",
                         transition: "all 0.2s ease",
-                        "&:hover": {
+                        "&:hover": onCategoryClick ? {
                           bgcolor: `${colors.primary}12`,
                           borderColor: colors.primary,
-                        },
+                          transform: "translateY(-2px)",
+                          boxShadow: `0 4px 12px -4px ${colors.primary}30`,
+                        } : {},
                       }}
                     >
                       <Box
@@ -241,13 +231,9 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                           <Typography variant="caption" color="text.secondary">
                             {percentage.toFixed(0)}%
                           </Typography>
-                          <IconButton size="small" sx={{ p: 0, ml: 0.5 }}>
-                            {isExpanded ? (
-                              <ExpandLessIcon fontSize="small" sx={{ color: colors.primary }} />
-                            ) : (
-                              <ExpandMoreIcon fontSize="small" sx={{ color: "text.secondary" }} />
-                            )}
-                          </IconButton>
+                          {onCategoryClick && (
+                            <OpenInNewIcon fontSize="small" sx={{ color: colors.primary, ml: 0.5 }} />
+                          )}
                         </Box>
                       </Box>
                       <LinearProgress
@@ -264,46 +250,6 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         }}
                       />
                     </Box>
-                    
-                    <Collapse in={isExpanded}>
-                      <Box sx={{ pl: 3, pr: 1, py: 1 }}>
-                        {categoryTransactions
-                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                          .map((tx) => (
-                          <Box
-                            key={tx.id}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              py: 0.75,
-                              borderBottom: 1,
-                              borderColor: "divider",
-                              "&:last-child": { borderBottom: 0 },
-                            }}
-                          >
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 45 }}>
-                                {formatDate(tx.date)}
-                              </Typography>
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
-                                  overflow: "hidden", 
-                                  textOverflow: "ellipsis", 
-                                  whiteSpace: "nowrap" 
-                                }}
-                              >
-                                {tx.description}
-                              </Typography>
-                            </Box>
-                            <Typography variant="body2" fontWeight={500} color="success.main">
-                              +{formatCurrency(tx.amount || 0)}
-                            </Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Collapse>
                   </Box>
                 );
               })}
@@ -339,17 +285,32 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
 
       {/* Expense by Category */}
       <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-        <Paper sx={{ p: 2.5, height: "100%", borderRadius: 1 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            height: "100%",
+            position: "relative",
+            overflow: "hidden",
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+            backdropFilter: "blur(16px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            borderRadius: "20px",
+            boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
             <Box
               sx={{
                 p: 1,
-                borderRadius: 1,
-                bgcolor: "error.light",
+                borderRadius: 2,
+                bgcolor: alpha("#DC2626", 0.1),
                 display: "flex",
               }}
             >
-              <TrendingDownIcon fontSize="small" sx={{ color: "error.dark" }} />
+              <TrendingDownIcon fontSize="small" sx={{ color: "#DC2626" }} />
             </Box>
             <Typography variant="subtitle1" fontWeight={600}>
               Expenses by Category
@@ -370,25 +331,26 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                 const percentage =
                   totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
                 const colors = getCategoryColor("expense", category);
-                const isExpanded = expandedExpenseCategories.has(category);
                 const categoryTransactions = expenseTransactionsByCategory[category] || [];
                 
                 return (
                   <Box key={category}>
                     <Box
-                      onClick={() => toggleExpenseCategory(category)}
+                      onClick={() => onCategoryClick && onCategoryClick(category, "expense")}
                       sx={{
-                        cursor: "pointer",
+                        cursor: onCategoryClick ? "pointer" : "default",
                         p: 1.5,
-                        borderRadius: 1,
+                        borderRadius: 2,
                         border: 1,
-                        borderColor: isExpanded ? colors.primary : "divider",
-                        bgcolor: isExpanded ? `${colors.primary}08` : "transparent",
+                        borderColor: "divider",
+                        bgcolor: "transparent",
                         transition: "all 0.2s ease",
-                        "&:hover": {
+                        "&:hover": onCategoryClick ? {
                           bgcolor: `${colors.primary}12`,
                           borderColor: colors.primary,
-                        },
+                          transform: "translateY(-2px)",
+                          boxShadow: `0 4px 12px -4px ${colors.primary}30`,
+                        } : {},
                       }}
                     >
                       <Box
@@ -435,13 +397,9 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                           <Typography variant="caption" color="text.secondary">
                             {percentage.toFixed(0)}%
                           </Typography>
-                          <IconButton size="small" sx={{ p: 0, ml: 0.5 }}>
-                            {isExpanded ? (
-                              <ExpandLessIcon fontSize="small" sx={{ color: colors.primary }} />
-                            ) : (
-                              <ExpandMoreIcon fontSize="small" sx={{ color: "text.secondary" }} />
-                            )}
-                          </IconButton>
+                          {onCategoryClick && (
+                            <OpenInNewIcon fontSize="small" sx={{ color: colors.primary, ml: 0.5 }} />
+                          )}
                         </Box>
                       </Box>
                       <LinearProgress
@@ -458,46 +416,6 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         }}
                       />
                     </Box>
-                    
-                    <Collapse in={isExpanded}>
-                      <Box sx={{ pl: 3, pr: 1, py: 1 }}>
-                        {categoryTransactions
-                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                          .map((tx) => (
-                          <Box
-                            key={tx.id}
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              py: 0.75,
-                              borderBottom: 1,
-                              borderColor: "divider",
-                              "&:last-child": { borderBottom: 0 },
-                            }}
-                          >
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 45 }}>
-                                {formatDate(tx.date)}
-                              </Typography>
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
-                                  overflow: "hidden", 
-                                  textOverflow: "ellipsis", 
-                                  whiteSpace: "nowrap" 
-                                }}
-                              >
-                                {tx.description}
-                              </Typography>
-                            </Box>
-                            <Typography variant="body2" fontWeight={500} color="error.main">
-                              -{formatCurrency(tx.amount || 0)}
-                            </Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Collapse>
                   </Box>
                 );
               })}
@@ -529,17 +447,32 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
 
       {/* Expenses by Payment Method */}
       <Grid size={{ xs: 12, md: 12, xl: 4 }}>
-        <Paper sx={{ p: 2.5, height: "100%", borderRadius: 1 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            height: "100%",
+            position: "relative",
+            overflow: "hidden",
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+            backdropFilter: "blur(16px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            borderRadius: "20px",
+            boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
             <Box
               sx={{
                 p: 1,
-                borderRadius: 1,
-                bgcolor: "error.light",
+                borderRadius: 2,
+                bgcolor: alpha("#6366f1", 0.1),
                 display: "flex",
               }}
             >
-              <CreditCardIcon fontSize="small" sx={{ color: "error.dark" }} />
+              <CreditCardIcon fontSize="small" sx={{ color: "#6366f1" }} />
             </Box>
             <Typography variant="subtitle1" fontWeight={600}>
               Expenses by Payment Method
@@ -573,19 +506,19 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                     <Box
                       onClick={() => onPaymentMethodClick && onPaymentMethodClick(method)}
                       sx={{
-                        cursor: "pointer",
+                        cursor: onPaymentMethodClick ? "pointer" : "default",
                         p: 1.5,
-                        borderRadius: 1,
+                        borderRadius: 2,
                         border: 1,
                         borderColor: "divider",
                         bgcolor: "transparent",
                         transition: "all 0.2s ease",
-                        "&:hover": {
+                        "&:hover": onPaymentMethodClick ? {
                           bgcolor: `${colors.primary}12`,
                           borderColor: colors.primary,
                           transform: "translateY(-2px)",
                           boxShadow: `0 4px 12px -4px ${colors.primary}30`,
-                        },
+                        } : {},
                       }}
                     >
                       <Box
