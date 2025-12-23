@@ -250,30 +250,57 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={2}>
+      <Grid container spacing={isMobile ? 1.5 : 2}>
         <Grid size={{ xs: 12, sm: 6 }}>
           <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              background: `linear-gradient(135deg, ${alpha("#10b981", 0.1)} 0%, ${alpha("#10b981", 0.02)} 100%)`,
-              border: `1px solid ${alpha("#10b981", 0.2)}`,
+              p: isMobile ? 1.5 : 2,
+              position: "relative",
+              overflow: "hidden",
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative", zIndex: 1 }}>
               <Box
                 sx={{
-                  p: 1.5,
-                  borderRadius: 2,
-                  bgcolor: alpha("#10b981", 0.1),
+                  width: isMobile ? 40 : 48,
+                  height: isMobile ? 40 : 48,
+                  borderRadius: "14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: isDarkMode
+                    ? `linear-gradient(135deg, ${alpha("#059669", 0.2)} 0%, ${alpha("#059669", 0.1)} 100%)`
+                    : `linear-gradient(135deg, #D1FAE5 0%, ${alpha("#D1FAE5", 0.6)} 100%)`,
+                  border: `1px solid ${isDarkMode ? alpha("#059669", 0.2) : alpha("#059669", 0.15)}`,
+                  boxShadow: isDarkMode
+                    ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
+                    : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
                 }}
               >
-                <TrendingUpIcon sx={{ color: "#10b981", fontSize: 28 }} />
+                <TrendingUpIcon sx={{ color: "#059669", fontSize: isMobile ? 22 : 26 }} />
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
                   Categorias de Receita
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" color="#10b981">
+                <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em" }}>
                   {categories.income.length}
                 </Typography>
               </Box>
@@ -282,27 +309,54 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
           <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              background: `linear-gradient(135deg, ${alpha("#ef4444", 0.1)} 0%, ${alpha("#ef4444", 0.02)} 100%)`,
-              border: `1px solid ${alpha("#ef4444", 0.2)}`,
+              p: isMobile ? 1.5 : 2,
+              position: "relative",
+              overflow: "hidden",
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative", zIndex: 1 }}>
               <Box
                 sx={{
-                  p: 1.5,
-                  borderRadius: 2,
-                  bgcolor: alpha("#ef4444", 0.1),
+                  width: isMobile ? 40 : 48,
+                  height: isMobile ? 40 : 48,
+                  borderRadius: "14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: isDarkMode
+                    ? `linear-gradient(135deg, ${alpha("#DC2626", 0.2)} 0%, ${alpha("#DC2626", 0.1)} 100%)`
+                    : `linear-gradient(135deg, #FEE2E2 0%, ${alpha("#FEE2E2", 0.6)} 100%)`,
+                  border: `1px solid ${isDarkMode ? alpha("#DC2626", 0.2) : alpha("#DC2626", 0.15)}`,
+                  boxShadow: isDarkMode
+                    ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
+                    : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
                 }}
               >
-                <TrendingDownIcon sx={{ color: "#ef4444", fontSize: 28 }} />
+                <TrendingDownIcon sx={{ color: "#DC2626", fontSize: isMobile ? 22 : 26 }} />
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
                   Categorias de Despesa
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" color="#ef4444">
+                <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em" }}>
                   {categories.expense.length}
                 </Typography>
               </Box>

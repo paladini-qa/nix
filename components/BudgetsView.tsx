@@ -23,6 +23,9 @@ import {
   Tooltip,
   Alert,
   Fab,
+  Card,
+  CardContent,
+  alpha,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -277,54 +280,137 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={2}>
+      <Grid container spacing={isMobile ? 1.5 : 2}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Total Budgeted
-            </Typography>
-            <Typography variant="h6" fontWeight="bold" color="primary.main">
-              {formatCurrency(summary.totalBudgeted)}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%)",
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Total Budgeted
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em" }}>
+                {formatCurrency(summary.totalBudgeted)}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Total Spent
-            </Typography>
-            <Typography variant="h6" fontWeight="bold">
-              {formatCurrency(summary.totalSpent)}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#64748B", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Total Spent
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em" }}>
+                {formatCurrency(summary.totalSpent)}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Over Budget
-            </Typography>
-            <Typography
-              variant="h6"
-              fontWeight="bold"
-              color={summary.overBudgetCount > 0 ? "error.main" : "success.main"}
-            >
-              {summary.overBudgetCount}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha(summary.overBudgetCount > 0 ? "#DC2626" : "#059669", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: summary.overBudgetCount > 0
+                  ? "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)"
+                  : "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Over Budget
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.overBudgetCount > 0 ? "#DC2626" : "#059669", letterSpacing: "-0.02em" }}>
+                {summary.overBudgetCount}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Near Limit
-            </Typography>
-            <Typography
-              variant="h6"
-              fontWeight="bold"
-              color={summary.warningCount > 0 ? "warning.main" : "text.primary"}
-            >
-              {summary.warningCount}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha(summary.warningCount > 0 ? "#F59E0B" : "#64748B", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": summary.warningCount > 0 ? {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(251, 191, 36, 0.02) 100%)",
+                pointerEvents: "none",
+              } : undefined,
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Near Limit
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.warningCount > 0 ? "#F59E0B" : "text.primary", letterSpacing: "-0.02em" }}>
+                {summary.warningCount}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
@@ -334,135 +420,214 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
           <Typography color="text.secondary">Loading budgets...</Typography>
         </Box>
       ) : budgetsWithSpending.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: "center" }}>
-          <TrendingDownIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            No budgets set for this month
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Create budgets to track your spending against limits
-          </Typography>
-          <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
-            <Button variant="outlined" onClick={handleCopyFromPreviousMonth}>
-              Copy from Previous Month
-            </Button>
-            <Button variant="contained" onClick={() => handleOpenForm()}>
-              Create Budget
-            </Button>
-          </Box>
-        </Paper>
+        <Card
+          elevation={0}
+          sx={{
+            position: "relative",
+            overflow: "hidden",
+            background: theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+            backdropFilter: "blur(16px)",
+            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            borderRadius: "20px",
+          }}
+        >
+          <CardContent sx={{ p: 4, textAlign: "center" }}>
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 2,
+                background: theme.palette.mode === "dark"
+                  ? alpha("#6366f1", 0.15)
+                  : alpha("#6366f1", 0.1),
+                border: `1px solid ${alpha("#6366f1", 0.2)}`,
+              }}
+            >
+              <TrendingDownIcon sx={{ fontSize: 32, color: "#6366f1" }} />
+            </Box>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              No budgets set for this month
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Create budgets to track your spending against limits
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+              <Button variant="outlined" onClick={handleCopyFromPreviousMonth}>
+                Copy from Previous Month
+              </Button>
+              <Button variant="contained" onClick={() => handleOpenForm()}>
+                Create Budget
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
       ) : (
         <Grid container spacing={2}>
-          {budgetsWithSpending.map((budget) => (
-            <Grid key={budget.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-              <Paper
-                sx={{
-                  p: 2.5,
-                  border: budget.isOverBudget ? 2 : 0,
-                  borderColor: "error.main",
-                }}
-              >
-                <Box
+          {budgetsWithSpending.map((budget) => {
+            const budgetColor = budget.isOverBudget ? "#DC2626" : budget.percentage >= 80 ? "#F59E0B" : "#6366f1";
+            return (
+              <Grid key={budget.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+                <Card
+                  elevation={0}
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    mb: 2,
+                    position: "relative",
+                    overflow: "hidden",
+                    background: theme.palette.mode === "dark"
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                      : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                    backdropFilter: "blur(16px)",
+                    border: budget.isOverBudget
+                      ? `2px solid ${alpha("#DC2626", 0.5)}`
+                      : `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                    borderLeft: `3px solid ${budgetColor}`,
+                    borderRadius: "16px",
+                    boxShadow: theme.palette.mode === "dark"
+                      ? `0 6px 24px -6px ${alpha(budgetColor, 0.2)}`
+                      : `0 6px 24px -6px ${alpha(budgetColor, 0.15)}`,
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": {
+                      transform: "translateY(-2px)",
+                      boxShadow: theme.palette.mode === "dark"
+                        ? `0 10px 32px -6px ${alpha(budgetColor, 0.3)}`
+                        : `0 10px 32px -6px ${alpha(budgetColor, 0.25)}`,
+                    },
+                    "&::before": budget.isOverBudget ? {
+                      content: '""',
+                      position: "absolute",
+                      top: 0, left: 0, right: 0, bottom: 0,
+                      background: "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                      pointerEvents: "none",
+                    } : undefined,
                   }}
                 >
-                  <Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="subtitle1" fontWeight={600}>
-                        {budget.category}
-                      </Typography>
-                      <Chip
-                        label={budget.type === "income" ? "Income" : "Expense"}
-                        size="small"
-                        color={budget.type === "income" ? "success" : "error"}
-                        variant="outlined"
+                  <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        mb: 2,
+                      }}
+                    >
+                      <Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Typography variant="subtitle1" fontWeight={600}>
+                            {budget.category}
+                          </Typography>
+                          <Chip
+                            label={budget.type === "income" ? "Income" : "Expense"}
+                            size="small"
+                            sx={{
+                              height: 20,
+                              fontSize: 10,
+                              bgcolor: alpha(budget.type === "income" ? "#059669" : "#DC2626", 0.1),
+                              color: budget.type === "income" ? "#059669" : "#DC2626",
+                              border: `1px solid ${alpha(budget.type === "income" ? "#059669" : "#DC2626", 0.2)}`,
+                            }}
+                          />
+                        </Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                          Limit: {formatCurrency(budget.limitAmount)}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Tooltip title="Edit">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleOpenForm(budget)}
+                            sx={{ 
+                              bgcolor: alpha(theme.palette.primary.main, 0.08),
+                              "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.15) }
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDelete(budget)}
+                            sx={{ 
+                              ml: 0.5,
+                              bgcolor: alpha(theme.palette.error.main, 0.08),
+                              "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.15) }
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+
+                    {/* Progress Bar */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={Math.min(budget.percentage, 100)}
+                        sx={{
+                          height: 10,
+                          borderRadius: 5,
+                          bgcolor: alpha(budgetColor, 0.1),
+                          "& .MuiLinearProgress-bar": {
+                            bgcolor: budgetColor,
+                            borderRadius: 5,
+                          },
+                        }}
                       />
                     </Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Limit: {formatCurrency(budget.limitAmount)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Tooltip title="Edit">
-                      <IconButton size="small" onClick={() => handleOpenForm(budget)}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDelete(budget)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </Box>
 
-                {/* Progress Bar */}
-                <Box sx={{ mb: 1.5 }}>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(budget.percentage, 100)}
-                    color={getProgressColor(budget.percentage, budget.isOverBudget)}
-                    sx={{
-                      height: 10,
-                      borderRadius: 5,
-                      bgcolor: "action.hover",
-                    }}
-                  />
-                </Box>
-
-                {/* Stats */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box>
-                    <Typography variant="body2" fontWeight={500}>
-                      {formatCurrency(budget.spent)} spent
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color={budget.isOverBudget ? "error.main" : "text.secondary"}
+                    {/* Stats */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
                     >
-                      {budget.isOverBudget
-                        ? `${formatCurrency(Math.abs(budget.remaining))} over budget`
-                        : `${formatCurrency(budget.remaining)} remaining`}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    {budget.isOverBudget ? (
-                      <WarningIcon color="error" fontSize="small" />
-                    ) : budget.percentage >= 80 ? (
-                      <WarningIcon color="warning" fontSize="small" />
-                    ) : null}
-                    <Typography
-                      variant="h6"
-                      fontWeight="bold"
-                      color={
-                        budget.isOverBudget
-                          ? "error.main"
-                          : budget.percentage >= 80
-                          ? "warning.main"
-                          : "text.primary"
-                      }
-                    >
-                      {Math.round(budget.percentage)}%
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
+                      <Box>
+                        <Typography variant="body2" fontWeight={500}>
+                          {formatCurrency(budget.spent)} spent
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: budget.isOverBudget ? "#DC2626" : "text.secondary", fontWeight: 500 }}
+                        >
+                          {budget.isOverBudget
+                            ? `${formatCurrency(Math.abs(budget.remaining))} over budget`
+                            : `${formatCurrency(budget.remaining)} remaining`}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        {budget.isOverBudget ? (
+                          <WarningIcon sx={{ color: "#DC2626", fontSize: 18 }} />
+                        ) : budget.percentage >= 80 ? (
+                          <WarningIcon sx={{ color: "#F59E0B", fontSize: 18 }} />
+                        ) : null}
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 700,
+                            color: budgetColor,
+                            letterSpacing: "-0.02em",
+                          }}
+                        >
+                          {Math.round(budget.percentage)}%
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
         </Grid>
       )}
 

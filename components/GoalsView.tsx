@@ -21,6 +21,7 @@ import {
   Card,
   CardContent,
   Avatar,
+  alpha,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
@@ -262,46 +263,142 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={2}>
+      <Grid container spacing={isMobile ? 1.5 : 2}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Total Target
-            </Typography>
-            <Typography variant="h6" fontWeight="bold" color="primary.main">
-              {formatCurrency(summary.totalTarget)}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%)",
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Total Target
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em" }}>
+                {formatCurrency(summary.totalTarget)}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Total Saved
-            </Typography>
-            <Typography variant="h6" fontWeight="bold" color="success.main">
-              {formatCurrency(summary.totalSaved)}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Total Saved
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em" }}>
+                {formatCurrency(summary.totalSaved)}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Avg. Progress
-            </Typography>
-            <Typography variant="h6" fontWeight="bold">
-              {Math.round(summary.avgProgress)}%
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#8b5cf6", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(167, 139, 250, 0.02) 100%)",
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Avg. Progress
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em" }}>
+                {Math.round(summary.avgProgress)}%
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Completed
-            </Typography>
-            <Typography variant="h6" fontWeight="bold" color="success.main">
-              {summary.completedCount}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Completed
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em" }}>
+                {summary.completedCount}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
@@ -311,18 +408,49 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
           <Typography color="text.secondary">Loading goals...</Typography>
         </Box>
       ) : activeGoals.length === 0 && completedGoals.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: "center" }}>
-          <SavingsIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            No goals yet
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Create your first financial goal to start tracking your savings
-          </Typography>
-          <Button variant="contained" onClick={() => handleOpenForm()}>
-            Create Goal
-          </Button>
-        </Paper>
+        <Card
+          elevation={0}
+          sx={{
+            position: "relative",
+            overflow: "hidden",
+            background: theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+            backdropFilter: "blur(16px)",
+            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            borderRadius: "20px",
+          }}
+        >
+          <CardContent sx={{ p: 4, textAlign: "center" }}>
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 2,
+                background: theme.palette.mode === "dark"
+                  ? alpha("#6366f1", 0.15)
+                  : alpha("#6366f1", 0.1),
+                border: `1px solid ${alpha("#6366f1", 0.2)}`,
+              }}
+            >
+              <SavingsIcon sx={{ fontSize: 32, color: "#6366f1" }} />
+            </Box>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              No goals yet
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Create your first financial goal to start tracking your savings
+            </Typography>
+            <Button variant="contained" onClick={() => handleOpenForm()}>
+              Create Goal
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <>
           {/* Active Goals */}
@@ -335,13 +463,33 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                 {activeGoals.map((goal) => (
                   <Grid key={goal.id} size={{ xs: 12, sm: 6, lg: 4 }}>
                     <Card
+                      elevation={0}
                       sx={{
                         height: "100%",
-                        border: goal.isOverdue ? 2 : 0,
-                        borderColor: "warning.main",
+                        position: "relative",
+                        overflow: "hidden",
+                        background: theme.palette.mode === "dark"
+                          ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                          : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                        backdropFilter: "blur(16px)",
+                        border: goal.isOverdue
+                          ? `2px solid ${alpha("#F59E0B", 0.5)}`
+                          : `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                        borderLeft: `3px solid ${goal.color}`,
+                        borderRadius: "16px",
+                        boxShadow: theme.palette.mode === "dark"
+                          ? `0 6px 24px -6px ${alpha(goal.color, 0.2)}`
+                          : `0 6px 24px -6px ${alpha(goal.color, 0.15)}`,
+                        transition: "all 0.2s ease-in-out",
+                        "&:hover": {
+                          transform: "translateY(-2px)",
+                          boxShadow: theme.palette.mode === "dark"
+                            ? `0 10px 32px -6px ${alpha(goal.color, 0.3)}`
+                            : `0 10px 32px -6px ${alpha(goal.color, 0.25)}`,
+                        },
                       }}
                     >
-                      <CardContent>
+                      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                         <Box
                           sx={{
                             display: "flex",
@@ -353,9 +501,13 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                             <Avatar
                               sx={{
-                                bgcolor: goal.color,
+                                bgcolor: theme.palette.mode === "dark"
+                                  ? alpha(goal.color, 0.2)
+                                  : alpha(goal.color, 0.15),
+                                color: goal.color,
                                 width: 40,
                                 height: 40,
+                                border: `1px solid ${alpha(goal.color, 0.2)}`,
                               }}
                             >
                               {GOAL_ICONS[goal.icon] || <SavingsIcon />}
@@ -375,12 +527,15 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                                   <TimeIcon
                                     sx={{
                                       fontSize: 14,
-                                      color: goal.isOverdue ? "warning.main" : "text.secondary",
+                                      color: goal.isOverdue ? "#F59E0B" : "text.secondary",
                                     }}
                                   />
                                   <Typography
                                     variant="caption"
-                                    color={goal.isOverdue ? "warning.main" : "text.secondary"}
+                                    sx={{ 
+                                      color: goal.isOverdue ? "#F59E0B" : "text.secondary",
+                                      fontWeight: 500,
+                                    }}
                                   >
                                     {goal.isOverdue
                                       ? `Overdue by ${Math.abs(goal.daysRemaining!)} days`
@@ -394,14 +549,26 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                             <Tooltip title="Add amount">
                               <IconButton
                                 size="small"
-                                color="success"
                                 onClick={() => handleOpenAddAmount(goal)}
+                                sx={{ 
+                                  bgcolor: alpha("#059669", 0.1),
+                                  color: "#059669",
+                                  "&:hover": { bgcolor: alpha("#059669", 0.2) }
+                                }}
                               >
                                 <AddIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Edit">
-                              <IconButton size="small" onClick={() => handleOpenForm(goal)}>
+                              <IconButton 
+                                size="small" 
+                                onClick={() => handleOpenForm(goal)}
+                                sx={{ 
+                                  ml: 0.5,
+                                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                                  "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.15) }
+                                }}
+                              >
                                 <EditIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
@@ -410,6 +577,11 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                                 size="small"
                                 color="error"
                                 onClick={() => handleDelete(goal)}
+                                sx={{ 
+                                  ml: 0.5,
+                                  bgcolor: alpha(theme.palette.error.main, 0.08),
+                                  "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.15) }
+                                }}
                               >
                                 <DeleteIcon fontSize="small" />
                               </IconButton>
@@ -425,7 +597,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                             sx={{
                               height: 12,
                               borderRadius: 6,
-                              bgcolor: "action.hover",
+                              bgcolor: alpha(goal.color, 0.1),
                               "& .MuiLinearProgress-bar": {
                                 bgcolor: goal.color,
                                 borderRadius: 6,
@@ -446,14 +618,17 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                             <Typography variant="body2" fontWeight={500}>
                               {formatCurrency(goal.currentAmount)}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
                               of {formatCurrency(goal.targetAmount)}
                             </Typography>
                           </Box>
                           <Typography
                             variant="h5"
-                            fontWeight="bold"
-                            sx={{ color: goal.color }}
+                            sx={{ 
+                              fontWeight: 700, 
+                              color: goal.color,
+                              letterSpacing: "-0.02em",
+                            }}
                           >
                             {Math.round(goal.percentage)}%
                           </Typography>
@@ -475,8 +650,28 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
               <Grid container spacing={2}>
                 {completedGoals.map((goal) => (
                   <Grid key={goal.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                    <Card sx={{ bgcolor: "action.hover", opacity: 0.9 }}>
-                      <CardContent>
+                    <Card
+                      elevation={0}
+                      sx={{
+                        position: "relative",
+                        overflow: "hidden",
+                        background: theme.palette.mode === "dark"
+                          ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.5)} 0%, ${alpha(theme.palette.background.paper, 0.3)} 100%)`
+                          : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.7)} 0%, ${alpha("#FFFFFF", 0.5)} 100%)`,
+                        backdropFilter: "blur(12px)",
+                        border: `1px solid ${theme.palette.mode === "dark" ? alpha("#059669", 0.2) : alpha("#059669", 0.15)}`,
+                        borderRadius: "14px",
+                        transition: "all 0.2s ease-in-out",
+                        "&::before": {
+                          content: '""',
+                          position: "absolute",
+                          top: 0, left: 0, right: 0, bottom: 0,
+                          background: "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                          pointerEvents: "none",
+                        },
+                      }}
+                    >
+                      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                         <Box
                           sx={{
                             display: "flex",
@@ -487,9 +682,11 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                             <Avatar
                               sx={{
-                                bgcolor: "success.main",
+                                bgcolor: alpha("#059669", 0.15),
+                                color: "#059669",
                                 width: 40,
                                 height: 40,
+                                border: `1px solid ${alpha("#059669", 0.2)}`,
                               }}
                             >
                               <CheckCircleIcon />
@@ -502,7 +699,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                               >
                                 {goal.name}
                               </Typography>
-                              <Typography variant="body2" color="success.main">
+                              <Typography variant="body2" sx={{ color: "#059669", fontWeight: 600 }}>
                                 {formatCurrency(goal.targetAmount)} achieved!
                               </Typography>
                             </Box>
@@ -511,6 +708,10 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                             size="small"
                             color="error"
                             onClick={() => handleDelete(goal)}
+                            sx={{ 
+                              bgcolor: alpha(theme.palette.error.main, 0.08),
+                              "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.15) }
+                            }}
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>

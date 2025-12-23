@@ -234,13 +234,28 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     return (
       <Card
         key={group.key}
+        elevation={0}
         sx={{
-          border: 1,
-          borderColor: "divider",
-          borderLeft: 4,
-          borderLeftColor: isIncome ? "success.main" : "warning.main",
           mb: 2,
+          position: "relative",
           overflow: "visible",
+          background: theme.palette.mode === "dark"
+            ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+          backdropFilter: "blur(16px)",
+          border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          borderLeft: `3px solid ${isIncome ? "#059669" : "#F59E0B"}`,
+          borderRadius: "16px",
+          boxShadow: theme.palette.mode === "dark"
+            ? `0 6px 24px -6px ${alpha(isIncome ? "#059669" : "#F59E0B", 0.2)}`
+            : `0 6px 24px -6px ${alpha(isIncome ? "#059669" : "#F59E0B", 0.15)}`,
+          transition: "all 0.2s ease-in-out",
+          "&:hover": {
+            transform: "translateY(-2px)",
+            boxShadow: theme.palette.mode === "dark"
+              ? `0 10px 32px -6px ${alpha(isIncome ? "#059669" : "#F59E0B", 0.3)}`
+              : `0 10px 32px -6px ${alpha(isIncome ? "#059669" : "#F59E0B", 0.25)}`,
+          },
         }}
       >
         <CardContent sx={{ pb: 1 }}>
@@ -488,82 +503,145 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={2}>
+      <Grid container spacing={isMobile ? 1.5 : 2}>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              bgcolor: "warning.50",
-              border: 1,
-              borderColor: "warning.light",
+              p: isMobile ? 1.5 : 2,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#F59E0B", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(251, 191, 36, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <ScheduleIcon fontSize="small" color="warning" />
-              <Typography variant="overline" color="warning.main">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
+              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#F59E0B", 0.1), border: `1px solid ${alpha("#F59E0B", 0.2)}` }}>
+                <ScheduleIcon sx={{ fontSize: 14, color: "#F59E0B" }} />
+              </Box>
+              <Typography variant="overline" sx={{ color: "#F59E0B", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
                 In Progress
               </Typography>
             </Box>
-            <Typography variant="h5" fontWeight="bold" color="warning.dark">
+            <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "#F59E0B", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {stats.inProgressCount}
             </Typography>
-            {stats.sharedCount > 0 && (
-              <Typography variant="caption" color="info.main" sx={{ mt: 0.5 }}>
-                {stats.sharedCount} shared
-              </Typography>
-            )}
           </Paper>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              bgcolor: "success.50",
-              border: 1,
-              borderColor: "success.light",
+              p: isMobile ? 1.5 : 2,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <CheckCircleIcon fontSize="small" color="success" />
-              <Typography variant="overline" color="success.main">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
+              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#059669", 0.1), border: `1px solid ${alpha("#059669", 0.2)}` }}>
+                <CheckCircleIcon sx={{ fontSize: 14, color: "#059669" }} />
+              </Box>
+              <Typography variant="overline" sx={{ color: "#059669", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
                 Completed
               </Typography>
             </Box>
-            <Typography variant="h5" fontWeight="bold" color="success.dark">
+            <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {stats.completedCount}
             </Typography>
           </Paper>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              bgcolor: "error.50",
-              border: 1,
-              borderColor: "error.light",
+              p: isMobile ? 1.5 : 2,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <Typography variant="overline" color="error.main">
+            <Typography variant="overline" sx={{ color: "#DC2626", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600, position: "relative", zIndex: 1 }}>
               Remaining
             </Typography>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold" color="error.dark">
+            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {formatCurrency(stats.totalRemaining)}
             </Typography>
           </Paper>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              bgcolor: "primary.50",
-              border: 1,
-              borderColor: "primary.light",
+              p: isMobile ? 1.5 : 2,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <Typography variant="overline" color="primary.main">
+            <Typography variant="overline" sx={{ color: "#6366f1", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600, position: "relative", zIndex: 1 }}>
               Total Paid
             </Typography>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold" color="primary.dark">
+            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {formatCurrency(stats.totalPaid)}
             </Typography>
           </Paper>

@@ -212,27 +212,54 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
 
       {/* Summary Card */}
       <Paper
+        elevation={0}
         sx={{
-          p: isMobile ? 2 : 3,
-          background: `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.08)} 0%, ${alpha(theme.palette.error.main, 0.02)} 100%)`,
-          border: `1px solid ${alpha(theme.palette.error.main, 0.15)}`,
+          p: isMobile ? 1.5 : 2,
+          position: "relative",
+          overflow: "hidden",
+          background: isDarkMode
+            ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+          backdropFilter: "blur(16px)",
+          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
+          borderRadius: "16px",
+          transition: "all 0.2s ease-in-out",
+          "&:hover": { transform: "translateY(-2px)" },
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
+            pointerEvents: "none",
+          },
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative", zIndex: 1 }}>
           <Box
             sx={{
-              p: 1.5,
-              borderRadius: 2,
-              bgcolor: alpha(theme.palette.error.main, 0.1),
+              width: isMobile ? 44 : 52,
+              height: isMobile ? 44 : 52,
+              borderRadius: "16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha("#DC2626", 0.2)} 0%, ${alpha("#DC2626", 0.1)} 100%)`
+                : `linear-gradient(135deg, #FEE2E2 0%, ${alpha("#FEE2E2", 0.6)} 100%)`,
+              border: `1px solid ${isDarkMode ? alpha("#DC2626", 0.2) : alpha("#DC2626", 0.15)}`,
+              boxShadow: isDarkMode
+                ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
+                : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
             }}
           >
-            <TrendingDownIcon sx={{ color: "error.main", fontSize: 28 }} />
+            <TrendingDownIcon sx={{ color: "#DC2626", fontSize: isMobile ? 24 : 28 }} />
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
               Total de Despesas no Mês
             </Typography>
-            <Typography variant="h5" fontWeight="bold" color="error.main">
+            <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em" }}>
               {formatCurrency(totalExpenses)}
             </Typography>
           </Box>
@@ -249,19 +276,38 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
           return (
             <Grid key={summary.name} size={{ xs: 12, sm: 6, lg: 4 }}>
               <Paper
+                elevation={0}
                 onClick={() => onSelectPaymentMethod(summary.name)}
                 sx={{
                   p: isMobile ? 2 : 2.5,
                   cursor: "pointer",
+                  position: "relative",
+                  overflow: "hidden",
                   transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                  border: `1px solid ${alpha(colors.primary, 0.15)}`,
                   background: isDarkMode
-                    ? `linear-gradient(135deg, ${alpha(colors.primary, 0.08)} 0%, ${alpha(colors.secondary, 0.02)} 100%)`
-                    : `linear-gradient(135deg, ${alpha(colors.primary, 0.06)} 0%, ${alpha(colors.secondary, 0.02)} 100%)`,
+                    ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                    : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                  backdropFilter: "blur(16px)",
+                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                  borderLeft: `3px solid ${colors.primary}`,
+                  borderRadius: "16px",
+                  boxShadow: isDarkMode
+                    ? `0 6px 24px -6px ${alpha(colors.primary, 0.2)}`
+                    : `0 6px 24px -6px ${alpha(colors.primary, 0.15)}`,
                   "&:hover": {
                     transform: "translateY(-4px)",
-                    boxShadow: `0 12px 24px -8px ${alpha(colors.primary, 0.25)}`,
-                    border: `1px solid ${alpha(colors.primary, 0.3)}`,
+                    boxShadow: isDarkMode
+                      ? `0 12px 32px -6px ${alpha(colors.primary, 0.3)}`
+                      : `0 12px 32px -6px ${alpha(colors.primary, 0.25)}`,
+                  },
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    background: isDarkMode
+                      ? `linear-gradient(135deg, ${alpha(colors.primary, 0.08)} 0%, ${alpha(colors.secondary, 0.02)} 100%)`
+                      : `linear-gradient(135deg, ${alpha(colors.primary, 0.04)} 0%, ${alpha(colors.secondary, 0.01)} 100%)`,
+                    pointerEvents: "none",
                   },
                 }}
               >

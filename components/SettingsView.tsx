@@ -103,10 +103,25 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Language Display - Segue o idioma do navegador */}
       <Paper
+        elevation={0}
         sx={{
           p: isMobile ? 2 : 3,
-          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`,
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+          position: "relative",
+          overflow: "hidden",
+          background: theme.palette.mode === "dark"
+            ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+          backdropFilter: "blur(16px)",
+          border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
+          borderRadius: "16px",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%)",
+            pointerEvents: "none",
+          },
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
@@ -143,7 +158,21 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       <Grid container spacing={isMobile ? 2 : 3}>
         {/* Income Categories */}
         <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-          <Paper sx={{ p: isMobile ? 2 : 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 2 : 3,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              borderRadius: "16px",
+              boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.1)}`,
+            }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -235,7 +264,21 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Expense Categories */}
         <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-          <Paper sx={{ p: isMobile ? 2 : 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 2 : 3,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              borderRadius: "16px",
+              boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.1)}`,
+            }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -327,7 +370,21 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Payment Methods */}
         <Grid size={{ xs: 12, md: 12, xl: 4 }}>
-          <Paper sx={{ p: isMobile ? 2 : 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 2 : 3,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              borderRadius: "16px",
+              boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.1)}`,
+            }}
+          >
             <Box
               sx={{
                 display: "flex",

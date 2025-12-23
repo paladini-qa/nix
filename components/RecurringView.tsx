@@ -282,12 +282,28 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     return (
       <Card
         key={t.id}
+        elevation={0}
         sx={{
-          border: 1,
-          borderColor: "divider",
-          borderLeft: 4,
-          borderLeftColor: isIncome ? "success.main" : "error.main",
           mb: 2,
+          position: "relative",
+          overflow: "hidden",
+          background: theme.palette.mode === "dark"
+            ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+          backdropFilter: "blur(16px)",
+          border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          borderLeft: `3px solid ${isIncome ? "#059669" : "#DC2626"}`,
+          borderRadius: "16px",
+          boxShadow: theme.palette.mode === "dark"
+            ? `0 6px 24px -6px ${alpha(isIncome ? "#059669" : "#DC2626", 0.2)}`
+            : `0 6px 24px -6px ${alpha(isIncome ? "#059669" : "#DC2626", 0.15)}`,
+          transition: "all 0.2s ease-in-out",
+          "&:hover": {
+            transform: "translateY(-2px)",
+            boxShadow: theme.palette.mode === "dark"
+              ? `0 10px 32px -6px ${alpha(isIncome ? "#059669" : "#DC2626", 0.3)}`
+              : `0 10px 32px -6px ${alpha(isIncome ? "#059669" : "#DC2626", 0.25)}`,
+          },
         }}
       >
         <CardContent sx={{ pb: 1 }}>
@@ -592,40 +608,54 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
+      <Grid container spacing={isMobile ? 1.5 : 2} sx={{ alignItems: "stretch" }}>
         <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Card
+            elevation={0}
             sx={{
               height: "100%",
-              bgcolor: "background.paper",
-              border: 1,
-              borderColor: "divider",
-              display: "flex",
-              flexDirection: "column",
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                <RepeatIcon color="primary" fontSize="small" />
-                <Typography variant="body2" color="text.secondary">
+                <Box sx={{ 
+                  width: 28, height: 28, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center",
+                  bgcolor: alpha("#6366f1", 0.1), border: `1px solid ${alpha("#6366f1", 0.2)}`
+                }}>
+                  <RepeatIcon sx={{ color: "#6366f1", fontSize: 16 }} />
+                </Box>
+                <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
                   Total Recurring
                 </Typography>
               </Box>
-              <Typography variant="h5" fontWeight="bold">
+              <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, letterSpacing: "-0.02em" }}>
                 {stats.total}
               </Typography>
-              <Box sx={{ display: "flex", gap: 2, mt: 1, flexWrap: "wrap" }}>
-                <Typography variant="caption" color="success.main">
+              <Box sx={{ display: "flex", gap: 1.5, mt: 1, flexWrap: "wrap" }}>
+                <Typography variant="caption" sx={{ color: "#059669", fontWeight: 500 }}>
                   {stats.incomeCount} income
                 </Typography>
-                <Typography variant="caption" color="error.main">
+                <Typography variant="caption" sx={{ color: "#DC2626", fontWeight: 500 }}>
                   {stats.expenseCount} expense
                 </Typography>
-                {stats.sharedCount > 0 && (
-                  <Typography variant="caption" color="info.main">
-                    {stats.sharedCount} shared
-                  </Typography>
-                )}
               </Box>
             </CardContent>
           </Card>
@@ -633,34 +663,51 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
         <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Card
+            elevation={0}
             sx={{
               height: "100%",
-              bgcolor: "background.paper",
-              border: 1,
-              borderColor: "divider",
-              display: "flex",
-              flexDirection: "column",
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha(stats.monthlyBalance >= 0 ? "#059669" : "#DC2626", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: stats.monthlyBalance >= 0
+                  ? "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)"
+                  : "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                <CalendarIcon color="info" fontSize="small" />
-                <Typography variant="body2" color="text.secondary">
+                <Box sx={{ 
+                  width: 28, height: 28, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center",
+                  bgcolor: alpha("#06B6D4", 0.1), border: `1px solid ${alpha("#06B6D4", 0.2)}`
+                }}>
+                  <CalendarIcon sx={{ color: "#06B6D4", fontSize: 16 }} />
+                </Box>
+                <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
                   Monthly
                 </Typography>
               </Box>
-              <Typography
-                variant={isMobile ? "h6" : "h5"}
-                fontWeight="bold"
-                color={stats.monthlyBalance >= 0 ? "success.main" : "error.main"}
-              >
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: stats.monthlyBalance >= 0 ? "#059669" : "#DC2626", letterSpacing: "-0.02em" }}>
                 {formatCurrency(stats.monthlyBalance)}
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 1 }}>
-                <Typography variant="caption" color="success.main">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: "#059669", fontWeight: 500 }}>
                   +{formatCurrency(stats.monthlyIncome)}
                 </Typography>
-                <Typography variant="caption" color="error.main">
+                <Typography variant="caption" sx={{ color: "#DC2626", fontWeight: 500 }}>
                   -{formatCurrency(stats.monthlyExpense)}
                 </Typography>
               </Box>
@@ -670,34 +717,51 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
         <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Card
+            elevation={0}
             sx={{
               height: "100%",
-              bgcolor: "background.paper",
-              border: 1,
-              borderColor: "divider",
-              display: "flex",
-              flexDirection: "column",
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha(stats.annualizedBalance >= 0 ? "#059669" : "#DC2626", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: stats.annualizedBalance >= 0
+                  ? "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)"
+                  : "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                <InfiniteIcon color="warning" fontSize="small" />
-                <Typography variant="body2" color="text.secondary">
+                <Box sx={{ 
+                  width: 28, height: 28, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center",
+                  bgcolor: alpha("#F59E0B", 0.1), border: `1px solid ${alpha("#F59E0B", 0.2)}`
+                }}>
+                  <InfiniteIcon sx={{ color: "#F59E0B", fontSize: 16 }} />
+                </Box>
+                <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
                   Yearly
                 </Typography>
               </Box>
-              <Typography
-                variant={isMobile ? "h6" : "h5"}
-                fontWeight="bold"
-                color={stats.annualizedBalance >= 0 ? "success.main" : "error.main"}
-              >
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: stats.annualizedBalance >= 0 ? "#059669" : "#DC2626", letterSpacing: "-0.02em" }}>
                 {formatCurrency(stats.annualizedBalance)}
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 1 }}>
-                <Typography variant="caption" color="success.main">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: "#059669", fontWeight: 500 }}>
                   +{formatCurrency(stats.annualizedIncome)}
                 </Typography>
-                <Typography variant="caption" color="error.main">
+                <Typography variant="caption" sx={{ color: "#DC2626", fontWeight: 500 }}>
                   -{formatCurrency(stats.annualizedExpense)}
                 </Typography>
               </Box>
@@ -707,25 +771,37 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
         <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <Card
+            elevation={0}
             sx={{
               height: "100%",
-              bgcolor: "primary.main",
-              color: "primary.contrastText",
-              display: "flex",
-              flexDirection: "column",
+              position: "relative",
+              overflow: "hidden",
+              background: `linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)`,
+              borderRadius: "16px",
+              boxShadow: `0 8px 32px -8px ${alpha("#6366f1", 0.4)}`,
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { 
+                transform: "translateY(-2px)",
+                boxShadow: `0 12px 40px -8px ${alpha("#6366f1", 0.5)}`,
+              },
             }}
           >
-            <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                <TrendingUpIcon fontSize="small" />
-                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                <Box sx={{ 
+                  width: 28, height: 28, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center",
+                  bgcolor: alpha("#FFFFFF", 0.2)
+                }}>
+                  <TrendingUpIcon sx={{ color: "#FFFFFF", fontSize: 16 }} />
+                </Box>
+                <Typography variant="overline" sx={{ color: alpha("#FFFFFF", 0.8), letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
                   Annual Impact
                 </Typography>
               </Box>
-              <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.02em" }}>
                 {formatCurrency(stats.annualizedBalance)}
               </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8, mt: 1 }}>
+              <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.7), mt: 0.5, display: "block" }}>
                 Monthly × 12 + Yearly
               </Typography>
             </CardContent>

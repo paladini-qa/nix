@@ -400,111 +400,169 @@ const SharedView: React.FC<SharedViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={2}>
+      <Grid container spacing={isMobile ? 1.5 : 2}>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              bgcolor: alpha(theme.palette.success.main, 0.1),
-              border: 1,
-              borderColor: alpha(theme.palette.success.main, 0.3),
+              p: isMobile ? 1.5 : 2,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <TrendingUpIcon fontSize="small" color="success" />
-              <Typography variant="overline" color="success.main">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
+              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#059669", 0.1), border: `1px solid ${alpha("#059669", 0.2)}` }}>
+                <TrendingUpIcon sx={{ fontSize: 14, color: "#059669" }} />
+              </Box>
+              <Typography variant="overline" sx={{ color: "#059669", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
                 A Receber
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold" color="success.dark">
+            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {formatCurrency(stats.totalPending)}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ position: "relative", zIndex: 1 }}>
               Amigos me devem
             </Typography>
           </Paper>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              bgcolor: alpha(theme.palette.error.main, 0.1),
-              border: 1,
-              borderColor: alpha(theme.palette.error.main, 0.3),
+              p: isMobile ? 1.5 : 2,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <TrendingDownIcon fontSize="small" color="error" />
-              <Typography variant="overline" color="error.main">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
+              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#DC2626", 0.1), border: `1px solid ${alpha("#DC2626", 0.2)}` }}>
+                <TrendingDownIcon sx={{ fontSize: 14, color: "#DC2626" }} />
+              </Box>
+              <Typography variant="overline" sx={{ color: "#DC2626", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
                 A Pagar
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold" color="error.dark">
+            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {formatCurrency(stats.totalPendingIOwe)}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ position: "relative", zIndex: 1 }}>
               Eu devo
             </Typography>
           </Paper>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              bgcolor: alpha(
-                stats.netBalance >= 0 ? theme.palette.success.main : theme.palette.error.main,
-                0.1
-              ),
-              border: 1,
-              borderColor: alpha(
-                stats.netBalance >= 0 ? theme.palette.success.main : theme.palette.error.main,
-                0.3
-              ),
+              p: isMobile ? 1.5 : 2,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha(stats.netBalance >= 0 ? "#059669" : "#DC2626", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: stats.netBalance >= 0
+                  ? "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
+                  : "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <BalanceIcon 
-                fontSize="small" 
-                sx={{ color: stats.netBalance >= 0 ? "success.main" : "error.main" }}
-              />
-              <Typography 
-                variant="overline" 
-                sx={{ color: stats.netBalance >= 0 ? "success.main" : "error.main" }}
-              >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
+              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha(stats.netBalance >= 0 ? "#059669" : "#DC2626", 0.1), border: `1px solid ${alpha(stats.netBalance >= 0 ? "#059669" : "#DC2626", 0.2)}` }}>
+                <BalanceIcon sx={{ fontSize: 14, color: stats.netBalance >= 0 ? "#059669" : "#DC2626" }} />
+              </Box>
+              <Typography variant="overline" sx={{ color: stats.netBalance >= 0 ? "#059669" : "#DC2626", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
                 Saldo
               </Typography>
             </Box>
-            <Typography 
-              variant={isMobile ? "h6" : "h5"} 
-              fontWeight="bold" 
-              sx={{ color: stats.netBalance >= 0 ? "success.dark" : "error.dark" }}
-            >
+            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: stats.netBalance >= 0 ? "#059669" : "#DC2626", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {stats.netBalance >= 0 ? "+" : ""}{formatCurrency(stats.netBalance)}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ position: "relative", zIndex: 1 }}>
               {stats.netBalance >= 0 ? "A seu favor" : "Você deve"}
             </Typography>
           </Paper>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              border: 1,
-              borderColor: alpha(theme.palette.primary.main, 0.3),
+              p: isMobile ? 1.5 : 2,
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.02) 100%)",
+                pointerEvents: "none",
+              },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <PeopleIcon fontSize="small" color="primary" />
-              <Typography variant="overline" color="primary.main">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
+              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#6366f1", 0.1), border: `1px solid ${alpha("#6366f1", 0.2)}` }}>
+                <PeopleIcon sx={{ fontSize: 14, color: "#6366f1" }} />
+              </Box>
+              <Typography variant="overline" sx={{ color: "#6366f1", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
                 Amigos
               </Typography>
             </Box>
-            <Typography variant="h5" fontWeight="bold" color="primary.dark">
+            <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {stats.friendCount}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ position: "relative", zIndex: 1 }}>
               Com transações
             </Typography>
           </Paper>
@@ -521,18 +579,29 @@ const SharedView: React.FC<SharedViewProps> = ({
             {friendBalances.map((friend) => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={friend.name}>
                 <Card
+                  elevation={0}
                   sx={{
                     cursor: "pointer",
-                    border: 2,
-                    borderColor:
-                      selectedFriend === friend.name
-                        ? "primary.main"
-                        : "divider",
-                    transition: "all 0.2s",
+                    position: "relative",
+                    overflow: "hidden",
+                    background: theme.palette.mode === "dark"
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                      : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                    backdropFilter: "blur(16px)",
+                    border: selectedFriend === friend.name
+                      ? `2px solid ${theme.palette.primary.main}`
+                      : `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                    borderLeft: `3px solid ${getAvatarColor(friend.name)}`,
+                    borderRadius: "16px",
+                    boxShadow: theme.palette.mode === "dark"
+                      ? `0 6px 24px -6px ${alpha(getAvatarColor(friend.name), 0.2)}`
+                      : `0 6px 24px -6px ${alpha(getAvatarColor(friend.name), 0.15)}`,
+                    transition: "all 0.2s ease-in-out",
                     "&:hover": {
-                      borderColor: "primary.light",
                       transform: "translateY(-2px)",
-                      boxShadow: 3,
+                      boxShadow: theme.palette.mode === "dark"
+                        ? `0 10px 32px -6px ${alpha(getAvatarColor(friend.name), 0.3)}`
+                        : `0 10px 32px -6px ${alpha(getAvatarColor(friend.name), 0.25)}`,
                     },
                   }}
                   onClick={() =>

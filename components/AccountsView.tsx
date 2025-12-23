@@ -26,6 +26,7 @@ import {
   Chip,
   Switch,
   FormControlLabel,
+  alpha,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -289,50 +290,146 @@ const AccountsView: React.FC<AccountsViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={2}>
+      <Grid container spacing={isMobile ? 1.5 : 2}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Total Balance
-            </Typography>
-            <Typography
-              variant="h6"
-              fontWeight="bold"
-              color={summary.totalBalance >= 0 ? "success.main" : "error.main"}
-            >
-              {formatCurrency(summary.totalBalance)}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: theme.palette.mode === "dark"
+                ? `0 6px 24px -6px ${alpha(summary.totalBalance >= 0 ? "#059669" : "#DC2626", 0.2)}`
+                : `0 6px 24px -6px ${alpha(summary.totalBalance >= 0 ? "#059669" : "#DC2626", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: summary.totalBalance >= 0
+                  ? "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
+                  : "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Total Balance
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.totalBalance >= 0 ? "#059669" : "#DC2626", letterSpacing: "-0.02em" }}>
+                {formatCurrency(summary.totalBalance)}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Assets
-            </Typography>
-            <Typography variant="h6" fontWeight="bold" color="success.main">
-              {formatCurrency(summary.positiveBalance)}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Assets
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em" }}>
+                {formatCurrency(summary.positiveBalance)}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Liabilities
-            </Typography>
-            <Typography variant="h6" fontWeight="bold" color="error.main">
-              {formatCurrency(Math.abs(summary.negativeBalance))}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Liabilities
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em" }}>
+                {formatCurrency(Math.abs(summary.negativeBalance))}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Active Accounts
-            </Typography>
-            <Typography variant="h6" fontWeight="bold">
-              {summary.count}
-            </Typography>
-          </Paper>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%)",
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                Active Accounts
+              </Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em" }}>
+                {summary.count}
+              </Typography>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
@@ -342,18 +439,49 @@ const AccountsView: React.FC<AccountsViewProps> = ({
           <Typography color="text.secondary">Loading accounts...</Typography>
         </Box>
       ) : displayedAccounts.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: "center" }}>
-          <BankIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            No accounts yet
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Add your bank accounts and wallets to track balances
-          </Typography>
-          <Button variant="contained" onClick={() => handleOpenForm()}>
-            Add Account
-          </Button>
-        </Paper>
+        <Card
+          elevation={0}
+          sx={{
+            position: "relative",
+            overflow: "hidden",
+            background: theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+            backdropFilter: "blur(16px)",
+            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            borderRadius: "20px",
+          }}
+        >
+          <CardContent sx={{ p: 4, textAlign: "center" }}>
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 2,
+                background: theme.palette.mode === "dark"
+                  ? alpha("#6366f1", 0.15)
+                  : alpha("#6366f1", 0.1),
+                border: `1px solid ${alpha("#6366f1", 0.2)}`,
+              }}
+            >
+              <BankIcon sx={{ fontSize: 32, color: "#6366f1" }} />
+            </Box>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              No accounts yet
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Add your bank accounts and wallets to track balances
+            </Typography>
+            <Button variant="contained" onClick={() => handleOpenForm()}>
+              Add Account
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <>
           {/* Active Accounts */}
@@ -361,8 +489,31 @@ const AccountsView: React.FC<AccountsViewProps> = ({
             <Grid container spacing={2}>
               {activeAccounts.map((account) => (
                 <Grid key={account.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                  <Card>
-                    <CardContent>
+                  <Card
+                    elevation={0}
+                    sx={{
+                      position: "relative",
+                      overflow: "hidden",
+                      background: theme.palette.mode === "dark"
+                        ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                        : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                      backdropFilter: "blur(16px)",
+                      border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                      borderLeft: `3px solid ${account.color}`,
+                      borderRadius: "16px",
+                      boxShadow: theme.palette.mode === "dark"
+                        ? `0 6px 24px -6px ${alpha(account.color, 0.2)}`
+                        : `0 6px 24px -6px ${alpha(account.color, 0.15)}`,
+                      transition: "all 0.2s ease-in-out",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: theme.palette.mode === "dark"
+                          ? `0 10px 32px -6px ${alpha(account.color, 0.3)}`
+                          : `0 10px 32px -6px ${alpha(account.color, 0.25)}`,
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                       <Box
                         sx={{
                           display: "flex",
@@ -380,9 +531,13 @@ const AccountsView: React.FC<AccountsViewProps> = ({
                         >
                           <Avatar
                             sx={{
-                              bgcolor: account.color,
+                              bgcolor: theme.palette.mode === "dark"
+                                ? alpha(account.color, 0.2)
+                                : alpha(account.color, 0.15),
+                              color: account.color,
                               width: 44,
                               height: 44,
+                              border: `1px solid ${alpha(account.color, 0.2)}`,
                             }}
                           >
                             {ACCOUNT_ICONS[account.type]}
@@ -395,7 +550,12 @@ const AccountsView: React.FC<AccountsViewProps> = ({
                               label={getTypeLabel(account.type)}
                               size="small"
                               variant="outlined"
-                              sx={{ height: 20, fontSize: 11 }}
+                              sx={{ 
+                                height: 20, 
+                                fontSize: 11,
+                                borderColor: alpha(account.color, 0.3),
+                                color: account.color,
+                              }}
                             />
                           </Box>
                         </Box>
@@ -404,6 +564,10 @@ const AccountsView: React.FC<AccountsViewProps> = ({
                             <IconButton
                               size="small"
                               onClick={() => handleOpenForm(account)}
+                              sx={{ 
+                                bgcolor: alpha(theme.palette.primary.main, 0.08),
+                                "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.15) }
+                              }}
                             >
                               <EditIcon fontSize="small" />
                             </IconButton>
@@ -412,6 +576,11 @@ const AccountsView: React.FC<AccountsViewProps> = ({
                             <IconButton
                               size="small"
                               onClick={() => handleToggleArchive(account)}
+                              sx={{ 
+                                ml: 0.5,
+                                bgcolor: alpha(theme.palette.warning.main, 0.08),
+                                "&:hover": { bgcolor: alpha(theme.palette.warning.main, 0.15) }
+                              }}
                             >
                               <ArchiveIcon fontSize="small" />
                             </IconButton>
@@ -421,6 +590,11 @@ const AccountsView: React.FC<AccountsViewProps> = ({
                               size="small"
                               color="error"
                               onClick={() => handleDelete(account)}
+                              sx={{ 
+                                ml: 0.5,
+                                bgcolor: alpha(theme.palette.error.main, 0.08),
+                                "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.15) }
+                              }}
                             >
                               <DeleteIcon fontSize="small" />
                             </IconButton>
@@ -429,17 +603,16 @@ const AccountsView: React.FC<AccountsViewProps> = ({
                       </Box>
 
                       <Box sx={{ textAlign: "right" }}>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" color="text.secondary" sx={{ letterSpacing: "0.05em", fontWeight: 500 }}>
                           Current Balance
                         </Typography>
                         <Typography
                           variant="h5"
-                          fontWeight="bold"
-                          color={
-                            account.currentBalance >= 0
-                              ? "success.main"
-                              : "error.main"
-                          }
+                          sx={{
+                            fontWeight: 700,
+                            color: account.currentBalance >= 0 ? "#059669" : "#DC2626",
+                            letterSpacing: "-0.02em",
+                          }}
                         >
                           {formatCurrency(account.currentBalance)}
                         </Typography>
@@ -465,8 +638,23 @@ const AccountsView: React.FC<AccountsViewProps> = ({
               <Grid container spacing={2}>
                 {archivedAccounts.map((account) => (
                   <Grid key={account.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                    <Card sx={{ opacity: 0.7, bgcolor: "action.hover" }}>
-                      <CardContent>
+                    <Card
+                      elevation={0}
+                      sx={{
+                        position: "relative",
+                        overflow: "hidden",
+                        opacity: 0.7,
+                        background: theme.palette.mode === "dark"
+                          ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.5)} 0%, ${alpha(theme.palette.background.paper, 0.3)} 100%)`
+                          : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.6)} 0%, ${alpha("#FFFFFF", 0.4)} 100%)`,
+                        backdropFilter: "blur(12px)",
+                        border: `1px dashed ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.1)}`,
+                        borderRadius: "14px",
+                        transition: "all 0.2s ease-in-out",
+                        "&:hover": { opacity: 0.9 },
+                      }}
+                    >
+                      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                         <Box
                           sx={{
                             display: "flex",
@@ -483,7 +671,8 @@ const AccountsView: React.FC<AccountsViewProps> = ({
                           >
                             <Avatar
                               sx={{
-                                bgcolor: "grey.500",
+                                bgcolor: alpha("#64748B", 0.15),
+                                color: "#64748B",
                                 width: 40,
                                 height: 40,
                               }}
