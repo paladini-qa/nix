@@ -67,20 +67,20 @@ const getCategoryConfig = (category: string) => {
 
 // Animation variants
 const containerVariants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 1 }, // Start visible to prevent flash of invisible content
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.1,
+      staggerChildren: 0.03,
+      delayChildren: 0,
     },
   },
 };
 
 const rowVariants = {
   hidden: { 
-    opacity: 0, 
-    y: 10,
+    opacity: 1, 
+    y: 0,
   },
   visible: { 
     opacity: 1, 
@@ -102,9 +102,9 @@ const rowVariants = {
 
 const mobileCardVariants = {
   hidden: { 
-    opacity: 0, 
-    y: 20,
-    scale: 0.98,
+    opacity: 1, 
+    y: 0,
+    scale: 1,
   },
   visible: { 
     opacity: 1, 
@@ -201,7 +201,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     return (
       <MotionBox
         variants={containerVariants}
-        initial="hidden"
+        initial={false}
         animate="visible"
         sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
       >
@@ -403,7 +403,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         <TableBody
           component={motion.tbody}
           variants={containerVariants}
-          initial="hidden"
+          initial={false}
           animate="visible"
         >
           <AnimatePresence mode="popLayout">
