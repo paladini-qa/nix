@@ -12,6 +12,7 @@ import {
   alpha,
   Checkbox,
   FormControlLabel,
+  IconButton,
 } from "@mui/material";
 import {
   AutoAwesome as SparklesIcon,
@@ -20,6 +21,8 @@ import {
   Person as PersonIcon,
   ArrowForward as ArrowForwardIcon,
   Fingerprint as FingerprintIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from "@mui/icons-material";
 import { supabase } from "../services/supabaseClient";
 
@@ -38,32 +41,30 @@ const LoginView: React.FC = () => {
     // Inicia marcado se usuário tinha escolhido lembrar antes
     return localStorage.getItem("nix_remember_session") === "true";
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   // Estilos de input premium - mais compactos
   const inputSx = {
     "& .MuiOutlinedInput-root": {
-      borderRadius: 2,
-      bgcolor: isDarkMode
-        ? alpha(theme.palette.background.paper, 0.4)
-        : alpha("#FFFFFF", 0.7),
-      backdropFilter: "blur(8px)",
+      borderRadius: "12px",
+      bgcolor: "transparent",
       transition: "all 0.2s ease-in-out",
       "& fieldset": {
         borderColor: isDarkMode
-          ? alpha("#FFFFFF", 0.1)
-          : alpha(theme.palette.primary.main, 0.15),
+          ? alpha("#FFFFFF", 0.15)
+          : alpha(theme.palette.primary.main, 0.2),
         borderWidth: 1.5,
+        transition: "border-color 0.2s ease-in-out, border-width 0.2s ease-in-out",
       },
       "&:hover fieldset": {
         borderColor: isDarkMode
-          ? alpha("#FFFFFF", 0.2)
-          : alpha(theme.palette.primary.main, 0.3),
+          ? alpha("#FFFFFF", 0.3)
+          : alpha(theme.palette.primary.main, 0.4),
       },
       "&.Mui-focused": {
         bgcolor: isDarkMode
-          ? alpha(theme.palette.primary.main, 0.1)
-          : alpha("#FFFFFF", 0.9),
-        boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+          ? alpha(theme.palette.primary.main, 0.06)
+          : alpha(theme.palette.primary.main, 0.03),
       },
       "&.Mui-focused fieldset": {
         borderColor: theme.palette.primary.main,
@@ -75,6 +76,17 @@ const LoginView: React.FC = () => {
     },
     "& .MuiInputBase-input": {
       py: 1.5,
+      // Remove estilos de validação e autofill do navegador
+      "&:valid, &:invalid": {
+        boxShadow: "none",
+        outline: "none",
+      },
+      "&:-webkit-autofill, &:-webkit-autofill:hover, &:-webkit-autofill:focus": {
+        WebkitBoxShadow: `0 0 0 1000px ${isDarkMode ? theme.palette.background.paper : "#FFFFFF"} inset !important`,
+        WebkitTextFillColor: `${theme.palette.text.primary} !important`,
+        caretColor: theme.palette.text.primary,
+        borderRadius: "12px",
+      },
     },
   };
 
@@ -214,7 +226,7 @@ const LoginView: React.FC = () => {
       >
         <Box
           sx={{
-            borderRadius: 3,
+            borderRadius: "20px",
             overflow: "hidden",
             // Glassmorphism Premium
             bgcolor: isDarkMode
@@ -384,7 +396,7 @@ const LoginView: React.FC = () => {
             <TextField
               fullWidth
               label="Senha"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -394,6 +406,30 @@ const LoginView: React.FC = () => {
                 startAdornment: (
                   <InputAdornment position="start">
                     <LockIcon sx={{ color: "text.secondary" }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      size="small"
+                      sx={{
+                        color: "text.secondary",
+                        transition: "all 0.2s ease-in-out",
+                        "&:hover": {
+                          color: "primary.main",
+                          bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        },
+                      }}
+                    >
+                      {showPassword ? (
+                        <VisibilityOffIcon fontSize="small" />
+                      ) : (
+                        <VisibilityIcon fontSize="small" />
+                      )}
+                    </IconButton>
                   </InputAdornment>
                 ),
               }}
@@ -436,7 +472,7 @@ const LoginView: React.FC = () => {
                   </Typography>
                 }
                 sx={{
-                  mx: 0,
+                  mx: "auto",
                   mt: -0.5,
                   "& .MuiFormControlLabel-label": {
                     ml: 0.5,
