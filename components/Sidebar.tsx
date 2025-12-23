@@ -16,7 +16,6 @@ import {
 import {
   Dashboard as DashboardIcon,
   AccountBalanceWallet as WalletIcon,
-  Settings as SettingsIcon,
   Logout as LogOutIcon,
   Person as UserIcon,
   ChevronRight as ChevronRightIcon,
@@ -52,7 +51,6 @@ type ViewType =
   | "nixai"
   | "budgets"
   | "goals"
-  | "settings"
   | "paymentMethods"
   | "categories";
 
@@ -174,7 +172,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Itens de menu no final
   const footerNavItems: NavItem[] = [
     { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" },
-    { icon: SettingsIcon, label: t("nav.settings"), id: "settings" },
   ];
 
   // Verifica se algum item do grupo está ativo

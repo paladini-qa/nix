@@ -210,7 +210,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   };
 
   const handleTogglePaid = (tx: Transaction) => {
-    if (onTogglePaid && !tx.isVirtual) {
+    if (onTogglePaid) {
       onTogglePaid(tx.id, !tx.isPaid);
     }
   };
@@ -577,35 +577,26 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     )}
                   </TableCell>
                   <TableCell sx={{ textAlign: "center" }}>
-                    {t.isVirtual ? (
-                      <Chip
-                        label="Virtual"
+                    <Tooltip title={t.isPaid ? "Marcar como não pago" : "Marcar como pago"}>
+                      <IconButton
                         size="small"
-                        variant="outlined"
-                        sx={{ fontSize: 10 }}
-                      />
-                    ) : (
-                      <Tooltip title={t.isPaid ? "Marcar como não pago" : "Marcar como pago"}>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleTogglePaid(t)}
-                          sx={{
-                            color: t.isPaid ? "#10b981" : "text.disabled",
-                            "&:hover": {
-                              bgcolor: t.isPaid
-                                ? alpha("#ef4444", 0.1)
-                                : alpha("#10b981", 0.1),
-                            },
-                          }}
-                        >
-                          {t.isPaid ? (
-                            <CheckCircleIcon fontSize="small" />
-                          ) : (
-                            <UnpaidIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </Tooltip>
-                    )}
+                        onClick={() => handleTogglePaid(t)}
+                        sx={{
+                          color: t.isPaid ? "#10b981" : "text.disabled",
+                          "&:hover": {
+                            bgcolor: t.isPaid
+                              ? alpha("#ef4444", 0.1)
+                              : alpha("#10b981", 0.1),
+                          },
+                        }}
+                      >
+                        {t.isPaid ? (
+                          <CheckCircleIcon fontSize="small" />
+                        ) : (
+                          <UnpaidIcon fontSize="small" />
+                        )}
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                   <TableCell
                     sx={{

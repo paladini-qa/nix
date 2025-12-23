@@ -12,6 +12,10 @@ import {
   IconButton,
   Tooltip,
   LinearProgress,
+  TextField,
+  Tabs,
+  Tab,
+  Collapse,
 } from "@mui/material";
 import {
   CreditCard as CreditCardIcon,
@@ -21,19 +25,31 @@ import {
   Receipt as ReceiptIcon,
   TrendingDown as TrendingDownIcon,
   Warning as WarningIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Settings as SettingsIcon,
+  Assessment as AssessmentIcon,
 } from "@mui/icons-material";
-import { Transaction } from "../types";
+import { Transaction, ColorConfig, PaymentMethodColors } from "../types";
 import { ColorsContext } from "../App";
 import DateFilter from "./DateFilter";
+import ColorPicker from "./ColorPicker";
+
+// Cores padrão para novos métodos
+const DEFAULT_PAYMENT_COLORS: ColorConfig = { primary: "#6366f1", secondary: "#4f46e5" };
 
 interface PaymentMethodsViewProps {
   transactions: Transaction[];
   paymentMethods: string[];
+  paymentMethodColors: PaymentMethodColors;
   selectedMonth: number;
   selectedYear: number;
   onDateChange: (month: number, year: number) => void;
   onSelectPaymentMethod: (method: string) => void;
   onPayAll: (paymentMethod: string, month: number, year: number) => void;
+  onAddPaymentMethod: (method: string) => void;
+  onRemovePaymentMethod: (method: string) => void;
+  onUpdatePaymentMethodColor: (method: string, colors: ColorConfig) => void;
 }
 
 interface PaymentMethodSummary {
@@ -48,16 +64,31 @@ interface PaymentMethodSummary {
 const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   transactions,
   paymentMethods,
+  paymentMethodColors,
   selectedMonth,
   selectedYear,
   onDateChange,
   onSelectPaymentMethod,
   onPayAll,
+  onAddPaymentMethod,
+  onRemovePaymentMethod,
+  onUpdatePaymentMethodColor,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDarkMode = theme.palette.mode === "dark";
   const { getPaymentMethodColor } = useContext(ColorsContext);
+
+  // Tab state: 0 = Overview, 1 = Manage
+  const [tabValue, setTabValue] = useState(0);
+  const [newPaymentMethod, setNewPaymentMethod] = useState("");
+
+  const handleAddMethod = () => {
+    if (newPaymentMethod.trim()) {
+      onAddPaymentMethod(newPaymentMethod.trim());
+      setNewPaymentMethod("");
+    }
+  };
 
   // Gera transações recorrentes virtuais para o mês
   const generateRecurringTransactions = useMemo(() => {
@@ -201,17 +232,76 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
           </Typography>
         </Box>
 
-        <DateFilter
-          month={selectedMonth}
-          year={selectedYear}
-          onDateChange={onDateChange}
-          showIcon
-          compact={isMobile}
-        />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          {tabValue === 0 && (
+            <DateFilter
+              month={selectedMonth}
+              year={selectedYear}
+              onDateChange={onDateChange}
+              showIcon
+              compact={isMobile}
+            />
+          )}
+        </Box>
       </Box>
 
-      {/* Summary Card */}
-      <Paper
+      {/* Tabs */}
+      <Paper sx={{ px: isMobile ? 1 : 2 }}>
+        <Tabs
+          value={tabValue}
+          onChange={(_, newValue) => setTabValue(newValue)}
+          sx={{
+            "& .MuiTab-root": {
+              textTransform: "none",
+              fontWeight: 600,
+              minHeight: 48,
+            },
+          }}
+        >
+          <Tab
+            icon={<AssessmentIcon />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                Visão Geral
+                <Chip
+                  label={paymentMethodsSummary.filter(s => s.transactionCount > 0).length}
+                  size="small"
+                  sx={{
+                    height: 20,
+                    bgcolor: tabValue === 0 ? alpha(theme.palette.primary.main, 0.15) : "action.hover",
+                    color: tabValue === 0 ? "primary.main" : "text.secondary",
+                  }}
+                />
+              </Box>
+            }
+          />
+          <Tab
+            icon={<SettingsIcon />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                Gerenciar
+                <Chip
+                  label={paymentMethods.length}
+                  size="small"
+                  sx={{
+                    height: 20,
+                    bgcolor: tabValue === 1 ? alpha(theme.palette.primary.main, 0.15) : "action.hover",
+                    color: tabValue === 1 ? "primary.main" : "text.secondary",
+                  }}
+                />
+              </Box>
+            }
+          />
+        </Tabs>
+      </Paper>
+
+      {/* Tab Content: Overview */}
+      <Collapse in={tabValue === 0} unmountOnExit>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}>
+        {/* Summary Card */}
+        <Paper
         elevation={0}
         sx={{
           p: isMobile ? 1.5 : 2,
@@ -450,12 +540,147 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 Nenhum método de pagamento
               </Typography>
               <Typography variant="body2" color="text.disabled">
-                Adicione métodos de pagamento nas configurações
+                Adicione métodos de pagamento na aba "Gerenciar"
               </Typography>
             </Paper>
           </Grid>
         )}
       </Grid>
+      </Box>
+      </Collapse>
+
+      {/* Tab Content: Manage */}
+      <Collapse in={tabValue === 1} unmountOnExit>
+        {/* Add Payment Method */}
+        <Paper
+          sx={{
+            p: isMobile ? 2 : 3,
+            mb: 3,
+            background: isDarkMode
+              ? alpha(theme.palette.primary.main, 0.08)
+              : alpha(theme.palette.primary.main, 0.04),
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+          }}
+        >
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+            Adicionar Novo Método de Pagamento
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Nome do método de pagamento..."
+              value={newPaymentMethod}
+              onChange={(e) => setNewPaymentMethod(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddMethod()}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                },
+              }}
+            />
+            <IconButton
+              onClick={handleAddMethod}
+              sx={{
+                bgcolor: "primary.main",
+                color: "white",
+                borderRadius: 2,
+                "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.8) },
+              }}
+            >
+              <AddIcon />
+            </IconButton>
+          </Box>
+        </Paper>
+
+        {/* Payment Methods List */}
+        <Grid container spacing={2}>
+          {paymentMethods.map((method) => {
+            const colors = paymentMethodColors[method] || DEFAULT_PAYMENT_COLORS;
+            return (
+              <Grid key={method} size={{ xs: 12, sm: 6, md: 4 }}>
+                <Paper
+                  sx={{
+                    p: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    transition: "all 0.2s ease",
+                    border: `1px solid ${alpha(colors.primary, 0.2)}`,
+                    background: isDarkMode
+                      ? `linear-gradient(135deg, ${alpha(colors.primary, 0.1)} 0%, ${alpha(colors.secondary, 0.05)} 100%)`
+                      : `linear-gradient(135deg, ${alpha(colors.primary, 0.06)} 0%, ${alpha(colors.secondary, 0.02)} 100%)`,
+                    "&:hover": {
+                      transform: "translateY(-2px)",
+                      boxShadow: `0 8px 16px -4px ${alpha(colors.primary, 0.2)}`,
+                    },
+                  }}
+                >
+                  <ColorPicker
+                    value={colors}
+                    onChange={(newColors) => onUpdatePaymentMethodColor(method, newColors)}
+                    size="small"
+                  />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
+                    <CreditCardIcon
+                      fontSize="small"
+                      sx={{ color: colors.primary }}
+                    />
+                    <Typography
+                      variant="body1"
+                      fontWeight={600}
+                      sx={{
+                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {method}
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    size="small"
+                    onClick={() => onRemovePaymentMethod(method)}
+                    sx={{
+                      color: "text.secondary",
+                      "&:hover": {
+                        bgcolor: alpha(theme.palette.error.main, 0.1),
+                        color: "error.main",
+                      },
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Paper>
+              </Grid>
+            );
+          })}
+        </Grid>
+
+        {/* Empty State */}
+        {paymentMethods.length === 0 && (
+          <Paper
+            sx={{
+              p: 4,
+              textAlign: "center",
+              bgcolor: alpha(theme.palette.primary.main, 0.02),
+              border: `1px dashed ${alpha(theme.palette.primary.main, 0.2)}`,
+            }}
+          >
+            <PaymentIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+            <Typography variant="h6" color="text.secondary">
+              Nenhum método de pagamento
+            </Typography>
+            <Typography variant="body2" color="text.disabled">
+              Adicione um método usando o campo acima
+            </Typography>
+          </Paper>
+        )}
+      </Collapse>
     </Box>
   );
 };

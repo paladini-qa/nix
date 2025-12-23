@@ -28,7 +28,6 @@ import {
   Logout as LogOutIcon,
   Dashboard as DashboardIcon,
   AccountBalanceWallet as WalletIcon,
-  Settings as SettingsIcon,
   AutoAwesome as SparklesIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
@@ -68,7 +67,6 @@ import DeleteOptionsDialog, { DeleteOption } from "./components/DeleteOptionsDia
 
 // Lazy loaded components (loaded on demand)
 const TransactionsView = lazy(() => import("./components/TransactionsView"));
-const SettingsView = lazy(() => import("./components/SettingsView"));
 const PaymentMethodDetailView = lazy(
   () => import("./components/PaymentMethodDetailView")
 );
@@ -211,7 +209,6 @@ const AppContent: React.FC<{
     | "nixai"
     | "budgets"
     | "goals"
-    | "settings"
     | "paymentMethods"
     | "categories"
   >("dashboard");
@@ -2114,6 +2111,7 @@ const AppContent: React.FC<{
                     <PaymentMethodsView
                       transactions={transactions}
                       paymentMethods={paymentMethods}
+                      paymentMethodColors={paymentMethodColors}
                       selectedMonth={filters.month}
                       selectedYear={filters.year}
                       onDateChange={(month, year) =>
@@ -2121,32 +2119,29 @@ const AppContent: React.FC<{
                       }
                       onSelectPaymentMethod={setSelectedPaymentMethod}
                       onPayAll={handlePayAllTransactions}
+                      onAddPaymentMethod={handleAddPaymentMethod}
+                      onRemovePaymentMethod={handleRemovePaymentMethod}
+                      onUpdatePaymentMethodColor={handleUpdatePaymentMethodColor}
                     />
                   </Suspense>
                 )
-              ) : currentView === "categories" ? (
-                <Suspense fallback={<ViewLoading />}>
-                  <CategoriesView
-                    categories={categories}
-                    categoryColors={categoryColors}
-                    onAddCategory={handleAddCategory}
-                    onRemoveCategory={handleRemoveCategory}
-                    onUpdateCategoryColor={handleUpdateCategoryColor}
-                  />
-                </Suspense>
               ) : (
                 <Suspense fallback={<ViewLoading />}>
-                  <SettingsView
+                  <CategoriesView
+                    transactions={transactions}
                     categories={categories}
-                    paymentMethods={paymentMethods}
                     categoryColors={categoryColors}
-                    paymentMethodColors={paymentMethodColors}
+                    selectedMonth={filters.month}
+                    selectedYear={filters.year}
+                    onDateChange={(month, year) =>
+                      setFilters({ ...filters, month, year })
+                    }
                     onAddCategory={handleAddCategory}
                     onRemoveCategory={handleRemoveCategory}
-                    onAddPaymentMethod={handleAddPaymentMethod}
-                    onRemovePaymentMethod={handleRemovePaymentMethod}
                     onUpdateCategoryColor={handleUpdateCategoryColor}
-                    onUpdatePaymentMethodColor={handleUpdatePaymentMethodColor}
+                    onTogglePaid={handleTogglePaid}
+                    onEditTransaction={handleEditTransaction}
+                    onDeleteTransaction={handleDeleteTransaction}
                   />
                 </Suspense>
               )}
@@ -2193,9 +2188,9 @@ const AppContent: React.FC<{
                   icon={<RepeatIcon />}
                 />
                 <BottomNavigationAction
-                  label="Settings"
-                  value="settings"
-                  icon={<SettingsIcon />}
+                  label="Payments"
+                  value="paymentMethods"
+                  icon={<CreditCardIcon />}
                 />
               </BottomNavigation>
             </Paper>
