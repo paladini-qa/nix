@@ -638,6 +638,251 @@ const AppContent: React.FC<{
           const originalTx = editingTransaction;
           if (!originalTx) return;
 
+          // Tratamento especial para transações recorrentes com "all_future"
+          // Precisamos materializar as ocorrências passadas antes de atualizar
+          if (originalTx.isRecurring && editMode === "all_future" && originalTx.frequency) {
+            const targetDate = new Date(newTx.date);
+            const targetYear = targetDate.getFullYear();
+            const targetMonth = targetDate.getMonth() + 1; // 1-12
+
+            const [origYear, origMonth, origDay] = originalTx.date.split("-").map(Number);
+            
+            // Gerar transações materializadas para meses passados
+            const materializedTransactions: Array<{
+              user_id: string;
+              description: string;
+              amount: number;
+              type: string;
+              category: string;
+              payment_method: string;
+              date: string;
+              is_recurring: boolean;
+              is_paid: boolean;
+              is_shared?: boolean;
+              shared_with?: string;
+            }> = [];
+
+            // Iterar pelos meses desde o original até o mês anterior ao selecionado
+            let currentYear = origYear;
+            let currentMonth = origMonth;
+
+            while (
+              currentYear < targetYear ||
+              (currentYear === targetYear && currentMonth < targetMonth)
+            ) {
+              // Pula o mês original (já existe como transação real)
+              if (!(currentYear === origYear && currentMonth === origMonth)) {
+                const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+                const adjustedDay = Math.min(origDay, daysInMonth);
+                const materializedDate = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+
+                // Verifica se já existe uma transação materializada para esta data
+                const alreadyExists = transactions.some((mt) => {
+                  if (mt.isRecurring || mt.isVirtual) return false;
+                  if (mt.id === originalTx.id) return false;
+                  
+                  const sameDescription = mt.description === originalTx.description;
+                  const sameCategory = mt.category === originalTx.category;
+                  const sameAmount = mt.amount === originalTx.amount;
+                  const sameDate = mt.date === materializedDate;
+                  const sameType = mt.type === originalTx.type;
+                  
+                  return sameDescription && sameCategory && sameAmount && sameDate && sameType;
+                });
+
+                if (!alreadyExists) {
+                  materializedTransactions.push({
+                    user_id: session.user.id,
+                    description: originalTx.description,
+                    amount: originalTx.amount,
+                    type: originalTx.type,
+                    category: originalTx.category,
+                    payment_method: originalTx.paymentMethod,
+                    date: materializedDate,
+                    is_recurring: false,
+                    is_paid: false,
+                    is_shared: originalTx.isShared,
+                    shared_with: originalTx.sharedWith,
+                  });
+                }
+              }
+
+              // Avançar para o próximo mês
+              if (originalTx.frequency === "monthly") {
+                currentMonth++;
+                if (currentMonth > 12) {
+                  currentMonth = 1;
+                  currentYear++;
+                }
+              } else if (originalTx.frequency === "yearly") {
+                currentYear++;
+              }
+            }
+
+            // Inserir transações materializadas no banco
+            if (materializedTransactions.length > 0) {
+              const { data: insertedData, error: insertError } = await supabase
+                .from("transactions")
+                .insert(materializedTransactions)
+                .select();
+
+              if (insertError) {
+                console.error("Error materializing past transactions:", insertError);
+              } else if (insertedData) {
+                // Adicionar transações materializadas ao estado local
+                const newTransactions: Transaction[] = insertedData.map((d) => ({
+                  id: d.id,
+                  description: d.description,
+                  amount: d.amount,
+                  type: d.type,
+                  category: d.category,
+                  paymentMethod: d.payment_method,
+                  date: d.date,
+                  createdAt: new Date(d.created_at).getTime(),
+                  isRecurring: false,
+                  isPaid: d.is_paid ?? false,
+                  isShared: d.is_shared,
+                  sharedWith: d.shared_with,
+                }));
+                setTransactions((prev) => [...newTransactions, ...prev]);
+              }
+            }
+
+            // Atualizar a transação original com nova data E novos valores
+            const updatedPayload = {
+              ...dbPayload,
+              date: newTx.date, // Nova data de início
+            };
+
+            const { error: updateError } = await supabase
+              .from("transactions")
+              .update(updatedPayload)
+              .eq("id", originalTx.id);
+
+            if (updateError) throw updateError;
+
+            // Atualizar estado local
+            const wasShared = originalTx.isShared && originalTx.sharedWith;
+            const isNowShared = newTx.isShared && newTx.sharedWith;
+
+            // Handle shared transaction income creation for recurring
+            if (isNowShared && !wasShared && newTx.type === "expense") {
+              const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+              const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
+
+              const incomePayload = {
+                user_id: session.user.id,
+                description: incomeDescription,
+                amount: incomeAmount,
+                type: "income" as const,
+                category: "Other",
+                payment_method: newTx.paymentMethod,
+                date: newTx.date,
+                is_recurring: newTx.isRecurring,
+                frequency: newTx.frequency,
+                is_paid: false,
+                related_transaction_id: originalTx.id,
+              };
+
+              const { data: incomeData, error: incomeError } = await supabase
+                .from("transactions")
+                .insert(incomePayload)
+                .select()
+                .single();
+
+              if (!incomeError && incomeData) {
+                await supabase
+                  .from("transactions")
+                  .update({ related_transaction_id: incomeData.id })
+                  .eq("id", originalTx.id);
+
+                const incomeTransaction: Transaction = {
+                  id: incomeData.id,
+                  description: incomeData.description,
+                  amount: incomeData.amount,
+                  type: incomeData.type,
+                  category: incomeData.category,
+                  paymentMethod: incomeData.payment_method,
+                  date: incomeData.date,
+                  createdAt: new Date(incomeData.created_at).getTime(),
+                  isRecurring: incomeData.is_recurring,
+                  frequency: incomeData.frequency,
+                  isPaid: incomeData.is_paid ?? false,
+                  relatedTransactionId: originalTx.id,
+                };
+                setTransactions((prev) => [incomeTransaction, ...prev]);
+              }
+            }
+
+            // Remove income if no longer shared
+            if (wasShared && !isNowShared && originalTx.relatedTransactionId) {
+              await supabase
+                .from("transactions")
+                .delete()
+                .eq("id", originalTx.relatedTransactionId);
+
+              setTransactions((prev) =>
+                prev.filter((t) => t.id !== originalTx.relatedTransactionId)
+              );
+            }
+
+            // Update existing income if still shared
+            if (wasShared && isNowShared && originalTx.relatedTransactionId) {
+              const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+              const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
+
+              await supabase
+                .from("transactions")
+                .update({
+                  description: incomeDescription,
+                  amount: incomeAmount,
+                  date: newTx.date,
+                  payment_method: newTx.paymentMethod,
+                })
+                .eq("id", originalTx.relatedTransactionId);
+
+              setTransactions((prev) =>
+                prev.map((t) =>
+                  t.id === originalTx.relatedTransactionId
+                    ? {
+                        ...t,
+                        description: incomeDescription,
+                        amount: incomeAmount,
+                        date: newTx.date,
+                        paymentMethod: newTx.paymentMethod,
+                      }
+                    : t
+                )
+              );
+            }
+
+            setTransactions((prev) =>
+              prev.map((t) => {
+                if (t.id === originalTx.id) {
+                  return {
+                    ...t,
+                    description: newTx.description,
+                    amount: newTx.amount,
+                    type: newTx.type,
+                    category: newTx.category,
+                    paymentMethod: newTx.paymentMethod,
+                    date: newTx.date,
+                    isRecurring: newTx.isRecurring,
+                    frequency: newTx.frequency,
+                    isShared: newTx.isShared,
+                    sharedWith: newTx.sharedWith,
+                  };
+                }
+                return t;
+              })
+            );
+
+            setIsFormOpen(false);
+            setEditingTransaction(null);
+            setCurrentEditMode(null);
+            return; // Early return - já tratamos o caso de recorrente + all_future
+          }
+
           const relatedTxs = transactions.filter((t) => {
             const sameDescription = t.description === originalTx.description;
             const samePaymentMethod =
@@ -665,6 +910,7 @@ const AppContent: React.FC<{
               }
               return true;
             } else if (originalTx.isRecurring) {
+              // Para "all" em recorrentes, simplesmente atualiza a transação original
               return t.id === originalTx.id;
             }
 
