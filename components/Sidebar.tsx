@@ -219,7 +219,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 sx={{
                   position: "absolute",
-                  left: 0,
+                  // Compensa: px:2 do container (16px) + px:2 do botão (16px) + ml:2 para sub-itens (16px)
+                  left: isSubItem ? -48 : -32,
                   top: "50%",
                   transform: "translateY(-50%)",
                   width: 4,
