@@ -42,22 +42,20 @@ import {
   Download as DownloadIcon,
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
-  Repeat as RepeatIcon,
-  CreditCard as CreditCardIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Description as FileTextIcon,
   TableChart as FileSpreadsheetIcon,
   MoreVert as MoreVertIcon,
-  AutorenewOutlined as AutorenewIcon,
-  Group as GroupIcon,
   UnfoldMore as UnsortedIcon,
   Close as CloseIcon,
   FilterList as FilterIcon,
   AccountBalanceWallet as WalletIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
+  Group as GroupIcon,
 } from "@mui/icons-material";
+import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
 import DateFilter from "./DateFilter";
@@ -1319,96 +1317,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                         </Typography>
                       </Box>
 
-                      {/* Tags */}
-                      {(t.isRecurring ||
-                        t.isVirtual ||
-                        (t.isShared && t.sharedWith) ||
-                        (t.type === "income" && t.relatedTransactionId) ||
-                        (t.installments && t.installments > 1)) && (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            gap: 0.5,
-                            mt: 1,
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          {t.isShared && t.sharedWith && (
-                            <Chip
-                              icon={<GroupIcon sx={{ fontSize: 12 }} />}
-                              label={t.sharedWith}
-                              size="small"
-                              color="info"
-                              variant="filled"
-                              sx={{
-                                height: 20,
-                                fontSize: 10,
-                                "& .MuiChip-icon": { ml: 0.5 },
-                              }}
-                            />
-                          )}
-                          {t.isRecurring && (
-                            <Chip
-                              icon={<RepeatIcon sx={{ fontSize: 12 }} />}
-                              label={
-                                t.frequency === "monthly" ? "Mensal" : "Anual"
-                              }
-                              size="small"
-                              color="primary"
-                              variant="outlined"
-                              sx={{
-                                height: 20,
-                                fontSize: 10,
-                                "& .MuiChip-icon": { ml: 0.5 },
-                              }}
-                            />
-                          )}
-                          {t.isVirtual && (
-                            <Chip
-                              icon={<AutorenewIcon sx={{ fontSize: 12 }} />}
-                              label="Auto"
-                              size="small"
-                              color="info"
-                              variant="outlined"
-                              sx={{
-                                height: 20,
-                                fontSize: 10,
-                                "& .MuiChip-icon": { ml: 0.5 },
-                              }}
-                            />
-                          )}
-                          {t.installments && t.installments > 1 && (
-                            <Chip
-                              icon={<CreditCardIcon sx={{ fontSize: 12 }} />}
-                              label={`${t.currentInstallment || 1}/${
-                                t.installments
-                              }x`}
-                              size="small"
-                              color="warning"
-                              variant="outlined"
-                              sx={{
-                                height: 20,
-                                fontSize: 10,
-                                "& .MuiChip-icon": { ml: 0.5 },
-                              }}
-                            />
-                          )}
-                          {t.type === "income" && t.relatedTransactionId && (
-                            <Chip
-                              icon={<GroupIcon sx={{ fontSize: 12 }} />}
-                              label="Shared"
-                              size="small"
-                              color="info"
-                              variant="filled"
-                              sx={{
-                                height: 20,
-                                fontSize: 10,
-                                "& .MuiChip-icon": { ml: 0.5 },
-                              }}
-                            />
-                          )}
-                        </Box>
-                      )}
+                      {/* Tags - Componente padronizado em formato pílula */}
+                      <TransactionTags transaction={t} />
                     </Box>
 
                     {/* Actions */}
@@ -1638,76 +1548,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: "flex", flexDirection: "column" }}>
-                          <Box
-                            sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                          >
-                            <Typography variant="body2" fontWeight={500}>
-                              {t.description}
-                            </Typography>
-                            {t.isRecurring && (
-                              <RepeatIcon fontSize="small" color="primary" />
-                            )}
-                            {t.isVirtual && (
-                              <Chip
-                                icon={<AutorenewIcon />}
-                                label="Auto"
-                                size="small"
-                                color="info"
-                                variant="outlined"
-                                sx={{
-                                  height: 18,
-                                  fontSize: 10,
-                                }}
-                              />
-                            )}
-                          </Box>
-                          {t.installments && t.installments > 1 && (
-                            <Chip
-                              icon={<CreditCardIcon />}
-                              label={`${t.currentInstallment || 1}/${
-                                t.installments
-                              }x`}
-                              size="small"
-                              color="warning"
-                              variant="outlined"
-                              sx={{
-                                height: 18,
-                                fontSize: 10,
-                                mt: 0.5,
-                                width: "fit-content",
-                              }}
-                            />
-                          )}
-                          {t.isShared && t.sharedWith && (
-                            <Chip
-                              icon={<GroupIcon />}
-                              label={t.sharedWith}
-                              size="small"
-                              color="info"
-                              variant="filled"
-                              sx={{
-                                height: 18,
-                                fontSize: 10,
-                                mt: 0.5,
-                                width: "fit-content",
-                              }}
-                            />
-                          )}
-                          {t.type === "income" && t.relatedTransactionId && (
-                            <Chip
-                              icon={<GroupIcon />}
-                              label="Shared"
-                              size="small"
-                              color="info"
-                              variant="filled"
-                              sx={{
-                                height: 18,
-                                fontSize: 10,
-                                mt: 0.5,
-                                width: "fit-content",
-                              }}
-                            />
-                          )}
+                          <Typography variant="body2" fontWeight={500}>
+                            {t.description}
+                          </Typography>
+                          {/* Tags - Componente padronizado em formato pílula */}
+                          <TransactionTags transaction={t} />
                         </Box>
                       </TableCell>
                       <TableCell>

@@ -41,11 +41,10 @@ import {
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as UnpaidIcon,
   Edit as EditIcon,
-  Repeat as RepeatIcon,
-  AutorenewOutlined as AutorenewIcon,
-  CreditCard as CreditCardIcon,
   MoreVert as MoreVertIcon,
+  Warning as WarningIcon,
 } from "@mui/icons-material";
+import TransactionTags from "./TransactionTags";
 import { Transaction, TransactionType, ColorConfig, CategoryColors } from "../types";
 import { ColorsContext } from "../App";
 import ColorPicker from "./ColorPicker";
@@ -76,6 +75,8 @@ interface CategorySummary {
   total: number;
   transactionCount: number;
   colors: ColorConfig;
+  unpaidCount: number;
+  unpaidAmount: number;
 }
 
 const CategoriesView: React.FC<CategoriesViewProps> = ({
@@ -173,11 +174,11 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     // Inicializa todas as categorias
     categories.income.forEach((cat) => {
       const colors = categoryColors.income?.[cat] || DEFAULT_INCOME_COLORS;
-      incomeMap.set(cat, { name: cat, type: "income", total: 0, transactionCount: 0, colors });
+      incomeMap.set(cat, { name: cat, type: "income", total: 0, transactionCount: 0, colors, unpaidCount: 0, unpaidAmount: 0 });
     });
     categories.expense.forEach((cat) => {
       const colors = categoryColors.expense?.[cat] || DEFAULT_EXPENSE_COLORS;
-      expenseMap.set(cat, { name: cat, type: "expense", total: 0, transactionCount: 0, colors });
+      expenseMap.set(cat, { name: cat, type: "expense", total: 0, transactionCount: 0, colors, unpaidCount: 0, unpaidAmount: 0 });
     });
 
     // Processa transações do mês
@@ -187,12 +188,22 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         if (summary) {
           summary.total += tx.amount || 0;
           summary.transactionCount++;
+          // Conta não pagas
+          if (!tx.isPaid) {
+            summary.unpaidCount++;
+            summary.unpaidAmount += tx.amount || 0;
+          }
         }
       } else {
         const summary = expenseMap.get(tx.category);
         if (summary) {
           summary.total += tx.amount || 0;
           summary.transactionCount++;
+          // Conta não pagas
+          if (!tx.isPaid) {
+            summary.unpaidCount++;
+            summary.unpaidAmount += tx.amount || 0;
+          }
         }
       }
     });
@@ -327,9 +338,21 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           </Typography>
         </Box>
 
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-          {summary.transactionCount} transaç{summary.transactionCount === 1 ? "ão" : "ões"}
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
+          <Typography variant="caption" color="text.secondary">
+            {summary.transactionCount} transaç{summary.transactionCount === 1 ? "ão" : "ões"}
+          </Typography>
+          {summary.unpaidCount > 0 && (
+            <Chip
+              icon={<WarningIcon />}
+              label={summary.unpaidCount === 1 ? "1 pendente" : `${summary.unpaidCount} pendentes`}
+              size="small"
+              color="warning"
+              variant="outlined"
+              sx={{ height: 18, fontSize: "0.6rem", "& .MuiChip-icon": { fontSize: 12 } }}
+            />
+          )}
+        </Box>
       </Paper>
     );
   };
@@ -406,6 +429,16 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     const categoryColors2 = getCategoryColor(selectedCategory.type, selectedCategory.name);
     const IconComponent = selectedCategory.type === "income" ? TrendingUpIcon : TrendingDownIcon;
     const categoryTotal = selectedCategoryTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+    
+    // Cor baseada no tipo (verde para receita, vermelho para despesa)
+    const typeColor = selectedCategory.type === "income" ? "#10b981" : "#ef4444";
+    
+    // Calcula transações não pagas da categoria selecionada
+    const categoryUnpaidTransactions = selectedCategoryTransactions.filter((tx) => !tx.isPaid);
+    const categoryUnpaidCount = categoryUnpaidTransactions.length;
+    const categoryUnpaidAmount = categoryUnpaidTransactions
+      .filter((tx) => tx.type === "expense")
+      .reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}>
@@ -464,13 +497,13 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
             backdropFilter: "blur(16px)",
             border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            boxShadow: `0 6px 24px -6px ${alpha(categoryColors2.primary, 0.15)}`,
+            boxShadow: `0 6px 24px -6px ${alpha(typeColor, 0.15)}`,
             borderRadius: "16px",
             "&::before": {
               content: '""',
               position: "absolute",
               top: 0, left: 0, right: 0, bottom: 0,
-              background: `linear-gradient(135deg, ${alpha(categoryColors2.primary, 0.06)} 0%, ${alpha(categoryColors2.secondary, 0.02)} 100%)`,
+              background: `linear-gradient(135deg, ${alpha(typeColor, 0.06)} 0%, ${alpha(typeColor, 0.02)} 100%)`,
               pointerEvents: "none",
             },
           }}
@@ -484,18 +517,18 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: `linear-gradient(135deg, ${alpha(categoryColors2.primary, 0.2)} 0%, ${alpha(categoryColors2.primary, 0.1)} 100%)`,
-                border: `1px solid ${alpha(categoryColors2.primary, 0.2)}`,
+                background: `linear-gradient(135deg, ${alpha(typeColor, 0.2)} 0%, ${alpha(typeColor, 0.1)} 100%)`,
+                border: `1px solid ${alpha(typeColor, 0.2)}`,
               }}
             >
-              <IconComponent sx={{ color: categoryColors2.primary, fontSize: isMobile ? 24 : 28 }} />
+              <IconComponent sx={{ color: typeColor, fontSize: isMobile ? 24 : 28 }} />
             </Box>
             <Box>
               <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
                 Total no Mês
               </Typography>
-              <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: categoryColors2.primary, letterSpacing: "-0.02em" }}>
-                {formatCurrency(categoryTotal)}
+              <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: typeColor, letterSpacing: "-0.02em" }}>
+                {selectedCategory.type === "income" ? "" : "- "}{formatCurrency(categoryTotal)}
               </Typography>
             </Box>
             <Chip
@@ -503,12 +536,83 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               size="small"
               sx={{
                 ml: "auto",
-                bgcolor: alpha(categoryColors2.primary, 0.1),
-                color: categoryColors2.primary,
+                bgcolor: alpha(typeColor, 0.1),
+                color: typeColor,
               }}
             />
           </Box>
         </Paper>
+
+        {/* Banner de transações não pagas */}
+        {categoryUnpaidCount > 0 && (
+          <Paper
+            sx={{
+              p: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha("#f59e0b", 0.15)} 0%, ${alpha("#f59e0b", 0.05)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#f59e0b", 0.1)} 0%, ${alpha("#f59e0b", 0.03)} 100%)`,
+              border: `1px solid ${alpha("#f59e0b", 0.3)}`,
+              borderRadius: "12px",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                sx={{
+                  p: 1,
+                  borderRadius: 2,
+                  bgcolor: alpha("#f59e0b", 0.2),
+                  display: "flex",
+                }}
+              >
+                <WarningIcon sx={{ color: "#f59e0b" }} />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  {categoryUnpaidCount === 1 ? "1 transação não paga" : `${categoryUnpaidCount} transações não pagas`}
+                </Typography>
+                {categoryUnpaidAmount > 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    Total a pagar: <strong style={{ color: "#f59e0b" }}>{formatCurrency(categoryUnpaidAmount)}</strong>
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          </Paper>
+        )}
+
+        {/* Banner de todas pagas */}
+        {categoryUnpaidCount === 0 && selectedCategoryTransactions.length > 0 && (
+          <Paper
+            sx={{
+              p: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha("#10b981", 0.15)} 0%, ${alpha("#10b981", 0.05)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#10b981", 0.1)} 0%, ${alpha("#10b981", 0.03)} 100%)`,
+              border: `1px solid ${alpha("#10b981", 0.3)}`,
+              borderRadius: "12px",
+            }}
+          >
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: 2,
+                bgcolor: alpha("#10b981", 0.2),
+                display: "flex",
+              }}
+            >
+              <CheckCircleIcon sx={{ color: "#10b981" }} />
+            </Box>
+            <Typography variant="subtitle1" fontWeight={600} color="#10b981">
+              Todas as transações deste mês estão pagas!
+            </Typography>
+          </Paper>
+        )}
 
         {/* Transactions Table */}
         <TableContainer component={Paper}>
@@ -538,7 +642,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                       {formatDate(tx.date)}
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box sx={{ display: "flex", flexDirection: "column" }}>
                         <Typography
                           variant="body2"
                           fontWeight={500}
@@ -549,30 +653,9 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                         >
                           {tx.description}
                         </Typography>
-                        {tx.isRecurring && (
-                          <RepeatIcon fontSize="small" color="primary" />
-                        )}
-                        {tx.isVirtual && (
-                          <Chip
-                            icon={<AutorenewIcon />}
-                            label="Auto"
-                            size="small"
-                            color="info"
-                            variant="outlined"
-                            sx={{ height: 18, fontSize: 10 }}
-                          />
-                        )}
+                        {/* Tags - Componente padronizado em formato pílula */}
+                        <TransactionTags transaction={tx} showShared={false} />
                       </Box>
-                      {tx.installments && tx.installments > 1 && (
-                        <Chip
-                          icon={<CreditCardIcon />}
-                          label={`${tx.currentInstallment || 1}/${tx.installments}x`}
-                          size="small"
-                          color="warning"
-                          variant="outlined"
-                          sx={{ height: 18, fontSize: 10, mt: 0.5 }}
-                        />
-                      )}
                     </TableCell>
                     <TableCell>
                       <Chip label={tx.paymentMethod} size="small" variant="outlined" />
@@ -604,10 +687,10 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                         textAlign: "right",
                         fontFamily: "monospace",
                         fontWeight: 600,
-                        color: categoryColors2.primary,
+                        color: typeColor,
                       }}
                     >
-                      {formatCurrency(tx.amount || 0)}
+                      {selectedCategory.type === "income" ? "" : "- "}{formatCurrency(tx.amount || 0)}
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
                       {isMobile ? (
@@ -689,10 +772,10 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                       textAlign: "right",
                       fontFamily: "monospace",
                       fontWeight: 600,
-                      color: categoryColors2.primary,
+                      color: typeColor,
                     }}
                   >
-                    {formatCurrency(categoryTotal)}
+                    {selectedCategory.type === "income" ? "" : "- "}{formatCurrency(categoryTotal)}
                   </TableCell>
                   <TableCell />
                 </TableRow>

@@ -49,6 +49,7 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
 } from "@mui/icons-material";
+import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
 
 interface SharedViewProps {
@@ -963,7 +964,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                             {t.sharedWith} • {formatDate(t.date)}
                           </Typography>
                         </Box>
-                        <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                        <Box sx={{ display: "flex", gap: 1, mt: 1, flexWrap: "wrap", alignItems: "center" }}>
                           <Chip label={t.category} size="small" variant="outlined" />
                           <Chip
                             icon={isPaid ? <CheckCircleIcon /> : <ScheduleIcon />}
@@ -976,6 +977,12 @@ const SharedView: React.FC<SharedViewProps> = ({
                             color={isPaid ? "success" : (isPositive ? "warning" : "error")}
                           />
                         </Box>
+                        {/* Tags adicionais - Componente padronizado em formato pílula */}
+                        <TransactionTags 
+                          transaction={t} 
+                          showShared={false} 
+                          showPaymentStatus={false}
+                        />
                       </Box>
                       <Box sx={{ textAlign: "right" }}>
                         <Typography

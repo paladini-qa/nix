@@ -165,13 +165,16 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       const summary = summaryMap.get(tx.paymentMethod);
       if (summary) {
         summary.transactionCount++;
-        if (tx.type === "expense") {
-          summary.totalExpense += tx.amount || 0;
-          // Conta não pagas (apenas despesas reais, não virtuais)
-          if (!tx.isPaid && !tx.isVirtual) {
-            summary.unpaidCount++;
+        // Conta não pagas (todas as transações, incluindo receitas e virtuais)
+        if (!tx.isPaid) {
+          summary.unpaidCount++;
+          // Valor a pagar é apenas de despesas
+          if (tx.type === "expense") {
             summary.unpaidAmount += tx.amount || 0;
           }
+        }
+        if (tx.type === "expense") {
+          summary.totalExpense += tx.amount || 0;
         } else {
           summary.totalIncome += tx.amount || 0;
         }
@@ -461,7 +464,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                   {hasUnpaid ? (
                     <Chip
                       icon={<WarningIcon />}
-                      label={`${summary.unpaidCount} não paga${summary.unpaidCount > 1 ? "s" : ""}`}
+                      label={summary.unpaidCount === 1 ? "1 não paga" : `${summary.unpaidCount} não pagas`}
                       size="small"
                       color="warning"
                       variant="outlined"

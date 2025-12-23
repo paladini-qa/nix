@@ -50,10 +50,10 @@ import {
   ExpandLess as ExpandLessIcon,
   Event as EventIcon,
   Schedule as ScheduleIcon,
-  People as PeopleIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as UnpaidIcon,
 } from "@mui/icons-material";
+import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
 
 interface RecurringViewProps {
@@ -333,26 +333,13 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 <Typography variant="caption" color="text.secondary">
                   {t.paymentMethod}
                 </Typography>
-                {t.isShared && t.sharedWith && (
-                  <Chip
-                    icon={<PeopleIcon sx={{ fontSize: 14 }} />}
-                    label={t.sharedWith}
-                    size="small"
-                    color="info"
-                    variant="filled"
-                  />
-                )}
-                {/* Income gerada de despesa compartilhada */}
-                {t.type === "income" && t.relatedTransactionId && (
-                  <Chip
-                    icon={<PeopleIcon sx={{ fontSize: 14 }} />}
-                    label="Shared"
-                    size="small"
-                    color="info"
-                    variant="filled"
-                  />
-                )}
               </Box>
+              {/* Tags - Componente padronizado em formato pílula (só shared, recorrência exibida separadamente) */}
+              <TransactionTags 
+                transaction={t} 
+                showRecurring={false} 
+                showInstallments={false} 
+              />
             </Box>
 
             <Box sx={{ textAlign: "right", minWidth: 120 }}>
@@ -450,7 +437,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               <Button
                 size="small"
                 variant={t.isPaid ? "outlined" : "contained"}
-                color={t.isPaid ? "default" : "success"}
+                color={t.isPaid ? "inherit" : "success"}
                 startIcon={t.isPaid ? <UnpaidIcon /> : <CheckCircleIcon />}
                 onClick={() => onTogglePaid(t.id, !t.isPaid)}
                 sx={{

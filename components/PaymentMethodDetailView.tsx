@@ -34,8 +34,6 @@ import {
   CreditCard as CreditCardIcon,
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
-  Repeat as RepeatIcon,
-  AutorenewOutlined as AutorenewIcon,
   Search as SearchIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
@@ -44,6 +42,7 @@ import {
   Delete as DeleteIcon,
   MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
+import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
 import { ColorsContext } from "../App";
@@ -171,15 +170,18 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [transactions, selectedMonth, selectedYear, paymentMethod, searchTerm, filterType, filterCategory, filterPaid]);
 
-  // Calcula transações não pagas (apenas despesas reais, não virtuais)
-  const unpaidExpenses = useMemo(() => {
-    return filteredTransactions.filter(
-      (t) => t.type === "expense" && !t.isPaid && !t.isVirtual
-    );
+  // Calcula transações não pagas (todas, incluindo receitas e virtuais)
+  const unpaidTransactions = useMemo(() => {
+    return filteredTransactions.filter((t) => !t.isPaid);
   }, [filteredTransactions]);
 
-  const unpaidCount = unpaidExpenses.length;
-  const unpaidAmount = unpaidExpenses.reduce((sum, t) => sum + (t.amount || 0), 0);
+  // Apenas despesas não pagas (para o valor a pagar)
+  const unpaidExpenses = useMemo(() => {
+    return unpaidTransactions.filter((t) => t.type === "expense");
+  }, [unpaidTransactions]);
+
+  const unpaidCount = unpaidTransactions.length;
+  const unpaidExpenseAmount = unpaidExpenses.reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -305,10 +307,10 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             </Box>
             <Box>
               <Typography variant="subtitle1" fontWeight={600}>
-                {unpaidCount} transação{unpaidCount > 1 ? "ões" : ""} não paga{unpaidCount > 1 ? "s" : ""}
+                {unpaidCount === 1 ? "1 transação não paga" : `${unpaidCount} transações não pagas`}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Total a pagar: <strong style={{ color: "#f59e0b" }}>{formatCurrency(unpaidAmount)}</strong>
+                Total a pagar: <strong style={{ color: "#f59e0b" }}>{formatCurrency(unpaidExpenseAmount)}</strong>
               </Typography>
             </Box>
           </Box>
@@ -530,7 +532,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     {formatDate(t.date)}
                   </TableCell>
                   <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: "flex", flexDirection: "column" }}>
                       <Typography
                         variant="body2"
                         fontWeight={500}
@@ -541,30 +543,9 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                       >
                         {t.description}
                       </Typography>
-                      {t.isRecurring && (
-                        <RepeatIcon fontSize="small" color="primary" />
-                      )}
-                      {t.isVirtual && (
-                        <Chip
-                          icon={<AutorenewIcon />}
-                          label="Auto"
-                          size="small"
-                          color="info"
-                          variant="outlined"
-                          sx={{ height: 18, fontSize: 10 }}
-                        />
-                      )}
+                      {/* Tags - Componente padronizado em formato pílula */}
+                      <TransactionTags transaction={t} showShared={false} />
                     </Box>
-                    {t.installments && t.installments > 1 && (
-                      <Chip
-                        icon={<CreditCardIcon />}
-                        label={`${t.currentInstallment || 1}/${t.installments}x`}
-                        size="small"
-                        color="warning"
-                        variant="outlined"
-                        sx={{ height: 18, fontSize: 10, mt: 0.5 }}
-                      />
-                    )}
                   </TableCell>
                   <TableCell>
                     <Chip label={t.category} size="small" variant="outlined" />

@@ -48,8 +48,8 @@ import {
   Add as AddIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
-  People as PeopleIcon,
 } from "@mui/icons-material";
+import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
 
 interface SplitsViewProps {
@@ -284,26 +284,24 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 <Typography variant="caption" color="text.secondary">
                   {group.paymentMethod}
                 </Typography>
-                {group.isShared && group.sharedWith && (
-                  <Chip
-                    icon={<PeopleIcon sx={{ fontSize: 14 }} />}
-                    label={group.sharedWith}
-                    size="small"
-                    color="info"
-                    variant="filled"
-                  />
-                )}
-                {/* Income gerada de despesa compartilhada */}
-                {group.type === "income" && group.relatedTransactionId && (
-                  <Chip
-                    icon={<PeopleIcon sx={{ fontSize: 14 }} />}
-                    label="Shared"
-                    size="small"
-                    color="info"
-                    variant="filled"
-                  />
-                )}
               </Box>
+              {/* Tags - Componente padronizado em formato pílula (só shared, parcelamento exibido separadamente) */}
+              <TransactionTags 
+                transaction={{
+                  isRecurring: false,
+                  frequency: undefined,
+                  isVirtual: false,
+                  installments: undefined,
+                  currentInstallment: undefined,
+                  isShared: group.isShared,
+                  sharedWith: group.sharedWith,
+                  type: group.type,
+                  relatedTransactionId: group.relatedTransactionId,
+                  isPaid: undefined,
+                }} 
+                showRecurring={false} 
+                showInstallments={false}
+              />
             </Box>
 
             <Box sx={{ textAlign: "right", minWidth: 120 }}>

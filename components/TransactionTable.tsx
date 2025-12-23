@@ -18,10 +18,6 @@ import {
 import {
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
-  Repeat as RepeatIcon,
-  CreditCard as CreditCardIcon,
-  AutorenewOutlined as AutorenewIcon,
-  People as PeopleIcon,
   ShoppingBag as ShoppingIcon,
   Restaurant as FoodIcon,
   DirectionsCar as TransportIcon,
@@ -33,6 +29,7 @@ import {
   SportsEsports as EntertainmentIcon,
   MoreHoriz as OtherIcon,
 } from "@mui/icons-material";
+import TransactionTags from "./TransactionTags";
 import { motion, AnimatePresence } from "framer-motion";
 import { Transaction } from "../types";
 import EmptyState from "./EmptyState";
@@ -341,47 +338,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         fontSize: 10,
                       }}
                     />
-                    {transaction.isRecurring && (
-                      <Chip
-                        icon={<RepeatIcon />}
-                        label={transaction.frequency === "monthly" ? "Mensal" : "Anual"}
-                        size="small"
-                        sx={getModernChipSx(theme.palette.primary.main)}
-                      />
-                    )}
-                    {transaction.isVirtual && (
-                      <Chip
-                        icon={<AutorenewIcon />}
-                        label="Auto"
-                        size="small"
-                        sx={getModernChipSx(theme.palette.info.main)}
-                      />
-                    )}
-                    {transaction.installments && transaction.installments > 1 && (
-                      <Chip
-                        icon={<CreditCardIcon />}
-                        label={`${transaction.currentInstallment || 1}/${transaction.installments}x`}
-                        size="small"
-                        sx={getModernChipSx(theme.palette.warning.main)}
-                      />
-                    )}
-                    {transaction.isShared && transaction.sharedWith && (
-                      <Chip
-                        icon={<PeopleIcon />}
-                        label={transaction.sharedWith}
-                        size="small"
-                        sx={getModernChipSx(theme.palette.secondary.main)}
-                      />
-                    )}
-                    {transaction.type === "income" && transaction.relatedTransactionId && (
-                      <Chip
-                        icon={<PeopleIcon />}
-                        label="Shared"
-                        size="small"
-                        sx={getModernChipSx(theme.palette.info.main)}
-                      />
-                    )}
                   </Box>
+                  {/* Tags - Componente padronizado em formato pílula */}
+                  <TransactionTags transaction={transaction} />
                 </Box>
               </MotionPaper>
             );
@@ -524,49 +483,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         <Typography variant="body2" fontWeight={500}>
                           {transaction.description}
                         </Typography>
-                        {/* Tags/Chips - Modern style */}
-                        <Box sx={{ display: "flex", gap: 0.75, mt: 0.75, flexWrap: "wrap" }}>
-                          {transaction.isRecurring && (
-                            <Chip
-                              icon={<RepeatIcon />}
-                              label={transaction.frequency === "monthly" ? "Mensal" : "Anual"}
-                              size="small"
-                              sx={getModernChipSx(theme.palette.primary.main)}
-                            />
-                          )}
-                          {transaction.isVirtual && (
-                            <Chip
-                              icon={<AutorenewIcon />}
-                              label="Auto"
-                              size="small"
-                              sx={getModernChipSx(theme.palette.info.main)}
-                            />
-                          )}
-                          {transaction.installments && transaction.installments > 1 && (
-                            <Chip
-                              icon={<CreditCardIcon />}
-                              label={`${transaction.currentInstallment || 1}/${transaction.installments}x`}
-                              size="small"
-                              sx={getModernChipSx(theme.palette.warning.main)}
-                            />
-                          )}
-                          {transaction.isShared && transaction.sharedWith && (
-                            <Chip
-                              icon={<PeopleIcon />}
-                              label={transaction.sharedWith}
-                              size="small"
-                              sx={getModernChipSx(theme.palette.secondary.main)}
-                            />
-                          )}
-                          {transaction.type === "income" && transaction.relatedTransactionId && (
-                            <Chip
-                              icon={<PeopleIcon />}
-                              label="Shared"
-                              size="small"
-                              sx={getModernChipSx(theme.palette.info.main)}
-                            />
-                          )}
-                        </Box>
+                        {/* Tags - Componente padronizado em formato pílula */}
+                        <TransactionTags transaction={transaction} />
                       </Box>
                     </Box>
                   </TableCell>
