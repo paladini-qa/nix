@@ -32,10 +32,10 @@ import {
   Chip,
   Autocomplete,
   Tooltip,
-  keyframes,
   Tabs,
   Tab,
 } from "@mui/material";
+import { useNotification } from "../contexts";
 import { TransitionProps } from "@mui/material/transitions";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
@@ -48,31 +48,14 @@ import {
   PersonAdd as PersonAddIcon,
   SaveAlt as SaveIcon,
   History as HistoryIcon,
-  LocalOffer as TagIcon,
   Bolt as BoltIcon,
   Today as TodayIcon,
-  Warning as WarningIcon,
   TrendingDown as TrendingDownIcon,
   TrendingUp as TrendingUpIcon,
   CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import { Transaction, TransactionType, FinancialSummary } from "../types";
 import { CATEGORY_KEYWORDS, QUICK_AMOUNTS } from "../constants";
-
-// Animação de sucesso
-const successPulse = keyframes`
-  0% {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-`;
 
 // Mobile slide transition
 const SlideTransition = React.forwardRef(function Transition(
@@ -320,13 +303,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [iOwe, setIOwe] = useState(false); // true = amigo pagou, eu devo | false = eu paguei, amigo deve
   const [newFriendName, setNewFriendName] = useState("");
   const [showAddFriend, setShowAddFriend] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
   
   // Novos estados para UX melhorada
   const [suggestedCategory, setSuggestedCategory] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [duplicateWarning, setDuplicateWarning] = useState<Transaction | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
+  
+  // Hook de notificações
+  const { showError, showWarning, showSuccess } = useNotification();
   
   // Estados para UX condicional - mostrar seções apenas quando relevante
   const [showQuickAmounts, setShowQuickAmounts] = useState(false);
@@ -394,15 +377,23 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   }, [description, type, category, categories]);
 
-  // Efeito para detectar duplicatas
+  // Efeito para detectar duplicatas (mostra notificação apenas uma vez por combinação)
+  const [lastDuplicateKey, setLastDuplicateKey] = useState<string>("");
+  
   useEffect(() => {
     if (description && parsedAmount && parsedAmount > 0 && !editTransaction) {
       const duplicate = findDuplicateTransaction(transactions, description, parsedAmount, type);
-      setDuplicateWarning(duplicate);
-    } else {
-      setDuplicateWarning(null);
+      const duplicateKey = duplicate ? `${duplicate.id}-${duplicate.amount}` : "";
+      
+      if (duplicate && duplicateKey !== lastDuplicateKey) {
+        setLastDuplicateKey(duplicateKey);
+        showWarning(
+          `"${duplicate.description}" - ${formatCurrency(duplicate.amount)} cadastrada recentemente`,
+          "Possível duplicata detectada!"
+        );
+      }
     }
-  }, [description, parsedAmount, type, transactions, editTransaction]);
+  }, [description, parsedAmount, type, transactions, editTransaction, showWarning, lastDuplicateKey]);
 
   // ========== LÓGICAS CONDICIONAIS (após todas as definições) ==========
   
@@ -470,13 +461,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
     setNewFriendName("");
     setShowAddFriend(false);
-    setValidationError(null);
     setSuggestedCategory(null);
     setShowDatePicker(false);
-    setDuplicateWarning(null);
-    setShowSuccess(false);
     setShowQuickAmounts(false);
     setAmountFieldFocused(false);
+    setLastDuplicateKey("");
   }, [editTransaction, isOpen]);
 
   // Handler para aplicar template de transação frequente
@@ -534,10 +523,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setValidationError(null);
     
     // Valor é opcional - pode ser definido depois
     if (!description || !category || !paymentMethod || !date) {
+      showError("Preencha todos os campos obrigatórios.", "Campos incompletos");
       return;
     }
 
@@ -546,13 +535,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       hasInstallments &&
       (isNaN(installmentsValue) || installmentsValue < 2)
     ) {
-      setValidationError("Parcelas devem ser no mínimo 2.");
+      showError("Parcelas devem ser no mínimo 2.", "Valor inválido");
       return;
     }
 
     // Validação: se isShared, precisa selecionar um amigo
     if (isShared && !sharedWith) {
-      setValidationError("Selecione um amigo para dividir.");
+      showError("Selecione um amigo para dividir.", "Amigo não selecionado");
       return;
     }
 
@@ -579,12 +568,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       editTransaction?.id || undefined
     );
 
-    // Mostrar animação de sucesso
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      onClose();
-    }, 600);
+    // Mostrar notificação de sucesso e fechar modal
+    showSuccess(
+      editTransaction ? "Transação atualizada com sucesso!" : "Transação criada com sucesso!",
+      "Sucesso"
+    );
+    onClose();
   };
 
   const handleAddNewFriend = () => {
@@ -638,37 +627,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         },
       }}
     >
-      {/* Success Overlay */}
-      {showSuccess && (
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: alpha(theme.palette.success.main, 0.95),
-            zIndex: 9999,
-            borderRadius: isMobile ? 0 : 1,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-              animation: `${successPulse} 0.4s ease-out`,
-            }}
-          >
-            <CheckCircleIcon sx={{ fontSize: 64, color: "#fff" }} />
-            <Typography variant="h6" fontWeight={700} color="#fff">
-              Transação salva!
-            </Typography>
-          </Box>
-        </Box>
-      )}
-
       {/* Mobile Header */}
       {isMobile ? (
         <AppBar
@@ -761,40 +719,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           }}
         >
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            {/* Validation Error Alert */}
-            <Collapse in={!!validationError}>
-              <Alert 
-                severity="error" 
-                onClose={() => setValidationError(null)}
-                sx={{
-                  borderRadius: "20px",
-                  border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
-                }}
-              >
-                {validationError}
-              </Alert>
-            </Collapse>
-
-            {/* Duplicate Warning Alert */}
-            <Collapse in={!!duplicateWarning}>
-              <Alert 
-                severity="warning"
-                icon={<WarningIcon />}
-                onClose={() => setDuplicateWarning(null)}
-                sx={{
-                  borderRadius: "20px",
-                  border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-                }}
-              >
-                <Typography variant="body2" fontWeight={600}>
-                  Possível duplicata detectada!
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  "{duplicateWarning?.description}" - {formatCurrency(duplicateWarning?.amount || 0)} cadastrada recentemente
-                </Typography>
-              </Alert>
-            </Collapse>
-
             {/* Quick Actions - Transações Frequentes - Mostrar apenas se poucos campos preenchidos */}
             {shouldShowFrequentTransactions && (
               <Box>
