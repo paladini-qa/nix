@@ -43,6 +43,8 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           installments: t.installments,
           currentInstallment: t.current_installment,
           isPaid: t.is_paid ?? true,
+          installmentGroupId: t.installment_group_id,
+          excludedDates: t.excluded_dates ?? [],
         }));
         setTransactions(mapped);
       }
@@ -348,6 +350,12 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           const daysInMonth = new Date(year, targetMonth, 0).getDate();
           const adjustedDay = Math.min(origDay, daysInMonth);
           const virtualDate = `${year}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+
+          // Verifica se esta data está no excluded_dates da transação original
+          const excludedDates = t.excludedDates || [];
+          if (excludedDates.includes(virtualDate)) {
+            return; // Não gera a transação virtual para esta data
+          }
 
           virtualTransactions.push({
             ...t,

@@ -97,6 +97,8 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
           sharedWith: t.shared_with,
           iOwe: t.i_owe,
           relatedTransactionId: t.related_transaction_id,
+          installmentGroupId: t.installment_group_id,
+          excludedDates: t.excluded_dates ?? [],
         }));
         setTransactions(mappedTxs);
       }
@@ -151,6 +153,12 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
           2,
           "0"
         )}-${String(adjustedDay).padStart(2, "0")}`;
+
+        // Verifica se esta data está no excluded_dates da transação original
+        const excludedDates = t.excludedDates || [];
+        if (excludedDates.includes(virtualDate)) {
+          return; // Não gera a transação virtual para esta data
+        }
 
         virtualTransactions.push({
           ...t,

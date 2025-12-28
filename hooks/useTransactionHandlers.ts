@@ -331,32 +331,33 @@ export const useTransactionHandlers = ({
               return; // Early return - já tratamos o caso de recorrente + all_future
             }
 
+            // Encontrar transações relacionadas usando installment_group_id (preferido) ou fallback por descrição
             const relatedTxs = transactions.filter((t) => {
-              const sameDescription = t.description === originalTx.description;
-              const samePaymentMethod =
-                t.paymentMethod === originalTx.paymentMethod;
-              const sameCategory = t.category === originalTx.category;
-              const sameInstallments = t.installments === originalTx.installments;
-              const sameType = t.type === originalTx.type;
-
-              if (
-                !sameDescription ||
-                !samePaymentMethod ||
-                !sameCategory ||
-                !sameType
-              ) {
-                return false;
-              }
-
+              // Para parcelamentos com installment_group_id (novo sistema)
               if (originalTx.installments && originalTx.installments > 1) {
-                if (!sameInstallments) return false;
-                if (editMode === "all_future") {
-                  return (
-                    (t.currentInstallment || 1) >=
-                    (originalTx.currentInstallment || 1)
-                  );
+                if (originalTx.installmentGroupId) {
+                  // Usar installment_group_id para encontrar parcelas relacionadas
+                  if (t.installmentGroupId !== originalTx.installmentGroupId) return false;
+                  if (editMode === "all_future") {
+                    return (t.currentInstallment || 1) >= (originalTx.currentInstallment || 1);
+                  }
+                  return true;
+                } else {
+                  // Fallback para transações antigas sem installment_group_id
+                  const sameDescription = t.description === originalTx.description;
+                  const samePaymentMethod = t.paymentMethod === originalTx.paymentMethod;
+                  const sameCategory = t.category === originalTx.category;
+                  const sameInstallments = t.installments === originalTx.installments;
+                  const sameType = t.type === originalTx.type;
+                  
+                  if (!sameDescription || !samePaymentMethod || !sameCategory || !sameType || !sameInstallments) {
+                    return false;
+                  }
+                  if (editMode === "all_future") {
+                    return (t.currentInstallment || 1) >= (originalTx.currentInstallment || 1);
+                  }
+                  return true;
                 }
-                return true;
               } else if (originalTx.isRecurring) {
                 // Para "all" em recorrentes, simplesmente atualiza a transação original
                 return t.id === originalTx.id;
@@ -619,13 +620,15 @@ export const useTransactionHandlers = ({
                 isShared: data.is_shared,
                 sharedWith: data.shared_with,
                 relatedTransactionId: data.related_transaction_id,
+                installmentGroupId: data.installment_group_id,
               };
               setTransactions((prev) =>
                 prev.map((t) => (t.id === editId ? transaction : t))
               );
             }
           }
-        } else if (newTx.installments && newTx.installments > 1) {
+        } else if (!editId && newTx.installments && newTx.installments > 1) {
+          // NEW INSTALLMENT TRANSACTION (only when NOT editing)
           // NEW INSTALLMENT TRANSACTION
           const totalInstallments = newTx.installments;
           const txAmount = newTx.amount || 0;
@@ -634,6 +637,9 @@ export const useTransactionHandlers = ({
           const totalFromInstallments = installmentAmount * totalInstallments;
           const remainder =
             Math.round((txAmount - totalFromInstallments) * 100) / 100;
+
+          // Gera um UUID único para agrupar todas as parcelas deste parcelamento
+          const installmentGroupId = crypto.randomUUID();
 
           const installmentPayloads = [];
           for (let i = 0; i < totalInstallments; i++) {
@@ -655,6 +661,7 @@ export const useTransactionHandlers = ({
               is_paid: false,
               is_shared: newTx.isShared,
               shared_with: newTx.sharedWith,
+              installment_group_id: installmentGroupId,
             });
           }
 
@@ -682,6 +689,7 @@ export const useTransactionHandlers = ({
               isPaid: d.is_paid ?? false,
               isShared: d.is_shared,
               sharedWith: d.shared_with,
+              installmentGroupId: d.installment_group_id,
             }));
             setTransactions((prev) => [...newTransactions, ...prev]);
 

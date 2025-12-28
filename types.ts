@@ -22,6 +22,9 @@ export interface Transaction {
   // Campos para transações recorrentes virtuais (geradas automaticamente)
   isVirtual?: boolean; // Indica se é uma ocorrência virtual de transação recorrente
   originalTransactionId?: string; // ID da transação original (para virtuais)
+  // Campos para agrupamento de parcelamentos e exclusões de recorrências
+  installmentGroupId?: string; // UUID que agrupa todas as parcelas de um mesmo parcelamento
+  excludedDates?: string[]; // Array de datas (YYYY-MM-DD) excluídas de recorrências
 }
 
 export interface FinancialSummary {

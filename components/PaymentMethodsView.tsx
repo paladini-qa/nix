@@ -121,6 +121,12 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
         const adjustedDay = Math.min(origDay, daysInTargetMonth);
         const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
 
+        // Verifica se esta data está no excluded_dates da transação original
+        const excludedDates = t.excludedDates || [];
+        if (excludedDates.includes(virtualDate)) {
+          return; // Não gera a transação virtual para esta data
+        }
+
         virtualTransactions.push({
           ...t,
           id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(2, "0")}`,

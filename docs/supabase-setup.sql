@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     shared_with TEXT,
     i_owe BOOLEAN DEFAULT FALSE,
     related_transaction_id UUID,
+    installment_group_id UUID,
+    excluded_dates JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -45,10 +47,17 @@ CREATE TABLE IF NOT EXISTS public.transactions (
 -- Para bancos existentes, adicione a coluna i_owe (true = amigo pagou e eu devo, false = eu paguei e amigo deve):
 -- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS i_owe BOOLEAN DEFAULT FALSE;
 
+-- Para bancos existentes, adicione a coluna installment_group_id (agrupa parcelas de um mesmo parcelamento):
+-- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS installment_group_id UUID;
+
+-- Para bancos existentes, adicione a coluna excluded_dates (datas excluídas de recorrências):
+-- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS excluded_dates JSONB DEFAULT '[]'::jsonb;
+
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.transactions(date DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_type ON public.transactions(type);
+CREATE INDEX IF NOT EXISTS idx_transactions_installment_group ON public.transactions(installment_group_id);
 
 -- Comentários na tabela
 COMMENT ON TABLE public.transactions IS 'Transações financeiras dos usuários';
@@ -60,6 +69,8 @@ COMMENT ON COLUMN public.transactions.is_shared IS 'Gasto compartilhado 50/50 co
 COMMENT ON COLUMN public.transactions.shared_with IS 'Nome do amigo com quem o gasto foi dividido';
 COMMENT ON COLUMN public.transactions.i_owe IS 'Se true, amigo pagou e eu devo. Se false, eu paguei e amigo me deve';
 COMMENT ON COLUMN public.transactions.related_transaction_id IS 'ID da transação relacionada (link entre expense e income de shared expense)';
+COMMENT ON COLUMN public.transactions.installment_group_id IS 'UUID que agrupa todas as parcelas de um mesmo parcelamento';
+COMMENT ON COLUMN public.transactions.excluded_dates IS 'Array JSON de datas (YYYY-MM-DD) excluídas de recorrências';
 
 -- =============================================
 -- 2. TABELA: user_settings
@@ -394,6 +405,67 @@ CREATE POLICY "Usuários podem remover tags de suas transações"
     USING (EXISTS (SELECT 1 FROM public.transactions t WHERE t.id = transaction_id AND t.user_id = auth.uid()));
 
 -- =============================================
+-- 10. MIGRAÇÃO: installment_group_id para parcelamentos existentes
+-- =============================================
+-- Este script agrupa parcelas existentes que compartilham as mesmas características
+-- Execute APENAS UMA VEZ após adicionar a coluna installment_group_id
+
+-- Passo 1: Criar uma função para gerar UUIDs únicos por grupo
+-- (Agrupa por user_id, description, category, payment_method, type, installments)
+
+-- Migração de parcelamentos existentes:
+-- Esta query identifica grupos de parcelas e atribui o mesmo installment_group_id
+/*
+DO $$
+DECLARE
+    rec RECORD;
+    new_group_id UUID;
+BEGIN
+    -- Para cada grupo único de parcelas (sem installment_group_id)
+    FOR rec IN 
+        SELECT DISTINCT 
+            user_id, 
+            description, 
+            category, 
+            payment_method, 
+            type, 
+            installments
+        FROM public.transactions
+        WHERE installments > 1 
+          AND installment_group_id IS NULL
+    LOOP
+        -- Gerar um novo UUID para este grupo
+        new_group_id := gen_random_uuid();
+        
+        -- Atualizar todas as parcelas deste grupo
+        UPDATE public.transactions
+        SET installment_group_id = new_group_id
+        WHERE user_id = rec.user_id
+          AND description = rec.description
+          AND category = rec.category
+          AND payment_method = rec.payment_method
+          AND type = rec.type
+          AND installments = rec.installments
+          AND installment_group_id IS NULL;
+    END LOOP;
+END $$;
+*/
+
+-- Alternativa mais simples (SQL puro):
+-- UPDATE public.transactions t1
+-- SET installment_group_id = (
+--     SELECT MIN(t2.id)::uuid  -- Usa o menor ID como grupo (não ideal, mas funciona)
+--     FROM public.transactions t2
+--     WHERE t2.description = t1.description
+--       AND t2.category = t1.category
+--       AND t2.payment_method = t1.payment_method
+--       AND t2.type = t1.type
+--       AND t2.installments = t1.installments
+--       AND t2.user_id = t1.user_id
+-- )
+-- WHERE t1.installments > 1 AND t1.installment_group_id IS NULL;
+
+-- =============================================
 -- VERIFICAÇÃO (Execute após criar as tabelas)
 -- =============================================
 -- SELECT * FROM information_schema.tables WHERE table_schema = 'public';
@@ -401,3 +473,10 @@ CREATE POLICY "Usuários podem remover tags de suas transações"
 -- SELECT * FROM information_schema.columns WHERE table_name = 'user_settings';
 -- SELECT * FROM information_schema.columns WHERE table_name = 'budgets';
 -- SELECT * FROM information_schema.columns WHERE table_name = 'goals';
+
+-- Verificar se a migração funcionou:
+-- SELECT installment_group_id, COUNT(*) as parcelas, description, installments
+-- FROM public.transactions
+-- WHERE installments > 1
+-- GROUP BY installment_group_id, description, installments
+-- ORDER BY parcelas DESC;

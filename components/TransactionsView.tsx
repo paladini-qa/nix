@@ -173,6 +173,12 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         // Se já existe materializada, não gera a virtual
         if (hasMaterialized) return;
 
+        // Verifica se esta data está no excluded_dates da transação original
+        const excludedDates = t.excludedDates || [];
+        if (excludedDates.includes(virtualDate)) {
+          return; // Não gera a transação virtual para esta data
+        }
+
         virtualTransactions.push({
           ...t,
           id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(2, "0")}`,

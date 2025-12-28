@@ -339,11 +339,16 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     baseTransaction: Transaction,
     occurrence: RecurringOccurrence
   ): Transaction => {
+    // Extrai ano e mês da data da ocorrência para criar o ID virtual
+    const [year, month] = occurrence.date.split("-");
+    const virtualId = `${baseTransaction.id}_recurring_${year}-${month}`;
+    
     return {
       ...baseTransaction,
+      id: virtualId,
       date: occurrence.date,
       isVirtual: true,
-      relatedTransactionId: baseTransaction.id,
+      originalTransactionId: baseTransaction.id,
       currentInstallment: occurrence.occurrenceNumber,
     };
   };
