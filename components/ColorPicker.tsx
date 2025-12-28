@@ -237,7 +237,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
           gap: 1,
           cursor: "pointer",
           p: 0.5,
-          borderRadius: 1,
+          borderRadius: "20px",
           "&:hover": { bgcolor: "action.hover" },
         }}
       >
@@ -367,7 +367,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
           <Box
             sx={{
               height: 40,
-              borderRadius: 2,
+              borderRadius: "20px",
               background: `linear-gradient(135deg, ${value.primary} 0%, ${value.secondary} 100%)`,
               display: "flex",
               alignItems: "center",

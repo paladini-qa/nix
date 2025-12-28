@@ -258,7 +258,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               <Box
                 sx={{
                   p: 1,
-                  borderRadius: 2,
+                  borderRadius: "20px",
                   background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                   display: "flex",
                 }}
@@ -305,7 +305,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 bgcolor: alpha("#f59e0b", 0.15),
               }}
             >
@@ -326,7 +326,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             onClick={handlePayAll}
             sx={{
               textTransform: "none",
-              borderRadius: 2,
+              borderRadius: "20px",
               px: 3,
               background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
               "&:hover": {
@@ -356,7 +356,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           <Box
             sx={{
               p: 1,
-              borderRadius: 2,
+              borderRadius: "20px",
               bgcolor: alpha("#10b981", 0.15),
             }}
           >
@@ -701,7 +701,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
         onClose={() => setMobileActionAnchor({ element: null, transaction: null })}
         PaperProps={{
           sx: {
-            borderRadius: 2,
+            borderRadius: "20px",
             minWidth: 160,
           },
         }}

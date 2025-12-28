@@ -314,7 +314,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             <Box
               sx={{
                 p: 0.75,
-                borderRadius: 1.5,
+                borderRadius: "20px",
                 background: `linear-gradient(135deg, ${summary.colors.primary}, ${summary.colors.secondary})`,
                 display: "flex",
               }}
@@ -343,10 +343,10 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             sx={{
               flex: 1,
               height: 4,
-              borderRadius: 2,
+              borderRadius: "20px",
               bgcolor: alpha(summary.colors.primary, 0.1),
               "& .MuiLinearProgress-bar": {
-                borderRadius: 2,
+                borderRadius: "20px",
                 background: `linear-gradient(90deg, ${summary.colors.primary}, ${summary.colors.secondary})`,
               },
             }}
@@ -477,7 +477,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 background: `linear-gradient(135deg, ${categoryColors2.primary}, ${categoryColors2.secondary})`,
                 display: "flex",
               }}
@@ -580,7 +580,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <Box
                 sx={{
                   p: 1,
-                  borderRadius: 2,
+                  borderRadius: "20px",
                   bgcolor: alpha("#f59e0b", 0.2),
                   display: "flex",
                 }}
@@ -619,7 +619,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 bgcolor: alpha("#10b981", 0.2),
                 display: "flex",
               }}
@@ -809,7 +809,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           onClose={() => setMobileActionAnchor({ element: null, transaction: null })}
           PaperProps={{
             sx: {
-              borderRadius: 2,
+              borderRadius: "20px",
               minWidth: 160,
             },
           }}
@@ -872,7 +872,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 bgcolor: alpha(theme.palette.primary.main, 0.1),
                 display: "flex",
               }}
@@ -1125,14 +1125,14 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                     value={newIncomeCat}
                     onChange={(e) => setNewIncomeCat(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddCat("income")}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "20px" } }}
                   />
                   <IconButton
                     onClick={() => handleAddCat("income")}
                     sx={{
                       bgcolor: "#10b981",
                       color: "white",
-                      borderRadius: 2,
+                      borderRadius: "20px",
                       "&:hover": { bgcolor: alpha("#10b981", 0.8) },
                     }}
                   >
@@ -1186,14 +1186,14 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                     value={newExpenseCat}
                     onChange={(e) => setNewExpenseCat(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddCat("expense")}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "20px" } }}
                   />
                   <IconButton
                     onClick={() => handleAddCat("expense")}
                     sx={{
                       bgcolor: "#ef4444",
                       color: "white",
-                      borderRadius: 2,
+                      borderRadius: "20px",
                       "&:hover": { bgcolor: alpha("#ef4444", 0.8) },
                     }}
                   >

@@ -646,7 +646,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                         alignItems: "center",
                         mb: 2,
                         p: 1.5,
-                        borderRadius: 1,
+                        borderRadius: "20px",
                         bgcolor: alpha(
                           friend.netBalance >= 0 
                             ? theme.palette.success.main 

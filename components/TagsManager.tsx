@@ -209,7 +209,7 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
         onClose={handleCloseForm}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{ sx: { borderRadius: "20px" } }}
       >
         <DialogTitle>{editingTag ? "Edit Tag" : "New Tag"}</DialogTitle>
         <DialogContent>

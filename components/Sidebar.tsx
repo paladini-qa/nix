@@ -148,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           sx={{
-            borderRadius: 2.5,
+            borderRadius: "20px",
             py: isSubItem ? 1 : 1.5,
             px: 2,
             ml: isSubItem ? 2 : 0,
@@ -204,7 +204,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               sx={{
                 width: isSubItem ? 28 : 36,
                 height: isSubItem ? 28 : 36,
-                borderRadius: 2,
+                borderRadius: "20px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -301,7 +301,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           sx={{
             width: 52,
             height: 52,
-            borderRadius: 2.5,
+            borderRadius: "20px",
             bgcolor: isDarkMode
               ? alpha("#FFFFFF", 0.1)
               : alpha(theme.palette.primary.main, 0.08),
@@ -483,7 +483,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           sx={{
             mb: 2,
             p: 1.5,
-            borderRadius: 2.5,
+            borderRadius: "20px",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.default, 0.5)
               : alpha(theme.palette.grey[100], 0.8),
@@ -500,7 +500,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           sx={{
             p: 2,
-            borderRadius: 2.5,
+            borderRadius: "20px",
             cursor: "pointer",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.default, 0.6)
@@ -565,7 +565,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           sx={{
             mt: 2,
-            borderRadius: 2.5,
+            borderRadius: "20px",
             py: 1.5,
             color: "text.secondary",
             bgcolor: isDarkMode

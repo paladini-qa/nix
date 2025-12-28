@@ -400,7 +400,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                       sx={{
                         width: "100%",
                         height: 4,
-                        borderRadius: 2.5,
+                        borderRadius: "20px",
                         bgcolor: isDarkMode
                           ? alpha(cardStyles.income.accentColor, 0.1)
                           : alpha(cardStyles.income.accentColor, 0.15),
@@ -414,7 +414,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                         transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
                         sx={{
                           height: "100%",
-                          borderRadius: 2.5,
+                          borderRadius: "20px",
                           bgcolor: cardStyles.income.accentColor,
                           boxShadow: `0 0 8px ${alpha(cardStyles.income.accentColor, 0.4)}`,
                         }}
@@ -538,7 +538,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                       sx={{
                         width: "100%",
                         height: 4,
-                        borderRadius: 2.5,
+                        borderRadius: "20px",
                         bgcolor: isDarkMode
                           ? alpha(cardStyles.expense.accentColor, 0.1)
                           : alpha(cardStyles.expense.accentColor, 0.15),
@@ -552,7 +552,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                         transition={{ delay: 0.7, duration: 0.8, ease: "easeOut" }}
                         sx={{
                           height: "100%",
-                          borderRadius: 2.5,
+                          borderRadius: "20px",
                           bgcolor: cardStyles.expense.accentColor,
                           boxShadow: `0 0 8px ${alpha(cardStyles.expense.accentColor, 0.4)}`,
                         }}

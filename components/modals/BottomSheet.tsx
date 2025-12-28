@@ -161,7 +161,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
         PaperProps={{
           elevation: 0,
           sx: {
-            borderRadius: 5,
+            borderRadius: "20px",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.paper, 0.95)
               : alpha("#FFFFFF", 0.98),
@@ -273,7 +273,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
               bottom: 0,
               height: fullScreenOnMobile ? "100vh" : getSheetHeight("full"),
               zIndex,
-              borderRadius: fullScreenOnMobile ? 0 : "24px 24px 0 0",
+              borderRadius: fullScreenOnMobile ? 0 : "20px 20px 0 0",
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
@@ -312,7 +312,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                 sx={{
                   width: 40,
                   height: 5,
-                  borderRadius: 2.5,
+                  borderRadius: "20px",
                   bgcolor: isDarkMode
                     ? alpha("#FFFFFF", 0.2)
                     : alpha("#000000", 0.15),

@@ -622,7 +622,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
               sx={{
                 maxWidth: isMobile ? "80%" : "70%",
                 p: isMobile ? 1.5 : 2,
-                borderRadius: 3,
+                borderRadius: "20px",
                 bgcolor:
                   message.role === "user"
                     ? "primary.main"
@@ -649,7 +649,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                       : "action.hover",
                   px: 0.75,
                   py: 0.25,
-                  borderRadius: 1,
+                  borderRadius: "20px",
                   fontSize: 13,
                 },
               }}
@@ -710,7 +710,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                     sx={{
                       px: 1,
                       py: 2.5,
-                      borderRadius: 2.5,
+                      borderRadius: "20px",
                       fontSize: 13,
                       fontWeight: 500,
                       bgcolor: alpha(action.color, 0.1),
@@ -763,7 +763,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                     sx={{
                       px: 1,
                       py: 2.5,
-                      borderRadius: 2.5,
+                      borderRadius: "20px",
                       fontSize: 13,
                       fontWeight: 500,
                       bgcolor: alpha(suggestion.color, 0.1),
@@ -793,7 +793,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
             elevation={0}
             sx={{
               p: 2,
-              borderRadius: 3,
+              borderRadius: "20px",
               bgcolor: alpha(theme.palette.success.main, 0.1),
               border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
               display: "flex",
@@ -811,7 +811,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                 size="small"
                 startIcon={<CheckIcon />}
                 onClick={handleConfirmTransaction}
-                sx={{ borderRadius: 2, flex: 1 }}
+                sx={{ borderRadius: "20px", flex: 1 }}
               >
                 Confirmar
               </Button>
@@ -821,7 +821,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                 size="small"
                 startIcon={<CloseIcon />}
                 onClick={handleCancelTransaction}
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: "20px" }}
               >
                 Cancelar
               </Button>
@@ -834,7 +834,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           <Alert
             severity="error"
             onClose={() => setSmartInputError(null)}
-            sx={{ borderRadius: 2, mb: 2 }}
+            sx={{ borderRadius: "20px", mb: 2 }}
           >
             {smartInputError}
           </Alert>
@@ -861,7 +861,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
             <Box
               sx={{
                 p: 2,
-                borderRadius: 3,
+                borderRadius: "20px",
                 bgcolor: (theme) =>
                   theme.palette.mode === "dark"
                     ? "rgba(255,255,255,0.08)"
@@ -937,7 +937,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                 gap: 2,
                 p: 2,
                 mb: 2,
-                borderRadius: 3,
+                borderRadius: "20px",
                 bgcolor: alpha(theme.palette.error.main, 0.1),
                 border: `1px solid ${alpha(theme.palette.error.main, 0.3)}`,
               }}
@@ -960,7 +960,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                 size="small"
                 startIcon={<StopIcon />}
                 onClick={stopRecording}
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: "20px" }}
               >
                 Parar
               </Button>
@@ -1049,7 +1049,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                 </InputAdornment>
               ),
               sx: {
-                borderRadius: 3,
+                borderRadius: "20px",
                 bgcolor: "background.paper",
                 boxShadow: (theme) =>
                   theme.palette.mode === "dark"

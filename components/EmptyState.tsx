@@ -618,7 +618,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
               mt: 1,
               px: 3,
               py: 1.25,
-              borderRadius: 2.5,
+              borderRadius: "20px",
               fontWeight: 600,
               boxShadow: `0 4px 14px ${alpha(
                 theme.palette.primary.main,

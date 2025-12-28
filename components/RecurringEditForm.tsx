@@ -196,7 +196,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
 
   const inputSx = {
     "& .MuiOutlinedInput-root": {
-      borderRadius: 2,
+      borderRadius: "20px",
       bgcolor: isDarkMode
         ? alpha(theme.palette.background.default, 0.5)
         : alpha(theme.palette.primary.main, 0.02),
@@ -211,7 +211,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
       <Paper
         sx={{
           p: 2,
-          borderRadius: 2,
+          borderRadius: "20px",
           bgcolor: alpha(modeInfo.color, 0.08),
           border: `1px solid ${alpha(modeInfo.color, 0.2)}`,
         }}
@@ -220,7 +220,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
           <Box
             sx={{
               p: 1,
-              borderRadius: 1.5,
+              borderRadius: "20px",
               bgcolor: alpha(modeInfo.color, 0.15),
               display: "flex",
             }}
@@ -343,7 +343,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
 
       {/* Warning for all_future */}
       {editMode === "all_future" && (transaction.isRecurring || transaction.isVirtual) && (
-        <Alert severity="info" sx={{ borderRadius: 2 }}>
+        <Alert severity="info" sx={{ borderRadius: "20px" }}>
           As ocorrências anteriores a {date?.format("DD/MM/YYYY")} serão preservadas como transações independentes com os valores originais.
         </Alert>
       )}
@@ -390,7 +390,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
       maxWidth="sm"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 3 },
+        sx: { borderRadius: "20px" },
       }}
     >
       <DialogTitle>

@@ -61,7 +61,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   // Estilos de input soft
   const inputSx = {
     "& .MuiOutlinedInput-root": {
-      borderRadius: 2.5,
+      borderRadius: "20px",
       bgcolor: isDarkMode
         ? alpha(theme.palette.background.default, 0.5)
         : alpha(theme.palette.primary.main, 0.02),
@@ -93,7 +93,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   // Estilos de seção
   const sectionSx = {
     p: 3,
-    borderRadius: 2.5,
+    borderRadius: "20px",
     bgcolor: isDarkMode
       ? alpha(theme.palette.background.default, 0.4)
       : alpha("#FFFFFF", 0.6),
@@ -156,7 +156,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 2.5,
+          borderRadius: "20px",
           overflow: "hidden",
           // Glassmorphism
           bgcolor: isDarkMode
@@ -262,7 +262,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
               severity="error"
               icon={<AlertCircleIcon fontSize="small" />}
               sx={{
-                borderRadius: 2.5,
+                borderRadius: "20px",
                 border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
               }}
             >
@@ -279,7 +279,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 sx={{
                   width: 36,
                   height: 36,
-                  borderRadius: 2.5,
+                  borderRadius: "20px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -325,7 +325,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 }
                 sx={{
                   minWidth: 100,
-                  borderRadius: 2.5,
+                  borderRadius: "20px",
                   fontWeight: 600,
                   boxShadow: nameStatus === "saved"
                     ? `0 4px 14px -4px ${alpha(theme.palette.success.main, 0.4)}`
@@ -346,7 +346,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 sx={{
                   width: 36,
                   height: 36,
-                  borderRadius: 2.5,
+                  borderRadius: "20px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -395,7 +395,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 }
                 sx={{
                   minWidth: 100,
-                  borderRadius: 2.5,
+                  borderRadius: "20px",
                   fontWeight: 600,
                   boxShadow: `0 4px 14px -4px ${alpha(
                     emailStatus === "sent"
@@ -419,7 +419,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 sx={{
                   width: 36,
                   height: 36,
-                  borderRadius: 2.5,
+                  borderRadius: "20px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -459,7 +459,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 )
               }
               sx={{
-                borderRadius: 2.5,
+                borderRadius: "20px",
                 py: 1.5,
                 fontWeight: 600,
                 boxShadow: `0 6px 20px -6px ${alpha(

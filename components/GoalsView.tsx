@@ -748,7 +748,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
         onClose={handleCloseForm}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{ sx: { borderRadius: "20px" } }}
       >
         <DialogTitle>{editingGoal ? "Edit Goal" : "New Goal"}</DialogTitle>
         <DialogContent>
@@ -869,7 +869,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
         onClose={() => setIsAddAmountOpen(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{ sx: { borderRadius: "20px" } }}
       >
         <DialogTitle>Add to {selectedGoalForAmount?.name}</DialogTitle>
         <DialogContent>

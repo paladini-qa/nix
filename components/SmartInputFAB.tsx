@@ -152,7 +152,7 @@ const SmartInputFAB: React.FC<SmartInputFABProps> = ({
                     color: "text.primary",
                     fontWeight: 600,
                     fontSize: "0.85rem",
-                    borderRadius: 2,
+                    borderRadius: "20px",
                     px: 1.5,
                     py: 0.75,
                     boxShadow: `0 4px 16px -4px ${alpha("#000", 0.2)}`,

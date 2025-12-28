@@ -264,7 +264,7 @@ const LoginView: React.FC = () => {
                 justifyContent: "center",
                 width: 56,
                 height: 56,
-                borderRadius: 2,
+                borderRadius: "20px",
                 mb: 2,
                 bgcolor: isDarkMode
                   ? alpha("#FFFFFF", 0.08)
@@ -332,7 +332,7 @@ const LoginView: React.FC = () => {
               <Alert
                 severity="error"
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: "20px",
                   border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
                   py: 0.5,
                 }}
@@ -345,7 +345,7 @@ const LoginView: React.FC = () => {
               <Alert
                 severity="success"
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: "20px",
                   border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
                   py: 0.5,
                 }}
@@ -498,7 +498,7 @@ const LoginView: React.FC = () => {
               sx={{
                 py: 1.5,
                 mt: 0.5,
-                borderRadius: 2,
+                borderRadius: "20px",
                 fontWeight: 600,
                 fontSize: "0.95rem",
                 letterSpacing: "0.01em",
@@ -577,7 +577,7 @@ const LoginView: React.FC = () => {
                 gap: 0.75,
                 px: 2,
                 py: 0.75,
-                borderRadius: 2,
+                borderRadius: "20px",
                 bgcolor: isDarkMode
                   ? alpha(theme.palette.primary.main, 0.1)
                   : alpha(theme.palette.primary.main, 0.06),

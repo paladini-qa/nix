@@ -274,7 +274,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
       <Box
         sx={{
           p: 1,
-          borderRadius: 2,
+          borderRadius: "20px",
           bgcolor: alpha(theme.palette.primary.main, 0.1),
           color: "primary.main",
           display: "flex",
@@ -777,7 +777,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
                 alignItems: "center",
                 justifyContent: "space-between",
                 p: 1.5,
-                borderRadius: 2,
+                borderRadius: "20px",
                 bgcolor: alpha(COLORS[index % COLORS.length], 0.08),
                 border: `1px solid ${alpha(
                   COLORS[index % COLORS.length],

@@ -225,7 +225,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 bgcolor: alpha(theme.palette.primary.main, 0.1),
                 display: "flex",
               }}
@@ -416,7 +416,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                     <Box
                       sx={{
                         p: 1,
-                        borderRadius: 2,
+                        borderRadius: "20px",
                         background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                         display: "flex",
                       }}
@@ -451,10 +451,10 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                       sx={{
                         flex: 1,
                         height: 6,
-                        borderRadius: 3,
+                        borderRadius: "20px",
                         bgcolor: alpha(colors.primary, 0.1),
                         "& .MuiLinearProgress-bar": {
-                          borderRadius: 3,
+                          borderRadius: "20px",
                           background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
                         },
                       }}
@@ -498,7 +498,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                         fontSize: 12,
                         py: 0.5,
                         px: 1.5,
-                        borderRadius: 2,
+                        borderRadius: "20px",
                         background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                         "&:hover": {
                           background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})`,
@@ -584,7 +584,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
               onKeyDown={(e) => e.key === "Enter" && handleAddMethod()}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
+                  borderRadius: "20px",
                 },
               }}
             />
@@ -593,7 +593,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
               sx={{
                 bgcolor: "primary.main",
                 color: "white",
-                borderRadius: 2,
+                borderRadius: "20px",
                 "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.8) },
               }}
             >

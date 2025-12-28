@@ -299,7 +299,7 @@ function DataTable<T>({
     <Paper
       elevation={0}
       sx={{
-        borderRadius: 1,
+        borderRadius: "20px",
         overflow: "hidden",
         bgcolor: isDarkMode
           ? alpha(theme.palette.background.paper, 0.7)
@@ -368,7 +368,7 @@ function DataTable<T>({
             minWidth: 200,
             maxWidth: 320,
             "& .MuiOutlinedInput-root": {
-              borderRadius: 2,
+              borderRadius: "20px",
               bgcolor: isDarkMode
                 ? alpha(theme.palette.background.default, 0.4)
                 : alpha(theme.palette.grey[100], 0.6),
@@ -395,7 +395,7 @@ function DataTable<T>({
               startIcon={<FilterIcon />}
               sx={{
                 minWidth: 100,
-                borderRadius: 2,
+                borderRadius: "20px",
                 ...(activeFiltersCount > 0 && !showFilters && {
                   borderColor: theme.palette.primary.main,
                   color: theme.palette.primary.main,

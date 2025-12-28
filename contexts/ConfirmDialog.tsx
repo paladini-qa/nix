@@ -323,7 +323,7 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
         maxWidth="xs"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 1 },
+          sx: { borderRadius: "20px" },
         }}
       >
         {renderDialogContent()}

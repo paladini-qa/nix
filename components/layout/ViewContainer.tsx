@@ -47,7 +47,7 @@ const ViewContainer: React.FC<ViewContainerProps> = ({
         <Box
           sx={{
             p: 3,
-            borderRadius: 4,
+            borderRadius: "20px",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.paper, 0.6)
               : alpha("#FFFFFF", 0.8),
@@ -136,7 +136,7 @@ export const ViewLoading: React.FC<{ size?: number }> = ({ size = 40 }) => {
           sx={{
             width: size + 24,
             height: size + 24,
-            borderRadius: 3,
+            borderRadius: "20px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

@@ -28,7 +28,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = false }) 
           gap: 0.5,
           px: compact ? 0.5 : 1,
           py: 0.5,
-          borderRadius: 1,
+          borderRadius: "20px",
           cursor: "default",
         }}
       >

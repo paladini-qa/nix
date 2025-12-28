@@ -178,7 +178,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
         elevation={0}
         sx={{
-          borderRadius: 2.5,
+          borderRadius: "20px",
           bgcolor: isDarkMode
             ? alpha(theme.palette.background.paper, 0.6)
             : alpha("#FFFFFF", 0.8),
@@ -229,7 +229,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
-                  borderRadius: 2.5,
+                  borderRadius: "20px",
                   cursor: "pointer",
                   // Glassmorphism
                   bgcolor: isDarkMode
@@ -251,7 +251,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                   sx={{
                     width: 44,
                     height: 44,
-                    borderRadius: 2.5,
+                    borderRadius: "20px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -359,7 +359,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       elevation={0}
       sx={{
-        borderRadius: 1,
+        borderRadius: "20px",
         overflow: "hidden",
         bgcolor: isDarkMode
           ? alpha(theme.palette.background.paper, 0.6)
@@ -450,7 +450,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         sx={{
                           width: 32,
                           height: 32,
-                          borderRadius: 2.5,
+                          borderRadius: "20px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -498,7 +498,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         sx={{
                           width: 36,
                           height: 36,
-                          borderRadius: 2.5,
+                          borderRadius: "20px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -543,18 +543,18 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                       >
                         {isIncome ? "+" : "-"} {formatCurrency(transaction.amount || 0)}
                       </Typography>
-                      <Box sx={{ position: "relative", overflow: "hidden", borderRadius: 2.5 }}>
+                      <Box sx={{ position: "relative", overflow: "hidden", borderRadius: "20px" }}>
                         <LinearProgress
                           variant="determinate"
                           value={100}
                           sx={{
                             height: 4,
-                            borderRadius: 2.5,
+                            borderRadius: "20px",
                             bgcolor: isDarkMode
                               ? alpha(isIncome ? theme.palette.success.main : theme.palette.error.main, 0.1)
                               : alpha(isIncome ? theme.palette.success.main : theme.palette.error.main, 0.08),
                             "& .MuiLinearProgress-bar": {
-                              borderRadius: 2.5,
+                              borderRadius: "20px",
                               bgcolor: "transparent",
                             },
                           }}
@@ -568,7 +568,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                             top: 0,
                             left: 0,
                             height: 4,
-                            borderRadius: 2.5,
+                            borderRadius: "20px",
                             bgcolor: isIncome
                               ? theme.palette.success.main
                               : theme.palette.error.main,

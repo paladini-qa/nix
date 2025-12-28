@@ -111,7 +111,7 @@ interface FrequentTransaction {
 // Estilos do input customizado - soft e orgânico
 const getInputSx = (theme: any, isDarkMode: boolean) => ({
   "& .MuiOutlinedInput-root": {
-    borderRadius: 2.5, // Usa múltiplo do theme.shape.borderRadius (20px)
+    borderRadius: "20px", // Usa múltiplo do theme.shape.borderRadius (20px)
     bgcolor: isDarkMode
       ? alpha(theme.palette.background.default, 0.5)
       : alpha(theme.palette.primary.main, 0.02),
@@ -178,7 +178,7 @@ const getTogglePaperSx = (isActive: boolean, accentColor: string, theme: any, is
   alignItems: "center",
   justifyContent: "space-between",
   cursor: "pointer",
-  borderRadius: 2.5, // Consistente com theme
+  borderRadius: "20px", // Consistente com theme
   transition: "all 0.2s ease-in-out",
   border: `1.5px solid ${isActive
     ? alpha(accentColor, 0.4)
@@ -689,7 +689,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               onClick={onClose}
               sx={{
                 mr: 2,
-                borderRadius: 2.5,
+                borderRadius: "20px",
                 bgcolor: isDarkMode
                   ? alpha("#FFFFFF", 0.05)
                   : alpha("#000000", 0.04),
@@ -711,7 +711,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               variant="contained"
               size="small"
               sx={{
-                borderRadius: 2.5,
+                borderRadius: "20px",
                 px: 2.5,
                 fontWeight: 600,
                 boxShadow: `0 4px 14px -4px ${alpha(theme.palette.primary.main, 0.4)}`,
@@ -767,7 +767,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 severity="error" 
                 onClose={() => setValidationError(null)}
                 sx={{
-                  borderRadius: 2.5,
+                  borderRadius: "20px",
                   border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
                 }}
               >
@@ -782,7 +782,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 icon={<WarningIcon />}
                 onClose={() => setDuplicateWarning(null)}
                 sx={{
-                  borderRadius: 2.5,
+                  borderRadius: "20px",
                   border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
                 }}
               >
@@ -816,7 +816,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       icon={<HistoryIcon sx={{ fontSize: 16 }} />}
                       size="small"
                       sx={{
-                        borderRadius: 2.5,
+                        borderRadius: "20px",
                         fontWeight: 500,
                         bgcolor: isDarkMode
                           ? alpha(theme.palette.primary.main, 0.1)
@@ -852,7 +852,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 bgcolor: isDarkMode
                   ? alpha(theme.palette.background.default, 0.3)
                   : alpha("#000000", 0.02),
-                borderRadius: 2.5,
+                borderRadius: "20px",
                 p: 0.5,
                 "& .MuiToggleButtonGroup-grouped": {
                   border: 0,
@@ -968,7 +968,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   size="small"
                   sx={{
                     mt: 1,
-                    borderRadius: 2.5,
+                    borderRadius: "20px",
                     fontWeight: 500,
                     bgcolor: alpha(theme.palette.info.main, 0.1),
                     border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
@@ -1022,7 +1022,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     size="small"
                     variant={parsedAmount === value ? "filled" : "outlined"}
                     sx={{
-                      borderRadius: 2.5,
+                      borderRadius: "20px",
                       fontWeight: 600,
                       minWidth: 60,
                       transition: "all 0.15s ease",
@@ -1106,7 +1106,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   size="small"
                   variant={date?.isSame(dayjs(), "day") ? "filled" : "outlined"}
                   sx={{
-                    borderRadius: 2.5,
+                    borderRadius: "20px",
                     fontWeight: 500,
                     ...(date?.isSame(dayjs(), "day")
                       ? {
@@ -1126,7 +1126,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   size="small"
                   variant={date?.isSame(dayjs().subtract(1, "day"), "day") ? "filled" : "outlined"}
                   sx={{
-                    borderRadius: 2.5,
+                    borderRadius: "20px",
                     fontWeight: 500,
                     ...(date?.isSame(dayjs().subtract(1, "day"), "day")
                       ? {
@@ -1146,7 +1146,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   size="small"
                   variant="outlined"
                   sx={{
-                    borderRadius: 2.5,
+                    borderRadius: "20px",
                     fontWeight: 500,
                     borderColor: isDarkMode
                       ? alpha("#FFFFFF", 0.2)
@@ -1187,7 +1187,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       sx={{
                         width: 36,
                         height: 36,
-                        borderRadius: 2.5,
+                        borderRadius: "20px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1236,7 +1236,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         sx={{
                           width: 36,
                           height: 36,
-                          borderRadius: 2.5,
+                          borderRadius: "20px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -1312,7 +1312,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     sx={{
                       width: 36,
                       height: 36,
-                      borderRadius: 2.5,
+                      borderRadius: "20px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1370,7 +1370,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       bgcolor: isDarkMode
                         ? alpha(theme.palette.background.default, 0.3)
                         : alpha("#000000", 0.02),
-                      borderRadius: 2.5,
+                      borderRadius: "20px",
                       p: 0.5,
                       "& .MuiToggleButtonGroup-grouped": {
                         border: 0,
@@ -1460,7 +1460,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       elevation={0}
                       sx={{
                         p: 2.5,
-                        borderRadius: 2.5,
+                        borderRadius: "20px",
                         bgcolor: isDarkMode
                           ? alpha(theme.palette.primary.main, 0.08)
                           : alpha(theme.palette.primary.main, 0.04),
@@ -1491,7 +1491,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           size="small"
                           onClick={handleAddNewFriend}
                           disabled={!newFriendName.trim()}
-                          sx={{ borderRadius: 2.5, px: 2.5 }}
+                          sx={{ borderRadius: "20px", px: 2.5 }}
                         >
                           Add
                         </Button>
@@ -1502,7 +1502,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             setShowAddFriend(false);
                             setNewFriendName("");
                           }}
-                          sx={{ borderRadius: 2.5 }}
+                          sx={{ borderRadius: "20px" }}
                         >
                           Cancelar
                         </Button>
@@ -1516,7 +1516,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       elevation={0}
                       sx={{
                         p: 2.5,
-                        borderRadius: 2.5,
+                        borderRadius: "20px",
                         bgcolor: isDarkMode
                           ? alpha(
                               type === "income" 
@@ -1602,7 +1602,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 elevation={0}
                 sx={{
                   p: 0,
-                  borderRadius: 2.5,
+                  borderRadius: "20px",
                   bgcolor: isDarkMode
                     ? alpha(theme.palette.background.default, 0.5)
                     : alpha("#000000", 0.02),
@@ -1784,7 +1784,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             sx={{ 
                               mt: 1, 
                               py: 0.5, 
-                              borderRadius: 2.5,
+                              borderRadius: "20px",
                               "& .MuiAlert-message": { py: 0 }
                             }}
                           >
@@ -1816,7 +1816,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               onClick={onClose}
               color="inherit"
               sx={{
-                borderRadius: 2.5,
+                borderRadius: "20px",
                 px: 3,
                 py: 1.25,
                 fontWeight: 500,
@@ -1840,7 +1840,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               startIcon={<SaveIcon />}
               sx={{
                 flex: 1,
-                borderRadius: 2.5,
+                borderRadius: "20px",
                 py: 1.5,
                 fontWeight: 600,
                 boxShadow: `0 8px 24px -8px ${alpha(theme.palette.primary.main, 0.4)}`,

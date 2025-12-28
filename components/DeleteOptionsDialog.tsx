@@ -165,7 +165,7 @@ const DeleteOptionsDialog: React.FC<DeleteOptionsDialogProps> = ({
           <Box
             sx={{
               p: 1,
-              borderRadius: 2,
+              borderRadius: "20px",
               bgcolor: isDarkMode 
                 ? alpha(theme.palette.error.main, 0.15)
                 : alpha(theme.palette.error.main, 0.1),
@@ -197,7 +197,7 @@ const DeleteOptionsDialog: React.FC<DeleteOptionsDialogProps> = ({
           <ListItemButton
             onClick={() => onSelect("single")}
             sx={{
-              borderRadius: 2,
+              borderRadius: "20px",
               mb: 1,
               border: 1,
               borderColor: "divider",
@@ -228,7 +228,7 @@ const DeleteOptionsDialog: React.FC<DeleteOptionsDialogProps> = ({
           <ListItemButton
             onClick={() => onSelect("all_future")}
             sx={{
-              borderRadius: 2,
+              borderRadius: "20px",
               mb: 1,
               border: 1,
               borderColor: "divider",
@@ -259,7 +259,7 @@ const DeleteOptionsDialog: React.FC<DeleteOptionsDialogProps> = ({
           <ListItemButton
             onClick={() => onSelect("all")}
             sx={{
-              borderRadius: 2,
+              borderRadius: "20px",
               border: 1,
               borderColor: "divider",
               transition: "all 0.2s ease",
@@ -292,7 +292,7 @@ const DeleteOptionsDialog: React.FC<DeleteOptionsDialogProps> = ({
           onClick={onClose} 
           color="inherit" 
           fullWidth={isMobile}
-          sx={{ borderRadius: 2 }}
+          sx={{ borderRadius: "20px" }}
         >
           Cancelar
         </Button>

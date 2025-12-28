@@ -139,7 +139,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 bgcolor: alpha("#059669", 0.1),
                 display: "flex",
               }}
@@ -174,7 +174,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       sx={{
                         cursor: onCategoryClick ? "pointer" : "default",
                         p: 1.5,
-                        borderRadius: 2,
+                        borderRadius: "20px",
                         border: 1,
                         borderColor: "divider",
                         bgcolor: "transparent",
@@ -241,10 +241,10 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         value={percentage}
                         sx={{
                           height: 6,
-                          borderRadius: 3,
+                          borderRadius: "20px",
                           bgcolor: "action.hover",
                           "& .MuiLinearProgress-bar": {
-                            borderRadius: 3,
+                            borderRadius: "20px",
                             background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
                           },
                         }}
@@ -305,7 +305,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 bgcolor: alpha("#DC2626", 0.1),
                 display: "flex",
               }}
@@ -340,7 +340,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       sx={{
                         cursor: onCategoryClick ? "pointer" : "default",
                         p: 1.5,
-                        borderRadius: 2,
+                        borderRadius: "20px",
                         border: 1,
                         borderColor: "divider",
                         bgcolor: "transparent",
@@ -407,10 +407,10 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         value={percentage}
                         sx={{
                           height: 6,
-                          borderRadius: 3,
+                          borderRadius: "20px",
                           bgcolor: "action.hover",
                           "& .MuiLinearProgress-bar": {
-                            borderRadius: 3,
+                            borderRadius: "20px",
                             background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
                           },
                         }}
@@ -467,7 +467,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
             <Box
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 bgcolor: alpha("#6366f1", 0.1),
                 display: "flex",
               }}
@@ -508,7 +508,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       sx={{
                         cursor: onPaymentMethodClick ? "pointer" : "default",
                         p: 1.5,
-                        borderRadius: 2,
+                        borderRadius: "20px",
                         border: 1,
                         borderColor: "divider",
                         bgcolor: "transparent",
@@ -575,10 +575,10 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                         value={percentage}
                         sx={{
                           height: 6,
-                          borderRadius: 3,
+                          borderRadius: "20px",
                           bgcolor: "action.hover",
                           "& .MuiLinearProgress-bar": {
-                            borderRadius: 3,
+                            borderRadius: "20px",
                             background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
                           },
                         }}

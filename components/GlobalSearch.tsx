@@ -200,7 +200,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: "20px",
           bgcolor: isDarkMode ? "grey.900" : "background.paper",
           backgroundImage: "none",
           overflow: "hidden",

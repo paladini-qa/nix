@@ -167,7 +167,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
       fullWidth
       fullScreen={isMobile}
       PaperProps={{
-        sx: { borderRadius: isMobile ? 0 : 4 },
+        sx: { borderRadius: isMobile ? 0 : "20px" },
       }}
     >
       <DialogTitle
@@ -216,7 +216,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
             sx={{
               height: 6,
               bgcolor: "action.hover",
-              borderRadius: 3,
+              borderRadius: "20px",
               overflow: "hidden",
             }}
           >
@@ -225,7 +225,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
                 height: "100%",
                 width: `${(completedCount / steps.length) * 100}%`,
                 bgcolor: allCompleted ? "success.main" : "primary.main",
-                borderRadius: 3,
+                borderRadius: "20px",
                 transition: "width 0.3s ease",
               }}
             />
@@ -263,7 +263,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
                   px: 2,
                   py: 1.5,
                   mb: 1,
-                  borderRadius: 2,
+                  borderRadius: "20px",
                   bgcolor: step.isCompleted
                     ? "success.50"
                     : index === activeStep

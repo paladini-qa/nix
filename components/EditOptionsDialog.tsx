@@ -58,7 +58,7 @@ const EditOptionsDialog: React.FC<EditOptionsDialogProps> = ({
       maxWidth="xs"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 1 },
+        sx: { borderRadius: "20px" },
       }}
     >
       <DialogTitle>
@@ -84,7 +84,7 @@ const EditOptionsDialog: React.FC<EditOptionsDialogProps> = ({
           <ListItemButton
             onClick={() => onSelect("single")}
             sx={{
-              borderRadius: 2,
+              borderRadius: "20px",
               mb: 1,
               border: 1,
               borderColor: "divider",
@@ -116,7 +116,7 @@ const EditOptionsDialog: React.FC<EditOptionsDialogProps> = ({
           <ListItemButton
             onClick={() => onSelect("all_future")}
             sx={{
-              borderRadius: 2,
+              borderRadius: "20px",
               mb: 1,
               border: 1,
               borderColor: "divider",
@@ -148,7 +148,7 @@ const EditOptionsDialog: React.FC<EditOptionsDialogProps> = ({
           <ListItemButton
             onClick={() => onSelect("all")}
             sx={{
-              borderRadius: 2,
+              borderRadius: "20px",
               border: 1,
               borderColor: "divider",
               "&:hover": {

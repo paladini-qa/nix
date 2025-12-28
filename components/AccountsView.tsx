@@ -744,7 +744,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
         onClose={handleCloseForm}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{ sx: { borderRadius: "20px" } }}
       >
         <DialogTitle>
           {editingAccount ? "Edit Account" : "New Account"}

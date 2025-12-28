@@ -350,7 +350,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         bgcolor: isDarkMode
           ? alpha(theme.palette.background.default, 0.3)
           : alpha("#000000", 0.02),
-        borderRadius: 2,
+        borderRadius: "20px",
         p: 0.5,
         "& .MuiToggleButtonGroup-grouped": {
           border: 0,
@@ -421,7 +421,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         disabled={isProcessing}
         sx={{
           "& .MuiOutlinedInput-root": {
-            borderRadius: 2,
+            borderRadius: "20px",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.default, 0.5)
               : alpha(theme.palette.primary.main, 0.02),
@@ -505,7 +505,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
             setAudioBlob(null);
             setRecordingTime(0);
           }}
-          sx={{ borderRadius: 2 }}
+          sx={{ borderRadius: "20px" }}
         >
           Gravar novamente
         </Button>
@@ -533,7 +533,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
             elevation={0}
             sx={{
               p: 1,
-              borderRadius: 2,
+              borderRadius: "20px",
               bgcolor: isDarkMode
                 ? alpha(theme.palette.background.default, 0.5)
                 : alpha(theme.palette.info.main, 0.05),
@@ -548,7 +548,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 width: "100%",
                 maxHeight: 200,
                 objectFit: "contain",
-                borderRadius: 1.5,
+                borderRadius: "20px",
               }}
             />
           </Paper>
@@ -574,7 +574,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
           onClick={() => fileInputRef.current?.click()}
           sx={{
             p: 4,
-            borderRadius: 2,
+            borderRadius: "20px",
             border: `2px dashed ${alpha(theme.palette.info.main, 0.3)}`,
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.default, 0.3)
@@ -621,7 +621,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
             alignItems: "center",
             justifyContent: "space-between",
             p: 1.5,
-            borderRadius: 2,
+            borderRadius: "20px",
             bgcolor: alpha(getConfidenceColor(parsedResult.confidence), 0.1),
             border: `1px solid ${alpha(getConfidenceColor(parsedResult.confidence), 0.2)}`,
           }}
@@ -697,7 +697,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
             size="small"
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: "20px" } }}
           />
 
           <TextField
@@ -714,7 +714,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 </InputAdornment>
               ),
             }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: "20px" } }}
           />
 
           <Box sx={{ display: "flex", gap: 2 }}>
@@ -724,7 +724,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 value={editCategory}
                 label="Categoria"
                 onChange={(e) => setEditCategory(e.target.value)}
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: "20px" }}
               >
                 {availableCategories.map((cat) => (
                   <MenuItem key={cat} value={cat}>
@@ -740,7 +740,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 value={editPaymentMethod}
                 label="Pagamento"
                 onChange={(e) => setEditPaymentMethod(e.target.value)}
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: "20px" }}
               >
                 {paymentMethods.map((method) => (
                   <MenuItem key={method} value={method}>
@@ -759,7 +759,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
               textField: {
                 fullWidth: true,
                 size: "small",
-                sx: { "& .MuiOutlinedInput-root": { borderRadius: 2 } },
+                sx: { "& .MuiOutlinedInput-root": { borderRadius: "20px" } },
               },
             }}
           />
@@ -789,7 +789,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
       TransitionComponent={isMobile ? SlideTransition : undefined}
       PaperProps={{
         sx: {
-          borderRadius: isMobile ? 0 : 3,
+          borderRadius: isMobile ? 0 : "20px",
           bgcolor: isDarkMode
             ? alpha(theme.palette.background.paper, 0.95)
             : alpha("#FFFFFF", 0.98),
@@ -828,7 +828,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
             sx={{
               width: 40,
               height: 40,
-              borderRadius: 2,
+              borderRadius: "20px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -873,7 +873,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
             <Alert
               severity="error"
               onClose={() => setError(null)}
-              sx={{ borderRadius: 2 }}
+              sx={{ borderRadius: "20px" }}
             >
               {error}
             </Alert>
@@ -903,7 +903,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
               onClick={onClose}
               color="inherit"
               sx={{
-                borderRadius: 2,
+                borderRadius: "20px",
                 px: 3,
                 fontWeight: 500,
                 color: "text.secondary",
@@ -918,7 +918,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
               startIcon={isProcessing ? <CircularProgress size={18} color="inherit" /> : <AIIcon />}
               sx={{
                 flex: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 py: 1.25,
                 fontWeight: 600,
                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
@@ -938,7 +938,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
               color="inherit"
               startIcon={<RefreshIcon />}
               sx={{
-                borderRadius: 2,
+                borderRadius: "20px",
                 px: 3,
                 fontWeight: 500,
                 color: "text.secondary",
@@ -954,7 +954,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
               startIcon={<CheckIcon />}
               sx={{
                 flex: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 py: 1.25,
                 fontWeight: 600,
                 boxShadow: `0 8px 24px -8px ${alpha(theme.palette.success.main, 0.4)}`,

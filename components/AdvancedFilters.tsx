@@ -66,7 +66,7 @@ export const AdvancedFiltersButton: React.FC<{
       onClick={onToggleFilters}
       size={compact ? "small" : "medium"}
       sx={{
-        borderRadius: 2,
+        borderRadius: "20px",
         textTransform: "none",
         minWidth: compact ? "auto" : undefined,
         px: compact ? 1.5 : 2,
@@ -229,7 +229,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                       size: "small",
                       fullWidth: true,
                       InputProps: {
-                        sx: { borderRadius: 2 },
+                        sx: { borderRadius: "20px" },
                       },
                     },
                   }}
@@ -248,7 +248,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                       size: "small",
                       fullWidth: true,
                       InputProps: {
-                        sx: { borderRadius: 2 },
+                        sx: { borderRadius: "20px" },
                       },
                     },
                   }}
@@ -268,7 +268,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                         type: e.target.value as AdvancedFiltersState["type"],
                       })
                     }
-                    sx={{ borderRadius: 2 }}
+                    sx={{ borderRadius: "20px" }}
                   >
                     <MenuItem value="all">Todos</MenuItem>
                     <MenuItem value="income">
@@ -321,7 +321,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                             selected.length > 1 ? "s" : ""
                           }`
                     }
-                    sx={{ borderRadius: 2 }}
+                    sx={{ borderRadius: "20px" }}
                     MenuProps={{
                       PaperProps: {
                         style: {
@@ -359,7 +359,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                             selected.length > 1 ? "s" : ""
                           }`
                     }
-                    sx={{ borderRadius: 2 }}
+                    sx={{ borderRadius: "20px" }}
                     MenuProps={{
                       PaperProps: {
                         style: {
