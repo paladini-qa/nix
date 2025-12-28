@@ -443,22 +443,31 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Custom focus styles with neon glow */
-*:focus-visible {
+/* Custom focus styles with neon glow - apenas para elementos não-MUI */
+*:focus-visible:not(.MuiInputBase-input):not(.MuiOutlinedInput-input):not(.MuiSelect-select) {
   outline: 2px solid var(--nix-primary);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Input focus glow */
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
+/* Input focus glow - desabilitado para MUI (usa estilos próprios) */
+input:focus-visible:not(.MuiInputBase-input),
+textarea:focus-visible:not(.MuiInputBase-input),
+select:focus-visible:not(.MuiSelect-select) {
   outline: none;
   box-shadow: 
     0 0 0 2px var(--nix-bg-paper),
     0 0 0 4px var(--nix-primary),
     0 0 15px var(--nix-primary-glow);
+}
+
+/* Remove focus styles dos inputs MUI - usar estilos do componente */
+.MuiInputBase-input:focus,
+.MuiInputBase-input:focus-visible,
+.MuiOutlinedInput-input:focus,
+.MuiOutlinedInput-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Selection color */

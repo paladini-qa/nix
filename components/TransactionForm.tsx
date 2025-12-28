@@ -33,6 +33,8 @@ import {
   Autocomplete,
   Tooltip,
   keyframes,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -109,36 +111,63 @@ interface FrequentTransaction {
 // Estilos do input customizado - soft e orgânico
 const getInputSx = (theme: any, isDarkMode: boolean) => ({
   "& .MuiOutlinedInput-root": {
-    borderRadius: 1,
+    borderRadius: 2.5, // Usa múltiplo do theme.shape.borderRadius (20px)
     bgcolor: isDarkMode
       ? alpha(theme.palette.background.default, 0.5)
       : alpha(theme.palette.primary.main, 0.02),
     transition: "all 0.2s ease-in-out",
+    outline: "none !important",
     "& fieldset": {
       borderColor: isDarkMode
-        ? alpha("#FFFFFF", 0.08)
-        : alpha(theme.palette.primary.main, 0.1),
+        ? alpha("#FFFFFF", 0.1)
+        : alpha(theme.palette.primary.main, 0.12),
       borderWidth: 1.5,
       transition: "all 0.2s ease-in-out",
+      outline: "none !important",
     },
     "&:hover fieldset": {
       borderColor: isDarkMode
-        ? alpha("#FFFFFF", 0.15)
-        : alpha(theme.palette.primary.main, 0.2),
+        ? alpha("#FFFFFF", 0.2)
+        : alpha(theme.palette.primary.main, 0.25),
+      outline: "none !important",
     },
     "&.Mui-focused": {
       bgcolor: isDarkMode
         ? alpha(theme.palette.primary.main, 0.08)
         : alpha(theme.palette.primary.main, 0.04),
-      boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+      outline: "none !important",
+      boxShadow: "none !important",
     },
     "&.Mui-focused fieldset": {
-      borderColor: theme.palette.primary.main,
-      borderWidth: 1.5,
+      border: "none !important",
+      borderColor: "transparent !important",
+      borderWidth: "0 !important",
+      outline: "none !important",
+      boxShadow: "none !important",
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      border: "none !important",
+      borderColor: "transparent !important",
+      borderWidth: "0 !important",
+      outline: "none !important",
     },
   },
   "& .MuiInputLabel-root": {
     fontWeight: 500,
+  },
+  "& .MuiOutlinedInput-input": {
+    outline: "none !important",
+    "&:focus": {
+      outline: "none !important",
+      boxShadow: "none !important",
+    },
+    "&:focus-visible": {
+      outline: "none !important",
+      boxShadow: "none !important",
+    },
+  },
+  "& .MuiOutlinedInput-notchedOutline": {
+    outline: "none !important",
   },
 });
 
@@ -149,13 +178,13 @@ const getTogglePaperSx = (isActive: boolean, accentColor: string, theme: any, is
   alignItems: "center",
   justifyContent: "space-between",
   cursor: "pointer",
-  borderRadius: 1,
+  borderRadius: 2.5, // Consistente com theme
   transition: "all 0.2s ease-in-out",
   border: `1.5px solid ${isActive
     ? alpha(accentColor, 0.4)
     : isDarkMode
-      ? alpha("#FFFFFF", 0.08)
-      : alpha("#000000", 0.08)}`,
+      ? alpha("#FFFFFF", 0.12)
+      : alpha("#000000", 0.1)}`,
   bgcolor: isActive
     ? isDarkMode
       ? alpha(accentColor, 0.1)
@@ -298,6 +327,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<Transaction | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  
+  // Estados para UX condicional - mostrar seções apenas quando relevante
+  const [showQuickAmounts, setShowQuickAmounts] = useState(false);
+  const [amountFieldFocused, setAmountFieldFocused] = useState(false);
+  
+  // Estado para controlar tab do preview unificado
+  const [previewTab, setPreviewTab] = useState<"installments" | "shared" | "balance">("balance");
 
   const inputSx = getInputSx(theme, isDarkMode);
 
@@ -368,6 +404,37 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   }, [description, parsedAmount, type, transactions, editTransaction]);
 
+  // ========== LÓGICAS CONDICIONAIS (após todas as definições) ==========
+  
+  // Lógica para mostrar Quick Amounts apenas quando relevante
+  const shouldShowQuickAmounts = amountFieldFocused || !amount;
+
+  // Lógica para mostrar Atalhos Rápidos apenas se campos não preenchidos
+  const filledFieldsCount = [description, category, paymentMethod].filter(Boolean).length;
+  const shouldShowFrequentTransactions = !editTransaction && frequentTransactions.length > 0 && filledFieldsCount < 2;
+
+  // Lógica para mostrar preview de impacto no saldo apenas para valores significativos
+  const shouldShowBalanceImpact = parsedAmount !== null && parsedAmount > 100 && currentBalance !== undefined;
+
+  // Decidir qual preview mostrar (unificado)
+  const hasInstallmentsPreview = type === "expense" && hasInstallments && parsedAmount && parseInt(installments) >= 2;
+  const hasSharedPreview = isShared && sharedWith && parsedAmount;
+  const hasBalancePreview = shouldShowBalanceImpact;
+  
+  // Mostrar preview unificado se pelo menos um preview estiver ativo
+  const shouldShowUnifiedPreview = hasInstallmentsPreview || hasSharedPreview || hasBalancePreview;
+  
+  // Auto-selecionar tab baseado no que está ativo
+  useEffect(() => {
+    if (hasInstallmentsPreview) {
+      setPreviewTab("installments");
+    } else if (hasSharedPreview) {
+      setPreviewTab("shared");
+    } else if (hasBalancePreview) {
+      setPreviewTab("balance");
+    }
+  }, [hasInstallmentsPreview, hasSharedPreview, hasBalancePreview]);
+
   useEffect(() => {
     if (editTransaction) {
       setDescription(editTransaction.description);
@@ -408,6 +475,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     setShowDatePicker(false);
     setDuplicateWarning(null);
     setShowSuccess(false);
+    setShowQuickAmounts(false);
+    setAmountFieldFocused(false);
   }, [editTransaction, isOpen]);
 
   // Handler para aplicar template de transação frequente
@@ -546,12 +615,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       TransitionComponent={isMobile ? SlideTransition : undefined}
       PaperProps={{
         sx: {
-          borderRadius: isMobile ? 0 : 1,
+          borderRadius: isMobile ? 0 : 2.5, // 20px em desktop
           bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.85)
-            : alpha("#FFFFFF", 0.95),
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
+            ? alpha(theme.palette.background.paper, 0.95)
+            : "#FFFFFF",
           border: isMobile
             ? "none"
             : `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
@@ -622,6 +689,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               onClick={onClose}
               sx={{
                 mr: 2,
+                borderRadius: 2.5,
                 bgcolor: isDarkMode
                   ? alpha("#FFFFFF", 0.05)
                   : alpha("#000000", 0.04),
@@ -643,7 +711,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               variant="contained"
               size="small"
               sx={{
-                borderRadius: 1,
+                borderRadius: 2.5,
                 px: 2.5,
                 fontWeight: 600,
                 boxShadow: `0 4px 14px -4px ${alpha(theme.palette.primary.main, 0.4)}`,
@@ -699,7 +767,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 severity="error" 
                 onClose={() => setValidationError(null)}
                 sx={{
-                  borderRadius: 1,
+                  borderRadius: 2.5,
                   border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
                 }}
               >
@@ -714,7 +782,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 icon={<WarningIcon />}
                 onClose={() => setDuplicateWarning(null)}
                 sx={{
-                  borderRadius: 1,
+                  borderRadius: 2.5,
                   border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
                 }}
               >
@@ -727,8 +795,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Alert>
             </Collapse>
 
-            {/* Quick Actions - Transações Frequentes */}
-            {!editTransaction && frequentTransactions.length > 0 && (
+            {/* Quick Actions - Transações Frequentes - Mostrar apenas se poucos campos preenchidos */}
+            {shouldShowFrequentTransactions && (
               <Box>
                 <Typography 
                   variant="caption" 
@@ -736,7 +804,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   fontWeight={600}
                   sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1.5 }}
                 >
-                  <BoltIcon sx={{ fontSize: 14 }} />
+                  <BoltIcon sx={{ fontSize: 16 }} />
                   ATALHOS RÁPIDOS
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -748,7 +816,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       icon={<HistoryIcon sx={{ fontSize: 16 }} />}
                       size="small"
                       sx={{
-                        borderRadius: 2,
+                        borderRadius: 2.5,
                         fontWeight: 500,
                         bgcolor: isDarkMode
                           ? alpha(theme.palette.primary.main, 0.1)
@@ -784,11 +852,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 bgcolor: isDarkMode
                   ? alpha(theme.palette.background.default, 0.3)
                   : alpha("#000000", 0.02),
-                borderRadius: 1,
+                borderRadius: 2.5,
                 p: 0.5,
                 "& .MuiToggleButtonGroup-grouped": {
                   border: 0,
-                  borderRadius: "10px !important",
+                  borderRadius: "20px !important", // Força 20px nos botões internos
                   mx: 0.25,
                 },
                 "& .MuiToggleButton-root": {
@@ -900,7 +968,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   size="small"
                   sx={{
                     mt: 1,
-                    borderRadius: 2,
+                    borderRadius: 2.5,
                     fontWeight: 500,
                     bgcolor: alpha(theme.palette.info.main, 0.1),
                     border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
@@ -923,6 +991,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 fullWidth
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
+                onFocus={() => setAmountFieldFocused(true)}
+                onBlur={() => setTimeout(() => setAmountFieldFocused(false), 200)}
                 placeholder="Ex: 150, 1.5k, 100+50"
                 helperText={
                   parsedAmount && parsedAmount !== parseFloat(amount) 
@@ -941,8 +1011,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 sx={inputSx}
               />
 
-              {/* Quick Amount Buttons */}
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
+              {/* Quick Amount Buttons - Mostrar apenas quando campo focado ou vazio */}
+              {shouldShowQuickAmounts && (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
                 {QUICK_AMOUNTS.map((value) => (
                   <Chip
                     key={value}
@@ -951,9 +1022,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     size="small"
                     variant={parsedAmount === value ? "filled" : "outlined"}
                     sx={{
-                      borderRadius: 2,
+                      borderRadius: 2.5,
                       fontWeight: 600,
-                      fontSize: "0.75rem",
                       minWidth: 60,
                       transition: "all 0.15s ease",
                       ...(parsedAmount === value
@@ -964,8 +1034,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           }
                         : {
                             borderColor: isDarkMode
-                              ? alpha("#FFFFFF", 0.15)
-                              : alpha("#000000", 0.15),
+                              ? alpha("#FFFFFF", 0.2)
+                              : alpha("#000000", 0.2),
                             "&:hover": {
                               bgcolor: alpha(theme.palette.primary.main, 0.1),
                               borderColor: theme.palette.primary.main,
@@ -975,6 +1045,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   />
                 ))}
               </Box>
+              )}
             </Box>
 
             <Grid container spacing={2.5}>
@@ -1023,7 +1094,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 fontWeight={600}
                 sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}
               >
-                <TodayIcon sx={{ fontSize: 14 }} />
+                <TodayIcon sx={{ fontSize: 16 }} />
                 DATA
               </Typography>
               
@@ -1035,7 +1106,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   size="small"
                   variant={date?.isSame(dayjs(), "day") ? "filled" : "outlined"}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 2.5,
                     fontWeight: 500,
                     ...(date?.isSame(dayjs(), "day")
                       ? {
@@ -1044,8 +1115,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         }
                       : {
                           borderColor: isDarkMode
-                            ? alpha("#FFFFFF", 0.15)
-                            : alpha("#000000", 0.15),
+                            ? alpha("#FFFFFF", 0.2)
+                            : alpha("#000000", 0.2),
                         }),
                   }}
                 />
@@ -1055,7 +1126,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   size="small"
                   variant={date?.isSame(dayjs().subtract(1, "day"), "day") ? "filled" : "outlined"}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 2.5,
                     fontWeight: 500,
                     ...(date?.isSame(dayjs().subtract(1, "day"), "day")
                       ? {
@@ -1064,8 +1135,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         }
                       : {
                           borderColor: isDarkMode
-                            ? alpha("#FFFFFF", 0.15)
-                            : alpha("#000000", 0.15),
+                            ? alpha("#FFFFFF", 0.2)
+                            : alpha("#000000", 0.2),
                         }),
                   }}
                 />
@@ -1075,11 +1146,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   size="small"
                   variant="outlined"
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 2.5,
                     fontWeight: 500,
                     borderColor: isDarkMode
-                      ? alpha("#FFFFFF", 0.15)
-                      : alpha("#000000", 0.15),
+                      ? alpha("#FFFFFF", 0.2)
+                      : alpha("#000000", 0.2),
                   }}
                 />
               </Box>
@@ -1116,7 +1187,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       sx={{
                         width: 36,
                         height: 36,
-                        borderRadius: 1,
+                        borderRadius: 2.5,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1165,7 +1236,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         sx={{
                           width: 36,
                           height: 36,
-                          borderRadius: 1,
+                          borderRadius: 2.5,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -1223,46 +1294,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               />
             )}
 
-            {/* Preview de Parcelas */}
-            {type === "expense" &&
-              hasInstallments &&
-              parsedAmount &&
-              parseInt(installments) >= 2 && (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 1,
-                    bgcolor: isDarkMode
-                      ? alpha(theme.palette.warning.main, 0.1)
-                      : alpha(theme.palette.warning.main, 0.06),
-                    border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Typography variant="body2" color="warning.main" fontWeight={500}>
-                      {installments}x de
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      fontWeight={700}
-                      color="warning.main"
-                    >
-                      {formatCurrency(parsedAmount / parseInt(installments))}
-                    </Typography>
-                  </Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                    Total: {formatCurrency(parsedAmount)}
-                  </Typography>
-                </Paper>
-              )}
-
             {/* Vincular a Amigo Toggle - Disponível para INCOME e EXPENSE */}
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
               <Paper
@@ -1281,7 +1312,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     sx={{
                       width: 36,
                       height: 36,
-                      borderRadius: 1,
+                      borderRadius: 2.5,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1336,21 +1367,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       }}
                       fullWidth
                       sx={{
-                        bgcolor: isDarkMode
-                          ? alpha(theme.palette.background.default, 0.3)
-                          : alpha("#000000", 0.02),
-                        borderRadius: 1,
-                        p: 0.5,
-                        "& .MuiToggleButtonGroup-grouped": {
-                          border: 0,
-                          borderRadius: "10px !important",
-                          mx: 0.25,
-                        },
-                        "& .MuiToggleButton-root": {
-                          py: 1.25,
-                          fontWeight: 600,
-                          fontSize: "0.85rem",
-                          textTransform: "none",
+                      bgcolor: isDarkMode
+                        ? alpha(theme.palette.background.default, 0.3)
+                        : alpha("#000000", 0.02),
+                      borderRadius: 2.5,
+                      p: 0.5,
+                      "& .MuiToggleButtonGroup-grouped": {
+                        border: 0,
+                        borderRadius: "20px !important",
+                        mx: 0.25,
+                      },
+                      "& .MuiToggleButton-root": {
+                        py: 1.25,
+                        fontWeight: 600,
+                        textTransform: "none",
                           transition: "all 0.2s ease-in-out",
                           "&:not(.Mui-selected)": {
                             color: "text.secondary",
@@ -1430,7 +1460,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       elevation={0}
                       sx={{
                         p: 2.5,
-                        borderRadius: 1,
+                        borderRadius: 2.5,
                         bgcolor: isDarkMode
                           ? alpha(theme.palette.primary.main, 0.08)
                           : alpha(theme.palette.primary.main, 0.04),
@@ -1461,7 +1491,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           size="small"
                           onClick={handleAddNewFriend}
                           disabled={!newFriendName.trim()}
-                          sx={{ borderRadius: 1, px: 2.5 }}
+                          sx={{ borderRadius: 2.5, px: 2.5 }}
                         >
                           Add
                         </Button>
@@ -1472,7 +1502,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             setShowAddFriend(false);
                             setNewFriendName("");
                           }}
-                          sx={{ borderRadius: 1 }}
+                          sx={{ borderRadius: 2.5 }}
                         >
                           Cancelar
                         </Button>
@@ -1486,7 +1516,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       elevation={0}
                       sx={{
                         p: 2.5,
-                        borderRadius: 1,
+                        borderRadius: 2.5,
                         bgcolor: isDarkMode
                           ? alpha(
                               type === "income" 
@@ -1566,91 +1596,210 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               )}
             </Box>
 
-            {/* Balance Impact Preview */}
-            {parsedAmount !== null && parsedAmount > 0 && currentBalance !== undefined && (
+            {/* ========== PREVIEW UNIFICADO - Substitui 3 cards por 1 com tabs ========== */}
+            {shouldShowUnifiedPreview && (
               <Paper
                 elevation={0}
                 sx={{
-                  p: 2.5,
-                  borderRadius: 1,
+                  p: 0,
+                  borderRadius: 2.5,
                   bgcolor: isDarkMode
                     ? alpha(theme.palette.background.default, 0.5)
                     : alpha("#000000", 0.02),
-                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.08)}`,
+                  overflow: "hidden",
                 }}
               >
-                <Typography 
-                  variant="caption" 
-                  color="text.secondary" 
-                  fontWeight={600}
-                  sx={{ display: "block", mb: 1.5 }}
+                {/* Tabs para alternar entre previews */}
+                <Tabs
+                  value={previewTab}
+                  onChange={(_, newValue) => setPreviewTab(newValue)}
+                  sx={{
+                    borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                    minHeight: 48,
+                    "& .MuiTab-root": {
+                      minHeight: 48,
+                      textTransform: "none",
+                      fontWeight: 500,
+                      fontSize: "0.875rem",
+                    },
+                  }}
                 >
-                  IMPACTO NO SALDO
-                </Typography>
-                
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Saldo atual
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {formatCurrency(currentBalance)}
-                    </Typography>
-                  </Box>
-                  
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      {type === "expense" ? (
-                        <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
-                      ) : (
-                        <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
-                      )}
-                      <Typography variant="body2" color="text.secondary">
-                        Esta transação
+                  {hasInstallmentsPreview && (
+                    <Tab label="💳 Parcelas" value="installments" />
+                  )}
+                  {hasSharedPreview && (
+                    <Tab label="👥 Compartilhado" value="shared" />
+                  )}
+                  {hasBalancePreview && (
+                    <Tab label="💰 Saldo" value="balance" />
+                  )}
+                </Tabs>
+
+                {/* Conteúdo do preview */}
+                <Box sx={{ p: 2.5 }}>
+                  {/* Preview de Parcelas */}
+                  {previewTab === "installments" && hasInstallmentsPreview && (
+                    <Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          mb: 1,
+                        }}
+                      >
+                        <Typography variant="body2" color="warning.main" fontWeight={500}>
+                          {installments}x de
+                        </Typography>
+                        <Typography
+                          variant="h5"
+                          fontWeight={700}
+                          color="warning.main"
+                        >
+                          {formatCurrency(parsedAmount! / parseInt(installments))}
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Total: {formatCurrency(parsedAmount!)}
                       </Typography>
                     </Box>
-                    <Typography 
-                      variant="body2" 
-                      fontWeight={600}
-                      color={type === "expense" ? "error.main" : "success.main"}
-                    >
-                      {type === "expense" ? "-" : "+"}{formatCurrency(parsedAmount)}
-                    </Typography>
-                  </Box>
-                  
-                  <Divider sx={{ my: 0.5 }} />
-                  
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="body2" fontWeight={600}>
-                      Saldo após
-                    </Typography>
-                    <Typography 
-                      variant="h6" 
-                      fontWeight={700}
-                      color={balanceAfter < 0 ? "error.main" : "text.primary"}
-                    >
-                      {formatCurrency(balanceAfter)}
-                    </Typography>
-                  </Box>
-                  
-                  {balanceAfter < 0 && (
-                    <Alert 
-                      severity="warning" 
-                      sx={{ 
-                        mt: 1, 
-                        py: 0.5, 
-                        borderRadius: 1,
-                        "& .MuiAlert-message": { py: 0 }
-                      }}
-                    >
-                      <Typography variant="caption">
-                        ⚠️ Saldo ficará negativo
+                  )}
+
+                  {/* Preview de Compartilhado */}
+                  {previewTab === "shared" && hasSharedPreview && (
+                    <Box>
+                      {type === "income" ? (
+                        <>
+                          <Typography variant="body2" color="success.main" fontWeight={600}>
+                            💰 {sharedWith} está te pagando:
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            "{description || "Transação"}"
+                          </Typography>
+                          <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
+                            +{formatCurrency(iOwe ? parsedAmount! : parsedAmount! / 2)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                            {iOwe 
+                              ? `Valor integral será somado ao saldo de ${sharedWith}`
+                              : `Metade do valor (conta dividida) será somada ao saldo de ${sharedWith}`
+                            }
+                          </Typography>
+                        </>
+                      ) : iOwe ? (
+                        <>
+                          <Typography variant="body2" color="error.main" fontWeight={600}>
+                            💸 Você está pagando para {sharedWith}:
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            "{description || "Transação"}"
+                          </Typography>
+                          <Typography variant="h5" fontWeight={700} color="error.main" sx={{ mt: 1 }}>
+                            -{formatCurrency(parsedAmount!)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                            Este valor será descontado do que {sharedWith} te deve
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <Typography variant="body2" color="success.main" fontWeight={600}>
+                            ✨ {sharedWith} te deve (metade):
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            "{description || "Transação"}"
+                          </Typography>
+                          <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
+                            +{formatCurrency(parsedAmount! / 2)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                            Receita de reembolso será criada automaticamente
+                          </Typography>
+                        </>
+                      )}
+                    </Box>
+                  )}
+
+                  {/* Preview de Impacto no Saldo */}
+                  {previewTab === "balance" && hasBalancePreview && (
+                    <Box>
+                      <Typography 
+                        variant="caption" 
+                        color="text.secondary" 
+                        fontWeight={600}
+                        sx={{ display: "block", mb: 1.5 }}
+                      >
+                        IMPACTO NO SALDO
                       </Typography>
-                    </Alert>
+                      
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Saldo atual
+                          </Typography>
+                          <Typography variant="body2" fontWeight={600}>
+                            {formatCurrency(currentBalance!)}
+                          </Typography>
+                        </Box>
+                        
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            {type === "expense" ? (
+                              <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
+                            ) : (
+                              <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
+                            )}
+                            <Typography variant="body2" color="text.secondary">
+                              Esta transação
+                            </Typography>
+                          </Box>
+                          <Typography 
+                            variant="body2" 
+                            fontWeight={600}
+                            color={type === "expense" ? "error.main" : "success.main"}
+                          >
+                            {type === "expense" ? "-" : "+"}{formatCurrency(parsedAmount!)}
+                          </Typography>
+                        </Box>
+                        
+                        <Divider sx={{ my: 0.5 }} />
+                        
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <Typography variant="body2" fontWeight={600}>
+                            Saldo após
+                          </Typography>
+                          <Typography 
+                            variant="h6" 
+                            fontWeight={700}
+                            color={balanceAfter < 0 ? "error.main" : "text.primary"}
+                          >
+                            {formatCurrency(balanceAfter)}
+                          </Typography>
+                        </Box>
+                        
+                        {balanceAfter < 0 && (
+                          <Alert 
+                            severity="warning" 
+                            sx={{ 
+                              mt: 1, 
+                              py: 0.5, 
+                              borderRadius: 2.5,
+                              "& .MuiAlert-message": { py: 0 }
+                            }}
+                          >
+                            <Typography variant="caption">
+                              ⚠️ Saldo ficará negativo
+                            </Typography>
+                          </Alert>
+                        )}
+                      </Box>
+                    </Box>
                   )}
                 </Box>
               </Paper>
             )}
+
           </Box>
         </DialogContent>
 
@@ -1667,7 +1816,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               onClick={onClose}
               color="inherit"
               sx={{
-                borderRadius: 1,
+                borderRadius: 2.5,
                 px: 3,
                 py: 1.25,
                 fontWeight: 500,
@@ -1691,10 +1840,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               startIcon={<SaveIcon />}
               sx={{
                 flex: 1,
-                borderRadius: 1,
+                borderRadius: 2.5,
                 py: 1.5,
                 fontWeight: 600,
-                fontSize: "1rem",
                 boxShadow: `0 8px 24px -8px ${alpha(theme.palette.primary.main, 0.4)}`,
                 transition: "all 0.2s ease-in-out",
                 "&:hover": {

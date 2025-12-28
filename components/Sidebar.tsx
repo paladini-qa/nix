@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Box,
   Drawer,
@@ -11,7 +11,6 @@ import {
   Avatar,
   useTheme,
   alpha,
-  Collapse,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -25,10 +24,6 @@ import {
   People as PeopleIcon,
   PieChart as BudgetIcon,
   Flag as GoalIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-  Folder as FolderIcon,
-  Assessment as ReportIcon,
   Category as CategoryIcon,
   Payment as PaymentIcon,
 } from "@mui/icons-material";
@@ -69,13 +64,6 @@ interface NavItem {
   icon: React.ElementType;
   label: string;
   id: ViewType;
-}
-
-interface NavGroup {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-  items: NavItem[];
 }
 
 const DRAWER_WIDTH = 280;
@@ -123,22 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
-  // Estado para controlar menus expandidos
-  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set(["cadastro", "relatorios"]));
-
-  const toggleMenu = (menuId: string) => {
-    setExpandedMenus((prev) => {
-      const next = new Set(prev);
-      if (next.has(menuId)) {
-        next.delete(menuId);
-      } else {
-        next.add(menuId);
-      }
-      return next;
-    });
-  };
-
-  // Itens de menu principais (sem grupo)
+  // Itens de menu principais
   const mainNavItems: NavItem[] = [
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
@@ -147,37 +120,22 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
   ];
 
-  // Grupos de menu com dropdown
-  const navGroups: NavGroup[] = [
-    {
-      id: "cadastro",
-      label: "Cadastro",
-      icon: FolderIcon,
-      items: [
-        { icon: PaymentIcon, label: "Payment Methods", id: "paymentMethods" },
-        { icon: CategoryIcon, label: "Categorias", id: "categories" },
-      ],
-    },
-    {
-      id: "relatorios",
-      label: "Relatórios",
-      icon: ReportIcon,
-      items: [
-        { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" },
-        { icon: GoalIcon, label: t("nav.goals"), id: "goals" },
-      ],
-    },
+  // Itens de cadastro (agora flat, sem dropdown)
+  const registrationNavItems: NavItem[] = [
+    { icon: PaymentIcon, label: "Payment Methods", id: "paymentMethods" },
+    { icon: CategoryIcon, label: "Categorias", id: "categories" },
+  ];
+
+  // Itens de relatórios (agora flat, sem dropdown)
+  const reportsNavItems: NavItem[] = [
+    { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" },
+    { icon: GoalIcon, label: t("nav.goals"), id: "goals" },
   ];
 
   // Itens de menu no final
   const footerNavItems: NavItem[] = [
     { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" },
   ];
-
-  // Verifica se algum item do grupo está ativo
-  const isGroupActive = (group: NavGroup) => {
-    return group.items.some((item) => item.id === currentView);
-  };
 
   // Renderiza um item de navegação
   const renderNavItem = (item: NavItem, isSubItem: boolean = false, index: number = 0) => {
@@ -292,108 +250,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  // Renderiza um grupo de navegação com dropdown
-  const renderNavGroup = (group: NavGroup) => {
-    const isExpanded = expandedMenus.has(group.id);
-    const hasActiveItem = isGroupActive(group);
-
-    return (
-      <Box key={group.id} sx={{ mb: 0.5 }}>
-        <ListItem disablePadding>
-          <MotionListItemButton
-            onClick={() => toggleMenu(group.id)}
-            whileHover={{ x: 4 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            sx={{
-              borderRadius: 2.5,
-              py: 1.5,
-              px: 2,
-              ...(hasActiveItem && {
-                bgcolor: isDarkMode
-                  ? alpha(theme.palette.primary.main, 0.08)
-                  : alpha(theme.palette.primary.main, 0.04),
-              }),
-              "&:hover": {
-                bgcolor: isDarkMode
-                  ? alpha(theme.palette.primary.main, 0.1)
-                  : alpha(theme.palette.primary.main, 0.05),
-              },
-            }}
-          >
-            <ListItemIcon
-              sx={{
-                minWidth: 44,
-                color: hasActiveItem ? "primary.main" : "text.secondary",
-                transition: "color 0.2s ease",
-              }}
-            >
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 2.5,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: hasActiveItem
-                    ? isDarkMode
-                      ? alpha(theme.palette.primary.main, 0.15)
-                      : alpha(theme.palette.primary.main, 0.08)
-                    : "transparent",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                <group.icon fontSize="small" />
-              </Box>
-            </ListItemIcon>
-            <ListItemText
-              primary={group.label}
-              primaryTypographyProps={{
-                fontWeight: hasActiveItem ? 600 : 500,
-                fontSize: 14,
-                color: hasActiveItem ? "primary.main" : "text.primary",
-                sx: { transition: "all 0.2s ease" },
-              }}
-            />
-            <MotionBox
-              animate={{ rotate: isExpanded ? 0 : -90 }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              sx={{ color: "text.secondary" }}
-            >
-              {isExpanded ? (
-                <ExpandLessIcon fontSize="small" />
-              ) : (
-                <ExpandMoreIcon fontSize="small" />
-              )}
-            </MotionBox>
-          </MotionListItemButton>
-        </ListItem>
-        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: { opacity: 0 },
-              visible: {
-                opacity: 1,
-                transition: { staggerChildren: 0.05 },
-              },
-            }}
-          >
-            <List disablePadding sx={{ pl: 1 }}>
-              {group.items.map((item, idx) => (
-                <motion.div key={item.id} variants={itemVariants}>
-                  {renderNavItem(item, true, idx)}
-                </motion.div>
-              ))}
-            </List>
-          </motion.div>
-        </Collapse>
-      </Box>
-    );
-  };
-
   return (
     <Drawer
       variant="permanent"
@@ -408,10 +264,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             ? `1px 0 24px -8px ${alpha("#000000", 0.4)}`
             : `1px 0 24px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
           bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.7)
-            : alpha("#FFFFFF", 0.85),
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
+            ? theme.palette.background.paper
+            : "#FFFFFF",
         },
       }}
     >
@@ -511,7 +365,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               color: "text.secondary",
               fontWeight: 600,
               letterSpacing: "0.1em",
-              fontSize: 10,
+              fontSize: 12,
             }}
           >
             Menu Principal
@@ -527,9 +381,54 @@ const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </List>
 
-        {/* Dropdown Groups */}
+        {/* Registration Items - Flat (sem dropdown) */}
         <Box sx={{ mt: 2 }}>
-          {navGroups.map((group) => renderNavGroup(group))}
+          <motion.div variants={itemVariants}>
+            <Typography
+              variant="overline"
+              sx={{
+                px: 2,
+                color: "text.secondary",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                fontSize: 12,
+              }}
+            >
+              Cadastro
+            </Typography>
+          </motion.div>
+          <List sx={{ mt: 1 }}>
+            {registrationNavItems.map((item, idx) => (
+              <motion.div key={item.id} variants={itemVariants}>
+                {renderNavItem(item, false, idx)}
+              </motion.div>
+            ))}
+          </List>
+        </Box>
+
+        {/* Reports Items - Flat (sem dropdown) */}
+        <Box sx={{ mt: 2 }}>
+          <motion.div variants={itemVariants}>
+            <Typography
+              variant="overline"
+              sx={{
+                px: 2,
+                color: "text.secondary",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                fontSize: 12,
+              }}
+            >
+              Relatórios
+            </Typography>
+          </motion.div>
+          <List sx={{ mt: 1 }}>
+            {reportsNavItems.map((item, idx) => (
+              <motion.div key={item.id} variants={itemVariants}>
+                {renderNavItem(item, false, idx)}
+              </motion.div>
+            ))}
+          </List>
         </Box>
 
         {/* Footer Items */}
@@ -542,7 +441,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 color: "text.secondary",
                 fontWeight: 600,
                 letterSpacing: "0.1em",
-                fontSize: 10,
+                fontSize: 12,
               }}
             >
               Ferramentas

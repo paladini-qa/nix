@@ -150,6 +150,23 @@ const baseThemeOptions: ThemeOptions = {
         body: {
           scrollBehavior: "smooth",
         },
+        // Remove outline de foco de todos os inputs
+        "input, textarea, select, button": {
+          "&:focus": {
+            outline: "none !important",
+          },
+          "&:focus-visible": {
+            outline: "none !important",
+          },
+        },
+        ".MuiOutlinedInput-input": {
+          "&:focus": {
+            outline: "none !important",
+          },
+          "&:focus-visible": {
+            outline: "none !important",
+          },
+        },
       },
     },
     MuiButton: {
@@ -274,6 +291,32 @@ const baseThemeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           borderRadius: BORDER_RADIUS,
+          outline: "none !important",
+          "&:focus": {
+            outline: "none !important",
+          },
+          "&:focus-visible": {
+            outline: "none !important",
+          },
+          "&:focus-within": {
+            outline: "none !important",
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "inherit",
+          },
+        },
+        notchedOutline: {
+          outline: "none !important",
+          transition: "border-color 0.2s ease-in-out",
+        },
+        input: {
+          outline: "none !important",
+          "&:focus": {
+            outline: "none !important",
+          },
+          "&:focus-visible": {
+            outline: "none !important",
+          },
         },
       },
     },
@@ -436,6 +479,22 @@ const baseThemeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           borderRadius: BORDER_RADIUS,
+          outline: "none !important",
+          "&:focus": {
+            outline: "none !important",
+          },
+          "&:focus-visible": {
+            outline: "none !important",
+          },
+        },
+        input: {
+          outline: "none !important",
+          "&:focus": {
+            outline: "none !important",
+          },
+          "&:focus-visible": {
+            outline: "none !important",
+          },
         },
       },
     },

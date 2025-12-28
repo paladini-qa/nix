@@ -153,36 +153,22 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
 
   const isPositiveBalance = summary.balance >= 0;
 
-  // Estilos base do card com Glassmorphism
-  const getGlassCardStyles = (accentColor: string, gradient: string) => ({
+  // Estilos base do card - Simplificado (sem glassmorphism)
+  const getGlassCardStyles = (accentColor: string) => ({
     height: "100%",
     minHeight: isMobile ? 120 : 140,
     position: "relative",
     overflow: "hidden",
     cursor: "pointer",
-    // Glassmorphism
+    // Background sólido (removido glassmorphism)
     background: isDarkMode
-      ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-      : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-    backdropFilter: "blur(20px)",
-    WebkitBackdropFilter: "blur(20px)",
-    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+      ? theme.palette.background.paper
+      : "#FFFFFF",
+    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.08)}`,
     // Sombra com tonalidade
     boxShadow: isDarkMode
       ? `0 8px 32px -8px ${alpha(accentColor, 0.2)}, 0 4px 16px -4px ${alpha("#000000", 0.3)}`
       : `0 8px 32px -8px ${alpha(accentColor, 0.15)}, 0 4px 16px -4px ${alpha("#64748B", 0.08)}`,
-    // Gradiente decorativo interno
-    "&::before": {
-      content: '""',
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: gradient,
-      pointerEvents: "none",
-      zIndex: 0,
-    },
   });
 
   // Estilo do container do ícone - visual premium 3D-ish
@@ -231,10 +217,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
             }}
             whileTap={{ scale: 0.99 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            sx={getGlassCardStyles(
-              balanceStyles.accentColor,
-              isDarkMode ? balanceStyles.gradientDark : balanceStyles.gradientLight
-            )}
+            sx={getGlassCardStyles(balanceStyles.accentColor)}
             elevation={0}
           >
             <CardContent
@@ -250,7 +233,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.1em",
-                  fontSize: isMobile ? 10 : 11,
+                  fontSize: 12, // Aumentado de 10-11 para 12px (melhor contraste)
                   fontWeight: 600,
                   display: "block",
                   mb: 1,
@@ -285,7 +268,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     }}
                   />
                   
-                  {/* Indicador visual do estado */}
+                  {/* Indicador visual do estado - Simplificado (sem pulso) */}
                   <MotionBox
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -298,16 +281,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     }}
                   >
                     <Box
-                      component={motion.div}
-                      animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.8, 1, 0.8],
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
                       sx={{
                         width: 8,
                         height: 8,
@@ -329,8 +302,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 </Box>
                 
                 <MotionBox
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
                   transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
                   sx={getIconContainerStyles(
                     balanceStyles.iconBg,
@@ -362,12 +335,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
             }}
             whileTap={{ scale: 0.99 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            sx={getGlassCardStyles(
-              cardStyles.income.accentColor,
-              isDarkMode
-                ? cardStyles.income.gradientDark
-                : cardStyles.income.gradientLight
-            )}
+            sx={getGlassCardStyles(cardStyles.income.accentColor)}
             elevation={0}
           >
             <CardContent
@@ -383,7 +351,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.1em",
-                  fontSize: isMobile ? 10 : 11,
+                  fontSize: 12,
                   fontWeight: 600,
                   display: "block",
                   mb: 1,
@@ -457,29 +425,23 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   {/* Indicador de mudança - espaço reservado para manter altura consistente */}
                   <Box sx={{ minHeight: 18, mt: 0.5 }}>
                     {comparison.prevIncome > 0 && (
-                      <MotionBox
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.7 }}
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: "block",
+                          color: comparison.incomeChange >= 0 ? "success.main" : "error.main",
+                          fontWeight: 600,
+                        }}
                       >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            display: "block",
-                            color: comparison.incomeChange >= 0 ? "success.main" : "error.main",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {comparison.incomeChange >= 0 ? "+" : ""}{comparison.incomeChange}% vs mês anterior
-                        </Typography>
-                      </MotionBox>
+                        {comparison.incomeChange >= 0 ? "+" : ""}{comparison.incomeChange}% vs mês anterior
+                      </Typography>
                     )}
                   </Box>
                 </Box>
                 
                 <MotionBox
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
                   transition={{ delay: 0.3, type: "spring", stiffness: 400 }}
                   sx={getIconContainerStyles(
                     cardStyles.income.iconBg,
@@ -511,12 +473,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
             }}
             whileTap={{ scale: 0.99 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            sx={getGlassCardStyles(
-              cardStyles.expense.accentColor,
-              isDarkMode
-                ? cardStyles.expense.gradientDark
-                : cardStyles.expense.gradientLight
-            )}
+            sx={getGlassCardStyles(cardStyles.expense.accentColor)}
             elevation={0}
           >
             <CardContent
@@ -532,7 +489,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.1em",
-                  fontSize: isMobile ? 10 : 11,
+                  fontSize: 12,
                   fontWeight: 600,
                   display: "block",
                   mb: 1,
@@ -606,29 +563,23 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   {/* Indicador de mudança - espaço reservado para manter altura consistente */}
                   <Box sx={{ minHeight: 18, mt: 0.5 }}>
                     {comparison.prevExpense > 0 && (
-                      <MotionBox
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.8 }}
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: "block",
+                          color: comparison.expenseChange <= 0 ? "success.main" : "error.main",
+                          fontWeight: 600,
+                        }}
                       >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            display: "block",
-                            color: comparison.expenseChange <= 0 ? "success.main" : "error.main",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {comparison.expenseChange >= 0 ? "+" : ""}{comparison.expenseChange}% vs mês anterior
-                        </Typography>
-                      </MotionBox>
+                        {comparison.expenseChange >= 0 ? "+" : ""}{comparison.expenseChange}% vs mês anterior
+                      </Typography>
                     )}
                   </Box>
                 </Box>
                 
                 <MotionBox
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
                   transition={{ delay: 0.4, type: "spring", stiffness: 400 }}
                   sx={getIconContainerStyles(
                     cardStyles.expense.iconBg,
