@@ -14,6 +14,7 @@ import {
   FilterState,
   FinancialSummary,
 } from "../types";
+import { getInitialMonthYear } from "../hooks/useFilters";
 
 // ============================================
 // Context Types
@@ -60,9 +61,9 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
 }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState<FilterState>({
-    month: new Date().getMonth(),
-    year: new Date().getFullYear(),
+  const [filters, setFilters] = useState<FilterState>(() => {
+    const { month, year } = getInitialMonthYear();
+    return { month, year };
   });
 
   // Fetch transactions from Supabase

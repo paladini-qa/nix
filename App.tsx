@@ -86,6 +86,7 @@ const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
 
 import type { AdvancedFiltersState } from "./components/AdvancedFilters";
 import { AdvancedFiltersButton } from "./components/AdvancedFilters";
+import { getInitialMonthYear } from "./hooks/useFilters";
 
 // Loading fallback component
 const ViewLoading: React.FC = () => (
@@ -3030,9 +3031,9 @@ const App: React.FC = () => {
   const [displayName, setDisplayName] = useState<string>("");
 
   // State for Filters
-  const [filters, setFilters] = useState<FilterState>({
-    month: new Date().getMonth(),
-    year: new Date().getFullYear(),
+  const [filters, setFilters] = useState<FilterState>(() => {
+    const { month, year } = getInitialMonthYear();
+    return { month, year };
   });
 
   // Theme preference state

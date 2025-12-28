@@ -8,14 +8,50 @@ export interface ExtendedFilterState extends FilterState {
   paymentMethod: string;
 }
 
-const getInitialFilters = (): ExtendedFilterState => ({
-  month: new Date().getMonth(),
-  year: new Date().getFullYear(),
-  searchTerm: "",
-  type: "all",
-  category: "all",
-  paymentMethod: "all",
-});
+/**
+ * Calcula o mês/ano inicial para o filtro
+ * - Até o dia 10: mostra o mês atual
+ * - Após o dia 10: mostra o próximo mês
+ */
+export const getInitialMonthYear = (): { month: number; year: number } => {
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+
+  if (dayOfMonth <= 10) {
+    // Até dia 10, mostra mês atual
+    return {
+      month: now.getMonth(),
+      year: now.getFullYear(),
+    };
+  } else {
+    // Após dia 10, mostra próximo mês
+    const currentMonth = now.getMonth();
+    if (currentMonth === 11) {
+      // Dezembro -> Janeiro do próximo ano
+      return {
+        month: 0,
+        year: now.getFullYear() + 1,
+      };
+    } else {
+      return {
+        month: currentMonth + 1,
+        year: now.getFullYear(),
+      };
+    }
+  }
+};
+
+const getInitialFilters = (): ExtendedFilterState => {
+  const { month, year } = getInitialMonthYear();
+  return {
+    month,
+    year,
+    searchTerm: "",
+    type: "all",
+    category: "all",
+    paymentMethod: "all",
+  };
+};
 
 /**
  * Hook para gerenciamento de filtros de transações
@@ -85,20 +121,20 @@ export function useFilters(initialState?: Partial<ExtendedFilterState>) {
     });
   }, []);
 
-  // Ir para mês atual
+  // Ir para mês "atual" (seguindo a mesma lógica do filtro inicial)
   const goToCurrentMonth = useCallback(() => {
-    const now = new Date();
+    const { month, year } = getInitialMonthYear();
     setFilters((prev) => ({
       ...prev,
-      month: now.getMonth(),
-      year: now.getFullYear(),
+      month,
+      year,
     }));
   }, []);
 
-  // Verifica se está no mês atual
+  // Verifica se está no mês "atual" (seguindo a mesma lógica do filtro inicial)
   const isCurrentMonth = useMemo(() => {
-    const now = new Date();
-    return filters.month === now.getMonth() && filters.year === now.getFullYear();
+    const { month, year } = getInitialMonthYear();
+    return filters.month === month && filters.year === year;
   }, [filters.month, filters.year]);
 
   // Verifica se tem filtros ativos (além de mês/ano)
