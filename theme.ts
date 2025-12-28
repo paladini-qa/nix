@@ -536,6 +536,13 @@ const baseThemeOptions: ThemeOptions = {
         },
       },
     },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          borderRadius: 0, // Drawer sem cantos arredondados
+        },
+      },
+    },
     MuiSwitch: {
       styleOverrides: {
         root: {
