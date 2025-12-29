@@ -61,58 +61,70 @@ const pulseAnimation = keyframes`
   }
 `;
 
-// Sugestões de perguntas pré-definidas
+// ============================================
+// NIX BRAND COLORS - Paleta do Brand Book
+// ============================================
+const NIX_BRAND = {
+  purple: "#8A2BE2",
+  purpleLight: "#9D4EDD",
+  purpleDark: "#6A0DAD",
+  teal: "#00D4FF",
+  success: "#2ECC71",
+  error: "#FF6B6B",
+};
+
+// Sugestões de perguntas pré-definidas - Tom amigável e conversacional
 const SUGGESTED_QUESTIONS = [
   {
     icon: <TrendingUpIcon sx={{ fontSize: 16 }} />,
     text: "Como estão meus gastos este mês?",
-    color: "#6366f1",
+    color: NIX_BRAND.purple,
   },
   {
     icon: <SavingsIcon sx={{ fontSize: 16 }} />,
     text: "Onde posso economizar dinheiro?",
-    color: "#10b981",
+    color: NIX_BRAND.success,
   },
   {
     icon: <ReceiptIcon sx={{ fontSize: 16 }} />,
     text: "Qual minha maior despesa?",
-    color: "#ef4444",
+    color: NIX_BRAND.error,
   },
   {
     icon: <PieChartIcon sx={{ fontSize: 16 }} />,
     text: "Analise meus gastos por categoria",
-    color: "#8b5cf6",
+    color: NIX_BRAND.purpleLight,
   },
   {
     icon: <LightbulbIcon sx={{ fontSize: 16 }} />,
     text: "Dicas para melhorar minhas finanças",
-    color: "#f59e0b",
+    color: NIX_BRAND.teal,
   },
   {
     icon: <CalendarIcon sx={{ fontSize: 16 }} />,
     text: "Compare com o mês anterior",
-    color: "#06b6d4",
+    color: NIX_BRAND.purpleDark,
   },
 ];
 
-// Ações rápidas de cadastro inteligente
+// Ações rápidas de cadastro inteligente - cores Nix
 const SMART_INPUT_ACTIONS = [
   {
     icon: <AddIcon sx={{ fontSize: 16 }} />,
     text: "Cadastrar despesa por texto",
-    color: "#6366f1",
+    color: NIX_BRAND.purple,
     mode: "text" as SmartInputMode,
   },
   {
     icon: <MicIcon sx={{ fontSize: 16 }} />,
     text: "Cadastrar por áudio",
-    color: "#a855f7",
+    color: NIX_BRAND.purpleLight,
     mode: "audio" as SmartInputMode,
   },
   {
     icon: <CameraIcon sx={{ fontSize: 16 }} />,
     text: "Cadastrar por foto de recibo",
-    color: "#0ea5e9",
+    color: NIX_BRAND.teal,
     mode: "image" as SmartInputMode,
   },
 ];
@@ -142,12 +154,14 @@ const NixAIView: React.FC<NixAIViewProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDarkMode = theme.palette.mode === "dark";
 
+  // Mensagem de boas-vindas com a voz da marca Nix
+  // Tom: Inteligente, Direto e Empático - o amigo tech-savvy que explica sem fazer você se sentir burro
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
       content:
-        "Olá! Sou o **NixAI**, seu assistente financeiro pessoal. 🤖💰\n\nPosso ajudar você com:\n\n- **Analisar seus gastos**\n- **Dar recomendações de economia**\n- **Responder perguntas sobre suas finanças**\n- **Cadastrar transações por texto, áudio ou foto** 📝🎤📷\n\nComo posso ajudar hoje?",
+        "E aí! Sou o **Nix**, seu copiloto financeiro. 🧠💰\n\nEstou aqui pra traduzir o \"financês\" pro português claro. Sem letras miúdas, sem jargões complicados.\n\nPosso te ajudar com:\n\n- 📊 **Analisar seus gastos** e mostrar onde seu dinheiro está indo\n- 💡 **Dar dicas personalizadas** baseadas nos seus hábitos\n- 🔮 **Prever gastos futuros** e evitar surpresas no fim do mês\n- ⚡ **Cadastrar transações** rapidinho por texto, áudio ou foto\n\nO que você quer saber sobre suas finanças?",
       timestamp: new Date(),
     },
   ]);
@@ -234,10 +248,11 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       setPendingTransaction(result);
     } catch (error) {
       console.error("Error parsing text:", error);
+      // Tom: Calmo, direto e focado na solução
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "❌ Desculpe, não consegui extrair os dados da transação. Tente ser mais específico, incluindo valor, descrição e forma de pagamento.",
+        content: "Ops, não consegui entender os detalhes dessa transação. 🤔\n\nTenta algo como: \"Gastei 50 reais no mercado com Pix\" - com valor, onde foi e como pagou. Aí fica fácil pra mim!",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -327,10 +342,11 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       setPendingTransaction(result);
     } catch (error) {
       console.error("Error parsing audio:", error);
+      // Tom: Calmo, direto e focado na solução
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "❌ Desculpe, não consegui processar o áudio. Tente falar mais claramente, incluindo valor e descrição.",
+        content: "Não consegui entender o áudio, desculpa! 🎤\n\nTenta falar um pouco mais devagar, tipo: \"Gastei cinquenta reais no Uber hoje\". Aí eu pego certinho!",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -389,10 +405,11 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       reader.readAsDataURL(file);
     } catch (error) {
       console.error("Error parsing image:", error);
+      // Tom: Calmo, direto e focado na solução
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "❌ Desculpe, não consegui ler a imagem. Tente enviar uma foto mais clara do recibo.",
+        content: "Hmm, não consegui ler essa imagem direito. 📷\n\nTenta tirar uma foto com mais luz e o recibo bem reto. Se preferir, me conta o gasto por texto mesmo!",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -405,7 +422,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     }
   };
 
-  // Confirmar transação
+  // Confirmar transação - Tom entusiasta e motivador
   const handleConfirmTransaction = () => {
     if (!pendingTransaction || !onTransactionCreate) return;
 
@@ -421,19 +438,19 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const confirmMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
-      content: "✅ **Transação cadastrada com sucesso!** A despesa foi adicionada às suas transações.",
+      content: "✅ **Mandou bem!** Transação cadastrada. Tô de olho pra te ajudar a manter tudo organizado. 📊",
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, confirmMessage]);
     setPendingTransaction(null);
   };
 
-  // Cancelar transação pendente
+  // Cancelar transação pendente - Tom calmo e prestativo
   const handleCancelTransaction = () => {
     const cancelMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
-      content: "🚫 Transação cancelada. Posso ajudar com mais alguma coisa?",
+      content: "Sem problemas! Cancelei essa transação. Me avisa se precisar de mais alguma coisa. 👍",
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, cancelMessage]);
@@ -504,11 +521,12 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
+      // Tom: Calmo e prestativo
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content:
-          "Desculpe, encontrei um erro ao processar sua solicitação. Tente novamente.",
+          "Ops, tive um probleminha aqui. 😅 Pode tentar de novo? Se continuar, me conta de outro jeito que eu dou um jeito!",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -555,7 +573,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "Sorry, I encountered an error processing your request. Please try again.",
+          content: "Ops, algo deu errado aqui. 😅 Tenta de novo?",
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -607,9 +625,17 @@ const NixAIView: React.FC<NixAIViewProps> = ({
               sx={{
                 width: 32,
                 height: 32,
-                bgcolor:
-                  message.role === "assistant" ? "primary.main" : "grey.600",
+                // Nix gradient para o assistente
+                background:
+                  message.role === "assistant"
+                    ? "linear-gradient(135deg, #8A2BE2 0%, #6A0DAD 100%)"
+                    : "grey.600",
+                bgcolor: message.role === "assistant" ? "transparent" : "grey.600",
                 flexShrink: 0,
+                // Pulso suave quando é o assistente
+                ...(message.role === "assistant" && {
+                  boxShadow: "0 4px 12px rgba(138, 43, 226, 0.3)",
+                }),
               }}
             >
               {message.role === "assistant" ? (
@@ -852,9 +878,11 @@ const NixAIView: React.FC<NixAIViewProps> = ({
               sx={{
                 width: 32,
                 height: 32,
-                bgcolor: "primary.main",
+                background: "linear-gradient(135deg, #8A2BE2 0%, #6A0DAD 100%)",
+                boxShadow: "0 4px 12px rgba(138, 43, 226, 0.3)",
                 flexShrink: 0,
               }}
+              className="nix-ai-indicator"
             >
               <SparklesIcon sx={{ fontSize: 18 }} />
             </Avatar>
@@ -873,7 +901,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
             >
               <CircularProgress size={16} color="primary" />
               <Typography variant="body2" color="text.secondary">
-                Thinking...
+                Analisando...
               </Typography>
             </Box>
           </Box>
@@ -1068,7 +1096,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
             }}
           />
 
-          {/* Dica de uso */}
+          {/* Dica de uso - Tom conversacional */}
           <Typography
             variant="caption"
             color="text.secondary"
@@ -1079,7 +1107,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
               opacity: 0.7,
             }}
           >
-            💡 Dica: Use "Cadastrar: gastei 50 no mercado" para registrar despesas rapidamente
+            💡 Dica: "Cadastrar: gastei 50 no Uber com Pix" e pronto!
           </Typography>
         </Box>
       </Box>

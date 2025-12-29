@@ -30,37 +30,51 @@ interface SummaryCardsProps {
   selectedYear?: number;
 }
 
-// Configuração de cores para os cards - paleta sofisticada
+// ============================================
+// PALETA NIX - Cores do Brand Book
+// ============================================
+const NIX_COLORS = {
+  purple: "#8A2BE2",
+  purpleLight: "#9D4EDD",
+  purpleDark: "#6A0DAD",
+  teal: "#00D4FF",
+  success: "#2ECC71",
+  successLight: "#A9DFBF",
+  error: "#FF6B6B",
+  errorLight: "#FDEDEC",
+};
+
+// Configuração de cores para os cards - Paleta Nix
 const cardStyles = {
   balance: {
     positive: {
-      iconBg: "#059669",
-      iconBgLight: "#D1FAE5",
-      accentColor: "#059669",
-      gradientLight: "linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(16, 185, 129, 0.04) 100%)",
-      gradientDark: "linear-gradient(135deg, rgba(5, 150, 105, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%)",
+      iconBg: NIX_COLORS.success,
+      iconBgLight: NIX_COLORS.successLight,
+      accentColor: NIX_COLORS.success,
+      gradientLight: "linear-gradient(135deg, rgba(46, 204, 113, 0.08) 0%, rgba(46, 204, 113, 0.04) 100%)",
+      gradientDark: "linear-gradient(135deg, rgba(46, 204, 113, 0.15) 0%, rgba(46, 204, 113, 0.08) 100%)",
     },
     negative: {
-      iconBg: "#DC2626",
-      iconBgLight: "#FEE2E2",
-      accentColor: "#DC2626",
-      gradientLight: "linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(239, 68, 68, 0.04) 100%)",
-      gradientDark: "linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%)",
+      iconBg: NIX_COLORS.error,
+      iconBgLight: NIX_COLORS.errorLight,
+      accentColor: NIX_COLORS.error,
+      gradientLight: "linear-gradient(135deg, rgba(255, 107, 107, 0.08) 0%, rgba(255, 107, 107, 0.04) 100%)",
+      gradientDark: "linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(255, 107, 107, 0.08) 100%)",
     },
   },
   income: {
-    iconBg: "#059669",
-    iconBgLight: "#D1FAE5",
-    accentColor: "#059669",
-    gradientLight: "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)",
-    gradientDark: "linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%)",
+    iconBg: NIX_COLORS.success,
+    iconBgLight: NIX_COLORS.successLight,
+    accentColor: NIX_COLORS.success,
+    gradientLight: "linear-gradient(135deg, rgba(46, 204, 113, 0.06) 0%, rgba(46, 204, 113, 0.02) 100%)",
+    gradientDark: "linear-gradient(135deg, rgba(46, 204, 113, 0.12) 0%, rgba(46, 204, 113, 0.06) 100%)",
   },
   expense: {
-    iconBg: "#DC2626",
-    iconBgLight: "#FEE2E2",
-    accentColor: "#DC2626",
-    gradientLight: "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
-    gradientDark: "linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(239, 68, 68, 0.06) 100%)",
+    iconBg: NIX_COLORS.error,
+    iconBgLight: NIX_COLORS.errorLight,
+    accentColor: NIX_COLORS.error,
+    gradientLight: "linear-gradient(135deg, rgba(255, 107, 107, 0.06) 0%, rgba(255, 107, 107, 0.02) 100%)",
+    gradientDark: "linear-gradient(135deg, rgba(255, 107, 107, 0.12) 0%, rgba(255, 107, 107, 0.06) 100%)",
   },
 };
 
@@ -296,7 +310,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                         fontWeight: 600,
                       }}
                     >
-                      {isPositiveBalance ? "Você está no verde!" : "Atenção ao saldo"}
+                      {/* UX Writing amigável - Tom Nix */}
+                      {isPositiveBalance ? "Mandou bem! No verde ✨" : "Atenção: saldo negativo"}
                     </Typography>
                   </MotionBox>
                 </Box>

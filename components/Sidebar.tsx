@@ -138,8 +138,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   // Renderiza um item de navegação
+  // Estilos especiais para o item NixAI conforme Brand Book
+  const isNixAI = (itemId: string) => itemId === "nixai";
+  
   const renderNavItem = (item: NavItem, isSubItem: boolean = false, index: number = 0) => {
     const isActive = currentView === item.id;
+    const isAIItem = isNixAI(item.id);
+    
     return (
       <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
         <MotionListItemButton
@@ -147,6 +152,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           whileHover={{ x: 4 }}
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          // NixAI item sempre visível com estilo especial (Brand Book)
+          className={isAIItem ? "nix-ai-indicator" : undefined}
           sx={{
             borderRadius: "20px",
             py: isSubItem ? 1 : 1.5,
@@ -154,15 +161,34 @@ const Sidebar: React.FC<SidebarProps> = ({
             ml: isSubItem ? 2 : 0,
             position: "relative",
             overflow: "hidden",
+            // Estilo especial para NixAI: gradiente roxo suave
+            ...(isAIItem && !isActive && {
+              background: isDarkMode
+                ? "linear-gradient(135deg, rgba(138, 43, 226, 0.12) 0%, rgba(106, 13, 173, 0.08) 100%)"
+                : "linear-gradient(135deg, rgba(138, 43, 226, 0.06) 0%, rgba(106, 13, 173, 0.04) 100%)",
+              border: `1px solid ${alpha("#8A2BE2", isDarkMode ? 0.2 : 0.1)}`,
+            }),
             ...(isActive && {
               bgcolor: isDarkMode
                 ? alpha(theme.palette.primary.main, 0.15)
                 : alpha(theme.palette.primary.main, 0.08),
+              // Se for NixAI ativo, usar gradiente mais forte
+              ...(isAIItem && {
+                background: isDarkMode
+                  ? "linear-gradient(135deg, rgba(138, 43, 226, 0.25) 0%, rgba(106, 13, 173, 0.15) 100%)"
+                  : "linear-gradient(135deg, rgba(138, 43, 226, 0.12) 0%, rgba(106, 13, 173, 0.08) 100%)",
+              }),
             }),
             "&:hover": {
               bgcolor: isDarkMode
                 ? alpha(theme.palette.primary.main, 0.1)
                 : alpha(theme.palette.primary.main, 0.05),
+              // NixAI hover com gradiente
+              ...(isAIItem && {
+                background: isDarkMode
+                  ? "linear-gradient(135deg, rgba(138, 43, 226, 0.2) 0%, rgba(106, 13, 173, 0.12) 100%)"
+                  : "linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(106, 13, 173, 0.06) 100%)",
+              }),
             },
           }}
         >
@@ -194,7 +220,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           <ListItemIcon
             sx={{
               minWidth: isSubItem ? 36 : 44,
-              color: isActive ? "primary.main" : "text.secondary",
+              // NixAI sempre usa a cor primária roxa
+              color: isActive || isAIItem ? "primary.main" : "text.secondary",
               transition: "color 0.2s ease",
             }}
           >
@@ -208,15 +235,26 @@ const Sidebar: React.FC<SidebarProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                bgcolor: isActive
-                  ? isDarkMode
-                    ? alpha(theme.palette.primary.main, 0.2)
-                    : alpha(theme.palette.primary.main, 0.12)
-                  : "transparent",
+                // NixAI tem gradiente roxo no ícone (Brand Book)
+                ...(isAIItem && {
+                  background: "linear-gradient(135deg, #8A2BE2 0%, #6A0DAD 100%)",
+                  color: "#FFFFFF",
+                  boxShadow: "0 4px 12px rgba(138, 43, 226, 0.3)",
+                }),
+                ...(!isAIItem && {
+                  bgcolor: isActive
+                    ? isDarkMode
+                      ? alpha(theme.palette.primary.main, 0.2)
+                      : alpha(theme.palette.primary.main, 0.12)
+                    : "transparent",
+                }),
                 transition: "all 0.2s ease",
               }}
             >
-              <item.icon fontSize={isSubItem ? "small" : "small"} />
+              <item.icon 
+                fontSize={isSubItem ? "small" : "small"} 
+                sx={isAIItem ? { color: "#FFFFFF" } : undefined}
+              />
             </MotionBox>
           </ListItemIcon>
           <ListItemText
