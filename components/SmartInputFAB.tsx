@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SpeedDial,
   SpeedDialAction,
@@ -6,30 +6,22 @@ import {
   Box,
   alpha,
   useTheme,
-  Zoom,
 } from "@mui/material";
 import {
-  Add as AddIcon,
   Close as CloseIcon,
   TextFields as TextIcon,
   Mic as MicIcon,
   PhotoCamera as CameraIcon,
   AutoAwesome as AIIcon,
 } from "@mui/icons-material";
-import { motion } from "framer-motion";
 import SmartInputModal from "./SmartInputModal";
 import { SmartInputMode, ParsedTransaction } from "../types";
-
-// Create motion-enabled Box
-const MotionBox = motion.create(Box);
 
 interface SmartInputFABProps {
   onTransactionCreate: (transaction: Omit<ParsedTransaction, "confidence" | "rawInput">) => void;
   categories: { income: string[]; expense: string[] };
   paymentMethods: string[];
   visible?: boolean;
-  /** Timestamp da última transação criada - para animação de nudge */
-  lastTransactionDate?: number;
 }
 
 const SmartInputFAB: React.FC<SmartInputFABProps> = ({
@@ -37,21 +29,21 @@ const SmartInputFAB: React.FC<SmartInputFABProps> = ({
   categories,
   paymentMethods,
   visible = true,
-  lastTransactionDate,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
   const [isOpen, setIsOpen] = useState(false);
-
-  // Calcula se deve mostrar animação de nudge (24 horas sem transações)
-  const shouldPulse = useMemo(() => {
-    if (!lastTransactionDate) return true; // Se nunca registou, mostrar
-    const hoursSinceLastTransaction = (Date.now() - lastTransactionDate) / (1000 * 60 * 60);
-    return hoursSinceLastTransaction > 24;
-  }, [lastTransactionDate]);
   const [modalOpen, setModalOpen] = useState(false);
   const [initialMode, setInitialMode] = useState<SmartInputMode>("text");
+
+  // Fecha o SpeedDial quando a visibilidade muda para false
+  useEffect(() => {
+    if (!visible) {
+      setIsOpen(false);
+    }
+  }, [visible]);
+
 
   const handleActionClick = (mode: SmartInputMode) => {
     setInitialMode(mode);
@@ -89,36 +81,19 @@ const SmartInputFAB: React.FC<SmartInputFABProps> = ({
     },
   ];
 
+  // Não renderiza nada se não estiver visível
   if (!visible) return null;
-
-  // Animação de pulse para nudge
-  const pulseAnimation = shouldPulse && !isOpen ? {
-    scale: [1, 1.08, 1],
-    boxShadow: [
-      `0 8px 32px -4px ${alpha(theme.palette.primary.main, 0.5)}`,
-      `0 16px 48px -4px ${alpha(theme.palette.primary.main, 0.7)}`,
-      `0 8px 32px -4px ${alpha(theme.palette.primary.main, 0.5)}`,
-    ],
-  } : {};
 
   return (
     <>
-      <Zoom in={visible}>
-        <MotionBox
-          animate={pulseAnimation}
-          transition={shouldPulse && !isOpen ? {
-            repeat: Infinity,
-            duration: 2.5,
-            ease: "easeInOut",
-          } : {}}
-          sx={{
-            position: "fixed",
-            bottom: { xs: 24, sm: 32 },
-            right: { xs: 24, sm: 32 },
-            zIndex: 1050,
-            borderRadius: "50%",
-          }}
-        >
+      <Box
+        sx={{
+          position: "fixed",
+          bottom: { xs: 24, sm: 32 },
+          right: { xs: 24, sm: 32 },
+          zIndex: 1050,
+        }}
+      >
           <SpeedDial
             ariaLabel="Cadastro inteligente"
             icon={
@@ -133,15 +108,15 @@ const SmartInputFAB: React.FC<SmartInputFABProps> = ({
             direction="up"
             FabProps={{
               sx: {
-                width: 64,
-                height: 64,
+                width: 56,
+                height: 56,
                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                boxShadow: `0 8px 32px -4px ${alpha(theme.palette.primary.main, 0.5)}`,
-                transition: "all 0.3s ease-in-out",
+                boxShadow: `0 4px 16px -2px ${alpha(theme.palette.primary.main, 0.4)}`,
+                transition: "all 0.2s ease-in-out",
                 "&:hover": {
                   background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
                   transform: "scale(1.05)",
-                  boxShadow: `0 12px 40px -4px ${alpha(theme.palette.primary.main, 0.6)}`,
+                  boxShadow: `0 6px 20px -2px ${alpha(theme.palette.primary.main, 0.5)}`,
                 },
               },
             }}
@@ -162,16 +137,16 @@ const SmartInputFAB: React.FC<SmartInputFABProps> = ({
                 FabProps={{
                   sx: {
                     bgcolor: isDarkMode
-                      ? alpha(action.color, 0.2)
+                      ? alpha(action.color, 0.15)
                       : alpha(action.color, 0.1),
                     color: action.color,
-                    border: `2px solid ${alpha(action.color, 0.3)}`,
-                    boxShadow: `0 4px 16px -4px ${alpha(action.color, 0.4)}`,
+                    border: `1.5px solid ${alpha(action.color, 0.25)}`,
+                    boxShadow: `0 2px 8px -2px ${alpha(action.color, 0.3)}`,
                     transition: "all 0.2s ease-in-out",
                     "&:hover": {
                       bgcolor: alpha(action.color, 0.2),
-                      transform: "scale(1.1)",
-                      boxShadow: `0 6px 20px -4px ${alpha(action.color, 0.5)}`,
+                      transform: "scale(1.08)",
+                      boxShadow: `0 4px 12px -2px ${alpha(action.color, 0.4)}`,
                     },
                   },
                 }}
@@ -182,20 +157,19 @@ const SmartInputFAB: React.FC<SmartInputFABProps> = ({
                       : alpha("#FFFFFF", 0.98),
                     color: "text.primary",
                     fontWeight: 600,
-                    fontSize: "0.85rem",
-                    borderRadius: "20px",
-                    px: 1.5,
-                    py: 0.75,
-                    boxShadow: `0 4px 16px -4px ${alpha("#000", 0.2)}`,
-                    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
+                    fontSize: "0.8rem",
+                    borderRadius: "10px",
+                    px: 1.25,
+                    py: 0.5,
+                    boxShadow: `0 2px 8px -2px ${alpha("#000", 0.15)}`,
+                    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.05)}`,
                     backdropFilter: "blur(8px)",
                   },
                 }}
               />
             ))}
           </SpeedDial>
-        </MotionBox>
-      </Zoom>
+      </Box>
 
       {/* Modal de entrada inteligente */}
       <SmartInputModal

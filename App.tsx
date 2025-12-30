@@ -544,16 +544,6 @@ const AppContent: React.FC<{
     };
   }, [dashboardFilteredTransactions]);
 
-  // Última data de transação (para nudge do FAB de IA)
-  const lastTransactionDate = useMemo(() => {
-    if (transactions.length === 0) return undefined;
-    // Encontra a transação mais recente pelo createdAt
-    const sortedByCreatedAt = [...transactions]
-      .filter((t) => t.createdAt)
-      .sort((a, b) => b.createdAt - a.createdAt);
-    return sortedByCreatedAt.length > 0 ? sortedByCreatedAt[0].createdAt : undefined;
-  }, [transactions]);
-
   // Colors Context Value
   const getCategoryColor = (
     type: TransactionType,
@@ -3004,8 +2994,7 @@ const AppContent: React.FC<{
               onTransactionCreate={handleSmartInputTransaction}
               categories={categories}
               paymentMethods={paymentMethods}
-              visible={!isMobile || currentView === "dashboard"}
-              lastTransactionDate={lastTransactionDate}
+              visible={currentView !== "nixai" && (!isMobile || currentView === "dashboard")}
             />
           </Suspense>
         </Box>

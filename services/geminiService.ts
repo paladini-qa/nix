@@ -4,6 +4,152 @@ import { Transaction, ParsedTransaction, TransactionType } from "../types";
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // ========================================
+// Intent Detection - Detecção de Intenção de Cadastro
+// ========================================
+
+/**
+ * Resultado da detecção de intenção
+ */
+export interface IntentDetectionResult {
+  isTransactionIntent: boolean;
+  confidence: number;
+  cleanedText: string;
+  suggestedType?: TransactionType;
+}
+
+/**
+ * Padrões para detecção de intenção de cadastro de transação
+ * Ordenados por especificidade (mais específico primeiro)
+ */
+const TRANSACTION_PATTERNS = [
+  // Comandos explícitos
+  { pattern: /^(?:cadastrar|registrar|adicionar|anotar|salvar)[:.]?\s*(.+)/i, confidence: 0.95 },
+  
+  // Padrões com verbos de gasto + valor
+  { pattern: /(?:gastei|paguei|comprei|gastar|pagar|comprar)\s+(?:r\$?\s*)?\d/i, confidence: 0.9 },
+  
+  // Padrões com verbos de receita + valor
+  { pattern: /(?:recebi|ganhei|receber|ganhar)\s+(?:r\$?\s*)?\d/i, confidence: 0.9 },
+  
+  // Valor + contexto de local/forma de pagamento
+  { pattern: /(?:r\$?\s*)?\d+(?:[.,]\d{2})?\s+(?:no|na|em|de|do|da|com|por|pra|para)\s+\w/i, confidence: 0.85 },
+  
+  // Palavras-chave financeiras + valor
+  { pattern: /(?:despesa|gasto|receita|entrada|saída|conta|boleto|fatura)\s+(?:de\s+)?(?:r\$?\s*)?\d/i, confidence: 0.85 },
+  
+  // Valor seguido de verbo/contexto
+  { pattern: /\d+(?:[.,]\d{2})?\s*(?:reais|real|pila|conto|mango)/i, confidence: 0.8 },
+  
+  // Menção de forma de pagamento comum
+  { pattern: /(?:pix|cartão|crédito|débito|dinheiro|boleto)\s+(?:de\s+)?(?:r\$?\s*)?\d/i, confidence: 0.8 },
+  
+  // Apenas valor com R$ explícito
+  { pattern: /r\$\s*\d+(?:[.,]\d{2})?/i, confidence: 0.6 },
+];
+
+/**
+ * Detecta se o texto do usuário indica intenção de cadastrar uma transação
+ * Usa análise de padrões para detecção rápida e eficiente
+ */
+export const detectTransactionIntent = (text: string): IntentDetectionResult => {
+  const trimmedText = text.trim();
+  
+  // Verifica cada padrão
+  for (const { pattern, confidence } of TRANSACTION_PATTERNS) {
+    const match = trimmedText.match(pattern);
+    if (match) {
+      // Para comandos explícitos, extrai o texto limpo (sem o comando)
+      let cleanedText = trimmedText;
+      if (match[1]) {
+        cleanedText = match[1].trim();
+      }
+      
+      // Detecta tipo sugerido baseado em palavras-chave
+      let suggestedType: TransactionType = "expense";
+      if (/(?:recebi|ganhei|receber|ganhar|salário|venda|entrada|freelance|bônus|prêmio)/i.test(trimmedText)) {
+        suggestedType = "income";
+      }
+      
+      return {
+        isTransactionIntent: true,
+        confidence,
+        cleanedText,
+        suggestedType,
+      };
+    }
+  }
+  
+  return {
+    isTransactionIntent: false,
+    confidence: 0,
+    cleanedText: trimmedText,
+  };
+};
+
+/**
+ * Detecta intenção usando IA para casos ambíguos
+ * Mais preciso mas mais lento - usar apenas quando padrões não são suficientes
+ */
+export const detectTransactionIntentWithAI = async (
+  text: string
+): Promise<IntentDetectionResult> => {
+  // Primeiro tenta detecção por padrões (rápido)
+  const patternResult = detectTransactionIntent(text);
+  if (patternResult.isTransactionIntent && patternResult.confidence >= 0.8) {
+    return patternResult;
+  }
+  
+  // Se não tem certeza, usa IA
+  try {
+    const prompt = `Analise se o texto a seguir indica uma intenção do usuário de REGISTRAR/CADASTRAR uma transação financeira (gasto ou receita).
+
+Texto: "${text}"
+
+Responda APENAS com JSON:
+{
+  "isTransactionIntent": boolean,
+  "confidence": number (0 a 1),
+  "suggestedType": "income" ou "expense" ou null,
+  "reason": "explicação curta"
+}
+
+Exemplos de intenção de cadastro:
+- "gastei 50 no uber" -> true, expense
+- "recebi 3000 de salário" -> true, income  
+- "paguei 200 de luz" -> true, expense
+- "50 reais no mercado com pix" -> true, expense
+
+Exemplos que NÃO são intenção de cadastro:
+- "quanto gastei esse mês?" -> false (pergunta)
+- "como economizar?" -> false (pergunta)
+- "me mostra minhas despesas" -> false (consulta)`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+
+    const responseText = (response.text || "")
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
+
+    const parsed = JSON.parse(responseText);
+
+    return {
+      isTransactionIntent: parsed.isTransactionIntent === true,
+      confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.5,
+      cleanedText: text.trim(),
+      suggestedType: parsed.suggestedType || undefined,
+    };
+  } catch (error) {
+    console.error("Error detecting intent with AI:", error);
+    // Fallback para resultado dos padrões
+    return patternResult;
+  }
+};
+
+// ========================================
 // Smart Input - Cadastro Inteligente via IA
 // ========================================
 
