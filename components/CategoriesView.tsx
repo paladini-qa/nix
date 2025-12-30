@@ -974,7 +974,13 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}>
+    <Box sx={{ 
+      display: "flex", 
+      flexDirection: "column", 
+      gap: isMobile ? 2 : 3,
+      // Extra padding para bottom navigation
+      pb: { xs: "140px", md: 0 },
+    }}>
       {/* Header */}
       <Box
         sx={{

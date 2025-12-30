@@ -290,7 +290,13 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
 
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}
+      sx={{ 
+        display: "flex", 
+        flexDirection: "column", 
+        gap: isMobile ? 2 : 3,
+        // Extra padding para bottom navigation
+        pb: { xs: "140px", md: 0 },
+      }}
     >
       {/* Summary Stats */}
       <Grid container spacing={isMobile ? 1.5 : 2}>

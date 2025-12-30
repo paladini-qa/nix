@@ -2534,9 +2534,13 @@ const AppContent: React.FC<{
             component="main"
             sx={{
               flexGrow: 1,
-              p: { xs: 2, sm: 3, lg: 4 },
+              p: { xs: 1.5, sm: 2, md: 3, lg: 4 },
               mt: { xs: "64px", lg: 0 },
-              pb: { xs: 4, lg: 4 }, // Extra padding bottom for FAB on mobile
+              // Extra padding para bottom navigation (64px) + safe area + FABs
+              pb: { xs: "140px", lg: 4 },
+              maxWidth: "100vw",
+              overflow: "hidden",
+              boxSizing: "border-box",
             }}
           >
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>

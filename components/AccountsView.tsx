@@ -245,7 +245,13 @@ const AccountsView: React.FC<AccountsViewProps> = ({
 
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}
+      sx={{ 
+        display: "flex", 
+        flexDirection: "column", 
+        gap: isMobile ? 2 : 3,
+        // Extra padding para bottom navigation + FABs
+        pb: { xs: "180px", md: 0 },
+      }}
     >
       {/* Header */}
       <Box
@@ -729,7 +735,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
           onClick={() => handleOpenForm()}
           sx={{
             position: "fixed",
-            bottom: 80,
+            bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
             right: 16,
             zIndex: 1100,
           }}

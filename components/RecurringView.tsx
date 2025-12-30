@@ -841,7 +841,8 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       display: "flex", 
       flexDirection: "column", 
       gap: 3,
-      pb: { xs: 10, md: 0 }, // Extra padding for mobile FAB
+      // Extra padding para bottom navigation + FABs
+      pb: { xs: "180px", md: 0 },
     }}>
       {/* Header */}
       <Box
@@ -1221,7 +1222,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           onClick={onNewTransaction}
           sx={{
             position: "fixed",
-            bottom: 80,
+            bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
             right: 16,
             zIndex: 1100,
           }}

@@ -204,3 +204,5 @@ Antes de commit, verifique:
 **Última atualização**: Dezembro 2025  
 **Mantido por**: Equipe Nix
 
+
+

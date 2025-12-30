@@ -650,7 +650,13 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}>
+    <Box sx={{ 
+      display: "flex", 
+      flexDirection: "column", 
+      gap: isMobile ? 2 : 3,
+      // Extra padding para bottom navigation + FABs
+      pb: { xs: "180px", md: 0 },
+    }}>
       {/* Header */}
       <Box
         sx={{
@@ -951,7 +957,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           onClick={onNewTransaction}
           sx={{
             position: "fixed",
-            bottom: 80,
+            bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
             right: 16,
             zIndex: 1100,
           }}

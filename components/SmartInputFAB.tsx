@@ -89,8 +89,12 @@ const SmartInputFAB: React.FC<SmartInputFABProps> = ({
       <Box
         sx={{
           position: "fixed",
-          bottom: { xs: 24, sm: 32 },
-          right: { xs: 24, sm: 32 },
+          // Posiciona acima da bottom navigation (64px) + safe area + margem
+          bottom: { 
+            xs: "calc(80px + env(safe-area-inset-bottom, 0px))", 
+            sm: 32 
+          },
+          right: { xs: 16, sm: 32 },
           zIndex: 1050,
         }}
       >

@@ -572,7 +572,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         display: "flex", 
         flexDirection: "column", 
         gap: isMobile ? 2 : 3,
-        pb: { xs: 10, md: 0 }, // Extra padding for mobile FAB
+        // Extra padding para FABs + bottom navigation (64px + safe area + FAB height + margem)
+        pb: { xs: "180px", md: 0 },
       }}
     >
       {/* Header */}
@@ -1492,7 +1493,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             onClick={onNewTransaction}
             sx={{
               position: "fixed",
-              bottom: 80,
+              // Posiciona acima da bottom navigation (64px) + safe area + margem
+              bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
               right: 16,
               zIndex: 1100,
             }}
