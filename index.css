@@ -636,6 +636,58 @@ a,
 /* ============================================
    RESPONSIVE UTILITIES
    ============================================ */
+
+/* Mobile viewport fix - prevent zoom on input focus */
+@media (max-width: 768px) {
+  html {
+    font-size: 16px; /* Prevent auto-zoom on iOS */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  /* Touch-friendly tap targets (minimum 44px) */
+  button,
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  .MuiIconButton-root,
+  .MuiButton-root,
+  .MuiListItemButton-root {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  select {
+    min-height: 44px;
+    font-size: 16px; /* Prevent zoom on focus */
+  }
+  
+  input,
+  textarea {
+    font-size: 16px !important; /* Prevent zoom on focus in iOS */
+  }
+  
+  /* Better spacing for mobile */
+  .MuiTypography-h5 {
+    font-size: 1.25rem;
+  }
+  
+  .MuiTypography-h6 {
+    font-size: 1.1rem;
+  }
+  
+  /* Icon sizing for touch */
+  .MuiSvgIcon-root {
+    font-size: 1.5rem;
+  }
+  
+  /* Cards with more breathing room */
+  .MuiCard-root,
+  .MuiPaper-root {
+    border-radius: 16px;
+  }
+}
+
 @media (max-width: 640px) {
   .text-responsive-lg {
     font-size: 1.5rem;
@@ -644,18 +696,14 @@ a,
   .text-responsive-xl {
     font-size: 1.75rem;
   }
-}
-
-@media (max-width: 768px) {
-  button,
-  select,
-  input[type="checkbox"],
-  input[type="radio"] {
-    min-height: 44px;
+  
+  /* Even tighter mobile spacing */
+  .MuiTypography-h5 {
+    font-size: 1.15rem;
   }
-
-  select {
-    min-height: 40px;
+  
+  .MuiTypography-h6 {
+    font-size: 1rem;
   }
 }
 

@@ -572,8 +572,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         display: "flex", 
         flexDirection: "column", 
         gap: isMobile ? 2 : 3,
-        // Padding extra para compensar a barra de navegação móvel
-        pb: isMobile ? 12 : 0,
+        pb: { xs: 10, md: 0 }, // Extra padding for mobile FAB
       }}
     >
       {/* Header */}

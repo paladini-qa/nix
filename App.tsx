@@ -11,28 +11,13 @@ import {
   CssBaseline,
   Box,
   CircularProgress,
-  AppBar,
-  Toolbar,
-  IconButton,
   Typography,
-  BottomNavigation,
-  BottomNavigationAction,
-  Paper,
   useMediaQuery,
   Fab,
   Button,
   useTheme,
 } from "@mui/material";
-import {
-  Add as AddIcon,
-  Logout as LogOutIcon,
-  Dashboard as DashboardIcon,
-  AccountBalanceWallet as WalletIcon,
-  AutoAwesome as SparklesIcon,
-  Repeat as RepeatIcon,
-  CreditCard as CreditCardIcon,
-  People as PeopleIcon,
-} from "@mui/icons-material";
+import { Add as AddIcon } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
@@ -60,8 +45,8 @@ import CategoryBreakdown from "./components/CategoryBreakdown";
 import Sidebar from "./components/Sidebar";
 import ProfileModal from "./components/ProfileModal";
 import LoginView from "./components/LoginView";
-import ThemeSwitch from "./components/ThemeSwitch";
 import DateFilter from "./components/DateFilter";
+import { MobileHeader, MobileDrawer } from "./components/layout";
 import EditOptionsDialog, { EditOption } from "./components/EditOptionsDialog";
 import DeleteOptionsDialog, { DeleteOption } from "./components/DeleteOptionsDialog";
 import RecurringEditForm from "./components/RecurringEditForm";
@@ -214,6 +199,7 @@ const AppContent: React.FC<{
     | "paymentMethods"
     | "categories"
   >("dashboard");
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
@@ -2521,38 +2507,26 @@ const AppContent: React.FC<{
             />
           )}
 
-          {/* Mobile Header */}
+          {/* Mobile Header & Drawer */}
           {isMobile && (
-            <AppBar
-              position="fixed"
-              sx={{
-                bgcolor: "background.paper",
-                borderBottom: 1,
-                borderColor: "divider",
-              }}
-              elevation={0}
-            >
-              <Toolbar>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    flexGrow: 1,
-                    fontWeight: "bold",
-                    color: "text.primary",
-                  }}
-                >
-                  Nix
-                </Typography>
-                <ThemeSwitch
-                  value={themePreference}
-                  onChange={updateThemePreference}
-                  compact
-                />
-                <IconButton onClick={handleLogout} color="error" sx={{ ml: 1 }}>
-                  <LogOutIcon />
-                </IconButton>
-              </Toolbar>
-            </AppBar>
+            <>
+              <MobileHeader
+                onMenuOpen={() => setIsMobileDrawerOpen(true)}
+                onLogout={handleLogout}
+              />
+              <MobileDrawer
+                open={isMobileDrawerOpen}
+                onClose={() => setIsMobileDrawerOpen(false)}
+                themePreference={themePreference}
+                onThemeChange={updateThemePreference}
+                currentView={currentView}
+                onNavigate={setCurrentView}
+                onLogout={handleLogout}
+                displayName={displayName}
+                userEmail={session.user.email || ""}
+                onOpenProfile={() => setIsProfileModalOpen(true)}
+              />
+            </>
           )}
 
           {/* Main Content */}
@@ -2560,9 +2534,9 @@ const AppContent: React.FC<{
             component="main"
             sx={{
               flexGrow: 1,
-              p: { xs: 2, lg: 4 },
+              p: { xs: 2, sm: 3, lg: 4 },
               mt: { xs: "64px", lg: 0 },
-              mb: { xs: "72px", lg: 0 },
+              pb: { xs: 4, lg: 4 }, // Extra padding bottom for FAB on mobile
             }}
           >
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -2716,14 +2690,17 @@ const AppContent: React.FC<{
                       <Fab
                         color="primary"
                         onClick={handleNewTransaction}
+                        aria-label="Add new transaction"
                         sx={{
                           position: "fixed",
-                          bottom: 80,
-                          right: 16,
+                          bottom: 24,
+                          right: 24,
                           zIndex: 1100,
+                          width: 56,
+                          height: 56,
                         }}
                       >
-                        <AddIcon />
+                        <AddIcon sx={{ fontSize: 28 }} />
                       </Fab>
                     )}
                   </>
@@ -2861,54 +2838,6 @@ const AppContent: React.FC<{
               )}
             </Box>
           </Box>
-
-          {/* Mobile Bottom Navigation */}
-          {isMobile && (
-            <Paper
-              sx={{
-                position: "fixed",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                zIndex: 1200,
-                borderTop: 1,
-                borderColor: "divider",
-              }}
-              elevation={3}
-            >
-              <BottomNavigation
-                value={currentView}
-                onChange={(_, newValue) => setCurrentView(newValue)}
-                showLabels
-              >
-                <BottomNavigationAction
-                  label="Dashboard"
-                  value="dashboard"
-                  icon={<DashboardIcon />}
-                />
-                <BottomNavigationAction
-                  label="Transactions"
-                  value="transactions"
-                  icon={<WalletIcon />}
-                />
-                <BottomNavigationAction
-                  label="Shared"
-                  value="shared"
-                  icon={<PeopleIcon />}
-                />
-                <BottomNavigationAction
-                  label="Recurring"
-                  value="recurring"
-                  icon={<RepeatIcon />}
-                />
-                <BottomNavigationAction
-                  label="Payments"
-                  value="paymentMethods"
-                  icon={<CreditCardIcon />}
-                />
-              </BottomNavigation>
-            </Paper>
-          )}
 
           <TransactionForm
             isOpen={isFormOpen}

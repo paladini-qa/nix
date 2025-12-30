@@ -28,6 +28,9 @@ import {
   ListItemIcon,
   ListItemText,
   useMediaQuery,
+  Card,
+  CardContent,
+  Checkbox,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
@@ -499,31 +502,146 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
         </FormControl>
       </Paper>
 
-      {/* Transactions Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: "action.hover" }}>
-              <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
-              <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
-                Type
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
-                Status
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
-                Amount
-              </TableCell>
-              {(onEdit || onDelete) && (
-                <TableCell sx={{ fontWeight: 600, textAlign: "center", width: 100 }}>
-                  Actions
+      {/* Transactions - Mobile Cards or Desktop Table */}
+      {isMobile ? (
+        // Mobile Card View
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {filteredTransactions.length > 0 ? (
+            filteredTransactions.map((t) => {
+              const isIncome = t.type === "income";
+              const accentColor = isIncome ? "#10b981" : "#ef4444";
+              return (
+                <Card
+                  key={t.id}
+                  elevation={0}
+                  sx={{
+                    position: "relative",
+                    overflow: "hidden",
+                    opacity: t.isPaid !== false ? 0.6 : 1,
+                    background: isDarkMode
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                      : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                    backdropFilter: "blur(12px)",
+                    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.05)}`,
+                    borderLeft: `3px solid ${accentColor}`,
+                    borderRadius: "14px",
+                    transition: "all 0.15s ease-in-out",
+                  }}
+                >
+                  <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 }, display: "flex", alignItems: "flex-start", gap: 1 }}>
+                    {/* Checkbox */}
+                    <Checkbox
+                      checked={t.isPaid !== false}
+                      onChange={(e) => handleTogglePaid({ ...t, isPaid: e.target.checked } as Transaction)}
+                      size="small"
+                      color={isIncome ? "success" : "error"}
+                      sx={{ mt: -0.5, ml: -1 }}
+                    />
+                    {/* Icon */}
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        background: isDarkMode
+                          ? `linear-gradient(135deg, ${alpha(accentColor, 0.2)} 0%, ${alpha(accentColor, 0.1)} 100%)`
+                          : `linear-gradient(135deg, ${isIncome ? "#D1FAE5" : "#FEE2E2"} 0%, ${alpha(isIncome ? "#D1FAE5" : "#FEE2E2", 0.6)} 100%)`,
+                        border: `1px solid ${isDarkMode ? alpha(accentColor, 0.2) : alpha(accentColor, 0.15)}`,
+                      }}
+                    >
+                      {isIncome ? (
+                        <ArrowUpIcon sx={{ fontSize: 16, color: accentColor }} />
+                      ) : (
+                        <ArrowDownIcon sx={{ fontSize: 16, color: accentColor }} />
+                      )}
+                    </Box>
+                    {/* Content */}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                        <Typography variant="body2" fontWeight={600} sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {t.description}
+                        </Typography>
+                        <Typography variant="body2" fontWeight={700} color={isIncome ? "success.main" : "error.main"} sx={{ flexShrink: 0 }}>
+                          {isIncome ? "+" : "-"} {formatCurrency(t.amount || 0)}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5, flexWrap: "wrap" }}>
+                        <Typography variant="caption" color="text.secondary">{formatDate(t.date)}</Typography>
+                        <Typography variant="caption" color="text.disabled">•</Typography>
+                        <Typography variant="caption" color="text.secondary">{t.category}</Typography>
+                      </Box>
+                      <TransactionTags transaction={t} />
+                    </Box>
+                    {/* Actions */}
+                    {(onEdit || onDelete) && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => setMobileActionAnchor({ element: e.currentTarget, transaction: t })}
+                        sx={{ color: "text.secondary", mt: -0.5, mr: -1 }}
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            <Card elevation={0} sx={{ p: 4, textAlign: "center", borderRadius: "16px" }}>
+              <Typography color="text.secondary" fontStyle="italic">
+                No transactions with {paymentMethod} for this period.
+              </Typography>
+            </Card>
+          )}
+          {/* Total Summary for Mobile */}
+          {filteredTransactions.length > 0 && (
+            <Paper sx={{ p: 2, borderRadius: "14px", bgcolor: alpha(colors.primary, 0.05), border: `1px solid ${alpha(colors.primary, 0.15)}` }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2" fontWeight={600}>
+                  Total ({filteredTransactions.length} transactions)
+                </Typography>
+                <Typography
+                  variant="body1"
+                  fontWeight={700}
+                  color={balance >= 0 ? "#10b981" : "#ef4444"}
+                  sx={{ fontFamily: "monospace" }}
+                >
+                  {formatCurrency(balance)}
+                </Typography>
+              </Box>
+            </Paper>
+          )}
+        </Box>
+      ) : (
+        // Desktop Table View
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: "action.hover" }}>
+                <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
+                  Type
                 </TableCell>
-              )}
-            </TableRow>
-          </TableHead>
-          <TableBody>
+                <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
+                  Status
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
+                  Amount
+                </TableCell>
+                {(onEdit || onDelete) && (
+                  <TableCell sx={{ fontWeight: 600, textAlign: "center", width: 100 }}>
+                    Actions
+                  </TableCell>
+                )}
+              </TableRow>
+            </TableHead>
+            <TableBody>
             {filteredTransactions.length > 0 ? (
               filteredTransactions.map((t, index) => (
                 <TableRow
@@ -691,8 +809,9 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               </TableRow>
             </TableFooter>
           )}
-        </Table>
-      </TableContainer>
+          </Table>
+        </TableContainer>
+      )}
 
       {/* Mobile Action Menu */}
       <Menu

@@ -4,28 +4,36 @@ import {
   Toolbar,
   Typography,
   IconButton,
+  Box,
   useTheme,
   alpha,
 } from "@mui/material";
-import { Logout as LogOutIcon } from "@mui/icons-material";
+import {
+  Menu as MenuIcon,
+  Logout as LogOutIcon,
+} from "@mui/icons-material";
 import { motion } from "framer-motion";
-import { ThemePreference } from "../../types";
-import ThemeSwitch from "../ThemeSwitch";
 
 const MotionAppBar = motion.create(AppBar);
+const MotionBox = motion.create(Box);
 
 interface MobileHeaderProps {
-  themePreference: ThemePreference;
-  onThemeChange: (theme: ThemePreference) => void;
+  onMenuOpen: () => void;
   onLogout: () => void;
 }
 
 /**
- * MobileHeader - Sleek mobile app bar with glassmorphism
+ * MobileHeader - Sleek mobile app bar with hamburger menu
+ * 
+ * Features:
+ * - Hamburger menu button on the left
+ * - Centered logo
+ * - Logout button on the right
+ * - Glassmorphism styling
+ * - Touch-friendly tap targets (min 44px)
  */
 const MobileHeader: React.FC<MobileHeaderProps> = ({
-  themePreference,
-  onThemeChange,
+  onMenuOpen,
   onLogout,
 }) => {
   const theme = useTheme();
@@ -40,8 +48,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
       sx={{
         // Glassmorphism
         bgcolor: isDarkMode
-          ? alpha(theme.palette.background.paper, 0.8)
-          : alpha("#FFFFFF", 0.85),
+          ? alpha(theme.palette.background.paper, 0.9)
+          : alpha("#FFFFFF", 0.92),
         backdropFilter: "blur(20px) saturate(180%)",
         WebkitBackdropFilter: "blur(20px) saturate(180%)",
         borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
@@ -51,51 +59,93 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
       }}
       elevation={0}
     >
-      <Toolbar>
-        {/* Logo */}
-        <motion.div
+      <Toolbar
+        sx={{
+          minHeight: { xs: 64 }, // Taller for better touch
+          px: { xs: 1.5 },
+        }}
+      >
+        {/* Hamburger Menu Button */}
+        <MotionBox
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
-          style={{ display: "flex", alignItems: "center", gap: 8, flexGrow: 1 }}
         >
+          <IconButton
+            onClick={onMenuOpen}
+            aria-label="Open navigation menu"
+            sx={{
+              width: 48,
+              height: 48,
+              color: "text.primary",
+              transition: "all 0.2s ease",
+              borderRadius: "14px",
+              "&:hover": {
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.primary.main, 0.15)
+                  : alpha(theme.palette.primary.main, 0.08),
+                transform: "scale(1.05)",
+              },
+              "&:active": {
+                transform: "scale(0.95)",
+              },
+            }}
+          >
+            <MenuIcon sx={{ fontSize: 26 }} />
+          </IconButton>
+        </MotionBox>
+
+        {/* Centered Logo */}
+        <MotionBox
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, type: "spring", stiffness: 400 }}
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+          }}
+        >
+          <Box
+            component="img"
+            src={`${import.meta.env.BASE_URL}logo.png`}
+            alt="Nix Logo"
+            sx={{
+              width: 32,
+              height: 32,
+              objectFit: "contain",
+            }}
+          />
           <Typography
             variant="h6"
             sx={{
               fontWeight: 700,
               color: "text.primary",
               letterSpacing: "-0.02em",
+              fontSize: 20,
             }}
           >
             Nix
           </Typography>
-        </motion.div>
-
-        {/* Theme Switch */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <ThemeSwitch
-            value={themePreference}
-            onChange={onThemeChange}
-            compact
-          />
-        </motion.div>
+        </MotionBox>
 
         {/* Logout Button */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3, type: "spring", stiffness: 400 }}
+        <MotionBox
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
         >
           <IconButton
             onClick={onLogout}
+            aria-label="Logout"
             sx={{
-              ml: 1,
+              width: 48,
+              height: 48,
               color: theme.palette.error.main,
               transition: "all 0.2s ease",
+              borderRadius: "14px",
               "&:hover": {
                 bgcolor: alpha(theme.palette.error.main, 0.1),
                 transform: "scale(1.05)",
@@ -105,13 +155,12 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
               },
             }}
           >
-            <LogOutIcon />
+            <LogOutIcon sx={{ fontSize: 24 }} />
           </IconButton>
-        </motion.div>
+        </MotionBox>
       </Toolbar>
     </MotionAppBar>
   );
 };
 
 export default MobileHeader;
-

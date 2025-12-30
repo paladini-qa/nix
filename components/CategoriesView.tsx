@@ -26,6 +26,9 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Card,
+  CardContent,
+  Checkbox,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -632,28 +635,142 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           </Paper>
         )}
 
-        {/* Transactions Table */}
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "action.hover" }}>
-                <TableCell sx={{ fontWeight: 600 }}>Data</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Método</TableCell>
-                <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>Valor</TableCell>
-                <TableCell sx={{ fontWeight: 600, textAlign: "center", width: 100 }}>Ações</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {selectedCategoryTransactions.length > 0 ? (
-                selectedCategoryTransactions.map((tx, index) => (
-                  <TableRow
+        {/* Transactions - Mobile Cards or Desktop Table */}
+        {isMobile ? (
+          // Mobile Card View
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            {selectedCategoryTransactions.length > 0 ? (
+              selectedCategoryTransactions.map((tx) => {
+                const isIncome = selectedCategory.type === "income";
+                const accentColor = isIncome ? "#10b981" : "#ef4444";
+                return (
+                  <Card
                     key={tx.id}
-                    hover
+                    elevation={0}
                     sx={{
-                      bgcolor: index % 2 === 0 ? "transparent" : "action.hover",
-                      opacity: tx.isPaid ? 0.7 : 1,
+                      position: "relative",
+                      overflow: "hidden",
+                      opacity: tx.isPaid !== false ? 0.6 : 1,
+                      background: isDarkMode
+                        ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                        : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                      backdropFilter: "blur(12px)",
+                      border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.05)}`,
+                      borderLeft: `3px solid ${accentColor}`,
+                      borderRadius: "14px",
+                      transition: "all 0.15s ease-in-out",
+                    }}
+                  >
+                    <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 }, display: "flex", alignItems: "flex-start", gap: 1 }}>
+                      {/* Checkbox */}
+                      <Checkbox
+                        checked={tx.isPaid !== false}
+                        onChange={(e) => onTogglePaid(tx.isVirtual && tx.originalTransactionId ? tx.originalTransactionId : tx.id, e.target.checked)}
+                        size="small"
+                        color={isIncome ? "success" : "error"}
+                        sx={{ mt: -0.5, ml: -1 }}
+                      />
+                      {/* Icon */}
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "10px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          background: isDarkMode
+                            ? `linear-gradient(135deg, ${alpha(accentColor, 0.2)} 0%, ${alpha(accentColor, 0.1)} 100%)`
+                            : `linear-gradient(135deg, ${isIncome ? "#D1FAE5" : "#FEE2E2"} 0%, ${alpha(isIncome ? "#D1FAE5" : "#FEE2E2", 0.6)} 100%)`,
+                          border: `1px solid ${isDarkMode ? alpha(accentColor, 0.2) : alpha(accentColor, 0.15)}`,
+                        }}
+                      >
+                        {isIncome ? (
+                          <TrendingUpIcon sx={{ fontSize: 16, color: accentColor }} />
+                        ) : (
+                          <TrendingDownIcon sx={{ fontSize: 16, color: accentColor }} />
+                        )}
+                      </Box>
+                      {/* Content */}
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                          <Typography variant="body2" fontWeight={600} sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {tx.description}
+                          </Typography>
+                          <Typography variant="body2" fontWeight={700} color={isIncome ? "success.main" : "error.main"} sx={{ flexShrink: 0 }}>
+                            {isIncome ? "+" : "-"} {formatCurrency(tx.amount || 0)}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5, flexWrap: "wrap" }}>
+                          <Typography variant="caption" color="text.secondary">{formatDate(tx.date)}</Typography>
+                          <Typography variant="caption" color="text.disabled">•</Typography>
+                          <Typography variant="caption" color="text.secondary">{tx.paymentMethod}</Typography>
+                        </Box>
+                        <TransactionTags transaction={tx} />
+                      </Box>
+                      {/* Actions */}
+                      <IconButton
+                        size="small"
+                        onClick={(e) => setMobileActionAnchor({ element: e.currentTarget, transaction: tx })}
+                        sx={{ color: "text.secondary", mt: -0.5, mr: -1 }}
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            ) : (
+              <Card elevation={0} sx={{ p: 4, textAlign: "center", borderRadius: "16px" }}>
+                <ReceiptIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+                <Typography color="text.secondary" fontStyle="italic">
+                  Nenhuma transação nesta categoria para o mês selecionado.
+                </Typography>
+              </Card>
+            )}
+            {/* Total Summary for Mobile */}
+            {selectedCategoryTransactions.length > 0 && (
+              <Paper sx={{ p: 2, borderRadius: "14px", bgcolor: alpha(categoryColors2.primary, 0.05), border: `1px solid ${alpha(categoryColors2.primary, 0.15)}` }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography variant="body2" fontWeight={600}>
+                    Total ({selectedCategoryTransactions.length} transações)
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    fontWeight={700}
+                    color={typeColor}
+                    sx={{ fontFamily: "monospace" }}
+                  >
+                    {selectedCategory.type === "income" ? "" : "- "}{formatCurrency(categoryTotal)}
+                  </Typography>
+                </Box>
+              </Paper>
+            )}
+          </Box>
+        ) : (
+          // Desktop Table View
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: "action.hover" }}>
+                  <TableCell sx={{ fontWeight: 600 }}>Data</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Método</TableCell>
+                  <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>Valor</TableCell>
+                  <TableCell sx={{ fontWeight: 600, textAlign: "center", width: 100 }}>Ações</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {selectedCategoryTransactions.length > 0 ? (
+                  selectedCategoryTransactions.map((tx, index) => (
+                    <TableRow
+                      key={tx.id}
+                      hover
+                      sx={{
+                        bgcolor: index % 2 === 0 ? "transparent" : "action.hover",
+                        opacity: tx.isPaid ? 0.7 : 1,
                     }}
                   >
                     <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
@@ -799,8 +916,9 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                 </TableRow>
               </TableFooter>
             )}
-          </Table>
-        </TableContainer>
+            </Table>
+          </TableContainer>
+        )}
 
         {/* Mobile Action Menu */}
         <Menu
