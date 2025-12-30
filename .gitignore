@@ -23,3 +23,27 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Capacitor - Android build files
+android/app/build/
+android/.gradle/
+android/build/
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+android/local.properties
+*.apk
+*.aab
+
+# Capacitor - iOS build files
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/Pods/
+ios/DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Capacitor web assets (regenerated on sync)
+android/app/src/main/assets/public/
+ios/App/App/public/

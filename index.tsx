@@ -2,8 +2,12 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { ErrorBoundary } from "./contexts";
+import { initializeCapacitor, hideSplashScreen } from "./services/capacitorService";
 import "./i18n"; // Initialize i18n
 import "./index.css";
+
+// Inicializa o Capacitor (só executa em plataformas nativas)
+initializeCapacitor();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -18,3 +22,6 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 );
+
+// Esconde o splash screen após o app ser montado
+hideSplashScreen();
