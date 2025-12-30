@@ -3,6 +3,7 @@ import {
   Paper,
   BottomNavigation,
   BottomNavigationAction,
+  Box,
   useTheme,
   alpha,
 } from "@mui/material";
@@ -16,6 +17,9 @@ import {
 import { motion } from "framer-motion";
 
 const MotionPaper = motion.create(Paper);
+
+// Altura da barra de navegação (para calcular fade gradient)
+const NAV_HEIGHT = 64;
 
 // View type matching App.tsx
 type ViewType =
@@ -48,32 +52,48 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const isDarkMode = theme.palette.mode === "dark";
 
   return (
-    <MotionPaper
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30, delay: 0.1 }}
-      sx={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1200,
-        // Glassmorphism
-        bgcolor: isDarkMode
-          ? alpha(theme.palette.background.paper, 0.9)
-          : alpha("#FFFFFF", 0.95),
-        backdropFilter: "blur(20px) saturate(180%)",
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-        boxShadow: isDarkMode
-          ? `0 -4px 20px -4px ${alpha("#000000", 0.4)}`
-          : `0 -4px 20px -4px ${alpha(theme.palette.primary.main, 0.08)}`,
-        // Safe area for devices with home indicator
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        borderRadius: 0,
-      }}
-      elevation={0}
-    >
+    <>
+      {/* Gradiente de fade-out para suavizar transição de conteúdo */}
+      <Box
+        sx={{
+          position: "fixed",
+          bottom: `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
+          left: 0,
+          right: 0,
+          height: 48,
+          background: isDarkMode
+            ? `linear-gradient(to bottom, transparent 0%, ${theme.palette.background.default} 100%)`
+            : `linear-gradient(to bottom, transparent 0%, ${theme.palette.background.default} 100%)`,
+          pointerEvents: "none",
+          zIndex: 1199,
+        }}
+      />
+      <MotionPaper
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30, delay: 0.1 }}
+        sx={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1200,
+          // Glassmorphism
+          bgcolor: isDarkMode
+            ? alpha(theme.palette.background.paper, 0.9)
+            : alpha("#FFFFFF", 0.95),
+          backdropFilter: "blur(20px) saturate(180%)",
+          WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          boxShadow: isDarkMode
+            ? `0 -4px 20px -4px ${alpha("#000000", 0.4)}`
+            : `0 -4px 20px -4px ${alpha(theme.palette.primary.main, 0.08)}`,
+          // Safe area for devices with home indicator
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          borderRadius: 0,
+        }}
+        elevation={0}
+      >
       <BottomNavigation
         value={currentView}
         onChange={(_, newValue) => onNavigate(newValue)}
@@ -139,6 +159,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         />
       </BottomNavigation>
     </MotionPaper>
+    </>
   );
 };
 

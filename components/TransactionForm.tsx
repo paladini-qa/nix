@@ -53,6 +53,8 @@ import {
   TrendingDown as TrendingDownIcon,
   TrendingUp as TrendingUpIcon,
   CheckCircle as CheckCircleIcon,
+  ExpandMore as ExpandMoreIcon,
+  Settings as SettingsIcon,
 } from "@mui/icons-material";
 import { Transaction, TransactionType, FinancialSummary } from "../types";
 import { CATEGORY_KEYWORDS, QUICK_AMOUNTS } from "../constants";
@@ -318,6 +320,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   // Estado para controlar tab do preview unificado
   const [previewTab, setPreviewTab] = useState<"installments" | "shared" | "balance">("balance");
 
+  // Estado para controlar opções avançadas colapsáveis
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   const inputSx = getInputSx(theme, isDarkMode);
 
   // Extrair transações frequentes do histórico
@@ -466,6 +471,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     setShowQuickAmounts(false);
     setAmountFieldFocused(false);
     setLastDuplicateKey("");
+    // Auto-expandir opções avançadas se editando transação com opções ativas
+    if (editTransaction) {
+      const hasAdvanced = editTransaction.isRecurring || 
+        (editTransaction.installments !== undefined && editTransaction.installments > 1) ||
+        editTransaction.isShared;
+      setShowAdvanced(hasAdvanced);
+    } else {
+      setShowAdvanced(false);
+    }
   }, [editTransaction, isOpen]);
 
   // Handler para aplicar template de transação frequente
@@ -663,20 +677,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             <Typography variant="h6" fontWeight={700} sx={{ flex: 1, letterSpacing: "-0.01em" }}>
               {editTransaction ? "Editar Transação" : "Nova Transação"}
             </Typography>
-            <Button
-              type="submit"
-              form="transaction-form"
-              variant="contained"
-              size="small"
-              sx={{
-                borderRadius: "20px",
-                px: 2.5,
-                fontWeight: 600,
-                boxShadow: `0 4px 14px -4px ${alpha(theme.palette.primary.main, 0.4)}`,
-              }}
-            >
-              Salvar
-            </Button>
           </Toolbar>
         </AppBar>
       ) : (
@@ -713,7 +713,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         <DialogContent
           sx={{
             pt: isMobile ? 2 : 0,
-            pb: 3,
+            pb: isMobile ? 12 : 3, // Extra padding para barra fixa no mobile
             borderTop: "none",
             borderBottom: "none",
           }}
@@ -1094,8 +1094,113 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               />
             </Box>
 
-            {/* Recorrente Toggle */}
-            <Grid container spacing={2.5}>
+            {/* ========== OPÇÕES AVANÇADAS - Colapsável ========== */}
+            <Paper
+              elevation={0}
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              sx={{
+                p: 2,
+                borderRadius: "20px",
+                cursor: "pointer",
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.background.default, 0.3)
+                  : alpha("#000000", 0.02),
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.background.default, 0.5)
+                    : alpha("#000000", 0.04),
+                },
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "20px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: (isRecurring || hasInstallments || isShared)
+                        ? alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.12)
+                        : alpha("#64748B", 0.1),
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <SettingsIcon
+                      fontSize="small"
+                      sx={{
+                        color: (isRecurring || hasInstallments || isShared)
+                          ? "primary.main"
+                          : "text.secondary",
+                        transition: "color 0.2s ease",
+                      }}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>
+                      Opções Avançadas
+                    </Typography>
+                    {/* Chips mostrando opções ativas quando colapsado */}
+                    {!showAdvanced && (isRecurring || hasInstallments || isShared) && (
+                      <Box sx={{ display: "flex", gap: 0.5, mt: 0.5, flexWrap: "wrap" }}>
+                        {isRecurring && (
+                          <Chip
+                            label={`Recorrente (${frequency === "monthly" ? "Mensal" : "Anual"})`}
+                            size="small"
+                            sx={{
+                              height: 20,
+                              fontSize: "0.7rem",
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              color: theme.palette.primary.main,
+                            }}
+                          />
+                        )}
+                        {hasInstallments && (
+                          <Chip
+                            label={`${installments}x Parcelado`}
+                            size="small"
+                            sx={{
+                              height: 20,
+                              fontSize: "0.7rem",
+                              bgcolor: alpha(theme.palette.warning.main, 0.1),
+                              color: theme.palette.warning.main,
+                            }}
+                          />
+                        )}
+                        {isShared && sharedWith && (
+                          <Chip
+                            label={`Com ${sharedWith}`}
+                            size="small"
+                            sx={{
+                              height: 20,
+                              fontSize: "0.7rem",
+                              bgcolor: alpha(theme.palette.info.main, 0.1),
+                              color: theme.palette.info.main,
+                            }}
+                          />
+                        )}
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+                <ExpandMoreIcon
+                  sx={{
+                    transition: "transform 0.2s ease",
+                    transform: showAdvanced ? "rotate(180deg)" : "rotate(0deg)",
+                    color: "text.secondary",
+                  }}
+                />
+              </Box>
+            </Paper>
+
+            <Collapse in={showAdvanced} timeout={300}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
+                {/* Recorrente Toggle */}
+                <Grid container spacing={2.5}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Paper
                   elevation={0}
@@ -1519,6 +1624,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 </Box>
               )}
             </Box>
+              </Box>
+            </Collapse>
 
             {/* ========== PREVIEW UNIFICADO - Substitui 3 cards por 1 com tabs ========== */}
             {shouldShowUnifiedPreview && (
@@ -1781,6 +1888,51 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               Salvar Transação
             </Button>
           </DialogActions>
+        )}
+
+        {/* Mobile Bottom Save Bar - Zona do Polegar */}
+        {isMobile && (
+          <Box
+            sx={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              p: 2,
+              pb: "calc(16px + env(safe-area-inset-bottom, 0px))",
+              bgcolor: isDarkMode
+                ? alpha(theme.palette.background.paper, 0.95)
+                : alpha("#FFFFFF", 0.98),
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              boxShadow: isDarkMode
+                ? `0 -4px 24px -4px ${alpha("#000000", 0.4)}`
+                : `0 -4px 24px -4px ${alpha(theme.palette.primary.main, 0.1)}`,
+              zIndex: 1300,
+            }}
+          >
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              fullWidth
+              startIcon={<SaveIcon />}
+              sx={{
+                borderRadius: "20px",
+                py: 1.75,
+                fontWeight: 600,
+                fontSize: "1rem",
+                boxShadow: `0 8px 24px -8px ${alpha(theme.palette.primary.main, 0.5)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:active": {
+                  transform: "scale(0.98)",
+                },
+              }}
+            >
+              Salvar Transação
+            </Button>
+          </Box>
         )}
       </form>
     </Dialog>

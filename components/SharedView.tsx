@@ -369,7 +369,13 @@ const SharedView: React.FC<SharedViewProps> = ({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}>
+    <Box sx={{ 
+      display: "flex", 
+      flexDirection: "column", 
+      gap: isMobile ? 2 : 3,
+      // Padding extra para compensar a barra de navegação móvel
+      pb: isMobile ? 12 : 0,
+    }}>
       {/* Header */}
       <Box
         sx={{

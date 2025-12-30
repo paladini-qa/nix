@@ -165,7 +165,9 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
     };
   }, [transactions, summary, selectedMonth, selectedYear]);
 
-  const isPositiveBalance = summary.balance >= 0;
+  // Calcula o fluxo mensal (apenas do mês selecionado, não acumulado)
+  const monthlyFlow = summary.totalIncome - summary.totalExpense;
+  const isPositiveFlow = monthlyFlow >= 0;
 
   // Estilos base do card - Simplificado (sem glassmorphism)
   const getGlassCardStyles = (accentColor: string) => ({
@@ -207,7 +209,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
     transition: "all 0.3s ease-in-out",
   });
 
-  const balanceStyles = isPositiveBalance
+  const flowStyles = isPositiveFlow
     ? cardStyles.balance.positive
     : cardStyles.balance.negative;
 
@@ -218,7 +220,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
       animate="visible"
     >
       <Grid container spacing={isMobile ? 1.5 : 2.5}>
-        {/* Balance Card */}
+        {/* Monthly Flow Card - Fluxo do mês selecionado */}
         <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
           <MotionCard
             variants={cardVariants}
@@ -226,12 +228,12 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
               y: -4,
               scale: 1.01,
               boxShadow: isDarkMode
-                ? `0 16px 48px -8px ${alpha(balanceStyles.accentColor, 0.3)}, 0 8px 24px -4px ${alpha("#000000", 0.4)}`
-                : `0 16px 48px -8px ${alpha(balanceStyles.accentColor, 0.25)}, 0 8px 24px -4px ${alpha("#64748B", 0.12)}`,
+                ? `0 16px 48px -8px ${alpha(flowStyles.accentColor, 0.3)}, 0 8px 24px -4px ${alpha("#000000", 0.4)}`
+                : `0 16px 48px -8px ${alpha(flowStyles.accentColor, 0.25)}, 0 8px 24px -4px ${alpha("#64748B", 0.12)}`,
             }}
             whileTap={{ scale: 0.99 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            sx={getGlassCardStyles(balanceStyles.accentColor)}
+            sx={getGlassCardStyles(flowStyles.accentColor)}
             elevation={0}
           >
             <CardContent
@@ -241,19 +243,19 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 p: isMobile ? 2 : 3,
               }}
             >
-              {/* Título acima de tudo */}
+              {/* Título dinâmico baseado no fluxo mensal */}
               <Typography
                 variant="overline"
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.1em",
-                  fontSize: 12, // Aumentado de 10-11 para 12px (melhor contraste)
+                  fontSize: 12,
                   fontWeight: 600,
                   display: "block",
                   mb: 1,
                 }}
               >
-                Saldo Atual
+                {isPositiveFlow ? "Sobras do Mês" : "Défice Mensal"}
               </Typography>
               
               <Box
@@ -265,16 +267,16 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 }}
               >
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  {/* Animated Balance Counter */}
+                  {/* Animated Monthly Flow Counter */}
                   <CountUp
-                    value={summary.balance}
+                    value={Math.abs(monthlyFlow)}
                     formatter={isMobile ? formatBRL : formatBRLFull}
                     duration={1.2}
                     delay={0.3}
                     variant={isMobile ? "h5" : "h4"}
                     sx={{
                       fontWeight: 700,
-                      color: "text.primary",
+                      color: flowStyles.accentColor,
                       letterSpacing: "-0.02em",
                       fontVariantNumeric: "tabular-nums",
                       minHeight: isMobile ? 28 : 36,
@@ -299,19 +301,19 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                         width: 8,
                         height: 8,
                         borderRadius: "50%",
-                        bgcolor: balanceStyles.accentColor,
-                        boxShadow: `0 0 8px ${alpha(balanceStyles.accentColor, 0.5)}`,
+                        bgcolor: flowStyles.accentColor,
+                        boxShadow: `0 0 8px ${alpha(flowStyles.accentColor, 0.5)}`,
                       }}
                     />
                     <Typography
                       variant="caption"
                       sx={{
-                        color: balanceStyles.accentColor,
+                        color: flowStyles.accentColor,
                         fontWeight: 600,
                       }}
                     >
                       {/* UX Writing amigável - Tom Nix */}
-                      {isPositiveBalance ? "Mandou bem! No verde ✨" : "Atenção: saldo negativo"}
+                      {isPositiveFlow ? "Mandou bem! Sobrando ✨" : "Gastando mais que ganha"}
                     </Typography>
                   </MotionBox>
                 </Box>
@@ -321,14 +323,14 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
                   sx={getIconContainerStyles(
-                    balanceStyles.iconBg,
-                    balanceStyles.iconBgLight
+                    flowStyles.iconBg,
+                    flowStyles.iconBgLight
                   )}
                 >
                   <WalletIcon
                     sx={{
                       fontSize: isMobile ? 20 : 26,
-                      color: balanceStyles.accentColor,
+                      color: flowStyles.accentColor,
                     }}
                   />
                 </MotionBox>

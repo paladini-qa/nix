@@ -837,7 +837,13 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ 
+      display: "flex", 
+      flexDirection: "column", 
+      gap: 3,
+      // Padding extra para compensar a barra de navegação móvel
+      pb: isMobile ? 12 : 0,
+    }}>
       {/* Header */}
       <Box
         sx={{
