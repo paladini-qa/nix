@@ -54,6 +54,8 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   Group as GroupIcon,
+  CheckCircleOutline as PaidIcon,
+  AccessTime as PendingIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
@@ -100,6 +102,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterShared, setFilterShared] = useState<"all" | "shared" | "not_shared">("all");
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState<"all" | "paid" | "pending">("all");
   const [showFilters, setShowFilters] = useState(false);
 
   // Estado de ordenação
@@ -216,8 +219,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     if (filterType !== "all") count++;
     if (filterCategory !== "all") count++;
     if (filterShared !== "all") count++;
+    if (filterPaymentStatus !== "all") count++;
     return count;
-  }, [filterType, filterCategory, filterShared]);
+  }, [filterType, filterCategory, filterShared, filterPaymentStatus]);
 
   // Filtra e ordena dados
   const filteredData = useMemo(() => {
@@ -233,7 +237,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         filterShared === "all" ||
         (filterShared === "shared" && t.isShared) ||
         (filterShared === "not_shared" && !t.isShared);
-      return matchesSearch && matchesType && matchesCategory && matchesShared;
+      const matchesPaymentStatus =
+        filterPaymentStatus === "all" ||
+        (filterPaymentStatus === "paid" && t.isPaid !== false) ||
+        (filterPaymentStatus === "pending" && t.isPaid === false);
+      return matchesSearch && matchesType && matchesCategory && matchesShared && matchesPaymentStatus;
     });
 
     // Ordenação
@@ -282,6 +290,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     filterType,
     filterCategory,
     filterShared,
+    filterPaymentStatus,
     sortConfig,
   ]);
 
@@ -1170,6 +1179,31 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               </Select>
             </FormControl>
 
+            <FormControl size="small" sx={{ minWidth: 130 }}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filterPaymentStatus}
+                label="Status"
+                onChange={(e: SelectChangeEvent) =>
+                  setFilterPaymentStatus(e.target.value as "all" | "paid" | "pending")
+                }
+              >
+                <MenuItem value="all">All Status</MenuItem>
+                <MenuItem value="paid">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <PaidIcon fontSize="small" color="success" />
+                    Paid
+                  </Box>
+                </MenuItem>
+                <MenuItem value="pending">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <PendingIcon fontSize="small" color="warning" />
+                    Pending
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+
             {activeFiltersCount > 0 && (
               <Button
                 size="small"
@@ -1177,6 +1211,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   setFilterType("all");
                   setFilterCategory("all");
                   setFilterShared("all");
+                  setFilterPaymentStatus("all");
                 }}
                 sx={{ textTransform: "none" }}
               >
