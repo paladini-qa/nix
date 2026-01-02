@@ -2739,6 +2739,7 @@ const AppContent: React.FC<{
                   <SharedView
                     transactions={transactions}
                     friends={friends}
+                    userName={displayName}
                     onNewTransaction={handleNewTransaction}
                     onEdit={handleEditTransaction}
                     onDelete={handleDeleteTransaction}

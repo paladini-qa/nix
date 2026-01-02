@@ -32,6 +32,7 @@ import {
   Avatar,
   alpha,
   Tooltip,
+  CircularProgress,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -48,13 +49,16 @@ import {
   AccountBalance as BalanceIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
+  PictureAsPdf as PdfIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
+import { generateFriendReport, prepareFriendReportData } from "../services/pdfService";
 
 interface SharedViewProps {
   transactions: Transaction[];
   friends: string[];
+  userName?: string; // Nome do usuário para o relatório PDF
   onNewTransaction: () => void;
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
@@ -80,6 +84,7 @@ interface FriendBalance {
 const SharedView: React.FC<SharedViewProps> = ({
   transactions,
   friends,
+  userName = "Usuário",
   onNewTransaction,
   onEdit,
   onDelete,
@@ -94,6 +99,31 @@ const SharedView: React.FC<SharedViewProps> = ({
     element: HTMLElement | null;
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
+  const [generatingPdf, setGeneratingPdf] = useState<string | null>(null); // friendName sendo gerado
+
+  // Gera o relatório PDF para um amigo específico
+  const handleGeneratePdf = async (friendName: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Previne seleção do card
+    setGeneratingPdf(friendName);
+
+    try {
+      // Pequeno delay para mostrar o loading
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const reportData = prepareFriendReportData(
+        friendName,
+        userName,
+        transactions,
+        transactions
+      );
+
+      generateFriendReport(reportData);
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+    } finally {
+      setGeneratingPdf(null);
+    }
+  };
 
   // Filtra transações vinculadas a amigos (tanto expenses quanto incomes)
   const sharedTransactions = useMemo(() => {
@@ -640,6 +670,32 @@ const SharedView: React.FC<SharedViewProps> = ({
                           {friend.transactionCount !== 1 ? "s" : ""}
                         </Typography>
                       </Box>
+                      {/* Botão de gerar relatório PDF */}
+                      <Tooltip title="Gerar relatório PDF" arrow>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => handleGeneratePdf(friend.name, e)}
+                          disabled={generatingPdf === friend.name}
+                          sx={{
+                            bgcolor: alpha(theme.palette.primary.main, 0.1),
+                            color: "primary.main",
+                            transition: "all 0.2s ease-in-out",
+                            "&:hover": {
+                              bgcolor: alpha(theme.palette.primary.main, 0.2),
+                              transform: "translateY(-2px)",
+                            },
+                            "&:disabled": {
+                              bgcolor: alpha(theme.palette.action.disabled, 0.1),
+                            },
+                          }}
+                        >
+                          {generatingPdf === friend.name ? (
+                            <CircularProgress size={18} color="inherit" />
+                          ) : (
+                            <PdfIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </Tooltip>
                     </Box>
 
                     <Divider sx={{ mb: 2 }} />
@@ -864,13 +920,36 @@ const SharedView: React.FC<SharedViewProps> = ({
                   : " (você deve)"}
               </Typography>
             </Box>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setSelectedFriend("all")}
-            >
-              Limpar Filtro
-            </Button>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={
+                  generatingPdf === selectedFriendStats.name ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <PdfIcon />
+                  )
+                }
+                disabled={generatingPdf === selectedFriendStats.name}
+                onClick={(e) => handleGeneratePdf(selectedFriendStats.name, e)}
+                sx={{
+                  bgcolor: theme.palette.primary.main,
+                  "&:hover": {
+                    bgcolor: theme.palette.primary.dark,
+                  },
+                }}
+              >
+                {isMobile ? "PDF" : "Gerar Relatório PDF"}
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setSelectedFriend("all")}
+              >
+                Limpar Filtro
+              </Button>
+            </Box>
           </Box>
         </Paper>
       )}
