@@ -67,7 +67,6 @@ const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
 const PaymentMethodsView = lazy(() => import("./components/PaymentMethodsView"));
 const CategoriesView = lazy(() => import("./components/CategoriesView"));
 const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
-const PluggyConnectionsView = lazy(() => import("./components/PluggyConnectionsView"));
 
 import type { AdvancedFiltersState } from "./components/AdvancedFilters";
 import { AdvancedFiltersButton } from "./components/AdvancedFilters";
@@ -200,7 +199,6 @@ const AppContent: React.FC<{
     | "goals"
     | "paymentMethods"
     | "categories"
-    | "pluggyConnections"
   >("dashboard");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -2962,13 +2960,6 @@ const AppContent: React.FC<{
                     onClearInitialCategory={() => setSelectedCategoryNav(null)}
                   />
                 </Suspense>
-              ) : currentView === "pluggyConnections" ? (
-                <Suspense fallback={<ViewLoading />}>
-                  <PluggyConnectionsView 
-                    userId={session.user.id} 
-                    onTransactionsRefresh={onRefreshData}
-                  />
-                </Suspense>
               ) : null}
             </Box>
           </Box>
@@ -3201,7 +3192,6 @@ const App: React.FC = () => {
 
       if (txs) {
         console.log("[DEBUG] Transações carregadas do banco:", txs.length);
-        console.log("[DEBUG] Transações com pluggy_id:", txs.filter((t: any) => t.pluggy_transaction_id).length);
         const mappedTxs: Transaction[] = txs.map((t: any) => ({
           id: t.id,
           description: t.description,
@@ -3222,7 +3212,6 @@ const App: React.FC = () => {
           relatedTransactionId: t.related_transaction_id,
           installmentGroupId: t.installment_group_id,
           excludedDates: t.excluded_dates ?? [],
-          pluggyTransactionId: t.pluggy_transaction_id,
         }));
         setTransactions(mappedTxs);
       }

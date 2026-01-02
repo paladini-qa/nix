@@ -100,7 +100,6 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
           relatedTransactionId: t.related_transaction_id,
           installmentGroupId: t.installment_group_id,
           excludedDates: t.excluded_dates ?? [],
-          pluggyTransactionId: t.pluggy_transaction_id,
         }));
         setTransactions(mappedTxs);
       }

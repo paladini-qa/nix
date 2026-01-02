@@ -28,7 +28,6 @@ import {
   Flag as GoalIcon,
   Category as CategoryIcon,
   Payment as PaymentIcon,
-  AccountBalance as BankConnectionIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,8 +51,7 @@ type ViewType =
   | "analytics"
   | "settings"
   | "paymentMethods"
-  | "categories"
-  | "pluggyConnections";
+  | "categories";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -139,7 +137,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
   // Itens de ferramentas
   const toolsNavItems: NavItem[] = [
-    { icon: BankConnectionIcon, label: "Conexões Bancárias", id: "pluggyConnections" },
     { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" },
   ];
 
