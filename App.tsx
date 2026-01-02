@@ -3008,7 +3008,8 @@ const AppContent: React.FC<{
               setRecurringEditMode(null);
               setRecurringVirtualDate(undefined);
               setCurrentEditMode(null);
-              setPendingVirtualEdit(null);
+              // NÃO resetar pendingVirtualEdit aqui - é usado por handleRecurringEditSave
+              // e é resetado no final dessa função
             }}
             onSave={handleRecurringEditSave}
             transaction={recurringEditTransaction}

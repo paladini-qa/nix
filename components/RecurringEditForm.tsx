@@ -56,7 +56,7 @@ interface RecurringEditFormProps {
     transaction: Omit<Transaction, "id" | "createdAt">,
     editId?: string,
     editMode?: EditOption
-  ) => void;
+  ) => Promise<void> | void;
   transaction: Transaction | null;
   editMode: EditOption;
   categories: { income: string[]; expense: string[] };
@@ -109,7 +109,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
     }
   }, [transaction, isOpen, editMode, virtualDate]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!transaction) return;
 
     const parsedAmount = parseFloat(amount.replace(",", "."));
@@ -136,7 +136,8 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
       ? undefined 
       : transaction.id;
 
-    onSave(newTx, editId, editMode);
+    // Aguarda onSave completar antes de fechar (onSave é assíncrono)
+    await onSave(newTx, editId, editMode);
     onClose();
   };
 

@@ -247,16 +247,35 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         (nextOccurrence.getMonth() - startDate.getMonth())
       ) + 1;
       
-      // Gera 12 ocorrências a partir da próxima
-      for (let i = 0; i < 12; i++) {
+      // Gera 12 ocorrências a partir da próxima, ignorando datas excluídas
+      const excludedDates = transaction.excludedDates || [];
+      let occurrenceCount = 0;
+      let monthOffset = 0;
+      
+      // Função auxiliar para formatar data local no formato YYYY-MM-DD
+      const formatLocalDate = (d: Date): string => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
+      
+      while (occurrenceCount < 12) {
         const occDate = new Date(nextOccurrence);
-        occDate.setMonth(nextOccurrence.getMonth() + i);
+        occDate.setMonth(nextOccurrence.getMonth() + monthOffset);
+        
+        // Verifica se esta data está excluída (usando formato local)
+        const occDateString = formatLocalDate(occDate);
+        if (excludedDates.includes(occDateString)) {
+          monthOffset++;
+          continue; // Pula esta ocorrência
+        }
         
         const isPast = occDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const isCurrent = occDate.getMonth() === today.getMonth() && occDate.getFullYear() === today.getFullYear();
         
         occurrences.push({
-          date: occDate.toISOString().split("T")[0],
+          date: occDateString,
           formattedDate: occDate.toLocaleDateString("pt-BR", {
             day: "2-digit",
             month: "short",
@@ -266,8 +285,11 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           year: occDate.getFullYear(),
           isPast,
           isCurrent,
-          occurrenceNumber: startOccurrenceNumber + i,
+          occurrenceNumber: startOccurrenceNumber + monthOffset,
         });
+        
+        occurrenceCount++;
+        monthOffset++;
       }
     } else if (transaction.frequency === "yearly") {
       // Para anuais, mostra 12 ocorrências (12 anos à frente)
@@ -278,17 +300,36 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       // Calcula quantas ocorrências já passaram desde o início
       const startOccurrenceNumber = Math.max(0, nextOccurrence.getFullYear() - startDate.getFullYear()) + 1;
       
-      // Gera 12 ocorrências anuais
-      for (let i = 0; i < 12; i++) {
+      // Gera 12 ocorrências anuais, ignorando datas excluídas
+      const excludedDatesYearly = transaction.excludedDates || [];
+      let yearlyCount = 0;
+      let yearOffset = 0;
+      
+      // Função auxiliar para formatar data local no formato YYYY-MM-DD
+      const formatLocalDateYearly = (d: Date): string => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
+      
+      while (yearlyCount < 12) {
         const occDate = new Date(nextOccurrence);
-        occDate.setFullYear(nextOccurrence.getFullYear() + i);
+        occDate.setFullYear(nextOccurrence.getFullYear() + yearOffset);
+        
+        // Verifica se esta data está excluída (usando formato local)
+        const occDateString = formatLocalDateYearly(occDate);
+        if (excludedDatesYearly.includes(occDateString)) {
+          yearOffset++;
+          continue; // Pula esta ocorrência
+        }
         
         const isPast = occDate < today;
         const isCurrent = occDate.getFullYear() === today.getFullYear() && 
           occDate.getMonth() === today.getMonth();
         
         occurrences.push({
-          date: occDate.toISOString().split("T")[0],
+          date: occDateString,
           formattedDate: occDate.toLocaleDateString("pt-BR", {
             day: "2-digit",
             month: "short",
@@ -298,8 +339,11 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           year: occDate.getFullYear(),
           isPast,
           isCurrent,
-          occurrenceNumber: startOccurrenceNumber + i,
+          occurrenceNumber: startOccurrenceNumber + yearOffset,
         });
+        
+        yearlyCount++;
+        yearOffset++;
       }
     }
     
