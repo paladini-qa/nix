@@ -3200,6 +3200,8 @@ const App: React.FC = () => {
       if (txError) throw txError;
 
       if (txs) {
+        console.log("[DEBUG] Transações carregadas do banco:", txs.length);
+        console.log("[DEBUG] Transações com pluggy_id:", txs.filter((t: any) => t.pluggy_transaction_id).length);
         const mappedTxs: Transaction[] = txs.map((t: any) => ({
           id: t.id,
           description: t.description,
@@ -3218,6 +3220,9 @@ const App: React.FC = () => {
           sharedWith: t.shared_with,
           iOwe: t.i_owe,
           relatedTransactionId: t.related_transaction_id,
+          installmentGroupId: t.installment_group_id,
+          excludedDates: t.excluded_dates ?? [],
+          pluggyTransactionId: t.pluggy_transaction_id,
         }));
         setTransactions(mappedTxs);
       }
