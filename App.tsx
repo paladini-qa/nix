@@ -62,7 +62,7 @@ const SplitsView = lazy(() => import("./components/SplitsView"));
 const SharedView = lazy(() => import("./components/SharedView"));
 const BudgetsView = lazy(() => import("./components/BudgetsView"));
 const GoalsView = lazy(() => import("./components/GoalsView"));
-const AnalyticsView = lazy(() => import("./components/AnalyticsView"));
+import AnalyticsView from "./components/AnalyticsView";
 const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
 const PaymentMethodsView = lazy(() => import("./components/PaymentMethodsView"));
 const CategoriesView = lazy(() => import("./components/CategoriesView"));
@@ -513,6 +513,127 @@ const AppContent: React.FC<{
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [filteredTransactions, transactions, advancedFilters]);
+
+  // Transações para os gráficos do Analytics (inclui recorrentes)
+  // Com filtro avançado: gera recorrentes para o período do filtro
+  // Sem filtro avançado: gera recorrentes desde a primeira transação até 3 meses no futuro
+  const analyticsTransactions = useMemo(() => {
+    const hasAdvancedDates = advancedFilters.startDate !== null || advancedFilters.endDate !== null;
+    const hasOtherFilters = advancedFilters.type !== "all" ||
+      advancedFilters.categories.length > 0 ||
+      advancedFilters.paymentMethods.length > 0;
+    
+    // Calcula o mês de referência atual (até dia 10 = mês corrente, após = próximo)
+    const now = new Date();
+    const day = now.getDate();
+    let refMonth = now.getMonth();
+    let refYear = now.getFullYear();
+    
+    if (day > 10) {
+      refMonth = refMonth === 11 ? 0 : refMonth + 1;
+      refYear = refMonth === 0 ? refYear + 1 : refYear;
+    }
+    
+    let startYear: number;
+    let startMonth: number;
+    let endYear: number;
+    let endMonth: number;
+    
+    if (hasAdvancedDates) {
+      // Com filtro avançado com datas: usa as datas do filtro
+      startYear = advancedFilters.startDate?.year() ?? refYear - 1;
+      startMonth = advancedFilters.startDate ? advancedFilters.startDate.month() + 1 : 1;
+      endYear = advancedFilters.endDate?.year() ?? refYear + 1;
+      endMonth = advancedFilters.endDate ? advancedFilters.endDate.month() + 1 : 12;
+    } else {
+      // Sem filtro de datas: encontra a primeira transação recorrente
+      startYear = refYear;
+      startMonth = refMonth + 1;
+      
+      transactions.forEach((t) => {
+        if (t.isRecurring && t.frequency) {
+          const [year, month] = t.date.split("-").map(Number);
+          if (year < startYear || (year === startYear && month < startMonth)) {
+            startYear = year;
+            startMonth = month;
+          }
+        }
+      });
+      
+      // Fim do período (3 meses depois do mês atual)
+      endMonth = refMonth + 4; // +3 meses + 1 para formato 1-12
+      endYear = refYear;
+      while (endMonth > 12) {
+        endMonth -= 12;
+        endYear += 1;
+      }
+    }
+    
+    // Gera transações recorrentes para o período
+    const recurringForAnalytics = generateRecurringForDateRange(
+      startYear, 
+      startMonth,
+      endYear, 
+      endMonth
+    );
+    
+    // Combina transações originais com as recorrentes geradas
+    let allTransactions = [...transactions, ...recurringForAnalytics];
+    
+    // Aplica filtros se necessário
+    if (hasAdvancedDates || hasOtherFilters) {
+      allTransactions = allTransactions.filter((tx) => {
+        // Filtro por data
+        if (advancedFilters.startDate) {
+          const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
+          const startYear = advancedFilters.startDate.year();
+          const startMonth = advancedFilters.startDate.month() + 1;
+          const startDay = advancedFilters.startDate.date();
+          
+          const txDateNum = txYear * 10000 + txMonth * 100 + txDay;
+          const startDateNum = startYear * 10000 + startMonth * 100 + startDay;
+          
+          if (txDateNum < startDateNum) return false;
+        }
+        if (advancedFilters.endDate) {
+          const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
+          const endYear = advancedFilters.endDate.year();
+          const endMonth = advancedFilters.endDate.month() + 1;
+          const endDay = advancedFilters.endDate.date();
+          
+          const txDateNum = txYear * 10000 + txMonth * 100 + txDay;
+          const endDateNum = endYear * 10000 + endMonth * 100 + endDay;
+          
+          if (txDateNum > endDateNum) return false;
+        }
+
+        // Filtro por tipo
+        if (advancedFilters.type !== "all" && tx.type !== advancedFilters.type) {
+          return false;
+        }
+
+        // Filtro por categoria
+        if (
+          advancedFilters.categories.length > 0 &&
+          !advancedFilters.categories.includes(tx.category)
+        ) {
+          return false;
+        }
+
+        // Filtro por método de pagamento
+        if (
+          advancedFilters.paymentMethods.length > 0 &&
+          !advancedFilters.paymentMethods.includes(tx.paymentMethod)
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+    }
+    
+    return allTransactions;
+  }, [transactions, advancedFilters, generateRecurringForDateRange]);
 
   // Summary (based on filtered transactions for dashboard)
   const summary = useMemo<FinancialSummary>(() => {
@@ -2538,7 +2659,8 @@ const AppContent: React.FC<{
               // Extra padding para bottom navigation (64px) + safe area + FABs
               pb: { xs: "140px", lg: 4 },
               maxWidth: "100vw",
-              overflow: "hidden",
+              overflowX: "hidden",
+              overflowY: "auto",
               boxSizing: "border-box",
             }}
           >
@@ -2673,9 +2795,17 @@ const AppContent: React.FC<{
                     />
 
                     {/* Analytics Charts */}
-                    <Suspense fallback={<ViewLoading />}>
-                      <AnalyticsView transactions={dashboardFilteredTransactions} />
-                    </Suspense>
+                    <AnalyticsView 
+                      transactions={analyticsTransactions} 
+                      hasAdvancedFilters={
+                        advancedFilters.startDate !== null ||
+                        advancedFilters.endDate !== null ||
+                        advancedFilters.type !== "all" ||
+                        advancedFilters.categories.length > 0 ||
+                        advancedFilters.paymentMethods.length > 0
+                      }
+                      advancedFilters={advancedFilters}
+                    />
 
                     {/* Mobile FAB for Dashboard */}
                     {isMobile && (

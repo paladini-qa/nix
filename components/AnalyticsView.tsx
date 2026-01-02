@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -33,11 +33,23 @@ import {
   PieChart,
   Pie,
   Cell,
+  ReferenceLine,
 } from "recharts";
 import { Transaction } from "../types";
+import type { Dayjs } from "dayjs";
+
+interface AdvancedFiltersInfo {
+  startDate: Dayjs | null;
+  endDate: Dayjs | null;
+  type: "all" | "income" | "expense";
+  categories: string[];
+  paymentMethods: string[];
+}
 
 interface AnalyticsViewProps {
   transactions: Transaction[];
+  hasAdvancedFilters?: boolean;
+  advancedFilters?: AdvancedFiltersInfo;
 }
 
 const COLORS = [
@@ -51,10 +63,57 @@ const COLORS = [
   "#84cc16",
 ];
 
-const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
+const AnalyticsView: React.FC<AnalyticsViewProps> = ({ 
+  transactions, 
+  hasAdvancedFilters = false,
+  advancedFilters 
+}) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDarkMode = theme.palette.mode === "dark";
+  
+  // Hook para calcular largura dinâmica dos gráficos
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [chartWidth, setChartWidth] = useState(800);
+  
+  const updateWidth = useCallback(() => {
+    if (containerRef.current) {
+      const width = containerRef.current.offsetWidth - (isMobile ? 32 : 48); // Padding do Paper
+      setChartWidth(Math.max(width, 300)); // Mínimo de 300px
+    }
+  }, [isMobile]);
+  
+  useEffect(() => {
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, [updateWidth]);
+  
+  // Calcula o "mês atual" baseado na regra do dia 10
+  // Até dia 10: mês corrente | Após dia 10: próximo mês
+  const currentReferenceMonth = useMemo(() => {
+    const now = new Date();
+    const day = now.getDate();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+    
+    if (day <= 10) {
+      return { month, year };
+    } else {
+      // Próximo mês
+      const nextMonth = month === 11 ? 0 : month + 1;
+      const nextYear = month === 11 ? year + 1 : year;
+      return { month: nextMonth, year: nextYear };
+    }
+  }, []);
+  
+  // Gera a chave do mês no formato YYYY-MM
+  const getMonthKey = (year: number, month: number) => {
+    return `${year}-${String(month + 1).padStart(2, "0")}`;
+  };
+  
+  // Chave do mês atual de referência
+  const currentMonthKey = getMonthKey(currentReferenceMonth.year, currentReferenceMonth.month);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -64,13 +123,17 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
     }).format(value);
   };
 
-  // Dados dos últimos 6 meses para gráfico de barras
+  // Dados para gráfico de barras mensal
+  // Sem filtro avançado: 3 meses antes + atual + 3 meses depois
+  // Com filtro avançado: todos os meses com dados no período filtrado
   const monthlyData = useMemo(() => {
     const months: {
       month: string;
+      monthKey: string;
       income: number;
       expense: number;
       balance: number;
+      isCurrentMonth: boolean;
     }[] = [];
 
     // Agrupa por mês as transações
@@ -90,55 +153,173 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
       monthlyMap.set(key, current);
     });
 
-    // Converte para array ordenado
-    const sortedKeys = Array.from(monthlyMap.keys()).sort();
-    // Pega os últimos 6 meses
-    const recentKeys = sortedKeys.slice(-6);
+    let keysToShow: string[] = [];
     
-    recentKeys.forEach((key) => {
+    if (!hasAdvancedFilters) {
+      // Sem filtro: gera 7 meses (3 antes + atual + 3 depois)
+      const { month: refMonth, year: refYear } = currentReferenceMonth;
+      
+      for (let offset = -3; offset <= 3; offset++) {
+        let targetMonth = refMonth + offset;
+        let targetYear = refYear;
+        
+        // Ajusta o ano se necessário
+        while (targetMonth < 0) {
+          targetMonth += 12;
+          targetYear -= 1;
+        }
+        while (targetMonth > 11) {
+          targetMonth -= 12;
+          targetYear += 1;
+        }
+        
+        keysToShow.push(getMonthKey(targetYear, targetMonth));
+      }
+    } else if (advancedFilters?.startDate && advancedFilters?.endDate) {
+      // Com filtro avançado com datas: gera meses entre as datas
+      const startYear = advancedFilters.startDate.year();
+      const startMonth = advancedFilters.startDate.month();
+      const endYear = advancedFilters.endDate.year();
+      const endMonth = advancedFilters.endDate.month();
+      
+      let currentYear = startYear;
+      let currentMonth = startMonth;
+      
+      while (
+        currentYear < endYear ||
+        (currentYear === endYear && currentMonth <= endMonth)
+      ) {
+        keysToShow.push(getMonthKey(currentYear, currentMonth));
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+      }
+    } else {
+      // Com filtro avançado sem datas: mostra todos os meses com dados, ordenados
+      keysToShow = Array.from(monthlyMap.keys()).sort();
+    }
+    
+    keysToShow.forEach((key) => {
       const [year, month] = key.split("-");
       const d = new Date(parseInt(year), parseInt(month) - 1, 1);
       const monthStr = d
         .toLocaleDateString("pt-BR", { month: "short" })
         .replace(".", "");
-      const data = monthlyMap.get(key)!;
+      const data = monthlyMap.get(key) || { income: 0, expense: 0 };
+      const isCurrentMonth = key === currentMonthKey;
 
       months.push({
         month: monthStr.charAt(0).toUpperCase() + monthStr.slice(1),
+        monthKey: key,
         income: data.income,
         expense: data.expense,
         balance: data.income - data.expense,
+        isCurrentMonth,
       });
     });
 
     return months;
-  }, [transactions]);
+  }, [transactions, hasAdvancedFilters, advancedFilters, currentReferenceMonth, currentMonthKey, getMonthKey]);
 
   // Evolução do saldo ao longo do tempo
+  // Sem filtro avançado: 3 meses antes + atual + 3 meses depois
+  // Com filtro avançado: todos os meses com dados
   const balanceEvolution = useMemo(() => {
-    const data: { date: string; balance: number }[] = [];
-    let runningBalance = 0;
+    const data: { 
+      date: string; 
+      monthKey: string; 
+      balance: number; 
+      income: number;
+      expense: number;
+      monthBalance: number;
+      isCurrentMonth: boolean 
+    }[] = [];
 
     // Ordena transações por data
     const sortedTxs = [...transactions].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
-    // Agrupa por mês
-    const monthlyBalances = new Map<string, number>();
+    // Agrupa por mês com detalhes de receita e despesa
+    const monthlyData = new Map<string, { income: number; expense: number }>();
 
     sortedTxs.forEach((tx) => {
       const [year, month] = tx.date.split("-");
       const key = `${year}-${month}`;
-      const change = tx.type === "income" ? tx.amount || 0 : -(tx.amount || 0);
-      monthlyBalances.set(key, (monthlyBalances.get(key) || 0) + change);
+      const current = monthlyData.get(key) || { income: 0, expense: 0 };
+      
+      if (tx.type === "income") {
+        current.income += tx.amount || 0;
+      } else {
+        current.expense += tx.amount || 0;
+      }
+      
+      monthlyData.set(key, current);
     });
 
-    const sortedKeys = Array.from(monthlyBalances.keys()).sort();
-    // Pega os últimos 12 meses
-    const recentKeys = sortedKeys.slice(-12);
+    let keysToShow: string[] = [];
     
-    recentKeys.forEach((key) => {
+    if (!hasAdvancedFilters) {
+      // Sem filtro: gera 7 meses (3 antes + atual + 3 depois)
+      const { month: refMonth, year: refYear } = currentReferenceMonth;
+      
+      for (let offset = -3; offset <= 3; offset++) {
+        let targetMonth = refMonth + offset;
+        let targetYear = refYear;
+        
+        while (targetMonth < 0) {
+          targetMonth += 12;
+          targetYear -= 1;
+        }
+        while (targetMonth > 11) {
+          targetMonth -= 12;
+          targetYear += 1;
+        }
+        
+        keysToShow.push(getMonthKey(targetYear, targetMonth));
+      }
+    } else if (advancedFilters?.startDate && advancedFilters?.endDate) {
+      // Com filtro avançado com datas: gera meses entre as datas
+      const startYear = advancedFilters.startDate.year();
+      const startMonth = advancedFilters.startDate.month();
+      const endYear = advancedFilters.endDate.year();
+      const endMonth = advancedFilters.endDate.month();
+      
+      let currentYear = startYear;
+      let currentMonth = startMonth;
+      
+      while (
+        currentYear < endYear ||
+        (currentYear === endYear && currentMonth <= endMonth)
+      ) {
+        keysToShow.push(getMonthKey(currentYear, currentMonth));
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+      }
+    } else {
+      // Com filtro avançado sem datas: mostra todos os meses com dados
+      keysToShow = Array.from(monthlyData.keys()).sort();
+    }
+
+    // Calcula o saldo acumulado até o primeiro mês exibido
+    const allKeys = Array.from(monthlyData.keys()).sort();
+    let runningBalance = 0;
+    
+    // Soma os saldos dos meses anteriores ao primeiro mês exibido
+    for (const key of allKeys) {
+      if (keysToShow.includes(key)) break;
+      const monthData = monthlyData.get(key);
+      if (monthData) {
+        runningBalance += monthData.income - monthData.expense;
+      }
+    }
+    
+    keysToShow.forEach((key) => {
       const [year, month] = key.split("-");
       const d = new Date(parseInt(year), parseInt(month) - 1, 1);
       const monthLabel = d.toLocaleDateString("pt-BR", {
@@ -146,15 +327,23 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
         year: "2-digit",
       });
 
-      runningBalance += monthlyBalances.get(key) || 0;
+      const monthData = monthlyData.get(key) || { income: 0, expense: 0 };
+      const monthBalance = monthData.income - monthData.expense;
+      runningBalance += monthBalance;
+      
       data.push({
         date: monthLabel,
+        monthKey: key,
         balance: runningBalance,
+        income: monthData.income,
+        expense: monthData.expense,
+        monthBalance,
+        isCurrentMonth: key === currentMonthKey,
       });
     });
 
     return data;
-  }, [transactions]);
+  }, [transactions, hasAdvancedFilters, advancedFilters, currentReferenceMonth, currentMonthKey, getMonthKey]);
 
   // Fluxo de caixa diário (últimos 30 dias)
   const cashFlow = useMemo(() => {
@@ -290,12 +479,16 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
 
   return (
     <Box
+      ref={containerRef}
       sx={{ 
         display: "flex", 
         flexDirection: "column", 
         gap: isMobile ? 2 : 3,
         // Extra padding para bottom navigation
         pb: { xs: "140px", md: 0 },
+        // Fix para ResponsiveContainer funcionar corretamente em flexbox
+        width: "100%",
+        minWidth: 0,
       }}
     >
       {/* Summary Stats */}
@@ -445,6 +638,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
           p: isMobile ? 2 : 3,
           position: "relative",
           overflow: "hidden",
+          minWidth: 0,
           background: isDarkMode
             ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
             : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
@@ -455,16 +649,35 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
         }}
       >
         <SectionHeader icon={<BarChartIcon />} title="Comparativo Mensal" />
-        <Box sx={{ height: isMobile ? 250 : 300 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyData} barGap={4}>
+        <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
+          <BarChart data={monthlyData} barGap={4} width={chartWidth} height={isMobile ? 250 : 300}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}
               />
               <XAxis
                 dataKey="month"
-                tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+                tick={(props) => {
+                  const { x, y, payload } = props;
+                  const dataIndex = monthlyData.findIndex(d => d.month === payload.value);
+                  const isCurrentMonth = dataIndex >= 0 && monthlyData[dataIndex]?.isCurrentMonth;
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      <text
+                        x={0}
+                        y={0}
+                        dy={16}
+                        textAnchor="middle"
+                        fill={isCurrentMonth ? "#6366f1" : theme.palette.text.secondary}
+                        fontSize={12}
+                        fontWeight={isCurrentMonth ? 700 : 400}
+                      >
+                        {payload.value}
+                        {isCurrentMonth && " •"}
+                      </text>
+                    </g>
+                  );
+                }}
                 axisLine={{
                   stroke: alpha(theme.palette.text.secondary, 0.2),
                 }}
@@ -477,24 +690,54 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
                 }}
               />
               <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
-                {...tooltipStyle}
+                formatter={(value: number, name: string) => [
+                  formatCurrency(value),
+                  <span style={{ color: name === "Despesas" ? "#ef4444" : "#10b981" }}>{name}</span>
+                ]}
+                contentStyle={{
+                  backgroundColor: isDarkMode ? alpha("#1e1e2e", 0.95) : alpha("#ffffff", 0.95),
+                  border: `1px solid ${isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}`,
+                  borderRadius: "12px",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                }}
+                labelStyle={{ color: theme.palette.text.primary, fontWeight: 600, marginBottom: 4 }}
+                itemStyle={{ padding: "2px 0" }}
               />
-              <Legend />
-              <Bar
-                dataKey="income"
-                name="Receitas"
-                fill="#10b981"
-                radius={[4, 4, 0, 0]}
+              <Legend 
+                content={() => (
+                  <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 12, height: 12, backgroundColor: "#ef4444", borderRadius: 2 }} />
+                      <span style={{ color: "#ef4444", fontSize: 12 }}>Despesas</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 12, height: 12, backgroundColor: "#10b981", borderRadius: 2 }} />
+                      <span style={{ color: "#10b981", fontSize: 12 }}>Receitas</span>
+                    </div>
+                  </div>
+                )}
               />
-              <Bar
-                dataKey="expense"
-                name="Despesas"
-                fill="#ef4444"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+              <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]}>
+                {monthlyData.map((entry, index) => (
+                  <Cell 
+                    key={`expense-${index}`} 
+                    fill={entry.isCurrentMonth ? "#dc2626" : "#ef4444"}
+                    stroke={entry.isCurrentMonth ? "#6366f1" : "none"}
+                    strokeWidth={entry.isCurrentMonth ? 2 : 0}
+                  />
+                ))}
+              </Bar>
+              <Bar dataKey="income" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]}>
+                {monthlyData.map((entry, index) => (
+                  <Cell 
+                    key={`income-${index}`} 
+                    fill={entry.isCurrentMonth ? "#059669" : "#10b981"}
+                    stroke={entry.isCurrentMonth ? "#6366f1" : "none"}
+                    strokeWidth={entry.isCurrentMonth ? 2 : 0}
+                  />
+                ))}
+              </Bar>
+          </BarChart>
         </Box>
       </Paper>
 
@@ -505,6 +748,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
           p: isMobile ? 2 : 3,
           position: "relative",
           overflow: "hidden",
+          minWidth: 0,
           background: isDarkMode
             ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
             : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
@@ -515,16 +759,35 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
         }}
       >
         <SectionHeader icon={<LineChartIcon />} title="Evolução do Saldo" />
-        <Box sx={{ height: isMobile ? 250 : 300 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={balanceEvolution}>
+        <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
+          <LineChart data={balanceEvolution} width={chartWidth} height={isMobile ? 250 : 300}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}
               />
               <XAxis
                 dataKey="date"
-                tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
+                tick={(props) => {
+                  const { x, y, payload } = props;
+                  const dataIndex = balanceEvolution.findIndex(d => d.date === payload.value);
+                  const isCurrentMonth = dataIndex >= 0 && balanceEvolution[dataIndex]?.isCurrentMonth;
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      <text
+                        x={0}
+                        y={0}
+                        dy={16}
+                        textAnchor="middle"
+                        fill={isCurrentMonth ? "#6366f1" : theme.palette.text.secondary}
+                        fontSize={11}
+                        fontWeight={isCurrentMonth ? 700 : 400}
+                      >
+                        {payload.value}
+                        {isCurrentMonth && " •"}
+                      </text>
+                    </g>
+                  );
+                }}
                 axisLine={{
                   stroke: alpha(theme.palette.text.secondary, 0.2),
                 }}
@@ -537,20 +800,85 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
                 }}
               />
               <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
-                {...tooltipStyle}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload || !payload.length) return null;
+                  const data = payload[0].payload;
+                  return (
+                    <div style={{
+                      backgroundColor: isDarkMode ? alpha("#1e1e2e", 0.95) : alpha("#ffffff", 0.95),
+                      border: `1px solid ${isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}`,
+                      borderRadius: "12px",
+                      padding: "12px 16px",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                    }}>
+                      <div style={{ fontWeight: 600, marginBottom: 8, color: theme.palette.text.primary }}>
+                        {label} {data.isCurrentMonth && "• Mês Atual"}
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13 }}>
+                        <div style={{ color: "#10b981" }}>
+                          Receitas: {formatCurrency(data.income)}
+                        </div>
+                        <div style={{ color: "#ef4444" }}>
+                          Despesas: {formatCurrency(data.expense)}
+                        </div>
+                        <div style={{ 
+                          color: data.monthBalance >= 0 ? "#10b981" : "#ef4444",
+                          borderTop: `1px solid ${isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}`,
+                          paddingTop: 4,
+                          marginTop: 4,
+                        }}>
+                          Saldo do Mês: {formatCurrency(data.monthBalance)}
+                        </div>
+                        <div style={{ 
+                          color: data.balance >= 0 ? "#6366f1" : "#ef4444",
+                          fontWeight: 600,
+                        }}>
+                          Saldo Acumulado: {formatCurrency(data.balance)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }}
               />
+              {/* Linha de referência vertical para o mês atual */}
+              {balanceEvolution.find(d => d.isCurrentMonth) && (
+                <ReferenceLine
+                  x={balanceEvolution.find(d => d.isCurrentMonth)?.date}
+                  stroke="#6366f1"
+                  strokeDasharray="5 5"
+                  strokeWidth={2}
+                  label={{
+                    value: "Atual",
+                    position: "top",
+                    fill: "#6366f1",
+                    fontSize: 10,
+                    fontWeight: 600,
+                  }}
+                />
+              )}
               <Line
                 type="monotone"
                 dataKey="balance"
                 name="Saldo"
                 stroke="#6366f1"
                 strokeWidth={3}
-                dot={{ fill: "#6366f1", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, fill: "#6366f1" }}
+                dot={(props) => {
+                  const { cx, cy, payload } = props;
+                  const isCurrentMonth = payload?.isCurrentMonth;
+                  return (
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={isCurrentMonth ? 8 : 4}
+                      fill={isCurrentMonth ? "#6366f1" : "#6366f1"}
+                      stroke={isCurrentMonth ? "#fff" : "none"}
+                      strokeWidth={isCurrentMonth ? 3 : 0}
+                    />
+                  );
+                }}
+                activeDot={{ r: 8, fill: "#6366f1", stroke: "#fff", strokeWidth: 2 }}
               />
-            </LineChart>
-          </ResponsiveContainer>
+          </LineChart>
         </Box>
       </Paper>
 
@@ -561,6 +889,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
           p: isMobile ? 2 : 3,
           position: "relative",
           overflow: "hidden",
+          minWidth: 0,
           background: isDarkMode
             ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
             : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
@@ -574,9 +903,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
           icon={<TimelineIcon />}
           title="Fluxo de Caixa"
         />
-        <Box sx={{ height: isMobile ? 250 : 300 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={cashFlow}>
+        <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
+          <AreaChart data={cashFlow} width={chartWidth} height={isMobile ? 250 : 300}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}
@@ -619,21 +947,21 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
                 fill={alpha("#ef4444", 0.3)}
                 strokeWidth={2}
               />
-            </AreaChart>
-          </ResponsiveContainer>
+          </AreaChart>
         </Box>
       </Paper>
 
       {/* Pie Charts Row */}
-      <Grid container spacing={isMobile ? 2 : 3}>
+      <Grid container spacing={isMobile ? 2 : 3} sx={{ minWidth: 0 }}>
         {/* Expenses by Category */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
           <Paper
             elevation={0}
             sx={{
               p: isMobile ? 2 : 3,
               position: "relative",
               overflow: "hidden",
+              minWidth: 0,
               background: isDarkMode
                 ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
                 : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
@@ -648,38 +976,56 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
               title="Despesas por Categoria"
             />
             {categoryData.length > 0 ? (
-              <Box sx={{ height: 280 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={3}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {categoryData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
+              <Box sx={{ width: "100%", height: 280, display: "flex", justifyContent: "center" }}>
+                <PieChart width={isMobile ? chartWidth : Math.min(chartWidth / 2 - 24, 400)} height={280}>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={3}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => formatCurrency(value)}
-                      {...tooltipStyle}
+                      content={({ active, payload }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const data = payload[0];
+                        const color = data.payload?.fill || COLORS[0];
+                        return (
+                          <div style={{
+                            backgroundColor: isDarkMode ? alpha("#1e1e2e", 0.95) : alpha("#ffffff", 0.95),
+                            border: `1px solid ${isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}`,
+                            borderRadius: "12px",
+                            padding: "10px 14px",
+                            boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                          }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <div style={{ width: 10, height: 10, backgroundColor: color, borderRadius: 2 }} />
+                              <span style={{ color, fontWeight: 600 }}>{data.name}</span>
+                            </div>
+                            <div style={{ color: theme.palette.text.primary, marginTop: 4 }}>
+                              {formatCurrency(data.value as number)}
+                            </div>
+                          </div>
+                        );
+                      }}
                     />
-                    <Legend
-                      layout="vertical"
-                      verticalAlign="middle"
-                      align="right"
-                      wrapperStyle={{ fontSize: "12px" }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                  <Legend
+                    layout="vertical"
+                    verticalAlign="middle"
+                    align="right"
+                    wrapperStyle={{ fontSize: "12px" }}
+                  />
+                </PieChart>
               </Box>
             ) : (
               <Box sx={{ py: 4, textAlign: "center" }}>
@@ -692,13 +1038,14 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
         </Grid>
 
         {/* Income by Category */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
           <Paper
             elevation={0}
             sx={{
               p: isMobile ? 2 : 3,
               position: "relative",
               overflow: "hidden",
+              minWidth: 0,
               background: isDarkMode
                 ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
                 : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
@@ -713,38 +1060,56 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({ transactions }) => {
               title="Receitas por Categoria"
             />
             {incomeByCategory.length > 0 ? (
-              <Box sx={{ height: 280 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={incomeByCategory}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={3}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {incomeByCategory.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[(index + 2) % COLORS.length]}
-                        />
-                      ))}
+              <Box sx={{ width: "100%", height: 280, display: "flex", justifyContent: "center" }}>
+                <PieChart width={isMobile ? chartWidth : Math.min(chartWidth / 2 - 24, 400)} height={280}>
+                  <Pie
+                    data={incomeByCategory}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={3}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {incomeByCategory.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[(index + 2) % COLORS.length]}
+                      />
+                    ))}
                     </Pie>
-                    <Tooltip
-                      formatter={(value: number) => formatCurrency(value)}
-                      {...tooltipStyle}
-                    />
-                    <Legend
-                      layout="vertical"
-                      verticalAlign="middle"
-                      align="right"
-                      wrapperStyle={{ fontSize: "12px" }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const data = payload[0];
+                      const color = data.payload?.fill || COLORS[2];
+                      return (
+                        <div style={{
+                          backgroundColor: isDarkMode ? alpha("#1e1e2e", 0.95) : alpha("#ffffff", 0.95),
+                          border: `1px solid ${isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}`,
+                          borderRadius: "12px",
+                          padding: "10px 14px",
+                          boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <div style={{ width: 10, height: 10, backgroundColor: color, borderRadius: 2 }} />
+                            <span style={{ color, fontWeight: 600 }}>{data.name}</span>
+                          </div>
+                          <div style={{ color: theme.palette.text.primary, marginTop: 4 }}>
+                            {formatCurrency(data.value as number)}
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Legend
+                    layout="vertical"
+                    verticalAlign="middle"
+                    align="right"
+                    wrapperStyle={{ fontSize: "12px" }}
+                  />
+                </PieChart>
               </Box>
             ) : (
               <Box sx={{ py: 4, textAlign: "center" }}>
