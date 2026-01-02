@@ -67,6 +67,7 @@ const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
 const PaymentMethodsView = lazy(() => import("./components/PaymentMethodsView"));
 const CategoriesView = lazy(() => import("./components/CategoriesView"));
 const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
+const PluggyConnectionsView = lazy(() => import("./components/PluggyConnectionsView"));
 
 import type { AdvancedFiltersState } from "./components/AdvancedFilters";
 import { AdvancedFiltersButton } from "./components/AdvancedFilters";
@@ -159,6 +160,7 @@ const AppContent: React.FC<{
     cats: { income: string[]; expense: string[] },
     methods: string[]
   ) => Promise<void>;
+  onRefreshData: () => Promise<void>;
 }> = ({
   session,
   transactions,
@@ -180,6 +182,7 @@ const AppContent: React.FC<{
   filters,
   setFilters,
   updateSettingsInDb,
+  onRefreshData,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
@@ -197,6 +200,7 @@ const AppContent: React.FC<{
     | "goals"
     | "paymentMethods"
     | "categories"
+    | "pluggyConnections"
   >("dashboard");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -2937,7 +2941,7 @@ const AppContent: React.FC<{
                     />
                   </Suspense>
                 )
-              ) : (
+              ) : currentView === "categories" ? (
                 <Suspense fallback={<ViewLoading />}>
                   <CategoriesView
                     transactions={transactions}
@@ -2958,7 +2962,14 @@ const AppContent: React.FC<{
                     onClearInitialCategory={() => setSelectedCategoryNav(null)}
                   />
                 </Suspense>
-              )}
+              ) : currentView === "pluggyConnections" ? (
+                <Suspense fallback={<ViewLoading />}>
+                  <PluggyConnectionsView 
+                    userId={session.user.id} 
+                    onTransactionsRefresh={onRefreshData}
+                  />
+                </Suspense>
+              ) : null}
             </Box>
           </Box>
 
@@ -3368,6 +3379,7 @@ const App: React.FC = () => {
               filters={filters}
               setFilters={setFilters}
               updateSettingsInDb={updateSettingsInDb}
+              onRefreshData={() => fetchData(session.user.id)}
             />
           </ConfirmDialogProvider>
         </NotificationProvider>

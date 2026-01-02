@@ -25,6 +25,8 @@ export interface Transaction {
   // Campos para agrupamento de parcelamentos e exclusões de recorrências
   installmentGroupId?: string; // UUID que agrupa todas as parcelas de um mesmo parcelamento
   excludedDates?: string[]; // Array de datas (YYYY-MM-DD) excluídas de recorrências
+  // Campos para transações importadas do Pluggy
+  pluggyTransactionId?: string; // ID da transação no Pluggy (para evitar duplicatas)
 }
 
 export interface FinancialSummary {
@@ -140,4 +142,124 @@ export interface ParsedTransaction {
   date: string; // ISO String YYYY-MM-DD
   confidence: number; // 0-1, nível de confiança da IA
   rawInput: string; // input original para debug
+}
+
+// =============================================
+// Sistema de Integração Pluggy (Open Finance)
+// =============================================
+
+export type PluggyConnectionStatus = 'active' | 'error' | 'updating' | 'inactive';
+
+export interface PluggyConnection {
+  id: string;
+  itemId: string;
+  connectorName: string;
+  connectorLogo?: string;
+  accountType?: string;
+  status: PluggyConnectionStatus;
+  lastSyncAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Resposta da API Pluggy para transações
+export interface PluggyTransaction {
+  id: string;
+  description: string;
+  descriptionRaw?: string;
+  currencyCode: string;
+  amount: number;
+  amountInAccountCurrency?: number;
+  date: string;
+  balance?: number;
+  category?: {
+    id: string;
+    description: string;
+    descriptionTranslated?: string;
+    primaryDescription?: string;
+  };
+  accountId: string;
+  providerCode?: string;
+  status?: string;
+  paymentData?: {
+    payer?: {
+      name?: string;
+      branchNumber?: string;
+      accountNumber?: string;
+      routingNumber?: string;
+      documentNumber?: {
+        type?: string;
+        value?: string;
+      };
+    };
+    receiver?: {
+      name?: string;
+      branchNumber?: string;
+      accountNumber?: string;
+      routingNumber?: string;
+      documentNumber?: {
+        type?: string;
+        value?: string;
+      };
+    };
+    paymentMethod?: string;
+    referenceNumber?: string;
+    reason?: string;
+  };
+  creditCardMetadata?: {
+    installmentNumber?: number;
+    totalInstallments?: number;
+    totalAmount?: number;
+    purchaseDate?: string;
+    payeeMCC?: number;
+  };
+  merchant?: {
+    name?: string;
+    businessName?: string;
+    cnpj?: string;
+    cnae?: string;
+    category?: string;
+  };
+}
+
+// Resposta da API Pluggy para contas
+export interface PluggyAccount {
+  id: string;
+  itemId: string;
+  type: string;
+  subtype?: string;
+  number?: string;
+  name: string;
+  marketingName?: string;
+  balance: number;
+  currencyCode: string;
+  bankData?: {
+    transferNumber?: string;
+    closingBalance?: number;
+  };
+  creditData?: {
+    level?: string;
+    brand?: string;
+    balanceCloseDate?: string;
+    balanceDueDate?: string;
+    availableCreditLimit?: number;
+    balanceForeignCurrency?: number;
+    minimumPayment?: number;
+    creditLimit?: number;
+  };
+}
+
+// Resposta do widget Pluggy Connect
+export interface PluggyConnectResult {
+  item: {
+    id: string;
+  };
+}
+
+// Resultado da sincronização
+export interface PluggySyncResult {
+  success: boolean;
+  transactionsImported: number;
+  transactionsSkipped: number;
+  errors?: string[];
 }

@@ -26,6 +26,7 @@ import {
   Flag as GoalIcon,
   Category as CategoryIcon,
   Payment as PaymentIcon,
+  AccountBalance as BankConnectionIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,7 +48,8 @@ type ViewType =
   | "budgets"
   | "goals"
   | "paymentMethods"
-  | "categories";
+  | "categories"
+  | "pluggyConnections";
 
 interface SidebarProps {
   themePreference: ThemePreference;
@@ -134,6 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Itens de menu no final
   const footerNavItems: NavItem[] = [
+    { icon: BankConnectionIcon, label: "Conexões Bancárias", id: "pluggyConnections" },
     { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" },
   ];
 
