@@ -66,7 +66,6 @@ const AnalyticsView = lazy(() => import("./components/AnalyticsView"));
 const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
 const PaymentMethodsView = lazy(() => import("./components/PaymentMethodsView"));
 const CategoriesView = lazy(() => import("./components/CategoriesView"));
-const SmartInputFAB = lazy(() => import("./components/SmartInputFAB"));
 const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
 
 import type { AdvancedFiltersState } from "./components/AdvancedFilters";
@@ -2660,17 +2659,6 @@ const AppContent: React.FC<{
                       selectedYear={filters.year}
                     />
 
-                    {/* Transaction History */}
-                    <Box>
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: 600, color: "text.primary", mb: 2 }}
-                      >
-                        Transaction History
-                      </Typography>
-                      <TransactionTable transactions={dashboardFilteredTransactions} />
-                    </Box>
-
                     {/* Category & Payment Breakdown */}
                     <CategoryBreakdown
                       transactions={dashboardFilteredTransactions}
@@ -2922,15 +2910,6 @@ const AppContent: React.FC<{
             />
           </Suspense>
 
-          {/* Smart Input FAB - Cadastro inteligente via IA */}
-          <Suspense fallback={null}>
-            <SmartInputFAB
-              onTransactionCreate={handleSmartInputTransaction}
-              categories={categories}
-              paymentMethods={paymentMethods}
-              visible={currentView !== "nixai" && (!isMobile || currentView === "dashboard")}
-            />
-          </Suspense>
         </Box>
       </ColorsContext.Provider>
     </ThemeContext.Provider>
