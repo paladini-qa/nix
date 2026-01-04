@@ -22,6 +22,7 @@ interface TransactionTagsProps {
     | "type"
     | "relatedTransactionId"
     | "isPaid"
+    | "recurringGroupId"
   >;
   /** Exibe o status de pagamento (pago/não pago) */
   showPaymentStatus?: boolean;
@@ -74,11 +75,11 @@ const TransactionTags: React.FC<TransactionTagsProps> = ({
   const t = transaction;
 
   // Verifica se há alguma tag para exibir
-  // Tag "Auto" aparece para qualquer transação recorrente (isRecurring ou isVirtual)
+  // Tag "Auto" aparece para qualquer transação recorrente (isRecurring, isVirtual ou recurringGroupId)
   const hasAnyTag =
     (showShared && t.isShared && t.sharedWith) ||
     (showShared && t.type === "income" && t.relatedTransactionId) ||
-    (showRecurring && (t.isRecurring || t.isVirtual)) ||
+    (showRecurring && (t.isRecurring || t.isVirtual || t.recurringGroupId)) ||
     (showInstallments && t.installments && t.installments > 1) ||
     showPaymentStatus;
 
@@ -116,8 +117,8 @@ const TransactionTags: React.FC<TransactionTagsProps> = ({
         />
       )}
 
-      {/* Tag "Auto" - aparece para todas as transações recorrentes (incluindo a primeira) */}
-      {showRecurring && (t.isRecurring || t.isVirtual) && (
+      {/* Tag "Auto" - aparece para todas as transações recorrentes (incluindo a primeira e modificadas) */}
+      {showRecurring && (t.isRecurring || t.isVirtual || t.recurringGroupId) && (
         <Chip
           icon={<AutorenewIcon />}
           label="Auto"

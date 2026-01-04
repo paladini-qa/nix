@@ -1742,9 +1742,9 @@ const AppContent: React.FC<{
           }
         } else {
           // Para recorrentes (virtuais ou originais), cria uma nova transação VINCULADA à recorrência
-          const excludeDate = recurringEditTransaction.isVirtual 
-            ? recurringEditTransaction.date 
-            : recurringEditTransaction.date;
+          // IMPORTANTE: Para virtuais, precisamos usar a data do formulário (newTx.date) que foi
+          // inicializada com a data virtual correta, não a data da transação original
+          const excludeDate = recurringVirtualDate || newTx.date;
           
           const dbPayload = {
             user_id: session.user.id,
