@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
   Button,
   TextField,
   FormControl,
@@ -21,9 +18,6 @@ import {
   Grid,
   useMediaQuery,
   useTheme,
-  Slide,
-  AppBar,
-  Toolbar,
   Divider,
   ListSubheader,
   Alert,
@@ -34,9 +28,9 @@ import {
   Tooltip,
   Tabs,
   Tab,
+  keyframes,
 } from "@mui/material";
 import { useNotification } from "../contexts";
-import { TransitionProps } from "@mui/material/transitions";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import {
@@ -55,17 +49,27 @@ import {
   CheckCircle as CheckCircleIcon,
   ExpandMore as ExpandMoreIcon,
   Settings as SettingsIcon,
+  ChevronRight as ChevronRightIcon,
+  ReceiptLong as ReceiptIcon,
 } from "@mui/icons-material";
 import { Transaction, TransactionType, FinancialSummary } from "../types";
 import { CATEGORY_KEYWORDS, QUICK_AMOUNTS } from "../constants";
 
-// Mobile slide transition
-const SlideTransition = React.forwardRef(function Transition(
-  props: TransitionProps & { children: React.ReactElement },
-  ref: React.Ref<unknown>
-) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
+// Animação de entrada suave
+const slideInRight = keyframes`
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+`;
+
+// Largura do Side Panel
+const SIDE_PANEL_WIDTH = 520;
+const SIDE_PANEL_WIDTH_MOBILE = "100vw";
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -609,113 +613,219 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   };
 
   return (
-    <Dialog
+    <Drawer
+      anchor="right"
       open={isOpen}
       onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      fullScreen={isMobile}
-      TransitionComponent={isMobile ? SlideTransition : undefined}
-      PaperProps={{
-        sx: {
-          borderRadius: isMobile ? 0 : 2.5, // 20px em desktop
-          bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.95)
-            : "#FFFFFF",
-          border: isMobile
-            ? "none"
-            : `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
-          boxShadow: isDarkMode
-            ? `0 24px 80px -20px ${alpha("#000000", 0.6)}`
-            : `0 24px 80px -20px ${alpha(theme.palette.primary.main, 0.2)}`,
-        },
-      }}
+      elevation={0}
       slotProps={{
         backdrop: {
           sx: {
             bgcolor: isDarkMode
-              ? alpha("#0F172A", 0.8)
-              : alpha("#64748B", 0.4),
-            backdropFilter: "blur(8px)",
+              ? alpha("#0F172A", 0.6)
+              : alpha("#64748B", 0.25),
+            backdropFilter: "blur(4px)",
           },
         },
       }}
+      PaperProps={{
+        sx: {
+          width: isMobile ? SIDE_PANEL_WIDTH_MOBILE : SIDE_PANEL_WIDTH,
+          maxWidth: "100vw",
+          bgcolor: isDarkMode
+            ? theme.palette.background.default
+            : "#FAFBFC",
+          borderLeft: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+          boxShadow: isDarkMode
+            ? `-24px 0 80px -20px ${alpha("#000000", 0.5)}`
+            : `-24px 0 80px -20px ${alpha(theme.palette.primary.main, 0.12)}`,
+          display: "flex",
+          flexDirection: "column",
+        },
+      }}
     >
-      {/* Mobile Header */}
-      {isMobile ? (
-        <AppBar
-          position="sticky"
-          elevation={0}
-          sx={{
-            bgcolor: isDarkMode
-              ? alpha(theme.palette.background.paper, 0.9)
-              : alpha("#FFFFFF", 0.9),
-            backdropFilter: "blur(20px)",
-            borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
-            color: "text.primary",
-          }}
-        >
-          <Toolbar>
-            <IconButton
-              edge="start"
-              onClick={onClose}
-              sx={{
-                mr: 2,
-                borderRadius: "20px",
-                bgcolor: isDarkMode
-                  ? alpha("#FFFFFF", 0.05)
-                  : alpha("#000000", 0.04),
-                "&:hover": {
-                  bgcolor: isDarkMode
-                    ? alpha("#FFFFFF", 0.1)
-                    : alpha("#000000", 0.08),
-                },
-              }}
-            >
-              <ArrowBackIcon />
-            </IconButton>
-            <Typography variant="h6" fontWeight={700} sx={{ flex: 1, letterSpacing: "-0.01em" }}>
-              {editTransaction ? "Editar Transação" : "Nova Transação"}
-            </Typography>
-          </Toolbar>
-        </AppBar>
-      ) : (
-        <DialogTitle
+      {/* ====== NOTION-STYLE HEADER ====== */}
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          bgcolor: isDarkMode
+            ? alpha(theme.palette.background.default, 0.85)
+            : alpha("#FAFBFC", 0.9),
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.04)}`,
+        }}
+      >
+        {/* Top Bar com Breadcrumb e Fechar */}
+        <Box
           sx={{
             display: "flex",
-            justifyContent: "space-between",
             alignItems: "center",
-            pb: 2,
+            justifyContent: "space-between",
+            px: 2.5,
+            py: 1.5,
+            minHeight: 52,
           }}
         >
-          <Typography variant="h5" fontWeight={700} letterSpacing="-0.02em">
-            {editTransaction ? "Editar Transação" : "Nova Transação"}
-          </Typography>
+          {/* Breadcrumb estilo Notion */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              animation: `${slideInRight} 0.3s ease-out`,
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                cursor: "pointer",
+                transition: "color 0.15s ease",
+                "&:hover": {
+                  color: "text.primary",
+                },
+              }}
+              onClick={onClose}
+            >
+              Transações
+            </Typography>
+            <ChevronRightIcon sx={{ fontSize: 16, color: "text.disabled" }} />
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                color: "text.primary",
+              }}
+            >
+              {editTransaction ? "Editar" : "Nova"}
+            </Typography>
+          </Box>
+
+          {/* Botão Fechar */}
           <IconButton
             onClick={onClose}
+            size="small"
             sx={{
+              width: 32,
+              height: 32,
+              borderRadius: "10px",
               bgcolor: isDarkMode
                 ? alpha("#FFFFFF", 0.05)
                 : alpha("#000000", 0.04),
+              transition: "all 0.15s ease",
               "&:hover": {
                 bgcolor: isDarkMode
                   ? alpha("#FFFFFF", 0.1)
                   : alpha("#000000", 0.08),
+                transform: "scale(1.05)",
               },
             }}
           >
-            <CloseIcon />
+            <CloseIcon sx={{ fontSize: 18 }} />
           </IconButton>
-        </DialogTitle>
-      )}
+        </Box>
 
-      <form id="transaction-form" onSubmit={handleSubmit}>
-        <DialogContent
+        {/* Título principal com ícone */}
+        <Box
           sx={{
-            pt: isMobile ? 2 : 0,
-            pb: isMobile ? 12 : 3, // Extra padding para barra fixa no mobile
-            borderTop: "none",
-            borderBottom: "none",
+            px: 3,
+            pb: 2.5,
+            pt: 0.5,
+            animation: `${slideInRight} 0.35s ease-out`,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: "14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: type === "income"
+                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(theme.palette.success.main, 0.25)} 100%)`
+                  : `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.15)} 0%, ${alpha(theme.palette.error.main, 0.25)} 100%)`,
+                border: `1px solid ${alpha(type === "income" ? theme.palette.success.main : theme.palette.error.main, 0.2)}`,
+                transition: "all 0.2s ease",
+              }}
+            >
+              <ReceiptIcon
+                sx={{
+                  fontSize: 22,
+                  color: type === "income" ? "success.main" : "error.main",
+                }}
+              />
+            </Box>
+            <Box>
+              <Typography
+                variant="h5"
+                fontWeight={700}
+                letterSpacing="-0.02em"
+                sx={{
+                  background: isDarkMode
+                    ? "linear-gradient(135deg, #fff 0%, #94A3B8 100%)"
+                    : "linear-gradient(135deg, #1A1A2E 0%, #475569 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                {editTransaction ? "Editar Transação" : "Nova Transação"}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                {editTransaction
+                  ? `Modificando ${editTransaction.description}`
+                  : "Preencha os detalhes abaixo"}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* ====== FORM CONTENT ====== */}
+      <form
+        id="transaction-form"
+        onSubmit={handleSubmit}
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            px: 3,
+            pt: 2,
+            pb: isMobile ? 14 : 3,
+            "&::-webkit-scrollbar": {
+              width: 6,
+            },
+            "&::-webkit-scrollbar-track": {
+              bgcolor: "transparent",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              bgcolor: isDarkMode
+                ? alpha("#FFFFFF", 0.1)
+                : alpha("#000000", 0.1),
+              borderRadius: 3,
+              "&:hover": {
+                bgcolor: isDarkMode
+                  ? alpha("#FFFFFF", 0.2)
+                  : alpha("#000000", 0.2),
+              },
+            },
           }}
         >
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -1832,22 +1942,34 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             )}
 
           </Box>
-        </DialogContent>
+        </Box>
 
-        {/* Desktop Actions - Prominent Save Button */}
-        {!isMobile && (
-          <DialogActions
-            sx={{
-              p: 3,
-              pt: 0,
-              gap: 1.5,
-            }}
-          >
+        {/* ====== BOTTOM ACTION BAR ====== */}
+        <Box
+          sx={{
+            position: "sticky",
+            bottom: 0,
+            p: 2.5,
+            pb: isMobile ? "calc(20px + env(safe-area-inset-bottom, 0px))" : 2.5,
+            bgcolor: isDarkMode
+              ? alpha(theme.palette.background.default, 0.95)
+              : alpha("#FAFBFC", 0.98),
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.04)}`,
+            boxShadow: isDarkMode
+              ? `0 -8px 32px -8px ${alpha("#000000", 0.3)}`
+              : `0 -8px 32px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            display: "flex",
+            gap: 1.5,
+          }}
+        >
+          {!isMobile && (
             <Button
               onClick={onClose}
               color="inherit"
               sx={{
-                borderRadius: "20px",
+                borderRadius: "14px",
                 px: 3,
                 py: 1.25,
                 fontWeight: 500,
@@ -1855,6 +1977,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 bgcolor: isDarkMode
                   ? alpha("#FFFFFF", 0.05)
                   : alpha("#000000", 0.04),
+                transition: "all 0.15s ease",
                 "&:hover": {
                   bgcolor: isDarkMode
                     ? alpha("#FFFFFF", 0.1)
@@ -1864,78 +1987,35 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             >
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              startIcon={<SaveIcon />}
-              sx={{
-                flex: 1,
-                borderRadius: "20px",
-                py: 1.5,
-                fontWeight: 600,
-                boxShadow: `0 8px 24px -8px ${alpha(theme.palette.primary.main, 0.4)}`,
-                transition: "all 0.2s ease-in-out",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: `0 12px 32px -8px ${alpha(theme.palette.primary.main, 0.5)}`,
-                },
-                "&:active": {
-                  transform: "translateY(0)",
-                },
-              }}
-            >
-              Salvar Transação
-            </Button>
-          </DialogActions>
-        )}
-
-        {/* Mobile Bottom Save Bar - Zona do Polegar */}
-        {isMobile && (
-          <Box
+          )}
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            fullWidth={isMobile}
+            startIcon={<SaveIcon />}
             sx={{
-              position: "fixed",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              p: 2,
-              pb: "calc(16px + env(safe-area-inset-bottom, 0px))",
-              bgcolor: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.95)
-                : alpha("#FFFFFF", 0.98),
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              boxShadow: isDarkMode
-                ? `0 -4px 24px -4px ${alpha("#000000", 0.4)}`
-                : `0 -4px 24px -4px ${alpha(theme.palette.primary.main, 0.1)}`,
-              zIndex: 1300,
+              flex: 1,
+              borderRadius: "14px",
+              py: 1.5,
+              fontWeight: 600,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              boxShadow: `0 8px 24px -8px ${alpha(theme.palette.primary.main, 0.5)}`,
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: `0 12px 32px -8px ${alpha(theme.palette.primary.main, 0.6)}`,
+              },
+              "&:active": {
+                transform: isMobile ? "scale(0.98)" : "translateY(0)",
+              },
             }}
           >
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              fullWidth
-              startIcon={<SaveIcon />}
-              sx={{
-                borderRadius: "20px",
-                py: 1.75,
-                fontWeight: 600,
-                fontSize: "1rem",
-                boxShadow: `0 8px 24px -8px ${alpha(theme.palette.primary.main, 0.5)}`,
-                transition: "all 0.2s ease-in-out",
-                "&:active": {
-                  transform: "scale(0.98)",
-                },
-              }}
-            >
-              Salvar Transação
-            </Button>
-          </Box>
-        )}
+            {editTransaction ? "Salvar Alterações" : "Criar Transação"}
+          </Button>
+        </Box>
       </form>
-    </Dialog>
+    </Drawer>
   );
 };
 
