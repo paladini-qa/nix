@@ -95,6 +95,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   onRefreshData,
 }) => {
   const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -659,7 +660,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         {/* Occurrences List */}
         <Collapse in={isExpanded}>
           <Divider />
-          <Box sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.08) }}>
+          <Box sx={{ p: 2 }}>
             {/* Actions */}
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2, flexWrap: "wrap" }}>
               <Button

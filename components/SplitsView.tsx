@@ -100,6 +100,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   onRefreshData,
 }) => {
   const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<SplitStatus>("in_progress");
@@ -446,7 +447,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         {/* Installments List */}
         <Collapse in={isExpanded}>
           <Divider />
-          <Box sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.08) }}>
+          <Box sx={{ p: 2 }}>
             {/* Título da Tabela */}
             <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <VisibilityIcon fontSize="small" color="primary" />
