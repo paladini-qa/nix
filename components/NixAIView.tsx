@@ -48,6 +48,7 @@ import {
 } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
+import NixAISkeleton from "./skeletons/NixAISkeleton";
 import { Transaction, ParsedTransaction, SmartInputMode, TransactionType } from "../types";
 import {
   chatWithNixAI,
@@ -1196,8 +1197,19 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           </Alert>
         </Collapse>
 
-        {/* Typing indicator */}
-        <AnimatePresence>{isLoading && <TypingIndicator />}</AnimatePresence>
+        {/* Loading Skeleton */}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <NixAISkeleton />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div ref={messagesEndRef} />
       </Box>

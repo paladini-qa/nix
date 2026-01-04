@@ -3,8 +3,6 @@ import {
   Box,
   Typography,
   Paper,
-  TextField,
-  InputAdornment,
   IconButton,
   Menu,
   MenuItem,
@@ -35,7 +33,6 @@ import {
   CircularProgress,
 } from "@mui/material";
 import {
-  Search as SearchIcon,
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
   Edit as EditIcon,
@@ -54,6 +51,13 @@ import {
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import DateFilter from "./DateFilter";
+import SearchBar from "./SearchBar";
+import {
+  getTableContainerSx,
+  getHeaderCellSx,
+  getRowSx,
+  getMobileCardSx,
+} from "../utils/tableStyles";
 import { Transaction } from "../types";
 import { generateFriendReport, prepareFriendReportData } from "../services/pdfService";
 
@@ -805,7 +809,15 @@ const SharedView: React.FC<SharedViewProps> = ({
 
       {/* Filters */}
       <Paper
+        elevation={0}
         sx={{
+          borderRadius: "20px",
+          overflow: "hidden",
+          bgcolor: theme.palette.mode === "dark"
+            ? alpha(theme.palette.background.paper, 0.7)
+            : alpha("#FFFFFF", 0.9),
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
           p: 2,
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
@@ -822,19 +834,11 @@ const SharedView: React.FC<SharedViewProps> = ({
           compact={isMobile}
         />
 
-        <TextField
-          size="small"
-          placeholder="Search..."
+        <SearchBar
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ flex: 1, minWidth: 150 }}
+          onChange={setSearchTerm}
+          placeholder="Search..."
+          minWidth={150}
         />
 
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
@@ -944,18 +948,24 @@ const SharedView: React.FC<SharedViewProps> = ({
       {/* Selected Friend Stats */}
       {selectedFriendStats && (
         <Paper
+          elevation={0}
           sx={{
+            borderRadius: "20px",
+            overflow: "hidden",
+            backdropFilter: "blur(20px)",
             p: 2,
             bgcolor: alpha(
               selectedFriendStats.netBalance >= 0 
                 ? theme.palette.success.main 
                 : theme.palette.error.main, 
-              0.05
+              0.08
             ),
-            border: 1,
-            borderColor: selectedFriendStats.netBalance >= 0 
-              ? "success.light" 
-              : "error.light",
+            border: `1px solid ${alpha(
+              selectedFriendStats.netBalance >= 0 
+                ? theme.palette.success.main 
+                : theme.palette.error.main,
+              0.2
+            )}`,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -1028,7 +1038,7 @@ const SharedView: React.FC<SharedViewProps> = ({
 
       {/* Transactions Table/List */}
       {filteredTransactions.length > 0 ? (
-        <Paper sx={{ overflow: "hidden" }}>
+        <Paper elevation={0} sx={getTableContainerSx(theme, isDarkMode)}>
           {isMobile ? (
             // Mobile: Cards
             <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -1058,13 +1068,8 @@ const SharedView: React.FC<SharedViewProps> = ({
                 return (
                   <Paper
                     key={t.id}
-                    sx={{
-                      p: 2,
-                      border: 1,
-                      borderColor: "divider",
-                      borderLeft: 4,
-                      borderLeftColor: isPaid ? "success.main" : (isPositive ? "warning.main" : "error.main"),
-                    }}
+                    elevation={0}
+                    sx={getMobileCardSx(theme, isDarkMode, isPositive ? "income" : "expense")}
                   >
                     <Box
                       sx={{
@@ -1166,19 +1171,19 @@ const SharedView: React.FC<SharedViewProps> = ({
             </Box>
           ) : (
             // Desktop: Table
-            <Table>
+            <Table size="small">
                 <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: 50 }}>Pago</TableCell>
-                  <TableCell>Descrição</TableCell>
-                  <TableCell>Amigo</TableCell>
-                  <TableCell>Categoria</TableCell>
-                  <TableCell>Data</TableCell>
-                  <TableCell align="right">Valor</TableCell>
-                  <TableCell align="center" sx={{ width: 120 }}>
+                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 50 }}>Pago</TableCell>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Descrição</TableCell>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Amigo</TableCell>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Categoria</TableCell>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Data</TableCell>
+                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
+                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 120 }}>
                     Status
                   </TableCell>
-                  <TableCell align="center" sx={{ width: 100 }}>
+                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>
                     Ações
                   </TableCell>
                 </TableRow>
@@ -1210,12 +1215,13 @@ const SharedView: React.FC<SharedViewProps> = ({
                     typeLabel = "Me devem (50%)";
                   }
 
+                  const rowIndex = filteredTransactions.indexOf(t);
                   return (
                     <TableRow
                       key={t.id}
                       sx={{
+                        ...getRowSx(theme, isDarkMode, rowIndex),
                         opacity: isPaid ? 0.6 : 1,
-                        bgcolor: isPaid ? "action.disabledBackground" : "transparent",
                       }}
                     >
                       <TableCell>
@@ -1315,23 +1321,23 @@ const SharedView: React.FC<SharedViewProps> = ({
           )}
         </Paper>
       ) : (
-        <Paper sx={{ p: 4, textAlign: "center" }}>
+        <Paper 
+          elevation={0}
+          sx={{ 
+            p: 4, 
+            textAlign: "center",
+            borderRadius: "20px",
+            bgcolor: theme.palette.mode === "dark"
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha("#FFFFFF", 0.9),
+            backdropFilter: "blur(20px)",
+            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          }}
+        >
           <PeopleIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
           <Typography color="text.secondary" fontStyle="italic">
-            {sharedTransactions.length === 0
-              ? "Nenhuma despesa compartilhada ainda. Crie uma para gerenciar contas com amigos!"
-              : "Nenhuma despesa encontrada com os filtros atuais."}
+            No shared transactions found with the current filters.
           </Typography>
-          {sharedTransactions.length === 0 && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onNewTransaction}
-              sx={{ mt: 2 }}
-            >
-              Criar Despesa Compartilhada
-            </Button>
-          )}
         </Paper>
       )}
 

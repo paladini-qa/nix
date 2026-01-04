@@ -48,6 +48,12 @@ import {
   Warning as WarningIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
+import {
+  getTableContainerSx,
+  getHeaderCellSx,
+  getRowSx,
+  getMobileCardSx,
+} from "../utils/tableStyles";
 import { Transaction, TransactionType, ColorConfig, CategoryColors } from "../types";
 import { ColorsContext } from "../App";
 import ColorPicker from "./ColorPicker";
@@ -750,16 +756,16 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           </Box>
         ) : (
           // Desktop Table View
-          <TableContainer component={Paper}>
-            <Table>
+          <TableContainer component={Paper} sx={getTableContainerSx(theme, isDarkMode)}>
+            <Table size="small">
               <TableHead>
-                <TableRow sx={{ bgcolor: "action.hover" }}>
-                  <TableCell sx={{ fontWeight: 600 }}>Data</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Método</TableCell>
-                  <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>Valor</TableCell>
-                  <TableCell sx={{ fontWeight: 600, textAlign: "center", width: 100 }}>Ações</TableCell>
+                <TableRow>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Data</TableCell>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Descrição</TableCell>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Método</TableCell>
+                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>Status</TableCell>
+                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
+                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Ações</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -767,9 +773,8 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   selectedCategoryTransactions.map((tx, index) => (
                     <TableRow
                       key={tx.id}
-                      hover
                       sx={{
-                        bgcolor: index % 2 === 0 ? "transparent" : "action.hover",
+                        ...getRowSx(theme, isDarkMode, index),
                         opacity: tx.isPaid ? 0.7 : 1,
                     }}
                   >

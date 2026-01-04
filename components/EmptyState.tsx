@@ -64,7 +64,14 @@ const floatVariants = {
   },
 };
 
+// Cores da paleta Nix para ilustrações
+const NIX_PURPLE = "#8A2BE2";
+const NIX_PURPLE_LIGHT = "#9D4EDD";
+const CYBER_TEAL = "#00D4FF";
+const CYBER_TEAL_LIGHT = "#5CE1E6";
+
 // Ilustrações SVG inline para cada tipo de empty state
+// Usando exclusivamente Nix Purple e Cyber Teal
 const illustrations: Record<EmptyStateType, React.ReactNode> = {
   transactions: (
     <svg
@@ -80,7 +87,7 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="120"
         height="70"
         rx="8"
-        fill="currentColor"
+        fill={NIX_PURPLE}
         opacity="0.1"
       />
       <rect
@@ -89,7 +96,7 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="60"
         height="8"
         rx="4"
-        fill="currentColor"
+        fill={NIX_PURPLE}
         opacity="0.2"
       />
       <rect
@@ -98,8 +105,8 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="40"
         height="8"
         rx="4"
-        fill="currentColor"
-        opacity="0.15"
+        fill={CYBER_TEAL}
+        opacity="0.2"
       />
       <rect
         x="30"
@@ -107,17 +114,17 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="50"
         height="8"
         rx="4"
-        fill="currentColor"
-        opacity="0.1"
+        fill={NIX_PURPLE}
+        opacity="0.15"
       />
-      <circle cx="120" cy="55" r="20" fill="currentColor" opacity="0.15" />
+      <circle cx="120" cy="55" r="20" fill={CYBER_TEAL} opacity="0.2" />
       <path
         d="M115 55L118 58L125 51"
-        stroke="currentColor"
+        stroke={CYBER_TEAL}
         strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.4"
+        opacity="0.6"
       />
       <rect
         x="60"
@@ -125,16 +132,16 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="40"
         height="25"
         rx="4"
-        fill="currentColor"
-        opacity="0.2"
+        fill={NIX_PURPLE_LIGHT}
+        opacity="0.25"
       />
       <path
         d="M75 20L80 25L85 20"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.4"
+        opacity="0.5"
       />
     </svg>
   ),
@@ -146,31 +153,31 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle cx="80" cy="60" r="45" fill="currentColor" opacity="0.1" />
-      <circle cx="80" cy="60" r="35" fill="currentColor" opacity="0.08" />
+      <circle cx="80" cy="60" r="45" fill={NIX_PURPLE} opacity="0.1" />
+      <circle cx="80" cy="60" r="35" fill={CYBER_TEAL} opacity="0.08" />
       <path
         d="M80 25C80 25 105 40 105 60C105 80 80 95 80 95"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
+        strokeWidth="8"
+        strokeLinecap="round"
+        opacity="0.3"
+      />
+      <path
+        d="M80 25C80 25 55 40 55 60C55 80 80 95 80 95"
+        stroke={CYBER_TEAL}
         strokeWidth="8"
         strokeLinecap="round"
         opacity="0.25"
       />
-      <path
-        d="M80 25C80 25 55 40 55 60C55 80 80 95 80 95"
-        stroke="currentColor"
-        strokeWidth="8"
-        strokeLinecap="round"
-        opacity="0.15"
-      />
-      <circle cx="80" cy="60" r="15" fill="currentColor" opacity="0.2" />
+      <circle cx="80" cy="60" r="15" fill={NIX_PURPLE_LIGHT} opacity="0.25" />
       <text
         x="80"
         y="65"
         textAnchor="middle"
-        fill="currentColor"
+        fill={NIX_PURPLE}
         fontSize="12"
         fontWeight="bold"
-        opacity="0.5"
+        opacity="0.6"
       >
         $
       </text>
@@ -186,20 +193,20 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
     >
       <path
         d="M40 100L80 20L120 100"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
         strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.2"
+        opacity="0.25"
       />
-      <circle cx="80" cy="35" r="12" fill="currentColor" opacity="0.2" />
+      <circle cx="80" cy="35" r="12" fill={CYBER_TEAL} opacity="0.25" />
       <path
         d="M75 35L78 38L85 31"
-        stroke="currentColor"
+        stroke={CYBER_TEAL}
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.4"
+        opacity="0.6"
       />
       <rect
         x="55"
@@ -207,8 +214,8 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="50"
         height="6"
         rx="3"
-        fill="currentColor"
-        opacity="0.1"
+        fill={NIX_PURPLE}
+        opacity="0.15"
       />
       <rect
         x="55"
@@ -216,24 +223,24 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="30"
         height="6"
         rx="3"
-        fill="currentColor"
-        opacity="0.25"
+        fill={CYBER_TEAL}
+        opacity="0.35"
       />
-      <circle cx="40" cy="100" r="8" fill="currentColor" opacity="0.15" />
-      <circle cx="120" cy="100" r="8" fill="currentColor" opacity="0.15" />
+      <circle cx="40" cy="100" r="8" fill={NIX_PURPLE_LIGHT} opacity="0.2" />
+      <circle cx="120" cy="100" r="8" fill={NIX_PURPLE_LIGHT} opacity="0.2" />
       <path
         d="M130 20L145 10V25L130 35V20Z"
-        fill="currentColor"
-        opacity="0.2"
+        fill={CYBER_TEAL}
+        opacity="0.3"
       />
       <line
         x1="130"
         y1="20"
         x2="130"
         y2="50"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
         strokeWidth="3"
-        opacity="0.15"
+        opacity="0.2"
       />
     </svg>
   ),
@@ -251,7 +258,7 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="110"
         height="65"
         rx="8"
-        fill="currentColor"
+        fill={NIX_PURPLE}
         opacity="0.1"
       />
       <rect
@@ -260,8 +267,8 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="50"
         height="10"
         rx="5"
-        fill="currentColor"
-        opacity="0.2"
+        fill={NIX_PURPLE}
+        opacity="0.25"
       />
       <rect
         x="35"
@@ -269,8 +276,8 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="30"
         height="6"
         rx="3"
-        fill="currentColor"
-        opacity="0.15"
+        fill={CYBER_TEAL}
+        opacity="0.2"
       />
       <rect
         x="35"
@@ -278,18 +285,18 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="40"
         height="6"
         rx="3"
-        fill="currentColor"
-        opacity="0.1"
+        fill={NIX_PURPLE}
+        opacity="0.15"
       />
-      <circle cx="110" cy="70" r="18" fill="currentColor" opacity="0.15" />
+      <circle cx="110" cy="70" r="18" fill={CYBER_TEAL} opacity="0.2" />
       <text
         x="110"
         y="75"
         textAnchor="middle"
-        fill="currentColor"
+        fill={CYBER_TEAL}
         fontSize="14"
         fontWeight="bold"
-        opacity="0.4"
+        opacity="0.6"
       >
         $
       </text>
@@ -299,10 +306,10 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="70"
         height="25"
         rx="6"
-        fill="currentColor"
-        opacity="0.15"
+        fill={NIX_PURPLE_LIGHT}
+        opacity="0.2"
       />
-      <circle cx="60" cy="32" r="8" fill="currentColor" opacity="0.2" />
+      <circle cx="60" cy="32" r="8" fill={CYBER_TEAL_LIGHT} opacity="0.25" />
     </svg>
   ),
   shared: (
@@ -313,31 +320,31 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle cx="55" cy="50" r="22" fill="currentColor" opacity="0.15" />
-      <circle cx="55" cy="42" r="10" fill="currentColor" opacity="0.2" />
+      <circle cx="55" cy="50" r="22" fill={NIX_PURPLE} opacity="0.15" />
+      <circle cx="55" cy="42" r="10" fill={NIX_PURPLE_LIGHT} opacity="0.25" />
       <path
         d="M35 68C35 58 44 55 55 55C66 55 75 58 75 68"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
         strokeWidth="3"
         strokeLinecap="round"
-        opacity="0.2"
+        opacity="0.25"
       />
-      <circle cx="105" cy="50" r="22" fill="currentColor" opacity="0.15" />
-      <circle cx="105" cy="42" r="10" fill="currentColor" opacity="0.2" />
+      <circle cx="105" cy="50" r="22" fill={CYBER_TEAL} opacity="0.15" />
+      <circle cx="105" cy="42" r="10" fill={CYBER_TEAL_LIGHT} opacity="0.25" />
       <path
         d="M85 68C85 58 94 55 105 55C116 55 125 58 125 68"
-        stroke="currentColor"
+        stroke={CYBER_TEAL}
         strokeWidth="3"
         strokeLinecap="round"
-        opacity="0.2"
+        opacity="0.25"
       />
       <path
         d="M75 50H85"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
         strokeWidth="4"
         strokeLinecap="round"
         strokeDasharray="6 4"
-        opacity="0.25"
+        opacity="0.35"
       />
       <rect
         x="55"
@@ -345,7 +352,7 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="50"
         height="8"
         rx="4"
-        fill="currentColor"
+        fill={NIX_PURPLE}
         opacity="0.15"
       />
       <rect
@@ -354,8 +361,8 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="25"
         height="8"
         rx="4"
-        fill="currentColor"
-        opacity="0.25"
+        fill={CYBER_TEAL}
+        opacity="0.35"
       />
     </svg>
   ),
@@ -371,49 +378,49 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         cx="80"
         cy="60"
         r="40"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
         strokeWidth="6"
-        opacity="0.1"
+        opacity="0.12"
       />
       <path
         d="M80 25C97 25 112 35 118 50"
-        stroke="currentColor"
+        stroke={CYBER_TEAL}
         strokeWidth="6"
         strokeLinecap="round"
-        opacity="0.2"
+        opacity="0.3"
       />
       <path
         d="M120 55L118 50L123 48"
-        stroke="currentColor"
+        stroke={CYBER_TEAL}
         strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.3"
+        opacity="0.45"
       />
       <path
         d="M80 95C63 95 48 85 42 70"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
         strokeWidth="6"
         strokeLinecap="round"
-        opacity="0.2"
+        opacity="0.25"
       />
       <path
         d="M40 65L42 70L37 72"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
         strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.3"
+        opacity="0.4"
       />
-      <circle cx="80" cy="60" r="15" fill="currentColor" opacity="0.15" />
+      <circle cx="80" cy="60" r="15" fill={NIX_PURPLE_LIGHT} opacity="0.2" />
       <text
         x="80"
         y="65"
         textAnchor="middle"
-        fill="currentColor"
+        fill={NIX_PURPLE}
         fontSize="10"
         fontWeight="bold"
-        opacity="0.4"
+        opacity="0.5"
       >
         ∞
       </text>
@@ -431,37 +438,37 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         cx="70"
         cy="55"
         r="30"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
         strokeWidth="6"
-        opacity="0.15"
+        opacity="0.2"
       />
       <line
         x1="92"
         y1="77"
         x2="115"
         y2="100"
-        stroke="currentColor"
+        stroke={NIX_PURPLE}
         strokeWidth="8"
         strokeLinecap="round"
-        opacity="0.2"
+        opacity="0.25"
       />
       <path
         d="M55 55L65 65L85 45"
-        stroke="currentColor"
+        stroke={CYBER_TEAL}
         strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.1"
+        opacity="0.2"
       />
-      <circle cx="70" cy="55" r="12" fill="currentColor" opacity="0.08" />
+      <circle cx="70" cy="55" r="12" fill={CYBER_TEAL} opacity="0.12" />
       <text
         x="70"
         y="60"
         textAnchor="middle"
-        fill="currentColor"
+        fill={NIX_PURPLE}
         fontSize="12"
         fontWeight="bold"
-        opacity="0.3"
+        opacity="0.4"
       >
         ?
       </text>
@@ -481,7 +488,7 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="90"
         height="70"
         rx="8"
-        fill="currentColor"
+        fill={NIX_PURPLE}
         opacity="0.1"
       />
       <rect
@@ -490,8 +497,8 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="60"
         height="8"
         rx="4"
-        fill="currentColor"
-        opacity="0.15"
+        fill={NIX_PURPLE}
+        opacity="0.2"
       />
       <rect
         x="50"
@@ -499,8 +506,8 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="40"
         height="8"
         rx="4"
-        fill="currentColor"
-        opacity="0.1"
+        fill={CYBER_TEAL}
+        opacity="0.15"
       />
       <rect
         x="50"
@@ -508,25 +515,25 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
         width="50"
         height="8"
         rx="4"
-        fill="currentColor"
-        opacity="0.08"
+        fill={NIX_PURPLE}
+        opacity="0.12"
       />
       <circle
         cx="80"
         cy="60"
         r="30"
-        stroke="currentColor"
+        stroke={CYBER_TEAL}
         strokeWidth="2"
         strokeDasharray="6 4"
-        opacity="0.15"
+        opacity="0.25"
       />
       <path
         d="M70 60L77 67L90 54"
-        stroke="currentColor"
+        stroke={CYBER_TEAL}
         strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.2"
+        opacity="0.35"
       />
     </svg>
   ),
@@ -557,6 +564,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         px: 3,
         textAlign: "center",
         color: theme.palette.primary.main,
+        borderRadius: "20px",
+        background: isDarkMode
+          ? `linear-gradient(135deg, ${alpha(NIX_PURPLE, 0.06)} 0%, ${alpha(CYBER_TEAL, 0.03)} 100%)`
+          : `linear-gradient(135deg, ${alpha(NIX_PURPLE, 0.03)} 0%, ${alpha(CYBER_TEAL, 0.02)} 100%)`,
       }}
     >
       {/* Animated Illustration */}
@@ -566,11 +577,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         animate="animate"
         sx={{
           mb: 3,
-          opacity: 0.9,
+          opacity: 1,
           transform: compact ? "scale(0.8)" : "scale(1)",
-          color: isDarkMode
-            ? theme.palette.primary.light
-            : theme.palette.primary.main,
         }}
       >
         <motion.div variants={itemVariants}>{illustrations[type]}</motion.div>

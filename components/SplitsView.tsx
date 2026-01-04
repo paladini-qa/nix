@@ -3,8 +3,6 @@ import {
   Box,
   Typography,
   Paper,
-  TextField,
-  InputAdornment,
   IconButton,
   Menu,
   MenuItem,
@@ -36,7 +34,6 @@ import {
   alpha,
 } from "@mui/material";
 import {
-  Search as SearchIcon,
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
   CreditCard as CreditCardIcon,
@@ -53,6 +50,13 @@ import {
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
+import SearchBar from "./SearchBar";
+import {
+  getTableContainerSx,
+  getHeaderCellSx,
+  getRowSx,
+  getMobileCardSx,
+} from "../utils/tableStyles";
 import { Transaction } from "../types";
 
 interface SplitsViewProps {
@@ -608,14 +612,14 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ width: 50 }}>Paid</TableCell>
-                        <TableCell sx={{ width: 80 }}>#</TableCell>
-                        {hasMultipleDescriptions && <TableCell>Description</TableCell>}
-                        <TableCell>Date</TableCell>
-                        <TableCell>Period</TableCell>
-                        <TableCell align="right">Amount</TableCell>
-                        <TableCell align="center" sx={{ width: 100 }}>Status</TableCell>
-                        <TableCell align="center" sx={{ width: 100 }}>Actions</TableCell>
+                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 50 }}>Paid</TableCell>
+                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 80 }}>#</TableCell>
+                        {hasMultipleDescriptions && <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Description</TableCell>}
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Date</TableCell>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Period</TableCell>
+                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Amount</TableCell>
+                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Status</TableCell>
+                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Actions</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -967,7 +971,15 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
       {/* Filters */}
       <Paper
+        elevation={0}
         sx={{
+          borderRadius: "20px",
+          overflow: "hidden",
+          bgcolor: theme.palette.mode === "dark"
+            ? alpha(theme.palette.background.paper, 0.7)
+            : alpha("#FFFFFF", 0.9),
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
           p: 2,
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
@@ -976,19 +988,11 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           gap: 2,
         }}
       >
-        <TextField
-          size="small"
-          placeholder="Search..."
+        <SearchBar
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ flex: 1, minWidth: 150 }}
+          onChange={setSearchTerm}
+          placeholder="Search..."
+          minWidth={150}
         />
 
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
@@ -1071,10 +1075,22 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           {filteredGroups.map((group) => renderInstallmentCard(group))}
         </Box>
       ) : (
-        <Paper sx={{ p: 4, textAlign: "center" }}>
+        <Paper 
+          elevation={0}
+          sx={{ 
+            p: 4, 
+            textAlign: "center",
+            borderRadius: "20px",
+            bgcolor: theme.palette.mode === "dark"
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha("#FFFFFF", 0.9),
+            backdropFilter: "blur(20px)",
+            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          }}
+        >
           <CreditCardIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
           <Typography color="text.secondary" fontStyle="italic">
-            No installment purchases found with the current filters.
+            No splits transactions found with the current filters.
           </Typography>
         </Paper>
       )}

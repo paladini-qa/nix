@@ -4,8 +4,6 @@ import {
   Typography,
   Paper,
   Button,
-  TextField,
-  InputAdornment,
   Table,
   TableBody,
   TableCell,
@@ -38,7 +36,6 @@ import {
 } from "@mui/material";
 import {
   Add as AddIcon,
-  Search as SearchIcon,
   Download as DownloadIcon,
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
@@ -48,7 +45,6 @@ import {
   TableChart as FileSpreadsheetIcon,
   MoreVert as MoreVertIcon,
   UnfoldMore as UnsortedIcon,
-  Close as CloseIcon,
   FilterList as FilterIcon,
   AccountBalanceWallet as WalletIcon,
   TrendingUp as TrendingUpIcon,
@@ -59,10 +55,14 @@ import {
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
+import SearchBar from "./SearchBar";
+import SwipeableTransactionCard from "./SwipeableTransactionCard";
+import PullToRefreshIndicator from "./PullToRefreshIndicator";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
 import DateFilter from "./DateFilter";
 import { useNotification } from "../contexts";
+import { usePullToRefresh } from "../hooks";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -527,6 +527,23 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     const [, month, day] = dateString.split("-");
     return `${day}/${month}`;
   };
+
+  // Pull-to-refresh para mobile
+  const {
+    y: pullY,
+    onPanStart,
+    onPan,
+    onPanEnd,
+    isPulling,
+    isRefreshing: isPullRefreshing,
+    indicatorOpacity,
+    indicatorScale,
+    indicatorRotation,
+  } = usePullToRefresh({
+    threshold: 80,
+    onRefresh: handleRefresh,
+    enabled: isMobile && !!onRefreshData,
+  });
 
   // Header com estilo de ordenação
   const headerCellSx = {
@@ -1004,43 +1021,12 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           }}
         >
           {/* Campo de busca */}
-          <TextField
-            size="small"
-            placeholder="Search transactions..."
+          <SearchBar
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" sx={{ color: "text.disabled" }} />
-                </InputAdornment>
-              ),
-              endAdornment: searchTerm && (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setSearchTerm("")}>
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              flex: 1,
-              minWidth: 200,
-              maxWidth: 320,
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "20px",
-                bgcolor: isDarkMode
-                  ? alpha(theme.palette.background.default, 0.4)
-                  : alpha(theme.palette.grey[100], 0.6),
-                "& fieldset": { borderColor: "transparent" },
-                "&:hover fieldset": {
-                  borderColor: alpha(theme.palette.primary.main, 0.3),
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: theme.palette.primary.main,
-                },
-              },
-            }}
+            onChange={setSearchTerm}
+            placeholder="Search transactions..."
+            minWidth={200}
+            maxWidth={320}
           />
 
           {/* Botão de filtros */}
@@ -1268,178 +1254,53 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         )}
       </Paper>
 
-      {/* Mobile Card View */}
+      {/* Mobile Card View with Pull-to-Refresh */}
       {isMobile ? (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box
+          data-pull-to-refresh-container
+          onTouchStart={onPanStart}
+          onTouchMove={(e) => {
+            const touch = e.touches[0];
+            const target = e.currentTarget;
+            const rect = target.getBoundingClientRect();
+            const offsetY = touch.clientY - rect.top;
+            onPan(e, { offset: { y: offsetY }, velocity: { y: 0 } });
+          }}
+          onTouchEnd={onPanEnd}
+          sx={{
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5,
+            pt: isPulling || isPullRefreshing ? 8 : 0,
+            transition: "padding-top 0.2s ease",
+          }}
+        >
+          {/* Pull-to-Refresh Indicator */}
+          <PullToRefreshIndicator
+            opacity={indicatorOpacity}
+            scale={indicatorScale}
+            rotation={indicatorRotation}
+            isRefreshing={isPullRefreshing}
+            isPulling={isPulling}
+            y={pullY}
+          />
+
           {paginatedData.length > 0 ? (
             <>
-              {paginatedData.map((t) => {
-                const isIncome = t.type === "income";
-                const accentColor = isIncome ? "#059669" : "#DC2626";
-                return (
-                  <Card
-                    key={t.id}
-                    elevation={0}
-                    sx={{
-                      position: "relative",
-                      overflow: "hidden",
-                      p: 0,
-                      opacity: t.isPaid !== false ? 0.6 : 1,
-                      background: isDarkMode
-                        ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                        : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-                      backdropFilter: "blur(12px)",
-                      border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.05)}`,
-                      borderLeft: `3px solid ${accentColor}`,
-                      borderRadius: "14px",
-                      boxShadow: isDarkMode
-                        ? `0 4px 16px -4px ${alpha(accentColor, 0.15)}`
-                        : `0 4px 16px -4px ${alpha(accentColor, 0.1)}`,
-                      transition: "all 0.15s ease-in-out",
-                      "&:hover": {
-                        transform: "translateY(-1px)",
-                        boxShadow: isDarkMode
-                          ? `0 6px 20px -4px ${alpha(accentColor, 0.2)}`
-                          : `0 6px 20px -4px ${alpha(accentColor, 0.15)}`,
-                      },
-                      ...(t.isVirtual && {
-                        borderStyle: "dashed",
-                        borderLeftStyle: "solid",
-                      }),
-                    }}
-                  >
-                    <CardContent
-                      sx={{
-                        p: 1.5,
-                        "&:last-child": { pb: 1.5 },
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 1,
-                      }}
-                    >
-                    {/* Checkbox */}
-                    <Tooltip title={t.isVirtual ? "Mark recurring occurrence as paid" : (t.isPaid !== false ? "Paid" : "Not paid")}>
-                      <Checkbox
-                        checked={t.isPaid !== false}
-                        onChange={(e) => onTogglePaid(t.isVirtual && t.originalTransactionId ? t.originalTransactionId : t.id, e.target.checked)}
-                        size="small"
-                        color={t.isVirtual ? "info" : "success"}
-                        sx={{ mt: -0.5, ml: -1 }}
-                      />
-                    </Tooltip>
-                    {/* Icon */}
-                    <Box
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: "10px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        background: isDarkMode
-                          ? `linear-gradient(135deg, ${alpha(accentColor, 0.2)} 0%, ${alpha(accentColor, 0.1)} 100%)`
-                          : `linear-gradient(135deg, ${isIncome ? "#D1FAE5" : "#FEE2E2"} 0%, ${alpha(isIncome ? "#D1FAE5" : "#FEE2E2", 0.6)} 100%)`,
-                        border: `1px solid ${isDarkMode ? alpha(accentColor, 0.2) : alpha(accentColor, 0.15)}`,
-                        boxShadow: isDarkMode
-                          ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
-                          : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
-                      }}
-                    >
-                      {isIncome ? (
-                        <ArrowUpIcon sx={{ fontSize: 16, color: accentColor }} />
-                      ) : (
-                        <ArrowDownIcon sx={{ fontSize: 16, color: accentColor }} />
-                      )}
-                    </Box>
-
-                    {/* Content */}
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                          gap: 1,
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          sx={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {t.description}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          fontWeight={700}
-                          color={isIncome ? "success.main" : "error.main"}
-                          sx={{ flexShrink: 0 }}
-                        >
-                          {isIncome ? "+" : "-"} {formatCurrency(t.amount || 0)}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mt: 0.5,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <Typography variant="caption" color="text.secondary">
-                          {formatDateShort(t.date)}
-                        </Typography>
-                        <Typography variant="caption" color="text.disabled">
-                          •
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {t.category}
-                        </Typography>
-                        <Typography variant="caption" color="text.disabled">
-                          •
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {t.paymentMethod}
-                        </Typography>
-                      </Box>
-
-                      {/* Tags - Componente padronizado em formato pílula */}
-                      <TransactionTags transaction={t} />
-                    </Box>
-
-                    {/* Actions */}
-                    <IconButton
-                      size="small"
-                      onClick={(e) =>
-                        setMobileActionAnchor({
-                          element: e.currentTarget,
-                          transaction: t,
-                        })
-                      }
-                      sx={{
-                        bgcolor: isDarkMode
-                          ? alpha(theme.palette.action.hover, 0.3)
-                          : alpha(theme.palette.action.hover, 0.5),
-                        "&:hover": {
-                          bgcolor: isDarkMode
-                            ? alpha(theme.palette.action.hover, 0.5)
-                            : alpha(theme.palette.action.hover, 0.8),
-                        },
-                      }}
-                    >
-                      <MoreVertIcon fontSize="small" />
-                    </IconButton>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {paginatedData.map((t) => (
+                <SwipeableTransactionCard
+                  key={t.id}
+                  transaction={t}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onTogglePaid={onTogglePaid}
+                  onOpenMenu={(element, transaction) =>
+                    setMobileActionAnchor({ element, transaction })
+                  }
+                  formatDateShort={formatDateShort}
+                />
+              ))}
 
               {/* Summary Footer */}
               <Card
@@ -1507,25 +1368,24 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               </Card>
             </>
           ) : (
-            <Card
+            <Paper
               elevation={0}
               sx={{
-                position: "relative",
-                overflow: "hidden",
-                background: isDarkMode
-                  ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                  : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-                backdropFilter: "blur(12px)",
+                p: 4,
+                textAlign: "center",
+                borderRadius: "20px",
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.7)
+                  : alpha("#FFFFFF", 0.9),
+                backdropFilter: "blur(20px)",
                 border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                borderRadius: "16px",
               }}
             >
-              <CardContent sx={{ p: 4, textAlign: "center" }}>
-                <Typography color="text.secondary" fontStyle="italic">
-                  No transactions found.
-                </Typography>
-              </CardContent>
-            </Card>
+              <WalletIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+              <Typography color="text.secondary" fontStyle="italic">
+                No transactions found with the current filters.
+              </Typography>
+            </Paper>
           )}
 
           {/* Mobile Action Menu */}
@@ -1707,6 +1567,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} sx={{ textAlign: "center", py: 6 }}>
+                      <WalletIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2, display: "block", mx: "auto" }} />
                       <Typography color="text.secondary" fontStyle="italic">
                         No transactions found with the current filters.
                       </Typography>

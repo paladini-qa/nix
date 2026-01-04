@@ -54,6 +54,7 @@ import {
 } from "@mui/icons-material";
 import { Transaction, TransactionType, FinancialSummary } from "../types";
 import { CATEGORY_KEYWORDS, QUICK_AMOUNTS } from "../constants";
+import { suggestCategoryWithAI, CategorySuggestion } from "../services/geminiService";
 
 // Animação de entrada suave
 const slideInRight = keyframes`
@@ -312,6 +313,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   
   // Novos estados para UX melhorada
   const [suggestedCategory, setSuggestedCategory] = useState<string | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<CategorySuggestion | null>(null);
+  const [isLoadingAiSuggestion, setIsLoadingAiSuggestion] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   
   // Hook de notificações
@@ -376,7 +379,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       : currentBalance + parsedAmount;
   }, [currentBalance, parsedAmount, type]);
 
-  // Efeito para sugerir categoria quando descrição muda
+  // Efeito para sugerir categoria quando descrição muda (local primeiro)
   useEffect(() => {
     if (description && !category) {
       const suggested = suggestCategory(description, type, categories[type]);
@@ -385,6 +388,45 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setSuggestedCategory(null);
     }
   }, [description, type, category, categories]);
+
+  // Efeito para sugestão de categoria com IA (com debounce de 500ms)
+  useEffect(() => {
+    // Só busca IA se tiver descrição, não tiver categoria selecionada e a local não tiver alta confiança
+    if (!description || description.length < 3 || category) {
+      setAiSuggestion(null);
+      return;
+    }
+
+    const debounceTimer = setTimeout(async () => {
+      // Só busca IA se a sugestão local não existir
+      if (suggestedCategory) {
+        return;
+      }
+
+      setIsLoadingAiSuggestion(true);
+      try {
+        const suggestion = await suggestCategoryWithAI(
+          description,
+          categories,
+          type
+        );
+        
+        // Só mostra se confiança for boa e diferente da sugestão local
+        if (suggestion.confidence >= 0.6 && suggestion.category !== suggestedCategory) {
+          setAiSuggestion(suggestion);
+        } else {
+          setAiSuggestion(null);
+        }
+      } catch (error) {
+        console.error("Error getting AI category suggestion:", error);
+        setAiSuggestion(null);
+      } finally {
+        setIsLoadingAiSuggestion(false);
+      }
+    }, 500); // Debounce de 500ms
+
+    return () => clearTimeout(debounceTimer);
+  }, [description, type, category, categories, suggestedCategory]);
 
   // Efeito para detectar duplicatas (mostra notificação apenas uma vez por combinação)
   const [lastDuplicateKey, setLastDuplicateKey] = useState<string>("");
@@ -991,7 +1033,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 }}
               />
 
-              {/* Sugestão de Categoria */}
+              {/* Sugestão de Categoria (Local) */}
               <Collapse in={!!suggestedCategory}>
                 <Chip
                   label={`💡 Sugestão: ${suggestedCategory}`}
@@ -1011,6 +1053,50 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     },
                     "&:hover": {
                       bgcolor: alpha(theme.palette.info.main, 0.2),
+                    },
+                  }}
+                />
+              </Collapse>
+
+              {/* Sugestão de Categoria (IA) - aparece quando não há sugestão local */}
+              <Collapse in={!suggestedCategory && (!!aiSuggestion || isLoadingAiSuggestion)}>
+                <Chip
+                  icon={isLoadingAiSuggestion ? undefined : <BoltIcon sx={{ fontSize: 14 }} />}
+                  label={
+                    isLoadingAiSuggestion 
+                      ? "🤖 Analisando..." 
+                      : `🤖 IA sugere: ${aiSuggestion?.category}`
+                  }
+                  onClick={() => {
+                    if (aiSuggestion) {
+                      setCategory(aiSuggestion.category);
+                      setAiSuggestion(null);
+                    }
+                  }}
+                  onDelete={aiSuggestion ? () => {
+                    setCategory(aiSuggestion.category);
+                    setAiSuggestion(null);
+                  } : undefined}
+                  deleteIcon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
+                  disabled={isLoadingAiSuggestion}
+                  size="small"
+                  sx={{
+                    mt: 1,
+                    borderRadius: "20px",
+                    fontWeight: 500,
+                    bgcolor: alpha("#8A2BE2", 0.1),
+                    border: `1px solid ${alpha("#8A2BE2", 0.2)}`,
+                    color: "#8A2BE2",
+                    "& .MuiChip-deleteIcon": {
+                      color: theme.palette.success.main,
+                    },
+                    "&:hover": {
+                      bgcolor: alpha("#8A2BE2", 0.2),
+                    },
+                    animation: isLoadingAiSuggestion ? "pulse 1.5s ease-in-out infinite" : undefined,
+                    "@keyframes pulse": {
+                      "0%, 100%": { opacity: 0.7 },
+                      "50%": { opacity: 1 },
                     },
                   }}
                 />

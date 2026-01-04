@@ -199,21 +199,34 @@ const baseThemeOptions: ThemeOptions = {
         body: {
           scrollBehavior: "smooth",
         },
-        "input, textarea, select, button": {
+        // Foco visível acessível - outline customizado com cor primária Nix
+        "*:focus-visible": {
+          outline: `2px solid ${alpha(nixColors.primary.main, 0.5)}`,
+          outlineOffset: "2px",
+          borderRadius: "4px",
+        },
+        // Remove outline padrão para :focus (apenas mantém :focus-visible)
+        "*:focus:not(:focus-visible)": {
+          outline: "none",
+        },
+        // Inputs e buttons precisam de tratamento especial
+        "input, textarea, select": {
           "&:focus": {
-            outline: "none !important",
+            outline: "none",
           },
           "&:focus-visible": {
-            outline: "none !important",
+            outline: `2px solid ${alpha(nixColors.primary.main, 0.5)}`,
+            outlineOffset: "2px",
           },
         },
-        ".MuiOutlinedInput-input": {
-          "&:focus": {
-            outline: "none !important",
-          },
-          "&:focus-visible": {
-            outline: "none !important",
-          },
+        // Buttons e IconButtons
+        "button:focus-visible, [role='button']:focus-visible": {
+          outline: `2px solid ${alpha(nixColors.primary.main, 0.5)}`,
+          outlineOffset: "2px",
+        },
+        // MUI Inputs já têm border highlight, não precisa de outline extra
+        ".MuiOutlinedInput-root:focus-within": {
+          outline: "none",
         },
       },
     },
@@ -233,6 +246,11 @@ const baseThemeOptions: ThemeOptions = {
           },
           "&:active": {
             transform: "translateY(0)",
+          },
+          // Foco visível acessível para botões
+          "&:focus-visible": {
+            outline: `2px solid ${alpha(nixColors.primary.main, 0.5)}`,
+            outlineOffset: "2px",
           },
         },
         contained: {
@@ -263,6 +281,11 @@ const baseThemeOptions: ThemeOptions = {
           transition: "all 0.2s ease-in-out",
           "&:hover": {
             transform: "translateY(-1px)",
+          },
+          // Foco visível acessível para icon buttons
+          "&:focus-visible": {
+            outline: `2px solid ${alpha(nixColors.primary.main, 0.5)}`,
+            outlineOffset: "2px",
           },
         },
       },
@@ -343,32 +366,23 @@ const baseThemeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           borderRadius: BORDER_RADIUS,
-          outline: "none !important",
-          "&:focus": {
-            outline: "none !important",
-          },
-          "&:focus-visible": {
-            outline: "none !important",
-          },
-          "&:focus-within": {
-            outline: "none !important",
-          },
+          // Usa border highlight nativo do MUI em vez de outline
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderColor: nixColors.primary.main,
             borderWidth: 2,
           },
+          // Adiciona sombra sutil no focus para acessibilidade
+          "&.Mui-focused": {
+            boxShadow: `0 0 0 3px ${alpha(nixColors.primary.main, 0.15)}`,
+          },
         },
         notchedOutline: {
-          outline: "none !important",
-          transition: "border-color 0.2s ease-in-out",
+          transition: "border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
         },
         input: {
-          outline: "none !important",
+          // Remove outline interno, deixa o container lidar com isso
           "&:focus": {
-            outline: "none !important",
-          },
-          "&:focus-visible": {
-            outline: "none !important",
+            outline: "none",
           },
         },
       },
@@ -537,21 +551,11 @@ const baseThemeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           borderRadius: BORDER_RADIUS,
-          outline: "none !important",
-          "&:focus": {
-            outline: "none !important",
-          },
-          "&:focus-visible": {
-            outline: "none !important",
-          },
         },
         input: {
-          outline: "none !important",
+          // Input interno não precisa de outline, o container lida com isso
           "&:focus": {
-            outline: "none !important",
-          },
-          "&:focus-visible": {
-            outline: "none !important",
+            outline: "none",
           },
         },
       },
@@ -758,3 +762,4 @@ export const getGlassStyles = (mode: "light" | "dark") => ({
       : "rgba(255, 255, 255, 0.3)"
   }`,
 });
+

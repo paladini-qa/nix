@@ -13,8 +13,6 @@ import {
   TableFooter,
   Chip,
   Grid,
-  TextField,
-  InputAdornment,
   FormControl,
   InputLabel,
   Select,
@@ -37,7 +35,6 @@ import {
   CreditCard as CreditCardIcon,
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
-  Search as SearchIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   RadioButtonUnchecked as UnpaidIcon,
@@ -46,6 +43,13 @@ import {
   MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
+import SearchBar from "./SearchBar";
+import {
+  getTableContainerSx,
+  getHeaderCellSx,
+  getRowSx,
+  getMobileCardSx,
+} from "../utils/tableStyles";
 import { Transaction } from "../types";
 import { MONTHS } from "../constants";
 import { ColorsContext } from "../App";
@@ -440,19 +444,11 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           gap: 2,
         }}
       >
-        <TextField
-          size="small"
-          placeholder="Search..."
+        <SearchBar
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ flex: 1, minWidth: 150 }}
+          onChange={setSearchTerm}
+          placeholder="Search..."
+          minWidth={150}
         />
 
         <FormControl size="small" sx={{ minWidth: 100 }}>
@@ -618,24 +614,24 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
         </Box>
       ) : (
         // Desktop Table View
-        <TableContainer component={Paper}>
-          <Table>
+        <TableContainer component={Paper} sx={getTableContainerSx(theme, isDarkMode)}>
+          <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: "action.hover" }}>
-                <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
-                <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
+              <TableRow>
+                <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Date</TableCell>
+                <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Description</TableCell>
+                <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Category</TableCell>
+                <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>
                   Type
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
+                <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>
                   Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
+                <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>
                   Amount
                 </TableCell>
                 {(onEdit || onDelete) && (
-                  <TableCell sx={{ fontWeight: 600, textAlign: "center", width: 100 }}>
+                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>
                     Actions
                   </TableCell>
                 )}
@@ -646,9 +642,8 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               filteredTransactions.map((t, index) => (
                 <TableRow
                   key={t.id}
-                  hover
                   sx={{
-                    bgcolor: index % 2 === 0 ? "transparent" : "action.hover",
+                    ...getRowSx(theme, isDarkMode, index),
                     opacity: t.isPaid ? 0.7 : 1,
                   }}
                 >

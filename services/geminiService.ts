@@ -667,6 +667,164 @@ Now respond to the user's message:`;
   }
 };
 
+// ========================================
+// Category Suggestion - Sugestão Preditiva de Categoria
+// ========================================
+
+export interface CategorySuggestion {
+  category: string;
+  confidence: number;
+}
+
+/**
+ * Sugere a categoria mais apropriada com base na descrição da transação usando IA.
+ * Usa cache local de padrões conhecidos para melhor performance.
+ */
+export const suggestCategoryWithAI = async (
+  description: string,
+  categories: { income: string[]; expense: string[] },
+  type: TransactionType
+): Promise<CategorySuggestion> => {
+  // Primeiro, tenta detectar por padrões locais (rápido)
+  const localSuggestion = suggestCategoryLocal(description, type, categories);
+  if (localSuggestion.confidence >= 0.8) {
+    return localSuggestion;
+  }
+
+  // Se não tem certeza, usa IA
+  try {
+    const availableCategories = type === "income" ? categories.income : categories.expense;
+
+    const prompt = `Analise a descrição de uma transação financeira e sugira a categoria mais apropriada.
+
+DESCRIÇÃO: "${description}"
+TIPO: ${type === "income" ? "Receita" : "Despesa"}
+
+CATEGORIAS DISPONÍVEIS:
+${availableCategories.map((c, i) => `${i + 1}. ${c}`).join("\n")}
+
+INSTRUÇÕES:
+1. Escolha APENAS uma categoria da lista acima
+2. Baseie-se em padrões comuns de nomenclatura
+3. Se a descrição for muito vaga, escolha a mais provável
+
+Responda APENAS com JSON:
+{
+  "category": "nome exato da categoria da lista",
+  "confidence": número de 0 a 1
+}`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+
+    const responseText = (response.text || "")
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
+
+    const parsed = JSON.parse(responseText);
+
+    // Valida se a categoria está na lista
+    if (availableCategories.includes(parsed.category)) {
+      return {
+        category: parsed.category,
+        confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.7,
+      };
+    }
+
+    // Se a IA retornou uma categoria inválida, usa a sugestão local
+    return localSuggestion;
+  } catch (error) {
+    console.error("Error suggesting category with AI:", error);
+    // Fallback para sugestão local
+    return localSuggestion;
+  }
+};
+
+/**
+ * Padrões locais para sugestão rápida de categoria (sem IA)
+ */
+const CATEGORY_PATTERNS: { pattern: RegExp; category: string; type: TransactionType }[] = [
+  // Alimentação
+  { pattern: /mercado|supermercado|feira|açougue|padaria|hortifruti/i, category: "Alimentação", type: "expense" },
+  { pattern: /restaurante|lanchonete|pizzaria|hamburgueria|sushi|ifood|uber\s*eats|rappi/i, category: "Alimentação", type: "expense" },
+  { pattern: /café|coffee|starbucks|bakery/i, category: "Alimentação", type: "expense" },
+
+  // Transporte
+  { pattern: /uber|99|taxi|táxi|cabify|lyft|indriver/i, category: "Transporte", type: "expense" },
+  { pattern: /ônibus|metro|metrô|trem|brt|bilhete\s*único/i, category: "Transporte", type: "expense" },
+  { pattern: /gasolina|combustível|posto|shell|ipiranga|petrobras|br\s*mania/i, category: "Transporte", type: "expense" },
+  { pattern: /estacionamento|parking|zona\s*azul|estapar/i, category: "Transporte", type: "expense" },
+
+  // Moradia
+  { pattern: /aluguel|rent|condomínio|iptu|luz|energia|elétrica|água|esgoto|gás/i, category: "Moradia", type: "expense" },
+  { pattern: /internet|wi-?fi|fibra|net|claro|vivo|oi|tim/i, category: "Moradia", type: "expense" },
+
+  // Lazer
+  { pattern: /cinema|teatro|show|concerto|ingresso|ticket/i, category: "Lazer", type: "expense" },
+  { pattern: /netflix|spotify|disney|hbo|prime|youtube\s*premium|apple\s*music/i, category: "Lazer", type: "expense" },
+  { pattern: /jogo|game|steam|playstation|xbox|nintendo/i, category: "Lazer", type: "expense" },
+
+  // Saúde
+  { pattern: /farmácia|drogaria|droga\s*raia|drogasil|pague\s*menos|remédio|medicamento/i, category: "Saúde", type: "expense" },
+  { pattern: /médico|consulta|hospital|clínica|dentista|exame|laboratório/i, category: "Saúde", type: "expense" },
+  { pattern: /academia|gym|crossfit|pilates|yoga/i, category: "Saúde", type: "expense" },
+
+  // Educação
+  { pattern: /curso|udemy|coursera|alura|faculdade|universidade|escola|mensalidade/i, category: "Educação", type: "expense" },
+  { pattern: /livro|livraria|amazon\s*kindle|e-?book/i, category: "Educação", type: "expense" },
+
+  // Compras
+  { pattern: /amazon|mercado\s*livre|shopee|aliexpress|magalu|americanas|casas\s*bahia/i, category: "Compras", type: "expense" },
+  { pattern: /roupa|vestuário|zara|renner|c&a|riachuelo|hering/i, category: "Compras", type: "expense" },
+  { pattern: /eletrônico|celular|notebook|computador|apple\s*store/i, category: "Compras", type: "expense" },
+
+  // Receitas
+  { pattern: /salário|pagamento|remuneração|holerite|contracheque/i, category: "Salário", type: "income" },
+  { pattern: /freelance|freela|projeto|consultoria/i, category: "Freelance", type: "income" },
+  { pattern: /investimento|dividendo|rendimento|juros|ações|fii/i, category: "Investimentos", type: "income" },
+  { pattern: /venda|vendas|comissão/i, category: "Vendas", type: "income" },
+  { pattern: /reembolso|restituição|devolução/i, category: "Reembolso", type: "income" },
+];
+
+/**
+ * Sugere categoria localmente usando padrões regex (rápido, sem API)
+ */
+const suggestCategoryLocal = (
+  description: string,
+  type: TransactionType,
+  categories: { income: string[]; expense: string[] }
+): CategorySuggestion => {
+  const availableCategories = type === "income" ? categories.income : categories.expense;
+
+  // Procura por padrões conhecidos
+  for (const { pattern, category, type: patternType } of CATEGORY_PATTERNS) {
+    if (patternType === type && pattern.test(description)) {
+      // Verifica se a categoria sugerida existe na lista do usuário
+      const matchingCategory = availableCategories.find(
+        (c) => c.toLowerCase() === category.toLowerCase() ||
+               c.toLowerCase().includes(category.toLowerCase()) ||
+               category.toLowerCase().includes(c.toLowerCase())
+      );
+
+      if (matchingCategory) {
+        return {
+          category: matchingCategory,
+          confidence: 0.85,
+        };
+      }
+    }
+  }
+
+  // Se não encontrou padrão, retorna a primeira categoria com baixa confiança
+  return {
+    category: availableCategories[0] || "Outros",
+    confidence: 0.3,
+  };
+};
+
 export const getFinancialInsights = async (
   transactions: Transaction[],
   month: string,

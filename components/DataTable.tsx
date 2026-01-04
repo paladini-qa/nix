@@ -3,8 +3,6 @@ import {
   Box,
   Typography,
   Paper,
-  TextField,
-  InputAdornment,
   Table,
   TableBody,
   TableCell,
@@ -13,7 +11,6 @@ import {
   TableRow,
   TableSortLabel,
   TablePagination,
-  IconButton,
   Tooltip,
   useMediaQuery,
   useTheme,
@@ -24,11 +21,10 @@ import {
   Button,
 } from "@mui/material";
 import {
-  Search as SearchIcon,
   FilterList as FilterIcon,
-  Close as CloseIcon,
   UnfoldMore as UnsortedIcon,
 } from "@mui/icons-material";
+import SearchBar from "./SearchBar";
 
 // Tipos para configuração de colunas
 export interface DataTableColumn<T> {
@@ -154,8 +150,7 @@ function DataTable<T>({
 
   // Handler de busca
   const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
+    (value: string) => {
       if (onSearch) {
         onSearch(value);
       } else {
@@ -339,50 +334,13 @@ function DataTable<T>({
         )}
 
         {/* Busca */}
-        <TextField
-          size="small"
-          placeholder={searchPlaceholder}
+        <SearchBar
           value={searchTerm}
           onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" sx={{ color: "text.disabled" }} />
-              </InputAdornment>
-            ),
-            endAdornment: searchTerm && (
-              <InputAdornment position="end">
-                <IconButton
-                  size="small"
-                  onClick={() =>
-                    onSearch ? onSearch("") : setInternalSearchTerm("")
-                  }
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            flex: title ? undefined : 1,
-            minWidth: 200,
-            maxWidth: 320,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "20px",
-              bgcolor: isDarkMode
-                ? alpha(theme.palette.background.default, 0.4)
-                : alpha(theme.palette.grey[100], 0.6),
-              "& fieldset": {
-                borderColor: "transparent",
-              },
-              "&:hover fieldset": {
-                borderColor: alpha(theme.palette.primary.main, 0.3),
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-          }}
+          placeholder={searchPlaceholder}
+          minWidth={200}
+          maxWidth={320}
+          flex={title ? 0 : 1}
         />
 
         {/* Botão de filtros */}

@@ -3,8 +3,6 @@ import {
   Box,
   Typography,
   Paper,
-  TextField,
-  InputAdornment,
   Chip,
   IconButton,
   Menu,
@@ -41,7 +39,6 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   MoreVert as MoreVertIcon,
-  Search as SearchIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   CalendarMonth as CalendarIcon,
@@ -57,6 +54,13 @@ import {
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
+import SearchBar from "./SearchBar";
+import {
+  getTableContainerSx,
+  getHeaderCellSx,
+  getRowSx,
+  getMobileCardSx,
+} from "../utils/tableStyles";
 import { Transaction } from "../types";
 
 interface RecurringViewProps {
@@ -816,17 +820,17 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: 50 }}>Paid</TableCell>
-                    <TableCell sx={{ width: 80 }}>#</TableCell>
+                    <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 50 }}>Paid</TableCell>
+                    <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 80 }}>#</TableCell>
                     {/* Mostra coluna de descrição se há transações modificadas */}
                     {occurrencesList.some(o => o.isModified) && (
-                      <TableCell>Description</TableCell>
+                      <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Description</TableCell>
                     )}
-                    <TableCell>Date</TableCell>
-                    <TableCell>Period</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell align="center" sx={{ width: 100 }}>Status</TableCell>
-                    <TableCell align="center" sx={{ width: 100 }}>Actions</TableCell>
+                    <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Date</TableCell>
+                    <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Period</TableCell>
+                    <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Amount</TableCell>
+                    <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Status</TableCell>
+                    <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1004,7 +1008,19 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             )}
 
             {/* Annual Impact */}
-            <Paper sx={{ p: 2, mt: 2, bgcolor: "background.paper", borderRadius: "12px" }}>
+            <Paper 
+              elevation={0}
+              sx={{ 
+                p: 2, 
+                mt: 2, 
+                borderRadius: "20px",
+                bgcolor: theme.palette.mode === "dark"
+                  ? alpha(theme.palette.background.paper, 0.7)
+                  : alpha("#FFFFFF", 0.9),
+                backdropFilter: "blur(16px)",
+                border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              }}
+            >
               <Typography variant="subtitle2" gutterBottom>
                 Annual Impact
               </Typography>
@@ -1268,7 +1284,15 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
       {/* Filters */}
       <Paper
+        elevation={0}
         sx={{
+          borderRadius: "20px",
+          overflow: "hidden",
+          bgcolor: theme.palette.mode === "dark"
+            ? alpha(theme.palette.background.paper, 0.7)
+            : alpha("#FFFFFF", 0.9),
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
           p: 2,
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
@@ -1277,19 +1301,11 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           alignItems: isMobile ? "stretch" : "center",
         }}
       >
-        <TextField
-          size="small"
-          placeholder="Search..."
+        <SearchBar
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ minWidth: 200, flex: 1 }}
+          onChange={setSearchTerm}
+          placeholder="Search..."
+          minWidth={200}
         />
 
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
@@ -1374,10 +1390,24 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
       {/* Recurring Items */}
       {recurringTransactions.length === 0 ? (
-        <Alert severity="info" icon={<RepeatIcon />}>
-          No recurring transactions found. Create a transaction and mark it as
-          recurring to see it here.
-        </Alert>
+        <Paper 
+          elevation={0}
+          sx={{ 
+            p: 4, 
+            textAlign: "center",
+            borderRadius: "20px",
+            bgcolor: theme.palette.mode === "dark"
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha("#FFFFFF", 0.9),
+            backdropFilter: "blur(20px)",
+            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          }}
+        >
+          <RepeatIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+          <Typography color="text.secondary" fontStyle="italic">
+            No recurring transactions found with the current filters.
+          </Typography>
+        </Paper>
       ) : (
         <Box>
           {recurringTransactions.map((t) => renderRecurringCard(t))}
