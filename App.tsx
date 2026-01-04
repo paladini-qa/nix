@@ -3168,6 +3168,8 @@ const AppContent: React.FC<{
                             onClick={handleRefresh}
                             disabled={isRefreshing}
                             sx={{
+                              width: 40,
+                              height: 40,
                               border: 1,
                               borderColor: "divider",
                               borderRadius: "20px",
@@ -3196,6 +3198,11 @@ const AppContent: React.FC<{
                             variant="contained"
                             startIcon={<AddIcon />}
                             onClick={handleNewTransaction}
+                            sx={{
+                              height: 40,
+                              borderRadius: "20px",
+                              px: 2.5,
+                            }}
                           >
                             Transaction
                           </Button>

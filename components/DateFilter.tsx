@@ -74,6 +74,8 @@ const DateFilter: React.FC<DateFilterProps> = ({
         size="small"
         disabled={disabled}
         sx={{
+          width: isMobile ? 36 : 40,
+          height: isMobile ? 36 : 40,
           border: 1,
           borderColor: "divider",
           borderRadius: "20px",
@@ -101,10 +103,12 @@ const DateFilter: React.FC<DateFilterProps> = ({
               minWidth: isMobile ? 120 : compact ? 160 : 200,
               "& .MuiOutlinedInput-root": {
                 borderRadius: "20px",
+                height: isMobile ? 36 : 40,
               },
               "& .MuiOutlinedInput-input": {
                 fontSize: isMobile ? 14 : 16,
                 textAlign: "center",
+                py: isMobile ? 0.75 : 1,
               },
             },
           },
@@ -116,6 +120,8 @@ const DateFilter: React.FC<DateFilterProps> = ({
         size="small"
         disabled={disabled}
         sx={{
+          width: isMobile ? 36 : 40,
+          height: isMobile ? 36 : 40,
           border: 1,
           borderColor: "divider",
           borderRadius: "20px",

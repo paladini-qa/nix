@@ -69,6 +69,7 @@ export const AdvancedFiltersButton: React.FC<{
         borderRadius: "20px",
         textTransform: "none",
         minWidth: compact ? "auto" : undefined,
+        height: compact ? 36 : 40,
         px: compact ? 1.5 : 2,
         ...(hasActiveFilters && {
           background: `linear-gradient(135deg, ${alpha(
