@@ -1,6 +1,9 @@
 export type TransactionType = "income" | "expense";
 export type ThemePreference = "light" | "dark" | "system";
 
+// Opções para edição/deleção de transações compartilhadas
+export type SharedEditOption = "both" | "this_only" | "related_only";
+
 export interface Transaction {
   id: string;
   description: string;

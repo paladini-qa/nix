@@ -227,20 +227,24 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
         sx: {
           width: isMobile ? SIDE_PANEL_WIDTH_MOBILE : SIDE_PANEL_WIDTH,
           maxWidth: "100vw",
-          bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.98)
-            : "#FAFBFC",
-          backdropFilter: "blur(20px)",
-          borderLeft: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          bgcolor: isDarkMode ? theme.palette.background.default : "#FAFBFC",
+          backgroundImage: "none", // Remove o overlay do MUI
+          borderLeft: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
           boxShadow: isDarkMode
-            ? `-8px 0 40px -10px ${alpha("#000000", 0.5)}`
-            : `-8px 0 40px -10px ${alpha("#64748B", 0.15)}`,
+            ? `-24px 0 80px -20px ${alpha("#000000", 0.5)}`
+            : `-24px 0 80px -20px ${alpha(theme.palette.primary.main, 0.12)}`,
+          display: "flex",
+          flexDirection: "column",
         },
       }}
-      sx={{
-        "& .MuiBackdrop-root": {
-          backdropFilter: "blur(4px)",
-          bgcolor: alpha("#000000", 0.4),
+      slotProps={{
+        backdrop: {
+          sx: {
+            bgcolor: isDarkMode
+              ? alpha("#000000", 0.5)
+              : alpha("#000000", 0.25),
+            backdropFilter: "blur(4px)",
+          },
         },
       }}
     >
@@ -258,7 +262,6 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
               sx={{
                 p: 3,
                 pb: 2,
-                borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
               }}
             >
                 <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
@@ -323,9 +326,8 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                   p: 2,
                   borderRadius: "20px",
                   bgcolor: isDarkMode
-                    ? alpha(theme.palette.background.default, 0.5)
+                    ? "transparent"
                     : alpha("#FFFFFF", 0.8),
-                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.04)}`,
                 }}
               >
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
@@ -430,9 +432,8 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                         borderRadius: "20px",
                         mb: 1.5,
                         p: 2,
-                        border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
                         bgcolor: isDarkMode
-                          ? alpha(theme.palette.background.default, 0.3)
+                          ? "transparent"
                           : alpha("#FFFFFF", 0.8),
                         transition: "all 0.2s ease",
                         "&:hover": {
@@ -513,10 +514,6 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
               sx={{
                 p: 3,
                 pt: 2,
-                borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                bgcolor: isDarkMode
-                  ? alpha(theme.palette.background.default, 0.5)
-                  : alpha(theme.palette.grey[50], 0.8),
               }}
             >
               {/* Info tip */}

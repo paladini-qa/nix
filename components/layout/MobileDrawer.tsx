@@ -336,9 +336,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           boxSizing: "border-box",
           border: "none",
           // Glassmorphism
-          bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.95)
-            : alpha("#FFFFFF", 0.98),
+          bgcolor: isDarkMode ? "#1A1A2E" : alpha("#FFFFFF", 0.98),
           backdropFilter: "blur(20px) saturate(180%)",
           WebkitBackdropFilter: "blur(20px) saturate(180%)",
           boxShadow: isDarkMode

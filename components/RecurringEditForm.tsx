@@ -244,9 +244,8 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
         sx: {
           width: isMobile ? SIDE_PANEL_WIDTH_MOBILE : SIDE_PANEL_WIDTH,
           maxWidth: "100vw",
-          bgcolor: isDarkMode
-            ? theme.palette.background.default
-            : "#FAFBFC",
+          bgcolor: isDarkMode ? theme.palette.background.default : "#FAFBFC",
+          backgroundImage: "none", // Remove o overlay do MUI
           borderLeft: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
           boxShadow: isDarkMode
             ? `-24px 0 80px -20px ${alpha("#000000", 0.5)}`

@@ -34,7 +34,9 @@ import {
   CategoryColors,
   PaymentMethodColors,
   ParsedTransaction,
+  SharedEditOption,
 } from "./types";
+import SharedOptionsDialog from "./components/SharedOptionsDialog";
 import {
   CATEGORIES as DEFAULT_CATEGORIES,
   PAYMENT_METHODS as DEFAULT_PAYMENT_METHODS,
@@ -250,6 +252,12 @@ const AppContent: React.FC<{
   const [optionsPanelOpen, setOptionsPanelOpen] = useState(false);
   const [optionsPanelActionType, setOptionsPanelActionType] = useState<ActionType>("edit");
   const [optionsPanelTransaction, setOptionsPanelTransaction] = useState<Transaction | null>(null);
+  
+  // Estados para o diálogo de transações compartilhadas
+  const [sharedOptionsOpen, setSharedOptionsOpen] = useState(false);
+  const [sharedOptionsActionType, setSharedOptionsActionType] = useState<"edit" | "delete">("edit");
+  const [sharedOptionsTransaction, setSharedOptionsTransaction] = useState<Transaction | null>(null);
+  const [pendingSharedEditOption, setPendingSharedEditOption] = useState<SharedEditOption | null>(null);
   
   const [currentEditMode, setCurrentEditMode] = useState<EditOption | null>(
     null
@@ -769,6 +777,7 @@ const AppContent: React.FC<{
               is_paid: boolean;
               is_shared?: boolean;
               shared_with?: string;
+              recurring_group_id?: string;
             }> = [];
 
             // Iterar pelos meses desde o original até o mês anterior ao selecionado
@@ -1609,6 +1618,23 @@ const AppContent: React.FC<{
   };
 
   const handleEditTransaction = (transaction: Transaction) => {
+    // PRIMEIRO: Verificar se é uma transação compartilhada com relacionada
+    const isSharedWithRelated = transaction.isShared && transaction.relatedTransactionId;
+    
+    if (isSharedWithRelated) {
+      // Mostra o diálogo de opções de transação compartilhada primeiro
+      setSharedOptionsTransaction(transaction);
+      setSharedOptionsActionType("edit");
+      setSharedOptionsOpen(true);
+      return;
+    }
+    
+    // Fluxo normal para transações não compartilhadas
+    proceedWithEdit(transaction);
+  };
+  
+  // Função auxiliar para continuar com a edição após escolha de transação compartilhada
+  const proceedWithEdit = (transaction: Transaction) => {
     const isVirtual = transaction.isVirtual;
     const isInstallment =
       transaction.installments && transaction.installments > 1;
@@ -1632,6 +1658,54 @@ const AppContent: React.FC<{
       setPendingVirtualEdit(null);
       setEditingTransaction(transaction);
       setIsFormOpen(true);
+    }
+  };
+  
+  // Handler para quando o usuário seleciona uma opção no diálogo de transações compartilhadas (edit)
+  const handleSharedEditOptionSelect = (option: SharedEditOption) => {
+    if (!sharedOptionsTransaction) return;
+    
+    setSharedOptionsOpen(false);
+    setPendingSharedEditOption(option);
+    
+    if (option === "both") {
+      // Editar ambas - continua com a transação atual, a relacionada será atualizada automaticamente
+      proceedWithEdit(sharedOptionsTransaction);
+    } else if (option === "this_only") {
+      // Editar apenas esta - precisa desvincular primeiro ou editar independentemente
+      proceedWithEdit(sharedOptionsTransaction);
+    } else if (option === "related_only") {
+      // Editar apenas a relacionada
+      const relatedTx = transactions.find(
+        (t) => t.id === sharedOptionsTransaction.relatedTransactionId
+      );
+      if (relatedTx) {
+        proceedWithEdit(relatedTx);
+      }
+    }
+  };
+  
+  // Handler para quando o usuário seleciona uma opção no diálogo de transações compartilhadas (delete)
+  const handleSharedDeleteOptionSelect = async (option: SharedEditOption) => {
+    if (!sharedOptionsTransaction) return;
+    
+    setSharedOptionsOpen(false);
+    setPendingSharedEditOption(option);
+    
+    if (option === "both") {
+      // Deletar ambas - continua com a transação atual e a relacionada será deletada também
+      await proceedWithDelete(sharedOptionsTransaction);
+    } else if (option === "this_only") {
+      // Deletar apenas esta
+      await proceedWithDelete(sharedOptionsTransaction);
+    } else if (option === "related_only") {
+      // Deletar apenas a relacionada
+      const relatedTx = transactions.find(
+        (t) => t.id === sharedOptionsTransaction.relatedTransactionId
+      );
+      if (relatedTx) {
+        await proceedWithDelete(relatedTx);
+      }
     }
   };
 
@@ -2154,6 +2228,25 @@ const AppContent: React.FC<{
       if (!transactionToDelete) return;
     }
 
+    // PRIMEIRO: Verificar se é uma transação compartilhada com relacionada
+    const isSharedWithRelated = transactionToDelete.isShared && transactionToDelete.relatedTransactionId;
+    
+    if (isSharedWithRelated) {
+      // Mostra o diálogo de opções de transação compartilhada primeiro
+      setSharedOptionsTransaction(transactionToDelete);
+      setSharedOptionsActionType("delete");
+      setSharedOptionsOpen(true);
+      return;
+    }
+
+    // Fluxo normal para transações não compartilhadas
+    await proceedWithDelete(transactionToDelete);
+  };
+  
+  // Função auxiliar para continuar com a deleção após escolha de transação compartilhada
+  const proceedWithDelete = async (transactionToDelete: Transaction) => {
+    const isVirtualTransaction = transactionToDelete.id.includes("_recurring_");
+
     // Mostra dialog de opções para:
     // 1. Transações virtuais (ocorrências de recorrentes) - permite deletar single/all_future/all
     // 2. Transações parceladas (múltiplas transações reais) - permite deletar single/all_future/all
@@ -2227,10 +2320,10 @@ const AppContent: React.FC<{
       const { error } = await supabase
         .from("transactions")
         .delete()
-        .eq("id", id);
+        .eq("id", transactionToDelete.id);
       if (error) throw error;
 
-      let idsToRemove = [id];
+      let idsToRemove = [transactionToDelete.id];
 
       if (deleteRelated && relatedTransaction) {
         const { error: relatedError } = await supabase
@@ -2753,7 +2846,7 @@ const AppContent: React.FC<{
       message: `Deseja marcar todas as despesas não pagas de "${paymentMethod}" em ${month + 1}/${year} como pagas?`,
       confirmText: "Pagar Tudo",
       cancelText: "Cancelar",
-      severity: "info",
+      variant: "info",
     });
 
     if (!confirmed) return;
@@ -3250,6 +3343,29 @@ const AppContent: React.FC<{
             onUpdateDisplayName={handleUpdateDisplayName}
             onChangeEmail={handleChangeEmail}
             onResetPassword={handleResetPassword}
+          />
+
+          {/* Shared Transaction Options Dialog */}
+          <SharedOptionsDialog
+            open={sharedOptionsOpen}
+            transaction={sharedOptionsTransaction}
+            relatedTransaction={
+              sharedOptionsTransaction?.relatedTransactionId
+                ? transactions.find((t) => t.id === sharedOptionsTransaction.relatedTransactionId) || null
+                : null
+            }
+            actionType={sharedOptionsActionType}
+            onSelect={(option) => {
+              if (sharedOptionsActionType === "edit") {
+                handleSharedEditOptionSelect(option);
+              } else {
+                handleSharedDeleteOptionSelect(option);
+              }
+            }}
+            onCancel={() => {
+              setSharedOptionsOpen(false);
+              setSharedOptionsTransaction(null);
+            }}
           />
 
           {/* Unified Transaction Options Panel for Edit/Delete */}
