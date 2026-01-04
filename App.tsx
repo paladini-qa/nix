@@ -2404,13 +2404,47 @@ const AppContent: React.FC<{
 
             if (error) throw error;
 
-            // Atualiza o estado local com a nova lista de datas excluídas
-            setTransactions((prev) =>
-              prev.map((t) =>
-                t.id === originalId
-                  ? { ...t, excludedDates: newExcludedDates }
-                  : t
-              )
+            // Verifica se existe uma transação materializada "órfã" (sem recurringGroupId)
+            // para a mesma data e mesmas características - se sim, também deletamos
+            const orphanMaterialized = transactions.find((t) => {
+              if (t.isRecurring || t.isVirtual) return false;
+              if (t.id === originalTransaction.id) return false;
+              if (t.recurringGroupId) return false; // Não é órfã se tem recurringGroupId
+              
+              const sameDescription = t.description === originalTransaction.description;
+              const sameCategory = t.category === originalTransaction.category;
+              const sameAmount = t.amount === originalTransaction.amount;
+              const sameDate = t.date === skipDate;
+              const sameType = t.type === originalTransaction.type;
+              
+              return sameDescription && sameCategory && sameAmount && sameDate && sameType;
+            });
+
+            let idsToRemove: string[] = [];
+
+            if (orphanMaterialized) {
+              // Deleta a transação materializada órfã do banco
+              const { error: deleteError } = await supabase
+                .from("transactions")
+                .delete()
+                .eq("id", orphanMaterialized.id);
+              
+              if (deleteError) {
+                console.error("Error deleting orphan materialized transaction:", deleteError);
+              } else {
+                idsToRemove.push(orphanMaterialized.id);
+              }
+            }
+
+            // Atualiza o estado local com a nova lista de datas excluídas e remove órfãs
+            setTransactions((prev) => 
+              prev
+                .filter((t) => !idsToRemove.includes(t.id))
+                .map((t) =>
+                  t.id === originalId
+                    ? { ...t, excludedDates: newExcludedDates }
+                    : t
+                )
             );
           }
         } else if (isInstallment) {
@@ -2448,12 +2482,46 @@ const AppContent: React.FC<{
 
           if (error) throw error;
 
+          // Verifica se existe uma transação materializada "órfã" (sem recurringGroupId)
+          // para a mesma data e mesmas características - se sim, também deletamos
+          const orphanMaterialized = transactions.find((t) => {
+            if (t.isRecurring || t.isVirtual) return false;
+            if (t.id === pendingDeleteTransaction.id) return false;
+            if (t.recurringGroupId) return false; // Não é órfã se tem recurringGroupId
+            
+            const sameDescription = t.description === pendingDeleteTransaction.description;
+            const sameCategory = t.category === pendingDeleteTransaction.category;
+            const sameAmount = t.amount === pendingDeleteTransaction.amount;
+            const sameDate = t.date === skipDate;
+            const sameType = t.type === pendingDeleteTransaction.type;
+            
+            return sameDescription && sameCategory && sameAmount && sameDate && sameType;
+          });
+
+          let idsToRemove: string[] = [];
+
+          if (orphanMaterialized) {
+            // Deleta a transação materializada órfã do banco
+            const { error: deleteError } = await supabase
+              .from("transactions")
+              .delete()
+              .eq("id", orphanMaterialized.id);
+            
+            if (deleteError) {
+              console.error("Error deleting orphan materialized transaction:", deleteError);
+            } else {
+              idsToRemove.push(orphanMaterialized.id);
+            }
+          }
+
           setTransactions((prev) =>
-            prev.map((t) =>
-              t.id === pendingDeleteTransaction.id
-                ? { ...t, excludedDates: newExcludedDates }
-                : t
-            )
+            prev
+              .filter((t) => !idsToRemove.includes(t.id))
+              .map((t) =>
+                t.id === pendingDeleteTransaction.id
+                  ? { ...t, excludedDates: newExcludedDates }
+                  : t
+              )
           );
         } else {
           // Para transação normal não recorrente
