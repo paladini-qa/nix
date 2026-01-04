@@ -318,18 +318,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           alignItems: "center",
           gap: 1.5,
           px: 3,
-          position: "relative",
-          "&::after": {
-            content: '""',
-            position: "absolute",
-            bottom: 0,
-            left: 24,
-            right: 24,
-            height: 1,
-            background: isDarkMode
-              ? `linear-gradient(90deg, transparent, ${alpha(theme.palette.divider, 0.5)}, transparent)`
-              : `linear-gradient(90deg, transparent, ${alpha(theme.palette.primary.main, 0.1)}, transparent)`,
-          },
         }}
       >
         <MotionBox
@@ -502,18 +490,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         transition={{ delay: 0.3, type: "spring", stiffness: 400 }}
         sx={{
           p: 2,
-          position: "relative",
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 24,
-            right: 24,
-            height: 1,
-            background: isDarkMode
-              ? `linear-gradient(90deg, transparent, ${alpha(theme.palette.divider, 0.5)}, transparent)`
-              : `linear-gradient(90deg, transparent, ${alpha(theme.palette.primary.main, 0.1)}, transparent)`,
-          },
         }}
       >
         {/* Theme Switch */}
