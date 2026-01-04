@@ -52,6 +52,7 @@ import {
   PictureAsPdf as PdfIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
+import DateFilter from "./DateFilter";
 import { Transaction } from "../types";
 import { generateFriendReport, prepareFriendReportData } from "../services/pdfService";
 
@@ -95,11 +96,19 @@ const SharedView: React.FC<SharedViewProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFriend, setSelectedFriend] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<PaymentStatus>("all");
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [mobileActionAnchor, setMobileActionAnchor] = useState<{
     element: HTMLElement | null;
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null); // friendName sendo gerado
+
+  // Handler para mudança de data
+  const handleDateChange = (month: number, year: number) => {
+    setSelectedMonth(month);
+    setSelectedYear(year);
+  };
 
   // Gera o relatório PDF para um amigo específico
   const handleGeneratePdf = async (friendName: string, event: React.MouseEvent) => {
@@ -125,10 +134,19 @@ const SharedView: React.FC<SharedViewProps> = ({
     }
   };
 
-  // Filtra transações vinculadas a amigos (tanto expenses quanto incomes)
+  // Filtra transações vinculadas a amigos (tanto expenses quanto incomes) e pelo mês selecionado
   const sharedTransactions = useMemo(() => {
-    return transactions.filter((t) => t.isShared && t.sharedWith);
-  }, [transactions]);
+    return transactions.filter((t) => {
+      if (!t.isShared || !t.sharedWith) return false;
+      
+      // Filtra pelo mês e ano selecionados
+      const transactionDate = new Date(t.date);
+      const transactionMonth = transactionDate.getMonth();
+      const transactionYear = transactionDate.getFullYear();
+      
+      return transactionMonth === selectedMonth && transactionYear === selectedYear;
+    });
+  }, [transactions, selectedMonth, selectedYear]);
 
   // Calcula o balanço por amigo
   const friendBalances = useMemo(() => {
@@ -781,6 +799,14 @@ const SharedView: React.FC<SharedViewProps> = ({
           gap: 2,
         }}
       >
+        {/* Date Filter */}
+        <DateFilter
+          month={selectedMonth}
+          year={selectedYear}
+          onDateChange={handleDateChange}
+          compact={isMobile}
+        />
+
         <TextField
           size="small"
           placeholder="Search..."
