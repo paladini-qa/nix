@@ -1075,7 +1075,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             startIcon={<AddIcon />}
             onClick={onNewTransaction}
           >
-            New Recurring
+            Transaction
           </Button>
         )}
       </Box>

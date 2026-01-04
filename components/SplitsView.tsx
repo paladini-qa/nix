@@ -818,7 +818,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             startIcon={<AddIcon />}
             onClick={onNewTransaction}
           >
-            New Installment
+            Transaction
           </Button>
         )}
       </Box>

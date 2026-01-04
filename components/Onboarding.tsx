@@ -112,7 +112,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
         markStepCompleted("transaction");
         handleComplete();
       },
-      actionLabel: "Add Transaction",
+      actionLabel: "Transaction",
       isCompleted: transactionCount > 0 || completedSteps.includes("transaction"),
     },
     {

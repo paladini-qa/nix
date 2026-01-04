@@ -648,7 +648,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               startIcon={<AddIcon />}
               onClick={onNewTransaction}
             >
-              New Transaction
+              Transaction
             </Button>
           )}
         </Box>

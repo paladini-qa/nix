@@ -3197,7 +3197,7 @@ const AppContent: React.FC<{
                             startIcon={<AddIcon />}
                             onClick={handleNewTransaction}
                           >
-                            New Transaction
+                            Transaction
                           </Button>
                         )}
                       </Box>

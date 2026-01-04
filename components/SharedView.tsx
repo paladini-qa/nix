@@ -468,7 +468,7 @@ const SharedView: React.FC<SharedViewProps> = ({
             startIcon={<AddIcon />}
             onClick={onNewTransaction}
           >
-            Nova Despesa Compartilhada
+            Transaction
           </Button>
         )}
       </Box>
