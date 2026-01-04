@@ -77,6 +77,7 @@ interface RecurringOccurrence {
   // Campos para ocorrências modificadas
   isModified?: boolean; // Indica que é uma transação modificada (não virtual)
   modifiedTransaction?: Transaction; // A transação modificada
+  isIndividuallyEdited?: boolean; // Indica que foi editada via "Only this occurrence"
 }
 
 const RecurringView: React.FC<RecurringViewProps> = ({
@@ -231,6 +232,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       modifiedByDate.set(t.date, t);
     });
     
+    // Array de datas excluídas da recorrência (onde ocorrências individuais foram editadas)
+    const excludedDatesSet = new Set(transaction.excludedDates || []);
+    
     // PRIMEIRO: Adiciona as transações materializadas que são ANTERIORES à data de início atual
     // (estas são as ocorrências passadas que foram preservadas quando "all_future" foi usado)
     modifiedTransactions
@@ -238,6 +242,8 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .forEach((t, idx) => {
         const tDate = new Date(t.date);
+        // Verifica se esta data está no excludedDates (indica edição individual via "Only this occurrence")
+        const isIndividuallyEdited = excludedDatesSet.has(t.date);
         occurrences.push({
           date: t.date,
           formattedDate: tDate.toLocaleDateString("pt-BR", {
@@ -252,6 +258,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           occurrenceNumber: idx + 1,
           isModified: true,
           modifiedTransaction: t,
+          isIndividuallyEdited, // Só mostra "edited" se foi edição individual
         });
       });
     
@@ -318,6 +325,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         const isPast = occDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const isCurrent = occDate.getMonth() === today.getMonth() && occDate.getFullYear() === today.getFullYear();
         
+        // Verifica se esta data está no excludedDates (indica edição individual via "Only this occurrence")
+        const isIndividuallyEdited = modifiedTx && excludedDatesSet.has(occDateString);
+        
         occurrences.push({
           date: occDateString,
           formattedDate: occDate.toLocaleDateString("pt-BR", {
@@ -333,6 +343,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           // Adiciona informação de modificação
           isModified: !!modifiedTx,
           modifiedTransaction: modifiedTx,
+          isIndividuallyEdited, // Só mostra "edited" se foi edição individual
         });
         
         occurrenceCount++;
@@ -380,6 +391,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         const isCurrent = occDate.getFullYear() === today.getFullYear() && 
           occDate.getMonth() === today.getMonth();
         
+        // Verifica se esta data está no excludedDates (indica edição individual via "Only this occurrence")
+        const isIndividuallyEditedYearly = modifiedTxYearly && excludedDatesSet.has(occDateString);
+        
         occurrences.push({
           date: occDateString,
           formattedDate: occDate.toLocaleDateString("pt-BR", {
@@ -395,6 +409,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           // Adiciona informação de modificação
           isModified: !!modifiedTxYearly,
           modifiedTransaction: modifiedTxYearly,
+          isIndividuallyEdited: isIndividuallyEditedYearly, // Só mostra "edited" se foi edição individual
         });
         
         yearlyCount++;
@@ -880,7 +895,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                               >
                                 {displayDescription}
                               </Typography>
-                              {occ.isModified && (
+                              {occ.isIndividuallyEdited && (
                                 <Chip
                                   label="edited"
                                   size="small"

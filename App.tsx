@@ -809,6 +809,7 @@ const AppContent: React.FC<{
                     is_paid: false,
                     is_shared: originalTx.isShared,
                     shared_with: originalTx.sharedWith,
+                    recurring_group_id: originalTx.id, // Vincula ao grupo original
                   });
                 }
               }
@@ -852,17 +853,14 @@ const AppContent: React.FC<{
                   isPaid: d.is_paid ?? false,
                   isShared: d.is_shared,
                   sharedWith: d.shared_with,
+                  recurringGroupId: d.recurring_group_id,
                 }));
                 setTransactions((prev) => [...newTransactions, ...prev]);
                 
-                // Adicionar datas materializadas ao excluded_dates da transação original
-                const currentExcludedDates = originalTx.excludedDates || [];
-                const newExcludedDates = [...new Set([...currentExcludedDates, ...materializedDates])];
-                
-                await supabase
-                  .from("transactions")
-                  .update({ excluded_dates: newExcludedDates })
-                  .eq("id", originalTx.id);
+                // NOTA: Não adicionamos as datas ao excluded_dates aqui porque:
+                // 1. A recorrência original terá nova data de início (não gerará virtuais para datas anteriores)
+                // 2. As transações materializadas têm recurring_group_id e podem ser identificadas
+                // 3. Adicionar ao excluded_dates faria aparecer a badge "edited" incorretamente
               }
             }
 
@@ -1602,12 +1600,15 @@ const AppContent: React.FC<{
       transaction.installments && transaction.installments > 1;
     // Transações recorrentes originais (não virtuais) também devem mostrar o dialog
     const isRecurringOriginal = transaction.isRecurring && !transaction.isVirtual;
+    // Transações materializadas (que pertencem a uma recorrência via recurringGroupId)
+    const isMaterializedRecurring = !!transaction.recurringGroupId;
 
     // Mostra painel de opções para:
     // 1. Transações virtuais (ocorrências de recorrentes) - permite editar single/all_future/all
     // 2. Transações parceladas (múltiplas transações reais) - permite editar single/all_future/all
     // 3. Transações recorrentes originais - permite editar apenas esta, futuras ou todas
-    if (isVirtual || isInstallment || isRecurringOriginal) {
+    // 4. Transações materializadas (vinculadas a recorrência) - permite editar esta, futuras ou todas
+    if (isVirtual || isInstallment || isRecurringOriginal || isMaterializedRecurring) {
       setOptionsPanelTransaction(transaction);
       setOptionsPanelActionType("edit");
       setOptionsPanelOpen(true);
@@ -2143,11 +2144,14 @@ const AppContent: React.FC<{
     // 1. Transações virtuais (ocorrências de recorrentes) - permite deletar single/all_future/all
     // 2. Transações parceladas (múltiplas transações reais) - permite deletar single/all_future/all
     // 3. Transações recorrentes originais - permite deletar apenas esta ocorrência, futuras ou todas
+    // 4. Transações materializadas (vinculadas a recorrência) - permite deletar esta, futuras ou todas
     const isInstallment = transactionToDelete.installments && transactionToDelete.installments > 1;
     // Transações recorrentes originais (não virtuais) também devem mostrar o dialog
     const isRecurringOriginal = transactionToDelete.isRecurring && !transactionToDelete.isVirtual;
+    // Transações materializadas (que pertencem a uma recorrência via recurringGroupId)
+    const isMaterializedRecurring = !!transactionToDelete.recurringGroupId;
 
-    if (isVirtualTransaction || isInstallment || isRecurringOriginal) {
+    if (isVirtualTransaction || isInstallment || isRecurringOriginal || isMaterializedRecurring) {
       setOptionsPanelTransaction(transactionToDelete);
       setOptionsPanelActionType("delete");
       setOptionsPanelOpen(true);
@@ -3418,6 +3422,7 @@ const App: React.FC = () => {
           relatedTransactionId: t.related_transaction_id,
           installmentGroupId: t.installment_group_id,
           excludedDates: t.excluded_dates ?? [],
+          recurringGroupId: t.recurring_group_id, // Vínculo para transações materializadas/editadas
         }));
         setTransactions(mappedTxs);
       }

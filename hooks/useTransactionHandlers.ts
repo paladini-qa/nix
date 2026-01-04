@@ -111,6 +111,7 @@ export const useTransactionHandlers = ({
                 is_paid: boolean;
                 is_shared?: boolean;
                 shared_with?: string;
+                recurring_group_id?: string;
               }> = [];
 
               // Iterar pelos meses desde o original até o mês anterior ao selecionado
@@ -154,6 +155,7 @@ export const useTransactionHandlers = ({
                       is_paid: false,
                       is_shared: originalTx.isShared,
                       shared_with: originalTx.sharedWith,
+                      recurring_group_id: originalTx.id, // Vincula ao grupo original
                     });
                   }
                 }
@@ -999,7 +1001,7 @@ export const useTransactionHandlers = ({
         message: `Deseja marcar todas as despesas não pagas de "${paymentMethod}" em ${month + 1}/${year} como pagas?`,
         confirmText: "Pagar Tudo",
         cancelText: "Cancelar",
-        severity: "info",
+        variant: "info",
       });
 
       if (!confirmed) return;
