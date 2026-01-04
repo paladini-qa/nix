@@ -39,7 +39,7 @@ import {
   CreditCard as CreditCardIcon,
 } from "@mui/icons-material";
 import { Transaction, TransactionType } from "../types";
-import { EditOption } from "./EditOptionsDialog";
+import { OptionType as EditOption } from "./TransactionOptionsPanel";
 
 // Mobile slide transition
 const SlideTransition = React.forwardRef(function Transition(

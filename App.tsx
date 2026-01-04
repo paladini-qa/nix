@@ -47,8 +47,11 @@ import ProfileModal from "./components/ProfileModal";
 import LoginView from "./components/LoginView";
 import DateFilter from "./components/DateFilter";
 import { MobileHeader, MobileDrawer } from "./components/layout";
-import EditOptionsDialog, { EditOption } from "./components/EditOptionsDialog";
-import DeleteOptionsDialog, { DeleteOption } from "./components/DeleteOptionsDialog";
+import TransactionOptionsPanel, { ActionType, OptionType } from "./components/TransactionOptionsPanel";
+
+// Type aliases for backward compatibility
+type EditOption = OptionType;
+type DeleteOption = OptionType;
 import RecurringEditForm from "./components/RecurringEditForm";
 
 // Lazy loaded components (loaded on demand)
@@ -240,9 +243,11 @@ const AppContent: React.FC<{
     }
   }, [currentView]);
 
-  const [editOptionsDialogOpen, setEditOptionsDialogOpen] = useState(false);
-  const [pendingEditTransaction, setPendingEditTransaction] =
-    useState<Transaction | null>(null);
+  // Unified state for transaction options panel (edit/delete)
+  const [optionsPanelOpen, setOptionsPanelOpen] = useState(false);
+  const [optionsPanelActionType, setOptionsPanelActionType] = useState<ActionType>("edit");
+  const [optionsPanelTransaction, setOptionsPanelTransaction] = useState<Transaction | null>(null);
+  
   const [currentEditMode, setCurrentEditMode] = useState<EditOption | null>(
     null
   );
@@ -269,10 +274,8 @@ const AppContent: React.FC<{
     paymentMethods: [],
   });
 
-  // Estados para o dialog de delete
-  const [deleteOptionsDialogOpen, setDeleteOptionsDialogOpen] = useState(false);
-  const [pendingDeleteTransaction, setPendingDeleteTransaction] =
-    useState<Transaction | null>(null);
+  // Legacy alias for pending delete transaction (uses unified panel state)
+  const pendingDeleteTransaction = optionsPanelActionType === "delete" ? optionsPanelTransaction : null;
 
   // Helper: Gera transações recorrentes virtuais para o mês/ano selecionado
   // Apenas para transações recorrentes SEM parcelas (parceladas já existem no banco)
@@ -1600,13 +1603,14 @@ const AppContent: React.FC<{
     // Transações recorrentes originais (não virtuais) também devem mostrar o dialog
     const isRecurringOriginal = transaction.isRecurring && !transaction.isVirtual;
 
-    // Mostra dialog de opções para:
+    // Mostra painel de opções para:
     // 1. Transações virtuais (ocorrências de recorrentes) - permite editar single/all_future/all
     // 2. Transações parceladas (múltiplas transações reais) - permite editar single/all_future/all
     // 3. Transações recorrentes originais - permite editar apenas esta, futuras ou todas
     if (isVirtual || isInstallment || isRecurringOriginal) {
-      setPendingEditTransaction(transaction);
-      setEditOptionsDialogOpen(true);
+      setOptionsPanelTransaction(transaction);
+      setOptionsPanelActionType("edit");
+      setOptionsPanelOpen(true);
     } else {
       // Para transações simples, resetar o modo de edição e limpar estados pendentes
       setCurrentEditMode(null);
@@ -1616,10 +1620,13 @@ const AppContent: React.FC<{
     }
   };
 
+  // Computed alias for edit transaction
+  const pendingEditTransaction = optionsPanelActionType === "edit" ? optionsPanelTransaction : null;
+
   const handleEditOptionSelect = async (option: EditOption) => {
     if (!pendingEditTransaction || !session) return;
 
-    setEditOptionsDialogOpen(false);
+    setOptionsPanelOpen(false);
     setCurrentEditMode(option);
 
     // Determinar a transação a editar e a data virtual
@@ -1672,7 +1679,7 @@ const AppContent: React.FC<{
     setRecurringEditMode(option);
     setRecurringVirtualDate(virtualDate);
     setIsRecurringFormOpen(true);
-    setPendingEditTransaction(null);
+    setOptionsPanelTransaction(null);
   };
 
   // Handler para salvar do formulário de edição de recorrência
@@ -2141,8 +2148,9 @@ const AppContent: React.FC<{
     const isRecurringOriginal = transactionToDelete.isRecurring && !transactionToDelete.isVirtual;
 
     if (isVirtualTransaction || isInstallment || isRecurringOriginal) {
-      setPendingDeleteTransaction(transactionToDelete);
-      setDeleteOptionsDialogOpen(true);
+      setOptionsPanelTransaction(transactionToDelete);
+      setOptionsPanelActionType("delete");
+      setOptionsPanelOpen(true);
       return;
     }
 
@@ -2244,11 +2252,11 @@ const AppContent: React.FC<{
     }
   };
 
-  // Handler para as opções de delete do dialog
+  // Handler para as opções de delete do painel
   const handleDeleteOptionSelect = async (option: DeleteOption) => {
     if (!pendingDeleteTransaction || !session) return;
 
-    setDeleteOptionsDialogOpen(false);
+    setOptionsPanelOpen(false);
     
     const isVirtual = pendingDeleteTransaction.isVirtual;
     const isInstallment = pendingDeleteTransaction.installments && pendingDeleteTransaction.installments > 1;
@@ -2498,7 +2506,7 @@ const AppContent: React.FC<{
       );
     }
 
-    setPendingDeleteTransaction(null);
+    setOptionsPanelTransaction(null);
   };
 
   const handleTogglePaid = async (id: string, isPaid: boolean) => {
@@ -3192,14 +3200,22 @@ const AppContent: React.FC<{
             onResetPassword={handleResetPassword}
           />
 
-          <EditOptionsDialog
-            isOpen={editOptionsDialogOpen}
+          {/* Unified Transaction Options Panel for Edit/Delete */}
+          <TransactionOptionsPanel
+            open={optionsPanelOpen}
             onClose={() => {
-              setEditOptionsDialogOpen(false);
-              setPendingEditTransaction(null);
+              setOptionsPanelOpen(false);
+              setOptionsPanelTransaction(null);
             }}
-            onSelect={handleEditOptionSelect}
-            transaction={pendingEditTransaction}
+            transaction={optionsPanelTransaction}
+            actionType={optionsPanelActionType}
+            onSelect={(option) => {
+              if (optionsPanelActionType === "edit") {
+                handleEditOptionSelect(option);
+              } else {
+                handleDeleteOptionSelect(option);
+              }
+            }}
           />
 
           <RecurringEditForm
@@ -3219,16 +3235,6 @@ const AppContent: React.FC<{
             categories={categories}
             paymentMethods={paymentMethods}
             virtualDate={recurringVirtualDate}
-          />
-
-          <DeleteOptionsDialog
-            isOpen={deleteOptionsDialogOpen}
-            onClose={() => {
-              setDeleteOptionsDialogOpen(false);
-              setPendingDeleteTransaction(null);
-            }}
-            onSelect={handleDeleteOptionSelect}
-            transaction={pendingDeleteTransaction}
           />
 
           <Suspense fallback={null}>

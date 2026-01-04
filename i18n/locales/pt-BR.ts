@@ -265,5 +265,97 @@ export default {
     yearly: "Anual",
     weekly: "Semanal",
   },
+
+  // Transaction Options Panel
+  transactionOptions: {
+    editTitle: "Editar Transação",
+    deleteTitle: "Excluir Transação",
+    selectOption: "Selecione como deseja prosseguir",
+    chooseAction: "Escolha uma opção",
+
+    // Transaction types
+    types: {
+      virtualOccurrence: "Ocorrência Automática",
+      virtualDescription: "Esta é uma ocorrência gerada automaticamente pela recorrência",
+      installment: "Parcelada",
+      installmentDescription: "Parcela {{current}} de {{total}}",
+      recurring: "Recorrente",
+      monthlyDescription: "Recorrência mensal",
+      yearlyDescription: "Recorrência anual",
+      single: "Única",
+    },
+
+    // Installment options
+    installment: {
+      editSingle: {
+        title: "Editar apenas esta parcela",
+        description: "Alterar somente a parcela {{current}}/{{total}}. As demais parcelas não serão afetadas.",
+      },
+      editFuture: {
+        title: "Editar esta e as próximas",
+        description: "Alterar parcelas {{from}} até {{to}}. Parcelas anteriores permanecerão inalteradas.",
+      },
+      editAll: {
+        title: "Editar todas as parcelas",
+        description: "Alterar todas as {{total}} parcelas desta compra.",
+      },
+      deleteSingle: {
+        title: "Excluir apenas esta parcela",
+        description: "Remover somente a parcela {{current}}/{{total}}. As demais parcelas serão mantidas.",
+      },
+      deleteFuture: {
+        title: "Excluir esta e as próximas",
+        description: "Remover parcelas {{from}} até {{to}}. Parcelas anteriores serão mantidas.",
+      },
+      deleteAll: {
+        title: "Excluir todas as parcelas",
+        description: "Remover completamente todas as {{total}} parcelas.",
+      },
+    },
+
+    // Recurring options
+    recurring: {
+      editSingle: {
+        title: "Editar apenas esta ocorrência",
+        description: "Criar uma exceção para este mês específico.",
+        virtualDescription: "Criar uma transação separada apenas para este mês.",
+      },
+      editFuture: {
+        title: "Editar esta e as futuras",
+        description: "Alterar a recorrência a partir deste mês.",
+      },
+      editAll: {
+        title: "Editar todas as ocorrências",
+        description: "Alterar a transação recorrente original e todas as ocorrências.",
+      },
+      deleteSingle: {
+        title: "Excluir apenas esta ocorrência",
+        description: "Esta ocorrência não aparecerá mais neste mês.",
+        virtualDescription: "Pular esta ocorrência específica do mês.",
+      },
+      deleteFuture: {
+        title: "Parar a recorrência",
+        description: "Encerrar a recorrência a partir deste mês.",
+      },
+      deleteAll: {
+        title: "Excluir a recorrência completa",
+        description: "Remover a transação recorrente e todo o histórico.",
+      },
+    },
+
+    // Warnings
+    warnings: {
+      affectsFuture: "Afetará parcelas futuras",
+      affectsAll: "Ação irreversível",
+      stopRecurring: "A recorrência será encerrada",
+      permanent: "Esta ação não pode ser desfeita",
+    },
+
+    // Tips
+    tips: {
+      installment: "Cada parcela pode ser editada individualmente ou em conjunto. Alterações em parcelas não afetam o valor total original.",
+      recurring: "Transações recorrentes geram ocorrências automáticas. Você pode criar exceções para meses específicos.",
+    },
+  },
 };
 
