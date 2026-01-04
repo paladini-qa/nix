@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -50,6 +50,7 @@ import {
   ExpandLess as ExpandLessIcon,
   Visibility as VisibilityIcon,
   RadioButtonUnchecked as UnpaidIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
@@ -60,6 +61,7 @@ interface SplitsViewProps {
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
   onTogglePaid: (id: string, isPaid: boolean) => void;
+  onRefreshData?: () => Promise<void>;
 }
 
 type SplitStatus = "all" | "in_progress" | "completed";
@@ -91,6 +93,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   onEdit,
   onDelete,
   onTogglePaid,
+  onRefreshData,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -98,6 +101,18 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   const [filterStatus, setFilterStatus] = useState<SplitStatus>("in_progress");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Handler de refresh
+  const handleRefresh = useCallback(async () => {
+    if (!onRefreshData || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await onRefreshData();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [onRefreshData, isRefreshing]);
   const [mobileActionAnchor, setMobileActionAnchor] = useState<{
     element: HTMLElement | null;
     transaction: Transaction | null;
@@ -1016,6 +1031,37 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               <MenuItem value="expense">Expense</MenuItem>
             </Select>
           </FormControl>
+
+          {/* Refresh Button */}
+          {onRefreshData && (
+            <Tooltip title="Atualizar dados">
+              <IconButton
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: "20px",
+                  transition: "all 0.2s ease-in-out",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    color: theme.palette.primary.main,
+                    transform: "translateY(-1px)",
+                  },
+                }}
+              >
+                <RefreshIcon
+                  sx={{
+                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </Paper>
 

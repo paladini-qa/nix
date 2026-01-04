@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -54,6 +54,7 @@ import {
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as UnpaidIcon,
   Visibility as VisibilityIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
@@ -64,6 +65,7 @@ interface RecurringViewProps {
   onDelete: (id: string) => void;
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onNewTransaction: () => void;
+  onRefreshData?: () => Promise<void>;
 }
 
 interface RecurringOccurrence {
@@ -86,6 +88,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   onDelete,
   onTogglePaid,
   onNewTransaction,
+  onRefreshData,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -95,6 +98,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   const [filterFrequency, setFilterFrequency] = useState<"all" | "monthly" | "yearly">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<{
     element: HTMLElement | null;
     transaction: Transaction | null;
@@ -106,6 +110,17 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     transaction: Transaction | null;
     occurrence: RecurringOccurrence | null;
   }>({ element: null, transaction: null, occurrence: null });
+
+  // Handler de refresh
+  const handleRefresh = useCallback(async () => {
+    if (!onRefreshData || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await onRefreshData();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [onRefreshData, isRefreshing]);
 
   // Lista de todas as categorias únicas das transações recorrentes
   const allCategories = useMemo(() => {
@@ -1323,6 +1338,37 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               ))}
             </Select>
           </FormControl>
+
+          {/* Refresh Button */}
+          {onRefreshData && (
+            <Tooltip title="Atualizar dados">
+              <IconButton
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: "20px",
+                  transition: "all 0.2s ease-in-out",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    color: theme.palette.primary.main,
+                    transform: "translateY(-1px)",
+                  },
+                }}
+              >
+                <RefreshIcon
+                  sx={{
+                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </Paper>
 

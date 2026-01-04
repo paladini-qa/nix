@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -50,6 +50,7 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   PictureAsPdf as PdfIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import DateFilter from "./DateFilter";
@@ -64,6 +65,7 @@ interface SharedViewProps {
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
   onTogglePaid: (id: string, isPaid: boolean) => void;
+  onRefreshData?: () => Promise<void>;
 }
 
 type PaymentStatus = "all" | "pending" | "paid";
@@ -90,6 +92,7 @@ const SharedView: React.FC<SharedViewProps> = ({
   onEdit,
   onDelete,
   onTogglePaid,
+  onRefreshData,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -98,6 +101,18 @@ const SharedView: React.FC<SharedViewProps> = ({
   const [filterStatus, setFilterStatus] = useState<PaymentStatus>("all");
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Handler de refresh
+  const handleRefresh = useCallback(async () => {
+    if (!onRefreshData || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await onRefreshData();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [onRefreshData, isRefreshing]);
   const [mobileActionAnchor, setMobileActionAnchor] = useState<{
     element: HTMLElement | null;
     transaction: Transaction | null;
@@ -892,6 +907,37 @@ const SharedView: React.FC<SharedViewProps> = ({
               </MenuItem>
             </Select>
           </FormControl>
+
+          {/* Refresh Button */}
+          {onRefreshData && (
+            <Tooltip title="Atualizar dados">
+              <IconButton
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: "20px",
+                  transition: "all 0.2s ease-in-out",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    color: theme.palette.primary.main,
+                    transform: "translateY(-1px)",
+                  },
+                }}
+              >
+                <RefreshIcon
+                  sx={{
+                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </Paper>
 

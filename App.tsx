@@ -16,8 +16,10 @@ import {
   Fab,
   Button,
   useTheme,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import { Add as AddIcon } from "@mui/icons-material";
+import { Add as AddIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
@@ -208,6 +210,7 @@ const AppContent: React.FC<{
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Global search shortcut (Ctrl+K / Cmd+K)
   useEffect(() => {
@@ -1583,6 +1586,17 @@ const AppContent: React.FC<{
     } catch (err) {
       console.error("Error saving transaction:", err);
       showError("Error saving transaction. Please try again.", "Save Error");
+    }
+  };
+
+  // Função para recarregar dados
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await onRefreshData();
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -2965,6 +2979,36 @@ const AppContent: React.FC<{
                           }
                           disabledMessage="Remova os filtros avançados para usar o filtro de mês"
                         />
+                        
+                        {/* Refresh Button */}
+                        <Tooltip title="Atualizar dados">
+                          <IconButton
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            sx={{
+                              border: 1,
+                              borderColor: "divider",
+                              borderRadius: "20px",
+                              transition: "all 0.2s ease-in-out",
+                              "&:hover": {
+                                borderColor: theme.palette.primary.main,
+                                color: theme.palette.primary.main,
+                                transform: "translateY(-1px)",
+                              },
+                            }}
+                          >
+                            <RefreshIcon
+                              sx={{
+                                animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                                "@keyframes spin": {
+                                  "0%": { transform: "rotate(0deg)" },
+                                  "100%": { transform: "rotate(360deg)" },
+                                },
+                              }}
+                            />
+                          </IconButton>
+                        </Tooltip>
+                        
                         {!isMobile && (
                           <Button
                             variant="contained"
@@ -3054,6 +3098,7 @@ const AppContent: React.FC<{
                     onDateChange={(month, year) =>
                       setFilters({ ...filters, month, year })
                     }
+                    onRefreshData={onRefreshData}
                   />
                 </Suspense>
               ) : currentView === "splits" ? (
@@ -3064,6 +3109,7 @@ const AppContent: React.FC<{
                     onEdit={handleEditTransaction}
                     onDelete={handleDeleteTransaction}
                     onTogglePaid={handleTogglePaid}
+                    onRefreshData={onRefreshData}
                   />
                 </Suspense>
               ) : currentView === "shared" ? (
@@ -3076,6 +3122,7 @@ const AppContent: React.FC<{
                     onEdit={handleEditTransaction}
                     onDelete={handleDeleteTransaction}
                     onTogglePaid={handleTogglePaid}
+                    onRefreshData={onRefreshData}
                   />
                 </Suspense>
               ) : currentView === "recurring" ? (
@@ -3086,6 +3133,7 @@ const AppContent: React.FC<{
                     onDelete={handleDeleteTransaction}
                     onTogglePaid={handleTogglePaid}
                     onNewTransaction={handleNewTransaction}
+                    onRefreshData={onRefreshData}
                   />
                 </Suspense>
               ) : currentView === "nixai" ? (

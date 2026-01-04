@@ -56,6 +56,7 @@ import {
   Group as GroupIcon,
   CheckCircleOutline as PaidIcon,
   AccessTime as PendingIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
@@ -72,6 +73,7 @@ interface TransactionsViewProps {
   selectedMonth: number;
   selectedYear: number;
   onDateChange: (month: number, year: number) => void;
+  onRefreshData?: () => Promise<void>;
 }
 
 type SortDirection = "asc" | "desc";
@@ -91,6 +93,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   selectedMonth,
   selectedYear,
   onDateChange,
+  onRefreshData,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -118,6 +121,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   // Menus
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [mobileActionAnchor, setMobileActionAnchor] = useState<{
     element: HTMLElement | null;
     transaction: Transaction | null;
@@ -308,6 +312,17 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       direction: prev.column === column && prev.direction === "asc" ? "desc" : "asc",
     }));
   }, []);
+
+  // Handler de refresh
+  const handleRefresh = useCallback(async () => {
+    if (!onRefreshData || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await onRefreshData();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [onRefreshData, isRefreshing]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -1061,6 +1076,37 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             onDateChange={onDateChange}
             compact
           />
+
+          {/* Refresh Button */}
+          {onRefreshData && (
+            <Tooltip title="Atualizar dados">
+              <IconButton
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: "20px",
+                  transition: "all 0.2s ease-in-out",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    color: theme.palette.primary.main,
+                    transform: "translateY(-1px)",
+                  },
+                }}
+              >
+                <RefreshIcon
+                  sx={{
+                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
 
           {/* Export Button */}
           <IconButton

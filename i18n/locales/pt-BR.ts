@@ -28,6 +28,8 @@ export default {
     next: "Próximo",
     previous: "Anterior",
     of: "de",
+    refresh: "Atualizar dados",
+    refreshing: "Atualizando...",
   },
 
   // Navigation
