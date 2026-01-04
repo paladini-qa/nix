@@ -701,10 +701,31 @@ const AppContent: React.FC<{
 
   // Handlers
   const handleLogout = async () => {
-    // Limpa flags de sessão ao fazer logout
-    localStorage.removeItem("nix_remember_session");
-    sessionStorage.removeItem("nix_temp_session");
-    await supabase.auth.signOut();
+    try {
+      // Limpa flags de sessão ao fazer logout
+      localStorage.removeItem("nix_remember_session");
+      sessionStorage.removeItem("nix_temp_session");
+
+      // Limpa todos os dados da aplicação para garantir privacidade
+      setTransactions([]);
+      setCategories(DEFAULT_CATEGORIES);
+      setPaymentMethods(DEFAULT_PAYMENT_METHODS);
+      setFriends([]);
+      setCategoryColors({ income: {}, expense: {} });
+      setPaymentMethodColors({});
+      setDisplayName("");
+
+      // Faz o signOut do Supabase (isso também dispara o onAuthStateChange)
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error signing out:", error);
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Mesmo com erro, tenta limpar a sessão local
+      localStorage.removeItem("nix_remember_session");
+      sessionStorage.removeItem("nix_temp_session");
+    }
   };
 
   const handleChangeEmail = async (newEmail: string): Promise<void> => {
