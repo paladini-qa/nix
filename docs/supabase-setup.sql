@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     related_transaction_id UUID,
     installment_group_id UUID,
     excluded_dates JSONB DEFAULT '[]'::jsonb,
+    recurring_group_id UUID, -- ID da recorrência original (para manter vínculo após edição "single")
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -53,11 +54,15 @@ CREATE TABLE IF NOT EXISTS public.transactions (
 -- Para bancos existentes, adicione a coluna excluded_dates (datas excluídas de recorrências):
 -- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS excluded_dates JSONB DEFAULT '[]'::jsonb;
 
+-- Para bancos existentes, adicione a coluna recurring_group_id (vincula transações modificadas à recorrência original):
+-- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS recurring_group_id UUID;
+
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.transactions(date DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_type ON public.transactions(type);
 CREATE INDEX IF NOT EXISTS idx_transactions_installment_group ON public.transactions(installment_group_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_recurring_group ON public.transactions(recurring_group_id);
 
 -- Comentários na tabela
 COMMENT ON TABLE public.transactions IS 'Transações financeiras dos usuários';
@@ -71,6 +76,7 @@ COMMENT ON COLUMN public.transactions.i_owe IS 'Se true, amigo pagou e eu devo. 
 COMMENT ON COLUMN public.transactions.related_transaction_id IS 'ID da transação relacionada (link entre expense e income de shared expense)';
 COMMENT ON COLUMN public.transactions.installment_group_id IS 'UUID que agrupa todas as parcelas de um mesmo parcelamento';
 COMMENT ON COLUMN public.transactions.excluded_dates IS 'Array JSON de datas (YYYY-MM-DD) excluídas de recorrências';
+COMMENT ON COLUMN public.transactions.recurring_group_id IS 'ID da transação recorrente original (para manter vínculo após edição single)';
 
 -- =============================================
 -- 2. TABELA: user_settings

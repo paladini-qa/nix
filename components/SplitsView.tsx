@@ -66,7 +66,10 @@ type SplitStatus = "all" | "in_progress" | "completed";
 
 interface InstallmentGroup {
   key: string;
-  description: string;
+  installmentGroupId?: string; // ID único do grupo de parcelas
+  description: string; // Descrição principal (mais comum no grupo)
+  originalDescription: string; // Descrição original (mais comum) para comparação
+  descriptions: string[]; // Todas as descrições únicas das parcelas
   category: string;
   paymentMethod: string;
   type: "income" | "expense";
@@ -105,17 +108,23 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     return transactions.filter((t) => t.installments && t.installments > 1);
   }, [transactions]);
 
-  // Agrupa transações por descrição + método de pagamento + categoria (mesma compra parcelada)
+  // Agrupa transações por installmentGroupId (preferido) ou fallback para descrição + método + categoria
   const groupedSplits = useMemo(() => {
     const groups: Map<string, InstallmentGroup> = new Map();
 
     splitsTransactions.forEach((t) => {
-      const key = `${t.description}-${t.paymentMethod}-${t.category}-${t.type}-${t.installments}`;
+      // Usa installmentGroupId se disponível, senão faz fallback para o método antigo
+      const key = t.installmentGroupId 
+        ? t.installmentGroupId 
+        : `${t.description}-${t.paymentMethod}-${t.category}-${t.type}-${t.installments}`;
 
       if (!groups.has(key)) {
         groups.set(key, {
           key,
+          installmentGroupId: t.installmentGroupId,
           description: t.description,
+          originalDescription: t.description, // Será recalculado depois
+          descriptions: [t.description],
           category: t.category,
           paymentMethod: t.paymentMethod,
           type: t.type,
@@ -136,6 +145,11 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       group.installments.push(t);
       group.totalAmount += t.amount;
       
+      // Adiciona descrição única à lista de descrições
+      if (!group.descriptions.includes(t.description)) {
+        group.descriptions.push(t.description);
+      }
+      
       if (t.isPaid !== false) {
         group.paidAmount += t.amount;
         group.paidCount++;
@@ -145,11 +159,35 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       if (t.date > group.endDate) group.endDate = t.date;
     });
 
-    // Ordena as parcelas de cada grupo por data
+    // Ordena as parcelas de cada grupo por currentInstallment e depois por data
     groups.forEach((group) => {
-      group.installments.sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-      );
+      group.installments.sort((a, b) => {
+        // Primeiro ordena por número da parcela
+        const installmentDiff = (a.currentInstallment || 1) - (b.currentInstallment || 1);
+        if (installmentDiff !== 0) return installmentDiff;
+        // Se mesmo número de parcela, ordena por data
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      });
+      
+      // Encontra a descrição mais comum (original) para usar como referência
+      const descriptionCounts = new Map<string, number>();
+      group.installments.forEach((inst) => {
+        descriptionCounts.set(inst.description, (descriptionCounts.get(inst.description) || 0) + 1);
+      });
+      
+      // A descrição original é a mais comum
+      let maxCount = 0;
+      let originalDesc = group.installments[0]?.description || "";
+      descriptionCounts.forEach((count, desc) => {
+        if (count > maxCount) {
+          maxCount = count;
+          originalDesc = desc;
+        }
+      });
+      group.originalDescription = originalDesc;
+      
+      // A descrição principal exibida no header é a original (mais comum)
+      group.description = originalDesc;
     });
 
     return Array.from(groups.values());
@@ -294,7 +332,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             onClick={() => toggleGroup(group.key)}
           >
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, flexWrap: "wrap" }}>
                 <CreditCardIcon
                   fontSize="small"
                   color={isIncome ? "success" : "warning"}
@@ -302,6 +340,15 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 <Typography variant="subtitle1" fontWeight={600}>
                   {group.description}
                 </Typography>
+                {group.descriptions.length > 1 && (
+                  <Chip 
+                    label={`+${group.descriptions.length - 1} variation${group.descriptions.length > 2 ? 's' : ''}`}
+                    size="small"
+                    color="info"
+                    variant="outlined"
+                    sx={{ height: 20, fontSize: 10 }}
+                  />
+                )}
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                 <Chip label={group.category} size="small" variant="outlined" />
@@ -389,235 +436,305 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
             {isMobile ? (
               // Mobile: Cards compactos com design melhorado
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {group.installments.map((t) => {
-                  const isPaid = t.isPaid !== false;
-                  const isCurrent = isCurrentMonth(t.date);
-                  
-                  return (
-                    <Paper
-                      key={t.id}
-                      sx={{
-                        p: 1.5,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        opacity: isPaid ? 0.6 : 1,
-                        bgcolor: isCurrent && !isPaid
-                          ? alpha(theme.palette.primary.main, 0.08) 
-                          : isPaid
-                            ? "action.disabledBackground"
-                            : "background.paper",
-                        border: isCurrent && !isPaid ? 2 : 1,
-                        borderColor: isCurrent && !isPaid ? "primary.main" : "divider",
-                        borderRadius: "12px",
-                      }}
-                    >
-                      <Checkbox
-                        checked={isPaid}
-                        onChange={(e) => onTogglePaid(t.id, e.target.checked)}
-                        size="small"
-                        color="success"
-                        sx={{ p: 0.5 }}
-                      />
-                      <Box
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: "8px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          bgcolor: isCurrent && !isPaid
-                            ? alpha(theme.palette.primary.main, 0.15) 
-                            : alpha(theme.palette.action.hover, 0.1),
-                          border: `1px solid ${isCurrent && !isPaid ? theme.palette.primary.main : "transparent"}`,
-                        }}
-                      >
-                        <Typography 
-                          variant="caption" 
-                          fontWeight={700}
-                          color={isCurrent && !isPaid ? "primary.main" : "text.secondary"}
-                          sx={{ fontSize: 10 }}
+              (() => {
+                const hasMultipleDescriptions = group.descriptions.length > 1;
+                
+                return (
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    {group.installments.map((t) => {
+                      const isPaid = t.isPaid !== false;
+                      const isCurrent = isCurrentMonth(t.date);
+                      const isDescriptionDifferent = hasMultipleDescriptions && t.description !== group.originalDescription;
+                      
+                      return (
+                        <Paper
+                          key={t.id}
+                          sx={{
+                            p: 1.5,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 1,
+                            opacity: isPaid ? 0.6 : 1,
+                            bgcolor: isCurrent && !isPaid
+                              ? alpha(theme.palette.primary.main, 0.08) 
+                              : isPaid
+                                ? "action.disabledBackground"
+                                : "background.paper",
+                            border: isCurrent && !isPaid ? 2 : 1,
+                            borderColor: isCurrent && !isPaid ? "primary.main" : "divider",
+                            borderRadius: "12px",
+                          }}
                         >
-                          #{t.currentInstallment}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
-                          <Typography 
-                            variant="body2" 
-                            fontWeight={isCurrent ? 600 : 500}
-                            sx={{
-                              textDecoration: isPaid ? "line-through" : "none",
-                            }}
-                          >
-                            {formatDateFull(t.date)}
-                          </Typography>
-                          {isCurrent && !isPaid && (
-                            <Chip 
-                              label="This Month" 
-                              size="small" 
-                              color="primary" 
-                              sx={{ height: 18, fontSize: 9 }} 
-                            />
+                          {/* Descrição individual (se diferente) */}
+                          {hasMultipleDescriptions && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <Typography 
+                                variant="caption" 
+                                fontWeight={isDescriptionDifferent ? 600 : 400}
+                                color={isDescriptionDifferent ? "info.main" : "text.secondary"}
+                                sx={{ 
+                                  overflow: "hidden", 
+                                  textOverflow: "ellipsis", 
+                                  whiteSpace: "nowrap",
+                                  flex: 1,
+                                }}
+                              >
+                                {t.description}
+                              </Typography>
+                              {isDescriptionDifferent && (
+                                <Chip 
+                                  label="edited" 
+                                  size="small" 
+                                  color="info" 
+                                  variant="outlined"
+                                  sx={{ height: 16, fontSize: 8 }} 
+                                />
+                              )}
+                            </Box>
                           )}
-                          {isPaid && (
-                            <Chip 
-                              label="Paid" 
-                              size="small" 
-                              color="success" 
-                              sx={{ height: 18, fontSize: 9 }} 
-                            />
-                          )}
-                        </Box>
-                        <Typography variant="caption" color="text.secondary">
-                          {t.currentInstallment}/{t.installments}x • {getPeriod(t.date)}
-                        </Typography>
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        color={isIncome ? "success.main" : "error.main"}
-                        sx={{ 
-                          fontFamily: "monospace", 
-                          fontSize: 12,
-                          textDecoration: isPaid ? "line-through" : "none",
-                        }}
-                      >
-                        {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMobileActionAnchor({ element: e.currentTarget, transaction: t });
-                        }}
-                      >
-                        <MoreVertIcon fontSize="small" />
-                      </IconButton>
-                    </Paper>
-                  );
-                })}
-              </Box>
-            ) : (
-              // Desktop: Tabela com design melhorado (igual ao RecurringView)
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ width: 50 }}>Paid</TableCell>
-                    <TableCell sx={{ width: 80 }}>#</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Period</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell align="center" sx={{ width: 100 }}>Status</TableCell>
-                    <TableCell align="center" sx={{ width: 100 }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {group.installments.map((t) => {
-                    const isPaid = t.isPaid !== false;
-                    const isCurrent = isCurrentMonth(t.date);
-                    
-                    return (
-                      <TableRow
-                        key={t.id}
-                        sx={{
-                          opacity: isPaid ? 0.6 : 1,
-                          bgcolor: isCurrent && !isPaid
-                            ? alpha(theme.palette.primary.main, 0.08) 
-                            : isPaid
-                              ? "action.disabledBackground"
-                              : "transparent",
-                          "&:hover": {
-                            bgcolor: alpha(theme.palette.action.hover, 0.08),
-                          },
-                          "& td": {
-                            textDecoration: isPaid ? "line-through" : "none",
-                            textDecorationColor: "text.disabled",
-                          },
-                        }}
-                      >
-                        <TableCell>
-                          <Tooltip title={isPaid ? "Mark as Unpaid" : "Mark as Paid"}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                             <Checkbox
                               checked={isPaid}
                               onChange={(e) => onTogglePaid(t.id, e.target.checked)}
                               size="small"
                               color="success"
+                              sx={{ p: 0.5 }}
                             />
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={`#${t.currentInstallment}`}
-                            size="small"
-                            variant="outlined"
-                            color={isCurrent && !isPaid ? "primary" : "default"}
-                            sx={{ fontWeight: 600 }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight={isCurrent ? 600 : 400}>
-                            {formatDateFull(t.date)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            {getPeriod(t.date)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: "monospace" }}>
-                          <Typography 
-                            variant="body2" 
-                            fontWeight={600}
-                            color={isIncome ? "success.main" : "error.main"}
-                          >
-                            {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          {isPaid ? (
-                            <Chip 
-                              label="Paid" 
-                              size="small" 
-                              color="success" 
-                              sx={{ fontWeight: 500 }}
-                            />
-                          ) : isCurrent ? (
-                            <Chip 
-                              label="Current" 
-                              size="small" 
-                              color="primary" 
-                              sx={{ fontWeight: 500 }}
-                            />
-                          ) : (
-                            <Chip 
-                              label="Pending" 
-                              size="small" 
-                              variant="outlined" 
-                              color="default"
-                              sx={{ opacity: 0.7 }}
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Tooltip title="Edit">
-                            <IconButton size="small" onClick={() => onEdit(t)} color="primary">
-                              <EditIcon fontSize="small" />
+                            <Box
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "8px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                bgcolor: isCurrent && !isPaid
+                                  ? alpha(theme.palette.primary.main, 0.15) 
+                                  : alpha(theme.palette.action.hover, 0.1),
+                                border: `1px solid ${isCurrent && !isPaid ? theme.palette.primary.main : "transparent"}`,
+                              }}
+                            >
+                              <Typography 
+                                variant="caption" 
+                                fontWeight={700}
+                                color={isCurrent && !isPaid ? "primary.main" : "text.secondary"}
+                                sx={{ fontSize: 10 }}
+                              >
+                                #{t.currentInstallment}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                                <Typography 
+                                  variant="body2" 
+                                  fontWeight={isCurrent ? 600 : 500}
+                                  sx={{
+                                    textDecoration: isPaid ? "line-through" : "none",
+                                  }}
+                                >
+                                  {formatDateFull(t.date)}
+                                </Typography>
+                                {isCurrent && !isPaid && (
+                                  <Chip 
+                                    label="This Month" 
+                                    size="small" 
+                                    color="primary" 
+                                    sx={{ height: 18, fontSize: 9 }} 
+                                  />
+                                )}
+                                {isPaid && (
+                                  <Chip 
+                                    label="Paid" 
+                                    size="small" 
+                                    color="success" 
+                                    sx={{ height: 18, fontSize: 9 }} 
+                                  />
+                                )}
+                              </Box>
+                              <Typography variant="caption" color="text.secondary">
+                                {t.currentInstallment}/{t.installments}x • {getPeriod(t.date)}
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color={isIncome ? "success.main" : "error.main"}
+                              sx={{ 
+                                fontFamily: "monospace", 
+                                fontSize: 12,
+                                textDecoration: isPaid ? "line-through" : "none",
+                              }}
+                            >
+                              {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMobileActionAnchor({ element: e.currentTarget, transaction: t });
+                              }}
+                            >
+                              <MoreVertIcon fontSize="small" />
                             </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton size="small" onClick={() => onDelete(t.id)} color="error">
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
+                          </Box>
+                        </Paper>
+                      );
+                    })}
+                  </Box>
+                );
+              })()
+            ) : (
+              // Desktop: Tabela com design melhorado (igual ao RecurringView)
+              (() => {
+                // Verifica se há descrições diferentes no grupo
+                const hasMultipleDescriptions = group.descriptions.length > 1;
+                
+                return (
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ width: 50 }}>Paid</TableCell>
+                        <TableCell sx={{ width: 80 }}>#</TableCell>
+                        {hasMultipleDescriptions && <TableCell>Description</TableCell>}
+                        <TableCell>Date</TableCell>
+                        <TableCell>Period</TableCell>
+                        <TableCell align="right">Amount</TableCell>
+                        <TableCell align="center" sx={{ width: 100 }}>Status</TableCell>
+                        <TableCell align="center" sx={{ width: 100 }}>Actions</TableCell>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                    </TableHead>
+                    <TableBody>
+                      {group.installments.map((t) => {
+                        const isPaid = t.isPaid !== false;
+                        const isCurrent = isCurrentMonth(t.date);
+                        const isDescriptionDifferent = hasMultipleDescriptions && t.description !== group.originalDescription;
+                        
+                        return (
+                          <TableRow
+                            key={t.id}
+                            sx={{
+                              opacity: isPaid ? 0.6 : 1,
+                              bgcolor: isCurrent && !isPaid
+                                ? alpha(theme.palette.primary.main, 0.08) 
+                                : isPaid
+                                  ? "action.disabledBackground"
+                                  : "transparent",
+                              "&:hover": {
+                                bgcolor: alpha(theme.palette.action.hover, 0.08),
+                              },
+                              "& td": {
+                                textDecoration: isPaid ? "line-through" : "none",
+                                textDecorationColor: "text.disabled",
+                              },
+                            }}
+                          >
+                            <TableCell>
+                              <Tooltip title={isPaid ? "Mark as Unpaid" : "Mark as Paid"}>
+                                <Checkbox
+                                  checked={isPaid}
+                                  onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                                  size="small"
+                                  color="success"
+                                />
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={`#${t.currentInstallment}`}
+                                size="small"
+                                variant="outlined"
+                                color={isCurrent && !isPaid ? "primary" : "default"}
+                                sx={{ fontWeight: 600 }}
+                              />
+                            </TableCell>
+                            {hasMultipleDescriptions && (
+                              <TableCell>
+                                <Typography 
+                                  variant="body2" 
+                                  fontWeight={isDescriptionDifferent ? 600 : 400}
+                                  color={isDescriptionDifferent ? "primary.main" : "text.primary"}
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                  }}
+                                >
+                                  {t.description}
+                                  {isDescriptionDifferent && (
+                                    <Chip 
+                                      label="edited" 
+                                      size="small" 
+                                      color="info" 
+                                      variant="outlined"
+                                      sx={{ height: 18, fontSize: 9, ml: 0.5 }} 
+                                    />
+                                  )}
+                                </Typography>
+                              </TableCell>
+                            )}
+                            <TableCell>
+                              <Typography variant="body2" fontWeight={isCurrent ? 600 : 400}>
+                                {formatDateFull(t.date)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" color="text.secondary">
+                                {getPeriod(t.date)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="right" sx={{ fontFamily: "monospace" }}>
+                              <Typography 
+                                variant="body2" 
+                                fontWeight={600}
+                                color={isIncome ? "success.main" : "error.main"}
+                              >
+                                {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              {isPaid ? (
+                                <Chip 
+                                  label="Paid" 
+                                  size="small" 
+                                  color="success" 
+                                  sx={{ fontWeight: 500 }}
+                                />
+                              ) : isCurrent ? (
+                                <Chip 
+                                  label="Current" 
+                                  size="small" 
+                                  color="primary" 
+                                  sx={{ fontWeight: 500 }}
+                                />
+                              ) : (
+                                <Chip 
+                                  label="Pending" 
+                                  size="small" 
+                                  variant="outlined" 
+                                  color="default"
+                                  sx={{ opacity: 0.7 }}
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Tooltip title="Edit">
+                                <IconButton size="small" onClick={() => onEdit(t)} color="primary">
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Delete">
+                                <IconButton size="small" onClick={() => onDelete(t.id)} color="error">
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                );
+              })()
             )}
 
             {/* Resumo do Parcelamento */}

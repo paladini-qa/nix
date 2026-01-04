@@ -25,6 +25,8 @@ export interface Transaction {
   // Campos para agrupamento de parcelamentos e exclusões de recorrências
   installmentGroupId?: string; // UUID que agrupa todas as parcelas de um mesmo parcelamento
   excludedDates?: string[]; // Array de datas (YYYY-MM-DD) excluídas de recorrências
+  // Campo para vincular transações modificadas à recorrência original
+  recurringGroupId?: string; // ID da transação recorrente original (para manter o vínculo após edição "single")
 }
 
 export interface FinancialSummary {

@@ -1005,6 +1005,21 @@ const AppContent: React.FC<{
           }
 
           const relatedTxs = transactions.filter((t) => {
+            // Se tem installmentGroupId, usa ele para encontrar parcelas relacionadas
+            if (originalTx.installmentGroupId && t.installmentGroupId) {
+              const sameGroup = t.installmentGroupId === originalTx.installmentGroupId;
+              if (!sameGroup) return false;
+              
+              if (editMode === "all_future") {
+                return (
+                  (t.currentInstallment || 1) >=
+                  (originalTx.currentInstallment || 1)
+                );
+              }
+              return true; // editMode === "all"
+            }
+            
+            // Fallback para transações sem installmentGroupId (legado)
             const sameDescription = t.description === originalTx.description;
             const samePaymentMethod =
               t.paymentMethod === originalTx.paymentMethod;
@@ -1582,18 +1597,18 @@ const AppContent: React.FC<{
     const isVirtual = transaction.isVirtual;
     const isInstallment =
       transaction.installments && transaction.installments > 1;
+    // Transações recorrentes originais (não virtuais) também devem mostrar o dialog
+    const isRecurringOriginal = transaction.isRecurring && !transaction.isVirtual;
 
-    // Mostra dialog de opções apenas para:
+    // Mostra dialog de opções para:
     // 1. Transações virtuais (ocorrências de recorrentes) - permite editar single/all_future/all
     // 2. Transações parceladas (múltiplas transações reais) - permite editar single/all_future/all
-    // 
-    // Transações recorrentes originais (não virtuais) são editadas diretamente
-    // porque são a única transação real - as virtuais são geradas a partir dela
-    if (isVirtual || isInstallment) {
+    // 3. Transações recorrentes originais - permite editar apenas esta, futuras ou todas
+    if (isVirtual || isInstallment || isRecurringOriginal) {
       setPendingEditTransaction(transaction);
       setEditOptionsDialogOpen(true);
     } else {
-      // Para transações simples ou recorrentes originais, resetar o modo de edição e limpar estados pendentes
+      // Para transações simples, resetar o modo de edição e limpar estados pendentes
       setCurrentEditMode(null);
       setPendingVirtualEdit(null);
       setEditingTransaction(transaction);
@@ -1641,8 +1656,15 @@ const AppContent: React.FC<{
         setPendingVirtualEdit({ originalId, excludeDate: virtualDate });
       }
     } else {
-      // Para transação parcelada real
+      // Para transação parcelada real ou recorrente original
       transactionToEdit = pendingEditTransaction;
+      
+      // Para "single" em transação recorrente original, configura o pending virtual edit
+      // para que a data original seja adicionada ao excluded_dates
+      if (option === "single" && pendingEditTransaction.isRecurring && !pendingEditTransaction.isVirtual) {
+        const excludeDate = pendingEditTransaction.date;
+        setPendingVirtualEdit({ originalId: pendingEditTransaction.id, excludeDate });
+      }
     }
 
     // Usa o novo formulário de edição de recorrência
@@ -1669,61 +1691,117 @@ const AppContent: React.FC<{
       if (!originalTx) return;
 
       if (editMode === "single") {
-        // Para "single", cria uma nova transação (não edita)
-        const dbPayload = {
-          user_id: session.user.id,
-          description: newTx.description,
-          amount: newTx.amount,
-          type: newTx.type,
-          category: newTx.category,
-          payment_method: newTx.paymentMethod,
-          date: newTx.date,
-          is_recurring: false, // Não é mais recorrente
-          is_paid: false,
-          is_shared: newTx.isShared,
-          shared_with: newTx.sharedWith,
-          i_owe: newTx.iOwe,
-        };
+        // Verifica se é uma parcela real (não virtual, não recorrente, tem installmentGroupId)
+        const isRealInstallment = recurringEditTransaction.installmentGroupId && 
+                                   !recurringEditTransaction.isVirtual && 
+                                   !recurringEditTransaction.isRecurring;
 
-        const { data, error } = await supabase
-          .from("transactions")
-          .insert(dbPayload)
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        if (data) {
-          const transaction: Transaction = {
-            id: data.id,
-            description: data.description,
-            amount: data.amount,
-            type: data.type,
-            category: data.category,
-            paymentMethod: data.payment_method,
-            date: data.date,
-            createdAt: new Date(data.created_at).getTime(),
-            isRecurring: false,
-            isPaid: false,
-            isShared: data.is_shared,
-            sharedWith: data.shared_with,
-            iOwe: data.i_owe,
+        if (isRealInstallment) {
+          // Para parcelas reais, apenas UPDATE o registro existente (cada parcela já é independente)
+          const updatePayload = {
+            description: newTx.description,
+            amount: newTx.amount,
+            type: newTx.type,
+            category: newTx.category,
+            payment_method: newTx.paymentMethod,
+            date: newTx.date,
+            is_shared: newTx.isShared,
+            shared_with: newTx.sharedWith,
+            i_owe: newTx.iOwe,
           };
-          setTransactions((prev) => [transaction, ...prev]);
 
-          // Se tinha pendingVirtualEdit, adiciona a data ao excluded_dates
-          if (pendingVirtualEdit) {
+          const { data, error } = await supabase
+            .from("transactions")
+            .update(updatePayload)
+            .eq("id", recurringEditTransaction.id)
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            // Atualiza o estado local com a parcela editada
+            setTransactions((prev) =>
+              prev.map((t) =>
+                t.id === recurringEditTransaction.id
+                  ? {
+                      ...t,
+                      description: data.description,
+                      amount: data.amount,
+                      type: data.type,
+                      category: data.category,
+                      paymentMethod: data.payment_method,
+                      date: data.date,
+                      isShared: data.is_shared,
+                      sharedWith: data.shared_with,
+                      iOwe: data.i_owe,
+                    }
+                  : t
+              )
+            );
+          }
+        } else {
+          // Para recorrentes (virtuais ou originais), cria uma nova transação VINCULADA à recorrência
+          const excludeDate = recurringEditTransaction.isVirtual 
+            ? recurringEditTransaction.date 
+            : recurringEditTransaction.date;
+          
+          const dbPayload = {
+            user_id: session.user.id,
+            description: newTx.description,
+            amount: newTx.amount,
+            type: newTx.type,
+            category: newTx.category,
+            payment_method: newTx.paymentMethod,
+            date: newTx.date,
+            is_recurring: false, // Não é mais recorrente
+            is_paid: false,
+            is_shared: newTx.isShared,
+            shared_with: newTx.sharedWith,
+            i_owe: newTx.iOwe,
+            // NOVO: Vincula a nova transação à recorrência original
+            recurring_group_id: originalTx.id,
+          };
+
+          const { data, error } = await supabase
+            .from("transactions")
+            .insert(dbPayload)
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            const transaction: Transaction = {
+              id: data.id,
+              description: data.description,
+              amount: data.amount,
+              type: data.type,
+              category: data.category,
+              paymentMethod: data.payment_method,
+              date: data.date,
+              createdAt: new Date(data.created_at).getTime(),
+              isRecurring: false,
+              isPaid: false,
+              isShared: data.is_shared,
+              sharedWith: data.shared_with,
+              iOwe: data.i_owe,
+              recurringGroupId: data.recurring_group_id, // Vínculo com a recorrência original
+            };
+            setTransactions((prev) => [transaction, ...prev]);
+
+            // Adiciona a data ao excluded_dates da recorrência original
             const currentExcludedDates = originalTx.excludedDates || [];
-            const newExcludedDates = [...currentExcludedDates, pendingVirtualEdit.excludeDate];
+            const newExcludedDates = [...currentExcludedDates, excludeDate];
 
             await supabase
               .from("transactions")
               .update({ excluded_dates: newExcludedDates })
-              .eq("id", pendingVirtualEdit.originalId);
+              .eq("id", originalTx.id);
 
             setTransactions((prev) =>
               prev.map((t) =>
-                t.id === pendingVirtualEdit.originalId
+                t.id === originalTx.id
                   ? { ...t, excludedDates: newExcludedDates }
                   : t
               )
@@ -1732,41 +1810,91 @@ const AppContent: React.FC<{
           }
         }
       } else if (editMode === "all_future") {
-        // Para "all_future", materializa as ocorrências passadas e atualiza a original
-        const targetDate = new Date(newTx.date);
-        const targetYear = targetDate.getFullYear();
-        const targetMonth = targetDate.getMonth() + 1;
+        // Verifica se é uma parcela (tem installmentGroupId)
+        const isInstallment = recurringEditTransaction.installmentGroupId && 
+                              !recurringEditTransaction.isVirtual && 
+                              !recurringEditTransaction.isRecurring;
 
-        const [origYear, origMonth, origDay] = originalTx.date.split("-").map(Number);
+        if (isInstallment) {
+          // Para parcelas, encontra todas as parcelas do mesmo grupo a partir da atual
+          const currentInstallment = recurringEditTransaction.currentInstallment || 1;
+          const relatedInstallments = transactions.filter(
+            (t) => t.installmentGroupId === recurringEditTransaction.installmentGroupId &&
+                   (t.currentInstallment || 1) >= currentInstallment
+          );
+          const idsToUpdate = relatedInstallments.map((t) => t.id);
 
-        // Gerar transações materializadas para meses passados
-        const materializedTransactions: Array<{
-          user_id: string;
-          description: string;
-          amount: number;
-          type: string;
-          category: string;
-          payment_method: string;
-          date: string;
-          is_recurring: boolean;
-          is_paid: boolean;
-          is_shared?: boolean;
-          shared_with?: string;
-        }> = [];
+          const updatedPayload = {
+            description: newTx.description,
+            amount: newTx.amount,
+            type: newTx.type,
+            category: newTx.category,
+            payment_method: newTx.paymentMethod,
+            is_shared: newTx.isShared,
+            shared_with: newTx.sharedWith,
+          };
 
-        let currentYear = origYear;
-        let currentMonth = origMonth;
+          const { error: updateError } = await supabase
+            .from("transactions")
+            .update(updatedPayload)
+            .in("id", idsToUpdate);
 
-        while (
-          currentYear < targetYear ||
-          (currentYear === targetYear && currentMonth < targetMonth)
-        ) {
-          if (!(currentYear === origYear && currentMonth === origMonth)) {
+          if (updateError) throw updateError;
+
+          setTransactions((prev) =>
+            prev.map((t) => {
+              if (idsToUpdate.includes(t.id)) {
+                return {
+                  ...t,
+                  description: newTx.description,
+                  amount: newTx.amount,
+                  type: newTx.type,
+                  category: newTx.category,
+                  paymentMethod: newTx.paymentMethod,
+                  isShared: newTx.isShared,
+                  sharedWith: newTx.sharedWith,
+                };
+              }
+              return t;
+            })
+          );
+        } else {
+          // Para recorrentes, materializa as ocorrências passadas VINCULADAS ao grupo e atualiza a original
+          const targetDate = new Date(newTx.date);
+          const targetYear = targetDate.getFullYear();
+          const targetMonth = targetDate.getMonth() + 1;
+
+          const [origYear, origMonth, origDay] = originalTx.date.split("-").map(Number);
+
+          // Gerar transações materializadas para meses passados (vinculadas ao grupo)
+          const materializedTransactions: Array<{
+            user_id: string;
+            description: string;
+            amount: number;
+            type: string;
+            category: string;
+            payment_method: string;
+            date: string;
+            is_recurring: boolean;
+            is_paid: boolean;
+            is_shared?: boolean;
+            shared_with?: string;
+            recurring_group_id: string; // NOVO: vincula ao grupo
+          }> = [];
+
+          let currentYear = origYear;
+          let currentMonth = origMonth;
+
+          while (
+            currentYear < targetYear ||
+            (currentYear === targetYear && currentMonth < targetMonth)
+          ) {
+            // Inclui a primeira ocorrência também (data original)
             const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
             const adjustedDay = Math.min(origDay, daysInMonth);
             const materializedDate = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
 
-            // Verifica se não está no excluded_dates
+            // Verifica se não está no excluded_dates E se não é uma transação já modificada
             const excludedDates = originalTx.excludedDates || [];
             if (!excludedDates.includes(materializedDate)) {
               materializedTransactions.push({
@@ -1781,137 +1909,188 @@ const AppContent: React.FC<{
                 is_paid: false,
                 is_shared: originalTx.isShared,
                 shared_with: originalTx.sharedWith,
+                recurring_group_id: originalTx.id, // NOVO: vincula ao grupo original
               });
             }
-          }
 
-          if (originalTx.frequency === "monthly") {
-            currentMonth++;
-            if (currentMonth > 12) {
-              currentMonth = 1;
+            if (originalTx.frequency === "monthly") {
+              currentMonth++;
+              if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+              }
+            } else if (originalTx.frequency === "yearly") {
               currentYear++;
             }
-          } else if (originalTx.frequency === "yearly") {
-            currentYear++;
           }
-        }
 
-        // Inserir transações materializadas
-        const materializedDates: string[] = materializedTransactions.map((mt) => mt.date);
+          // Inserir transações materializadas
+          const materializedDates: string[] = materializedTransactions.map((mt) => mt.date);
 
-        if (materializedTransactions.length > 0) {
-          const { data: insertedData, error: insertError } = await supabase
+          if (materializedTransactions.length > 0) {
+            const { data: insertedData, error: insertError } = await supabase
+              .from("transactions")
+              .insert(materializedTransactions)
+              .select();
+
+            if (insertError) {
+              console.error("Error materializing past transactions:", insertError);
+            } else if (insertedData) {
+              const newTransactions: Transaction[] = insertedData.map((d) => ({
+                id: d.id,
+                description: d.description,
+                amount: d.amount,
+                type: d.type,
+                category: d.category,
+                paymentMethod: d.payment_method,
+                date: d.date,
+                createdAt: new Date(d.created_at).getTime(),
+                isRecurring: false,
+                isPaid: d.is_paid ?? false,
+                isShared: d.is_shared,
+                sharedWith: d.shared_with,
+                recurringGroupId: d.recurring_group_id, // NOVO: vincula ao grupo
+              }));
+              setTransactions((prev) => [...newTransactions, ...prev]);
+            }
+          }
+
+          // Atualizar a transação original com nova data e novos valores
+          // Adiciona as datas materializadas ao excluded_dates para não gerar duplicatas
+          const currentExcludedDates = originalTx.excludedDates || [];
+          const updatedExcludedDates = [...new Set([...currentExcludedDates, ...materializedDates])];
+
+          const updatedPayload = {
+            description: newTx.description,
+            amount: newTx.amount,
+            type: newTx.type,
+            category: newTx.category,
+            payment_method: newTx.paymentMethod,
+            date: newTx.date, // Nova data de início (a partir de quando a edição se aplica)
+            is_recurring: newTx.isRecurring,
+            frequency: newTx.frequency,
+            is_shared: newTx.isShared,
+            shared_with: newTx.sharedWith,
+            excluded_dates: updatedExcludedDates,
+          };
+
+          const { error: updateError } = await supabase
             .from("transactions")
-            .insert(materializedTransactions)
-            .select();
+            .update(updatedPayload)
+            .eq("id", originalTx.id);
 
-          if (insertError) {
-            console.error("Error materializing past transactions:", insertError);
-          } else if (insertedData) {
-            const newTransactions: Transaction[] = insertedData.map((d) => ({
-              id: d.id,
-              description: d.description,
-              amount: d.amount,
-              type: d.type,
-              category: d.category,
-              paymentMethod: d.payment_method,
-              date: d.date,
-              createdAt: new Date(d.created_at).getTime(),
-              isRecurring: false,
-              isPaid: d.is_paid ?? false,
-              isShared: d.is_shared,
-              sharedWith: d.shared_with,
-            }));
-            setTransactions((prev) => [...newTransactions, ...prev]);
-          }
+          if (updateError) throw updateError;
+
+          setTransactions((prev) =>
+            prev.map((t) => {
+              if (t.id === originalTx.id) {
+                return {
+                  ...t,
+                  description: newTx.description,
+                  amount: newTx.amount,
+                  type: newTx.type,
+                  category: newTx.category,
+                  paymentMethod: newTx.paymentMethod,
+                  date: newTx.date,
+                  isRecurring: newTx.isRecurring,
+                  frequency: newTx.frequency,
+                  isShared: newTx.isShared,
+                  sharedWith: newTx.sharedWith,
+                  excludedDates: updatedExcludedDates,
+                };
+              }
+              return t;
+            })
+          );
         }
-
-        // Atualizar a transação original com nova data e novos valores
-        const currentExcludedDates = originalTx.excludedDates || [];
-        const updatedExcludedDates = [...new Set([...currentExcludedDates, ...materializedDates])];
-
-        const updatedPayload = {
-          description: newTx.description,
-          amount: newTx.amount,
-          type: newTx.type,
-          category: newTx.category,
-          payment_method: newTx.paymentMethod,
-          date: newTx.date,
-          is_recurring: newTx.isRecurring,
-          frequency: newTx.frequency,
-          is_shared: newTx.isShared,
-          shared_with: newTx.sharedWith,
-          excluded_dates: updatedExcludedDates,
-        };
-
-        const { error: updateError } = await supabase
-          .from("transactions")
-          .update(updatedPayload)
-          .eq("id", originalTx.id);
-
-        if (updateError) throw updateError;
-
-        setTransactions((prev) =>
-          prev.map((t) => {
-            if (t.id === originalTx.id) {
-              return {
-                ...t,
-                description: newTx.description,
-                amount: newTx.amount,
-                type: newTx.type,
-                category: newTx.category,
-                paymentMethod: newTx.paymentMethod,
-                date: newTx.date,
-                isRecurring: newTx.isRecurring,
-                frequency: newTx.frequency,
-                isShared: newTx.isShared,
-                sharedWith: newTx.sharedWith,
-                excludedDates: updatedExcludedDates,
-              };
-            }
-            return t;
-          })
-        );
       } else if (editMode === "all") {
-        // Para "all", simplesmente atualiza a transação original
-        const updatedPayload = {
-          description: newTx.description,
-          amount: newTx.amount,
-          type: newTx.type,
-          category: newTx.category,
-          payment_method: newTx.paymentMethod,
-          is_recurring: newTx.isRecurring,
-          frequency: newTx.frequency,
-          is_shared: newTx.isShared,
-          shared_with: newTx.sharedWith,
-        };
+        // Verifica se é uma parcela (tem installmentGroupId)
+        const isInstallment = recurringEditTransaction.installmentGroupId && 
+                              !recurringEditTransaction.isVirtual && 
+                              !recurringEditTransaction.isRecurring;
 
-        const { error: updateError } = await supabase
-          .from("transactions")
-          .update(updatedPayload)
-          .eq("id", originalTx.id);
+        if (isInstallment) {
+          // Para parcelas, encontra todas as parcelas do mesmo grupo
+          const relatedInstallments = transactions.filter(
+            (t) => t.installmentGroupId === recurringEditTransaction.installmentGroupId
+          );
+          const idsToUpdate = relatedInstallments.map((t) => t.id);
 
-        if (updateError) throw updateError;
+          const updatedPayload = {
+            description: newTx.description,
+            amount: newTx.amount,
+            type: newTx.type,
+            category: newTx.category,
+            payment_method: newTx.paymentMethod,
+            is_shared: newTx.isShared,
+            shared_with: newTx.sharedWith,
+          };
 
-        setTransactions((prev) =>
-          prev.map((t) => {
-            if (t.id === originalTx.id) {
-              return {
-                ...t,
-                description: newTx.description,
-                amount: newTx.amount,
-                type: newTx.type,
-                category: newTx.category,
-                paymentMethod: newTx.paymentMethod,
-                isRecurring: newTx.isRecurring,
-                frequency: newTx.frequency,
-                isShared: newTx.isShared,
-                sharedWith: newTx.sharedWith,
-              };
-            }
-            return t;
-          })
-        );
+          const { error: updateError } = await supabase
+            .from("transactions")
+            .update(updatedPayload)
+            .in("id", idsToUpdate);
+
+          if (updateError) throw updateError;
+
+          setTransactions((prev) =>
+            prev.map((t) => {
+              if (idsToUpdate.includes(t.id)) {
+                return {
+                  ...t,
+                  description: newTx.description,
+                  amount: newTx.amount,
+                  type: newTx.type,
+                  category: newTx.category,
+                  paymentMethod: newTx.paymentMethod,
+                  isShared: newTx.isShared,
+                  sharedWith: newTx.sharedWith,
+                };
+              }
+              return t;
+            })
+          );
+        } else {
+          // Para recorrentes, simplesmente atualiza a transação original
+          const updatedPayload = {
+            description: newTx.description,
+            amount: newTx.amount,
+            type: newTx.type,
+            category: newTx.category,
+            payment_method: newTx.paymentMethod,
+            is_recurring: newTx.isRecurring,
+            frequency: newTx.frequency,
+            is_shared: newTx.isShared,
+            shared_with: newTx.sharedWith,
+          };
+
+          const { error: updateError } = await supabase
+            .from("transactions")
+            .update(updatedPayload)
+            .eq("id", originalTx.id);
+
+          if (updateError) throw updateError;
+
+          setTransactions((prev) =>
+            prev.map((t) => {
+              if (t.id === originalTx.id) {
+                return {
+                  ...t,
+                  description: newTx.description,
+                  amount: newTx.amount,
+                  type: newTx.type,
+                  category: newTx.category,
+                  paymentMethod: newTx.paymentMethod,
+                  isRecurring: newTx.isRecurring,
+                  frequency: newTx.frequency,
+                  isShared: newTx.isShared,
+                  sharedWith: newTx.sharedWith,
+                };
+              }
+              return t;
+            })
+          );
+        }
       }
 
       // Limpar estados
@@ -1953,15 +2132,15 @@ const AppContent: React.FC<{
       if (!transactionToDelete) return;
     }
 
-    // Mostra dialog de opções apenas para:
+    // Mostra dialog de opções para:
     // 1. Transações virtuais (ocorrências de recorrentes) - permite deletar single/all_future/all
     // 2. Transações parceladas (múltiplas transações reais) - permite deletar single/all_future/all
-    // 
-    // Transações recorrentes originais (não virtuais) pedem confirmação simples
-    // pois deletar a original remove toda a recorrência
+    // 3. Transações recorrentes originais - permite deletar apenas esta ocorrência, futuras ou todas
     const isInstallment = transactionToDelete.installments && transactionToDelete.installments > 1;
+    // Transações recorrentes originais (não virtuais) também devem mostrar o dialog
+    const isRecurringOriginal = transactionToDelete.isRecurring && !transactionToDelete.isVirtual;
 
-    if (isVirtualTransaction || isInstallment) {
+    if (isVirtualTransaction || isInstallment || isRecurringOriginal) {
       setPendingDeleteTransaction(transactionToDelete);
       setDeleteOptionsDialogOpen(true);
       return;
@@ -2136,8 +2315,29 @@ const AppContent: React.FC<{
           setTransactions((prev) =>
             prev.filter((t) => t.id !== pendingDeleteTransaction.id)
           );
+        } else if (isRecurring) {
+          // Para transação recorrente original (não virtual), adiciona a data ao excluded_dates
+          // Isso preserva a recorrência mas pula essa ocorrência específica
+          const skipDate = pendingDeleteTransaction.date;
+          const currentExcludedDates = pendingDeleteTransaction.excludedDates || [];
+          const newExcludedDates = [...currentExcludedDates, skipDate];
+
+          const { error } = await supabase
+            .from("transactions")
+            .update({ excluded_dates: newExcludedDates })
+            .eq("id", pendingDeleteTransaction.id);
+
+          if (error) throw error;
+
+          setTransactions((prev) =>
+            prev.map((t) =>
+              t.id === pendingDeleteTransaction.id
+                ? { ...t, excludedDates: newExcludedDates }
+                : t
+            )
+          );
         } else {
-          // Para transação recorrente real (não virtual), deleta apenas esta
+          // Para transação normal não recorrente
           const { error } = await supabase
             .from("transactions")
             .delete()

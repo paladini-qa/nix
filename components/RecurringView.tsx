@@ -74,6 +74,9 @@ interface RecurringOccurrence {
   isPast: boolean;
   isCurrent: boolean;
   occurrenceNumber: number;
+  // Campos para ocorrências modificadas
+  isModified?: boolean; // Indica que é uma transação modificada (não virtual)
+  modifiedTransaction?: Transaction; // A transação modificada
 }
 
 const RecurringView: React.FC<RecurringViewProps> = ({
@@ -209,12 +212,51 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   };
 
   // Gera lista de ocorrências futuras para exibição (12 meses ou 1 ano à frente)
+  // Agora também inclui transações modificadas/materializadas (com recurringGroupId)
   const getOccurrencesList = (transaction: Transaction): RecurringOccurrence[] => {
     const startDate = parseLocalDate(transaction.date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const occurrences: RecurringOccurrence[] = [];
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    // Busca transações modificadas/materializadas que pertencem a este grupo recorrente
+    const modifiedTransactions = transactions.filter(
+      (t) => t.recurringGroupId === transaction.id && !t.isRecurring
+    );
+    
+    // Cria um mapa de data -> transação modificada
+    const modifiedByDate = new Map<string, Transaction>();
+    modifiedTransactions.forEach((t) => {
+      modifiedByDate.set(t.date, t);
+    });
+    
+    // PRIMEIRO: Adiciona as transações materializadas que são ANTERIORES à data de início atual
+    // (estas são as ocorrências passadas que foram preservadas quando "all_future" foi usado)
+    modifiedTransactions
+      .filter((t) => new Date(t.date) < startDate)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .forEach((t, idx) => {
+        const tDate = new Date(t.date);
+        occurrences.push({
+          date: t.date,
+          formattedDate: tDate.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          month: months[tDate.getMonth()],
+          year: tDate.getFullYear(),
+          isPast: tDate < today,
+          isCurrent: tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear(),
+          occurrenceNumber: idx + 1,
+          isModified: true,
+          modifiedTransaction: t,
+        });
+      });
+    
+    // Calcula o offset para numeração das ocorrências futuras
+    const pastOccurrencesCount = occurrences.length;
     
     // Calcula a próxima ocorrência a partir de hoje
     let nextOccurrence = new Date(startDate);
@@ -241,11 +283,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         }
       }
       
-      // Calcula quantas ocorrências já passaram desde o início
-      const startOccurrenceNumber = Math.max(0, 
-        (nextOccurrence.getFullYear() - startDate.getFullYear()) * 12 + 
-        (nextOccurrence.getMonth() - startDate.getMonth())
-      ) + 1;
+      // Calcula o número inicial para as ocorrências futuras
+      // Leva em conta as ocorrências passadas materializadas
+      const startOccurrenceNumber = pastOccurrencesCount + 1;
       
       // Gera 12 ocorrências a partir da próxima, ignorando datas excluídas
       const excludedDates = transaction.excludedDates || [];
@@ -266,9 +306,13 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         
         // Verifica se esta data está excluída (usando formato local)
         const occDateString = formatLocalDate(occDate);
-        if (excludedDates.includes(occDateString)) {
+        
+        // Verifica se existe uma transação modificada para esta data
+        const modifiedTx = modifiedByDate.get(occDateString);
+        
+        if (excludedDates.includes(occDateString) && !modifiedTx) {
           monthOffset++;
-          continue; // Pula esta ocorrência
+          continue; // Pula esta ocorrência se está excluída E não tem modificada
         }
         
         const isPast = occDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -286,6 +330,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           isPast,
           isCurrent,
           occurrenceNumber: startOccurrenceNumber + monthOffset,
+          // Adiciona informação de modificação
+          isModified: !!modifiedTx,
+          modifiedTransaction: modifiedTx,
         });
         
         occurrenceCount++;
@@ -297,8 +344,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         nextOccurrence.setFullYear(nextOccurrence.getFullYear() + 1);
       }
       
-      // Calcula quantas ocorrências já passaram desde o início
-      const startOccurrenceNumber = Math.max(0, nextOccurrence.getFullYear() - startDate.getFullYear()) + 1;
+      // Calcula o número inicial para as ocorrências futuras
+      // Leva em conta as ocorrências passadas materializadas
+      const startOccurrenceNumber = pastOccurrencesCount + 1;
       
       // Gera 12 ocorrências anuais, ignorando datas excluídas
       const excludedDatesYearly = transaction.excludedDates || [];
@@ -319,9 +367,13 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         
         // Verifica se esta data está excluída (usando formato local)
         const occDateString = formatLocalDateYearly(occDate);
-        if (excludedDatesYearly.includes(occDateString)) {
+        
+        // Verifica se existe uma transação modificada para esta data
+        const modifiedTxYearly = modifiedByDate.get(occDateString);
+        
+        if (excludedDatesYearly.includes(occDateString) && !modifiedTxYearly) {
           yearOffset++;
-          continue; // Pula esta ocorrência
+          continue; // Pula esta ocorrência se está excluída E não tem modificada
         }
         
         const isPast = occDate < today;
@@ -340,6 +392,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           isPast,
           isCurrent,
           occurrenceNumber: startOccurrenceNumber + yearOffset,
+          // Adiciona informação de modificação
+          isModified: !!modifiedTxYearly,
+          modifiedTransaction: modifiedTxYearly,
         });
         
         yearlyCount++;
@@ -733,6 +788,10 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                   <TableRow>
                     <TableCell sx={{ width: 50 }}>Paid</TableCell>
                     <TableCell sx={{ width: 80 }}>#</TableCell>
+                    {/* Mostra coluna de descrição se há transações modificadas */}
+                    {occurrencesList.some(o => o.isModified) && (
+                      <TableCell>Description</TableCell>
+                    )}
                     <TableCell>Date</TableCell>
                     <TableCell>Period</TableCell>
                     <TableCell align="right">Amount</TableCell>
@@ -742,8 +801,16 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 </TableHead>
                 <TableBody>
                   {occurrencesList.map((occ, idx) => {
-                    // Verifica se esta ocorrência está paga (baseado no mês atual da transação base)
-                    const isPaidOccurrence = occ.isCurrent && t.isPaid;
+                    // Verifica se esta ocorrência está paga (baseado no mês atual da transação base ou da modificada)
+                    const isPaidOccurrence = occ.isModified 
+                      ? occ.modifiedTransaction?.isPaid 
+                      : (occ.isCurrent && t.isPaid);
+                    
+                    // Usa valores da transação modificada se existir
+                    const displayAmount = occ.modifiedTransaction?.amount ?? t.amount;
+                    const displayDescription = occ.modifiedTransaction?.description ?? t.description;
+                    const displayType = occ.modifiedTransaction?.type ?? t.type;
+                    const isModifiedIncome = displayType === "income";
                     
                     return (
                       <TableRow
@@ -754,7 +821,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                             ? alpha(theme.palette.primary.main, 0.08) 
                             : isPaidOccurrence
                               ? "action.disabledBackground"
-                              : "transparent",
+                              : occ.isModified
+                                ? alpha(theme.palette.warning.main, 0.05)
+                                : "transparent",
                           "&:hover": {
                             bgcolor: alpha(theme.palette.action.hover, 0.08),
                           },
@@ -767,18 +836,20 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                         <TableCell>
                           <Tooltip title={isPaidOccurrence ? "Mark as Unpaid" : "Mark as Paid"}>
                             <Checkbox
-                              checked={isPaidOccurrence}
+                              checked={!!isPaidOccurrence}
                               onChange={(e) => {
-                                // Para a ocorrência atual, toggle o status de pago
-                                if (occ.isCurrent) {
+                                // Para transação modificada, usa o ID dela
+                                if (occ.isModified && occ.modifiedTransaction) {
+                                  onTogglePaid(occ.modifiedTransaction.id, e.target.checked);
+                                } else if (occ.isCurrent) {
                                   onTogglePaid(t.id, e.target.checked);
                                 }
                               }}
                               size="small"
                               color="success"
-                              disabled={!occ.isCurrent}
+                              disabled={!occ.isCurrent && !occ.isModified}
                               sx={{
-                                opacity: occ.isCurrent ? 1 : 0.3,
+                                opacity: (occ.isCurrent || occ.isModified) ? 1 : 0.3,
                               }}
                             />
                           </Tooltip>
@@ -792,6 +863,39 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                             sx={{ fontWeight: 600 }}
                           />
                         </TableCell>
+                        {/* Coluna de descrição (se há modificadas) */}
+                        {occurrencesList.some(o => o.isModified) && (
+                          <TableCell>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <Typography 
+                                variant="caption" 
+                                fontWeight={occ.isModified ? 600 : 400}
+                                color={occ.isModified ? "primary.main" : "text.secondary"}
+                                sx={{ 
+                                  overflow: "hidden", 
+                                  textOverflow: "ellipsis", 
+                                  whiteSpace: "nowrap",
+                                  flex: 1,
+                                }}
+                              >
+                                {displayDescription}
+                              </Typography>
+                              {occ.isModified && (
+                                <Chip
+                                  label="edited"
+                                  size="small"
+                                  color="warning"
+                                  sx={{
+                                    height: 18,
+                                    fontSize: "0.65rem",
+                                    fontWeight: 600,
+                                    "& .MuiChip-label": { px: 0.75 },
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          </TableCell>
+                        )}
                         <TableCell>
                           <Typography variant="body2" fontWeight={occ.isCurrent ? 600 : 400}>
                             {occ.formattedDate}
@@ -806,9 +910,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                           <Typography 
                             variant="body2" 
                             fontWeight={600}
-                            color={isIncome ? "success.main" : "error.main"}
+                            color={isModifiedIncome ? "success.main" : "error.main"}
                           >
-                            {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
+                            {isModifiedIncome ? "+" : "-"}{formatCurrency(displayAmount || 0)}
                           </Typography>
                         </TableCell>
                         <TableCell align="center">
@@ -817,6 +921,13 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                               label={isPaidOccurrence ? "Paid" : "Current"} 
                               size="small" 
                               color={isPaidOccurrence ? "success" : "primary"} 
+                              sx={{ fontWeight: 500 }}
+                            />
+                          ) : occ.isModified ? (
+                            <Chip 
+                              label={isPaidOccurrence ? "Paid" : "Modified"} 
+                              size="small" 
+                              color={isPaidOccurrence ? "success" : "warning"} 
                               sx={{ fontWeight: 500 }}
                             />
                           ) : (
@@ -833,7 +944,10 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                           <Tooltip title="Edit">
                             <IconButton 
                               size="small" 
-                              onClick={() => handleOccurrenceEdit(t, occ)} 
+                              onClick={() => occ.isModified && occ.modifiedTransaction 
+                                ? onEdit(occ.modifiedTransaction)
+                                : handleOccurrenceEdit(t, occ)
+                              } 
                               color="primary"
                             >
                               <EditIcon fontSize="small" />
@@ -842,7 +956,10 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                           <Tooltip title="Delete">
                             <IconButton 
                               size="small" 
-                              onClick={() => handleOccurrenceDelete(t, occ)} 
+                              onClick={() => occ.isModified && occ.modifiedTransaction
+                                ? onDelete(occ.modifiedTransaction.id)
+                                : handleOccurrenceDelete(t, occ)
+                              } 
                               color="error"
                             >
                               <DeleteIcon fontSize="small" />
