@@ -11,6 +11,7 @@ import {
   Button,
   Chip,
   useTheme,
+  useMediaQuery,
   alpha,
   Divider,
   Stack,
@@ -30,6 +31,8 @@ import {
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import dayjs from "dayjs";
+import "dayjs/locale/pt-br";
 import { Transaction } from "../types";
 
 const MotionBox = motion.create(Box);
@@ -45,7 +48,9 @@ interface TransactionOptionsPanelProps {
   onSelect: (option: OptionType) => void;
 }
 
-const PANEL_WIDTH = 380;
+// Padronizado com TransactionForm e RecurringEditForm
+const SIDE_PANEL_WIDTH = 520;
+const SIDE_PANEL_WIDTH_MOBILE = "100vw";
 
 const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
   open,
@@ -56,6 +61,7 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDarkMode = theme.palette.mode === "dark";
 
   if (!transaction) return null;
@@ -219,8 +225,8 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: { xs: "100%", sm: PANEL_WIDTH },
-          maxWidth: "100%",
+          width: isMobile ? SIDE_PANEL_WIDTH_MOBILE : SIDE_PANEL_WIDTH,
+          maxWidth: "100vw",
           bgcolor: isDarkMode
             ? alpha(theme.palette.background.paper, 0.98)
             : "#FAFBFC",
@@ -255,7 +261,7 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                 borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   <Box
                     sx={{
@@ -273,13 +279,27 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="h6" fontWeight={600}>
-                      {isEdit
-                        ? t("transactionOptions.editTitle")
-                        : t("transactionOptions.deleteTitle")}
+                      {isEdit ? "Editar Transação" : "Excluir Transação"}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t("transactionOptions.selectOption")}
-                    </Typography>
+                    {/* Mostrar qual mês está sendo editado - usa virtualDate para recorrentes */}
+                    {(transaction.virtualDate || transaction.date) && (
+                      <Typography 
+                        variant="body2" 
+                        fontWeight={600}
+                        sx={{ 
+                          color: "primary.main",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                        }}
+                      >
+                        <TodayIcon sx={{ fontSize: 14 }} />
+                        {dayjs(transaction.virtualDate || transaction.date)
+                          .locale("pt-br")
+                          .format("MMMM [de] YYYY")
+                          .replace(/^\w/, (c) => c.toUpperCase())}
+                      </Typography>
+                    )}
                   </Box>
                 </Box>
                 <IconButton
@@ -346,8 +366,35 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                     currency: "BRL",
                   }).format(transaction.amount)}
                 </Typography>
+                
+                {/* Indicador de qual parcela está sendo editada (apenas para parceladas) */}
+                {isInstallment && transaction.currentInstallment && (
+                  <Box
+                    sx={{
+                      mt: 1.5,
+                      p: 1.5,
+                      borderRadius: "12px",
+                      bgcolor: alpha(theme.palette.warning.main, isDarkMode ? 0.12 : 0.08),
+                      border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <CreditCardIcon sx={{ fontSize: 18, color: "warning.main" }} />
+                    <Box>
+                      <Typography variant="caption" fontWeight={600} color="warning.main">
+                        Parcela
+                      </Typography>
+                      <Typography variant="body2" fontWeight={700} color="warning.main">
+                        {transaction.currentInstallment} de {transaction.installments}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+                
                 {typeInfo.description && (
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: "block" }}>
                     {typeInfo.description}
                   </Typography>
                 )}
