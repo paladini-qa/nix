@@ -240,7 +240,10 @@ const SharedView: React.FC<SharedViewProps> = ({
         balance.incomes.push(t);
         
         // INCOME vinculada a amigo: Amigo está me pagando
-        const paymentAmount = t.iOwe ? transactionAmount : transactionAmount / 2;
+        // Se tem relatedTransactionId, o valor já foi calculado como 50% da despesa original
+        // Se não tem, é uma income avulsa com conta dividida - dividir por 2
+        const hasRelatedExpense = !!t.relatedTransactionId;
+        const paymentAmount = t.iOwe ? transactionAmount : (hasRelatedExpense ? transactionAmount : transactionAmount / 2);
         
         if (t.isPaid) {
           // Já recebi o pagamento
@@ -1063,7 +1066,10 @@ const SharedView: React.FC<SharedViewProps> = ({
                 let typeLabel: string;
                 
                 if (t.type === "income") {
-                  displayAmount = t.iOwe ? transactionAmount : transactionAmount / 2;
+                  // Se tem relatedTransactionId, o valor já foi calculado como 50% da despesa original
+                  // Se não tem, é uma income avulsa com conta dividida - dividir por 2
+                  const hasRelatedExpense = !!t.relatedTransactionId;
+                  displayAmount = t.iOwe ? transactionAmount : (hasRelatedExpense ? transactionAmount : transactionAmount / 2);
                   isPositive = true;
                   typeLabel = "Receber";
                 } else if (t.iOwe) {
@@ -1211,9 +1217,12 @@ const SharedView: React.FC<SharedViewProps> = ({
                   
                   if (t.type === "income") {
                     // INCOME: amigo está me pagando
-                    displayAmount = t.iOwe ? transactionAmount : transactionAmount / 2;
+                    // Se tem relatedTransactionId, o valor já foi calculado como 50% da despesa original
+                    // Se não tem, é uma income avulsa com conta dividida - dividir por 2
+                    const hasRelatedExpense = !!t.relatedTransactionId;
+                    displayAmount = t.iOwe ? transactionAmount : (hasRelatedExpense ? transactionAmount : transactionAmount / 2);
                     isPositive = true;
-                    typeLabel = t.iOwe ? "Pagamento" : "Pagamento (50%)";
+                    typeLabel = t.iOwe ? "Pagamento" : (hasRelatedExpense ? "Pagamento (50%)" : "Pagamento (50%)");
                   } else if (t.iOwe) {
                     // EXPENSE + Conta Única: eu devo ao amigo
                     displayAmount = transactionAmount;
