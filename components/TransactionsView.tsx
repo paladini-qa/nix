@@ -204,7 +204,17 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   const allTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
       const [y, m] = t.date.split("-");
-      return parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+      const isCurrentMonth = parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+      
+      if (!isCurrentMonth) return false;
+      
+      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
+      // Isso acontece quando o usuário exclui a primeira ocorrência com "apenas esta"
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+        return false; // Não exibe a transação recorrente se sua própria data foi excluída
+      }
+      
+      return true;
     });
 
     return [...currentMonthTransactions, ...generateRecurringTransactions];

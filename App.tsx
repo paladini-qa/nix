@@ -358,7 +358,17 @@ const AppContent: React.FC<{
   const filteredTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
       const [y, m] = t.date.split("-");
-      return parseInt(y) === filters.year && parseInt(m) === filters.month + 1;
+      const isCurrentMonth = parseInt(y) === filters.year && parseInt(m) === filters.month + 1;
+      
+      if (!isCurrentMonth) return false;
+      
+      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
+      // Isso acontece quando o usuário exclui a primeira ocorrência com "apenas esta"
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+        return false; // Não exibe a transação recorrente se sua própria data foi excluída
+      }
+      
+      return true;
     });
 
     const allTransactions = [
@@ -478,7 +488,15 @@ const AppContent: React.FC<{
     }
 
     // Quando há filtros avançados ativos, usa todas as transações + recorrentes do período
-    const baseTransactions = [...transactions, ...recurringForRange];
+    // Filtra transações recorrentes originais cuja data está no excludedDates
+    const filteredBaseTransactions = transactions.filter((t) => {
+      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+        return false;
+      }
+      return true;
+    });
+    const baseTransactions = [...filteredBaseTransactions, ...recurringForRange];
 
     return baseTransactions.filter((tx) => {
       // Filtro por data - normaliza para comparar apenas as datas (sem timezone)
@@ -594,7 +612,15 @@ const AppContent: React.FC<{
     );
     
     // Combina transações originais com as recorrentes geradas
-    let allTransactions = [...transactions, ...recurringForAnalytics];
+    // Filtra transações recorrentes originais cuja data está no excludedDates
+    const filteredBaseTransactions = transactions.filter((t) => {
+      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+        return false;
+      }
+      return true;
+    });
+    let allTransactions = [...filteredBaseTransactions, ...recurringForAnalytics];
     
     // Aplica filtros se necessário
     if (hasAdvancedDates || hasOtherFilters) {
@@ -2399,6 +2425,50 @@ const AppContent: React.FC<{
 
     if (!originalId) return;
 
+    // Verifica se deve deletar também a transação relacionada (compartilhada)
+    const shouldDeleteRelated = pendingSharedEditOption === "both";
+    const originalTransaction = transactions.find((t) => t.id === originalId);
+    const relatedTransactionId = originalTransaction?.relatedTransactionId;
+
+    // Função helper para deletar a transação relacionada se necessário
+    const deleteRelatedIfNeeded = async (idsAlreadyRemoved: string[]) => {
+      if (!shouldDeleteRelated || !relatedTransactionId) return idsAlreadyRemoved;
+      
+      const relatedTx = transactions.find((t) => t.id === relatedTransactionId);
+      if (!relatedTx || idsAlreadyRemoved.includes(relatedTransactionId)) return idsAlreadyRemoved;
+      
+      try {
+        // Se a transação relacionada também é recorrente, deletamos ela também
+        if (relatedTx.isRecurring) {
+          const { error } = await supabase
+            .from("transactions")
+            .delete()
+            .eq("id", relatedTransactionId);
+          
+          if (error) {
+            console.error("Error deleting related recurring transaction:", error);
+            return idsAlreadyRemoved;
+          }
+        } else {
+          // Para transação normal, deleta diretamente
+          const { error } = await supabase
+            .from("transactions")
+            .delete()
+            .eq("id", relatedTransactionId);
+          
+          if (error) {
+            console.error("Error deleting related transaction:", error);
+            return idsAlreadyRemoved;
+          }
+        }
+        
+        return [...idsAlreadyRemoved, relatedTransactionId];
+      } catch (err) {
+        console.error("Error in deleteRelatedIfNeeded:", err);
+        return idsAlreadyRemoved;
+      }
+    };
+
     try {
       if (option === "single") {
         // Deletar apenas esta transação/ocorrência específica
@@ -2457,15 +2527,58 @@ const AppContent: React.FC<{
               }
             }
 
+            // Se foi escolhido "both" (excluir ambas compartilhadas), trata a transação relacionada
+            let relatedExcludedDatesTx: string | null = null;
+            if (shouldDeleteRelated && relatedTransactionId) {
+              const relatedTx = transactions.find((t) => t.id === relatedTransactionId);
+              if (relatedTx) {
+                if (relatedTx.isRecurring) {
+                  // Se a relacionada também é recorrente, adiciona a mesma data ao excluded_dates dela
+                  const relatedCurrentExcludedDates = relatedTx.excludedDates || [];
+                  const relatedNewExcludedDates = [...relatedCurrentExcludedDates, skipDate];
+                  
+                  const { error: relatedError } = await supabase
+                    .from("transactions")
+                    .update({ excluded_dates: relatedNewExcludedDates })
+                    .eq("id", relatedTransactionId);
+                  
+                  if (relatedError) {
+                    console.error("Error updating related transaction excluded_dates:", relatedError);
+                  } else {
+                    relatedExcludedDatesTx = relatedTransactionId;
+                  }
+                } else {
+                  // Se a relacionada não é recorrente, deleta diretamente
+                  const { error: relatedError } = await supabase
+                    .from("transactions")
+                    .delete()
+                    .eq("id", relatedTransactionId);
+                  
+                  if (relatedError) {
+                    console.error("Error deleting related transaction:", relatedError);
+                  } else {
+                    idsToRemove.push(relatedTransactionId);
+                  }
+                }
+              }
+            }
+
             // Atualiza o estado local com a nova lista de datas excluídas e remove órfãs
             setTransactions((prev) => 
               prev
                 .filter((t) => !idsToRemove.includes(t.id))
-                .map((t) =>
-                  t.id === originalId
-                    ? { ...t, excludedDates: newExcludedDates }
-                    : t
-                )
+                .map((t) => {
+                  if (t.id === originalId) {
+                    return { ...t, excludedDates: newExcludedDates };
+                  }
+                  // Atualiza a transação relacionada se necessário
+                  if (relatedExcludedDatesTx && t.id === relatedExcludedDatesTx) {
+                    const relatedTx = transactions.find((tx) => tx.id === relatedExcludedDatesTx);
+                    const relatedNewExcludedDates = [...(relatedTx?.excludedDates || []), skipDate];
+                    return { ...t, excludedDates: relatedNewExcludedDates };
+                  }
+                  return t;
+                })
             );
           }
         } else if (isInstallment) {
@@ -2535,14 +2648,57 @@ const AppContent: React.FC<{
             }
           }
 
+          // Se foi escolhido "both" (excluir ambas compartilhadas), trata a transação relacionada
+          let relatedExcludedDatesTx: string | null = null;
+          if (shouldDeleteRelated && relatedTransactionId) {
+            const relatedTx = transactions.find((t) => t.id === relatedTransactionId);
+            if (relatedTx) {
+              if (relatedTx.isRecurring) {
+                // Se a relacionada também é recorrente, adiciona a mesma data ao excluded_dates dela
+                const relatedCurrentExcludedDates = relatedTx.excludedDates || [];
+                const relatedNewExcludedDates = [...relatedCurrentExcludedDates, skipDate];
+                
+                const { error: relatedError } = await supabase
+                  .from("transactions")
+                  .update({ excluded_dates: relatedNewExcludedDates })
+                  .eq("id", relatedTransactionId);
+                
+                if (relatedError) {
+                  console.error("Error updating related transaction excluded_dates:", relatedError);
+                } else {
+                  relatedExcludedDatesTx = relatedTransactionId;
+                }
+              } else {
+                // Se a relacionada não é recorrente, deleta diretamente
+                const { error: relatedError } = await supabase
+                  .from("transactions")
+                  .delete()
+                  .eq("id", relatedTransactionId);
+                
+                if (relatedError) {
+                  console.error("Error deleting related transaction:", relatedError);
+                } else {
+                  idsToRemove.push(relatedTransactionId);
+                }
+              }
+            }
+          }
+
           setTransactions((prev) =>
             prev
               .filter((t) => !idsToRemove.includes(t.id))
-              .map((t) =>
-                t.id === pendingDeleteTransaction.id
-                  ? { ...t, excludedDates: newExcludedDates }
-                  : t
-              )
+              .map((t) => {
+                if (t.id === pendingDeleteTransaction.id) {
+                  return { ...t, excludedDates: newExcludedDates };
+                }
+                // Atualiza a transação relacionada se necessário
+                if (relatedExcludedDatesTx && t.id === relatedExcludedDatesTx) {
+                  const relatedTx = transactions.find((tx) => tx.id === relatedExcludedDatesTx);
+                  const relatedNewExcludedDates = [...(relatedTx?.excludedDates || []), skipDate];
+                  return { ...t, excludedDates: relatedNewExcludedDates };
+                }
+                return t;
+              })
           );
         } else {
           // Para transação normal não recorrente
@@ -2625,8 +2781,13 @@ const AppContent: React.FC<{
             .eq("id", originalId);
           if (error) throw error;
 
+          let idsToRemove = [originalId];
+          
+          // Deleta a transação relacionada se foi escolhido "both" no diálogo de compartilhada
+          idsToRemove = await deleteRelatedIfNeeded(idsToRemove);
+
           setTransactions((prev) =>
-            prev.filter((t) => t.id !== originalId)
+            prev.filter((t) => !idsToRemove.includes(t.id))
           );
         }
       } else if (option === "all") {
@@ -2693,8 +2854,13 @@ const AppContent: React.FC<{
             .eq("id", originalId);
           if (error) throw error;
 
+          let idsToRemove = [originalId];
+          
+          // Deleta a transação relacionada se foi escolhido "both" no diálogo de compartilhada
+          idsToRemove = await deleteRelatedIfNeeded(idsToRemove);
+
           setTransactions((prev) =>
-            prev.filter((t) => t.id !== originalId)
+            prev.filter((t) => !idsToRemove.includes(t.id))
           );
         }
       }
@@ -2706,6 +2872,8 @@ const AppContent: React.FC<{
       );
     }
 
+    // Limpa o estado de opções de transação compartilhada
+    setPendingSharedEditOption(null);
     setOptionsPanelTransaction(null);
   };
 

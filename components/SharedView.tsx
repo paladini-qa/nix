@@ -167,7 +167,14 @@ const SharedView: React.FC<SharedViewProps> = ({
       const transactionMonth = transactionDate.getMonth();
       const transactionYear = transactionDate.getFullYear();
       
-      return transactionMonth === selectedMonth && transactionYear === selectedYear;
+      if (transactionMonth !== selectedMonth || transactionYear !== selectedYear) return false;
+      
+      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+        return false;
+      }
+      
+      return true;
     });
   }, [transactions, selectedMonth, selectedYear]);
 

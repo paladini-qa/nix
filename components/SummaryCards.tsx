@@ -126,7 +126,16 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
     // Transações do mês anterior
     const prevMonthTxs = transactions.filter((t) => {
       const [y, m] = t.date.split("-");
-      return parseInt(y) === prevYear && parseInt(m) === prevMonth + 1;
+      const isPrevMonth = parseInt(y) === prevYear && parseInt(m) === prevMonth + 1;
+      
+      if (!isPrevMonth) return false;
+      
+      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+        return false;
+      }
+      
+      return true;
     });
 
     const prevIncome = prevMonthTxs

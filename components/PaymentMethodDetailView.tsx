@@ -162,7 +162,15 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
         const [y, m] = t.date.split("-");
         const matchesDate =
           parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
-        return t.paymentMethod === paymentMethod && matchesDate;
+        
+        if (!matchesDate || t.paymentMethod !== paymentMethod) return false;
+        
+        // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
+        if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+          return false;
+        }
+        
+        return true;
       }),
       ...generateRecurringForMethod(),
     ];

@@ -144,7 +144,17 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   const monthTransactions = useMemo(() => {
     const baseTransactions = transactions.filter((t) => {
       const [y, m] = t.date.split("-");
-      return parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+      const isCurrentMonth = parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+      
+      if (!isCurrentMonth) return false;
+      
+      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
+      // Isso acontece quando o usuário exclui a primeira ocorrência com "apenas esta"
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+        return false;
+      }
+      
+      return true;
     });
 
     return [...baseTransactions, ...generateRecurringTransactions];

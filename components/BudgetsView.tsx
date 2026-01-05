@@ -96,7 +96,16 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
   const monthTransactions = useMemo(() => {
     return transactions.filter((t) => {
       const [y, m] = t.date.split("-");
-      return parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+      const isCurrentMonth = parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+      
+      if (!isCurrentMonth) return false;
+      
+      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+        return false;
+      }
+      
+      return true;
     });
   }, [transactions, selectedMonth, selectedYear]);
 
