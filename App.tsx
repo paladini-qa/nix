@@ -4103,29 +4103,45 @@ const App: React.FC = () => {
       if (txError) throw txError;
 
       if (txs) {
-        console.log("[DEBUG] Transações carregadas do banco:", txs.length);
-        const mappedTxs: Transaction[] = txs.map((t: any) => ({
-          id: t.id,
-          description: t.description,
-          amount: t.amount,
-          type: t.type,
-          category: t.category,
-          paymentMethod: t.payment_method,
-          date: t.date,
-          createdAt: new Date(t.created_at).getTime(),
-          isRecurring: t.is_recurring,
-          frequency: t.frequency,
-          installments: t.installments,
-          currentInstallment: t.current_installment,
-          isPaid: t.is_paid ?? true, // Default true para transações existentes
-          isShared: t.is_shared,
-          sharedWith: t.shared_with,
-          iOwe: t.i_owe,
-          relatedTransactionId: t.related_transaction_id,
-          installmentGroupId: t.installment_group_id,
-          excludedDates: t.excluded_dates ?? [],
-          recurringGroupId: t.recurring_group_id, // Vínculo para transações materializadas/editadas
-        }));
+        // Primeiro, coletar todos os IDs de transações recorrentes originais
+        const recurringOriginalIds = new Set<string>(
+          txs.filter((t: any) => t.is_recurring).map((t: any) => t.id)
+        );
+        
+        const mappedTxs: Transaction[] = txs.map((t: any) => {
+          // Se a transação tem recurring_group_id mas o "pai" não existe,
+          // promover para recorrente original (fix para transações órfãs)
+          const hasOrphanRecurringGroupId = t.recurring_group_id && !recurringOriginalIds.has(t.recurring_group_id);
+          
+          // Se é órfã, promover para recorrente original com frequency padrão "monthly"
+          const shouldPromoteToRecurring = hasOrphanRecurringGroupId;
+          
+          return {
+            id: t.id,
+            description: t.description,
+            amount: t.amount,
+            type: t.type,
+            category: t.category,
+            paymentMethod: t.payment_method,
+            date: t.date,
+            createdAt: new Date(t.created_at).getTime(),
+            // Se é órfã, promover para recorrente original (mesmo sem frequency)
+            isRecurring: t.is_recurring || shouldPromoteToRecurring,
+            // Se é órfã e não tem frequency, usar "monthly" como padrão
+            frequency: t.frequency || (shouldPromoteToRecurring ? "monthly" : undefined),
+            installments: t.installments,
+            currentInstallment: t.current_installment,
+            isPaid: t.is_paid ?? true, // Default true para transações existentes
+            isShared: t.is_shared,
+            sharedWith: t.shared_with,
+            iOwe: t.i_owe,
+            relatedTransactionId: t.related_transaction_id,
+            installmentGroupId: t.installment_group_id,
+            excludedDates: t.excluded_dates ?? [],
+            // Se é órfã, remover o vínculo para que apareça como original
+            recurringGroupId: shouldPromoteToRecurring ? undefined : t.recurring_group_id,
+          };
+        });
         setTransactions(mappedTxs);
       }
 

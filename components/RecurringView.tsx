@@ -144,10 +144,12 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
   // Conjunto de IDs de transações relacionadas (incomes vinculadas a expenses compartilhados)
   // Essas transações serão exibidas junto com sua expense principal, não separadamente
+  // IMPORTANTE: Filtramos apenas as DESPESAS (type === "expense") porque queremos
+  // encontrar as incomes relacionadas a elas, não as despesas relacionadas às incomes
   const relatedTransactionIds = useMemo(() => {
     const ids = new Set<string>();
     transactions
-      .filter((t) => t.isRecurring && !t.isVirtual && t.isShared && t.relatedTransactionId)
+      .filter((t) => t.isRecurring && !t.isVirtual && t.isShared && t.relatedTransactionId && t.type === "expense")
       .forEach((t) => {
         if (t.relatedTransactionId) {
           ids.add(t.relatedTransactionId);
