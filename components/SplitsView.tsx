@@ -32,6 +32,8 @@ import {
   TableRow,
   TableHead,
   alpha,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import {
   ArrowUpward as ArrowUpIcon,
@@ -123,10 +125,38 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
 
-  // Filtra apenas transações com parcelas
-  const splitsTransactions = useMemo(() => {
-    return transactions.filter((t) => t.installments && t.installments > 1);
+  // Estado para controlar qual aba está selecionada em transações compartilhadas
+  // 0 = Despesa (expense), 1 = Compartilhado (related income)
+  const [selectedSharedTab, setSelectedSharedTab] = useState<Record<string, number>>({});
+
+  // Conjunto de IDs de transações relacionadas (incomes vinculadas a expenses compartilhados)
+  // Essas transações serão exibidas junto com sua expense principal, não separadamente
+  const relatedTransactionIds = useMemo(() => {
+    const ids = new Set<string>();
+    transactions
+      .filter((t) => t.installments && t.installments > 1 && t.isShared && t.relatedTransactionId)
+      .forEach((t) => {
+        if (t.relatedTransactionId) {
+          ids.add(t.relatedTransactionId);
+        }
+      });
+    return ids;
   }, [transactions]);
+
+  // Helper para encontrar a transação relacionada (income de reembolso)
+  const getRelatedTransaction = useCallback((transaction: Transaction): Transaction | null => {
+    if (!transaction.isShared || !transaction.relatedTransactionId) return null;
+    return transactions.find((t) => t.id === transaction.relatedTransactionId) || null;
+  }, [transactions]);
+
+  // Filtra apenas transações com parcelas
+  // Exclui transações que são a "parte relacionada" de uma transação compartilhada
+  const splitsTransactions = useMemo(() => {
+    return transactions
+      .filter((t) => t.installments && t.installments > 1)
+      // Exclui incomes que são reembolsos vinculados a expenses (serão mostradas junto com a expense)
+      .filter((t) => !relatedTransactionIds.has(t.id));
+  }, [transactions, relatedTransactionIds]);
 
   // Agrupa transações por installmentGroupId (preferido) ou fallback para descrição + método + categoria
   const groupedSplits = useMemo(() => {
@@ -431,6 +461,59 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             />
           </Box>
 
+          {/* Related Transaction (Income) - Mostrar quando for compartilhado */}
+          {(() => {
+            // Para cada parcela do grupo, procura a transação relacionada
+            const relatedTransactions = group.installments
+              .map((inst) => getRelatedTransaction(inst))
+              .filter((t): t is Transaction => t !== null);
+            
+            if (relatedTransactions.length === 0) return null;
+            
+            const totalRelatedAmount = relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+            const paidRelatedCount = relatedTransactions.filter((t) => t.isPaid).length;
+            const paidRelatedAmount = relatedTransactions.filter((t) => t.isPaid).reduce((sum, t) => sum + (t.amount || 0), 0);
+            
+            return (
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 1.5,
+                  borderRadius: "12px",
+                  bgcolor: alpha(theme.palette.success.main, 0.08),
+                  border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <ArrowUpIcon fontSize="small" color="success" />
+                    <Typography variant="body2" fontWeight={500}>
+                      Compartilhado com {group.sharedWith}
+                    </Typography>
+                    <Chip
+                      label={`${paidRelatedCount}/${relatedTransactions.length}x`}
+                      size="small"
+                      color={paidRelatedCount === relatedTransactions.length ? "success" : "warning"}
+                      variant="outlined"
+                      sx={{ height: 20, fontSize: 10 }}
+                    />
+                  </Box>
+                  <Box sx={{ textAlign: "right" }}>
+                    <Typography variant="body2" fontWeight={700} color="success.main">
+                      +{formatCurrency(totalRelatedAmount)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Recebido: {formatCurrency(paidRelatedAmount)}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                  Valor líquido total: {formatCurrency(group.totalAmount - totalRelatedAmount)}
+                </Typography>
+              </Box>
+            );
+          })()}
+
           {/* Expand/Collapse Button */}
           <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
             <Button
@@ -448,6 +531,68 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         <Collapse in={isExpanded}>
           <Divider />
           <Box sx={{ p: 2 }}>
+            {/* Tabs para transações compartilhadas */}
+            {(() => {
+              const relatedTransactions = group.installments
+                .map((inst) => getRelatedTransaction(inst))
+                .filter((t): t is Transaction => t !== null);
+              const hasRelated = relatedTransactions.length > 0;
+              const currentTab = selectedSharedTab[group.key] || 0;
+              
+              return hasRelated ? (
+                <Box sx={{ mb: 2 }}>
+                  <Tabs
+                    value={currentTab}
+                    onChange={(_, newValue) => setSelectedSharedTab((prev) => ({ ...prev, [group.key]: newValue }))}
+                    variant="fullWidth"
+                    sx={{
+                      bgcolor: alpha(theme.palette.action.hover, 0.04),
+                      borderRadius: "12px",
+                      p: 0.5,
+                      minHeight: 40,
+                      "& .MuiTabs-indicator": {
+                        display: "none",
+                      },
+                      "& .MuiTab-root": {
+                        minHeight: 36,
+                        borderRadius: "8px",
+                        textTransform: "none",
+                        fontWeight: 600,
+                        fontSize: "0.875rem",
+                        transition: "all 0.2s ease-in-out",
+                        "&.Mui-selected": {
+                          bgcolor: theme.palette.mode === "dark" 
+                            ? alpha(theme.palette.primary.main, 0.2)
+                            : alpha(theme.palette.primary.main, 0.1),
+                          color: theme.palette.primary.main,
+                        },
+                      },
+                    }}
+                  >
+                    <Tab 
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <ArrowDownIcon fontSize="small" />
+                          Despesa
+                        </Box>
+                      } 
+                    />
+                    <Tab 
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <ArrowUpIcon fontSize="small" />
+                          Compartilhado com {group.sharedWith}
+                        </Box>
+                      } 
+                    />
+                  </Tabs>
+                </Box>
+              ) : null;
+            })()}
+
+            {/* Tab: Despesa (expense installments) */}
+            {(selectedSharedTab[group.key] || 0) === 0 && (
+              <>
             {/* Título da Tabela */}
             <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <VisibilityIcon fontSize="small" color="primary" />
@@ -780,6 +925,238 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 </Box>
               </Box>
             </Paper>
+              </>
+            )}
+
+            {/* Tab: Compartilhado (related income installments) */}
+            {(selectedSharedTab[group.key] || 0) === 1 && (() => {
+              const relatedTransactions = group.installments
+                .map((inst) => getRelatedTransaction(inst))
+                .filter((t): t is Transaction => t !== null);
+              
+              if (relatedTransactions.length === 0) return null;
+
+              const totalRelatedAmount = relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+              const paidRelatedCount = relatedTransactions.filter((t) => t.isPaid).length;
+              const paidRelatedAmount = relatedTransactions.filter((t) => t.isPaid).reduce((sum, t) => sum + (t.amount || 0), 0);
+              
+              return (
+                <>
+                  <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <VisibilityIcon fontSize="small" color="success" />
+                    Todas as {relatedTransactions.length} Parcelas Compartilhadas
+                  </Typography>
+                  
+                  {isMobile ? (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                      {relatedTransactions.map((t, idx) => {
+                        const isPaid = t.isPaid !== false;
+                        const isCurrent = isCurrentMonth(t.date);
+                        
+                        return (
+                          <Paper
+                            key={t.id}
+                            sx={{
+                              p: 1.5,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              opacity: isPaid ? 0.6 : 1,
+                              bgcolor: isCurrent && !isPaid
+                                ? alpha(theme.palette.success.main, 0.08) 
+                                : isPaid
+                                  ? "action.disabledBackground"
+                                  : "background.paper",
+                              border: isCurrent && !isPaid ? 2 : 1,
+                              borderColor: isCurrent && !isPaid ? "success.main" : "divider",
+                              borderRadius: "12px",
+                            }}
+                          >
+                            <Checkbox
+                              checked={isPaid}
+                              onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                              size="small"
+                              color="success"
+                            />
+                            <Box
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "8px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                bgcolor: isCurrent && !isPaid
+                                  ? alpha(theme.palette.success.main, 0.15) 
+                                  : alpha(theme.palette.action.hover, 0.1),
+                              }}
+                            >
+                              <Typography 
+                                variant="caption" 
+                                fontWeight={700}
+                                color={isCurrent && !isPaid ? "success.main" : "text.secondary"}
+                                sx={{ fontSize: 10 }}
+                              >
+                                #{t.currentInstallment}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography 
+                                variant="body2" 
+                                fontWeight={isCurrent ? 600 : 500}
+                              >
+                                {formatDate(t.date)}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {t.currentInstallment}/{t.installments}x
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color="success.main"
+                              sx={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              +{formatCurrency(t.amount || 0)}
+                            </Typography>
+                            <Chip
+                              label={isPaid ? "Recebido" : "Pendente"}
+                              size="small"
+                              color={isPaid ? "success" : "warning"}
+                              sx={{ height: 20, fontSize: 10 }}
+                            />
+                          </Paper>
+                        );
+                      })}
+                    </Box>
+                  ) : (
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 50 }}>Recebido</TableCell>
+                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 80 }}>#</TableCell>
+                          <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Data</TableCell>
+                          <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Período</TableCell>
+                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
+                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Status</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {relatedTransactions.map((t) => {
+                          const isPaid = t.isPaid !== false;
+                          const isCurrent = isCurrentMonth(t.date);
+                          
+                          return (
+                            <TableRow
+                              key={t.id}
+                              sx={{
+                                opacity: isPaid ? 0.6 : 1,
+                                bgcolor: isCurrent && !isPaid
+                                  ? alpha(theme.palette.success.main, 0.08) 
+                                  : isPaid
+                                    ? "action.disabledBackground"
+                                    : "transparent",
+                                "&:hover": {
+                                  bgcolor: alpha(theme.palette.action.hover, 0.08),
+                                },
+                              }}
+                            >
+                              <TableCell>
+                                <Tooltip title={isPaid ? "Marcar como não recebido" : "Marcar como recebido"}>
+                                  <Checkbox
+                                    checked={isPaid}
+                                    onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                                    size="small"
+                                    color="success"
+                                  />
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={`#${t.currentInstallment}`}
+                                  size="small"
+                                  variant="outlined"
+                                  color={isCurrent && !isPaid ? "success" : "default"}
+                                  sx={{ fontWeight: 600 }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2" fontWeight={isCurrent ? 600 : 400}>
+                                  {formatDate(t.date)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2" color="text.secondary">
+                                  {getPeriod(t.date)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="right" sx={{ fontFamily: "monospace" }}>
+                                <Typography 
+                                  variant="body2" 
+                                  fontWeight={600}
+                                  color="success.main"
+                                >
+                                  +{formatCurrency(t.amount || 0)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                {isPaid ? (
+                                  <Chip 
+                                    label="Recebido" 
+                                    size="small" 
+                                    color="success" 
+                                    sx={{ fontWeight: 500 }}
+                                  />
+                                ) : isCurrent ? (
+                                  <Chip 
+                                    label="Atual" 
+                                    size="small" 
+                                    color="warning" 
+                                    sx={{ fontWeight: 500 }}
+                                  />
+                                ) : (
+                                  <Chip 
+                                    label="Pendente" 
+                                    size="small" 
+                                    variant="outlined" 
+                                    color="default"
+                                    sx={{ opacity: 0.7 }}
+                                  />
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
+
+                  {/* Resumo do Compartilhado */}
+                  <Paper sx={{ p: 2, mt: 2, bgcolor: "background.paper", borderRadius: "12px" }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Resumo Compartilhado
+                    </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {paidRelatedCount}/{relatedTransactions.length} parcelas recebidas
+                      </Typography>
+                      <Box sx={{ textAlign: "right" }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Recebido: {formatCurrency(paidRelatedAmount)}
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          fontWeight={700}
+                          color="success.main"
+                        >
+                          Total: +{formatCurrency(totalRelatedAmount)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+                </>
+              );
+            })()}
           </Box>
         </Collapse>
       </Card>

@@ -33,6 +33,8 @@ import {
   Switch,
   Tooltip,
   Checkbox,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import {
   Repeat as RepeatIcon,
@@ -116,6 +118,10 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     occurrence: RecurringOccurrence | null;
   }>({ element: null, transaction: null, occurrence: null });
 
+  // Estado para controlar qual aba está selecionada em transações compartilhadas
+  // 0 = Despesa (expense), 1 = Compartilhado (related income)
+  const [selectedSharedTab, setSelectedSharedTab] = useState<Record<string, number>>({});
+
   // Handler de refresh
   const handleRefresh = useCallback(async () => {
     if (!onRefreshData || isRefreshing) return;
@@ -136,10 +142,33 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     return Array.from(categories).sort();
   }, [transactions]);
 
+  // Conjunto de IDs de transações relacionadas (incomes vinculadas a expenses compartilhados)
+  // Essas transações serão exibidas junto com sua expense principal, não separadamente
+  const relatedTransactionIds = useMemo(() => {
+    const ids = new Set<string>();
+    transactions
+      .filter((t) => t.isRecurring && !t.isVirtual && t.isShared && t.relatedTransactionId)
+      .forEach((t) => {
+        if (t.relatedTransactionId) {
+          ids.add(t.relatedTransactionId);
+        }
+      });
+    return ids;
+  }, [transactions]);
+
+  // Helper para encontrar a transação relacionada (income de reembolso)
+  const getRelatedTransaction = useCallback((transaction: Transaction): Transaction | null => {
+    if (!transaction.isShared || !transaction.relatedTransactionId) return null;
+    return transactions.find((t) => t.id === transaction.relatedTransactionId) || null;
+  }, [transactions]);
+
   // Filtra apenas transações recorrentes (não virtuais)
+  // Exclui transações que são a "parte relacionada" de uma transação compartilhada
   const recurringTransactions = useMemo(() => {
     return transactions
       .filter((t) => t.isRecurring && !t.isVirtual)
+      // Exclui incomes que são reembolsos vinculados a expenses (serão mostradas junto com a expense)
+      .filter((t) => !relatedTransactionIds.has(t.id))
       .filter((t) => {
         const matchesSearch =
           t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -150,7 +179,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         return matchesSearch && matchesType && matchesFrequency && matchesCategory;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, searchTerm, filterType, filterFrequency, filterCategory]);
+  }, [transactions, searchTerm, filterType, filterFrequency, filterCategory, relatedTransactionIds]);
 
   // Estatísticas
   const stats = useMemo(() => {
@@ -644,6 +673,61 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             </Box>
           </Box>
 
+          {/* Related Transaction (Income) - Mostrar quando for compartilhado */}
+          {(() => {
+            const relatedTransaction = getRelatedTransaction(t);
+            if (!relatedTransaction) return null;
+            
+            return (
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 1.5,
+                  borderRadius: "12px",
+                  bgcolor: alpha(theme.palette.success.main, 0.08),
+                  border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <TrendingUpIcon fontSize="small" color="success" />
+                    <Typography variant="body2" fontWeight={500}>
+                      Compartilhado com {t.sharedWith}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography variant="body2" fontWeight={700} color="success.main">
+                      +{formatCurrency(relatedTransaction.amount || 0)}
+                    </Typography>
+                    <Tooltip title={relatedTransaction.isPaid ? "Recebido" : "Pendente"}>
+                      <Chip
+                        icon={relatedTransaction.isPaid ? <CheckCircleIcon sx={{ fontSize: 14 }} /> : <UnpaidIcon sx={{ fontSize: 14 }} />}
+                        label={relatedTransaction.isPaid ? "Recebido" : "Pendente"}
+                        size="small"
+                        color={relatedTransaction.isPaid ? "success" : "warning"}
+                        variant={relatedTransaction.isPaid ? "filled" : "outlined"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTogglePaid(relatedTransaction.id, !relatedTransaction.isPaid);
+                        }}
+                        sx={{ 
+                          cursor: "pointer",
+                          transition: "all 0.2s ease-in-out",
+                          "&:hover": {
+                            transform: "scale(1.05)",
+                          }
+                        }}
+                      />
+                    </Tooltip>
+                  </Box>
+                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                  Valor líquido: {formatCurrency((t.amount || 0) - (relatedTransaction.amount || 0))}
+                </Typography>
+              </Box>
+            );
+          })()}
+
           {/* Expand Button */}
           <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
             <Button
@@ -694,7 +778,66 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               </Button>
             </Box>
 
+            {/* Tabs para transações compartilhadas */}
+            {(() => {
+              const relatedTx = getRelatedTransaction(t);
+              const hasRelated = !!relatedTx;
+              const currentTab = selectedSharedTab[t.id] || 0;
+              
+              return hasRelated ? (
+                <Box sx={{ mb: 2 }}>
+                  <Tabs
+                    value={currentTab}
+                    onChange={(_, newValue) => setSelectedSharedTab((prev) => ({ ...prev, [t.id]: newValue }))}
+                    variant="fullWidth"
+                    sx={{
+                      bgcolor: alpha(theme.palette.action.hover, 0.04),
+                      borderRadius: "12px",
+                      p: 0.5,
+                      minHeight: 40,
+                      "& .MuiTabs-indicator": {
+                        display: "none",
+                      },
+                      "& .MuiTab-root": {
+                        minHeight: 36,
+                        borderRadius: "8px",
+                        textTransform: "none",
+                        fontWeight: 600,
+                        fontSize: "0.875rem",
+                        transition: "all 0.2s ease-in-out",
+                        "&.Mui-selected": {
+                          bgcolor: theme.palette.mode === "dark" 
+                            ? alpha(theme.palette.primary.main, 0.2)
+                            : alpha(theme.palette.primary.main, 0.1),
+                          color: theme.palette.primary.main,
+                        },
+                      },
+                    }}
+                  >
+                    <Tab 
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <TrendingDownIcon fontSize="small" />
+                          Despesa
+                        </Box>
+                      } 
+                    />
+                    <Tab 
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <TrendingUpIcon fontSize="small" />
+                          Compartilhado com {t.sharedWith}
+                        </Box>
+                      } 
+                    />
+                  </Tabs>
+                </Box>
+              ) : null;
+            })()}
+
             {/* Tabela de Ocorrências Futuras (similar ao SplitsView) */}
+            {(selectedSharedTab[t.id] || 0) === 0 && (
+              <>
             <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <VisibilityIcon fontSize="small" color="primary" />
               Next 12 {t.frequency === "monthly" ? "Months" : "Years"}
@@ -1038,6 +1181,245 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 </Typography>
               </Box>
             </Paper>
+              </>
+            )}
+
+            {/* Tab: Compartilhado (transação relacionada) */}
+            {(selectedSharedTab[t.id] || 0) === 1 && (() => {
+              const relatedTx = getRelatedTransaction(t);
+              if (!relatedTx) return null;
+              
+              // Gera lista de ocorrências para a transação relacionada
+              const relatedOccurrencesList = getOccurrencesList(relatedTx);
+              
+              return (
+                <>
+                  <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <VisibilityIcon fontSize="small" color="success" />
+                    Próximos 12 {relatedTx.frequency === "monthly" ? "Meses" : "Anos"} - Compartilhado
+                  </Typography>
+                  
+                  {isMobile ? (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                      {relatedOccurrencesList.map((occ, idx) => {
+                        const isPaidOccurrence = occ.isCurrent && relatedTx.isPaid;
+                        
+                        return (
+                          <Paper
+                            key={idx}
+                            sx={{
+                              p: 1.5,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              opacity: isPaidOccurrence ? 0.6 : 1,
+                              bgcolor: occ.isCurrent 
+                                ? alpha(theme.palette.success.main, 0.08) 
+                                : isPaidOccurrence
+                                  ? "action.disabledBackground"
+                                  : "background.paper",
+                              border: occ.isCurrent ? 2 : 1,
+                              borderColor: occ.isCurrent ? "success.main" : "divider",
+                              borderRadius: "12px",
+                            }}
+                          >
+                            <Checkbox
+                              checked={isPaidOccurrence}
+                              onChange={(e) => {
+                                if (occ.isCurrent) {
+                                  onTogglePaid(relatedTx.id, e.target.checked);
+                                }
+                              }}
+                              size="small"
+                              color="success"
+                              disabled={!occ.isCurrent}
+                            />
+                            <Box
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "8px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                bgcolor: occ.isCurrent
+                                  ? alpha(theme.palette.success.main, 0.15) 
+                                  : alpha(theme.palette.action.hover, 0.1),
+                              }}
+                            >
+                              <Typography 
+                                variant="caption" 
+                                fontWeight={700}
+                                color={occ.isCurrent ? "success.main" : "text.secondary"}
+                                sx={{ fontSize: 10 }}
+                              >
+                                #{occ.occurrenceNumber}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography 
+                                variant="body2" 
+                                fontWeight={occ.isCurrent ? 600 : 500}
+                              >
+                                {occ.formattedDate}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {occ.month} {occ.year}
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color="success.main"
+                              sx={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              +{formatCurrency(relatedTx.amount || 0)}
+                            </Typography>
+                          </Paper>
+                        );
+                      })}
+                    </Box>
+                  ) : (
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 50 }}>Recebido</TableCell>
+                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 80 }}>#</TableCell>
+                          <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Data</TableCell>
+                          <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Período</TableCell>
+                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
+                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Status</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {relatedOccurrencesList.map((occ, idx) => {
+                          const isPaidOccurrence = occ.isCurrent && relatedTx.isPaid;
+                          
+                          return (
+                            <TableRow
+                              key={idx}
+                              sx={{
+                                opacity: isPaidOccurrence ? 0.6 : 1,
+                                bgcolor: occ.isCurrent
+                                  ? alpha(theme.palette.success.main, 0.08) 
+                                  : isPaidOccurrence
+                                    ? "action.disabledBackground"
+                                    : "transparent",
+                                "&:hover": {
+                                  bgcolor: alpha(theme.palette.action.hover, 0.08),
+                                },
+                              }}
+                            >
+                              <TableCell>
+                                <Tooltip title={occ.isCurrent ? (isPaidOccurrence ? "Marcar como não recebido" : "Marcar como recebido") : "Só é possível alterar o mês atual"}>
+                                  <span>
+                                    <Checkbox
+                                      checked={isPaidOccurrence}
+                                      onChange={(e) => {
+                                        if (occ.isCurrent) {
+                                          onTogglePaid(relatedTx.id, e.target.checked);
+                                        }
+                                      }}
+                                      size="small"
+                                      color="success"
+                                      disabled={!occ.isCurrent}
+                                    />
+                                  </span>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={`#${occ.occurrenceNumber}`}
+                                  size="small"
+                                  variant="outlined"
+                                  color={occ.isCurrent ? "success" : "default"}
+                                  sx={{ fontWeight: 600 }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2" fontWeight={occ.isCurrent ? 600 : 400}>
+                                  {occ.formattedDate}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2" color="text.secondary">
+                                  {occ.month} {occ.year}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="right" sx={{ fontFamily: "monospace" }}>
+                                <Typography 
+                                  variant="body2" 
+                                  fontWeight={600}
+                                  color="success.main"
+                                >
+                                  +{formatCurrency(relatedTx.amount || 0)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                {isPaidOccurrence ? (
+                                  <Chip 
+                                    label="Recebido" 
+                                    size="small" 
+                                    color="success" 
+                                    sx={{ fontWeight: 500 }}
+                                  />
+                                ) : occ.isCurrent ? (
+                                  <Chip 
+                                    label="Atual" 
+                                    size="small" 
+                                    color="warning" 
+                                    sx={{ fontWeight: 500 }}
+                                  />
+                                ) : (
+                                  <Chip 
+                                    label="Agendado" 
+                                    size="small" 
+                                    variant="outlined" 
+                                    color="default"
+                                    sx={{ opacity: 0.7 }}
+                                  />
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
+
+                  {/* Annual Impact - Related */}
+                  <Paper 
+                    elevation={0}
+                    sx={{ 
+                      p: 2, 
+                      mt: 2, 
+                      borderRadius: "20px",
+                      bgcolor: theme.palette.mode === "dark"
+                        ? alpha(theme.palette.background.paper, 0.7)
+                        : alpha("#FFFFFF", 0.9),
+                      backdropFilter: "blur(16px)",
+                      border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                    }}
+                  >
+                    <Typography variant="subtitle2" gutterBottom>
+                      Impacto Anual (Compartilhado)
+                    </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {relatedTx.frequency === "monthly" ? "12 meses × " : "1 ano × "}{formatCurrency(relatedTx.amount || 0)}
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight={700}
+                        color="success.main"
+                      >
+                        +{formatCurrency((relatedTx.amount || 0) * (relatedTx.frequency === "monthly" ? 12 : 1))}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </>
+              );
+            })()}
           </Box>
         </Collapse>
       </Card>
