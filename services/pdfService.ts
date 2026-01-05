@@ -19,6 +19,9 @@ export interface FriendReportData {
   friendName: string;
   userName: string;
   generatedAt: Date;
+  // Mês e ano do período filtrado
+  month: number; // 0-11 (Janeiro = 0)
+  year: number;
   // Despesas que EU paguei (amigo me deve)
   theyOweMe: {
     transactions: Transaction[];
@@ -116,6 +119,14 @@ export const generateFriendReport = (data: FriendReportData): void => {
   // INFORMAÇÕES DO RELATÓRIO
   // ========================================
 
+  // Formata o nome do mês
+  const monthNames = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+  const periodMonth = monthNames[data.month];
+  const periodYear = data.year;
+
   doc.setTextColor(...darkRgb);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
@@ -125,8 +136,17 @@ export const generateFriendReport = (data: FriendReportData): void => {
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(`Gerado por: ${data.userName}`, margin, yPos);
+
+  // Período do relatório (mês filtrado)
+  yPos += 6;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...purpleRgb);
+  doc.text(`Período: ${periodMonth} de ${periodYear}`, margin, yPos);
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...darkRgb);
   doc.text(
-    `Data: ${data.generatedAt.toLocaleDateString("pt-BR", {
+    `Gerado em: ${data.generatedAt.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -399,9 +419,16 @@ export const generateFriendReport = (data: FriendReportData): void => {
   // SALVAR PDF
   // ========================================
 
-  const fileName = `nix-relatorio-${data.friendName
+  // Formata nome do mês para o arquivo (sem acentos e minúsculo)
+  const monthNamesFile = [
+    "janeiro", "fevereiro", "marco", "abril", "maio", "junho",
+    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+  ];
+  const fileMonthName = monthNamesFile[data.month];
+
+  const fileName = `despesas-${data.friendName
     .toLowerCase()
-    .replace(/\s+/g, "-")}-${data.generatedAt.toISOString().split("T")[0]}.pdf`;
+    .replace(/\s+/g, "-")}-${fileMonthName}-${data.year}.pdf`;
 
   doc.save(fileName);
 };
@@ -413,7 +440,9 @@ export const prepareFriendReportData = (
   friendName: string,
   userName: string,
   transactions: Transaction[],
-  allTransactions: Transaction[]
+  allTransactions: Transaction[],
+  month: number,
+  year: number
 ): FriendReportData => {
   // Filtra transações compartilhadas com esse amigo
   const friendTransactions = transactions.filter(
@@ -471,6 +500,8 @@ export const prepareFriendReportData = (
     friendName,
     userName,
     generatedAt: new Date(),
+    month,
+    year,
     theyOweMe: {
       transactions: theyOweMeTransactions,
       total: theyOweMeTotal,

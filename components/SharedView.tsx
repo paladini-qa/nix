@@ -130,7 +130,7 @@ const SharedView: React.FC<SharedViewProps> = ({
     setSelectedYear(year);
   };
 
-  // Gera o relatório PDF para um amigo específico
+  // Gera o relatório PDF para um amigo específico (usando o mês filtrado)
   const handleGeneratePdf = async (friendName: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Previne seleção do card
     setGeneratingPdf(friendName);
@@ -139,11 +139,14 @@ const SharedView: React.FC<SharedViewProps> = ({
       // Pequeno delay para mostrar o loading
       await new Promise((resolve) => setTimeout(resolve, 300));
 
+      // Usa sharedTransactions (já filtradas pelo mês) ao invés de todas as transações
       const reportData = prepareFriendReportData(
         friendName,
         userName,
-        transactions,
-        transactions
+        sharedTransactions,
+        sharedTransactions,
+        selectedMonth,
+        selectedYear
       );
 
       generateFriendReport(reportData);
