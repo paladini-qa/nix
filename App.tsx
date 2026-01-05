@@ -2621,6 +2621,46 @@ const AppContent: React.FC<{
 
             if (error) throw error;
 
+            let idsToRemove: string[] = [];
+
+            // Verifica se existe uma transação materializada COM recurringGroupId
+            // (ocorrência editada individualmente)
+            const materializedWithGroup = transactions.find((t) => {
+              if (t.isRecurring || t.isVirtual) return false;
+              if (t.id === originalTransaction.id) return false;
+              if (!t.recurringGroupId) return false; // Deve ter recurringGroupId
+              
+              return t.recurringGroupId === originalId && t.date === skipDate;
+            });
+
+            if (materializedWithGroup) {
+              // Deleta a transação materializada e sua relacionada se houver
+              const { error: deleteError } = await supabase
+                .from("transactions")
+                .delete()
+                .eq("id", materializedWithGroup.id);
+              
+              if (deleteError) {
+                console.error("Error deleting materialized transaction:", deleteError);
+              } else {
+                idsToRemove.push(materializedWithGroup.id);
+                
+                // Se a materializada tem uma transação relacionada (compartilhada), deleta também
+                if (materializedWithGroup.relatedTransactionId) {
+                  const { error: relatedDeleteError } = await supabase
+                    .from("transactions")
+                    .delete()
+                    .eq("id", materializedWithGroup.relatedTransactionId);
+                  
+                  if (relatedDeleteError) {
+                    console.error("Error deleting related materialized transaction:", relatedDeleteError);
+                  } else {
+                    idsToRemove.push(materializedWithGroup.relatedTransactionId);
+                  }
+                }
+              }
+            }
+
             // Verifica se existe uma transação materializada "órfã" (sem recurringGroupId)
             // para a mesma data e mesmas características - se sim, também deletamos
             const orphanMaterialized = transactions.find((t) => {
@@ -2636,8 +2676,6 @@ const AppContent: React.FC<{
               
               return sameDescription && sameCategory && sameAmount && sameDate && sameType;
             });
-
-            let idsToRemove: string[] = [];
 
             if (orphanMaterialized) {
               // Deleta a transação materializada órfã do banco
@@ -2742,6 +2780,46 @@ const AppContent: React.FC<{
 
           if (error) throw error;
 
+          let idsToRemove: string[] = [];
+
+          // Verifica se existe uma transação materializada COM recurringGroupId
+          // (ocorrência editada individualmente)
+          const materializedWithGroup = transactions.find((t) => {
+            if (t.isRecurring || t.isVirtual) return false;
+            if (t.id === pendingDeleteTransaction.id) return false;
+            if (!t.recurringGroupId) return false; // Deve ter recurringGroupId
+            
+            return t.recurringGroupId === pendingDeleteTransaction.id && t.date === skipDate;
+          });
+
+          if (materializedWithGroup) {
+            // Deleta a transação materializada e sua relacionada se houver
+            const { error: deleteError } = await supabase
+              .from("transactions")
+              .delete()
+              .eq("id", materializedWithGroup.id);
+            
+            if (deleteError) {
+              console.error("Error deleting materialized transaction:", deleteError);
+            } else {
+              idsToRemove.push(materializedWithGroup.id);
+              
+              // Se a materializada tem uma transação relacionada (compartilhada), deleta também
+              if (materializedWithGroup.relatedTransactionId) {
+                const { error: relatedDeleteError } = await supabase
+                  .from("transactions")
+                  .delete()
+                  .eq("id", materializedWithGroup.relatedTransactionId);
+                
+                if (relatedDeleteError) {
+                  console.error("Error deleting related materialized transaction:", relatedDeleteError);
+                } else {
+                  idsToRemove.push(materializedWithGroup.relatedTransactionId);
+                }
+              }
+            }
+          }
+
           // Verifica se existe uma transação materializada "órfã" (sem recurringGroupId)
           // para a mesma data e mesmas características - se sim, também deletamos
           const orphanMaterialized = transactions.find((t) => {
@@ -2757,8 +2835,6 @@ const AppContent: React.FC<{
             
             return sameDescription && sameCategory && sameAmount && sameDate && sameType;
           });
-
-          let idsToRemove: string[] = [];
 
           if (orphanMaterialized) {
             // Deleta a transação materializada órfã do banco
@@ -2830,6 +2906,25 @@ const AppContent: React.FC<{
           // Para transação normal não recorrente (incluindo materializadas de recorrência)
           let idsToRemove = [pendingDeleteTransaction.id];
           
+          // Se a transação tem recurringGroupId, é uma materializada de recorrência
+          // Precisamos adicionar a data ao excluded_dates da recorrência original
+          if (pendingDeleteTransaction.recurringGroupId) {
+            const originalRecurring = transactions.find(
+              (t) => t.id === pendingDeleteTransaction.recurringGroupId
+            );
+            if (originalRecurring) {
+              const currentExcludedDates = originalRecurring.excludedDates || [];
+              if (!currentExcludedDates.includes(pendingDeleteTransaction.date)) {
+                const newExcludedDates = [...currentExcludedDates, pendingDeleteTransaction.date];
+                
+                await supabase
+                  .from("transactions")
+                  .update({ excluded_dates: newExcludedDates })
+                  .eq("id", originalRecurring.id);
+              }
+            }
+          }
+          
           // Se foi escolhido "both" e tem transação relacionada, deleta ela também
           if (shouldDeleteRelated && pendingDeleteTransaction.relatedTransactionId) {
             const relatedTxId = pendingDeleteTransaction.relatedTransactionId;
@@ -2853,7 +2948,18 @@ const AppContent: React.FC<{
           if (error) throw error;
 
           setTransactions((prev) =>
-            prev.filter((t) => !idsToRemove.includes(t.id))
+            prev
+              .filter((t) => !idsToRemove.includes(t.id))
+              .map((t) => {
+                // Atualiza o excluded_dates da recorrência original se necessário
+                if (pendingDeleteTransaction.recurringGroupId && t.id === pendingDeleteTransaction.recurringGroupId) {
+                  const currentExcludedDates = t.excludedDates || [];
+                  if (!currentExcludedDates.includes(pendingDeleteTransaction.date)) {
+                    return { ...t, excludedDates: [...currentExcludedDates, pendingDeleteTransaction.date] };
+                  }
+                }
+                return t;
+              })
           );
         }
       } else if (option === "all_future") {
