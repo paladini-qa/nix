@@ -593,19 +593,14 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     </TableCell>
   );
 
-  // Estilos de linha
-  const getRowSx = (t: Transaction, index: number) => ({
+  // Estilos de linha - transações recorrentes/auto usam apenas tags para identificação
+  const getRowSx = (_t: Transaction, index: number) => ({
     transition: "all 0.15s ease",
-    opacity: t.isVirtual ? 0.75 : 1,
-    bgcolor: t.isVirtual
-      ? isDarkMode
-        ? alpha(theme.palette.info.main, 0.08)
-        : alpha(theme.palette.info.main, 0.05)
-      : index % 2 === 0
-        ? "transparent"
-        : isDarkMode
-          ? alpha(theme.palette.action.hover, 0.08)
-          : alpha(theme.palette.action.hover, 0.06),
+    bgcolor: index % 2 === 0
+      ? "transparent"
+      : isDarkMode
+        ? alpha(theme.palette.action.hover, 0.08)
+        : alpha(theme.palette.action.hover, 0.06),
     "&:hover": {
       bgcolor: isDarkMode
         ? alpha(theme.palette.primary.main, 0.08)
