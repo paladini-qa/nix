@@ -957,6 +957,8 @@ const AppContent: React.FC<{
                 frequency: newTx.frequency,
                 is_paid: false,
                 related_transaction_id: originalTx.id,
+                is_shared: true,
+                shared_with: newTx.sharedWith,
               };
 
               const { data: incomeData, error: incomeError } = await supabase
@@ -984,6 +986,8 @@ const AppContent: React.FC<{
                   frequency: incomeData.frequency,
                   isPaid: incomeData.is_paid ?? false,
                   relatedTransactionId: originalTx.id,
+                  isShared: true,
+                  sharedWith: newTx.sharedWith,
                 };
                 setTransactions((prev) => [incomeTransaction, ...prev]);
               }
@@ -1143,6 +1147,8 @@ const AppContent: React.FC<{
               frequency: newTx.frequency,
               is_paid: false,
               related_transaction_id: editId,
+              is_shared: true,
+              shared_with: newTx.sharedWith,
             };
 
             const { data: incomeData, error: incomeError } = await supabase
@@ -1171,6 +1177,8 @@ const AppContent: React.FC<{
                 frequency: incomeData.frequency,
                 isPaid: incomeData.is_paid ?? false,
                 relatedTransactionId: editId,
+                isShared: true,
+                sharedWith: newTx.sharedWith,
               };
               setTransactions((prev) => [incomeTransaction, ...prev]);
             }
@@ -1294,6 +1302,8 @@ const AppContent: React.FC<{
                 is_recurring: false,
                 is_paid: false,
                 related_transaction_id: data.id,
+                is_shared: true,
+                shared_with: newTx.sharedWith,
               };
 
               const { data: incomeData, error: incomeError } = await supabase
@@ -1322,6 +1332,8 @@ const AppContent: React.FC<{
                   frequency: incomeData.frequency,
                   isPaid: incomeData.is_paid ?? false,
                   relatedTransactionId: data.id,
+                  isShared: true,
+                  sharedWith: newTx.sharedWith,
                 };
                 setTransactions((prev) => [incomeTransaction, ...prev]);
 
@@ -1468,6 +1480,8 @@ const AppContent: React.FC<{
               installments: totalInstallments,
               current_installment: d.current_installment,
               related_transaction_id: d.id,
+              is_shared: true,
+              shared_with: newTx.sharedWith,
             }));
 
             const { data: incomeData, error: incomeError } = await supabase
@@ -1492,6 +1506,8 @@ const AppContent: React.FC<{
                   currentInstallment: d.current_installment,
                   isPaid: d.is_paid ?? false,
                   relatedTransactionId: d.related_transaction_id,
+                  isShared: true,
+                  sharedWith: newTx.sharedWith,
                 })
               );
               setTransactions((prev) => [...incomeTransactions, ...prev]);
@@ -1567,6 +1583,8 @@ const AppContent: React.FC<{
               frequency: newTx.frequency,
               is_paid: false,
               related_transaction_id: data.id,
+              is_shared: true,
+              shared_with: newTx.sharedWith,
             };
 
             const { data: incomeData, error: incomeError } = await supabase
@@ -1607,6 +1625,8 @@ const AppContent: React.FC<{
                 frequency: incomeData.frequency,
                 isPaid: incomeData.is_paid ?? false,
                 relatedTransactionId: data.id,
+                isShared: true,
+                sharedWith: newTx.sharedWith,
               };
               setTransactions((prev) => [incomeTransaction, ...prev]);
             }
@@ -1986,6 +2006,8 @@ const AppContent: React.FC<{
                   is_paid: false,
                   related_transaction_id: data.id,
                   recurring_group_id: relatedRecurringTx.id, // Vincula à receita recorrente original
+                  is_shared: true,
+                  shared_with: newTx.sharedWith,
                 };
                 
                 const { data: incomeData, error: incomeError } = await supabase
@@ -2017,6 +2039,8 @@ const AppContent: React.FC<{
                     isPaid: false,
                     relatedTransactionId: data.id,
                     recurringGroupId: incomeData.recurring_group_id,
+                    isShared: true,
+                    sharedWith: newTx.sharedWith,
                   };
                   setTransactions((prev) => [incomeTransaction, ...prev]);
                   
