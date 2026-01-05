@@ -273,7 +273,15 @@ export const generateFriendReport = (data: FriendReportData): void => {
     yPos += 5;
 
     const theyOweMeData = data.theyOweMe.transactions.map((t) => {
-      const amount = t.iOwe ? t.amount : t.amount / 2;
+      let amount: number;
+      if (t.type === "income") {
+        // Para incomes, se tem relatedTransactionId o valor já é 50%
+        const hasRelatedExpense = !!t.relatedTransactionId;
+        amount = hasRelatedExpense ? t.amount : t.amount / 2;
+      } else {
+        // Para expenses, iOwe = valor integral, caso contrário = 50%
+        amount = t.iOwe ? t.amount : t.amount / 2;
+      }
       return [
         formatDate(t.date),
         t.description,
@@ -470,8 +478,14 @@ export const prepareFriendReportData = (
         theyOweMeTotal += t.amount / 2;
       }
     } else if (t.type === "income") {
-      // INCOME vinculada a amigo: registro de pagamento/reembolso
-      // Não inclui nas listas de despesas pendentes
+      // INCOME compartilhada: representa o valor que o amigo me deve
+      // Se tem relatedTransactionId, o valor já é 50% da despesa original
+      // Se não tem, pode ser uma income avulsa compartilhada
+      const hasRelatedExpense = !!t.relatedTransactionId;
+      const incomeAmount = hasRelatedExpense ? t.amount : t.amount / 2;
+      
+      theyOweMeTransactions.push(t);
+      theyOweMeTotal += incomeAmount;
     }
   });
 
@@ -480,11 +494,21 @@ export const prepareFriendReportData = (
   let pendingIOwe = 0;
 
   theyOweMeTransactions.forEach((t) => {
-    const relatedIncome = allTransactions.find(
-      (inc) => inc.id === t.relatedTransactionId
-    );
-    if (!relatedIncome?.isPaid) {
-      pendingTheyOweMe += t.amount / 2;
+    if (t.type === "expense") {
+      // Para expenses, verifica se a income relacionada está paga
+      const relatedIncome = allTransactions.find(
+        (inc) => inc.id === t.relatedTransactionId
+      );
+      if (!relatedIncome?.isPaid) {
+        pendingTheyOweMe += t.amount / 2;
+      }
+    } else if (t.type === "income") {
+      // Para incomes compartilhadas, verifica se a própria income está paga
+      if (!t.isPaid) {
+        const hasRelatedExpense = !!t.relatedTransactionId;
+        const incomeAmount = hasRelatedExpense ? t.amount : t.amount / 2;
+        pendingTheyOweMe += incomeAmount;
+      }
     }
   });
 
