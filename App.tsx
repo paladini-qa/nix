@@ -1915,6 +1915,89 @@ const AppContent: React.FC<{
           if (error) throw error;
 
           if (data) {
+            let newRelatedTransactionId: string | undefined;
+            
+            // Se é compartilhada e a opção foi "both", cria também a transação de receita correspondente
+            const shouldCreateRelatedIncome = pendingSharedEditOption === "both" && 
+              originalTx.isShared && 
+              originalTx.sharedWith && 
+              originalTx.relatedTransactionId &&
+              newTx.type === "expense";
+            
+            if (shouldCreateRelatedIncome) {
+              const relatedRecurringTx = transactions.find(t => t.id === originalTx.relatedTransactionId);
+              
+              if (relatedRecurringTx) {
+                // Calcula o valor proporcional (50% do novo valor)
+                const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+                const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+                
+                const incomePayload = {
+                  user_id: session.user.id,
+                  description: incomeDescription,
+                  amount: incomeAmount,
+                  type: "income" as const,
+                  category: relatedRecurringTx.category || "Other",
+                  payment_method: newTx.paymentMethod,
+                  date: newTx.date,
+                  is_recurring: false,
+                  is_paid: false,
+                  related_transaction_id: data.id,
+                  recurring_group_id: relatedRecurringTx.id, // Vincula à receita recorrente original
+                };
+                
+                const { data: incomeData, error: incomeError } = await supabase
+                  .from("transactions")
+                  .insert(incomePayload)
+                  .select()
+                  .single();
+                
+                if (!incomeError && incomeData) {
+                  newRelatedTransactionId = incomeData.id;
+                  
+                  // Atualiza a despesa criada para vincular à receita
+                  await supabase
+                    .from("transactions")
+                    .update({ related_transaction_id: incomeData.id })
+                    .eq("id", data.id);
+                  
+                  // Adiciona a receita ao estado
+                  const incomeTransaction: Transaction = {
+                    id: incomeData.id,
+                    description: incomeData.description,
+                    amount: incomeData.amount,
+                    type: incomeData.type as "income",
+                    category: incomeData.category,
+                    paymentMethod: incomeData.payment_method,
+                    date: incomeData.date,
+                    createdAt: new Date(incomeData.created_at).getTime(),
+                    isRecurring: false,
+                    isPaid: false,
+                    relatedTransactionId: data.id,
+                    recurringGroupId: incomeData.recurring_group_id,
+                  };
+                  setTransactions((prev) => [incomeTransaction, ...prev]);
+                  
+                  // Adiciona a data ao excluded_dates da receita recorrente relacionada
+                  const relatedExcludedDates = relatedRecurringTx.excludedDates || [];
+                  const newRelatedExcludedDates = [...relatedExcludedDates, excludeDate];
+                  
+                  await supabase
+                    .from("transactions")
+                    .update({ excluded_dates: newRelatedExcludedDates })
+                    .eq("id", relatedRecurringTx.id);
+                  
+                  setTransactions((prev) =>
+                    prev.map((t) =>
+                      t.id === relatedRecurringTx.id
+                        ? { ...t, excludedDates: newRelatedExcludedDates }
+                        : t
+                    )
+                  );
+                }
+              }
+            }
+            
             const transaction: Transaction = {
               id: data.id,
               description: data.description,
@@ -1930,6 +2013,7 @@ const AppContent: React.FC<{
               sharedWith: data.shared_with,
               iOwe: data.i_owe,
               recurringGroupId: data.recurring_group_id, // Vínculo com a recorrência original
+              relatedTransactionId: newRelatedTransactionId, // Vincula à receita criada
             };
             setTransactions((prev) => [transaction, ...prev]);
 
@@ -2701,7 +2785,25 @@ const AppContent: React.FC<{
               })
           );
         } else {
-          // Para transação normal não recorrente
+          // Para transação normal não recorrente (incluindo materializadas de recorrência)
+          let idsToRemove = [pendingDeleteTransaction.id];
+          
+          // Se foi escolhido "both" e tem transação relacionada, deleta ela também
+          if (shouldDeleteRelated && pendingDeleteTransaction.relatedTransactionId) {
+            const relatedTxId = pendingDeleteTransaction.relatedTransactionId;
+            
+            const { error: relatedError } = await supabase
+              .from("transactions")
+              .delete()
+              .eq("id", relatedTxId);
+            
+            if (relatedError) {
+              console.error("Error deleting related transaction:", relatedError);
+            } else {
+              idsToRemove.push(relatedTxId);
+            }
+          }
+          
           const { error } = await supabase
             .from("transactions")
             .delete()
@@ -2709,7 +2811,7 @@ const AppContent: React.FC<{
           if (error) throw error;
 
           setTransactions((prev) =>
-            prev.filter((t) => t.id !== pendingDeleteTransaction.id)
+            prev.filter((t) => !idsToRemove.includes(t.id))
           );
         }
       } else if (option === "all_future") {

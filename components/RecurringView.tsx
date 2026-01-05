@@ -1273,7 +1273,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                               color="success.main"
                               sx={{ fontFamily: "monospace", fontSize: 12 }}
                             >
-                              +{formatCurrency(relatedTx.amount || 0)}
+                              +{formatCurrency(occ.modifiedTransaction?.amount ?? relatedTx.amount ?? 0)}
                             </Typography>
                           </Paper>
                         );
@@ -1352,7 +1352,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                                   fontWeight={600}
                                   color="success.main"
                                 >
-                                  +{formatCurrency(relatedTx.amount || 0)}
+                                  +{formatCurrency(occ.modifiedTransaction?.amount ?? relatedTx.amount ?? 0)}
                                 </Typography>
                               </TableCell>
                               <TableCell align="center">
