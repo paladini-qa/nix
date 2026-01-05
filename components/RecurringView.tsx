@@ -275,38 +275,67 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       (t) => t.recurringGroupId === transaction.id && !t.isRecurring
     );
     
-    // Cria um mapa de data -> transação modificada
-    const modifiedByDate = new Map<string, Transaction>();
-    modifiedTransactions.forEach((t) => {
-      modifiedByDate.set(t.date, t);
-    });
-    
     // Array de datas excluídas da recorrência (onde ocorrências individuais foram editadas)
     const excludedDatesSet = new Set(transaction.excludedDates || []);
+    
+    // Cria um mapa de mês/ano -> transação modificada para evitar duplicatas
+    // Agrupa por mês/ano porque transações recorrentes mensais têm apenas uma ocorrência por mês
+    const modifiedByMonthYear = new Map<string, Transaction>();
+    modifiedTransactions.forEach((t) => {
+      const tDate = parseLocalDate(t.date);
+      const monthYearKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, "0")}`;
+      // Se já existe uma transação para este mês, mantém a mais recente (por data de criação ou data)
+      const existing = modifiedByMonthYear.get(monthYearKey);
+      if (!existing || new Date(t.createdAt).getTime() > new Date(existing.createdAt).getTime()) {
+        modifiedByMonthYear.set(monthYearKey, t);
+      }
+    });
+    
+    // Cria um Set de meses/anos já processados para evitar duplicatas
+    const processedMonths = new Set<string>();
     
     // PRIMEIRO: Adiciona as transações materializadas que são ANTERIORES à data de início atual
     // (estas são as ocorrências passadas que foram preservadas quando "all_future" foi usado)
     modifiedTransactions
-      .filter((t) => new Date(t.date) < startDate)
+      .filter((t) => {
+        const tDate = parseLocalDate(t.date);
+        // Verifica se é de um mês/ano ANTERIOR ao mês/ano da data de início
+        const startMonth = startDate.getMonth();
+        const startYear = startDate.getFullYear();
+        const tMonth = tDate.getMonth();
+        const tYear = tDate.getFullYear();
+        // Só inclui se o mês/ano é estritamente anterior
+        return tYear < startYear || (tYear === startYear && tMonth < startMonth);
+      })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .forEach((t, idx) => {
-        const tDate = new Date(t.date);
+        const tDate = parseLocalDate(t.date);
+        const monthYearKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, "0")}`;
+        
+        // Pula se já processamos este mês (para evitar múltiplas entradas do mesmo mês)
+        if (processedMonths.has(monthYearKey)) return;
+        processedMonths.add(monthYearKey);
+        
+        // Usa a transação mais recente para este mês
+        const txToUse = modifiedByMonthYear.get(monthYearKey) || t;
+        const txDate = parseLocalDate(txToUse.date);
+        
         // Verifica se esta data está no excludedDates (indica edição individual via "Only this occurrence")
-        const isIndividuallyEdited = excludedDatesSet.has(t.date);
+        const isIndividuallyEdited = excludedDatesSet.has(txToUse.date);
         occurrences.push({
-          date: t.date,
-          formattedDate: tDate.toLocaleDateString("pt-BR", {
+          date: txToUse.date,
+          formattedDate: txDate.toLocaleDateString("pt-BR", {
             day: "2-digit",
             month: "short",
             year: "numeric",
           }),
-          month: months[tDate.getMonth()],
-          year: tDate.getFullYear(),
-          isPast: tDate < today,
-          isCurrent: tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear(),
+          month: months[txDate.getMonth()],
+          year: txDate.getFullYear(),
+          isPast: txDate < today,
+          isCurrent: txDate.getMonth() === today.getMonth() && txDate.getFullYear() === today.getFullYear(),
           occurrenceNumber: idx + 1,
           isModified: true,
-          modifiedTransaction: t,
+          modifiedTransaction: txToUse,
           isIndividuallyEdited, // Só mostra "edited" se foi edição individual
         });
       });
@@ -362,33 +391,48 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         
         // Verifica se esta data está excluída (usando formato local)
         const occDateString = formatLocalDate(occDate);
+        const monthYearKey = `${occDate.getFullYear()}-${String(occDate.getMonth() + 1).padStart(2, "0")}`;
         
-        // Verifica se existe uma transação modificada para esta data
-        const modifiedTx = modifiedByDate.get(occDateString);
+        // Pula se este mês já foi processado (pelo primeiro bloco)
+        if (processedMonths.has(monthYearKey)) {
+          monthOffset++;
+          continue;
+        }
         
+        // Verifica se existe uma transação modificada para este mês/ano
+        const modifiedTx = modifiedByMonthYear.get(monthYearKey);
+        
+        // Se a data está excluída e não tem transação modificada para este mês, pula
         if (excludedDates.includes(occDateString) && !modifiedTx) {
           monthOffset++;
-          continue; // Pula esta ocorrência se está excluída E não tem modificada
+          continue;
         }
+        
+        // Marca o mês como processado
+        processedMonths.add(monthYearKey);
         
         const isPast = occDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const isCurrent = occDate.getMonth() === today.getMonth() && occDate.getFullYear() === today.getFullYear();
         
+        // Se tem transação modificada, usa ela; senão usa a ocorrência virtual
+        const finalDate = modifiedTx ? modifiedTx.date : occDateString;
+        const finalDateObj = modifiedTx ? parseLocalDate(modifiedTx.date) : occDate;
+        
         // Verifica se esta data está no excludedDates (indica edição individual via "Only this occurrence")
-        const isIndividuallyEdited = modifiedTx && excludedDatesSet.has(occDateString);
+        const isIndividuallyEdited = modifiedTx && excludedDatesSet.has(modifiedTx.date);
         
         occurrences.push({
-          date: occDateString,
-          formattedDate: occDate.toLocaleDateString("pt-BR", {
+          date: finalDate,
+          formattedDate: finalDateObj.toLocaleDateString("pt-BR", {
             day: "2-digit",
             month: "short",
             year: "numeric",
           }),
-          month: months[occDate.getMonth()],
-          year: occDate.getFullYear(),
+          month: months[finalDateObj.getMonth()],
+          year: finalDateObj.getFullYear(),
           isPast,
           isCurrent,
-          occurrenceNumber: startOccurrenceNumber + monthOffset,
+          occurrenceNumber: startOccurrenceNumber + occurrenceCount,
           // Adiciona informação de modificação
           isModified: !!modifiedTx,
           modifiedTransaction: modifiedTx,
@@ -399,6 +443,18 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         monthOffset++;
       }
     } else if (transaction.frequency === "yearly") {
+      // Cria um mapa de ano -> transação modificada para transações anuais
+      const modifiedByYear = new Map<number, Transaction>();
+      modifiedTransactions.forEach((t) => {
+        const tDate = parseLocalDate(t.date);
+        const year = tDate.getFullYear();
+        // Se já existe uma transação para este ano, mantém a mais recente (por data de criação)
+        const existing = modifiedByYear.get(year);
+        if (!existing || new Date(t.createdAt).getTime() > new Date(existing.createdAt).getTime()) {
+          modifiedByYear.set(year, t);
+        }
+      });
+      
       // Para anuais, mostra 12 ocorrências (12 anos à frente)
       while (nextOccurrence < today) {
         nextOccurrence.setFullYear(nextOccurrence.getFullYear() + 1);
@@ -427,34 +483,48 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         
         // Verifica se esta data está excluída (usando formato local)
         const occDateString = formatLocalDateYearly(occDate);
+        const yearKey = occDate.getFullYear();
         
-        // Verifica se existe uma transação modificada para esta data
-        const modifiedTxYearly = modifiedByDate.get(occDateString);
+        // Pula se este ano já foi processado (pelo primeiro bloco)
+        if (processedMonths.has(`year-${yearKey}`)) {
+          yearOffset++;
+          continue;
+        }
+        
+        // Verifica se existe uma transação modificada para este ano
+        const modifiedTxYearly = modifiedByYear.get(yearKey);
         
         if (excludedDatesYearly.includes(occDateString) && !modifiedTxYearly) {
           yearOffset++;
           continue; // Pula esta ocorrência se está excluída E não tem modificada
         }
         
-        const isPast = occDate < today;
-        const isCurrent = occDate.getFullYear() === today.getFullYear() && 
-          occDate.getMonth() === today.getMonth();
+        // Marca o ano como processado
+        processedMonths.add(`year-${yearKey}`);
+        
+        // Se tem transação modificada, usa ela; senão usa a ocorrência virtual
+        const finalDate = modifiedTxYearly ? modifiedTxYearly.date : occDateString;
+        const finalDateObj = modifiedTxYearly ? parseLocalDate(modifiedTxYearly.date) : occDate;
+        
+        const isPast = finalDateObj < today;
+        const isCurrent = finalDateObj.getFullYear() === today.getFullYear() && 
+          finalDateObj.getMonth() === today.getMonth();
         
         // Verifica se esta data está no excludedDates (indica edição individual via "Only this occurrence")
-        const isIndividuallyEditedYearly = modifiedTxYearly && excludedDatesSet.has(occDateString);
+        const isIndividuallyEditedYearly = modifiedTxYearly && excludedDatesSet.has(modifiedTxYearly.date);
         
         occurrences.push({
-          date: occDateString,
-          formattedDate: occDate.toLocaleDateString("pt-BR", {
+          date: finalDate,
+          formattedDate: finalDateObj.toLocaleDateString("pt-BR", {
             day: "2-digit",
             month: "short",
             year: "numeric",
           }),
-          month: months[occDate.getMonth()],
-          year: occDate.getFullYear(),
+          month: months[finalDateObj.getMonth()],
+          year: finalDateObj.getFullYear(),
           isPast,
           isCurrent,
-          occurrenceNumber: startOccurrenceNumber + yearOffset,
+          occurrenceNumber: startOccurrenceNumber + yearlyCount,
           // Adiciona informação de modificação
           isModified: !!modifiedTxYearly,
           modifiedTransaction: modifiedTxYearly,

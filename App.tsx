@@ -1838,9 +1838,15 @@ const AppContent: React.FC<{
         const isRealInstallment = recurringEditTransaction.installmentGroupId && 
                                    !recurringEditTransaction.isVirtual && 
                                    !recurringEditTransaction.isRecurring;
+        
+        // Verifica se é uma transação materializada (já foi editada antes de uma recorrência)
+        // Não é virtual, não é recorrente, tem recurringGroupId
+        const isMaterializedTransaction = !recurringEditTransaction.isVirtual && 
+                                          !recurringEditTransaction.isRecurring && 
+                                          recurringEditTransaction.recurringGroupId;
 
-        if (isRealInstallment) {
-          // Para parcelas reais, apenas UPDATE o registro existente (cada parcela já é independente)
+        if (isRealInstallment || isMaterializedTransaction) {
+          // Para parcelas reais OU transações materializadas, faz UPDATE no registro existente
           const updatePayload = {
             description: newTx.description,
             amount: newTx.amount,
@@ -1863,7 +1869,43 @@ const AppContent: React.FC<{
           if (error) throw error;
 
           if (data) {
-            // Atualiza o estado local com a parcela editada
+            // Se é uma transação materializada compartilhada, também atualiza a receita relacionada
+            if (isMaterializedTransaction && 
+                recurringEditTransaction.isShared && 
+                recurringEditTransaction.relatedTransactionId &&
+                pendingSharedEditOption === "both") {
+              const newIncomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+              const newIncomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+              
+              const { error: incomeError } = await supabase
+                .from("transactions")
+                .update({
+                  description: newIncomeDescription,
+                  amount: newIncomeAmount,
+                  payment_method: newTx.paymentMethod,
+                  date: newTx.date,
+                })
+                .eq("id", recurringEditTransaction.relatedTransactionId);
+              
+              if (!incomeError) {
+                // Atualiza a receita relacionada no estado local
+                setTransactions((prev) =>
+                  prev.map((t) =>
+                    t.id === recurringEditTransaction.relatedTransactionId
+                      ? {
+                          ...t,
+                          description: newIncomeDescription,
+                          amount: newIncomeAmount,
+                          paymentMethod: newTx.paymentMethod,
+                          date: newTx.date,
+                        }
+                      : t
+                  )
+                );
+              }
+            }
+            
+            // Atualiza o estado local com a transação editada
             setTransactions((prev) =>
               prev.map((t) =>
                 t.id === recurringEditTransaction.id
