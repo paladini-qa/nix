@@ -20,7 +20,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import TransactionTags from "./TransactionTags";
 import { Transaction } from "../types";
-import { useSwipeActions } from "../hooks";
+import { useSwipeActions, usePrivacyMode } from "../hooks";
 import { useCurrency } from "../hooks/useCurrency";
 
 const MotionCard = motion.create(Card);
@@ -54,6 +54,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const { formatCurrency } = useCurrency();
+  const { privacyStyles } = usePrivacyMode();
 
   const isIncome = t.type === "income";
   const accentColor = isIncome ? "#059669" : "#DC2626";
@@ -255,7 +256,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
                 variant="body2"
                 fontWeight={700}
                 color={isIncome ? "success.main" : "error.main"}
-                sx={{ flexShrink: 0 }}
+                sx={{ flexShrink: 0, ...privacyStyles }}
               >
                 {isIncome ? "+" : "-"} {formatCurrency(t.amount || 0)}
               </Typography>

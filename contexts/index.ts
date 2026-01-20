@@ -7,6 +7,9 @@ export { default as ErrorBoundary } from "./ErrorBoundary";
 export { TransactionsProvider, useTransactions } from "./TransactionsContext";
 export { SettingsProvider, useSettings } from "./SettingsContext";
 
+// Privacy Context
+export { PrivacyProvider, usePrivacy } from "./PrivacyContext";
+
 
 
 

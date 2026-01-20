@@ -9,4 +9,5 @@ export { useTransactionHandlers } from "./useTransactionHandlers";
 export { useResponsiveModal, useModalProps } from "./useResponsiveModal";
 export { useSwipeActions, type SwipeActionsConfig, type SwipeActionsReturn } from "./useSwipeActions";
 export { usePullToRefresh, type PullToRefreshConfig, type PullToRefreshReturn } from "./usePullToRefresh";
+export { usePrivacyMode } from "./usePrivacyMode";
 

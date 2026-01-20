@@ -11,6 +11,8 @@ import {
   Avatar,
   useTheme,
   alpha,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -26,11 +28,14 @@ import {
   Flag as GoalIcon,
   Category as CategoryIcon,
   Payment as PaymentIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemePreference } from "../types";
 import ThemeSwitch from "./ThemeSwitch";
+import { usePrivacy } from "../contexts";
 
 // Motion-enabled components
 const MotionBox = motion.create(Box);
@@ -110,6 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
 
   // Itens de menu principais
   const mainNavItems: NavItem[] = [
@@ -492,7 +498,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           p: 2,
         }}
       >
-        {/* Theme Switch */}
+        {/* Privacy Mode & Theme Switch Row */}
         <Box
           sx={{
             mb: 2,
@@ -503,6 +509,57 @@ const Sidebar: React.FC<SidebarProps> = ({
               : alpha(theme.palette.grey[100], 0.8),
           }}
         >
+          {/* Privacy Toggle */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 1.5,
+              pb: 1.5,
+              borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {isPrivacyMode ? (
+                <VisibilityOffIcon sx={{ fontSize: 18, color: "primary.main" }} />
+              ) : (
+                <VisibilityIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+              )}
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 500,
+                  color: isPrivacyMode ? "primary.main" : "text.secondary",
+                }}
+              >
+                Modo Privado
+              </Typography>
+            </Box>
+            <Tooltip title={`${isPrivacyMode ? "Mostrar" : "Ocultar"} valores (Alt+P)`}>
+              <IconButton
+                onClick={togglePrivacyMode}
+                size="small"
+                sx={{
+                  bgcolor: isPrivacyMode
+                    ? alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.1)
+                    : "transparent",
+                  color: isPrivacyMode ? "primary.main" : "text.secondary",
+                  "&:hover": {
+                    bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.15),
+                  },
+                }}
+              >
+                {isPrivacyMode ? (
+                  <VisibilityOffIcon sx={{ fontSize: 18 }} />
+                ) : (
+                  <VisibilityIcon sx={{ fontSize: 18 }} />
+                )}
+              </IconButton>
+            </Tooltip>
+          </Box>
+          
+          {/* Theme Switch */}
           <ThemeSwitch value={themePreference} onChange={onThemeChange} />
         </Box>
 

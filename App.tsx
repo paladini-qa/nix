@@ -96,6 +96,7 @@ import { supabase } from "./services/supabaseClient";
 import {
   NotificationProvider,
   ConfirmDialogProvider,
+  PrivacyProvider,
   useNotification,
   useConfirmDialog,
 } from "./contexts";
@@ -4281,11 +4282,12 @@ const App: React.FC = () => {
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
         <NotificationProvider>
           <ConfirmDialogProvider>
-            <AppContent
-              session={session}
-              transactions={transactions}
-              setTransactions={setTransactions}
-              categories={categories}
+            <PrivacyProvider>
+              <AppContent
+                session={session}
+                transactions={transactions}
+                setTransactions={setTransactions}
+                categories={categories}
               setCategories={setCategories}
               paymentMethods={paymentMethods}
               setPaymentMethods={setPaymentMethods}
@@ -4303,7 +4305,8 @@ const App: React.FC = () => {
               setFilters={setFilters}
               updateSettingsInDb={updateSettingsInDb}
               onRefreshData={() => fetchData(session.user.id)}
-            />
+              />
+            </PrivacyProvider>
           </ConfirmDialogProvider>
         </NotificationProvider>
       </LocalizationProvider>

@@ -10,15 +10,15 @@
 
 /* ============================================
    CSS CUSTOM PROPERTIES (Design Tokens)
-   Paleta de cores Nix conforme Brand Book
+   Design System: Finance App (Black & Purple)
    ============================================ */
 :root {
-  /* Cor Primária: Nix Purple (Gradiente) */
-  --nix-purple-start: #8A2BE2;
-  --nix-purple-end: #6A0DAD;
+  /* Cor Primária: Nix Purple - Light Mode */
+  --nix-purple-start: #7B2CBF;
+  --nix-purple-end: #5A189A;
   --nix-purple-light: #9D4EDD;
-  --nix-purple-glow: rgba(138, 43, 226, 0.5);
-  --nix-purple-gradient: linear-gradient(135deg, #8A2BE2 0%, #6A0DAD 100%);
+  --nix-purple-glow: rgba(123, 44, 191, 0.5);
+  --nix-purple-gradient: linear-gradient(135deg, #9D4EDD 0%, #7B2CBF 100%);
   
   /* Cor Secundária: Cyber Teal (Ciano) */
   --nix-teal: #00D4FF;
@@ -26,52 +26,69 @@
   --nix-teal-dark: #00A3CC;
   --nix-teal-glow: rgba(0, 212, 255, 0.5);
   
-  /* Cores Semânticas */
-  --nix-success: #2ECC71;
-  --nix-success-glow: rgba(46, 204, 113, 0.5);
-  --nix-error: #FF6B6B;
-  --nix-error-glow: rgba(255, 107, 107, 0.5);
+  /* Cores Semânticas - Light Mode */
+  --nix-success: #2D6A4F;
+  --nix-success-glow: rgba(45, 106, 79, 0.5);
+  --nix-error: #C9184A;
+  --nix-error-glow: rgba(201, 24, 74, 0.5);
   --nix-warning: #F59E0B;
   
   /* Cores Neutras - Light Mode */
-  --nix-dark: #1A1A2E;
-  --nix-bg-base: #F4F6F9;
-  --nix-bg-subtle: #F1F5F9;
-  --nix-bg-paper: #FFFFFF;
+  --nix-dark: #121212;
+  --nix-bg-base: #FFFFFF;
+  --nix-bg-subtle: #F4F4F9;
+  --nix-bg-paper: #F4F4F9;
+  --nix-text-primary: #121212;
+  --nix-text-secondary: #666666;
   
   /* Aurora mesh gradient colors - Light mode (sutil) */
-  --nix-aurora-1: rgba(138, 43, 226, 0.08);
-  --nix-aurora-2: rgba(0, 212, 255, 0.06);
-  --nix-aurora-3: rgba(46, 204, 113, 0.04);
-  --nix-aurora-4: rgba(106, 13, 173, 0.05);
+  --nix-aurora-1: rgba(123, 44, 191, 0.06);
+  --nix-aurora-2: rgba(0, 212, 255, 0.04);
+  --nix-aurora-3: rgba(45, 106, 79, 0.03);
+  --nix-aurora-4: rgba(157, 78, 221, 0.04);
   
-  /* Glassmorphism */
-  --nix-glass-bg: rgba(255, 255, 255, 0.75);
-  --nix-glass-border: rgba(255, 255, 255, 0.3);
+  /* Glassmorphism - Light Mode */
+  --nix-glass-bg: rgba(244, 244, 249, 0.85);
+  --nix-glass-border: rgba(18, 18, 18, 0.06);
   --nix-glass-blur: 20px;
   
   /* Noise texture opacity */
   --nix-noise-opacity: 0.02;
 }
 
-/* Dark mode variables - Aurora vibrante */
+/* Dark mode variables - Design System Black & Purple */
 [data-theme="dark"],
 .dark,
 .MuiCssBaseline-root[class*="dark"] {
-  --nix-bg-base: #1A1A2E;
-  --nix-bg-subtle: #252542;
-  --nix-bg-paper: #2A2A4A;
+  /* Cor Primária: Nix Purple - Dark Mode */
+  --nix-purple-start: #9D4EDD;
+  --nix-purple-end: #7B2CBF;
+  --nix-purple-glow: rgba(157, 78, 221, 0.5);
+  
+  /* Cores Semânticas - Dark Mode */
+  --nix-success: #00C853;
+  --nix-success-glow: rgba(0, 200, 83, 0.5);
+  --nix-error: #FF1744;
+  --nix-error-glow: rgba(255, 23, 68, 0.5);
+  
+  /* Cores Neutras - Dark Mode */
+  --nix-dark: #EDEDED;
+  --nix-bg-base: #0A0A0A;
+  --nix-bg-subtle: #1A1A1A;
+  --nix-bg-paper: #1A1A1A;
+  --nix-text-primary: #EDEDED;
+  --nix-text-secondary: #A0A0A0;
   
   /* Aurora mesh gradient colors - Dark mode (vibrante) */
-  --nix-aurora-1: rgba(138, 43, 226, 0.25);
+  --nix-aurora-1: rgba(157, 78, 221, 0.25);
   --nix-aurora-2: rgba(0, 212, 255, 0.15);
-  --nix-aurora-3: rgba(46, 204, 113, 0.08);
-  --nix-aurora-4: rgba(106, 13, 173, 0.12);
+  --nix-aurora-3: rgba(0, 200, 83, 0.08);
+  --nix-aurora-4: rgba(123, 44, 191, 0.12);
   --nix-aurora-5: rgba(0, 212, 255, 0.06);
   
   /* Glassmorphism - Dark */
-  --nix-glass-bg: rgba(37, 37, 66, 0.75);
-  --nix-glass-border: rgba(255, 255, 255, 0.08);
+  --nix-glass-bg: rgba(26, 26, 26, 0.85);
+  --nix-glass-border: rgba(237, 237, 237, 0.08);
   
   /* Noise texture opacity */
   --nix-noise-opacity: 0.03;
@@ -194,14 +211,14 @@ body::after {
 }
 
 /* ============================================
-   NEON GLOW EFFECTS - Nix Purple
+   NEON GLOW EFFECTS - Design System Black & Purple
    Para estados ativos e foco
    ============================================ */
 .neon-glow-primary {
   box-shadow: 
     0 0 5px var(--nix-purple-start),
     0 0 20px var(--nix-purple-glow),
-    0 0 40px rgba(138, 43, 226, 0.2);
+    0 0 40px rgba(157, 78, 221, 0.2);
 }
 
 .neon-glow-teal {
@@ -215,14 +232,14 @@ body::after {
   box-shadow: 
     0 0 5px var(--nix-success),
     0 0 20px var(--nix-success-glow),
-    0 0 40px rgba(46, 204, 113, 0.2);
+    0 0 40px rgba(0, 200, 83, 0.2);
 }
 
 .neon-glow-error {
   box-shadow: 
     0 0 5px var(--nix-error),
     0 0 20px var(--nix-error-glow),
-    0 0 40px rgba(255, 107, 107, 0.2);
+    0 0 40px rgba(255, 23, 68, 0.2);
 }
 
 /* Focus state com neon glow roxo */
@@ -241,14 +258,14 @@ body::after {
 @keyframes nix-ai-pulse {
   0%, 100% {
     box-shadow: 
-      0 0 0 0 rgba(138, 43, 226, 0.4),
-      0 0 20px rgba(138, 43, 226, 0.2);
+      0 0 0 0 rgba(157, 78, 221, 0.4),
+      0 0 20px rgba(157, 78, 221, 0.2);
     transform: scale(1);
   }
   50% {
     box-shadow: 
-      0 0 0 8px rgba(138, 43, 226, 0),
-      0 0 30px rgba(138, 43, 226, 0.3);
+      0 0 0 8px rgba(157, 78, 221, 0),
+      0 0 30px rgba(157, 78, 221, 0.3);
     transform: scale(1.02);
   }
 }
@@ -345,10 +362,10 @@ body::after {
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(138, 43, 226, 0.15);
+    box-shadow: 0 0 20px rgba(157, 78, 221, 0.15);
   }
   50% {
-    box-shadow: 0 0 35px rgba(138, 43, 226, 0.35);
+    box-shadow: 0 0 35px rgba(157, 78, 221, 0.35);
   }
 }
 
@@ -442,9 +459,9 @@ body::after {
 [data-theme="dark"] .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(138, 43, 226, 0.05) 25%,
-    rgba(138, 43, 226, 0.12) 50%,
-    rgba(138, 43, 226, 0.05) 75%
+    rgba(157, 78, 221, 0.05) 25%,
+    rgba(157, 78, 221, 0.12) 50%,
+    rgba(157, 78, 221, 0.05) 75%
   );
   background-size: 200% 100%;
 }
@@ -482,9 +499,9 @@ body::after {
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(138, 43, 226, 0.3) 0%,
+    rgba(157, 78, 221, 0.3) 0%,
     rgba(0, 212, 255, 0.2) 50%,
-    rgba(138, 43, 226, 0.3) 100%
+    rgba(157, 78, 221, 0.3) 100%
   );
   -webkit-mask: 
     linear-gradient(#fff 0 0) content-box, 
@@ -538,9 +555,9 @@ select:focus-visible:not(.MuiSelect-select) {
   box-shadow: none !important;
 }
 
-/* Selection color - Nix Purple */
+/* Selection color - Design System Purple */
 ::selection {
-  background-color: rgba(138, 43, 226, 0.25);
+  background-color: rgba(157, 78, 221, 0.25);
   color: inherit;
 }
 
@@ -564,14 +581,14 @@ textarea {
 button,
 a,
 [role="button"] {
-  -webkit-tap-highlight-color: rgba(138, 43, 226, 0.1);
+  -webkit-tap-highlight-color: rgba(157, 78, 221, 0.1);
 }
 
 /* ============================================
-   TINTED SHADOW UTILITIES - Nix Purple
+   TINTED SHADOW UTILITIES - Design System Black & Purple
    ============================================ */
 .shadow-primary {
-  box-shadow: 0 10px 40px -10px rgba(138, 43, 226, 0.25);
+  box-shadow: 0 10px 40px -10px rgba(157, 78, 221, 0.25);
 }
 
 .shadow-teal {
@@ -579,11 +596,11 @@ a,
 }
 
 .shadow-success {
-  box-shadow: 0 10px 40px -10px rgba(46, 204, 113, 0.25);
+  box-shadow: 0 10px 40px -10px rgba(0, 200, 83, 0.25);
 }
 
 .shadow-error {
-  box-shadow: 0 10px 40px -10px rgba(255, 107, 107, 0.25);
+  box-shadow: 0 10px 40px -10px rgba(255, 23, 68, 0.25);
 }
 
 /* Hover lift effect */
@@ -711,7 +728,7 @@ html, body {
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Touch-friendly tap targets (minimum 44px) */
+  /* Touch-friendly tap targets (minimum 48px) - Design System Accessibility */
   button,
   select,
   input[type="checkbox"],
@@ -719,12 +736,12 @@ html, body {
   .MuiIconButton-root,
   .MuiButton-root,
   .MuiListItemButton-root {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px;
+    min-width: 48px;
   }
   
   select {
-    min-height: 44px;
+    min-height: 48px;
     font-size: 16px; /* Prevent zoom on focus */
   }
   
@@ -846,7 +863,7 @@ body.sheet-open {
 .sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(26, 26, 46, 0.6);
+  background: rgba(10, 10, 10, 0.7);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   z-index: 1299;
@@ -874,7 +891,7 @@ body.sheet-open {
 
 .bento-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px -15px rgba(138, 43, 226, 0.2);
+  box-shadow: 0 20px 40px -15px rgba(157, 78, 221, 0.2);
 }
 
 .bento-full { grid-column: span 12; }

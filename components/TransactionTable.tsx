@@ -33,6 +33,7 @@ import TransactionTags from "./TransactionTags";
 import { motion, AnimatePresence } from "framer-motion";
 import { Transaction } from "../types";
 import EmptyState from "./EmptyState";
+import { usePrivacyMode } from "../hooks";
 
 // Create motion-enabled components
 const MotionPaper = motion.create(Paper);
@@ -131,6 +132,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDarkMode = theme.palette.mode === "dark";
+  const { privacyStyles } = usePrivacyMode();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -299,6 +301,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         color: isIncome
                           ? theme.palette.success.main
                           : theme.palette.error.main,
+                        ...privacyStyles,
                       }}
                     >
                       {isIncome ? "+" : "-"} {formatCurrency(transaction.amount || 0)}
@@ -539,6 +542,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                           color: isIncome
                             ? theme.palette.success.main
                             : theme.palette.error.main,
+                          ...privacyStyles,
                         }}
                       >
                         {isIncome ? "+" : "-"} {formatCurrency(transaction.amount || 0)}

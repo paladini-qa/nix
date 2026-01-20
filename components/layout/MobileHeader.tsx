@@ -7,12 +7,16 @@ import {
   Box,
   useTheme,
   alpha,
+  Tooltip,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
   Logout as LogOutIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
+import { usePrivacy } from "../../contexts";
 
 const MotionAppBar = motion.create(AppBar);
 const MotionBox = motion.create(Box);
@@ -38,6 +42,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
 
   return (
     <MotionAppBar
@@ -129,6 +134,47 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           >
             Nix
           </Typography>
+        </MotionBox>
+
+        {/* Privacy Toggle Button */}
+        <MotionBox
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.18, type: "spring", stiffness: 400 }}
+        >
+          <Tooltip title={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}>
+            <IconButton
+              onClick={togglePrivacyMode}
+              aria-label={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
+              sx={{
+                width: 48,
+                height: 48,
+                color: isPrivacyMode ? theme.palette.primary.main : "text.secondary",
+                transition: "all 0.2s ease",
+                borderRadius: "14px",
+                bgcolor: isPrivacyMode
+                  ? isDarkMode
+                    ? alpha(theme.palette.primary.main, 0.15)
+                    : alpha(theme.palette.primary.main, 0.1)
+                  : "transparent",
+                "&:hover": {
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.primary.main, 0.2)
+                    : alpha(theme.palette.primary.main, 0.12),
+                  transform: "scale(1.05)",
+                },
+                "&:active": {
+                  transform: "scale(0.95)",
+                },
+              }}
+            >
+              {isPrivacyMode ? (
+                <VisibilityOffIcon sx={{ fontSize: 24 }} />
+              ) : (
+                <VisibilityIcon sx={{ fontSize: 24 }} />
+              )}
+            </IconButton>
+          </Tooltip>
         </MotionBox>
 
         {/* Logout Button */}

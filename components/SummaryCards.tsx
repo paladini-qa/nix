@@ -18,6 +18,7 @@ import {
 import { motion } from "framer-motion";
 import { FinancialSummary, Transaction } from "../types";
 import { CountUp, formatBRL, formatBRLFull } from "./motion";
+import { usePrivacyMode } from "../hooks";
 
 // Create motion-enabled components
 const MotionCard = motion.create(Card);
@@ -31,50 +32,59 @@ interface SummaryCardsProps {
 }
 
 // ============================================
-// PALETA NIX - Cores do Brand Book
+// PALETA NIX - Design System Black & Purple
 // ============================================
 const NIX_COLORS = {
-  purple: "#8A2BE2",
-  purpleLight: "#9D4EDD",
-  purpleDark: "#6A0DAD",
+  // Primary Purple
+  purple: "#9D4EDD",
+  purpleLight: "#B47AEA",
+  purpleDark: "#7B2CBF",
+  // Secondary Teal
   teal: "#00D4FF",
-  success: "#2ECC71",
-  successLight: "#A9DFBF",
-  error: "#FF6B6B",
-  errorLight: "#FDEDEC",
+  // Success - Dark Mode values (used for cards)
+  success: "#00C853",
+  successLight: "#69F0AE",
+  successDark: "#2D6A4F",
+  // Error - Dark Mode values (used for cards)
+  error: "#FF1744",
+  errorLight: "#FF616F",
+  errorDark: "#C9184A",
 };
 
 // Configuração de cores para os cards - Paleta Nix
+// Card styles using the new Design System colors
 const cardStyles = {
   balance: {
     positive: {
       iconBg: NIX_COLORS.success,
       iconBgLight: NIX_COLORS.successLight,
       accentColor: NIX_COLORS.success,
-      gradientLight: "linear-gradient(135deg, rgba(46, 204, 113, 0.08) 0%, rgba(46, 204, 113, 0.04) 100%)",
-      gradientDark: "linear-gradient(135deg, rgba(46, 204, 113, 0.15) 0%, rgba(46, 204, 113, 0.08) 100%)",
+      // #00C853 - New success green
+      gradientLight: "linear-gradient(135deg, rgba(0, 200, 83, 0.08) 0%, rgba(0, 200, 83, 0.04) 100%)",
+      gradientDark: "linear-gradient(135deg, rgba(0, 200, 83, 0.15) 0%, rgba(0, 200, 83, 0.08) 100%)",
     },
     negative: {
       iconBg: NIX_COLORS.error,
       iconBgLight: NIX_COLORS.errorLight,
       accentColor: NIX_COLORS.error,
-      gradientLight: "linear-gradient(135deg, rgba(255, 107, 107, 0.08) 0%, rgba(255, 107, 107, 0.04) 100%)",
-      gradientDark: "linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(255, 107, 107, 0.08) 100%)",
+      // #FF1744 - New error red
+      gradientLight: "linear-gradient(135deg, rgba(255, 23, 68, 0.08) 0%, rgba(255, 23, 68, 0.04) 100%)",
+      gradientDark: "linear-gradient(135deg, rgba(255, 23, 68, 0.15) 0%, rgba(255, 23, 68, 0.08) 100%)",
     },
   },
   income: {
     iconBg: NIX_COLORS.success,
     iconBgLight: NIX_COLORS.successLight,
     accentColor: NIX_COLORS.success,
-    gradientLight: "linear-gradient(135deg, rgba(46, 204, 113, 0.06) 0%, rgba(46, 204, 113, 0.02) 100%)",
-    gradientDark: "linear-gradient(135deg, rgba(46, 204, 113, 0.12) 0%, rgba(46, 204, 113, 0.06) 100%)",
+    gradientLight: "linear-gradient(135deg, rgba(0, 200, 83, 0.06) 0%, rgba(0, 200, 83, 0.02) 100%)",
+    gradientDark: "linear-gradient(135deg, rgba(0, 200, 83, 0.12) 0%, rgba(0, 200, 83, 0.06) 100%)",
   },
   expense: {
     iconBg: NIX_COLORS.error,
     iconBgLight: NIX_COLORS.errorLight,
     accentColor: NIX_COLORS.error,
-    gradientLight: "linear-gradient(135deg, rgba(255, 107, 107, 0.06) 0%, rgba(255, 107, 107, 0.02) 100%)",
-    gradientDark: "linear-gradient(135deg, rgba(255, 107, 107, 0.12) 0%, rgba(255, 107, 107, 0.06) 100%)",
+    gradientLight: "linear-gradient(135deg, rgba(255, 23, 68, 0.06) 0%, rgba(255, 23, 68, 0.02) 100%)",
+    gradientDark: "linear-gradient(135deg, rgba(255, 23, 68, 0.12) 0%, rgba(255, 23, 68, 0.06) 100%)",
   },
 };
 
@@ -112,6 +122,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDarkMode = theme.palette.mode === "dark";
+  const { privacyStylesStrong } = usePrivacyMode();
 
   // Calcula comparação com mês anterior
   const comparison = useMemo(() => {
@@ -297,6 +308,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                       fontVariantNumeric: "tabular-nums",
                       minHeight: isMobile ? 28 : 36,
                       display: "block",
+                      ...privacyStylesStrong,
                     }}
                   />
                   
@@ -420,6 +432,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
+                      ...privacyStylesStrong,
                     }}
                   />
                   
@@ -559,6 +572,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
+                      ...privacyStylesStrong,
                     }}
                   />
                   
