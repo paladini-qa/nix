@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Nix</title>
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/nix/favicon.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/nix/favicon.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/nix/logo.png" />
-    <link rel="shortcut icon" href="/nix/favicon.png" />
+    <!-- Favicon - paths are relative, Vite will transform based on 'base' config -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./logo.png" />
+    <link rel="shortcut icon" href="./favicon.png" />
 
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#7c3aed" />
@@ -32,6 +32,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>

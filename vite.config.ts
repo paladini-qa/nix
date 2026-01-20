@@ -5,14 +5,21 @@ import react from "@vitejs/plugin-react";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
 
-  // Detecta se é build para mobile (Capacitor) ou web (GitHub Pages)
-  // Use: npm run build:mobile para Capacitor
-  // Use: npm run build para GitHub Pages
+  // Detecta o ambiente de build
+  // - BUILD_TARGET=mobile -> Capacitor (base: "/")
+  // - VERCEL=1 -> Vercel (base: "/")
+  // - Default -> GitHub Pages (base: "/nix/")
   const isMobile = process.env.BUILD_TARGET === "mobile";
+  const isVercel = process.env.VERCEL === "1";
+
+  // Determina o base path baseado no ambiente
+  const getBasePath = () => {
+    if (isMobile || isVercel) return "/";
+    return "/nix/";
+  };
 
   return {
-    // Para GitHub Pages: "/nix/", para Capacitor: "/"
-    base: isMobile ? "/" : "/nix/",
+    base: getBasePath(),
     server: {
       port: 3000,
       host: "0.0.0.0",
