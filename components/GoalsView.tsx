@@ -7,10 +7,7 @@ import {
   Grid,
   LinearProgress,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
   TextField,
   InputAdornment,
   Chip,
@@ -36,6 +33,7 @@ import {
   TrendingUp as TrendingUpIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { Goal, GoalProgress } from "../types";
 import { goalService } from "../services/api";
@@ -748,137 +746,268 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
         </Fab>
       )}
 
-      {/* Goal Form Dialog */}
-      <Dialog
+      {/* Side Panel Form */}
+      <Drawer
+        anchor="right"
         open={isFormOpen}
         onClose={handleCloseForm}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: "20px" } }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: theme.palette.mode === "dark"
+                ? alpha("#0F172A", 0.6)
+                : alpha("#64748B", 0.25),
+              backdropFilter: "blur(4px)",
+            },
+          },
+        }}
+        PaperProps={{
+          sx: {
+            width: { xs: "100vw", sm: 420 },
+            maxWidth: "100vw",
+            bgcolor: theme.palette.mode === "dark" ? theme.palette.background.default : "#FAFBFC",
+            backgroundImage: "none",
+            borderLeft: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+            boxShadow: theme.palette.mode === "dark"
+              ? `-24px 0 80px -20px ${alpha("#000000", 0.5)}`
+              : `-24px 0 80px -20px ${alpha(theme.palette.primary.main, 0.12)}`,
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
       >
-        <DialogTitle>{editingGoal ? "Edit Goal" : "New Goal"}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
-            <TextField
-              label="Goal Name"
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              placeholder="e.g., Emergency Fund"
-              fullWidth
-              required
-            />
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 2.5,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            {editingGoal ? "Edit Goal" : "New Goal"}
+          </Typography>
+          <IconButton onClick={handleCloseForm} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
 
-            <TextField
-              label="Target Amount"
-              type="number"
-              value={formTarget}
-              onChange={(e) => setFormTarget(e.target.value)}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-              }}
-              inputProps={{ min: 0.01, step: 0.01 }}
-              fullWidth
-              required
-            />
+        {/* Content */}
+        <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 2.5, flex: 1, overflow: "auto" }}>
+          <TextField
+            label="Goal Name"
+            value={formName}
+            onChange={(e) => setFormName(e.target.value)}
+            placeholder="e.g., Emergency Fund"
+            fullWidth
+            required
+          />
 
-            <TextField
-              label="Current Amount"
-              type="number"
-              value={formCurrent}
-              onChange={(e) => setFormCurrent(e.target.value)}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-              }}
-              inputProps={{ min: 0, step: 0.01 }}
-              fullWidth
-            />
+          <TextField
+            label="Target Amount"
+            type="number"
+            value={formTarget}
+            onChange={(e) => setFormTarget(e.target.value)}
+            InputProps={{
+              startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+            }}
+            inputProps={{ min: 0.01, step: 0.01 }}
+            fullWidth
+            required
+          />
 
-            <DatePicker
-              label="Deadline (optional)"
-              value={formDeadline}
-              onChange={(newValue) => setFormDeadline(newValue)}
-              slotProps={{
-                textField: { fullWidth: true },
-              }}
-              minDate={dayjs()}
-            />
+          <TextField
+            label="Current Amount"
+            type="number"
+            value={formCurrent}
+            onChange={(e) => setFormCurrent(e.target.value)}
+            InputProps={{
+              startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+            }}
+            inputProps={{ min: 0, step: 0.01 }}
+            fullWidth
+          />
 
-            {/* Color Picker */}
-            <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                Color
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                {GOAL_COLORS.map((color) => (
-                  <Box
-                    key={color}
-                    onClick={() => setFormColor(color)}
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: "50%",
-                      bgcolor: color,
-                      cursor: "pointer",
-                      border: formColor === color ? 3 : 0,
-                      borderColor: "common.white",
-                      outline: formColor === color ? `2px solid ${color}` : "none",
-                      transition: "transform 0.2s",
-                      "&:hover": { transform: "scale(1.1)" },
-                    }}
-                  />
-                ))}
-              </Box>
-            </Box>
+          <DatePicker
+            label="Deadline (optional)"
+            value={formDeadline}
+            onChange={(newValue) => setFormDeadline(newValue)}
+            slotProps={{
+              textField: { fullWidth: true },
+            }}
+            minDate={dayjs()}
+          />
 
-            {/* Icon Picker */}
-            <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                Icon
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1 }}>
-                {Object.entries(GOAL_ICONS).map(([key, icon]) => (
-                  <IconButton
-                    key={key}
-                    onClick={() => setFormIcon(key)}
-                    sx={{
-                      bgcolor: formIcon === key ? formColor : "action.hover",
-                      color: formIcon === key ? "white" : "text.secondary",
-                      "&:hover": {
-                        bgcolor: formIcon === key ? formColor : "action.selected",
-                      },
-                    }}
-                  >
-                    {icon}
-                  </IconButton>
-                ))}
-              </Box>
+          {/* Color Picker */}
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block", fontWeight: 500 }}>
+              Color
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              {GOAL_COLORS.map((color) => (
+                <Box
+                  key={color}
+                  onClick={() => setFormColor(color)}
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "12px",
+                    bgcolor: color,
+                    cursor: "pointer",
+                    border: formColor === color ? 3 : 0,
+                    borderColor: "common.white",
+                    outline: formColor === color ? `2px solid ${color}` : "none",
+                    transition: "all 0.2s",
+                    boxShadow: `0 4px 12px -2px ${alpha(color, 0.4)}`,
+                    "&:hover": { transform: "scale(1.1)" },
+                  }}
+                />
+              ))}
             </Box>
           </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1 }}>
-          <Button onClick={handleCloseForm} color="inherit">
+
+          {/* Icon Picker */}
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block", fontWeight: 500 }}>
+              Icon
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1.5 }}>
+              {Object.entries(GOAL_ICONS).map(([key, icon]) => (
+                <IconButton
+                  key={key}
+                  onClick={() => setFormIcon(key)}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "14px",
+                    bgcolor: formIcon === key ? formColor : alpha(theme.palette.action.hover, 0.1),
+                    color: formIcon === key ? "white" : "text.secondary",
+                    border: `1px solid ${formIcon === key ? formColor : alpha(theme.palette.divider, 0.5)}`,
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      bgcolor: formIcon === key ? formColor : alpha(theme.palette.action.hover, 0.2),
+                      transform: "scale(1.05)",
+                    },
+                  }}
+                >
+                  {icon}
+                </IconButton>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Footer */}
+        <Box
+          sx={{
+            p: 2.5,
+            borderTop: 1,
+            borderColor: "divider",
+            display: "flex",
+            gap: 1.5,
+          }}
+        >
+          <Button onClick={handleCloseForm} color="inherit" fullWidth variant="outlined">
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             variant="contained"
+            fullWidth
             disabled={!formName || !formTarget}
           >
             {editingGoal ? "Update" : "Create"}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
 
-      {/* Add Amount Dialog */}
-      <Dialog
+      {/* Add Amount Side Panel */}
+      <Drawer
+        anchor="right"
         open={isAddAmountOpen}
         onClose={() => setIsAddAmountOpen(false)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: "20px" } }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: theme.palette.mode === "dark"
+                ? alpha("#0F172A", 0.6)
+                : alpha("#64748B", 0.25),
+              backdropFilter: "blur(4px)",
+            },
+          },
+        }}
+        PaperProps={{
+          sx: {
+            width: { xs: "100vw", sm: 400 },
+            maxWidth: "100vw",
+            bgcolor: theme.palette.mode === "dark" ? theme.palette.background.default : "#FAFBFC",
+            backgroundImage: "none",
+            borderLeft: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+            boxShadow: theme.palette.mode === "dark"
+              ? `-24px 0 80px -20px ${alpha("#000000", 0.5)}`
+              : `-24px 0 80px -20px ${alpha(theme.palette.primary.main, 0.12)}`,
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
       >
-        <DialogTitle>Add to {selectedGoalForAmount?.name}</DialogTitle>
-        <DialogContent>
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 2.5,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            Add to Goal
+          </Typography>
+          <IconButton onClick={() => setIsAddAmountOpen(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        {/* Content */}
+        <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 2.5, flex: 1 }}>
+          {selectedGoalForAmount && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                p: 2,
+                borderRadius: 2,
+                bgcolor: alpha(selectedGoalForAmount.color, 0.1),
+                border: `1px solid ${alpha(selectedGoalForAmount.color, 0.2)}`,
+              }}
+            >
+              <Avatar
+                sx={{
+                  bgcolor: alpha(selectedGoalForAmount.color, 0.2),
+                  color: selectedGoalForAmount.color,
+                  width: 48,
+                  height: 48,
+                }}
+              >
+                {GOAL_ICONS[selectedGoalForAmount.icon] || <SavingsIcon />}
+              </Avatar>
+              <Box>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  {selectedGoalForAmount.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {formatCurrency(selectedGoalForAmount.currentAmount)} of {formatCurrency(selectedGoalForAmount.targetAmount)}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
           <TextField
             label="Amount to Add"
             type="number"
@@ -890,23 +1019,33 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
             inputProps={{ min: 0.01, step: 0.01 }}
             fullWidth
             autoFocus
-            sx={{ mt: 1 }}
           />
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1 }}>
-          <Button onClick={() => setIsAddAmountOpen(false)} color="inherit">
+        </Box>
+
+        {/* Footer */}
+        <Box
+          sx={{
+            p: 2.5,
+            borderTop: 1,
+            borderColor: "divider",
+            display: "flex",
+            gap: 1.5,
+          }}
+        >
+          <Button onClick={() => setIsAddAmountOpen(false)} color="inherit" fullWidth variant="outlined">
             Cancel
           </Button>
           <Button
             onClick={handleAddAmount}
             variant="contained"
             color="success"
+            fullWidth
             disabled={!addAmount}
           >
             Add Amount
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
     </Box>
   );
 };

@@ -217,10 +217,14 @@ CREATE TABLE IF NOT EXISTS public.budgets (
     limit_amount NUMERIC(12, 2) NOT NULL CHECK (limit_amount > 0),
     month INTEGER NOT NULL CHECK (month >= 1 AND month <= 12),
     year INTEGER NOT NULL CHECK (year >= 2000),
+    is_recurring BOOLEAN DEFAULT TRUE, -- Se true, o orçamento se repete automaticamente nos próximos meses
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id, category, type, month, year)
 );
+
+-- Para bancos existentes, adicione a coluna is_recurring:
+-- ALTER TABLE public.budgets ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN DEFAULT TRUE;
 
 -- Índices para performance
 CREATE INDEX IF NOT EXISTS idx_budgets_user_id ON public.budgets(user_id);

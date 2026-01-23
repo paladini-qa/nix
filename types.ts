@@ -67,6 +67,7 @@ export interface Budget {
   limitAmount: number;
   month: number; // 1-12
   year: number;
+  isRecurring?: boolean; // Se true, o orçamento se repete automaticamente nos próximos meses
   createdAt?: string;
   updatedAt?: string;
 }

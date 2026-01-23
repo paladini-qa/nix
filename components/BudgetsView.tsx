@@ -7,12 +7,10 @@ import {
   Grid,
   LinearProgress,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
   TextField,
   FormControl,
+  FormControlLabel,
   InputLabel,
   Select,
   MenuItem,
@@ -25,6 +23,7 @@ import {
   Fab,
   Card,
   CardContent,
+  Switch,
   alpha,
 } from "@mui/material";
 import {
@@ -35,6 +34,8 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   TrendingDown as TrendingDownIcon,
+  Repeat as RepeatIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { Budget, BudgetWithSpending, Transaction, TransactionType } from "../types";
 import { budgetService } from "../services/api";
@@ -73,6 +74,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
   const [formCategory, setFormCategory] = useState("");
   const [formType, setFormType] = useState<TransactionType>("expense");
   const [formLimit, setFormLimit] = useState("");
+  const [formIsRecurring, setFormIsRecurring] = useState(true);
 
   // Fetch budgets
   useEffect(() => {
@@ -143,11 +145,13 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
       setFormCategory(budget.category);
       setFormType(budget.type);
       setFormLimit(budget.limitAmount.toString());
+      setFormIsRecurring(budget.isRecurring ?? true);
     } else {
       setEditingBudget(null);
       setFormCategory("");
       setFormType("expense");
       setFormLimit("");
+      setFormIsRecurring(true);
     }
     setIsFormOpen(true);
   };
@@ -157,6 +161,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
     setEditingBudget(null);
     setFormCategory("");
     setFormLimit("");
+    setFormIsRecurring(true);
   };
 
   const handleSave = async () => {
@@ -166,6 +171,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
       if (editingBudget) {
         await budgetService.update(editingBudget.id, {
           limitAmount: parseFloat(formLimit),
+          isRecurring: formIsRecurring,
         });
         showSuccess("Budget updated successfully");
       } else {
@@ -175,6 +181,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
           limitAmount: parseFloat(formLimit),
           month: selectedMonth + 1,
           year: selectedYear,
+          isRecurring: formIsRecurring,
         });
         showSuccess("Budget created successfully");
       }
@@ -532,7 +539,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
                       }}
                     >
                       <Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                           <Typography variant="subtitle1" fontWeight={600}>
                             {budget.category}
                           </Typography>
@@ -547,6 +554,26 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
                               border: `1px solid ${alpha(budget.type === "income" ? "#059669" : "#DC2626", 0.2)}`,
                             }}
                           />
+                          {budget.isRecurring && (
+                            <Tooltip title="Repeats every month">
+                              <Chip
+                                icon={<RepeatIcon sx={{ fontSize: 12 }} />}
+                                label="Monthly"
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: 10,
+                                  bgcolor: alpha("#6366f1", 0.1),
+                                  color: "#6366f1",
+                                  border: `1px solid ${alpha("#6366f1", 0.2)}`,
+                                  "& .MuiChip-icon": {
+                                    color: "#6366f1",
+                                    ml: 0.5,
+                                  },
+                                }}
+                              />
+                            </Tooltip>
+                          )}
                         </Box>
                         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
                           Limit: {formatCurrency(budget.limitAmount)}
@@ -662,93 +689,195 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         </Fab>
       )}
 
-      {/* Form Dialog */}
-      <Dialog
+      {/* Side Panel Form */}
+      <Drawer
+        anchor="right"
         open={isFormOpen}
         onClose={handleCloseForm}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: "20px" } }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: theme.palette.mode === "dark"
+                ? alpha("#0F172A", 0.6)
+                : alpha("#64748B", 0.25),
+              backdropFilter: "blur(4px)",
+            },
+          },
+        }}
+        PaperProps={{
+          sx: {
+            width: { xs: "100vw", sm: 420 },
+            maxWidth: "100vw",
+            bgcolor: theme.palette.mode === "dark" ? theme.palette.background.default : "#FAFBFC",
+            backgroundImage: "none",
+            borderLeft: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+            boxShadow: theme.palette.mode === "dark"
+              ? `-24px 0 80px -20px ${alpha("#000000", 0.5)}`
+              : `-24px 0 80px -20px ${alpha(theme.palette.primary.main, 0.12)}`,
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
       >
-        <DialogTitle>
-          {editingBudget ? "Edit Budget" : "New Budget"}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
-            {!editingBudget && (
-              <>
-                <FormControl fullWidth>
-                  <InputLabel>Type</InputLabel>
-                  <Select
-                    value={formType}
-                    label="Type"
-                    onChange={(e) => {
-                      setFormType(e.target.value as TransactionType);
-                      setFormCategory("");
-                    }}
-                  >
-                    <MenuItem value="expense">Expense</MenuItem>
-                    <MenuItem value="income">Income</MenuItem>
-                  </Select>
-                </FormControl>
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 2.5,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            {editingBudget ? "Edit Budget" : "New Budget"}
+          </Typography>
+          <IconButton onClick={handleCloseForm} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
 
-                <FormControl fullWidth>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={formCategory}
-                    label="Category"
-                    onChange={(e) => setFormCategory(e.target.value)}
-                  >
-                    {availableCategories.map((cat) => (
-                      <MenuItem key={cat} value={cat}>
-                        {cat}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+        {/* Content */}
+        <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 2.5, flex: 1, overflow: "auto" }}>
+          {!editingBudget && (
+            <>
+              <FormControl fullWidth>
+                <InputLabel>Type</InputLabel>
+                <Select
+                  value={formType}
+                  label="Type"
+                  onChange={(e) => {
+                    setFormType(e.target.value as TransactionType);
+                    setFormCategory("");
+                  }}
+                >
+                  <MenuItem value="expense">Expense</MenuItem>
+                  <MenuItem value="income">Income</MenuItem>
+                </Select>
+              </FormControl>
 
-                {availableCategories.length === 0 && (
-                  <Alert severity="info" sx={{ mt: -1 }}>
-                    All categories have budgets set for this month
-                  </Alert>
-                )}
-              </>
-            )}
+              <FormControl fullWidth>
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={formCategory}
+                  label="Category"
+                  onChange={(e) => setFormCategory(e.target.value)}
+                >
+                  {availableCategories.map((cat) => (
+                    <MenuItem key={cat} value={cat}>
+                      {cat}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            {editingBudget && (
-              <Typography variant="body2" color="text.secondary">
-                Category: <strong>{editingBudget.category}</strong>
-              </Typography>
-            )}
+              {availableCategories.length === 0 && (
+                <Alert severity="info" sx={{ mt: -1 }}>
+                  All categories have budgets set for this month
+                </Alert>
+              )}
+            </>
+          )}
 
-            <TextField
-              label="Monthly Limit"
-              type="number"
-              value={formLimit}
-              onChange={(e) => setFormLimit(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">R$</InputAdornment>
-                ),
+          {editingBudget && (
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
               }}
-              inputProps={{ min: 0.01, step: 0.01 }}
-              fullWidth
+            >
+              <Typography variant="caption" color="text.secondary">
+                Category
+              </Typography>
+              <Typography variant="body1" fontWeight={600}>
+                {editingBudget.category}
+              </Typography>
+            </Box>
+          )}
+
+          <TextField
+            label="Monthly Limit"
+            type="number"
+            value={formLimit}
+            onChange={(e) => setFormLimit(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">R$</InputAdornment>
+              ),
+            }}
+            inputProps={{ min: 0.01, step: 0.01 }}
+            fullWidth
+          />
+
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              p: 2,
+              borderRadius: 2,
+              bgcolor: formIsRecurring
+                ? alpha(theme.palette.primary.main, 0.08)
+                : alpha(theme.palette.action.disabled, 0.05),
+              border: 1,
+              borderColor: formIsRecurring
+                ? alpha(theme.palette.primary.main, 0.2)
+                : "divider",
+              transition: "all 0.2s ease-in-out",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <RepeatIcon
+                sx={{
+                  color: formIsRecurring ? "primary.main" : "text.disabled",
+                  transition: "color 0.2s",
+                }}
+              />
+              <Box>
+                <Typography variant="body2" fontWeight={500}>
+                  Repeat every month
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {formIsRecurring
+                    ? "This budget will be created automatically in future months"
+                    : "This budget is only for the selected month"}
+                </Typography>
+              </Box>
+            </Box>
+            <Switch
+              checked={formIsRecurring}
+              onChange={(e) => setFormIsRecurring(e.target.checked)}
+              color="primary"
             />
           </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1 }}>
-          <Button onClick={handleCloseForm} color="inherit">
+        </Box>
+
+        {/* Footer */}
+        <Box
+          sx={{
+            p: 2.5,
+            borderTop: 1,
+            borderColor: "divider",
+            display: "flex",
+            gap: 1.5,
+          }}
+        >
+          <Button onClick={handleCloseForm} color="inherit" fullWidth variant="outlined">
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             variant="contained"
+            fullWidth
             disabled={!formLimit || (!editingBudget && !formCategory)}
           >
             {editingBudget ? "Update" : "Create"}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
     </Box>
   );
 };

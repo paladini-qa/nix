@@ -22,8 +22,12 @@ export const budgetService = {
 
   /**
    * Busca orçamentos de um mês específico
+   * Automaticamente gera orçamentos recorrentes se não existirem
    */
   async getByMonth(month: number, year: number): Promise<Budget[]> {
+    // Primeiro, tenta gerar orçamentos recorrentes para este mês
+    await this.generateRecurringBudgets(month, year);
+
     const { data, error } = await supabase
       .from("budgets")
       .select("*")
@@ -33,6 +37,85 @@ export const budgetService = {
     if (error) throw error;
 
     return (data || []).map(mapDbToBudget);
+  },
+
+  /**
+   * Gera orçamentos recorrentes automaticamente para um mês específico
+   * Baseado nos orçamentos recorrentes de meses anteriores
+   */
+  async generateRecurringBudgets(month: number, year: number): Promise<Budget[]> {
+    try {
+      // Busca orçamentos existentes para este mês
+      const { data: existingBudgets, error: existingError } = await supabase
+        .from("budgets")
+        .select("*")
+        .eq("month", month)
+        .eq("year", year);
+
+      if (existingError) throw existingError;
+
+      // Se já existem orçamentos neste mês, não gera automaticamente
+      if (existingBudgets && existingBudgets.length > 0) {
+        return [];
+      }
+
+      // Busca o mês anterior mais recente que tem orçamentos recorrentes
+      const { data: recurringBudgets, error: recurringError } = await supabase
+        .from("budgets")
+        .select("*")
+        .eq("is_recurring", true)
+        .or(`year.lt.${year},and(year.eq.${year},month.lt.${month})`)
+        .order("year", { ascending: false })
+        .order("month", { ascending: false });
+
+      if (recurringError) throw recurringError;
+
+      if (!recurringBudgets || recurringBudgets.length === 0) {
+        return [];
+      }
+
+      // Agrupa por categoria+tipo para pegar apenas o mais recente de cada
+      const latestByCategory = new Map<string, any>();
+      for (const budget of recurringBudgets) {
+        const key = `${budget.type}-${budget.category}`;
+        if (!latestByCategory.has(key)) {
+          latestByCategory.set(key, budget);
+        }
+      }
+
+      // Cria os novos orçamentos para o mês atual
+      const budgetsToCreate = Array.from(latestByCategory.values()).map((b) => ({
+        user_id: b.user_id,
+        category: b.category,
+        type: b.type,
+        limit_amount: b.limit_amount,
+        month: month,
+        year: year,
+        is_recurring: true, // Mantém como recorrente
+      }));
+
+      if (budgetsToCreate.length === 0) {
+        return [];
+      }
+
+      const { data: createdBudgets, error: createError } = await supabase
+        .from("budgets")
+        .insert(budgetsToCreate)
+        .select();
+
+      if (createError) {
+        // Se o erro for de duplicidade, apenas ignora (orçamento já existe)
+        if (createError.code === "23505") {
+          return [];
+        }
+        throw createError;
+      }
+
+      return (createdBudgets || []).map(mapDbToBudget);
+    } catch (error) {
+      console.error("Error generating recurring budgets:", error);
+      return [];
+    }
   },
 
   /**
@@ -51,6 +134,7 @@ export const budgetService = {
         limit_amount: budget.limitAmount,
         month: budget.month,
         year: budget.year,
+        is_recurring: budget.isRecurring ?? true, // Default: recorrente
       })
       .select()
       .single();
@@ -73,6 +157,7 @@ export const budgetService = {
     if (updates.limitAmount !== undefined) dbUpdates.limit_amount = updates.limitAmount;
     if (updates.month !== undefined) dbUpdates.month = updates.month;
     if (updates.year !== undefined) dbUpdates.year = updates.year;
+    if (updates.isRecurring !== undefined) dbUpdates.is_recurring = updates.isRecurring;
 
     const { data, error } = await supabase
       .from("budgets")
@@ -175,6 +260,7 @@ function mapDbToBudget(data: any): Budget {
     limitAmount: data.limit_amount,
     month: data.month,
     year: data.year,
+    isRecurring: data.is_recurring ?? true, // Default true para compatibilidade
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   };
