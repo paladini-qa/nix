@@ -24,7 +24,6 @@ import {
   Collapse,
   Card,
   CardContent,
-  CardActions,
   Divider,
   Table,
   TableBody,
@@ -34,6 +33,9 @@ import {
   alpha,
   Tabs,
   Tab,
+  Drawer,
+  CircularProgress,
+  Stack,
 } from "@mui/material";
 import {
   ArrowUpward as ArrowUpIcon,
@@ -48,17 +50,16 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Visibility as VisibilityIcon,
-  RadioButtonUnchecked as UnpaidIcon,
   Refresh as RefreshIcon,
+  Payments as PaymentsIcon,
+  TrendingDown as TrendingDownIcon,
+  CalendarMonth as CalendarMonthIcon,
+  EventRepeat as EventRepeatIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import SearchBar from "./SearchBar";
-import {
-  getTableContainerSx,
-  getHeaderCellSx,
-  getRowSx,
-  getMobileCardSx,
-} from "../utils/tableStyles";
+import { getHeaderCellSx } from "../utils/tableStyles";
 import { Transaction } from "../types";
 
 interface SplitsViewProps {
@@ -68,16 +69,20 @@ interface SplitsViewProps {
   onDelete: (id: string) => void;
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onRefreshData?: () => Promise<void>;
+  onUpdateInstallmentDates?: (
+    installmentIds: string[],
+    newDates: { id: string; date: string }[]
+  ) => Promise<boolean>;
 }
 
 type SplitStatus = "all" | "in_progress" | "completed";
 
 interface InstallmentGroup {
   key: string;
-  installmentGroupId?: string; // ID único do grupo de parcelas
-  description: string; // Descrição principal (mais comum no grupo)
-  originalDescription: string; // Descrição original (mais comum) para comparação
-  descriptions: string[]; // Todas as descrições únicas das parcelas
+  installmentGroupId?: string;
+  description: string;
+  originalDescription: string;
+  descriptions: string[];
   category: string;
   paymentMethod: string;
   type: "income" | "expense";
@@ -100,17 +105,32 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   onDelete,
   onTogglePaid,
   onRefreshData,
+  onUpdateInstallmentDates,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<SplitStatus>("in_progress");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedSharedTab, setSelectedSharedTab] = useState<Record<string, number>>({});
 
-  // Handler de refresh
+  const [mobileActionAnchor, setMobileActionAnchor] = useState<{
+    element: HTMLElement | null;
+    transaction: Transaction | null;
+  }>({ element: null, transaction: null });
+
+  // Estado para o Dialog de alteração de datas
+  const [dateDialogOpen, setDateDialogOpen] = useState(false);
+  const [selectedGroupForDateChange, setSelectedGroupForDateChange] = useState<InstallmentGroup | null>(null);
+  const [newDueDay, setNewDueDay] = useState<number>(1);
+  const [newStartMonth, setNewStartMonth] = useState<number>(new Date().getMonth() + 1);
+  const [newStartYear, setNewStartYear] = useState<number>(new Date().getFullYear());
+  const [isUpdatingDates, setIsUpdatingDates] = useState(false);
+
   const handleRefresh = useCallback(async () => {
     if (!onRefreshData || isRefreshing) return;
     setIsRefreshing(true);
@@ -120,50 +140,136 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       setIsRefreshing(false);
     }
   }, [onRefreshData, isRefreshing]);
-  const [mobileActionAnchor, setMobileActionAnchor] = useState<{
-    element: HTMLElement | null;
-    transaction: Transaction | null;
-  }>({ element: null, transaction: null });
 
-  // Estado para controlar qual aba está selecionada em transações compartilhadas
-  // 0 = Despesa (expense), 1 = Compartilhado (related income)
-  const [selectedSharedTab, setSelectedSharedTab] = useState<Record<string, number>>({});
+  // Abre o Dialog para alterar datas das parcelas
+  const handleOpenDateDialog = useCallback((group: InstallmentGroup) => {
+    setSelectedGroupForDateChange(group);
+    // Define valores iniciais baseados na primeira parcela
+    const firstInstallment = group.installments[0];
+    if (firstInstallment) {
+      const [year, month, day] = firstInstallment.date.split("-").map(Number);
+      setNewDueDay(day);
+      setNewStartMonth(month);
+      setNewStartYear(year);
+    }
+    setDateDialogOpen(true);
+  }, []);
 
-  // Conjunto de IDs de transações relacionadas (incomes vinculadas a expenses compartilhados)
-  // Essas transações serão exibidas junto com sua expense principal, não separadamente
+  // Fecha o Dialog
+  const handleCloseDateDialog = useCallback(() => {
+    setDateDialogOpen(false);
+    setSelectedGroupForDateChange(null);
+    setIsUpdatingDates(false);
+  }, []);
+
+  // Calcula as novas datas das parcelas
+  const calculateNewDates = useCallback((
+    installments: Transaction[],
+    dueDay: number,
+    startMonth: number,
+    startYear: number
+  ): { id: string; date: string }[] => {
+    const sortedInstallments = [...installments].sort(
+      (a, b) => (a.currentInstallment || 1) - (b.currentInstallment || 1)
+    );
+
+    return sortedInstallments.map((inst, index) => {
+      let targetMonth = startMonth + index;
+      let targetYear = startYear;
+
+      // Ajusta ano se passar de dezembro
+      while (targetMonth > 12) {
+        targetMonth -= 12;
+        targetYear += 1;
+      }
+
+      // Ajusta o dia para o último dia do mês se necessário
+      const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+      const adjustedDay = Math.min(dueDay, daysInMonth);
+
+      const newDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+
+      return { id: inst.id, date: newDate };
+    });
+  }, []);
+
+  // Salva as novas datas
+  const handleSaveDates = useCallback(async () => {
+    if (!selectedGroupForDateChange || !onUpdateInstallmentDates) return;
+
+    setIsUpdatingDates(true);
+    try {
+      const newDates = calculateNewDates(
+        selectedGroupForDateChange.installments,
+        newDueDay,
+        newStartMonth,
+        newStartYear
+      );
+
+      const installmentIds = selectedGroupForDateChange.installments.map((i) => i.id);
+      await onUpdateInstallmentDates(installmentIds, newDates);
+      
+      handleCloseDateDialog();
+      
+      // Refresh data após atualização
+      if (onRefreshData) {
+        await onRefreshData();
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar datas:", error);
+    } finally {
+      setIsUpdatingDates(false);
+    }
+  }, [
+    selectedGroupForDateChange,
+    onUpdateInstallmentDates,
+    newDueDay,
+    newStartMonth,
+    newStartYear,
+    calculateNewDates,
+    handleCloseDateDialog,
+    onRefreshData,
+  ]);
+
+  // Preview das novas datas
+  const previewDates = useMemo(() => {
+    if (!selectedGroupForDateChange) return [];
+    return calculateNewDates(
+      selectedGroupForDateChange.installments,
+      newDueDay,
+      newStartMonth,
+      newStartYear
+    );
+  }, [selectedGroupForDateChange, newDueDay, newStartMonth, newStartYear, calculateNewDates]);
+
+  // IDs de transações relacionadas
   const relatedTransactionIds = useMemo(() => {
     const ids = new Set<string>();
     transactions
       .filter((t) => t.installments && t.installments > 1 && t.isShared && t.relatedTransactionId)
       .forEach((t) => {
-        if (t.relatedTransactionId) {
-          ids.add(t.relatedTransactionId);
-        }
+        if (t.relatedTransactionId) ids.add(t.relatedTransactionId);
       });
     return ids;
   }, [transactions]);
 
-  // Helper para encontrar a transação relacionada (income de reembolso)
   const getRelatedTransaction = useCallback((transaction: Transaction): Transaction | null => {
     if (!transaction.isShared || !transaction.relatedTransactionId) return null;
     return transactions.find((t) => t.id === transaction.relatedTransactionId) || null;
   }, [transactions]);
 
   // Filtra apenas transações com parcelas
-  // Exclui transações que são a "parte relacionada" de uma transação compartilhada
   const splitsTransactions = useMemo(() => {
     return transactions
       .filter((t) => t.installments && t.installments > 1)
-      // Exclui incomes que são reembolsos vinculados a expenses (serão mostradas junto com a expense)
       .filter((t) => !relatedTransactionIds.has(t.id));
   }, [transactions, relatedTransactionIds]);
 
-  // Agrupa transações por installmentGroupId (preferido) ou fallback para descrição + método + categoria
+  // Agrupa transações por installmentGroupId
   const groupedSplits = useMemo(() => {
     const groups: Map<string, InstallmentGroup> = new Map();
 
     splitsTransactions.forEach((t) => {
-      // Usa installmentGroupId se disponível, senão faz fallback para o método antigo
       const key = t.installmentGroupId 
         ? t.installmentGroupId 
         : `${t.description}-${t.paymentMethod}-${t.category}-${t.type}-${t.installments}`;
@@ -173,7 +279,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           key,
           installmentGroupId: t.installmentGroupId,
           description: t.description,
-          originalDescription: t.description, // Será recalculado depois
+          originalDescription: t.description,
           descriptions: [t.description],
           category: t.category,
           paymentMethod: t.paymentMethod,
@@ -195,7 +301,6 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       group.installments.push(t);
       group.totalAmount += t.amount;
       
-      // Adiciona descrição única à lista de descrições
       if (!group.descriptions.includes(t.description)) {
         group.descriptions.push(t.description);
       }
@@ -209,23 +314,19 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       if (t.date > group.endDate) group.endDate = t.date;
     });
 
-    // Ordena as parcelas de cada grupo por currentInstallment e depois por data
+    // Ordena parcelas e encontra descrição principal
     groups.forEach((group) => {
       group.installments.sort((a, b) => {
-        // Primeiro ordena por número da parcela
         const installmentDiff = (a.currentInstallment || 1) - (b.currentInstallment || 1);
         if (installmentDiff !== 0) return installmentDiff;
-        // Se mesmo número de parcela, ordena por data
         return new Date(a.date).getTime() - new Date(b.date).getTime();
       });
       
-      // Encontra a descrição mais comum (original) para usar como referência
       const descriptionCounts = new Map<string, number>();
       group.installments.forEach((inst) => {
         descriptionCounts.set(inst.description, (descriptionCounts.get(inst.description) || 0) + 1);
       });
       
-      // A descrição original é a mais comum
       let maxCount = 0;
       let originalDesc = group.installments[0]?.description || "";
       descriptionCounts.forEach((count, desc) => {
@@ -235,8 +336,6 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         }
       });
       group.originalDescription = originalDesc;
-      
-      // A descrição principal exibida no header é a original (mais comum)
       group.description = originalDesc;
     });
 
@@ -265,32 +364,38 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   }, [groupedSplits, searchTerm, filterType, filterStatus]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
+  // Estatísticas
+  const stats = useMemo(() => {
+    const inProgressGroups = groupedSplits.filter((g) => g.paidCount < g.totalInstallments);
+    const completedGroups = groupedSplits.filter((g) => g.paidCount >= g.totalInstallments);
 
-  const formatDate = (dateString: string) => {
-    const [year, month, day] = dateString.split("-");
-    return `${day}/${month}/${year}`;
+    const totalRemaining = inProgressGroups.reduce((sum, g) => sum + (g.totalAmount - g.paidAmount), 0);
+    const totalPaid = groupedSplits.reduce((sum, g) => sum + g.paidAmount, 0);
+    const totalAll = groupedSplits.reduce((sum, g) => sum + g.totalAmount, 0);
+
+    return {
+      inProgressCount: inProgressGroups.length,
+      completedCount: completedGroups.length,
+      totalRemaining,
+      totalPaid,
+      totalAll,
+    };
+  }, [groupedSplits]);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
   const formatDateShort = (dateString: string) => {
-    const [year, month, day] = dateString.split("-");
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const [year, month] = dateString.split("-");
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     return `${months[parseInt(month) - 1]} ${year}`;
   };
 
   const formatDateFull = (dateString: string) => {
     const [year, month, day] = dateString.split("-");
     const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    return date.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
   };
 
   const isCurrentMonth = (dateString: string) => {
@@ -301,7 +406,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
   const getPeriod = (dateString: string) => {
     const [year, month] = dateString.split("-");
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     return `${months[parseInt(month) - 1]} ${year}`;
   };
 
@@ -317,61 +422,58 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     });
   };
 
-  // Estatísticas
-  const stats = useMemo(() => {
-    const inProgressGroups = groupedSplits.filter((g) => g.paidCount < g.totalInstallments);
-    const completedGroups = groupedSplits.filter((g) => g.paidCount >= g.totalInstallments);
-
-    const totalRemaining = inProgressGroups.reduce(
-      (sum, g) => sum + (g.totalAmount - g.paidAmount),
-      0
-    );
-    const totalPaid = groupedSplits.reduce((sum, g) => sum + g.paidAmount, 0);
-
-    return {
-      inProgressCount: inProgressGroups.length,
-      completedCount: completedGroups.length,
-      totalRemaining,
-      totalPaid,
-      sharedCount: groupedSplits.filter((g) => g.isShared).length,
-    };
-  }, [groupedSplits]);
-
+  // =============================================
+  // CARD COMPONENT - Design alinhado
+  // =============================================
   const renderInstallmentCard = (group: InstallmentGroup) => {
     const isExpanded = expandedGroups.has(group.key);
     const isCompleted = group.paidCount >= group.totalInstallments;
     const progress = (group.paidCount / group.totalInstallments) * 100;
     const isIncome = group.type === "income";
+    const accentColor = isIncome ? "#059669" : "#F59E0B";
+    
+    // Transações relacionadas (shared)
+    const relatedTransactions = group.installments
+      .map((inst) => getRelatedTransaction(inst))
+      .filter((t): t is Transaction => t !== null);
 
     return (
       <Card
         key={group.key}
         elevation={0}
         sx={{
-          mb: 2,
           position: "relative",
-          overflow: "visible",
-          background: theme.palette.mode === "dark"
+          overflow: "hidden",
+          background: isDarkMode
             ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
             : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
           backdropFilter: "blur(16px)",
-          border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-          borderLeft: `3px solid ${isIncome ? "#059669" : "#F59E0B"}`,
+          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          borderLeft: `3px solid ${accentColor}`,
           borderRadius: "16px",
-          boxShadow: theme.palette.mode === "dark"
-            ? `0 6px 24px -6px ${alpha(isIncome ? "#059669" : "#F59E0B", 0.2)}`
-            : `0 6px 24px -6px ${alpha(isIncome ? "#059669" : "#F59E0B", 0.15)}`,
-          transition: "all 0.2s ease-in-out",
+          boxShadow: isDarkMode
+            ? `0 6px 24px -6px ${alpha(accentColor, 0.2)}`
+            : `0 6px 24px -6px ${alpha(accentColor, 0.15)}`,
+          transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
           "&:hover": {
-            transform: "translateY(-2px)",
-            boxShadow: theme.palette.mode === "dark"
-              ? `0 10px 32px -6px ${alpha(isIncome ? "#059669" : "#F59E0B", 0.3)}`
-              : `0 10px 32px -6px ${alpha(isIncome ? "#059669" : "#F59E0B", 0.25)}`,
+            transform: "translateY(-4px)",
+            boxShadow: isDarkMode
+              ? `0 12px 32px -6px ${alpha(accentColor, 0.3)}`
+              : `0 12px 32px -6px ${alpha(accentColor, 0.25)}`,
+          },
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha(accentColor, 0.08)} 0%, ${alpha(accentColor, 0.02)} 100%)`
+              : `linear-gradient(135deg, ${alpha(accentColor, 0.04)} 0%, ${alpha(accentColor, 0.01)} 100%)`,
+            pointerEvents: "none",
           },
         }}
       >
-        <CardContent sx={{ pb: 1 }}>
-          {/* Header */}
+        <CardContent sx={{ p: isMobile ? 2 : 2.5, "&:last-child": { pb: isMobile ? 2 : 2.5 } }}>
+          {/* Header Row */}
           <Box
             sx={{
               display: "flex",
@@ -381,235 +483,234 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             }}
             onClick={() => toggleGroup(group.key)}
           >
-            <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, flexWrap: "wrap" }}>
-                <CreditCardIcon
-                  fontSize="small"
-                  color={isIncome ? "success" : "warning"}
-                />
-                <Typography variant="subtitle1" fontWeight={600}>
-                  {group.description}
-                </Typography>
-                {group.descriptions.length > 1 && (
-                  <Chip 
-                    label={`+${group.descriptions.length - 1} variation${group.descriptions.length > 2 ? 's' : ''}`}
-                    size="small"
-                    color="info"
-                    variant="outlined"
-                    sx={{ height: 20, fontSize: 10 }}
-                  />
-                )}
+            {/* Left: Icon + Info */}
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, flex: 1, minWidth: 0 }}>
+              <Box
+                sx={{
+                  p: 1,
+                  borderRadius: "12px",
+                  background: `linear-gradient(135deg, ${accentColor}, ${alpha(accentColor, 0.7)})`,
+                  display: "flex",
+                  flexShrink: 0,
+                }}
+              >
+                <CreditCardIcon sx={{ color: "#fff", fontSize: 20 }} />
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                <Chip label={group.category} size="small" variant="outlined" />
-                <Typography variant="caption" color="text.secondary">
-                  {group.paymentMethod}
-                </Typography>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                  <Typography 
+                    variant="subtitle1" 
+                    fontWeight={600}
+                    sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  >
+                    {group.description}
+                  </Typography>
+                  {group.descriptions.length > 1 && (
+                    <Chip 
+                      label={`+${group.descriptions.length - 1}`}
+                      size="small"
+                      color="info"
+                      variant="outlined"
+                      sx={{ height: 18, fontSize: 10 }}
+                    />
+                  )}
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mt: 0.25 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {group.category}
+                  </Typography>
+                  <Typography variant="caption" color="text.disabled">•</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {group.paymentMethod}
+                  </Typography>
+                </Box>
               </Box>
-              {/* Tags - Componente padronizado em formato pílula (só shared, parcelamento exibido separadamente) */}
-              <TransactionTags 
-                transaction={{
-                  isRecurring: false,
-                  frequency: undefined,
-                  isVirtual: false,
-                  installments: undefined,
-                  currentInstallment: undefined,
-                  isShared: group.isShared,
-                  sharedWith: group.sharedWith,
-                  type: group.type,
-                  relatedTransactionId: group.relatedTransactionId,
-                  isPaid: undefined,
-                }} 
-                showRecurring={false} 
-                showInstallments={false}
-              />
             </Box>
 
-            <Box sx={{ textAlign: "right", minWidth: 120 }}>
+            {/* Right: Amount + Status */}
+            <Box sx={{ textAlign: "right", flexShrink: 0, ml: 1 }}>
               <Typography
                 variant="h6"
                 fontWeight={700}
-                color={isIncome ? "success.main" : "error.main"}
+                color={isIncome ? "success.main" : "warning.main"}
+                sx={{ fontFamily: "monospace", letterSpacing: "-0.02em" }}
               >
                 {isIncome ? "+" : "-"}{formatCurrency(group.totalAmount)}
               </Typography>
               <Chip
-                icon={isCompleted ? <CheckCircleIcon /> : <ScheduleIcon />}
+                icon={isCompleted ? <CheckCircleIcon sx={{ fontSize: 14 }} /> : <ScheduleIcon sx={{ fontSize: 14 }} />}
                 label={`${group.paidCount}/${group.totalInstallments}x`}
                 size="small"
                 color={isCompleted ? "success" : "warning"}
-                sx={{ mt: 0.5 }}
+                sx={{ height: 22, fontSize: 11, borderRadius: "8px", mt: 0.5 }}
               />
             </Box>
           </Box>
 
-          {/* Progress Bar */}
+          {/* Progress + Period */}
           <Box sx={{ mt: 2 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
               <Typography variant="caption" color="text.secondary">
                 {formatDateShort(group.startDate)} → {formatDateShort(group.endDate)}
               </Typography>
-              <Typography variant="caption" fontWeight={600}>
-                {Math.round(progress)}% paid
+              <Typography variant="caption" fontWeight={600} color={accentColor}>
+                {Math.round(progress)}% pago
               </Typography>
             </Box>
             <LinearProgress
               variant="determinate"
               value={progress}
-              color={isCompleted ? "success" : "warning"}
-              sx={{ height: 8, borderRadius: 4 }}
+              sx={{
+                height: 4,
+                borderRadius: "4px",
+                bgcolor: alpha(accentColor, 0.1),
+                "& .MuiLinearProgress-bar": {
+                  borderRadius: "4px",
+                  background: `linear-gradient(90deg, ${accentColor}, ${alpha(accentColor, 0.7)})`,
+                },
+              }}
             />
           </Box>
 
-          {/* Related Transaction (Income) - Mostrar quando for compartilhado */}
-          {(() => {
-            // Para cada parcela do grupo, procura a transação relacionada
-            const relatedTransactions = group.installments
-              .map((inst) => getRelatedTransaction(inst))
-              .filter((t): t is Transaction => t !== null);
-            
-            if (relatedTransactions.length === 0) return null;
-            
-            const totalRelatedAmount = relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-            const paidRelatedCount = relatedTransactions.filter((t) => t.isPaid).length;
-            const paidRelatedAmount = relatedTransactions.filter((t) => t.isPaid).reduce((sum, t) => sum + (t.amount || 0), 0);
-            
-            return (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 1.5,
-                  borderRadius: "12px",
-                  bgcolor: alpha(theme.palette.success.main, 0.08),
-                  border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <ArrowUpIcon fontSize="small" color="success" />
-                    <Typography variant="body2" fontWeight={500}>
-                      Compartilhado com {group.sharedWith}
-                    </Typography>
-                    <Chip
-                      label={`${paidRelatedCount}/${relatedTransactions.length}x`}
-                      size="small"
-                      color={paidRelatedCount === relatedTransactions.length ? "success" : "warning"}
-                      variant="outlined"
-                      sx={{ height: 20, fontSize: 10 }}
-                    />
-                  </Box>
-                  <Box sx={{ textAlign: "right" }}>
-                    <Typography variant="body2" fontWeight={700} color="success.main">
-                      +{formatCurrency(totalRelatedAmount)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Recebido: {formatCurrency(paidRelatedAmount)}
-                    </Typography>
-                  </Box>
+          {/* Shared Info (if applicable) */}
+          {relatedTransactions.length > 0 && (
+            <Box
+              sx={{
+                mt: 1.5,
+                p: 1.5,
+                borderRadius: "10px",
+                bgcolor: alpha(theme.palette.success.main, 0.08),
+                border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <ArrowUpIcon fontSize="small" color="success" />
+                  <Typography variant="body2" fontWeight={500}>
+                    Compartilhado com {group.sharedWith}
+                  </Typography>
                 </Box>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                  Valor líquido total: {formatCurrency(group.totalAmount - totalRelatedAmount)}
+                <Typography variant="body2" fontWeight={700} color="success.main">
+                  +{formatCurrency(relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0))}
                 </Typography>
               </Box>
-            );
-          })()}
+            </Box>
+          )}
 
-          {/* Expand/Collapse Button */}
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+          {/* Tags */}
+          <TransactionTags 
+            transaction={{
+              isRecurring: false,
+              frequency: undefined,
+              isVirtual: false,
+              installments: undefined,
+              currentInstallment: undefined,
+              isShared: group.isShared,
+              sharedWith: group.sharedWith,
+              type: group.type,
+              relatedTransactionId: group.relatedTransactionId,
+              isPaid: undefined,
+            }} 
+            showRecurring={false} 
+            showInstallments={false}
+          />
+
+          {/* Action Buttons */}
+          <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mt: 1.5, flexWrap: "wrap" }}>
             <Button
               size="small"
-              onClick={() => toggleGroup(group.key)}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleGroup(group.key);
+              }}
               endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              sx={{ textTransform: "none" }}
+              sx={{ 
+                textTransform: "none", 
+                color: "text.secondary",
+                fontSize: 12,
+                "&:hover": { bgcolor: alpha(accentColor, 0.08) }
+              }}
             >
-              {isExpanded ? "Hide installments" : `View ${group.totalInstallments} installments`}
+              {isExpanded ? "Ocultar parcelas" : `Ver ${group.totalInstallments} parcelas`}
             </Button>
+            
+            {onUpdateInstallmentDates && (
+              <Tooltip title="Alterar datas de vencimento">
+                <Button
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDateDialog(group);
+                  }}
+                  startIcon={<CalendarMonthIcon sx={{ fontSize: 16 }} />}
+                  sx={{ 
+                    textTransform: "none", 
+                    color: "text.secondary",
+                    fontSize: 12,
+                    "&:hover": { 
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      color: "primary.main"
+                    }
+                  }}
+                >
+                  Alterar Datas
+                </Button>
+              </Tooltip>
+            )}
           </Box>
         </CardContent>
 
-        {/* Installments List */}
+        {/* Expanded Content */}
         <Collapse in={isExpanded}>
           <Divider />
-          <Box sx={{ p: 2 }}>
-            {/* Tabs para transações compartilhadas */}
-            {(() => {
-              const relatedTransactions = group.installments
-                .map((inst) => getRelatedTransaction(inst))
-                .filter((t): t is Transaction => t !== null);
-              const hasRelated = relatedTransactions.length > 0;
-              const currentTab = selectedSharedTab[group.key] || 0;
-              
-              return hasRelated ? (
-                <Box sx={{ mb: 2 }}>
-                  <Tabs
-                    value={currentTab}
-                    onChange={(_, newValue) => setSelectedSharedTab((prev) => ({ ...prev, [group.key]: newValue }))}
-                    variant="fullWidth"
-                    sx={{
-                      bgcolor: alpha(theme.palette.action.hover, 0.04),
-                      borderRadius: "12px",
-                      p: 0.5,
-                      minHeight: 40,
-                      "& .MuiTabs-indicator": {
-                        display: "none",
+          <Box sx={{ p: isMobile ? 2 : 2.5, bgcolor: alpha(theme.palette.background.default, 0.5) }}>
+            {/* Tabs for shared transactions */}
+            {relatedTransactions.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Tabs
+                  value={selectedSharedTab[group.key] || 0}
+                  onChange={(_, newValue) => setSelectedSharedTab((prev) => ({ ...prev, [group.key]: newValue }))}
+                  variant="fullWidth"
+                  sx={{
+                    bgcolor: alpha(theme.palette.action.hover, 0.04),
+                    borderRadius: "10px",
+                    p: 0.5,
+                    minHeight: 36,
+                    "& .MuiTabs-indicator": { display: "none" },
+                    "& .MuiTab-root": {
+                      minHeight: 32,
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      fontSize: "0.8rem",
+                      "&.Mui-selected": {
+                        bgcolor: isDarkMode 
+                          ? alpha(theme.palette.primary.main, 0.2)
+                          : alpha(theme.palette.primary.main, 0.1),
+                        color: theme.palette.primary.main,
                       },
-                      "& .MuiTab-root": {
-                        minHeight: 36,
-                        borderRadius: "8px",
-                        textTransform: "none",
-                        fontWeight: 600,
-                        fontSize: "0.875rem",
-                        transition: "all 0.2s ease-in-out",
-                        "&.Mui-selected": {
-                          bgcolor: theme.palette.mode === "dark" 
-                            ? alpha(theme.palette.primary.main, 0.2)
-                            : alpha(theme.palette.primary.main, 0.1),
-                          color: theme.palette.primary.main,
-                        },
-                      },
-                    }}
-                  >
-                    <Tab 
-                      label={
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <ArrowDownIcon fontSize="small" />
-                          Despesa
-                        </Box>
-                      } 
-                    />
-                    <Tab 
-                      label={
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <ArrowUpIcon fontSize="small" />
-                          Compartilhado com {group.sharedWith}
-                        </Box>
-                      } 
-                    />
-                  </Tabs>
-                </Box>
-              ) : null;
-            })()}
+                    },
+                  }}
+                >
+                  <Tab label={<Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}><ArrowDownIcon fontSize="small" />Despesa</Box>} />
+                  <Tab label={<Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}><ArrowUpIcon fontSize="small" />Compartilhado</Box>} />
+                </Tabs>
+              </Box>
+            )}
 
-            {/* Tab: Despesa (expense installments) */}
+            {/* Tab: Expense Installments */}
             {(selectedSharedTab[group.key] || 0) === 0 && (
               <>
-            {/* Título da Tabela */}
-            <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <VisibilityIcon fontSize="small" color="primary" />
-              All {group.totalInstallments} Installments
-            </Typography>
+                <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <VisibilityIcon fontSize="small" color="primary" />
+                  Todas as {group.totalInstallments} parcelas
+                </Typography>
 
-            {isMobile ? (
-              // Mobile: Cards compactos com design melhorado
-              (() => {
-                const hasMultipleDescriptions = group.descriptions.length > 1;
-                
-                return (
+                {isMobile ? (
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                     {group.installments.map((t) => {
                       const isPaid = t.isPaid !== false;
                       const isCurrent = isCurrentMonth(t.date);
-                      const isDescriptionDifferent = hasMultipleDescriptions && t.description !== group.originalDescription;
                       
                       return (
                         <Paper
@@ -617,191 +718,91 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                           sx={{
                             p: 1.5,
                             display: "flex",
-                            flexDirection: "column",
+                            alignItems: "center",
                             gap: 1,
                             opacity: isPaid ? 0.6 : 1,
-                            bgcolor: isCurrent && !isPaid
-                              ? alpha(theme.palette.primary.main, 0.08) 
-                              : isPaid
-                                ? "action.disabledBackground"
-                                : "background.paper",
-                            border: isCurrent && !isPaid ? 2 : 1,
-                            borderColor: isCurrent && !isPaid ? "primary.main" : "divider",
-                            borderRadius: "12px",
+                            bgcolor: isCurrent && !isPaid ? alpha(theme.palette.primary.main, 0.08) : "background.paper",
+                            border: isCurrent && !isPaid ? `2px solid ${theme.palette.primary.main}` : `1px solid ${theme.palette.divider}`,
+                            borderRadius: "10px",
                           }}
                         >
-                          {/* Descrição individual (se diferente) */}
-                          {hasMultipleDescriptions && (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                              <Typography 
-                                variant="caption" 
-                                fontWeight={isDescriptionDifferent ? 600 : 400}
-                                color={isDescriptionDifferent ? "info.main" : "text.secondary"}
-                                sx={{ 
-                                  overflow: "hidden", 
-                                  textOverflow: "ellipsis", 
-                                  whiteSpace: "nowrap",
-                                  flex: 1,
-                                }}
-                              >
-                                {t.description}
-                              </Typography>
-                              {isDescriptionDifferent && (
-                                <Chip 
-                                  label="edited" 
-                                  size="small" 
-                                  color="info" 
-                                  variant="outlined"
-                                  sx={{ height: 16, fontSize: 8 }} 
-                                />
-                              )}
-                            </Box>
-                          )}
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Checkbox
-                              checked={isPaid}
-                              onChange={(e) => onTogglePaid(t.id, e.target.checked)}
-                              size="small"
-                              color="success"
-                              sx={{ p: 0.5 }}
-                            />
-                            <Box
-                              sx={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: "8px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                bgcolor: isCurrent && !isPaid
-                                  ? alpha(theme.palette.primary.main, 0.15) 
-                                  : alpha(theme.palette.action.hover, 0.1),
-                                border: `1px solid ${isCurrent && !isPaid ? theme.palette.primary.main : "transparent"}`,
-                              }}
-                            >
-                              <Typography 
-                                variant="caption" 
-                                fontWeight={700}
-                                color={isCurrent && !isPaid ? "primary.main" : "text.secondary"}
-                                sx={{ fontSize: 10 }}
-                              >
-                                #{t.currentInstallment}
-                              </Typography>
-                            </Box>
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
-                                <Typography 
-                                  variant="body2" 
-                                  fontWeight={isCurrent ? 600 : 500}
-                                  sx={{
-                                    textDecoration: isPaid ? "line-through" : "none",
-                                  }}
-                                >
-                                  {formatDateFull(t.date)}
-                                </Typography>
-                                {isCurrent && !isPaid && (
-                                  <Chip 
-                                    label="This Month" 
-                                    size="small" 
-                                    color="primary" 
-                                    sx={{ height: 18, fontSize: 9 }} 
-                                  />
-                                )}
-                                {isPaid && (
-                                  <Chip 
-                                    label="Paid" 
-                                    size="small" 
-                                    color="success" 
-                                    sx={{ height: 18, fontSize: 9 }} 
-                                  />
-                                )}
-                              </Box>
-                              <Typography variant="caption" color="text.secondary">
-                                {t.currentInstallment}/{t.installments}x • {getPeriod(t.date)}
-                              </Typography>
-                            </Box>
-                            <Typography
-                              variant="body2"
-                              fontWeight={600}
-                              color={isIncome ? "success.main" : "error.main"}
-                              sx={{ 
-                                fontFamily: "monospace", 
-                                fontSize: 12,
-                                textDecoration: isPaid ? "line-through" : "none",
-                              }}
-                            >
-                              {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
+                          <Checkbox
+                            checked={isPaid}
+                            onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                            size="small"
+                            color="success"
+                            sx={{ p: 0.5 }}
+                          />
+                          <Box
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: "8px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              bgcolor: isCurrent && !isPaid ? alpha(theme.palette.primary.main, 0.15) : alpha(theme.palette.action.hover, 0.1),
+                            }}
+                          >
+                            <Typography variant="caption" fontWeight={700} color={isCurrent && !isPaid ? "primary.main" : "text.secondary"} sx={{ fontSize: 10 }}>
+                              #{t.currentInstallment}
                             </Typography>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setMobileActionAnchor({ element: e.currentTarget, transaction: t });
-                              }}
-                            >
-                              <MoreVertIcon fontSize="small" />
-                            </IconButton>
                           </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="body2" fontWeight={isCurrent ? 600 : 500} sx={{ textDecoration: isPaid ? "line-through" : "none" }}>
+                              {formatDateFull(t.date)}
+                            </Typography>
+                            {isCurrent && !isPaid && <Chip label="Atual" size="small" color="primary" sx={{ height: 16, fontSize: 9, mt: 0.5 }} />}
+                          </Box>
+                          <Typography variant="body2" fontWeight={600} color={isIncome ? "success.main" : "warning.main"} sx={{ fontFamily: "monospace", fontSize: 12 }}>
+                            {formatCurrency(t.amount || 0)}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMobileActionAnchor({ element: e.currentTarget, transaction: t });
+                            }}
+                          >
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
                         </Paper>
                       );
                     })}
                   </Box>
-                );
-              })()
-            ) : (
-              // Desktop: Tabela com design melhorado (igual ao RecurringView)
-              (() => {
-                // Verifica se há descrições diferentes no grupo
-                const hasMultipleDescriptions = group.descriptions.length > 1;
-                
-                return (
-                  <Table size="small">
+                ) : (
+                  <Table size="small" sx={{ "& td, & th": { py: 1 } }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 50 }}>Paid</TableCell>
-                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 80 }}>#</TableCell>
-                        {hasMultipleDescriptions && <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Description</TableCell>}
-                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Date</TableCell>
-                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Period</TableCell>
-                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Amount</TableCell>
-                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Status</TableCell>
-                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Actions</TableCell>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)} padding="checkbox">Pago</TableCell>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>#</TableCell>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Data</TableCell>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Período</TableCell>
+                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
+                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>Status</TableCell>
+                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>Ações</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {group.installments.map((t) => {
                         const isPaid = t.isPaid !== false;
                         const isCurrent = isCurrentMonth(t.date);
-                        const isDescriptionDifferent = hasMultipleDescriptions && t.description !== group.originalDescription;
                         
                         return (
                           <TableRow
                             key={t.id}
                             sx={{
                               opacity: isPaid ? 0.6 : 1,
-                              bgcolor: isCurrent && !isPaid
-                                ? alpha(theme.palette.primary.main, 0.08) 
-                                : isPaid
-                                  ? "action.disabledBackground"
-                                  : "transparent",
-                              "&:hover": {
-                                bgcolor: alpha(theme.palette.action.hover, 0.08),
-                              },
-                              "& td": {
-                                textDecoration: isPaid ? "line-through" : "none",
-                                textDecorationColor: "text.disabled",
-                              },
+                              bgcolor: isCurrent && !isPaid ? alpha(theme.palette.primary.main, 0.08) : "transparent",
                             }}
                           >
-                            <TableCell>
-                              <Tooltip title={isPaid ? "Mark as Unpaid" : "Mark as Paid"}>
-                                <Checkbox
-                                  checked={isPaid}
-                                  onChange={(e) => onTogglePaid(t.id, e.target.checked)}
-                                  size="small"
-                                  color="success"
-                                />
-                              </Tooltip>
+                            <TableCell padding="checkbox">
+                              <Checkbox
+                                checked={isPaid}
+                                onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                                size="small"
+                                color="success"
+                              />
                             </TableCell>
                             <TableCell>
                               <Chip
@@ -809,34 +810,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                                 size="small"
                                 variant="outlined"
                                 color={isCurrent && !isPaid ? "primary" : "default"}
-                                sx={{ fontWeight: 600 }}
+                                sx={{ fontWeight: 600, height: 22 }}
                               />
                             </TableCell>
-                            {hasMultipleDescriptions && (
-                              <TableCell>
-                                <Typography 
-                                  variant="body2" 
-                                  fontWeight={isDescriptionDifferent ? 600 : 400}
-                                  color={isDescriptionDifferent ? "primary.main" : "text.primary"}
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 0.5,
-                                  }}
-                                >
-                                  {t.description}
-                                  {isDescriptionDifferent && (
-                                    <Chip 
-                                      label="edited" 
-                                      size="small" 
-                                      color="info" 
-                                      variant="outlined"
-                                      sx={{ height: 18, fontSize: 9, ml: 0.5 }} 
-                                    />
-                                  )}
-                                </Typography>
-                              </TableCell>
-                            )}
                             <TableCell>
                               <Typography variant="body2" fontWeight={isCurrent ? 600 : 400}>
                                 {formatDateFull(t.date)}
@@ -847,47 +823,27 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                                 {getPeriod(t.date)}
                               </Typography>
                             </TableCell>
-                            <TableCell align="right" sx={{ fontFamily: "monospace" }}>
-                              <Typography 
-                                variant="body2" 
-                                fontWeight={600}
-                                color={isIncome ? "success.main" : "error.main"}
-                              >
-                                {isIncome ? "+" : "-"}{formatCurrency(t.amount || 0)}
+                            <TableCell align="right">
+                              <Typography variant="body2" fontWeight={600} color={isIncome ? "success.main" : "warning.main"}>
+                                {formatCurrency(t.amount || 0)}
                               </Typography>
                             </TableCell>
                             <TableCell align="center">
                               {isPaid ? (
-                                <Chip 
-                                  label="Paid" 
-                                  size="small" 
-                                  color="success" 
-                                  sx={{ fontWeight: 500 }}
-                                />
+                                <Chip label="Pago" size="small" color="success" sx={{ height: 22 }} />
                               ) : isCurrent ? (
-                                <Chip 
-                                  label="Current" 
-                                  size="small" 
-                                  color="primary" 
-                                  sx={{ fontWeight: 500 }}
-                                />
+                                <Chip label="Atual" size="small" color="primary" sx={{ height: 22 }} />
                               ) : (
-                                <Chip 
-                                  label="Pending" 
-                                  size="small" 
-                                  variant="outlined" 
-                                  color="default"
-                                  sx={{ opacity: 0.7 }}
-                                />
+                                <Chip label="Pendente" size="small" variant="outlined" sx={{ height: 22, opacity: 0.7 }} />
                               )}
                             </TableCell>
                             <TableCell align="center">
-                              <Tooltip title="Edit">
+                              <Tooltip title="Editar">
                                 <IconButton size="small" onClick={() => onEdit(t)} color="primary">
                                   <EditIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Delete">
+                              <Tooltip title="Excluir">
                                 <IconButton size="small" onClick={() => onDelete(t.id)} color="error">
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
@@ -898,523 +854,206 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                       })}
                     </TableBody>
                   </Table>
-                );
-              })()
-            )}
+                )}
 
-            {/* Resumo do Parcelamento */}
-            <Paper sx={{ p: 2, mt: 2, bgcolor: "background.paper", borderRadius: "12px" }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Installment Summary
-              </Typography>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography variant="body2" color="text.secondary">
-                  {group.paidCount}/{group.totalInstallments} installments paid
-                </Typography>
-                <Box sx={{ textAlign: "right" }}>
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    Remaining: {formatCurrency(group.totalAmount - group.paidAmount)}
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    color={isIncome ? "success.main" : "error.main"}
-                  >
-                    Total: {isIncome ? "+" : "-"}{formatCurrency(group.totalAmount)}
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
+                {/* Summary */}
+                <Paper 
+                  elevation={0}
+                  sx={{ 
+                    p: 2, 
+                    mt: 2, 
+                    borderRadius: "12px",
+                    bgcolor: alpha(accentColor, 0.05),
+                    border: `1px solid ${alpha(accentColor, 0.15)}`,
+                  }}
+                >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                        Resumo do Parcelamento
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {group.paidCount}/{group.totalInstallments} parcelas pagas
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: "right" }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Restante: {formatCurrency(group.totalAmount - group.paidAmount)}
+                      </Typography>
+                      <Typography variant="h6" fontWeight={700} color={isIncome ? "success.main" : "warning.main"}>
+                        Total: {formatCurrency(group.totalAmount)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
               </>
             )}
 
-            {/* Tab: Compartilhado (related income installments) */}
-            {(selectedSharedTab[group.key] || 0) === 1 && (() => {
-              const relatedTransactions = group.installments
-                .map((inst) => getRelatedTransaction(inst))
-                .filter((t): t is Transaction => t !== null);
-              
-              if (relatedTransactions.length === 0) return null;
+            {/* Tab: Shared (related income) */}
+            {(selectedSharedTab[group.key] || 0) === 1 && relatedTransactions.length > 0 && (
+              <>
+                <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <VisibilityIcon fontSize="small" color="success" />
+                  Parcelas Compartilhadas
+                </Typography>
 
-              const totalRelatedAmount = relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-              const paidRelatedCount = relatedTransactions.filter((t) => t.isPaid).length;
-              const paidRelatedAmount = relatedTransactions.filter((t) => t.isPaid).reduce((sum, t) => sum + (t.amount || 0), 0);
-              
-              return (
-                <>
-                  <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <VisibilityIcon fontSize="small" color="success" />
-                    Todas as {relatedTransactions.length} Parcelas Compartilhadas
-                  </Typography>
-                  
-                  {isMobile ? (
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                      {relatedTransactions.map((t, idx) => {
+                {isMobile ? (
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    {relatedTransactions.map((t) => {
+                      const isPaid = t.isPaid !== false;
+                      const isCurrent = isCurrentMonth(t.date);
+                      
+                      return (
+                        <Paper
+                          key={t.id}
+                          sx={{
+                            p: 1.5,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            opacity: isPaid ? 0.6 : 1,
+                            bgcolor: isCurrent && !isPaid ? alpha(theme.palette.success.main, 0.08) : "background.paper",
+                            border: isCurrent && !isPaid ? `2px solid ${theme.palette.success.main}` : `1px solid ${theme.palette.divider}`,
+                            borderRadius: "10px",
+                          }}
+                        >
+                          <Checkbox
+                            checked={isPaid}
+                            onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                            size="small"
+                            color="success"
+                            sx={{ p: 0.5 }}
+                          />
+                          <Box
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: "8px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              bgcolor: isCurrent && !isPaid ? alpha(theme.palette.success.main, 0.15) : alpha(theme.palette.action.hover, 0.1),
+                            }}
+                          >
+                            <Typography variant="caption" fontWeight={700} color={isCurrent && !isPaid ? "success.main" : "text.secondary"} sx={{ fontSize: 10 }}>
+                              #{t.currentInstallment}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" fontWeight={isCurrent ? 600 : 500}>
+                              {formatDateFull(t.date)}
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" fontWeight={600} color="success.main" sx={{ fontFamily: "monospace", fontSize: 12 }}>
+                            +{formatCurrency(t.amount || 0)}
+                          </Typography>
+                          <Chip label={isPaid ? "Recebido" : "Pendente"} size="small" color={isPaid ? "success" : "warning"} sx={{ height: 20, fontSize: 10 }} />
+                        </Paper>
+                      );
+                    })}
+                  </Box>
+                ) : (
+                  <Table size="small" sx={{ "& td, & th": { py: 1 } }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)} padding="checkbox">Recebido</TableCell>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>#</TableCell>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Data</TableCell>
+                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
+                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {relatedTransactions.map((t) => {
                         const isPaid = t.isPaid !== false;
                         const isCurrent = isCurrentMonth(t.date);
                         
                         return (
-                          <Paper
-                            key={t.id}
-                            sx={{
-                              p: 1.5,
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              opacity: isPaid ? 0.6 : 1,
-                              bgcolor: isCurrent && !isPaid
-                                ? alpha(theme.palette.success.main, 0.08) 
-                                : isPaid
-                                  ? "action.disabledBackground"
-                                  : "background.paper",
-                              border: isCurrent && !isPaid ? 2 : 1,
-                              borderColor: isCurrent && !isPaid ? "success.main" : "divider",
-                              borderRadius: "12px",
-                            }}
-                          >
-                            <Checkbox
-                              checked={isPaid}
-                              onChange={(e) => onTogglePaid(t.id, e.target.checked)}
-                              size="small"
-                              color="success"
-                            />
-                            <Box
-                              sx={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: "8px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                bgcolor: isCurrent && !isPaid
-                                  ? alpha(theme.palette.success.main, 0.15) 
-                                  : alpha(theme.palette.action.hover, 0.1),
-                              }}
-                            >
-                              <Typography 
-                                variant="caption" 
-                                fontWeight={700}
-                                color={isCurrent && !isPaid ? "success.main" : "text.secondary"}
-                                sx={{ fontSize: 10 }}
-                              >
-                                #{t.currentInstallment}
-                              </Typography>
-                            </Box>
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Typography 
-                                variant="body2" 
-                                fontWeight={isCurrent ? 600 : 500}
-                              >
-                                {formatDate(t.date)}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {t.currentInstallment}/{t.installments}x
-                              </Typography>
-                            </Box>
-                            <Typography
-                              variant="body2"
-                              fontWeight={600}
-                              color="success.main"
-                              sx={{ fontFamily: "monospace", fontSize: 12 }}
-                            >
-                              +{formatCurrency(t.amount || 0)}
-                            </Typography>
-                            <Chip
-                              label={isPaid ? "Recebido" : "Pendente"}
-                              size="small"
-                              color={isPaid ? "success" : "warning"}
-                              sx={{ height: 20, fontSize: 10 }}
-                            />
-                          </Paper>
+                          <TableRow key={t.id} sx={{ opacity: isPaid ? 0.6 : 1, bgcolor: isCurrent && !isPaid ? alpha(theme.palette.success.main, 0.08) : "transparent" }}>
+                            <TableCell padding="checkbox">
+                              <Checkbox checked={isPaid} onChange={(e) => onTogglePaid(t.id, e.target.checked)} size="small" color="success" />
+                            </TableCell>
+                            <TableCell>
+                              <Chip label={`#${t.currentInstallment}`} size="small" variant="outlined" color={isCurrent && !isPaid ? "success" : "default"} sx={{ fontWeight: 600, height: 22 }} />
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" fontWeight={isCurrent ? 600 : 400}>{formatDateFull(t.date)}</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography variant="body2" fontWeight={600} color="success.main">+{formatCurrency(t.amount || 0)}</Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip label={isPaid ? "Recebido" : isCurrent ? "Atual" : "Pendente"} size="small" color={isPaid ? "success" : isCurrent ? "warning" : "default"} variant={isPaid || isCurrent ? "filled" : "outlined"} sx={{ height: 22 }} />
+                            </TableCell>
+                          </TableRow>
                         );
                       })}
-                    </Box>
-                  ) : (
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 50 }}>Recebido</TableCell>
-                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 80 }}>#</TableCell>
-                          <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Data</TableCell>
-                          <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Período</TableCell>
-                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
-                          <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Status</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {relatedTransactions.map((t) => {
-                          const isPaid = t.isPaid !== false;
-                          const isCurrent = isCurrentMonth(t.date);
-                          
-                          return (
-                            <TableRow
-                              key={t.id}
-                              sx={{
-                                opacity: isPaid ? 0.6 : 1,
-                                bgcolor: isCurrent && !isPaid
-                                  ? alpha(theme.palette.success.main, 0.08) 
-                                  : isPaid
-                                    ? "action.disabledBackground"
-                                    : "transparent",
-                                "&:hover": {
-                                  bgcolor: alpha(theme.palette.action.hover, 0.08),
-                                },
-                              }}
-                            >
-                              <TableCell>
-                                <Tooltip title={isPaid ? "Marcar como não recebido" : "Marcar como recebido"}>
-                                  <Checkbox
-                                    checked={isPaid}
-                                    onChange={(e) => onTogglePaid(t.id, e.target.checked)}
-                                    size="small"
-                                    color="success"
-                                  />
-                                </Tooltip>
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={`#${t.currentInstallment}`}
-                                  size="small"
-                                  variant="outlined"
-                                  color={isCurrent && !isPaid ? "success" : "default"}
-                                  sx={{ fontWeight: 600 }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Typography variant="body2" fontWeight={isCurrent ? 600 : 400}>
-                                  {formatDate(t.date)}
-                                </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Typography variant="body2" color="text.secondary">
-                                  {getPeriod(t.date)}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="right" sx={{ fontFamily: "monospace" }}>
-                                <Typography 
-                                  variant="body2" 
-                                  fontWeight={600}
-                                  color="success.main"
-                                >
-                                  +{formatCurrency(t.amount || 0)}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="center">
-                                {isPaid ? (
-                                  <Chip 
-                                    label="Recebido" 
-                                    size="small" 
-                                    color="success" 
-                                    sx={{ fontWeight: 500 }}
-                                  />
-                                ) : isCurrent ? (
-                                  <Chip 
-                                    label="Atual" 
-                                    size="small" 
-                                    color="warning" 
-                                    sx={{ fontWeight: 500 }}
-                                  />
-                                ) : (
-                                  <Chip 
-                                    label="Pendente" 
-                                    size="small" 
-                                    variant="outlined" 
-                                    color="default"
-                                    sx={{ opacity: 0.7 }}
-                                  />
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  )}
+                    </TableBody>
+                  </Table>
+                )}
 
-                  {/* Resumo do Compartilhado */}
-                  <Paper sx={{ p: 2, mt: 2, bgcolor: "background.paper", borderRadius: "12px" }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Resumo Compartilhado
+                <Paper 
+                  elevation={0}
+                  sx={{ p: 2, mt: 2, borderRadius: "12px", bgcolor: alpha("#059669", 0.05), border: `1px solid ${alpha("#059669", 0.15)}` }}
+                >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {relatedTransactions.filter(t => t.isPaid).length}/{relatedTransactions.length} parcelas recebidas
                     </Typography>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <Typography variant="body2" color="text.secondary">
-                        {paidRelatedCount}/{relatedTransactions.length} parcelas recebidas
-                      </Typography>
-                      <Box sx={{ textAlign: "right" }}>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          Recebido: {formatCurrency(paidRelatedAmount)}
-                        </Typography>
-                        <Typography
-                          variant="h6"
-                          fontWeight={700}
-                          color="success.main"
-                        >
-                          Total: +{formatCurrency(totalRelatedAmount)}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Paper>
-                </>
-              );
-            })()}
+                    <Typography variant="h6" fontWeight={700} color="success.main">
+                      +{formatCurrency(relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0))}
+                    </Typography>
+                  </Box>
+                </Paper>
+              </>
+            )}
           </Box>
         </Collapse>
       </Card>
     );
   };
 
+  // =============================================
+  // MAIN RENDER
+  // =============================================
   return (
     <Box sx={{ 
       display: "flex", 
       flexDirection: "column", 
       gap: isMobile ? 2 : 3,
-      // Extra padding para bottom navigation + FABs
       pb: { xs: "180px", md: 0 },
     }}>
       {/* Header */}
       <Box
         sx={{
           display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
           justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
+          alignItems: { xs: "flex-start", sm: "center" },
           gap: 2,
         }}
       >
         <Box>
-          <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-            Installments (Splits)
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Manage your installment purchases
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: "12px",
+                bgcolor: alpha("#F59E0B", 0.1),
+                display: "flex",
+              }}
+            >
+              <PaymentsIcon sx={{ color: "#F59E0B" }} />
+            </Box>
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
+              Parcelamentos
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Gerencie suas compras parceladas
           </Typography>
         </Box>
-
-        {!isMobile && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onNewTransaction}
-          >
-            Transaction
-          </Button>
-        )}
-      </Box>
-
-      {/* Summary Cards */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: isMobile ? 1.5 : 2,
-              position: "relative",
-              overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              boxShadow: `0 6px 24px -6px ${alpha("#F59E0B", 0.15)}`,
-              borderRadius: "16px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: "linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(251, 191, 36, 0.02) 100%)",
-                pointerEvents: "none",
-              },
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
-              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#F59E0B", 0.1), border: `1px solid ${alpha("#F59E0B", 0.2)}` }}>
-                <ScheduleIcon sx={{ fontSize: 14, color: "#F59E0B" }} />
-              </Box>
-              <Typography variant="overline" sx={{ color: "#F59E0B", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
-                In Progress
-              </Typography>
-            </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "#F59E0B", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
-              {stats.inProgressCount}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: isMobile ? 1.5 : 2,
-              position: "relative",
-              overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
-              borderRadius: "16px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)",
-                pointerEvents: "none",
-              },
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
-              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#059669", 0.1), border: `1px solid ${alpha("#059669", 0.2)}` }}>
-                <CheckCircleIcon sx={{ fontSize: 14, color: "#059669" }} />
-              </Box>
-              <Typography variant="overline" sx={{ color: "#059669", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
-                Completed
-              </Typography>
-            </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
-              {stats.completedCount}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: isMobile ? 1.5 : 2,
-              position: "relative",
-              overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
-              borderRadius: "16px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
-                pointerEvents: "none",
-              },
-            }}
-          >
-            <Typography variant="overline" sx={{ color: "#DC2626", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600, position: "relative", zIndex: 1 }}>
-              Remaining
-            </Typography>
-            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
-              {formatCurrency(stats.totalRemaining)}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: isMobile ? 1.5 : 2,
-              position: "relative",
-              overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
-              borderRadius: "16px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.02) 100%)",
-                pointerEvents: "none",
-              },
-            }}
-          >
-            <Typography variant="overline" sx={{ color: "#6366f1", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600, position: "relative", zIndex: 1 }}>
-              Total Paid
-            </Typography>
-            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
-              {formatCurrency(stats.totalPaid)}
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* Filters */}
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: "20px",
-          overflow: "hidden",
-          bgcolor: theme.palette.mode === "dark"
-            ? alpha(theme.palette.background.paper, 0.7)
-            : alpha("#FFFFFF", 0.9),
-          backdropFilter: "blur(20px)",
-          border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-          p: 2,
-          display: "flex",
-          flexDirection: isMobile ? "column" : "row",
-          flexWrap: "wrap",
-          alignItems: isMobile ? "stretch" : "center",
-          gap: 2,
-        }}
-      >
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Search..."
-          minWidth={150}
-        />
-
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={filterStatus}
-              label="Status"
-              onChange={(e: SelectChangeEvent) =>
-                setFilterStatus(e.target.value as SplitStatus)
-              }
-            >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="in_progress">
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <ScheduleIcon fontSize="small" color="warning" />
-                  In Progress
-                </Box>
-              </MenuItem>
-              <MenuItem value="completed">
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <CheckCircleIcon fontSize="small" color="success" />
-                  Completed
-                </Box>
-              </MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 100 }}>
-            <InputLabel>Type</InputLabel>
-            <Select
-              value={filterType}
-              label="Type"
-              onChange={(e: SelectChangeEvent) =>
-                setFilterType(e.target.value as "all" | "income" | "expense")
-              }
-            >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="income">Income</MenuItem>
-              <MenuItem value="expense">Expense</MenuItem>
-            </Select>
-          </FormControl>
-
-          {/* Refresh Button */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           {onRefreshData && (
             <Tooltip title="Atualizar dados">
               <IconButton
@@ -1423,13 +1062,8 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 sx={{
                   border: 1,
                   borderColor: "divider",
-                  borderRadius: "20px",
-                  transition: "all 0.2s ease-in-out",
-                  "&:hover": {
-                    borderColor: theme.palette.primary.main,
-                    color: theme.palette.primary.main,
-                    transform: "translateY(-1px)",
-                  },
+                  borderRadius: "10px",
+                  "&:hover": { borderColor: theme.palette.primary.main },
                 }}
               >
                 <RefreshIcon
@@ -1444,12 +1078,189 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               </IconButton>
             </Tooltip>
           )}
+          {!isMobile && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onNewTransaction}
+              sx={{ borderRadius: "10px" }}
+            >
+              Nova Transação
+            </Button>
+          )}
+        </Box>
+      </Box>
+
+      {/* Summary Cards */}
+      <Grid container spacing={isMobile ? 1.5 : 2}>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <ScheduleIcon sx={{ color: "#F59E0B", fontSize: 20 }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Em Andamento
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700} color="#F59E0B">
+              {stats.inProgressCount}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              parcelamentos ativos
+            </Typography>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <CheckCircleIcon sx={{ color: "#059669", fontSize: 20 }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Concluídos
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700} color="#059669">
+              {stats.completedCount}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              parcelamentos quitados
+            </Typography>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <TrendingDownIcon sx={{ color: "#DC2626", fontSize: 20 }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                A Pagar
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#DC2626">
+              {formatCurrency(stats.totalRemaining)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              restante total
+            </Typography>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              background: `linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)`,
+              boxShadow: `0 8px 32px -8px ${alpha("#6366f1", 0.4)}`,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <CheckCircleIcon sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }} />
+              <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.8) }} fontWeight={600}>
+                Total Pago
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#FFFFFF">
+              {formatCurrency(stats.totalPaid)}
+            </Typography>
+            <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.7) }}>
+              de {formatCurrency(stats.totalAll)}
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Filters */}
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: "16px",
+          overflow: "hidden",
+          bgcolor: isDarkMode
+            ? alpha(theme.palette.background.paper, 0.7)
+            : alpha("#FFFFFF", 0.9),
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          p: 2,
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          flexWrap: "wrap",
+          gap: 2,
+          alignItems: isMobile ? "stretch" : "center",
+        }}
+      >
+        <SearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Buscar..."
+          minWidth={180}
+        />
+
+        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", flex: 1 }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={filterStatus}
+              label="Status"
+              onChange={(e: SelectChangeEvent) => setFilterStatus(e.target.value as SplitStatus)}
+            >
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="in_progress">Em Andamento</MenuItem>
+              <MenuItem value="completed">Concluídos</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 100 }}>
+            <InputLabel>Tipo</InputLabel>
+            <Select
+              value={filterType}
+              label="Tipo"
+              onChange={(e: SelectChangeEvent) => setFilterType(e.target.value as "all" | "income" | "expense")}
+            >
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="income">Receita</MenuItem>
+              <MenuItem value="expense">Despesa</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
       </Paper>
 
       {/* Installment Groups */}
       {filteredGroups.length > 0 ? (
-        <Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {filteredGroups.map((group) => renderInstallmentCard(group))}
         </Box>
       ) : (
@@ -1458,17 +1269,20 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           sx={{ 
             p: 4, 
             textAlign: "center",
-            borderRadius: "20px",
-            bgcolor: theme.palette.mode === "dark"
+            borderRadius: "16px",
+            bgcolor: isDarkMode
               ? alpha(theme.palette.background.paper, 0.7)
               : alpha("#FFFFFF", 0.9),
             backdropFilter: "blur(20px)",
-            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
           }}
         >
           <CreditCardIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-          <Typography color="text.secondary" fontStyle="italic">
-            No splits transactions found with the current filters.
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Nenhum parcelamento encontrado
+          </Typography>
+          <Typography variant="body2" color="text.disabled">
+            Crie uma transação parcelada para gerenciá-la aqui
           </Typography>
         </Paper>
       )}
@@ -1481,29 +1295,21 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       >
         <MenuItem
           onClick={() => {
-            if (mobileActionAnchor.transaction) {
-              onEdit(mobileActionAnchor.transaction);
-            }
+            if (mobileActionAnchor.transaction) onEdit(mobileActionAnchor.transaction);
             setMobileActionAnchor({ element: null, transaction: null });
           }}
         >
-          <ListItemIcon>
-            <EditIcon fontSize="small" color="primary" />
-          </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
+          <ListItemIcon><EditIcon fontSize="small" color="primary" /></ListItemIcon>
+          <ListItemText>Editar</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() => {
-            if (mobileActionAnchor.transaction) {
-              onDelete(mobileActionAnchor.transaction.id);
-            }
+            if (mobileActionAnchor.transaction) onDelete(mobileActionAnchor.transaction.id);
             setMobileActionAnchor({ element: null, transaction: null });
           }}
         >
-          <ListItemIcon>
-            <DeleteIcon fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
+          <ListItemIcon><DeleteIcon fontSize="small" color="error" /></ListItemIcon>
+          <ListItemText>Excluir</ListItemText>
         </MenuItem>
       </Menu>
 
@@ -1522,6 +1328,285 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           <AddIcon />
         </Fab>
       )}
+
+      {/* Painel lateral para alterar datas de vencimento */}
+      <Drawer
+        anchor="right"
+        open={dateDialogOpen}
+        onClose={handleCloseDateDialog}
+        PaperProps={{
+          sx: {
+            width: isMobile ? "100vw" : 520,
+            maxWidth: "100vw",
+            bgcolor: isDarkMode ? theme.palette.background.default : "#FAFBFC",
+            backgroundImage: "none",
+            borderLeft: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+            boxShadow: isDarkMode
+              ? `-24px 0 80px -20px ${alpha("#000000", 0.5)}`
+              : `-24px 0 80px -20px ${alpha(theme.palette.primary.main, 0.12)}`,
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: isDarkMode
+                ? alpha("#000000", 0.5)
+                : alpha("#000000", 0.25),
+              backdropFilter: "blur(4px)",
+            },
+          },
+        }}
+      >
+        {/* Header */}
+        <Box sx={{ p: 3, pb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: "20px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.1),
+                  color: "primary.main",
+                }}
+              >
+                <EventRepeatIcon />
+              </Box>
+              <Box>
+                <Typography variant="h6" fontWeight={600}>
+                  Alterar Datas de Vencimento
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 280 }} noWrap>
+                  {selectedGroupForDateChange?.description}
+                </Typography>
+              </Box>
+            </Box>
+            <IconButton
+              onClick={handleCloseDateDialog}
+              size="small"
+              sx={{
+                color: "text.secondary",
+                "&:hover": {
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: "text.primary",
+                },
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          {/* Info Card */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: "16px",
+              bgcolor: isDarkMode
+                ? alpha(theme.palette.primary.main, 0.08)
+                : alpha(theme.palette.primary.main, 0.04),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Configure o dia de vencimento e o mês de início para recalcular as datas de todas as{" "}
+              <Typography component="span" fontWeight={600} color="primary.main">
+                {selectedGroupForDateChange?.totalInstallments} parcelas
+              </Typography>.
+            </Typography>
+          </Box>
+        </Box>
+
+        <Divider />
+
+        {/* Content - Scrollable */}
+        <Box sx={{ flex: 1, overflow: "auto", p: 3 }}>
+          <Stack spacing={3}>
+            {/* Dia de vencimento */}
+            <FormControl fullWidth>
+              <InputLabel>Dia de Vencimento</InputLabel>
+              <Select
+                value={newDueDay}
+                label="Dia de Vencimento"
+                onChange={(e) => setNewDueDay(Number(e.target.value))}
+                sx={{ borderRadius: "12px" }}
+              >
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                  <MenuItem key={day} value={day}>
+                    Dia {day}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Mês de início */}
+            <FormControl fullWidth>
+              <InputLabel>Mês de Início</InputLabel>
+              <Select
+                value={newStartMonth}
+                label="Mês de Início"
+                onChange={(e) => setNewStartMonth(Number(e.target.value))}
+                sx={{ borderRadius: "12px" }}
+              >
+                <MenuItem value={1}>Janeiro</MenuItem>
+                <MenuItem value={2}>Fevereiro</MenuItem>
+                <MenuItem value={3}>Março</MenuItem>
+                <MenuItem value={4}>Abril</MenuItem>
+                <MenuItem value={5}>Maio</MenuItem>
+                <MenuItem value={6}>Junho</MenuItem>
+                <MenuItem value={7}>Julho</MenuItem>
+                <MenuItem value={8}>Agosto</MenuItem>
+                <MenuItem value={9}>Setembro</MenuItem>
+                <MenuItem value={10}>Outubro</MenuItem>
+                <MenuItem value={11}>Novembro</MenuItem>
+                <MenuItem value={12}>Dezembro</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Ano de início */}
+            <FormControl fullWidth>
+              <InputLabel>Ano de Início</InputLabel>
+              <Select
+                value={newStartYear}
+                label="Ano de Início"
+                onChange={(e) => setNewStartYear(Number(e.target.value))}
+                sx={{ borderRadius: "12px" }}
+              >
+                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Preview das novas datas */}
+            {previewDates.length > 0 && (
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
+                  <VisibilityIcon fontSize="small" color="primary" />
+                  Prévia das Novas Datas
+                </Typography>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    maxHeight: 300,
+                    overflow: "auto",
+                    borderRadius: "16px",
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.background.paper, 0.5)
+                      : alpha("#FFFFFF", 0.8),
+                    border: `1px solid ${theme.palette.divider}`,
+                  }}
+                >
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>Parcela</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>Data Atual</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>Nova Data</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {selectedGroupForDateChange?.installments
+                        .sort((a, b) => (a.currentInstallment || 1) - (b.currentInstallment || 1))
+                        .map((inst, idx) => {
+                          const preview = previewDates[idx];
+                          const currentDate = inst.date;
+                          const hasChanged = currentDate !== preview?.date;
+                          
+                          return (
+                            <TableRow key={inst.id}>
+                              <TableCell>
+                                <Chip
+                                  label={`#${inst.currentInstallment}`}
+                                  size="small"
+                                  variant="outlined"
+                                  color={hasChanged ? "primary" : "default"}
+                                  sx={{ height: 22, fontSize: 11 }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{ textDecoration: hasChanged ? "line-through" : "none", fontSize: 12 }}
+                                >
+                                  {formatDateFull(currentDate)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight={hasChanged ? 600 : 400}
+                                  color={hasChanged ? "primary.main" : "text.secondary"}
+                                  sx={{ fontSize: 12 }}
+                                >
+                                  {preview ? formatDateFull(preview.date) : "-"}
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </Box>
+            )}
+          </Stack>
+        </Box>
+
+        {/* Footer */}
+        <Divider />
+        <Box
+          sx={{
+            p: 3,
+            display: "flex",
+            gap: 2,
+            justifyContent: "flex-end",
+            bgcolor: isDarkMode
+              ? alpha(theme.palette.background.paper, 0.5)
+              : alpha("#FFFFFF", 0.8),
+          }}
+        >
+          <Button
+            onClick={handleCloseDateDialog}
+            disabled={isUpdatingDates}
+            sx={{
+              textTransform: "none",
+              borderRadius: "12px",
+              px: 3,
+              color: "text.secondary",
+              "&:hover": {
+                bgcolor: alpha(theme.palette.action.hover, 0.08),
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveDates}
+            disabled={isUpdatingDates || !onUpdateInstallmentDates}
+            startIcon={isUpdatingDates ? <CircularProgress size={18} color="inherit" /> : <CalendarMonthIcon />}
+            sx={{
+              textTransform: "none",
+              borderRadius: "12px",
+              px: 3,
+              boxShadow: `0 4px 14px -4px ${alpha(theme.palette.primary.main, 0.4)}`,
+              "&:hover": {
+                boxShadow: `0 6px 20px -4px ${alpha(theme.palette.primary.main, 0.5)}`,
+              },
+            }}
+          >
+            {isUpdatingDates ? "Atualizando..." : "Salvar Alterações"}
+          </Button>
+        </Box>
+      </Drawer>
     </Box>
   );
 };

@@ -377,6 +377,51 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     setError(null);
   }, []);
 
+  // Atualiza datas de múltiplas parcelas de um grupo
+  const updateInstallmentDates = useCallback(
+    async (
+      installmentIds: string[],
+      newDates: { id: string; date: string }[]
+    ): Promise<boolean> => {
+      try {
+        // Atualiza cada parcela com sua nova data
+        const updatePromises = newDates.map(({ id, date }) =>
+          supabase
+            .from("transactions")
+            .update({ date })
+            .eq("id", id)
+        );
+
+        const results = await Promise.all(updatePromises);
+        
+        // Verifica se houve algum erro
+        const hasError = results.some((r) => r.error);
+        if (hasError) {
+          const firstError = results.find((r) => r.error)?.error;
+          throw firstError;
+        }
+
+        // Atualiza o estado local
+        setTransactions((prev) =>
+          prev.map((t) => {
+            const newDateEntry = newDates.find((d) => d.id === t.id);
+            if (newDateEntry) {
+              return { ...t, date: newDateEntry.date };
+            }
+            return t;
+          })
+        );
+
+        return true;
+      } catch (err: any) {
+        console.error("Error updating installment dates:", err);
+        setError(err.message || "Failed to update installment dates");
+        throw err;
+      }
+    },
+    []
+  );
+
   return {
     transactions,
     setTransactions,
@@ -392,6 +437,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     getFilteredByDate,
     getSummary,
     generateRecurringForMonth,
+    updateInstallmentDates,
   };
 }
 

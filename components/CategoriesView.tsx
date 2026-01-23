@@ -29,6 +29,7 @@ import {
   Card,
   CardContent,
   Checkbox,
+  Button,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -46,20 +47,19 @@ import {
   Edit as EditIcon,
   MoreVert as MoreVertIcon,
   Warning as WarningIcon,
+  AccountBalance as BalanceIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import {
   getTableContainerSx,
   getHeaderCellSx,
   getRowSx,
-  getMobileCardSx,
 } from "../utils/tableStyles";
 import { Transaction, TransactionType, ColorConfig, CategoryColors } from "../types";
 import { ColorsContext } from "../App";
 import ColorPicker from "./ColorPicker";
 import DateFilter from "./DateFilter";
 
-// Cores padrão para novas categorias
 const DEFAULT_INCOME_COLORS: ColorConfig = { primary: "#10b981", secondary: "#059669" };
 const DEFAULT_EXPENSE_COLORS: ColorConfig = { primary: "#ef4444", secondary: "#dc2626" };
 
@@ -111,29 +111,24 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
   const isDarkMode = theme.palette.mode === "dark";
   const { getCategoryColor } = useContext(ColorsContext);
 
-  // Tab state: 0 = Overview, 1 = Manage
   const [tabValue, setTabValue] = useState(0);
   const [newIncomeCat, setNewIncomeCat] = useState("");
   const [newExpenseCat, setNewExpenseCat] = useState("");
-  
-  // Estado para categoria selecionada (detalhes)
   const [selectedCategory, setSelectedCategory] = useState<{ name: string; type: TransactionType } | null>(null);
 
-  // Sincroniza com categoria inicial externa
+  const [mobileActionAnchor, setMobileActionAnchor] = useState<{
+    element: HTMLElement | null;
+    transaction: Transaction | null;
+  }>({ element: null, transaction: null });
+
   useEffect(() => {
     if (initialSelectedCategory) {
       setSelectedCategory(initialSelectedCategory);
       onClearInitialCategory?.();
     }
   }, [initialSelectedCategory, onClearInitialCategory]);
-  
-  // Estado para menu de ações mobile
-  const [mobileActionAnchor, setMobileActionAnchor] = useState<{
-    element: HTMLElement | null;
-    transaction: Transaction | null;
-  }>({ element: null, transaction: null });
 
-  // Gera transações recorrentes virtuais para o mês
+  // Gera transações recorrentes virtuais
   const generateRecurringTransactions = useMemo(() => {
     const virtualTransactions: Transaction[] = [];
     const targetMonth = selectedMonth + 1;
@@ -164,11 +159,8 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         const adjustedDay = Math.min(origDay, daysInTargetMonth);
         const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
 
-        // Verifica se esta data está no excluded_dates da transação original
         const excludedDates = t.excludedDates || [];
-        if (excludedDates.includes(virtualDate)) {
-          return; // Não gera a transação virtual para esta data
-        }
+        if (excludedDates.includes(virtualDate)) return;
 
         virtualTransactions.push({
           ...t,
@@ -183,19 +175,14 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     return virtualTransactions;
   }, [transactions, selectedMonth, selectedYear]);
 
-  // Filtra transações do mês selecionado
+  // Filtra transações do mês
   const monthTransactions = useMemo(() => {
     const baseTransactions = transactions.filter((t) => {
       const [y, m] = t.date.split("-");
       const isCurrentMonth = parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
       
       if (!isCurrentMonth) return false;
-      
-      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
-      // Isso acontece quando o usuário exclui a primeira ocorrência com "apenas esta"
-      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
-        return false;
-      }
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) return false;
       
       return true;
     });
@@ -203,12 +190,11 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     return [...baseTransactions, ...generateRecurringTransactions];
   }, [transactions, selectedMonth, selectedYear, generateRecurringTransactions]);
 
-  // Calcula resumo por categoria
+  // Resumo por categoria
   const categorySummaries = useMemo(() => {
     const incomeMap = new Map<string, CategorySummary>();
     const expenseMap = new Map<string, CategorySummary>();
 
-    // Inicializa todas as categorias
     categories.income.forEach((cat) => {
       const colors = categoryColors.income?.[cat] || DEFAULT_INCOME_COLORS;
       incomeMap.set(cat, { name: cat, type: "income", total: 0, transactionCount: 0, colors, unpaidCount: 0, unpaidAmount: 0 });
@@ -218,29 +204,15 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       expenseMap.set(cat, { name: cat, type: "expense", total: 0, transactionCount: 0, colors, unpaidCount: 0, unpaidAmount: 0 });
     });
 
-    // Processa transações do mês
     monthTransactions.forEach((tx) => {
-      if (tx.type === "income") {
-        const summary = incomeMap.get(tx.category);
-        if (summary) {
-          summary.total += tx.amount || 0;
-          summary.transactionCount++;
-          // Conta não pagas
-          if (!tx.isPaid) {
-            summary.unpaidCount++;
-            summary.unpaidAmount += tx.amount || 0;
-          }
-        }
-      } else {
-        const summary = expenseMap.get(tx.category);
-        if (summary) {
-          summary.total += tx.amount || 0;
-          summary.transactionCount++;
-          // Conta não pagas
-          if (!tx.isPaid) {
-            summary.unpaidCount++;
-            summary.unpaidAmount += tx.amount || 0;
-          }
+      const map = tx.type === "income" ? incomeMap : expenseMap;
+      const summary = map.get(tx.category);
+      if (summary) {
+        summary.total += tx.amount || 0;
+        summary.transactionCount++;
+        if (!tx.isPaid) {
+          summary.unpaidCount++;
+          summary.unpaidAmount += tx.amount || 0;
         }
       }
     });
@@ -251,9 +223,23 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     };
   }, [monthTransactions, categories, categoryColors]);
 
-  // Totais
-  const totalIncome = categorySummaries.income.reduce((sum, s) => sum + s.total, 0);
-  const totalExpense = categorySummaries.expense.reduce((sum, s) => sum + s.total, 0);
+  // Estatísticas
+  const stats = useMemo(() => {
+    const totalIncome = categorySummaries.income.reduce((sum, s) => sum + s.total, 0);
+    const totalExpense = categorySummaries.expense.reduce((sum, s) => sum + s.total, 0);
+    const incomeWithActivity = categorySummaries.income.filter(s => s.transactionCount > 0).length;
+    const expenseWithActivity = categorySummaries.expense.filter(s => s.transactionCount > 0).length;
+    
+    return {
+      totalIncome,
+      totalExpense,
+      balance: totalIncome - totalExpense,
+      incomeCategories: categories.income.length,
+      expenseCategories: categories.expense.length,
+      incomeWithActivity,
+      expenseWithActivity,
+    };
+  }, [categorySummaries, categories]);
 
   // Transações da categoria selecionada
   const selectedCategoryTransactions = useMemo(() => {
@@ -264,10 +250,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
   }, [monthTransactions, selectedCategory]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
   const formatDate = (dateStr: string) => {
@@ -285,10 +268,13 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     }
   };
 
-  // Renderiza card de categoria para visão geral
+  // =============================================
+  // CATEGORY CARD COMPONENT
+  // =============================================
   const renderCategoryCard = (summary: CategorySummary, total: number) => {
     const percentage = total > 0 ? (summary.total / total) * 100 : 0;
-    const IconComponent = summary.type === "income" ? TrendingUpIcon : TrendingDownIcon;
+    const isIncome = summary.type === "income";
+    const accentColor = summary.colors.primary;
 
     return (
       <Paper
@@ -296,7 +282,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         elevation={0}
         onClick={() => setSelectedCategory({ name: summary.name, type: summary.type })}
         sx={{
-          p: isMobile ? 1.5 : 2,
+          p: isMobile ? 2 : 2.5,
           cursor: "pointer",
           position: "relative",
           overflow: "hidden",
@@ -306,55 +292,88 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
           backdropFilter: "blur(16px)",
           border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-          borderLeft: `3px solid ${summary.colors.primary}`,
-          borderRadius: "12px",
+          borderLeft: `3px solid ${accentColor}`,
+          borderRadius: "16px",
           boxShadow: isDarkMode
-            ? `0 4px 16px -4px ${alpha(summary.colors.primary, 0.2)}`
-            : `0 4px 16px -4px ${alpha(summary.colors.primary, 0.15)}`,
+            ? `0 6px 24px -6px ${alpha(accentColor, 0.2)}`
+            : `0 6px 24px -6px ${alpha(accentColor, 0.15)}`,
           "&:hover": {
-            transform: "translateY(-2px)",
+            transform: "translateY(-4px)",
             boxShadow: isDarkMode
-              ? `0 8px 24px -4px ${alpha(summary.colors.primary, 0.3)}`
-              : `0 8px 24px -4px ${alpha(summary.colors.primary, 0.25)}`,
+              ? `0 12px 32px -6px ${alpha(accentColor, 0.3)}`
+              : `0 12px 32px -6px ${alpha(accentColor, 0.25)}`,
           },
           "&::before": {
             content: '""',
             position: "absolute",
             top: 0, left: 0, right: 0, bottom: 0,
             background: isDarkMode
-              ? `linear-gradient(135deg, ${alpha(summary.colors.primary, 0.08)} 0%, ${alpha(summary.colors.secondary, 0.02)} 100%)`
-              : `linear-gradient(135deg, ${alpha(summary.colors.primary, 0.04)} 0%, ${alpha(summary.colors.secondary, 0.01)} 100%)`,
+              ? `linear-gradient(135deg, ${alpha(accentColor, 0.08)} 0%, ${alpha(summary.colors.secondary, 0.02)} 100%)`
+              : `linear-gradient(135deg, ${alpha(accentColor, 0.04)} 0%, ${alpha(summary.colors.secondary, 0.01)} 100%)`,
             pointerEvents: "none",
           },
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {/* Header */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, flex: 1, minWidth: 0 }}>
             <Box
               sx={{
-                p: 0.75,
-                borderRadius: "20px",
-                background: `linear-gradient(135deg, ${summary.colors.primary}, ${summary.colors.secondary})`,
+                p: 1,
+                borderRadius: "12px",
+                background: `linear-gradient(135deg, ${accentColor}, ${summary.colors.secondary})`,
                 display: "flex",
+                flexShrink: 0,
               }}
             >
-              <IconComponent sx={{ color: "#fff", fontSize: 16 }} />
+              {isIncome ? (
+                <TrendingUpIcon sx={{ color: "#fff", fontSize: 18 }} />
+              ) : (
+                <TrendingDownIcon sx={{ color: "#fff", fontSize: 18 }} />
+              )}
             </Box>
-            <Typography variant="subtitle2" fontWeight={600} noWrap sx={{ maxWidth: 120 }}>
-              {summary.name}
-            </Typography>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography 
+                variant="subtitle1" 
+                fontWeight={600}
+                sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              >
+                {summary.name}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {summary.transactionCount} transaç{summary.transactionCount === 1 ? "ão" : "ões"}
+              </Typography>
+            </Box>
           </Box>
           <Tooltip title="Ver detalhes">
-            <IconButton size="small" sx={{ color: summary.colors.primary, p: 0.5 }}>
+            <IconButton 
+              size="small" 
+              sx={{ 
+                color: accentColor,
+                bgcolor: alpha(accentColor, 0.1),
+                "&:hover": { bgcolor: alpha(accentColor, 0.2) }
+              }}
+            >
               <ArrowForwardIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
 
-        <Typography variant="h6" fontWeight="bold" sx={{ color: summary.colors.primary, mb: 0.5 }}>
-          {formatCurrency(summary.total)}
+        {/* Amount */}
+        <Typography 
+          variant="h6" 
+          fontWeight="bold" 
+          sx={{ 
+            color: accentColor, 
+            mb: 1.5,
+            fontFamily: "monospace",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {isIncome ? "+" : "-"}{formatCurrency(summary.total)}
         </Typography>
 
+        {/* Progress */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <LinearProgress
             variant="determinate"
@@ -362,61 +381,64 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             sx={{
               flex: 1,
               height: 4,
-              borderRadius: "20px",
-              bgcolor: alpha(summary.colors.primary, 0.1),
+              borderRadius: "4px",
+              bgcolor: alpha(accentColor, 0.1),
               "& .MuiLinearProgress-bar": {
-                borderRadius: "20px",
-                background: `linear-gradient(90deg, ${summary.colors.primary}, ${summary.colors.secondary})`,
+                borderRadius: "4px",
+                background: `linear-gradient(90deg, ${accentColor}, ${summary.colors.secondary})`,
               },
             }}
           />
-          <Typography variant="caption" color="text.secondary" sx={{ minWidth: 30 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ minWidth: 35 }}>
             {percentage.toFixed(0)}%
           </Typography>
         </Box>
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
-          <Typography variant="caption" color="text.secondary">
-            {summary.transactionCount} transaç{summary.transactionCount === 1 ? "ão" : "ões"}
-          </Typography>
-          {summary.unpaidCount > 0 && (
+        {/* Unpaid indicator */}
+        {summary.unpaidCount > 0 && (
+          <Box sx={{ mt: 1.5, display: "flex", justifyContent: "flex-end" }}>
             <Chip
               icon={<WarningIcon />}
               label={summary.unpaidCount === 1 ? "1 pendente" : `${summary.unpaidCount} pendentes`}
               size="small"
               color="warning"
               variant="outlined"
-              sx={{ height: 18, fontSize: "0.6rem", "& .MuiChip-icon": { fontSize: 12 } }}
+              sx={{ height: 22, fontSize: 10, borderRadius: "8px" }}
             />
-          )}
-        </Box>
+          </Box>
+        )}
       </Paper>
     );
   };
 
-  // Renderiza item de categoria para gerenciamento
+  // =============================================
+  // MANAGE ITEM COMPONENT
+  // =============================================
   const renderManageItem = (cat: string, type: TransactionType) => {
     const defaultColors = type === "income" ? DEFAULT_INCOME_COLORS : DEFAULT_EXPENSE_COLORS;
     const colorKey = type === "income" ? categoryColors.income : categoryColors.expense;
     const colors = colorKey?.[cat] || defaultColors;
-    const IconComponent = type === "income" ? TrendingUpIcon : TrendingDownIcon;
+    const summary = (type === "income" ? categorySummaries.income : categorySummaries.expense).find(s => s.name === cat);
 
     return (
       <Paper
         key={cat}
+        elevation={0}
         sx={{
-          p: 1.5,
+          p: 2,
           display: "flex",
           alignItems: "center",
-          gap: 1,
+          gap: 1.5,
+          borderRadius: "16px",
           transition: "all 0.2s ease",
           border: `1px solid ${alpha(colors.primary, 0.2)}`,
+          borderLeft: `3px solid ${colors.primary}`,
           background: isDarkMode
             ? `linear-gradient(135deg, ${alpha(colors.primary, 0.1)} 0%, ${alpha(colors.secondary, 0.05)} 100%)`
             : `linear-gradient(135deg, ${alpha(colors.primary, 0.06)} 0%, ${alpha(colors.secondary, 0.02)} 100%)`,
           "&:hover": {
             transform: "translateY(-2px)",
-            boxShadow: `0 6px 12px -3px ${alpha(colors.primary, 0.2)}`,
+            boxShadow: `0 8px 16px -4px ${alpha(colors.primary, 0.2)}`,
           },
         }}
       >
@@ -425,57 +447,66 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           onChange={(newColors) => onUpdateCategoryColor(type, cat, newColors)}
           size="small"
         />
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: 1, minWidth: 0 }}>
-          <IconComponent fontSize="small" sx={{ color: colors.primary }} />
-          <Typography
-            variant="body2"
-            fontWeight={600}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
+          {type === "income" ? (
+            <TrendingUpIcon fontSize="small" sx={{ color: colors.primary }} />
+          ) : (
+            <TrendingDownIcon fontSize="small" sx={{ color: colors.primary }} />
+          )}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="body1"
+              fontWeight={600}
+              sx={{
+                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {cat}
+            </Typography>
+            {summary && summary.transactionCount > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                {summary.transactionCount} transações este mês
+              </Typography>
+            )}
+          </Box>
+        </Box>
+        <Tooltip title="Remover categoria">
+          <IconButton
+            size="small"
+            onClick={() => onRemoveCategory(type, cat)}
             sx={{
-              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              color: "text.secondary",
+              "&:hover": {
+                bgcolor: alpha(theme.palette.error.main, 0.1),
+                color: "error.main",
+              },
             }}
           >
-            {cat}
-          </Typography>
-        </Box>
-        <IconButton
-          size="small"
-          onClick={() => onRemoveCategory(type, cat)}
-          sx={{
-            color: "text.secondary",
-            p: 0.5,
-            "&:hover": {
-              bgcolor: alpha(theme.palette.error.main, 0.1),
-              color: "error.main",
-            },
-          }}
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Paper>
     );
   };
 
-  // View de detalhes da categoria
+  // =============================================
+  // DETAIL VIEW
+  // =============================================
   if (selectedCategory) {
     const categoryColors2 = getCategoryColor(selectedCategory.type, selectedCategory.name);
-    const IconComponent = selectedCategory.type === "income" ? TrendingUpIcon : TrendingDownIcon;
+    const isIncome = selectedCategory.type === "income";
+    const accentColor = isIncome ? "#059669" : "#DC2626";
     const categoryTotal = selectedCategoryTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0);
     
-    // Cor baseada no tipo (verde para receita, vermelho para despesa)
-    const typeColor = selectedCategory.type === "income" ? "#10b981" : "#ef4444";
-    
-    // Calcula transações não pagas da categoria selecionada
-    const categoryUnpaidTransactions = selectedCategoryTransactions.filter((tx) => !tx.isPaid);
-    const categoryUnpaidCount = categoryUnpaidTransactions.length;
-    const categoryUnpaidAmount = categoryUnpaidTransactions
-      .filter((tx) => tx.type === "expense")
-      .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+    const unpaidTransactions = selectedCategoryTransactions.filter((tx) => !tx.isPaid);
+    const unpaidCount = unpaidTransactions.length;
+    const unpaidAmount = unpaidTransactions.filter((tx) => tx.type === "expense").reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}>
@@ -490,25 +521,32 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <IconButton onClick={() => setSelectedCategory(null)} sx={{ mr: 0.5 }}>
+            <IconButton 
+              onClick={() => setSelectedCategory(null)} 
+              sx={{ 
+                border: 1, 
+                borderColor: "divider",
+                borderRadius: "10px",
+              }}
+            >
               <ArrowBackIcon />
             </IconButton>
             <Box
               sx={{
                 p: 1,
-                borderRadius: "20px",
+                borderRadius: "12px",
                 background: `linear-gradient(135deg, ${categoryColors2.primary}, ${categoryColors2.secondary})`,
                 display: "flex",
               }}
             >
-              <IconComponent sx={{ color: "#fff" }} />
+              {isIncome ? <TrendingUpIcon sx={{ color: "#fff" }} /> : <TrendingDownIcon sx={{ color: "#fff" }} />}
             </Box>
             <Box>
               <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
                 {selectedCategory.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {selectedCategory.type === "income" ? "Categoria de Receita" : "Categoria de Despesa"}
+                {isIncome ? "Categoria de Receita" : "Categoria de Despesa"}
               </Typography>
             </Box>
           </Box>
@@ -522,250 +560,169 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           />
         </Box>
 
-        {/* Summary Card */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: isMobile ? 1.5 : 2,
-            position: "relative",
-            overflow: "hidden",
-            background: isDarkMode
-              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-            backdropFilter: "blur(16px)",
-            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            boxShadow: `0 6px 24px -6px ${alpha(typeColor, 0.15)}`,
-            borderRadius: "16px",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0, left: 0, right: 0, bottom: 0,
-              background: `linear-gradient(135deg, ${alpha(typeColor, 0.06)} 0%, ${alpha(typeColor, 0.02)} 100%)`,
-              pointerEvents: "none",
-            },
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative", zIndex: 1 }}>
-            <Box
+        {/* Summary Cards */}
+        <Grid container spacing={isMobile ? 1.5 : 2}>
+          <Grid size={{ xs: 6, md: 4 }}>
+            <Paper
+              elevation={0}
               sx={{
-                width: isMobile ? 44 : 52,
-                height: isMobile ? 44 : 52,
+                p: isMobile ? 1.5 : 2,
                 borderRadius: "16px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: `linear-gradient(135deg, ${alpha(typeColor, 0.2)} 0%, ${alpha(typeColor, 0.1)} 100%)`,
-                border: `1px solid ${alpha(typeColor, 0.2)}`,
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                background: isDarkMode
+                  ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                  : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+                backdropFilter: "blur(16px)",
               }}
             >
-              <IconComponent sx={{ color: typeColor, fontSize: isMobile ? 24 : 28 }} />
-            </Box>
-            <Box>
-              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
-                Total no Mês
-              </Typography>
-              <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: typeColor, letterSpacing: "-0.02em" }}>
-                {selectedCategory.type === "income" ? "" : "- "}{formatCurrency(categoryTotal)}
-              </Typography>
-            </Box>
-            <Chip
-              label={`${selectedCategoryTransactions.length} transações`}
-              size="small"
-              sx={{
-                ml: "auto",
-                bgcolor: alpha(typeColor, 0.1),
-                color: typeColor,
-              }}
-            />
-          </Box>
-        </Paper>
-
-        {/* Banner de transações não pagas */}
-        {categoryUnpaidCount > 0 && (
-          <Paper
-            sx={{
-              p: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha("#f59e0b", 0.15)} 0%, ${alpha("#f59e0b", 0.05)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#f59e0b", 0.1)} 0%, ${alpha("#f59e0b", 0.03)} 100%)`,
-              border: `1px solid ${alpha("#f59e0b", 0.3)}`,
-              borderRadius: "12px",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: "20px",
-                  bgcolor: alpha("#f59e0b", 0.2),
-                  display: "flex",
-                }}
-              >
-                <WarningIcon sx={{ color: "#f59e0b" }} />
-              </Box>
-              <Box>
-                <Typography variant="subtitle1" fontWeight={600}>
-                  {categoryUnpaidCount === 1 ? "1 transação não paga" : `${categoryUnpaidCount} transações não pagas`}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                {isIncome ? <TrendingUpIcon sx={{ color: accentColor, fontSize: 20 }} /> : <TrendingDownIcon sx={{ color: accentColor, fontSize: 20 }} />}
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                  Total no Mês
                 </Typography>
-                {categoryUnpaidAmount > 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    Total a pagar: <strong style={{ color: "#f59e0b" }}>{formatCurrency(categoryUnpaidAmount)}</strong>
-                  </Typography>
-                )}
               </Box>
-            </Box>
-          </Paper>
-        )}
+              <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color={accentColor}>
+                {isIncome ? "+" : "-"}{formatCurrency(categoryTotal)}
+              </Typography>
+            </Paper>
+          </Grid>
 
-        {/* Banner de todas pagas */}
-        {categoryUnpaidCount === 0 && selectedCategoryTransactions.length > 0 && (
-          <Paper
-            sx={{
-              p: 2,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha("#10b981", 0.15)} 0%, ${alpha("#10b981", 0.05)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#10b981", 0.1)} 0%, ${alpha("#10b981", 0.03)} 100%)`,
-              border: `1px solid ${alpha("#10b981", 0.3)}`,
-              borderRadius: "12px",
-            }}
-          >
-            <Box
+          <Grid size={{ xs: 6, md: 4 }}>
+            <Paper
+              elevation={0}
               sx={{
-                p: 1,
-                borderRadius: "20px",
-                bgcolor: alpha("#10b981", 0.2),
-                display: "flex",
+                p: isMobile ? 1.5 : 2,
+                borderRadius: "16px",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                background: isDarkMode
+                  ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                  : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+                backdropFilter: "blur(16px)",
               }}
             >
-              <CheckCircleIcon sx={{ color: "#10b981" }} />
-            </Box>
-            <Typography variant="subtitle1" fontWeight={600} color="#10b981">
-              Todas as transações deste mês estão pagas!
-            </Typography>
-          </Paper>
-        )}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                <ReceiptIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                  Transações
+                </Typography>
+              </Box>
+              <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700}>
+                {selectedCategoryTransactions.length}
+              </Typography>
+            </Paper>
+          </Grid>
 
-        {/* Transactions - Mobile Cards or Desktop Table */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: isMobile ? 1.5 : 2,
+                borderRadius: "16px",
+                background: unpaidCount > 0
+                  ? `linear-gradient(135deg, #f59e0b 0%, #d97706 100%)`
+                  : `linear-gradient(135deg, #059669 0%, #047857 100%)`,
+                boxShadow: `0 8px 32px -8px ${alpha(unpaidCount > 0 ? "#f59e0b" : "#059669", 0.4)}`,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                {unpaidCount > 0 ? (
+                  <WarningIcon sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }} />
+                ) : (
+                  <CheckCircleIcon sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }} />
+                )}
+                <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.8) }} fontWeight={600}>
+                  Status
+                </Typography>
+              </Box>
+              <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#FFFFFF">
+                {unpaidCount > 0 ? `${unpaidCount} pendente${unpaidCount > 1 ? "s" : ""}` : "Tudo em dia!"}
+              </Typography>
+              {unpaidAmount > 0 && (
+                <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.7) }}>
+                  {formatCurrency(unpaidAmount)} a pagar
+                </Typography>
+              )}
+            </Paper>
+          </Grid>
+        </Grid>
+
+        {/* Transactions */}
         {isMobile ? (
-          // Mobile Card View
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {selectedCategoryTransactions.length > 0 ? (
-              selectedCategoryTransactions.map((tx) => {
-                const isIncome = selectedCategory.type === "income";
-                const accentColor = isIncome ? "#10b981" : "#ef4444";
-                return (
-                  <Card
-                    key={tx.id}
-                    elevation={0}
-                    sx={{
-                      position: "relative",
-                      overflow: "hidden",
-                      opacity: tx.isPaid !== false ? 0.6 : 1,
-                      background: isDarkMode
-                        ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                        : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-                      backdropFilter: "blur(12px)",
-                      border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.05)}`,
-                      borderLeft: `3px solid ${accentColor}`,
-                      borderRadius: "14px",
-                      transition: "all 0.15s ease-in-out",
-                    }}
-                  >
-                    <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 }, display: "flex", alignItems: "flex-start", gap: 1 }}>
-                      {/* Checkbox */}
-                      <Checkbox
-                        checked={tx.isPaid !== false}
-                        onChange={(e) => onTogglePaid(tx.isVirtual && tx.originalTransactionId ? tx.originalTransactionId : tx.id, e.target.checked)}
-                        size="small"
-                        color={isIncome ? "success" : "error"}
-                        sx={{ mt: -0.5, ml: -1 }}
-                      />
-                      {/* Icon */}
-                      <Box
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: "10px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          background: isDarkMode
-                            ? `linear-gradient(135deg, ${alpha(accentColor, 0.2)} 0%, ${alpha(accentColor, 0.1)} 100%)`
-                            : `linear-gradient(135deg, ${isIncome ? "#D1FAE5" : "#FEE2E2"} 0%, ${alpha(isIncome ? "#D1FAE5" : "#FEE2E2", 0.6)} 100%)`,
-                          border: `1px solid ${isDarkMode ? alpha(accentColor, 0.2) : alpha(accentColor, 0.15)}`,
-                        }}
-                      >
-                        {isIncome ? (
-                          <TrendingUpIcon sx={{ fontSize: 16, color: accentColor }} />
-                        ) : (
-                          <TrendingDownIcon sx={{ fontSize: 16, color: accentColor }} />
-                        )}
+              selectedCategoryTransactions.map((tx) => (
+                <Card
+                  key={tx.id}
+                  elevation={0}
+                  sx={{
+                    position: "relative",
+                    overflow: "hidden",
+                    opacity: tx.isPaid !== false ? 0.6 : 1,
+                    background: isDarkMode
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                      : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                    backdropFilter: "blur(12px)",
+                    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.05)}`,
+                    borderLeft: `3px solid ${accentColor}`,
+                    borderRadius: "14px",
+                  }}
+                >
+                  <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 }, display: "flex", alignItems: "flex-start", gap: 1 }}>
+                    <Checkbox
+                      checked={tx.isPaid !== false}
+                      onChange={(e) => onTogglePaid(tx.isVirtual && tx.originalTransactionId ? tx.originalTransactionId : tx.id, e.target.checked)}
+                      size="small"
+                      color={isIncome ? "success" : "error"}
+                      sx={{ mt: -0.5, ml: -1 }}
+                    />
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        background: `linear-gradient(135deg, ${alpha(accentColor, 0.2)} 0%, ${alpha(accentColor, 0.1)} 100%)`,
+                      }}
+                    >
+                      {isIncome ? <TrendingUpIcon sx={{ fontSize: 16, color: accentColor }} /> : <TrendingDownIcon sx={{ fontSize: 16, color: accentColor }} />}
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                        <Typography variant="body2" fontWeight={600} sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {tx.description}
+                        </Typography>
+                        <Typography variant="body2" fontWeight={700} color={isIncome ? "success.main" : "error.main"} sx={{ flexShrink: 0 }}>
+                          {isIncome ? "+" : "-"} {formatCurrency(tx.amount || 0)}
+                        </Typography>
                       </Box>
-                      {/* Content */}
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
-                          <Typography variant="body2" fontWeight={600} sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {tx.description}
-                          </Typography>
-                          <Typography variant="body2" fontWeight={700} color={isIncome ? "success.main" : "error.main"} sx={{ flexShrink: 0 }}>
-                            {isIncome ? "+" : "-"} {formatCurrency(tx.amount || 0)}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5, flexWrap: "wrap" }}>
-                          <Typography variant="caption" color="text.secondary">{formatDate(tx.date)}</Typography>
-                          <Typography variant="caption" color="text.disabled">•</Typography>
-                          <Typography variant="caption" color="text.secondary">{tx.paymentMethod}</Typography>
-                        </Box>
-                        <TransactionTags transaction={tx} />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">{formatDate(tx.date)}</Typography>
+                        <Typography variant="caption" color="text.disabled">•</Typography>
+                        <Typography variant="caption" color="text.secondary">{tx.paymentMethod}</Typography>
                       </Box>
-                      {/* Actions */}
-                      <IconButton
-                        size="small"
-                        onClick={(e) => setMobileActionAnchor({ element: e.currentTarget, transaction: tx })}
-                        sx={{ color: "text.secondary", mt: -0.5, mr: -1 }}
-                      >
-                        <MoreVertIcon fontSize="small" />
-                      </IconButton>
-                    </CardContent>
-                  </Card>
-                );
-              })
+                      <TransactionTags transaction={tx} />
+                    </Box>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => setMobileActionAnchor({ element: e.currentTarget, transaction: tx })}
+                      sx={{ color: "text.secondary", mt: -0.5, mr: -1 }}
+                    >
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                  </CardContent>
+                </Card>
+              ))
             ) : (
-              <Card elevation={0} sx={{ p: 4, textAlign: "center", borderRadius: "16px" }}>
+              <Paper elevation={0} sx={{ p: 4, textAlign: "center", borderRadius: "16px" }}>
                 <ReceiptIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-                <Typography color="text.secondary" fontStyle="italic">
-                  Nenhuma transação nesta categoria para o mês selecionado.
-                </Typography>
-              </Card>
-            )}
-            {/* Total Summary for Mobile */}
-            {selectedCategoryTransactions.length > 0 && (
-              <Paper sx={{ p: 2, borderRadius: "14px", bgcolor: alpha(categoryColors2.primary, 0.05), border: `1px solid ${alpha(categoryColors2.primary, 0.15)}` }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="body2" fontWeight={600}>
-                    Total ({selectedCategoryTransactions.length} transações)
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    fontWeight={700}
-                    color={typeColor}
-                    sx={{ fontFamily: "monospace" }}
-                  >
-                    {selectedCategory.type === "income" ? "" : "- "}{formatCurrency(categoryTotal)}
-                  </Typography>
-                </Box>
+                <Typography color="text.secondary">Nenhuma transação nesta categoria</Typography>
               </Paper>
             )}
           </Box>
         ) : (
-          // Desktop Table View
           <TableContainer component={Paper} sx={getTableContainerSx(theme, isDarkMode)}>
             <Table size="small">
               <TableHead>
@@ -775,211 +732,92 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Método</TableCell>
                   <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>Status</TableCell>
                   <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
-                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>Ações</TableCell>
+                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>Ações</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {selectedCategoryTransactions.length > 0 ? (
                   selectedCategoryTransactions.map((tx, index) => (
-                    <TableRow
-                      key={tx.id}
-                      sx={{
-                        ...getRowSx(theme, isDarkMode, index),
-                        opacity: tx.isPaid ? 0.7 : 1,
-                    }}
-                  >
-                    <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
-                      {formatDate(tx.date)}
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: "flex", flexDirection: "column" }}>
-                        <Typography
-                          variant="body2"
-                          fontWeight={500}
-                          sx={{
-                            textDecoration: tx.isPaid ? "line-through" : "none",
-                            color: tx.isPaid ? "text.secondary" : "text.primary",
-                          }}
-                        >
-                          {tx.description}
-                        </Typography>
-                        {/* Tags - Componente padronizado em formato pílula */}
-                        <TransactionTags transaction={tx} showShared={false} />
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={tx.paymentMethod} size="small" variant="outlined" />
-                    </TableCell>
-                    <TableCell sx={{ textAlign: "center" }}>
-                      <Tooltip title={tx.isPaid ? "Marcar como não pago" : "Marcar como pago"}>
-                        <IconButton
-                          size="small"
-                          onClick={() => onTogglePaid(tx.id, !tx.isPaid)}
-                          sx={{
-                            color: tx.isPaid ? "#10b981" : "text.disabled",
-                            "&:hover": {
-                              bgcolor: tx.isPaid
-                                ? alpha("#ef4444", 0.1)
-                                : alpha("#10b981", 0.1),
-                            },
-                          }}
-                        >
-                          {tx.isPaid ? (
-                            <CheckCircleIcon fontSize="small" />
-                          ) : (
-                            <UnpaidIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        textAlign: "right",
-                        fontFamily: "monospace",
-                        fontWeight: 600,
-                        color: typeColor,
-                      }}
-                    >
-                      {selectedCategory.type === "income" ? "" : "- "}{formatCurrency(tx.amount || 0)}
-                    </TableCell>
-                    <TableCell sx={{ textAlign: "center" }}>
-                      {isMobile ? (
-                        <IconButton
-                          size="small"
-                          onClick={(e) =>
-                            setMobileActionAnchor({
-                              element: e.currentTarget,
-                              transaction: tx,
-                            })
-                          }
-                        >
-                          <MoreVertIcon fontSize="small" />
-                        </IconButton>
-                      ) : (
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
-                          <Tooltip title={
-                            tx.isVirtual 
-                              ? "Editar recorrência" 
-                              : tx.isRecurring 
-                                ? "Editar transação recorrente"
-                                : tx.installments && tx.installments > 1
-                                  ? "Editar parcelas"
-                                  : "Editar"
-                          }>
-                            <IconButton
-                              size="small"
-                              onClick={() => onEditTransaction(tx)}
-                              sx={{
-                                color: categoryColors2.primary,
-                                "&:hover": {
-                                  bgcolor: alpha(categoryColors2.primary, 0.1),
-                                },
-                              }}
-                            >
-                              <EditIcon fontSize="small" />
+                    <TableRow key={tx.id} sx={{ ...getRowSx(theme, isDarkMode, index), opacity: tx.isPaid ? 0.7 : 1 }}>
+                      <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>{formatDate(tx.date)}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: "flex", flexDirection: "column" }}>
+                          <Typography variant="body2" fontWeight={500} sx={{ textDecoration: tx.isPaid ? "line-through" : "none" }}>
+                            {tx.description}
+                          </Typography>
+                          <TransactionTags transaction={tx} showShared={false} />
+                        </Box>
+                      </TableCell>
+                      <TableCell><Chip label={tx.paymentMethod} size="small" variant="outlined" /></TableCell>
+                      <TableCell sx={{ textAlign: "center" }}>
+                        <Tooltip title={tx.isPaid ? "Marcar como não pago" : "Marcar como pago"}>
+                          <IconButton
+                            size="small"
+                            onClick={() => onTogglePaid(tx.id, !tx.isPaid)}
+                            sx={{ color: tx.isPaid ? "#10b981" : "text.disabled" }}
+                          >
+                            {tx.isPaid ? <CheckCircleIcon fontSize="small" /> : <UnpaidIcon fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell sx={{ textAlign: "right", fontFamily: "monospace", fontWeight: 600, color: accentColor }}>
+                        {isIncome ? "+" : "-"}{formatCurrency(tx.amount || 0)}
+                      </TableCell>
+                      <TableCell sx={{ textAlign: "center" }}>
+                        <Tooltip title="Editar">
+                          <IconButton size="small" onClick={() => onEditTransaction(tx)} color="primary">
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        {!tx.isVirtual && (
+                          <Tooltip title="Excluir">
+                            <IconButton size="small" onClick={() => onDeleteTransaction(tx.id)} color="error">
+                              <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          {!tx.isVirtual && (
-                            <Tooltip title="Excluir">
-                              <IconButton
-                                size="small"
-                                onClick={() => onDeleteTransaction(tx.id)}
-                                sx={{
-                                  color: "#ef4444",
-                                  "&:hover": {
-                                    bgcolor: alpha("#ef4444", 0.1),
-                                  },
-                                }}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Box>
-                      )}
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} sx={{ textAlign: "center", py: 6 }}>
+                      <ReceiptIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+                      <Typography color="text.secondary">Nenhuma transação nesta categoria</Typography>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} sx={{ textAlign: "center", py: 6 }}>
-                    <ReceiptIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-                    <Typography color="text.secondary" fontStyle="italic">
-                      Nenhuma transação nesta categoria para o mês selecionado.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                )}
+              </TableBody>
+              {selectedCategoryTransactions.length > 0 && (
+                <TableFooter>
+                  <TableRow sx={{ bgcolor: "action.hover" }}>
+                    <TableCell colSpan={4} sx={{ textAlign: "right", fontWeight: 600 }}>
+                      Total ({selectedCategoryTransactions.length} transações):
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "right", fontFamily: "monospace", fontWeight: 600, color: accentColor }}>
+                      {isIncome ? "+" : "-"}{formatCurrency(categoryTotal)}
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
+                </TableFooter>
               )}
-            </TableBody>
-            {selectedCategoryTransactions.length > 0 && (
-              <TableFooter>
-                <TableRow sx={{ bgcolor: "action.hover" }}>
-                  <TableCell colSpan={4} sx={{ textAlign: "right", fontWeight: 600 }}>
-                    Total ({selectedCategoryTransactions.length} transações):
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: "right",
-                      fontFamily: "monospace",
-                      fontWeight: 600,
-                      color: typeColor,
-                    }}
-                  >
-                    {selectedCategory.type === "income" ? "" : "- "}{formatCurrency(categoryTotal)}
-                  </TableCell>
-                  <TableCell />
-                </TableRow>
-              </TableFooter>
-            )}
             </Table>
           </TableContainer>
         )}
 
-        {/* Mobile Action Menu */}
+        {/* Mobile Menu */}
         <Menu
           anchorEl={mobileActionAnchor.element}
           open={Boolean(mobileActionAnchor.element)}
           onClose={() => setMobileActionAnchor({ element: null, transaction: null })}
-          PaperProps={{
-            sx: {
-              borderRadius: "20px",
-              minWidth: 160,
-            },
-          }}
         >
-          <MenuItem
-            onClick={() => {
-              if (mobileActionAnchor.transaction) {
-                onEditTransaction(mobileActionAnchor.transaction);
-              }
-              setMobileActionAnchor({ element: null, transaction: null });
-            }}
-          >
-            <ListItemIcon>
-              <EditIcon fontSize="small" sx={{ color: categoryColors2.primary }} />
-            </ListItemIcon>
-            <ListItemText>
-              {mobileActionAnchor.transaction?.isVirtual 
-                ? "Editar Recorrência" 
-                : mobileActionAnchor.transaction?.isRecurring 
-                  ? "Editar Recorrente"
-                  : mobileActionAnchor.transaction?.installments && mobileActionAnchor.transaction.installments > 1
-                    ? "Editar Parcelas"
-                    : "Editar"}
-            </ListItemText>
+          <MenuItem onClick={() => { if (mobileActionAnchor.transaction) onEditTransaction(mobileActionAnchor.transaction); setMobileActionAnchor({ element: null, transaction: null }); }}>
+            <ListItemIcon><EditIcon fontSize="small" color="primary" /></ListItemIcon>
+            <ListItemText>Editar</ListItemText>
           </MenuItem>
           {!mobileActionAnchor.transaction?.isVirtual && (
-            <MenuItem
-              onClick={() => {
-                if (mobileActionAnchor.transaction) {
-                  onDeleteTransaction(mobileActionAnchor.transaction.id);
-                }
-                setMobileActionAnchor({ element: null, transaction: null });
-              }}
-            >
-              <ListItemIcon>
-                <DeleteIcon fontSize="small" color="error" />
-              </ListItemIcon>
+            <MenuItem onClick={() => { if (mobileActionAnchor.transaction) onDeleteTransaction(mobileActionAnchor.transaction.id); setMobileActionAnchor({ element: null, transaction: null }); }}>
+              <ListItemIcon><DeleteIcon fontSize="small" color="error" /></ListItemIcon>
               <ListItemText>Excluir</ListItemText>
             </MenuItem>
           )}
@@ -988,14 +826,11 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     );
   }
 
+  // =============================================
+  // MAIN VIEW
+  // =============================================
   return (
-    <Box sx={{ 
-      display: "flex", 
-      flexDirection: "column", 
-      gap: isMobile ? 2 : 3,
-      // Extra padding para bottom navigation
-      pb: { xs: "140px", md: 0 },
-    }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3, pb: { xs: "140px", md: 0 } }}>
       {/* Header */}
       <Box
         sx={{
@@ -1008,14 +843,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       >
         <Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              sx={{
-                p: 1,
-                borderRadius: "20px",
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                display: "flex",
-              }}
-            >
+            <Box sx={{ p: 1, borderRadius: "12px", bgcolor: alpha(theme.palette.primary.main, 0.1), display: "flex" }}>
               <CategoryIcon color="primary" />
             </Box>
             <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
@@ -1023,35 +851,144 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Gerencie as categorias de receitas e despesas
+            Gerencie suas categorias de receitas e despesas
           </Typography>
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           {tabValue === 0 && (
-            <DateFilter
-              month={selectedMonth}
-              year={selectedYear}
-              onDateChange={onDateChange}
-              showIcon
-              compact={isMobile}
-            />
+            <DateFilter month={selectedMonth} year={selectedYear} onDateChange={onDateChange} showIcon compact={isMobile} />
           )}
         </Box>
       </Box>
 
+      {/* Summary Cards */}
+      <Grid container spacing={isMobile ? 1.5 : 2}>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <TrendingUpIcon sx={{ color: "#059669", fontSize: 20 }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Receitas
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#059669">
+              {formatCurrency(stats.totalIncome)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {stats.incomeWithActivity} de {stats.incomeCategories} categorias
+            </Typography>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <TrendingDownIcon sx={{ color: "#DC2626", fontSize: 20 }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Despesas
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#DC2626">
+              {formatCurrency(stats.totalExpense)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {stats.expenseWithActivity} de {stats.expenseCategories} categorias
+            </Typography>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <CategoryIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Total Categorias
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700}>
+              {stats.incomeCategories + stats.expenseCategories}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {stats.incomeCategories} receitas • {stats.expenseCategories} despesas
+            </Typography>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              background: stats.balance >= 0
+                ? `linear-gradient(135deg, #059669 0%, #047857 100%)`
+                : `linear-gradient(135deg, #DC2626 0%, #b91c1c 100%)`,
+              boxShadow: `0 8px 32px -8px ${alpha(stats.balance >= 0 ? "#059669" : "#DC2626", 0.4)}`,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <BalanceIcon sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }} />
+              <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.8) }} fontWeight={600}>
+                Saldo
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#FFFFFF">
+              {formatCurrency(stats.balance)}
+            </Typography>
+            <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.7) }}>
+              receitas - despesas
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
       {/* Tabs */}
-      <Paper sx={{ px: isMobile ? 1 : 2 }}>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          px: isMobile ? 1 : 2,
+          borderRadius: "16px",
+          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+        }}
+      >
         <Tabs
           value={tabValue}
           onChange={(_, newValue) => setTabValue(newValue)}
-          sx={{
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 600,
-              minHeight: 48,
-            },
-          }}
+          sx={{ "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 48 } }}
         >
           <Tab
             icon={<AssessmentIcon />}
@@ -1060,7 +997,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 Visão Geral
                 <Chip
-                  label={categories.income.length + categories.expense.length}
+                  label={stats.incomeWithActivity + stats.expenseWithActivity}
                   size="small"
                   sx={{
                     height: 20,
@@ -1078,7 +1015,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 Gerenciar
                 <Chip
-                  label={categories.income.length + categories.expense.length}
+                  label={stats.incomeCategories + stats.expenseCategories}
                   size="small"
                   sx={{
                     height: 20,
@@ -1092,135 +1029,105 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         </Tabs>
       </Paper>
 
-      {/* Tab Content: Overview */}
+      {/* Tab: Overview */}
       <Collapse in={tabValue === 0} unmountOnExit>
         <Grid container spacing={isMobile ? 2 : 3}>
-          {/* Income Column */}
+          {/* Income */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {/* Income Header */}
               <Paper
                 elevation={0}
                 sx={{
                   p: isMobile ? 1.5 : 2,
-                  position: "relative",
-                  overflow: "hidden",
-                  background: isDarkMode
-                    ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                    : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-                  backdropFilter: "blur(16px)",
-                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                  boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
                   borderRadius: "16px",
-                  "&::before": {
-                    content: '""',
-                    position: "absolute",
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    background: "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)",
-                    pointerEvents: "none",
-                  },
+                  border: `1px solid ${alpha("#059669", 0.2)}`,
+                  background: isDarkMode
+                    ? `linear-gradient(135deg, ${alpha("#059669", 0.1)} 0%, ${alpha("#059669", 0.05)} 100%)`
+                    : `linear-gradient(135deg, ${alpha("#059669", 0.08)} 0%, ${alpha("#059669", 0.02)} 100%)`,
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative", zIndex: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   <Box
                     sx={{
-                      width: isMobile ? 40 : 48,
-                      height: isMobile ? 40 : 48,
-                      borderRadius: "14px",
+                      p: 1,
+                      borderRadius: "12px",
+                      background: "linear-gradient(135deg, #059669, #047857)",
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: isDarkMode
-                        ? `linear-gradient(135deg, ${alpha("#059669", 0.2)} 0%, ${alpha("#059669", 0.1)} 100%)`
-                        : `linear-gradient(135deg, #D1FAE5 0%, ${alpha("#D1FAE5", 0.6)} 100%)`,
-                      border: `1px solid ${isDarkMode ? alpha("#059669", 0.2) : alpha("#059669", 0.15)}`,
                     }}
                   >
-                    <TrendingUpIcon sx={{ color: "#059669", fontSize: isMobile ? 22 : 26 }} />
+                    <TrendingUpIcon sx={{ color: "#fff" }} />
                   </Box>
                   <Box>
-                    <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                    <Typography variant="subtitle1" fontWeight={600} color="#059669">
                       Receitas
                     </Typography>
-                    <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em" }}>
-                      {formatCurrency(totalIncome)}
+                    <Typography variant="body2" color="text.secondary">
+                      {categorySummaries.income.filter(s => s.transactionCount > 0).length} categorias ativas
                     </Typography>
                   </Box>
+                  <Typography variant="h6" fontWeight={700} color="#059669" sx={{ ml: "auto" }}>
+                    {formatCurrency(stats.totalIncome)}
+                  </Typography>
                 </Box>
               </Paper>
 
-              {/* Income Categories */}
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {categorySummaries.income.map((summary) => renderCategoryCard(summary, totalIncome))}
-                {categorySummaries.income.length === 0 && (
-                  <Paper sx={{ p: 3, textAlign: "center", bgcolor: alpha("#059669", 0.02), border: `1px dashed ${alpha("#059669", 0.2)}` }}>
-                    <Typography variant="body2" color="text.secondary">Nenhuma categoria de receita</Typography>
+                {categorySummaries.income.filter(s => s.transactionCount > 0).map((summary) => renderCategoryCard(summary, stats.totalIncome))}
+                {categorySummaries.income.filter(s => s.transactionCount > 0).length === 0 && (
+                  <Paper sx={{ p: 3, textAlign: "center", borderRadius: "16px", border: `1px dashed ${alpha("#059669", 0.2)}` }}>
+                    <TrendingUpIcon sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
+                    <Typography variant="body2" color="text.secondary">Nenhuma transação de receita</Typography>
                   </Paper>
                 )}
               </Box>
             </Box>
           </Grid>
 
-          {/* Expense Column */}
+          {/* Expense */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {/* Expense Header */}
               <Paper
                 elevation={0}
                 sx={{
                   p: isMobile ? 1.5 : 2,
-                  position: "relative",
-                  overflow: "hidden",
-                  background: isDarkMode
-                    ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                    : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-                  backdropFilter: "blur(16px)",
-                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                  boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
                   borderRadius: "16px",
-                  "&::before": {
-                    content: '""',
-                    position: "absolute",
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    background: "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
-                    pointerEvents: "none",
-                  },
+                  border: `1px solid ${alpha("#DC2626", 0.2)}`,
+                  background: isDarkMode
+                    ? `linear-gradient(135deg, ${alpha("#DC2626", 0.1)} 0%, ${alpha("#DC2626", 0.05)} 100%)`
+                    : `linear-gradient(135deg, ${alpha("#DC2626", 0.08)} 0%, ${alpha("#DC2626", 0.02)} 100%)`,
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative", zIndex: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   <Box
                     sx={{
-                      width: isMobile ? 40 : 48,
-                      height: isMobile ? 40 : 48,
-                      borderRadius: "14px",
+                      p: 1,
+                      borderRadius: "12px",
+                      background: "linear-gradient(135deg, #DC2626, #b91c1c)",
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: isDarkMode
-                        ? `linear-gradient(135deg, ${alpha("#DC2626", 0.2)} 0%, ${alpha("#DC2626", 0.1)} 100%)`
-                        : `linear-gradient(135deg, #FEE2E2 0%, ${alpha("#FEE2E2", 0.6)} 100%)`,
-                      border: `1px solid ${isDarkMode ? alpha("#DC2626", 0.2) : alpha("#DC2626", 0.15)}`,
                     }}
                   >
-                    <TrendingDownIcon sx={{ color: "#DC2626", fontSize: isMobile ? 22 : 26 }} />
+                    <TrendingDownIcon sx={{ color: "#fff" }} />
                   </Box>
                   <Box>
-                    <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+                    <Typography variant="subtitle1" fontWeight={600} color="#DC2626">
                       Despesas
                     </Typography>
-                    <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em" }}>
-                      {formatCurrency(totalExpense)}
+                    <Typography variant="body2" color="text.secondary">
+                      {categorySummaries.expense.filter(s => s.transactionCount > 0).length} categorias ativas
                     </Typography>
                   </Box>
+                  <Typography variant="h6" fontWeight={700} color="#DC2626" sx={{ ml: "auto" }}>
+                    {formatCurrency(stats.totalExpense)}
+                  </Typography>
                 </Box>
               </Paper>
 
-              {/* Expense Categories */}
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {categorySummaries.expense.map((summary) => renderCategoryCard(summary, totalExpense))}
-                {categorySummaries.expense.length === 0 && (
-                  <Paper sx={{ p: 3, textAlign: "center", bgcolor: alpha("#DC2626", 0.02), border: `1px dashed ${alpha("#DC2626", 0.2)}` }}>
-                    <Typography variant="body2" color="text.secondary">Nenhuma categoria de despesa</Typography>
+                {categorySummaries.expense.filter(s => s.transactionCount > 0).map((summary) => renderCategoryCard(summary, stats.totalExpense))}
+                {categorySummaries.expense.filter(s => s.transactionCount > 0).length === 0 && (
+                  <Paper sx={{ p: 3, textAlign: "center", borderRadius: "16px", border: `1px dashed ${alpha("#DC2626", 0.2)}` }}>
+                    <TrendingDownIcon sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
+                    <Typography variant="body2" color="text.secondary">Nenhuma transação de despesa</Typography>
                   </Paper>
                 )}
               </Box>
@@ -1229,19 +1136,18 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         </Grid>
       </Collapse>
 
-      {/* Tab Content: Manage */}
+      {/* Tab: Manage */}
       <Collapse in={tabValue === 1} unmountOnExit>
         <Grid container spacing={isMobile ? 2 : 3}>
-          {/* Income Column */}
+          {/* Income */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {/* Income Header */}
               <Paper
+                elevation={0}
                 sx={{
                   p: isMobile ? 2 : 2.5,
-                  background: isDarkMode
-                    ? alpha("#10b981", 0.08)
-                    : alpha("#10b981", 0.04),
+                  borderRadius: "16px",
+                  background: isDarkMode ? alpha("#10b981", 0.08) : alpha("#10b981", 0.04),
                   border: `1px solid ${alpha("#10b981", 0.15)}`,
                 }}
               >
@@ -1250,11 +1156,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   <Typography variant="subtitle1" fontWeight={600} color="#10b981">
                     Categorias de Receita
                   </Typography>
-                  <Chip
-                    label={categories.income.length}
-                    size="small"
-                    sx={{ bgcolor: alpha("#10b981", 0.15), color: "#10b981", ml: "auto" }}
-                  />
+                  <Chip label={categories.income.length} size="small" sx={{ bgcolor: alpha("#10b981", 0.15), color: "#10b981", ml: "auto" }} />
                 </Box>
                 <Box sx={{ display: "flex", gap: 1 }}>
                   <TextField
@@ -1264,27 +1166,18 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                     value={newIncomeCat}
                     onChange={(e) => setNewIncomeCat(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddCat("income")}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "20px" } }}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                   />
-                  <IconButton
-                    onClick={() => handleAddCat("income")}
-                    sx={{
-                      bgcolor: "#10b981",
-                      color: "white",
-                      borderRadius: "20px",
-                      "&:hover": { bgcolor: alpha("#10b981", 0.8) },
-                    }}
-                  >
+                  <Button onClick={() => handleAddCat("income")} variant="contained" sx={{ minWidth: 48, borderRadius: "10px", bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" } }}>
                     <AddIcon />
-                  </IconButton>
+                  </Button>
                 </Box>
               </Paper>
 
-              {/* Income Categories List */}
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {categories.income.map((cat) => renderManageItem(cat, "income"))}
                 {categories.income.length === 0 && (
-                  <Paper sx={{ p: 3, textAlign: "center", bgcolor: alpha("#10b981", 0.02), border: `1px dashed ${alpha("#10b981", 0.2)}` }}>
+                  <Paper sx={{ p: 3, textAlign: "center", borderRadius: "16px", border: `1px dashed ${alpha("#10b981", 0.2)}` }}>
                     <CategoryIcon sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
                     <Typography variant="body2" color="text.secondary">Nenhuma categoria</Typography>
                   </Paper>
@@ -1293,16 +1186,15 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             </Box>
           </Grid>
 
-          {/* Expense Column */}
+          {/* Expense */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {/* Expense Header */}
               <Paper
+                elevation={0}
                 sx={{
                   p: isMobile ? 2 : 2.5,
-                  background: isDarkMode
-                    ? alpha("#ef4444", 0.08)
-                    : alpha("#ef4444", 0.04),
+                  borderRadius: "16px",
+                  background: isDarkMode ? alpha("#ef4444", 0.08) : alpha("#ef4444", 0.04),
                   border: `1px solid ${alpha("#ef4444", 0.15)}`,
                 }}
               >
@@ -1311,11 +1203,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   <Typography variant="subtitle1" fontWeight={600} color="#ef4444">
                     Categorias de Despesa
                   </Typography>
-                  <Chip
-                    label={categories.expense.length}
-                    size="small"
-                    sx={{ bgcolor: alpha("#ef4444", 0.15), color: "#ef4444", ml: "auto" }}
-                  />
+                  <Chip label={categories.expense.length} size="small" sx={{ bgcolor: alpha("#ef4444", 0.15), color: "#ef4444", ml: "auto" }} />
                 </Box>
                 <Box sx={{ display: "flex", gap: 1 }}>
                   <TextField
@@ -1325,27 +1213,18 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                     value={newExpenseCat}
                     onChange={(e) => setNewExpenseCat(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddCat("expense")}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "20px" } }}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                   />
-                  <IconButton
-                    onClick={() => handleAddCat("expense")}
-                    sx={{
-                      bgcolor: "#ef4444",
-                      color: "white",
-                      borderRadius: "20px",
-                      "&:hover": { bgcolor: alpha("#ef4444", 0.8) },
-                    }}
-                  >
+                  <Button onClick={() => handleAddCat("expense")} variant="contained" sx={{ minWidth: 48, borderRadius: "10px", bgcolor: "#ef4444", "&:hover": { bgcolor: "#dc2626" } }}>
                     <AddIcon />
-                  </IconButton>
+                  </Button>
                 </Box>
               </Paper>
 
-              {/* Expense Categories List */}
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {categories.expense.map((cat) => renderManageItem(cat, "expense"))}
                 {categories.expense.length === 0 && (
-                  <Paper sx={{ p: 3, textAlign: "center", bgcolor: alpha("#ef4444", 0.02), border: `1px dashed ${alpha("#ef4444", 0.2)}` }}>
+                  <Paper sx={{ p: 3, textAlign: "center", borderRadius: "16px", border: `1px dashed ${alpha("#ef4444", 0.2)}` }}>
                     <CategoryIcon sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
                     <Typography variant="body2" color="text.secondary">Nenhuma categoria</Typography>
                   </Paper>

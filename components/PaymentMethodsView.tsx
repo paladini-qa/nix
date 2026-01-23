@@ -24,11 +24,13 @@ import {
   ArrowForward as ArrowForwardIcon,
   Receipt as ReceiptIcon,
   TrendingDown as TrendingDownIcon,
+  TrendingUp as TrendingUpIcon,
   Warning as WarningIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
   Settings as SettingsIcon,
   Assessment as AssessmentIcon,
+  AccountBalanceWallet as WalletIcon,
 } from "@mui/icons-material";
 import { Transaction, ColorConfig, PaymentMethodColors } from "../types";
 import { ColorsContext } from "../App";
@@ -79,7 +81,6 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   const isDarkMode = theme.palette.mode === "dark";
   const { getPaymentMethodColor } = useContext(ColorsContext);
 
-  // Tab state: 0 = Overview, 1 = Manage
   const [tabValue, setTabValue] = useState(0);
   const [newPaymentMethod, setNewPaymentMethod] = useState("");
 
@@ -121,11 +122,8 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
         const adjustedDay = Math.min(origDay, daysInTargetMonth);
         const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
 
-        // Verifica se esta data está no excluded_dates da transação original
         const excludedDates = t.excludedDates || [];
-        if (excludedDates.includes(virtualDate)) {
-          return; // Não gera a transação virtual para esta data
-        }
+        if (excludedDates.includes(virtualDate)) return;
 
         virtualTransactions.push({
           ...t,
@@ -147,12 +145,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       const isCurrentMonth = parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
       
       if (!isCurrentMonth) return false;
-      
-      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
-      // Isso acontece quando o usuário exclui a primeira ocorrência com "apenas esta"
-      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
-        return false;
-      }
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) return false;
       
       return true;
     });
@@ -164,7 +157,6 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   const paymentMethodsSummary = useMemo<PaymentMethodSummary[]>(() => {
     const summaryMap = new Map<string, PaymentMethodSummary>();
 
-    // Inicializa todos os métodos de pagamento
     paymentMethods.forEach((method) => {
       summaryMap.set(method, {
         name: method,
@@ -176,15 +168,12 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       });
     });
 
-    // Processa transações do mês
     monthTransactions.forEach((tx) => {
       const summary = summaryMap.get(tx.paymentMethod);
       if (summary) {
         summary.transactionCount++;
-        // Conta não pagas (todas as transações, incluindo receitas e virtuais)
         if (!tx.isPaid) {
           summary.unpaidCount++;
-          // Valor a pagar é apenas de despesas
           if (tx.type === "expense") {
             summary.unpaidAmount += tx.amount || 0;
           }
@@ -197,14 +186,28 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       }
     });
 
-    // Converte para array e ordena por despesas
     return Array.from(summaryMap.values())
       .filter((s) => s.transactionCount > 0 || paymentMethods.includes(s.name))
       .sort((a, b) => b.totalExpense - a.totalExpense);
   }, [monthTransactions, paymentMethods]);
 
-  // Total geral de despesas do mês
-  const totalExpenses = paymentMethodsSummary.reduce((sum, s) => sum + s.totalExpense, 0);
+  // Estatísticas gerais
+  const stats = useMemo(() => {
+    const totalExpenses = paymentMethodsSummary.reduce((sum, s) => sum + s.totalExpense, 0);
+    const totalIncome = paymentMethodsSummary.reduce((sum, s) => sum + s.totalIncome, 0);
+    const totalUnpaid = paymentMethodsSummary.reduce((sum, s) => sum + s.unpaidAmount, 0);
+    const totalTransactions = paymentMethodsSummary.reduce((sum, s) => sum + s.transactionCount, 0);
+    const methodsWithActivity = paymentMethodsSummary.filter(s => s.transactionCount > 0).length;
+    
+    return {
+      totalExpenses,
+      totalIncome,
+      totalUnpaid,
+      totalTransactions,
+      methodsWithActivity,
+      balance: totalIncome - totalExpenses,
+    };
+  }, [paymentMethodsSummary]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -223,7 +226,6 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       display: "flex", 
       flexDirection: "column", 
       gap: isMobile ? 2 : 3,
-      // Extra padding para bottom navigation
       pb: { xs: "140px", md: 0 },
     }}>
       {/* Header */}
@@ -241,7 +243,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
             <Box
               sx={{
                 p: 1,
-                borderRadius: "20px",
+                borderRadius: "12px",
                 bgcolor: alpha(theme.palette.primary.main, 0.1),
                 display: "flex",
               }}
@@ -249,11 +251,11 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
               <PaymentIcon color="primary" />
             </Box>
             <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-              Payment Methods
+              Métodos de Pagamento
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Gerencie seus métodos de pagamento e visualize as faturas
+            Gerencie seus métodos e visualize as faturas
           </Typography>
         </Box>
 
@@ -270,8 +272,133 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
         </Box>
       </Box>
 
+      {/* Summary Cards - Always Visible */}
+      <Grid container spacing={isMobile ? 1.5 : 2}>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <CreditCardIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Métodos Ativos
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700}>
+              {stats.methodsWithActivity}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              de {paymentMethods.length} cadastrados
+            </Typography>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <TrendingDownIcon sx={{ color: "#DC2626", fontSize: 20 }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Total Despesas
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#DC2626">
+              {formatCurrency(stats.totalExpenses)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {stats.totalTransactions} transações
+            </Typography>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              backdropFilter: "blur(16px)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <TrendingUpIcon sx={{ color: "#059669", fontSize: 20 }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Total Receitas
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#059669">
+              {formatCurrency(stats.totalIncome)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              no mês
+            </Typography>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              borderRadius: "16px",
+              background: stats.totalUnpaid > 0
+                ? `linear-gradient(135deg, #f59e0b 0%, #d97706 100%)`
+                : `linear-gradient(135deg, #059669 0%, #047857 100%)`,
+              boxShadow: `0 8px 32px -8px ${alpha(stats.totalUnpaid > 0 ? "#f59e0b" : "#059669", 0.4)}`,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              {stats.totalUnpaid > 0 ? (
+                <WarningIcon sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }} />
+              ) : (
+                <CheckCircleIcon sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }} />
+              )}
+              <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.8) }} fontWeight={600}>
+                {stats.totalUnpaid > 0 ? "A Pagar" : "Status"}
+              </Typography>
+            </Box>
+            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#FFFFFF">
+              {stats.totalUnpaid > 0 ? formatCurrency(stats.totalUnpaid) : "Tudo em dia!"}
+            </Typography>
+            <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.7) }}>
+              {stats.totalUnpaid > 0 ? "pendente" : "todas as faturas pagas"}
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
       {/* Tabs */}
-      <Paper sx={{ px: isMobile ? 1 : 2 }}>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          px: isMobile ? 1 : 2,
+          borderRadius: "16px",
+          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+        }}
+      >
         <Tabs
           value={tabValue}
           onChange={(_, newValue) => setTabValue(newValue)}
@@ -290,7 +417,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 Visão Geral
                 <Chip
-                  label={paymentMethodsSummary.filter(s => s.transactionCount > 0).length}
+                  label={stats.methodsWithActivity}
                   size="small"
                   sx={{
                     height: 20,
@@ -324,392 +451,375 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
 
       {/* Tab Content: Overview */}
       <Collapse in={tabValue === 0} unmountOnExit>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}>
-        {/* Summary Card */}
-        <Paper
-        elevation={0}
-        sx={{
-          p: isMobile ? 1.5 : 2,
-          position: "relative",
-          overflow: "hidden",
-          background: isDarkMode
-            ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-          backdropFilter: "blur(16px)",
-          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-          boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
-          borderRadius: "16px",
-          transition: "all 0.2s ease-in-out",
-          "&:hover": { transform: "translateY(-2px)" },
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
-            pointerEvents: "none",
-          },
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative", zIndex: 1 }}>
-          <Box
-            sx={{
-              width: isMobile ? 44 : 52,
-              height: isMobile ? 44 : 52,
-              borderRadius: "16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha("#DC2626", 0.2)} 0%, ${alpha("#DC2626", 0.1)} 100%)`
-                : `linear-gradient(135deg, #FEE2E2 0%, ${alpha("#FEE2E2", 0.6)} 100%)`,
-              border: `1px solid ${isDarkMode ? alpha("#DC2626", 0.2) : alpha("#DC2626", 0.15)}`,
-              boxShadow: isDarkMode
-                ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
-                : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
-            }}
-          >
-            <TrendingDownIcon sx={{ color: "#DC2626", fontSize: isMobile ? 24 : 28 }} />
-          </Box>
-          <Box>
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
-              Total de Despesas no Mês
-            </Typography>
-            <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em" }}>
-              {formatCurrency(totalExpenses)}
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Payment Methods Grid */}
+          {paymentMethodsSummary.filter(s => s.transactionCount > 0).length > 0 ? (
+            <Grid container spacing={isMobile ? 1.5 : 2}>
+              {paymentMethodsSummary
+                .filter(s => s.transactionCount > 0)
+                .map((summary) => {
+                  const colors = getPaymentMethodColor(summary.name);
+                  const percentage = stats.totalExpenses > 0 ? (summary.totalExpense / stats.totalExpenses) * 100 : 0;
+                  const hasUnpaid = summary.unpaidCount > 0;
 
-      {/* Payment Methods Grid */}
-      <Grid container spacing={isMobile ? 2 : 3}>
-        {paymentMethodsSummary.map((summary) => {
-          const colors = getPaymentMethodColor(summary.name);
-          const percentage = totalExpenses > 0 ? (summary.totalExpense / totalExpenses) * 100 : 0;
-          const hasUnpaid = summary.unpaidCount > 0;
+                  return (
+                    <Grid key={summary.name} size={{ xs: 12, sm: 6, lg: 4 }}>
+                      <Paper
+                        elevation={0}
+                        onClick={() => onSelectPaymentMethod(summary.name)}
+                        sx={{
+                          p: isMobile ? 2 : 2.5,
+                          cursor: "pointer",
+                          position: "relative",
+                          overflow: "hidden",
+                          transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                          background: isDarkMode
+                            ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                          backdropFilter: "blur(16px)",
+                          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                          borderLeft: `3px solid ${colors.primary}`,
+                          borderRadius: "16px",
+                          boxShadow: isDarkMode
+                            ? `0 6px 24px -6px ${alpha(colors.primary, 0.2)}`
+                            : `0 6px 24px -6px ${alpha(colors.primary, 0.15)}`,
+                          "&:hover": {
+                            transform: "translateY(-4px)",
+                            boxShadow: isDarkMode
+                              ? `0 12px 32px -6px ${alpha(colors.primary, 0.3)}`
+                              : `0 12px 32px -6px ${alpha(colors.primary, 0.25)}`,
+                          },
+                          "&::before": {
+                            content: '""',
+                            position: "absolute",
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            background: isDarkMode
+                              ? `linear-gradient(135deg, ${alpha(colors.primary, 0.08)} 0%, ${alpha(colors.secondary, 0.02)} 100%)`
+                              : `linear-gradient(135deg, ${alpha(colors.primary, 0.04)} 0%, ${alpha(colors.secondary, 0.01)} 100%)`,
+                            pointerEvents: "none",
+                          },
+                        }}
+                      >
+                        {/* Header */}
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+                          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, flex: 1, minWidth: 0 }}>
+                            <Box
+                              sx={{
+                                p: 1,
+                                borderRadius: "12px",
+                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                display: "flex",
+                                flexShrink: 0,
+                              }}
+                            >
+                              <CreditCardIcon sx={{ color: "#fff", fontSize: 20 }} />
+                            </Box>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography 
+                                variant="subtitle1" 
+                                fontWeight={600}
+                                sx={{ 
+                                  overflow: "hidden", 
+                                  textOverflow: "ellipsis", 
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {summary.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {summary.transactionCount} transações
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Tooltip title="Ver detalhes">
+                            <IconButton 
+                              size="small" 
+                              sx={{ 
+                                color: colors.primary,
+                                bgcolor: alpha(colors.primary, 0.1),
+                                "&:hover": { bgcolor: alpha(colors.primary, 0.2) }
+                              }}
+                            >
+                              <ArrowForwardIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
 
-          return (
-            <Grid key={summary.name} size={{ xs: 12, sm: 6, lg: 4 }}>
-              <Paper
-                elevation={0}
-                onClick={() => onSelectPaymentMethod(summary.name)}
-                sx={{
-                  p: isMobile ? 2 : 2.5,
-                  cursor: "pointer",
-                  position: "relative",
-                  overflow: "hidden",
-                  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                  background: isDarkMode
-                    ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                    : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-                  backdropFilter: "blur(16px)",
-                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                  borderLeft: `3px solid ${colors.primary}`,
-                  borderRadius: "16px",
-                  boxShadow: isDarkMode
-                    ? `0 6px 24px -6px ${alpha(colors.primary, 0.2)}`
-                    : `0 6px 24px -6px ${alpha(colors.primary, 0.15)}`,
-                  "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow: isDarkMode
-                      ? `0 12px 32px -6px ${alpha(colors.primary, 0.3)}`
-                      : `0 12px 32px -6px ${alpha(colors.primary, 0.25)}`,
-                  },
-                  "&::before": {
-                    content: '""',
-                    position: "absolute",
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    background: isDarkMode
-                      ? `linear-gradient(135deg, ${alpha(colors.primary, 0.08)} 0%, ${alpha(colors.secondary, 0.02)} 100%)`
-                      : `linear-gradient(135deg, ${alpha(colors.primary, 0.04)} 0%, ${alpha(colors.secondary, 0.01)} 100%)`,
-                    pointerEvents: "none",
-                  },
-                }}
-              >
-                {/* Header */}
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Box
-                      sx={{
-                        p: 1,
-                        borderRadius: "20px",
-                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                        display: "flex",
-                      }}
-                    >
-                      <CreditCardIcon sx={{ color: "#fff", fontSize: 20 }} />
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle1" fontWeight={600}>
-                        {summary.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {summary.transactionCount} transações
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Tooltip title="Ver detalhes">
-                    <IconButton size="small" sx={{ color: colors.primary }}>
-                      <ArrowForwardIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
+                        {/* Amount */}
+                        <Box sx={{ mb: 2 }}>
+                          <Typography 
+                            variant="h5" 
+                            fontWeight="bold" 
+                            sx={{ 
+                              color: colors.primary,
+                              fontFamily: "monospace",
+                              letterSpacing: "-0.02em",
+                            }}
+                          >
+                            {formatCurrency(summary.totalExpense)}
+                          </Typography>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={percentage}
+                              sx={{
+                                flex: 1,
+                                height: 4,
+                                borderRadius: "4px",
+                                bgcolor: alpha(colors.primary, 0.1),
+                                "& .MuiLinearProgress-bar": {
+                                  borderRadius: "4px",
+                                  background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
+                                },
+                              }}
+                            />
+                            <Typography variant="caption" color="text.secondary" sx={{ minWidth: 35 }}>
+                              {percentage.toFixed(0)}%
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                {/* Amount */}
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="h5" fontWeight="bold" sx={{ color: colors.primary }}>
-                    {formatCurrency(summary.totalExpense)}
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
-                    <LinearProgress
-                      variant="determinate"
-                      value={percentage}
-                      sx={{
-                        flex: 1,
-                        height: 6,
-                        borderRadius: "20px",
-                        bgcolor: alpha(colors.primary, 0.1),
-                        "& .MuiLinearProgress-bar": {
-                          borderRadius: "20px",
-                          background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
-                        },
-                      }}
-                    />
-                    <Typography variant="caption" color="text.secondary" sx={{ minWidth: 35 }}>
-                      {percentage.toFixed(0)}%
-                    </Typography>
-                  </Box>
-                </Box>
+                        {/* Status & Actions */}
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+                          {hasUnpaid ? (
+                            <Chip
+                              icon={<WarningIcon />}
+                              label={summary.unpaidCount === 1 ? "1 pendente" : `${summary.unpaidCount} pendentes`}
+                              size="small"
+                              color="warning"
+                              variant="outlined"
+                              sx={{ fontSize: 11, height: 24, borderRadius: "8px" }}
+                            />
+                          ) : (
+                            <Chip
+                              icon={<CheckCircleIcon />}
+                              label="Todas pagas"
+                              size="small"
+                              color="success"
+                              variant="outlined"
+                              sx={{ fontSize: 11, height: 24, borderRadius: "8px" }}
+                            />
+                          )}
 
-                {/* Unpaid Info & Actions */}
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  {hasUnpaid ? (
-                    <Chip
-                      icon={<WarningIcon />}
-                      label={summary.unpaidCount === 1 ? "1 não paga" : `${summary.unpaidCount} não pagas`}
-                      size="small"
-                      color="warning"
-                      variant="outlined"
-                      sx={{ fontSize: 11 }}
-                    />
-                  ) : (
-                    <Chip
-                      icon={<CheckCircleIcon />}
-                      label="Todas pagas"
-                      size="small"
-                      color="success"
-                      variant="outlined"
-                      sx={{ fontSize: 11 }}
-                    />
-                  )}
+                          {hasUnpaid && (
+                            <Button
+                              size="small"
+                              variant="contained"
+                              startIcon={<CheckCircleIcon />}
+                              onClick={(e) => handlePayAll(summary.name, e)}
+                              sx={{
+                                textTransform: "none",
+                                fontSize: 11,
+                                py: 0.5,
+                                px: 1.5,
+                                borderRadius: "8px",
+                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                "&:hover": {
+                                  background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})`,
+                                },
+                              }}
+                            >
+                              Pagar
+                            </Button>
+                          )}
+                        </Box>
 
-                  {hasUnpaid && (
-                    <Button
-                      size="small"
-                      variant="contained"
-                      startIcon={<CheckCircleIcon />}
-                      onClick={(e) => handlePayAll(summary.name, e)}
-                      sx={{
-                        textTransform: "none",
-                        fontSize: 12,
-                        py: 0.5,
-                        px: 1.5,
-                        borderRadius: "20px",
-                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                        "&:hover": {
-                          background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})`,
-                        },
-                      }}
-                    >
-                      Pagar Tudo
-                    </Button>
-                  )}
-                </Box>
-
-                {/* Unpaid Amount */}
-                {hasUnpaid && (
-                  <Box
-                    sx={{
-                      mt: 2,
-                      pt: 2,
-                      borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                    }}
-                  >
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Valor a pagar:
-                      </Typography>
-                      <Typography variant="body2" fontWeight={600} color="warning.main">
-                        {formatCurrency(summary.unpaidAmount)}
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-              </Paper>
+                        {/* Unpaid Amount */}
+                        {hasUnpaid && (
+                          <Box
+                            sx={{
+                              mt: 2,
+                              pt: 2,
+                              borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                            }}
+                          >
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <Typography variant="caption" color="text.secondary">
+                                Valor pendente:
+                              </Typography>
+                              <Typography variant="body2" fontWeight={600} color="warning.main">
+                                {formatCurrency(summary.unpaidAmount)}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+                      </Paper>
+                    </Grid>
+                  );
+                })}
             </Grid>
-          );
-        })}
-
-        {/* Empty State */}
-        {paymentMethodsSummary.length === 0 && (
-          <Grid size={{ xs: 12 }}>
+          ) : (
             <Paper
+              elevation={0}
               sx={{
                 p: 4,
                 textAlign: "center",
+                borderRadius: "16px",
                 bgcolor: alpha(theme.palette.primary.main, 0.02),
+                border: `1px dashed ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             >
               <ReceiptIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-              <Typography variant="h6" color="text.secondary">
-                Nenhum método de pagamento
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Nenhuma transação neste mês
               </Typography>
               <Typography variant="body2" color="text.disabled">
-                Adicione métodos de pagamento na aba "Gerenciar"
+                Não há transações registradas para os métodos de pagamento cadastrados
               </Typography>
             </Paper>
-          </Grid>
-        )}
-      </Grid>
-      </Box>
+          )}
+        </Box>
       </Collapse>
 
       {/* Tab Content: Manage */}
       <Collapse in={tabValue === 1} unmountOnExit>
-        {/* Add Payment Method */}
-        <Paper
-          sx={{
-            p: isMobile ? 2 : 3,
-            mb: 3,
-            background: isDarkMode
-              ? alpha(theme.palette.primary.main, 0.08)
-              : alpha(theme.palette.primary.main, 0.04),
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
-          }}
-        >
-          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-            Adicionar Novo Método de Pagamento
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Nome do método de pagamento..."
-              value={newPaymentMethod}
-              onChange={(e) => setNewPaymentMethod(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddMethod()}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "20px",
-                },
-              }}
-            />
-            <IconButton
-              onClick={handleAddMethod}
-              sx={{
-                bgcolor: "primary.main",
-                color: "white",
-                borderRadius: "20px",
-                "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.8) },
-              }}
-            >
-              <AddIcon />
-            </IconButton>
-          </Box>
-        </Paper>
-
-        {/* Payment Methods List */}
-        <Grid container spacing={2}>
-          {paymentMethods.map((method) => {
-            const colors = paymentMethodColors[method] || DEFAULT_PAYMENT_COLORS;
-            return (
-              <Grid key={method} size={{ xs: 12, sm: 6, md: 4 }}>
-                <Paper
-                  sx={{
-                    p: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    transition: "all 0.2s ease",
-                    border: `1px solid ${alpha(colors.primary, 0.2)}`,
-                    background: isDarkMode
-                      ? `linear-gradient(135deg, ${alpha(colors.primary, 0.1)} 0%, ${alpha(colors.secondary, 0.05)} 100%)`
-                      : `linear-gradient(135deg, ${alpha(colors.primary, 0.06)} 0%, ${alpha(colors.secondary, 0.02)} 100%)`,
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow: `0 8px 16px -4px ${alpha(colors.primary, 0.2)}`,
-                    },
-                  }}
-                >
-                  <ColorPicker
-                    value={colors}
-                    onChange={(newColors) => onUpdatePaymentMethodColor(method, newColors)}
-                    size="small"
-                  />
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
-                    <CreditCardIcon
-                      fontSize="small"
-                      sx={{ color: colors.primary }}
-                    />
-                    <Typography
-                      variant="body1"
-                      fontWeight={600}
-                      sx={{
-                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {method}
-                    </Typography>
-                  </Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => onRemovePaymentMethod(method)}
-                    sx={{
-                      color: "text.secondary",
-                      "&:hover": {
-                        bgcolor: alpha(theme.palette.error.main, 0.1),
-                        color: "error.main",
-                      },
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Paper>
-              </Grid>
-            );
-          })}
-        </Grid>
-
-        {/* Empty State */}
-        {paymentMethods.length === 0 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Add Payment Method */}
           <Paper
+            elevation={0}
             sx={{
-              p: 4,
-              textAlign: "center",
-              bgcolor: alpha(theme.palette.primary.main, 0.02),
-              border: `1px dashed ${alpha(theme.palette.primary.main, 0.2)}`,
+              p: isMobile ? 2 : 2.5,
+              borderRadius: "16px",
+              background: isDarkMode
+                ? alpha(theme.palette.primary.main, 0.08)
+                : alpha(theme.palette.primary.main, 0.04),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
             }}
           >
-            <PaymentIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Nenhum método de pagamento
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+              Adicionar Novo Método de Pagamento
             </Typography>
-            <Typography variant="body2" color="text.disabled">
-              Adicione um método usando o campo acima
-            </Typography>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Nome do método de pagamento..."
+                value={newPaymentMethod}
+                onChange={(e) => setNewPaymentMethod(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddMethod()}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "10px",
+                    bgcolor: isDarkMode ? alpha("#000", 0.2) : alpha("#fff", 0.8),
+                  },
+                }}
+              />
+              <Button
+                onClick={handleAddMethod}
+                variant="contained"
+                sx={{
+                  minWidth: 48,
+                  borderRadius: "10px",
+                }}
+              >
+                <AddIcon />
+              </Button>
+            </Box>
           </Paper>
-        )}
+
+          {/* Payment Methods List */}
+          {paymentMethods.length > 0 ? (
+            <Grid container spacing={isMobile ? 1.5 : 2}>
+              {paymentMethods.map((method) => {
+                const colors = paymentMethodColors[method] || DEFAULT_PAYMENT_COLORS;
+                const summary = paymentMethodsSummary.find(s => s.name === method);
+                
+                return (
+                  <Grid key={method} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.5,
+                        borderRadius: "16px",
+                        transition: "all 0.2s ease",
+                        border: `1px solid ${alpha(colors.primary, 0.2)}`,
+                        borderLeft: `3px solid ${colors.primary}`,
+                        background: isDarkMode
+                          ? `linear-gradient(135deg, ${alpha(colors.primary, 0.1)} 0%, ${alpha(colors.secondary, 0.05)} 100%)`
+                          : `linear-gradient(135deg, ${alpha(colors.primary, 0.06)} 0%, ${alpha(colors.secondary, 0.02)} 100%)`,
+                        "&:hover": {
+                          transform: "translateY(-2px)",
+                          boxShadow: `0 8px 16px -4px ${alpha(colors.primary, 0.2)}`,
+                        },
+                      }}
+                    >
+                      <ColorPicker
+                        value={colors}
+                        onChange={(newColors) => onUpdatePaymentMethodColor(method, newColors)}
+                        size="small"
+                      />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
+                        <CreditCardIcon fontSize="small" sx={{ color: colors.primary }} />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="body1"
+                            fontWeight={600}
+                            sx={{
+                              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                              WebkitBackgroundClip: "text",
+                              WebkitTextFillColor: "transparent",
+                              backgroundClip: "text",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {method}
+                          </Typography>
+                          {summary && summary.transactionCount > 0 && (
+                            <Typography variant="caption" color="text.secondary">
+                              {summary.transactionCount} transações este mês
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                      <Tooltip title="Remover método">
+                        <IconButton
+                          size="small"
+                          onClick={() => onRemovePaymentMethod(method)}
+                          sx={{
+                            color: "text.secondary",
+                            "&:hover": {
+                              bgcolor: alpha(theme.palette.error.main, 0.1),
+                              color: "error.main",
+                            },
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Paper>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          ) : (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 4,
+                textAlign: "center",
+                borderRadius: "16px",
+                bgcolor: alpha(theme.palette.primary.main, 0.02),
+                border: `1px dashed ${alpha(theme.palette.primary.main, 0.2)}`,
+              }}
+            >
+              <WalletIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Nenhum método cadastrado
+              </Typography>
+              <Typography variant="body2" color="text.disabled">
+                Adicione um método de pagamento usando o campo acima
+              </Typography>
+            </Paper>
+          )}
+        </Box>
       </Collapse>
     </Box>
   );
 };
 
 export default PaymentMethodsView;
-
-

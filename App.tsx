@@ -193,7 +193,7 @@ const AppContent: React.FC<{
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
-  const { showError } = useNotification();
+  const { showError, showSuccess } = useNotification();
   const { confirm, choice } = useConfirmDialog();
 
   const [currentView, setCurrentView] = useState<
@@ -3239,6 +3239,49 @@ const AppContent: React.FC<{
     }
   };
 
+  // Atualiza datas de múltiplas parcelas de um grupo
+  const handleUpdateInstallmentDates = async (
+    installmentIds: string[],
+    newDates: { id: string; date: string }[]
+  ): Promise<boolean> => {
+    try {
+      // Atualiza cada parcela com sua nova data
+      const updatePromises = newDates.map(({ id, date }) =>
+        supabase
+          .from("transactions")
+          .update({ date })
+          .eq("id", id)
+      );
+
+      const results = await Promise.all(updatePromises);
+
+      // Verifica se houve algum erro
+      const hasError = results.some((r) => r.error);
+      if (hasError) {
+        const firstError = results.find((r) => r.error)?.error;
+        throw firstError;
+      }
+
+      // Atualiza o estado local
+      setTransactions((prev) =>
+        prev.map((t) => {
+          const newDateEntry = newDates.find((d) => d.id === t.id);
+          if (newDateEntry) {
+            return { ...t, date: newDateEntry.date };
+          }
+          return t;
+        })
+      );
+
+      showSuccess("Datas atualizadas com sucesso!");
+      return true;
+    } catch (err: any) {
+      console.error("Error updating installment dates:", err);
+      showError("Erro ao atualizar datas das parcelas");
+      throw err;
+    }
+  };
+
   // Configuration Handlers
   const handleAddCategory = (type: TransactionType, category: string) => {
     if (!categories[type].includes(category)) {
@@ -3742,6 +3785,7 @@ const AppContent: React.FC<{
                     onDelete={handleDeleteTransaction}
                     onTogglePaid={handleTogglePaid}
                     onRefreshData={onRefreshData}
+                    onUpdateInstallmentDates={handleUpdateInstallmentDates}
                   />
                 </Suspense>
               ) : currentView === "shared" ? (
