@@ -195,6 +195,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     const incomeMap = new Map<string, CategorySummary>();
     const expenseMap = new Map<string, CategorySummary>();
 
+    // Inicializa com categorias cadastradas
     categories.income.forEach((cat) => {
       const colors = categoryColors.income?.[cat] || DEFAULT_INCOME_COLORS;
       incomeMap.set(cat, { name: cat, type: "income", total: 0, transactionCount: 0, colors, unpaidCount: 0, unpaidAmount: 0 });
@@ -204,16 +205,31 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       expenseMap.set(cat, { name: cat, type: "expense", total: 0, transactionCount: 0, colors, unpaidCount: 0, unpaidAmount: 0 });
     });
 
+    // Processa todas as transações, criando categorias dinamicamente se necessário
     monthTransactions.forEach((tx) => {
       const map = tx.type === "income" ? incomeMap : expenseMap;
-      const summary = map.get(tx.category);
-      if (summary) {
-        summary.total += tx.amount || 0;
-        summary.transactionCount++;
-        if (!tx.isPaid) {
-          summary.unpaidCount++;
-          summary.unpaidAmount += tx.amount || 0;
-        }
+      const defaultColors = tx.type === "income" ? DEFAULT_INCOME_COLORS : DEFAULT_EXPENSE_COLORS;
+      
+      // Se a categoria não existe no mapa, cria dinamicamente
+      if (!map.has(tx.category)) {
+        const colors = (tx.type === "income" ? categoryColors.income : categoryColors.expense)?.[tx.category] || defaultColors;
+        map.set(tx.category, { 
+          name: tx.category, 
+          type: tx.type, 
+          total: 0, 
+          transactionCount: 0, 
+          colors, 
+          unpaidCount: 0, 
+          unpaidAmount: 0 
+        });
+      }
+      
+      const summary = map.get(tx.category)!;
+      summary.total += tx.amount || 0;
+      summary.transactionCount++;
+      if (!tx.isPaid) {
+        summary.unpaidCount++;
+        summary.unpaidAmount += tx.amount || 0;
       }
     });
 
