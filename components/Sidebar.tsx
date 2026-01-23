@@ -124,10 +124,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
     { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
-  ];
-
-  // Itens de cadastro (agora flat, sem dropdown)
-  const registrationNavItems: NavItem[] = [
     { icon: PaymentIcon, label: "Payment Methods", id: "paymentMethods" },
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
   ];
@@ -412,31 +408,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             </motion.div>
           ))}
         </List>
-
-        {/* Registration Items - Flat (sem dropdown) */}
-        <Box sx={{ mt: 2 }}>
-          <motion.div variants={itemVariants}>
-            <Typography
-              variant="overline"
-              sx={{
-                px: 2,
-                color: "text.secondary",
-                fontWeight: 600,
-                letterSpacing: "0.1em",
-                fontSize: 12,
-              }}
-            >
-              Cadastro
-            </Typography>
-          </motion.div>
-          <List sx={{ mt: 1 }}>
-            {registrationNavItems.map((item, idx) => (
-              <motion.div key={item.id} variants={itemVariants}>
-                {renderNavItem(item, false, idx)}
-              </motion.div>
-            ))}
-          </List>
-        </Box>
 
         {/* Reports Items - Flat (sem dropdown) */}
         <Box sx={{ mt: 2 }}>
