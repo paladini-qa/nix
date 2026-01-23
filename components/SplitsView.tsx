@@ -353,7 +353,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
         const matchesType = filterType === "all" || group.type === filterType;
 
-        const isCompleted = group.paidCount >= group.totalInstallments;
+        // Usa o número real de parcelas existentes para determinar se está completo
+        const actualInstallmentCount = group.installments.length;
+        const isCompleted = group.paidCount >= actualInstallmentCount;
         const matchesStatus =
           filterStatus === "all" ||
           (filterStatus === "in_progress" && !isCompleted) ||
@@ -366,8 +368,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
   // Estatísticas
   const stats = useMemo(() => {
-    const inProgressGroups = groupedSplits.filter((g) => g.paidCount < g.totalInstallments);
-    const completedGroups = groupedSplits.filter((g) => g.paidCount >= g.totalInstallments);
+    // Usa o número real de parcelas existentes para determinar status
+    const inProgressGroups = groupedSplits.filter((g) => g.paidCount < g.installments.length);
+    const completedGroups = groupedSplits.filter((g) => g.paidCount >= g.installments.length);
 
     const totalRemaining = inProgressGroups.reduce((sum, g) => sum + (g.totalAmount - g.paidAmount), 0);
     const totalPaid = groupedSplits.reduce((sum, g) => sum + g.paidAmount, 0);
@@ -427,8 +430,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   // =============================================
   const renderInstallmentCard = (group: InstallmentGroup) => {
     const isExpanded = expandedGroups.has(group.key);
-    const isCompleted = group.paidCount >= group.totalInstallments;
-    const progress = (group.paidCount / group.totalInstallments) * 100;
+    // Usa o número real de parcelas existentes para calcular progresso e status
+    const actualInstallmentCount = group.installments.length;
+    const isCompleted = group.paidCount >= actualInstallmentCount;
+    const progress = actualInstallmentCount > 0 ? (group.paidCount / actualInstallmentCount) * 100 : 0;
     const isIncome = group.type === "income";
     const accentColor = isIncome ? "#059669" : "#F59E0B";
     
@@ -539,7 +544,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               </Typography>
               <Chip
                 icon={isCompleted ? <CheckCircleIcon sx={{ fontSize: 14 }} /> : <ScheduleIcon sx={{ fontSize: 14 }} />}
-                label={`${group.paidCount}/${group.totalInstallments}x`}
+                label={`${group.paidCount}/${actualInstallmentCount}x`}
                 size="small"
                 color={isCompleted ? "success" : "warning"}
                 sx={{ height: 22, fontSize: 11, borderRadius: "8px", mt: 0.5 }}
@@ -631,7 +636,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 "&:hover": { bgcolor: alpha(accentColor, 0.08) }
               }}
             >
-              {isExpanded ? "Ocultar parcelas" : `Ver ${group.totalInstallments} parcelas`}
+              {isExpanded ? "Ocultar parcelas" : `Ver ${actualInstallmentCount} parcelas`}
             </Button>
             
             {onUpdateInstallmentDates && (
@@ -703,7 +708,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               <>
                 <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <VisibilityIcon fontSize="small" color="primary" />
-                  Todas as {group.totalInstallments} parcelas
+                  Todas as {actualInstallmentCount} parcelas
                 </Typography>
 
                 {isMobile ? (
@@ -873,7 +878,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                         Resumo do Parcelamento
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {group.paidCount}/{group.totalInstallments} parcelas pagas
+                        {group.paidCount}/{actualInstallmentCount} parcelas pagas
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: "right" }}>
