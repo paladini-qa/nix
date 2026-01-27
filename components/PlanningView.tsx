@@ -27,10 +27,6 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   alpha,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Menu,
 } from "@mui/material";
 import {
@@ -43,6 +39,7 @@ import {
   PlayArrow as ConvertIcon,
   MoreVert as MoreVertIcon,
   Close as CloseIcon,
+  ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import { Planning, PlanningItem, PlanningWithItems, Transaction } from "../types";
 import { planningService } from "../services/api";
@@ -77,6 +74,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
   const [editingPlanning, setEditingPlanning] = useState<Planning | null>(null);
   const [editingItem, setEditingItem] = useState<PlanningItem | null>(null);
   const [selectedPlanningId, setSelectedPlanningId] = useState<string | null>(null);
+  const [openPlanningId, setOpenPlanningId] = useState<string | null>(null);
   const [itemMenuAnchor, setItemMenuAnchor] = useState<{
     element: HTMLElement | null;
     item: PlanningItem | null;
@@ -201,8 +199,11 @@ const PlanningView: React.FC<PlanningViewProps> = ({
   };
 
   // Item form handlers
-  const handleOpenItemForm = (planningId: string, item?: PlanningItem) => {
+  const handleOpenItemForm = (planningId: string, item?: PlanningItem, keepDetailsOpen = false) => {
     setSelectedPlanningId(planningId);
+    if (!keepDetailsOpen) {
+      setOpenPlanningId(null);
+    }
     if (item) {
       setEditingItem(item);
       setItemDescription(item.description);
@@ -225,7 +226,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
 
   const handleCloseItemForm = () => {
     setIsItemFormOpen(false);
-    setSelectedPlanningId(null);
+    // Não limpa selectedPlanningId aqui para manter o contexto se o drawer de detalhes estiver aberto
     setEditingItem(null);
     setItemDescription("");
     setItemAmount("");
@@ -273,6 +274,10 @@ const PlanningView: React.FC<PlanningViewProps> = ({
       }
       handleCloseItemForm();
       fetchPlannings();
+      // Reabre o drawer de detalhes se estava aberto
+      if (selectedPlanningId) {
+        setOpenPlanningId(selectedPlanningId);
+      }
     } catch (err) {
       console.error("Error saving item:", err);
       showError("Falha ao salvar gasto");
@@ -301,16 +306,19 @@ const PlanningView: React.FC<PlanningViewProps> = ({
 
   // Convert to transaction handlers
   const handleConvertItemToTransaction = async (item: PlanningItem) => {
-    const confirmed = await confirm(
-      "Transformar em transação?",
-      `O gasto "${item.description}" será convertido em uma transação e removido do planejamento.`
-    );
+    const confirmed = await confirm({
+      title: "Transformar em transação?",
+      message: `O gasto "${item.description}" será convertido em uma transação e removido do planejamento.`,
+      confirmText: "Converter",
+      cancelText: "Cancelar",
+    });
     if (!confirmed) return;
 
     try {
       await planningService.convertItemToTransaction(userId, item.id);
       showSuccess("Gasto convertido em transação com sucesso");
       fetchPlannings();
+      // Se o drawer de detalhes estiver aberto, mantém aberto (será atualizado pelo fetchPlannings)
       if (onTransactionCreated) {
         onTransactionCreated();
       }
@@ -326,10 +334,12 @@ const PlanningView: React.FC<PlanningViewProps> = ({
       return;
     }
 
-    const confirmed = await confirm(
-      "Transformar todo o planejamento em transações?",
-      `Todos os ${planning.items.length} gastos serão convertidos em transações e removidos do planejamento.`
-    );
+    const confirmed = await confirm({
+      title: "Transformar todo o planejamento em transações?",
+      message: `Todos os ${planning.items.length} gastos serão convertidos em transações e removidos do planejamento.`,
+      confirmText: "Converter",
+      cancelText: "Cancelar",
+    });
     if (!confirmed) return;
 
     try {
@@ -353,6 +363,241 @@ const PlanningView: React.FC<PlanningViewProps> = ({
     );
   }
 
+  // Se um planejamento está aberto, mostra a view de detalhes
+  if (openPlanningId) {
+    const planning = plannings.find((p) => p.id === openPlanningId);
+    if (!planning) {
+      setOpenPlanningId(null);
+      return null;
+    }
+
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}>
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", sm: "center" },
+            gap: 2,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <IconButton onClick={() => setOpenPlanningId(null)} sx={{ bgcolor: "action.hover" }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: "20px",
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    display: "flex",
+                  }}
+                >
+                  <EventIcon sx={{ color: "primary.main" }} />
+                </Box>
+                <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
+                  {planning.name}
+                </Typography>
+              </Box>
+              {planning.description && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {planning.description}
+                </Typography>
+              )}
+              {planning.targetDate && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+                  <EventIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+                  <Typography variant="caption" color="text.secondary">
+                    {formatDate(planning.targetDate)}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Total Summary Card */}
+        <Card
+          elevation={0}
+          sx={{
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+            backdropFilter: "blur(16px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            borderRadius: "20px",
+          }}
+        >
+          <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+              Total Planejado
+            </Typography>
+            <Typography variant="h4" fontWeight={700} color="primary.main">
+              {formatCurrency(planning.totalAmount)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {planning.items.length} {planning.items.length === 1 ? "gasto" : "gastos"}
+            </Typography>
+          </CardContent>
+        </Card>
+
+        {/* Items List */}
+        <Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={600}>
+              Gastos Planejados
+            </Typography>
+            <Button
+              variant="outlined"
+              size={isMobile ? "medium" : "small"}
+              startIcon={<AddIcon />}
+              onClick={() => {
+                handleOpenItemForm(planning.id, undefined, true);
+              }}
+            >
+              Adicionar
+            </Button>
+          </Box>
+
+          {planning.items.length > 0 ? (
+            <Grid container spacing={isMobile ? 1.5 : 2}>
+              {planning.items.map((item) => (
+                <Grid key={item.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Card
+                    elevation={0}
+                    sx={{
+                      background: isDarkMode
+                        ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                        : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+                      backdropFilter: "blur(16px)",
+                      border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                      borderRadius: "16px",
+                    }}
+                  >
+                    <CardContent sx={{ p: 2 }}>
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="body1" fontWeight={600} sx={{ mb: 0.5 }}>
+                            {item.description}
+                          </Typography>
+                          <Typography variant="h6" fontWeight={700} color="primary.main">
+                            {formatCurrency(item.amount)}
+                          </Typography>
+                        </Box>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => setItemMenuAnchor({ element: e.currentTarget, item })}
+                        >
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+                        <Chip
+                          label={item.category}
+                          size="small"
+                          variant="outlined"
+                          sx={{ height: 24 }}
+                        />
+                        <Chip
+                          label={item.paymentMethod}
+                          size="small"
+                          variant="outlined"
+                          sx={{ height: 24 }}
+                        />
+                        {item.date && (
+                          <Typography variant="caption" color="text.secondary">
+                            {formatDate(item.date)}
+                          </Typography>
+                        )}
+                      </Box>
+                      {item.notes && (
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block", fontStyle: "italic" }}>
+                          {item.notes}
+                        </Typography>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 8,
+                textAlign: "center",
+                borderRadius: "20px",
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.5)
+                  : alpha("#FFFFFF", 0.6),
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              }}
+            >
+              <MoneyIcon sx={{ fontSize: 64, color: "text.disabled", mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                Nenhum gasto planejado
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Adicione gastos para este planejamento
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  handleOpenItemForm(planning.id, undefined, true);
+                }}
+              >
+                Adicionar Primeiro Gasto
+              </Button>
+            </Box>
+          )}
+        </Box>
+
+        {/* Footer Actions */}
+        {planning.items.length > 0 && (
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              flexDirection: isMobile ? "column" : "row",
+            }}
+          >
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<EditIcon />}
+              onClick={() => {
+                setOpenPlanningId(null);
+                handleOpenPlanningForm(planning);
+              }}
+            >
+              Editar Planejamento
+            </Button>
+            <Button
+              variant="contained"
+              fullWidth
+              startIcon={<ConvertIcon />}
+              onClick={() => {
+                setOpenPlanningId(null);
+                handleConvertPlanningToTransactions(planning);
+              }}
+            >
+              Transformar em Transações
+            </Button>
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
+  // View principal - Lista de planejamentos
   return (
     <Box
       sx={{
@@ -404,9 +649,11 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                 >
                   <Card
                     elevation={0}
+                    onClick={() => setOpenPlanningId(planning.id)}
                     sx={{
                       position: "relative",
                       overflow: "hidden",
+                      cursor: "pointer",
                       background: isDarkMode
                         ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
                         : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
@@ -473,7 +720,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                             </Box>
                           )}
                         </Box>
-                        <Box sx={{ display: "flex", gap: 0.5 }}>
+                        <Box sx={{ display: "flex", gap: 0.5 }} onClick={(e) => e.stopPropagation()}>
                           <Tooltip title="Editar">
                             <IconButton
                               size="small"
@@ -517,114 +764,22 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                         </Typography>
                       </Box>
 
-                      {/* Items List */}
-                      {planning.items.length > 0 ? (
-                        <Box sx={{ mb: 2 }}>
-                          <Typography
-                            variant="overline"
-                            sx={{
-                              display: "block",
-                              mb: 1,
-                              color: "text.secondary",
-                              fontSize: 11,
-                              fontWeight: 600,
-                            }}
-                          >
-                            Gastos Planejados
-                          </Typography>
-                          <List dense sx={{ p: 0 }}>
-                            {planning.items.slice(0, 3).map((item) => (
-                              <ListItem
-                                key={item.id}
-                                sx={{
-                                  px: 1,
-                                  py: 0.5,
-                                  borderRadius: "8px",
-                                  mb: 0.5,
-                                  bgcolor: isDarkMode
-                                    ? alpha(theme.palette.background.default, 0.3)
-                                    : alpha(theme.palette.grey[50], 0.5),
-                                }}
-                              >
-                                <ListItemText
-                                  primary={
-                                    <Typography variant="body2" fontWeight={500} noWrap>
-                                      {item.description}
-                                    </Typography>
-                                  }
-                                  secondary={
-                                    <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
-                                      <Chip
-                                        label={item.category}
-                                        size="small"
-                                        variant="outlined"
-                                        sx={{ height: 20, fontSize: 10 }}
-                                      />
-                                      <Typography variant="caption" color="text.secondary">
-                                        {formatCurrency(item.amount)}
-                                      </Typography>
-                                    </Box>
-                                  }
-                                />
-                                <ListItemSecondaryAction>
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) =>
-                                      setItemMenuAnchor({ element: e.currentTarget, item })
-                                    }
-                                  >
-                                    <MoreVertIcon fontSize="small" />
-                                  </IconButton>
-                                </ListItemSecondaryAction>
-                              </ListItem>
-                            ))}
-                            {planning.items.length > 3 && (
-                              <Typography variant="caption" color="text.secondary" sx={{ px: 1, mt: 0.5, display: "block" }}>
-                                +{planning.items.length - 3} mais
-                              </Typography>
-                            )}
-                          </List>
-                        </Box>
-                      ) : (
-                        <Box
-                          sx={{
-                            p: 2,
-                            textAlign: "center",
-                            borderRadius: "12px",
-                            bgcolor: isDarkMode
-                              ? alpha(theme.palette.background.default, 0.3)
-                              : alpha(theme.palette.grey[50], 0.5),
-                          }}
-                        >
-                          <Typography variant="body2" color="text.secondary">
-                            Nenhum gasto planejado
-                          </Typography>
-                        </Box>
-                      )}
-
-                      {/* Actions */}
-                      <CardActions sx={{ p: 0, pt: 1, flexDirection: "column", gap: 1 }}>
-                        <Button
-                          fullWidth
-                          variant="outlined"
-                          size="small"
-                          startIcon={<AddIcon />}
-                          onClick={() => handleOpenItemForm(planning.id)}
-                        >
-                          Adicionar Gasto
-                        </Button>
-                        {planning.items.length > 0 && (
-                          <Button
-                            fullWidth
-                            variant="contained"
-                            size="small"
-                            startIcon={<ConvertIcon />}
-                            onClick={() => handleConvertPlanningToTransactions(planning)}
-                          >
-                            Transformar em Transações
-                          </Button>
-                        )}
-                      </CardActions>
+                      {/* Click hint */}
+                      <Box
+                        sx={{
+                          mt: 2,
+                          pt: 2,
+                          borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 1,
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>
+                          Clique para ver os gastos
+                        </Typography>
+                      </Box>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -700,6 +855,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
           </Box>
         </Box>
       </Drawer>
+
 
       {/* Item Form Drawer */}
       <Drawer
@@ -812,7 +968,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
             <MenuItem
               onClick={() => {
                 if (itemMenuAnchor.item) {
-                  handleOpenItemForm(itemMenuAnchor.item.planningId, itemMenuAnchor.item);
+                  handleOpenItemForm(itemMenuAnchor.item.planningId, itemMenuAnchor.item, true);
                 }
                 setItemMenuAnchor({ element: null, item: null });
               }}
@@ -823,9 +979,9 @@ const PlanningView: React.FC<PlanningViewProps> = ({
             <MenuItem
               onClick={() => {
                 if (itemMenuAnchor.item) {
+                  setItemMenuAnchor({ element: null, item: null });
                   handleConvertItemToTransaction(itemMenuAnchor.item);
                 }
-                setItemMenuAnchor({ element: null, item: null });
               }}
             >
               <ConvertIcon fontSize="small" sx={{ mr: 1 }} />
