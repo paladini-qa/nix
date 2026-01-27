@@ -99,6 +99,7 @@ XL:  4   = 32px  // Separação de módulos principais
 
 #### 1. Cards e Containers
 
+{% raw %}
 ```typescript
 // Padding interno
 <Card sx={{ p: 3 }}>           // Desktop: 24px
@@ -107,6 +108,7 @@ XL:  4   = 32px  // Separação de módulos principais
 // Margem entre cards
 <Grid container spacing={2.5}>  // 20px entre cards
 ```
+{% endraw %}
 
 #### 2. Formulários e Inputs
 
@@ -120,6 +122,7 @@ XL:  4   = 32px  // Separação de módulos principais
 
 #### 3. Modais e Dialogs
 
+{% raw %}
 ```typescript
 <DialogContent sx={{ pt: 2, pb: 3 }}>
   // pt: 16px (topo)
@@ -131,9 +134,11 @@ XL:  4   = 32px  // Separação de módulos principais
   // Topo: 0 (já tem padding do content)
 </DialogActions>
 ```
+{% endraw %}
 
 #### 4. Sidebar e Navigation
 
+{% raw %}
 ```typescript
 // Padding container
 <Box sx={{ px: 2, py: 2 }}>   // 16px horizontal e vertical
@@ -143,6 +148,7 @@ XL:  4   = 32px  // Separação de módulos principais
   // 12px vertical, 16px horizontal
 </ListItemButton>
 ```
+{% endraw %}
 
 #### 5. Gaps entre Elementos
 
@@ -162,10 +168,12 @@ gap: 2.5  // 20px
 #### ✅ FAZER
 
 1. **Usar múltiplos de 0.5** (4px)
+   {% raw %}
    ```typescript
    sx={{ p: 2.5 }}    // ✅ 20px
    sx={{ gap: 1.5 }}  // ✅ 12px
    ```
+   {% endraw %}
 
 2. **Manter consistência por tipo**
    - Cards sempre `p: 3` (desktop)
@@ -173,19 +181,24 @@ gap: 2.5  // 20px
    - Modais sempre `p: 3` nas ações
 
 3. **Responsive com breakpoints**
+   {% raw %}
    ```typescript
    sx={{ p: isMobile ? 2 : 3 }}  // ✅
    ```
+   {% endraw %}
 
 #### ❌ EVITAR
 
 1. **Valores hardcoded fora do sistema**
+   {% raw %}
    ```typescript
    sx={{ padding: "18px" }}     // ❌ Não é múltiplo de 8
    sx={{ marginTop: "25px" }}   // ❌ Use theme.spacing()
    ```
+   {% endraw %}
 
 2. **Espaçamentos inconsistentes**
+   {% raw %}
    ```typescript
    // Card A
    <Card sx={{ p: 2 }}>         // ❌ Deveria ser p: 3
@@ -193,8 +206,10 @@ gap: 2.5  // 20px
    // Card B (mesmo contexto)
    <Card sx={{ p: 3 }}>         // ✅
    ```
+   {% endraw %}
 
 3. **Padding diferente em componentes similares**
+   {% raw %}
    ```typescript
    // Dialog 1
    <DialogContent sx={{ p: 2 }}>    // ❌
@@ -202,6 +217,7 @@ gap: 2.5  // 20px
    // Dialog 2
    <DialogContent sx={{ p: 3 }}>    // ✅
    ```
+   {% endraw %}
 
 ### Tabela de Referência Rápida
 
@@ -219,6 +235,7 @@ gap: 2.5  // 20px
 
 #### Card com Conteúdo
 
+{% raw %}
 ```typescript
 <Card sx={{ p: 3 }}>
   <Typography variant="h6" sx={{ mb: 2 }}>
@@ -230,9 +247,11 @@ gap: 2.5  // 20px
   </Stack>
 </Card>
 ```
+{% endraw %}
 
 #### Modal com Ações
 
+{% raw %}
 ```typescript
 <Dialog>
   <DialogTitle sx={{ pb: 2 }}>
@@ -251,9 +270,11 @@ gap: 2.5  // 20px
   </DialogActions>
 </Dialog>
 ```
+{% endraw %}
 
 #### Grid de Cards
 
+{% raw %}
 ```typescript
 <Grid container spacing={2.5}>
   <Grid size={{ xs: 12, md: 6 }}>
@@ -263,6 +284,7 @@ gap: 2.5  // 20px
   </Grid>
 </Grid>
 ```
+{% endraw %}
 
 ### Exceções Permitidas
 
@@ -276,6 +298,7 @@ gap: 2.5  // 20px
 
 ### Cards
 
+{% raw %}
 ```typescript
 <Card
   sx={{
@@ -298,9 +321,11 @@ gap: 2.5  // 20px
   </CardContent>
 </Card>
 ```
+{% endraw %}
 
 ### Dialogs/Modals
 
+{% raw %}
 ```typescript
 <Dialog
   open={open}
@@ -337,9 +362,11 @@ gap: 2.5  // 20px
   {/* Content */}
 </Dialog>
 ```
+{% endraw %}
 
 ### Botões
 
+{% raw %}
 ```typescript
 <Button
   variant="contained"
@@ -360,9 +387,11 @@ gap: 2.5  // 20px
   Texto do Botão
 </Button>
 ```
+{% endraw %}
 
 ### Inputs
 
+{% raw %}
 ```typescript
 <TextField
   fullWidth
@@ -393,6 +422,7 @@ gap: 2.5  // 20px
   }}
 />
 ```
+{% endraw %}
 
 ---
 
@@ -406,6 +436,7 @@ gap: 2.5  // 20px
 
 ### Padrões de Animação
 
+{% raw %}
 ```typescript
 // Hover em cards
 "&:hover": {
@@ -422,6 +453,7 @@ gap: 2.5  // 20px
 // Loading states
 <CircularProgress sx={{ animation: "spin 1s linear infinite" }} />
 ```
+{% endraw %}
 
 ---
 
@@ -457,6 +489,7 @@ border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)
 
 ### Padrões Responsivos
 
+{% raw %}
 ```typescript
 // Padding adaptativo
 sx={{ p: isMobile ? 2 : 3 }}  // Mobile: 16px, Desktop: 24px
@@ -471,6 +504,7 @@ fullScreen={isMobile}
   </Grid>
 </Grid>
 ```
+{% endraw %}
 
 ---
 
