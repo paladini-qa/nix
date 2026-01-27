@@ -4030,6 +4030,7 @@ const AppContent: React.FC<{
             <MobileNavigation
               currentView={currentView}
               onNavigate={setCurrentView}
+              onCreateTransaction={handleNewTransaction}
             />
           )}
 

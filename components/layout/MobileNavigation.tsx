@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Paper,
   BottomNavigation,
@@ -6,20 +6,22 @@ import {
   Box,
   useTheme,
   alpha,
+  Fab,
 } from "@mui/material";
 import {
-  Dashboard as DashboardIcon,
-  AccountBalanceWallet as WalletIcon,
-  Settings as SettingsIcon,
-  Repeat as RepeatIcon,
-  People as PeopleIcon,
+  Receipt as TransactionsIcon,
+  CreditCard as PaymentMethodsIcon,
+  MoreVert as OthersIcon,
+  Add as AddIcon,
+  GridView as GridViewIcon,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
+import OthersGridModal from "./OthersGridModal";
 
 const MotionPaper = motion.create(Paper);
 
 // Altura da barra de navegação (para calcular fade gradient)
-const NAV_HEIGHT = 64;
+const NAV_HEIGHT = 80;
 
 // View type matching App.tsx
 type ViewType =
@@ -34,22 +36,56 @@ type ViewType =
   | "analytics"
   | "settings"
   | "paymentMethods"
-  | "categories";
+  | "categories"
+  | "openFinance"
+  | "planning";
 
 interface MobileNavigationProps {
   currentView: ViewType;
   onNavigate: (view: ViewType) => void;
+  onCreateTransaction?: () => void;
 }
 
 /**
  * MobileNavigation - Bottom navigation bar for mobile with glassmorphism
+ * New layout: Dashboard, Transactions, Create Button, Payment Methods, Others
  */
 const MobileNavigation: React.FC<MobileNavigationProps> = ({
   currentView,
   onNavigate,
+  onCreateTransaction,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const [othersModalOpen, setOthersModalOpen] = useState(false);
+
+  // Determina qual item está ativo (considerando que "others" não é uma view real)
+  const getActiveValue = () => {
+    if (
+      currentView === "splits" ||
+      currentView === "shared" ||
+      currentView === "recurring" ||
+      currentView === "openFinance" ||
+      currentView === "categories" ||
+      currentView === "budgets" ||
+      currentView === "goals" ||
+      currentView === "planning" ||
+      currentView === "nixai"
+    ) {
+      return "others";
+    }
+    return currentView;
+  };
+
+  const handleNavigation = (value: string) => {
+    if (value === "others") {
+      setOthersModalOpen(true);
+    } else if (value === "create") {
+      onCreateTransaction?.();
+    } else {
+      onNavigate(value as ViewType);
+    }
+  };
 
   return (
     <>
@@ -94,71 +130,221 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         }}
         elevation={0}
       >
-      <BottomNavigation
-        value={currentView}
-        onChange={(_, newValue) => onNavigate(newValue)}
-        showLabels
-        sx={{
-          bgcolor: "transparent",
-          height: 64,
-          "& .MuiBottomNavigationAction-root": {
-            minWidth: 60,
-            maxWidth: 100,
-            color: "text.secondary",
-            transition: "all 0.2s ease",
-            "&.Mui-selected": {
-              color: "primary.main",
-              "& .MuiSvgIcon-root": {
-                transform: "scale(1.15)",
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-around",
+            height: NAV_HEIGHT,
+            px: 1,
+            position: "relative",
+          }}
+        >
+          {/* Dashboard */}
+          <Box
+            onClick={() => handleNavigation("dashboard")}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.5,
+              flex: 1,
+              cursor: "pointer",
+              color:
+                currentView === "dashboard"
+                  ? theme.palette.primary.main
+                  : "text.secondary",
+              transition: "all 0.2s ease",
+              "&:active": {
+                transform: "scale(0.95)",
               },
-            },
-            "&:active": {
-              "& .MuiSvgIcon-root": {
-                transform: "scale(0.9)",
+            }}
+          >
+            <GridViewIcon
+              sx={{
+                fontSize: 24,
+                transition: "transform 0.2s ease",
+                transform:
+                  currentView === "dashboard" ? "scale(1.15)" : "scale(1)",
+              }}
+            />
+            <Box
+              component="span"
+              sx={{
+                fontSize: "0.65rem",
+                fontWeight: currentView === "dashboard" ? 600 : 500,
+              }}
+            >
+              Dashboard
+            </Box>
+          </Box>
+
+          {/* Transactions */}
+          <Box
+            onClick={() => handleNavigation("transactions")}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.5,
+              flex: 1,
+              cursor: "pointer",
+              color:
+                currentView === "transactions"
+                  ? theme.palette.primary.main
+                  : "text.secondary",
+              transition: "all 0.2s ease",
+              "&:active": {
+                transform: "scale(0.95)",
               },
-            },
-          },
-          "& .MuiBottomNavigationAction-label": {
-            fontSize: "0.65rem",
-            fontWeight: 500,
-            mt: 0.5,
-            "&.Mui-selected": {
-              fontSize: "0.65rem",
-              fontWeight: 600,
-            },
-          },
-          "& .MuiSvgIcon-root": {
-            transition: "transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-          },
+            }}
+          >
+            <TransactionsIcon
+              sx={{
+                fontSize: 24,
+                transition: "transform 0.2s ease",
+                transform:
+                  currentView === "transactions" ? "scale(1.15)" : "scale(1)",
+              }}
+            />
+            <Box
+              component="span"
+              sx={{
+                fontSize: "0.65rem",
+                fontWeight: currentView === "transactions" ? 600 : 500,
+              }}
+            >
+              Transactions
+            </Box>
+          </Box>
+
+          {/* Create Button - Central, maior */}
+          <Fab
+            color="primary"
+            onClick={() => handleNavigation("create")}
+            sx={{
+              width: 56,
+              height: 56,
+              position: "absolute",
+              bottom: 12,
+              left: "50%",
+              transform: "translateX(-50%)",
+              boxShadow: `0 4px 16px -4px ${alpha(
+                theme.palette.primary.main,
+                0.4
+              )}`,
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                transform: "translateX(-50%) translateY(-4px)",
+                boxShadow: `0 8px 24px -4px ${alpha(
+                  theme.palette.primary.main,
+                  0.5
+                )}`,
+              },
+              "&:active": {
+                transform: "translateX(-50%) translateY(-2px) scale(0.95)",
+              },
+            }}
+            aria-label="Create transaction"
+          >
+            <AddIcon sx={{ fontSize: 28 }} />
+          </Fab>
+
+          {/* Payment Methods */}
+          <Box
+            onClick={() => handleNavigation("paymentMethods")}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.5,
+              flex: 1,
+              cursor: "pointer",
+              color:
+                currentView === "paymentMethods"
+                  ? theme.palette.primary.main
+                  : "text.secondary",
+              transition: "all 0.2s ease",
+              "&:active": {
+                transform: "scale(0.95)",
+              },
+            }}
+          >
+            <PaymentMethodsIcon
+              sx={{
+                fontSize: 24,
+                transition: "transform 0.2s ease",
+                transform:
+                  currentView === "paymentMethods"
+                    ? "scale(1.15)"
+                    : "scale(1)",
+              }}
+            />
+            <Box
+              component="span"
+              sx={{
+                fontSize: "0.65rem",
+                fontWeight: currentView === "paymentMethods" ? 600 : 500,
+              }}
+            >
+              Payment Methods
+            </Box>
+          </Box>
+
+          {/* Others */}
+          <Box
+            onClick={() => handleNavigation("others")}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.5,
+              flex: 1,
+              cursor: "pointer",
+              color:
+                getActiveValue() === "others"
+                  ? theme.palette.primary.main
+                  : "text.secondary",
+              transition: "all 0.2s ease",
+              "&:active": {
+                transform: "scale(0.95)",
+              },
+            }}
+          >
+            <OthersIcon
+              sx={{
+                fontSize: 24,
+                transition: "transform 0.2s ease",
+                transform:
+                  getActiveValue() === "others" ? "scale(1.15)" : "scale(1)",
+              }}
+            />
+            <Box
+              component="span"
+              sx={{
+                fontSize: "0.65rem",
+                fontWeight: getActiveValue() === "others" ? 600 : 500,
+              }}
+            >
+              Others
+            </Box>
+          </Box>
+        </Box>
+      </MotionPaper>
+
+      {/* Others Grid Modal */}
+      <OthersGridModal
+        open={othersModalOpen}
+        onClose={() => setOthersModalOpen(false)}
+        onNavigate={(view) => {
+          onNavigate(view);
+          setOthersModalOpen(false);
         }}
-      >
-        <BottomNavigationAction
-          label="Dashboard"
-          value="dashboard"
-          icon={<DashboardIcon />}
-        />
-        <BottomNavigationAction
-          label="Transactions"
-          value="transactions"
-          icon={<WalletIcon />}
-        />
-        <BottomNavigationAction
-          label="Shared"
-          value="shared"
-          icon={<PeopleIcon />}
-        />
-        <BottomNavigationAction
-          label="Recurring"
-          value="recurring"
-          icon={<RepeatIcon />}
-        />
-        <BottomNavigationAction
-          label="Settings"
-          value="settings"
-          icon={<SettingsIcon />}
-        />
-      </BottomNavigation>
-    </MotionPaper>
+      />
     </>
   );
 };

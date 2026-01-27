@@ -2,5 +2,6 @@
 export { default as MobileHeader } from "./MobileHeader";
 export { default as MobileDrawer } from "./MobileDrawer";
 export { default as MobileNavigation } from "./MobileNavigation";
+export { default as OthersGridModal } from "./OthersGridModal";
 export { default as ViewContainer, ViewLoading } from "./ViewContainer";
 
