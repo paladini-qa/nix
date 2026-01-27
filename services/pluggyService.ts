@@ -27,14 +27,12 @@ async function getAccessToken(): Promise<string> {
     return cachedAccessToken;
   }
 
-  // Vite injeta variáveis de ambiente com prefixo VITE_
-  // Mas também suporta process.env para compatibilidade
-  const clientId = import.meta.env.VITE_PLUGGY_CLIENT_ID || 
-    (typeof process !== "undefined" && process.env?.PLUGGY_CLIENT_ID) ||
-    "";
-  const clientSecret = import.meta.env.VITE_PLUGGY_CLIENT_SECRET || 
-    (typeof process !== "undefined" && process.env?.PLUGGY_CLIENT_SECRET) ||
-    "";
+  // Vite injeta variáveis de ambiente através do define no vite.config.ts
+  // process.env é substituído em tempo de build pelo Vite
+  // @ts-ignore - process.env é substituído pelo Vite em tempo de build
+  const clientId = process.env.PLUGGY_CLIENT_ID || "";
+  // @ts-ignore - process.env é substituído pelo Vite em tempo de build
+  const clientSecret = process.env.PLUGGY_CLIENT_SECRET || "";
 
   if (!clientId || !clientSecret) {
     throw new Error(
