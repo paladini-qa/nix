@@ -364,7 +364,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
   }
 
   // Se um planejamento está aberto, mostra a view de detalhes
-  if (openPlanningId) {
+  const detailView = openPlanningId ? (() => {
     const planning = plannings.find((p) => p.id === openPlanningId);
     if (!planning) {
       setOpenPlanningId(null);
@@ -595,10 +595,10 @@ const PlanningView: React.FC<PlanningViewProps> = ({
         )}
       </Box>
     );
-  }
+  })() : null;
 
   // View principal - Lista de planejamentos
-  return (
+  const mainView = (
     <Box
       sx={{
         display: "flex",
@@ -795,6 +795,28 @@ const PlanningView: React.FC<PlanningViewProps> = ({
         />
       )}
 
+      {/* Mobile FAB */}
+      {isMobile && (
+        <Fab
+          color="primary"
+          onClick={() => handleOpenPlanningForm()}
+          sx={{
+            position: "fixed",
+            bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
+            right: 16,
+            zIndex: 1100,
+          }}
+        >
+          <AddIcon />
+        </Fab>
+      )}
+    </Box>
+  );
+
+  return (
+    <>
+      {detailView || mainView}
+      
       {/* Planning Form Drawer */}
       <Drawer
         anchor={isMobile ? "bottom" : "right"}
@@ -856,18 +878,34 @@ const PlanningView: React.FC<PlanningViewProps> = ({
         </Box>
       </Drawer>
 
-
       {/* Item Form Drawer */}
       <Drawer
         anchor={isMobile ? "bottom" : "right"}
         open={isItemFormOpen}
         onClose={handleCloseItemForm}
+        disablePortal={false}
+        ModalProps={{
+          container: typeof document !== "undefined" ? document.body : undefined,
+          style: { zIndex: 1400 },
+        }}
         PaperProps={{
           sx: {
             width: isMobile ? "100%" : 400,
             maxHeight: isMobile ? "90vh" : "100vh",
             borderTopLeftRadius: isMobile ? "20px" : 0,
             borderTopRightRadius: isMobile ? "20px" : 0,
+            zIndex: 1401,
+          },
+        }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: isDarkMode
+                ? alpha("#000000", 0.5)
+                : alpha("#000000", 0.25),
+              backdropFilter: "blur(4px)",
+              zIndex: 1399,
+            },
           },
         }}
       >
@@ -1002,23 +1040,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
           </>
         )}
       </Menu>
-
-      {/* Mobile FAB */}
-      {isMobile && (
-        <Fab
-          color="primary"
-          onClick={() => handleOpenPlanningForm()}
-          sx={{
-            position: "fixed",
-            bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
-            right: 16,
-            zIndex: 1100,
-          }}
-        >
-          <AddIcon />
-        </Fab>
-      )}
-    </Box>
+    </>
   );
 };
 
