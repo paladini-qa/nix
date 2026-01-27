@@ -31,6 +31,7 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   AccountBalance as AccountBalanceIcon,
+  EventNote as PlanningIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,6 +53,7 @@ type ViewType =
   | "nixai"
   | "budgets"
   | "goals"
+  | "planning"
   | "paymentMethods"
   | "categories"
   | "openFinance";
@@ -135,6 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const reportsNavItems: NavItem[] = [
     { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" },
     { icon: GoalIcon, label: t("nav.goals"), id: "goals" },
+    { icon: PlanningIcon, label: "Planejamentos", id: "planning" },
   ];
 
   // Itens de menu no final

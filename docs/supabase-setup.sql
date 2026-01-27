@@ -620,3 +620,107 @@ CREATE TRIGGER on_pending_transactions_updated
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
+-- =============================================
+-- 13. TABELA: plannings
+-- =============================================
+-- Armazena planejamentos financeiros (gastos planejados que ainda não são transações)
+
+CREATE TABLE IF NOT EXISTS public.plannings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    target_date DATE, -- Data alvo do planejamento (opcional)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_plannings_user_id ON public.plannings(user_id);
+CREATE INDEX IF NOT EXISTS idx_plannings_target_date ON public.plannings(target_date);
+
+-- Comentários
+COMMENT ON TABLE public.plannings IS 'Planejamentos financeiros (gastos planejados que ainda não são transações)';
+COMMENT ON COLUMN public.plannings.name IS 'Nome do planejamento';
+COMMENT ON COLUMN public.plannings.description IS 'Descrição opcional do planejamento';
+COMMENT ON COLUMN public.plannings.target_date IS 'Data alvo do planejamento (opcional)';
+
+-- RLS para plannings
+ALTER TABLE public.plannings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Usuários podem ver apenas seus próprios planejamentos"
+    ON public.plannings FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem inserir seus próprios planejamentos"
+    ON public.plannings FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem atualizar seus próprios planejamentos"
+    ON public.plannings FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem deletar seus próprios planejamentos"
+    ON public.plannings FOR DELETE USING (auth.uid() = user_id);
+
+-- Trigger para updated_at
+CREATE TRIGGER on_plannings_updated
+    BEFORE UPDATE ON public.plannings
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
+-- =============================================
+-- 14. TABELA: planning_items
+-- =============================================
+-- Armazena os gastos individuais dentro de um planejamento
+
+CREATE TABLE IF NOT EXISTS public.planning_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    planning_id UUID NOT NULL REFERENCES public.plannings(id) ON DELETE CASCADE,
+    description TEXT NOT NULL,
+    amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
+    category TEXT NOT NULL,
+    payment_method TEXT NOT NULL,
+    date DATE, -- Data do gasto (opcional, se não informado usa a data do planejamento)
+    notes TEXT, -- Notas adicionais sobre o gasto
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_planning_items_planning_id ON public.planning_items(planning_id);
+CREATE INDEX IF NOT EXISTS idx_planning_items_date ON public.planning_items(date);
+
+-- Comentários
+COMMENT ON TABLE public.planning_items IS 'Gastos individuais dentro de um planejamento';
+COMMENT ON COLUMN public.planning_items.planning_id IS 'ID do planejamento ao qual este gasto pertence';
+COMMENT ON COLUMN public.planning_items.description IS 'Descrição do gasto';
+COMMENT ON COLUMN public.planning_items.amount IS 'Valor do gasto';
+COMMENT ON COLUMN public.planning_items.category IS 'Categoria do gasto';
+COMMENT ON COLUMN public.planning_items.payment_method IS 'Método de pagamento planejado';
+COMMENT ON COLUMN public.planning_items.date IS 'Data do gasto (opcional, se não informado usa a data do planejamento)';
+COMMENT ON COLUMN public.planning_items.notes IS 'Notas adicionais sobre o gasto';
+
+-- RLS para planning_items (baseado no planejamento)
+ALTER TABLE public.planning_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Usuários podem ver itens de seus próprios planejamentos"
+    ON public.planning_items FOR SELECT
+    USING (EXISTS (SELECT 1 FROM public.plannings p WHERE p.id = planning_id AND p.user_id = auth.uid()));
+
+CREATE POLICY "Usuários podem inserir itens em seus próprios planejamentos"
+    ON public.planning_items FOR INSERT
+    WITH CHECK (EXISTS (SELECT 1 FROM public.plannings p WHERE p.id = planning_id AND p.user_id = auth.uid()));
+
+CREATE POLICY "Usuários podem atualizar itens de seus próprios planejamentos"
+    ON public.planning_items FOR UPDATE
+    USING (EXISTS (SELECT 1 FROM public.plannings p WHERE p.id = planning_id AND p.user_id = auth.uid()))
+    WITH CHECK (EXISTS (SELECT 1 FROM public.plannings p WHERE p.id = planning_id AND p.user_id = auth.uid()));
+
+CREATE POLICY "Usuários podem deletar itens de seus próprios planejamentos"
+    ON public.planning_items FOR DELETE
+    USING (EXISTS (SELECT 1 FROM public.plannings p WHERE p.id = planning_id AND p.user_id = auth.uid()));
+
+-- Trigger para updated_at
+CREATE TRIGGER on_planning_items_updated
+    BEFORE UPDATE ON public.planning_items
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+

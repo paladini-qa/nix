@@ -29,6 +29,7 @@ import {
   Category as CategoryIcon,
   Payment as PaymentIcon,
   AccountBalance as AccountBalanceIcon,
+  EventNote as PlanningIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -49,6 +50,7 @@ type ViewType =
   | "nixai"
   | "budgets"
   | "goals"
+  | "planning"
   | "analytics"
   | "settings"
   | "paymentMethods"
@@ -136,6 +138,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
   const reportsNavItems: NavItem[] = [
     { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" },
     { icon: GoalIcon, label: t("nav.goals"), id: "goals" },
+    { icon: PlanningIcon, label: "Planejamentos", id: "planning" },
   ];
 
   // Itens de ferramentas

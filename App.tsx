@@ -69,6 +69,7 @@ const SplitsView = lazy(() => import("./components/SplitsView"));
 const SharedView = lazy(() => import("./components/SharedView"));
 const BudgetsView = lazy(() => import("./components/BudgetsView"));
 const GoalsView = lazy(() => import("./components/GoalsView"));
+const PlanningView = lazy(() => import("./components/PlanningView"));
 import AnalyticsView from "./components/AnalyticsView";
 const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
 const PaymentMethodsView = lazy(() => import("./components/PaymentMethodsView"));
@@ -206,6 +207,7 @@ const AppContent: React.FC<{
     | "nixai"
     | "budgets"
     | "goals"
+    | "planning"
     | "paymentMethods"
     | "categories"
     | "openFinance"
@@ -3839,6 +3841,15 @@ const AppContent: React.FC<{
               ) : currentView === "goals" ? (
                 <Suspense fallback={<ViewLoading />}>
                   <GoalsView userId={session.user.id} />
+                </Suspense>
+              ) : currentView === "planning" ? (
+                <Suspense fallback={<ViewLoading />}>
+                  <PlanningView
+                    categories={categories}
+                    paymentMethods={paymentMethods}
+                    userId={session.user.id}
+                    onTransactionCreated={onRefreshData}
+                  />
                 </Suspense>
               ) : currentView === "paymentMethods" ? (
                 selectedPaymentMethod ? (

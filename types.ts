@@ -237,3 +237,31 @@ export interface PluggyAccount {
   balance?: number;
   currencyCode: string;
 }
+
+// Sistema de Planejamento
+export interface Planning {
+  id: string;
+  name: string;
+  description?: string;
+  targetDate?: string; // ISO Date (opcional)
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PlanningItem {
+  id: string;
+  planningId: string;
+  description: string;
+  amount: number;
+  category: string;
+  paymentMethod: string;
+  date?: string; // ISO Date (opcional, se não informado usa a data do planejamento)
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PlanningWithItems extends Planning {
+  items: PlanningItem[];
+  totalAmount: number;
+}
