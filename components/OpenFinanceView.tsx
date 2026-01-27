@@ -183,12 +183,12 @@ const OpenFinanceView: React.FC<OpenFinanceViewProps> = ({
   // Abre modal da Pluggy diretamente
   const handleOpenPluggyModal = useCallback(async () => {
     try {
-      // Carrega conectores disponíveis
-      const connectors = await pluggyService.getConnectors();
+      // Carrega todos os conectores disponíveis (não apenas CREDIT_CARD)
+      const connectors = await pluggyService.getAllConnectors();
       
       if (connectors.length === 0) {
         showNotification({
-          message: "Nenhum banco disponível no momento",
+          message: "Nenhum banco disponível no momento. Verifique suas credenciais da Pluggy.",
           severity: "warning",
         });
         return;
@@ -197,11 +197,34 @@ const OpenFinanceView: React.FC<OpenFinanceViewProps> = ({
       // Usa o primeiro conector disponível (ou pode ser modificado para permitir escolha)
       const connector = connectors[0];
 
+      // Valida se o conector tem um ID válido
+      if (!connector || !connector.id) {
+        showNotification({
+          message: "Conector inválido. Tente novamente.",
+          severity: "error",
+        });
+        return;
+      }
+
+      console.log("Using connector:", { id: connector.id, name: connector.name });
+
       // Cria connect token
-      const { connectUrl } = await pluggyService.createConnectToken(
+      const { connectToken, connectUrl } = await pluggyService.createConnectToken(
         connector.id,
         userId
       );
+
+      // Valida se o token foi retornado
+      if (!connectToken || !connectUrl) {
+        throw new Error("Token de conexão não foi retornado pela API");
+      }
+
+      // Valida se a URL contém o token (sem codificação)
+      if (!connectUrl.includes(connectToken)) {
+        console.warn("URL não contém o token completo - pode ser um problema de truncamento");
+      }
+
+      console.log("Pluggy Connect URL:", connectUrl);
 
       // Abre janela do Pluggy Connect
       const width = 600;
@@ -274,8 +297,21 @@ const OpenFinanceView: React.FC<OpenFinanceViewProps> = ({
       }, 300000); // 5 minutos
     } catch (error: any) {
       console.error("Error opening Pluggy modal:", error);
+      
+      // Mensagens de erro mais específicas
+      let errorMessage = "Erro ao abrir modal da Pluggy";
+      if (error.message?.includes("credentials not configured")) {
+        errorMessage = "Credenciais da Pluggy não configuradas. Verifique as variáveis de ambiente.";
+      } else if (error.message?.includes("Failed to authenticate")) {
+        errorMessage = "Erro ao autenticar com a Pluggy. Verifique suas credenciais.";
+      } else if (error.message?.includes("Pluggy API error")) {
+        errorMessage = error.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       showNotification({
-        message: error.message || "Erro ao abrir modal da Pluggy",
+        message: errorMessage,
         severity: "error",
       });
     }

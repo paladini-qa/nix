@@ -160,6 +160,33 @@ export const pluggyService = {
   },
 
   /**
+   * Lista todos os conectores disponíveis sem filtro
+   * Útil para Open Finance onde queremos permitir todos os tipos
+   */
+  async getAllConnectors(): Promise<PluggyConnector[]> {
+    // Verifica cache (válido por 24 horas)
+    if (cachedConnectors && Date.now() < connectorsCacheExpiresAt) {
+      return cachedConnectors;
+    }
+
+    try {
+      const response = await retryFetch(() =>
+        authenticatedFetch("/connectors")
+      );
+      const data = await response.json();
+
+      // Atualiza cache
+      cachedConnectors = data.results || [];
+      connectorsCacheExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 horas
+
+      return cachedConnectors;
+    } catch (error: any) {
+      console.error("Error fetching all connectors:", error);
+      throw error;
+    }
+  },
+
+  /**
    * Cria um connect token para iniciar o fluxo de conexão
    */
   async createConnectToken(
@@ -167,20 +194,50 @@ export const pluggyService = {
     clientUserId?: string
   ): Promise<{ connectToken: string; connectUrl: string }> {
     try {
+      // Valida se o connectorId foi fornecido
+      if (!connectorId) {
+        throw new Error("connectorId é obrigatório para criar o connect token");
+      }
+
+      const requestBody = {
+        connectorId,
+        ...(clientUserId && { clientUserId }),
+      };
+
+      console.log("Creating connect token with:", { connectorId, hasClientUserId: !!clientUserId });
+
       const response = await retryFetch(() =>
         authenticatedFetch("/connect_token", {
           method: "POST",
-          body: JSON.stringify({
-            connectorId,
-            clientUserId,
-          }),
+          body: JSON.stringify(requestBody),
         })
       );
 
       const data = await response.json();
+      console.log("Pluggy connect_token response:", data);
+      
+      // A API Pluggy retorna 'accessToken' ao invés de 'connectToken'
+      const connectToken = data.accessToken || data.connectToken;
+      
+      // Valida se o token foi retornado
+      if (!connectToken) {
+        console.error("Pluggy API response (missing token):", data);
+        throw new Error(
+          `Connect token não foi retornado pela API Pluggy. Response: ${JSON.stringify(data)}`
+        );
+      }
+      
+      // Não codifica o token - tokens JWT são seguros para passar diretamente na URL
+      // A codificação pode causar problemas com a validação do token pela Pluggy
+      const connectUrl = `${PLUGGY_CONNECT_URL}?connectToken=${connectToken}`;
+      
+      console.log("Connect URL generated:", connectUrl.substring(0, 100) + "...");
+      console.log("Token length:", connectToken.length);
+      console.log("Token starts with:", connectToken.substring(0, 20));
+      
       return {
-        connectToken: data.connectToken,
-        connectUrl: `${PLUGGY_CONNECT_URL}?connectToken=${data.connectToken}`,
+        connectToken,
+        connectUrl,
       };
     } catch (error: any) {
       console.error("Error creating connect token:", error);
