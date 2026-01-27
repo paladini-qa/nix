@@ -134,10 +134,11 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-around",
+            justifyContent: "space-evenly",
             height: NAV_HEIGHT,
-            px: 1,
+            px: 3,
             position: "relative",
+            maxWidth: "100%",
           }}
         >
           {/* Dashboard */}
@@ -148,8 +149,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 0.5,
-              flex: 1,
+              gap: 0.25,
+              minWidth: 0,
+              flex: "0 0 auto",
               cursor: "pointer",
               color:
                 currentView === "dashboard"
@@ -163,7 +165,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           >
             <GridViewIcon
               sx={{
-                fontSize: 24,
+                fontSize: 22,
                 transition: "transform 0.2s ease",
                 transform:
                   currentView === "dashboard" ? "scale(1.15)" : "scale(1)",
@@ -172,8 +174,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             <Box
               component="span"
               sx={{
-                fontSize: "0.65rem",
+                fontSize: "0.6rem",
                 fontWeight: currentView === "dashboard" ? 600 : 500,
+                lineHeight: 1.2,
+                textAlign: "center",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: "100%",
               }}
             >
               Dashboard
@@ -188,8 +196,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 0.5,
-              flex: 1,
+              gap: 0.25,
+              minWidth: 0,
+              flex: "0 0 auto",
               cursor: "pointer",
               color:
                 currentView === "transactions"
@@ -203,7 +212,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           >
             <TransactionsIcon
               sx={{
-                fontSize: 24,
+                fontSize: 22,
                 transition: "transform 0.2s ease",
                 transform:
                   currentView === "transactions" ? "scale(1.15)" : "scale(1)",
@@ -212,8 +221,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             <Box
               component="span"
               sx={{
-                fontSize: "0.65rem",
+                fontSize: "0.6rem",
                 fontWeight: currentView === "transactions" ? 600 : 500,
+                lineHeight: 1.2,
+                textAlign: "center",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: "100%",
               }}
             >
               Transactions
@@ -225,31 +240,28 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             color="primary"
             onClick={() => handleNavigation("create")}
             sx={{
-              width: 56,
-              height: 56,
-              position: "absolute",
-              bottom: 12,
-              left: "50%",
-              transform: "translateX(-50%)",
+              width: 48,
+              height: 48,
+              flex: "0 0 auto",
               boxShadow: `0 4px 16px -4px ${alpha(
                 theme.palette.primary.main,
                 0.4
               )}`,
               transition: "all 0.2s ease-in-out",
               "&:hover": {
-                transform: "translateX(-50%) translateY(-4px)",
+                transform: "translateY(-4px)",
                 boxShadow: `0 8px 24px -4px ${alpha(
                   theme.palette.primary.main,
                   0.5
                 )}`,
               },
               "&:active": {
-                transform: "translateX(-50%) translateY(-2px) scale(0.95)",
+                transform: "translateY(-2px) scale(0.95)",
               },
             }}
             aria-label="Create transaction"
           >
-            <AddIcon sx={{ fontSize: 28 }} />
+            <AddIcon sx={{ fontSize: 24 }} />
           </Fab>
 
           {/* Payment Methods */}
@@ -260,8 +272,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 0.5,
-              flex: 1,
+              gap: 0.25,
+              minWidth: 0,
+              flex: "0 0 auto",
               cursor: "pointer",
               color:
                 currentView === "paymentMethods"
@@ -275,7 +288,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           >
             <PaymentMethodsIcon
               sx={{
-                fontSize: 24,
+                fontSize: 22,
                 transition: "transform 0.2s ease",
                 transform:
                   currentView === "paymentMethods"
@@ -286,8 +299,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             <Box
               component="span"
               sx={{
-                fontSize: "0.65rem",
+                fontSize: "0.6rem",
                 fontWeight: currentView === "paymentMethods" ? 600 : 500,
+                lineHeight: 1.2,
+                textAlign: "center",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: "100%",
               }}
             >
               Payment Methods
@@ -302,8 +321,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 0.5,
-              flex: 1,
+              gap: 0.25,
+              minWidth: 0,
+              flex: "0 0 auto",
               cursor: "pointer",
               color:
                 getActiveValue() === "others"
@@ -317,7 +337,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           >
             <OthersIcon
               sx={{
-                fontSize: 24,
+                fontSize: 22,
                 transition: "transform 0.2s ease",
                 transform:
                   getActiveValue() === "others" ? "scale(1.15)" : "scale(1)",
@@ -326,8 +346,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             <Box
               component="span"
               sx={{
-                fontSize: "0.65rem",
+                fontSize: "0.6rem",
                 fontWeight: getActiveValue() === "others" ? 600 : 500,
+                lineHeight: 1.2,
+                textAlign: "center",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: "100%",
               }}
             >
               Others

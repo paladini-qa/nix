@@ -158,7 +158,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
             </Box>
 
             {/* Grid */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid container spacing={2.5} sx={{ mb: 3 }}>
               {gridItems.map((item, index) => {
                 const IconComponent = item.icon;
                 return (
@@ -179,7 +179,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                         justifyContent: "center",
                         gap: 1,
                         p: 2,
-                        borderRadius: 3,
+                        borderRadius: 1,
                         bgcolor: theme.palette.primary.main,
                         color: "white",
                         cursor: "pointer",
@@ -232,7 +232,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                 startIcon={<SparklesIcon />}
                 sx={{
                   py: 1.5,
-                  borderRadius: 3,
+                  borderRadius: 1,
                   bgcolor: theme.palette.primary.main,
                   color: "white",
                   fontWeight: 600,

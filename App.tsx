@@ -3744,24 +3744,6 @@ const AppContent: React.FC<{
                       advancedFilters={advancedFilters}
                     />
 
-                    {/* Mobile FAB for Dashboard */}
-                    {isMobile && (
-                      <Fab
-                        color="primary"
-                        onClick={handleNewTransaction}
-                        aria-label="Add new transaction"
-                        sx={{
-                          position: "fixed",
-                          bottom: 24,
-                          right: 24,
-                          zIndex: 1100,
-                          width: 56,
-                          height: 56,
-                        }}
-                      >
-                        <AddIcon sx={{ fontSize: 28 }} />
-                      </Fab>
-                    )}
                   </>
                 )
               ) : currentView === "transactions" ? (
