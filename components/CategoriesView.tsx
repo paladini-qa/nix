@@ -59,6 +59,7 @@ import { Transaction, TransactionType, ColorConfig, CategoryColors } from "../ty
 import { ColorsContext } from "../App";
 import ColorPicker from "./ColorPicker";
 import DateFilter from "./DateFilter";
+import EmptyState from "./EmptyState";
 
 const DEFAULT_INCOME_COLORS: ColorConfig = { primary: "#10b981", secondary: "#059669" };
 const DEFAULT_EXPENSE_COLORS: ColorConfig = { primary: "#ef4444", secondary: "#dc2626" };
@@ -732,10 +733,12 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                 </Card>
               ))
             ) : (
-              <Paper elevation={0} sx={{ p: 4, textAlign: "center", borderRadius: "16px" }}>
-                <ReceiptIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-                <Typography color="text.secondary">Nenhuma transação nesta categoria</Typography>
-              </Paper>
+              <EmptyState
+                type="transactions"
+                title="Nenhuma transação nesta categoria"
+                description="Não há transações registradas para esta categoria"
+                compact
+              />
             )}
           </Box>
         ) : (
@@ -798,8 +801,12 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} sx={{ textAlign: "center", py: 6 }}>
-                      <ReceiptIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-                      <Typography color="text.secondary">Nenhuma transação nesta categoria</Typography>
+                      <EmptyState
+                        type="transactions"
+                        title="Nenhuma transação nesta categoria"
+                        description="Não há transações registradas para esta categoria"
+                        compact
+                      />
                     </TableCell>
                   </TableRow>
                 )}
@@ -1090,10 +1097,12 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {categorySummaries.income.filter(s => s.transactionCount > 0).map((summary) => renderCategoryCard(summary, stats.totalIncome))}
                 {categorySummaries.income.filter(s => s.transactionCount > 0).length === 0 && (
-                  <Paper sx={{ p: 3, textAlign: "center", borderRadius: "16px", border: `1px dashed ${alpha("#059669", 0.2)}` }}>
-                    <TrendingUpIcon sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
-                    <Typography variant="body2" color="text.secondary">Nenhuma transação de receita</Typography>
-                  </Paper>
+                  <EmptyState
+                    type="transactions"
+                    title="Nenhuma transação de receita"
+                    description="Não há transações de receita registradas"
+                    compact
+                  />
                 )}
               </Box>
             </Box>
@@ -1141,10 +1150,12 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {categorySummaries.expense.filter(s => s.transactionCount > 0).map((summary) => renderCategoryCard(summary, stats.totalExpense))}
                 {categorySummaries.expense.filter(s => s.transactionCount > 0).length === 0 && (
-                  <Paper sx={{ p: 3, textAlign: "center", borderRadius: "16px", border: `1px dashed ${alpha("#DC2626", 0.2)}` }}>
-                    <TrendingDownIcon sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
-                    <Typography variant="body2" color="text.secondary">Nenhuma transação de despesa</Typography>
-                  </Paper>
+                  <EmptyState
+                    type="transactions"
+                    title="Nenhuma transação de despesa"
+                    description="Não há transações de despesa registradas"
+                    compact
+                  />
                 )}
               </Box>
             </Box>
@@ -1193,10 +1204,12 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {categories.income.map((cat) => renderManageItem(cat, "income"))}
                 {categories.income.length === 0 && (
-                  <Paper sx={{ p: 3, textAlign: "center", borderRadius: "16px", border: `1px dashed ${alpha("#10b981", 0.2)}` }}>
-                    <CategoryIcon sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
-                    <Typography variant="body2" color="text.secondary">Nenhuma categoria</Typography>
-                  </Paper>
+                  <EmptyState
+                    type="generic"
+                    title="Nenhuma categoria"
+                    description="Adicione uma categoria de receita para começar"
+                    compact
+                  />
                 )}
               </Box>
             </Box>
@@ -1240,10 +1253,12 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {categories.expense.map((cat) => renderManageItem(cat, "expense"))}
                 {categories.expense.length === 0 && (
-                  <Paper sx={{ p: 3, textAlign: "center", borderRadius: "16px", border: `1px dashed ${alpha("#ef4444", 0.2)}` }}>
-                    <CategoryIcon sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
-                    <Typography variant="body2" color="text.secondary">Nenhuma categoria</Typography>
-                  </Paper>
+                  <EmptyState
+                    type="generic"
+                    title="Nenhuma categoria"
+                    description="Adicione uma categoria de despesa para começar"
+                    compact
+                  />
                 )}
               </Box>
             </Box>

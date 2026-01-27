@@ -25,6 +25,8 @@ import {
   UnfoldMore as UnsortedIcon,
 } from "@mui/icons-material";
 import SearchBar from "./SearchBar";
+import EmptyState from "./EmptyState";
+import { motion } from "framer-motion";
 
 // Tipos para configuração de colunas
 export interface DataTableColumn<T> {
@@ -508,14 +510,34 @@ function DataTable<T>({
                     colSpan={visibleColumns.length}
                     sx={{ py: 6, textAlign: "center" }}
                   >
-                    {emptyIcon && (
-                      <Box sx={{ mb: 2, color: "text.disabled" }}>
-                        {emptyIcon}
-                      </Box>
-                    )}
-                    <Typography color="text.secondary" fontStyle="italic">
-                      {emptyMessage}
-                    </Typography>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    >
+                      {emptyIcon && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 25 }}
+                          style={{ marginBottom: 16, color: "inherit" }}
+                        >
+                          {emptyIcon}
+                        </motion.div>
+                      )}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <Typography
+                          color="text.secondary"
+                          fontStyle="italic"
+                        >
+                          {emptyMessage}
+                        </Typography>
+                      </motion.div>
+                    </motion.div>
                   </TableCell>
                 </TableRow>
               )}

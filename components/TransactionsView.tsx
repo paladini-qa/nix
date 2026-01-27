@@ -63,6 +63,8 @@ import { MONTHS } from "../constants";
 import DateFilter from "./DateFilter";
 import { useNotification } from "../contexts";
 import { usePullToRefresh } from "../hooks";
+import EmptyState from "./EmptyState";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -1293,19 +1295,33 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
           {paginatedData.length > 0 ? (
             <>
-              {paginatedData.map((t) => (
-                <SwipeableTransactionCard
-                  key={t.id}
-                  transaction={t}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onTogglePaid={onTogglePaid}
-                  onOpenMenu={(element, transaction) =>
-                    setMobileActionAnchor({ element, transaction })
-                  }
-                  formatDateShort={formatDateShort}
-                />
-              ))}
+              <AnimatePresence mode="popLayout">
+                {paginatedData.map((t, index) => (
+                  <motion.div
+                    key={t.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 30,
+                      delay: index * 0.05,
+                    }}
+                  >
+                    <SwipeableTransactionCard
+                      transaction={t}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onTogglePaid={onTogglePaid}
+                      onOpenMenu={(element, transaction) =>
+                        setMobileActionAnchor({ element, transaction })
+                      }
+                      formatDateShort={formatDateShort}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
               {/* Summary Footer */}
               <Card
@@ -1373,24 +1389,12 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               </Card>
             </>
           ) : (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                textAlign: "center",
-                borderRadius: "20px",
-                bgcolor: isDarkMode
-                  ? alpha(theme.palette.background.paper, 0.7)
-                  : alpha("#FFFFFF", 0.9),
-                backdropFilter: "blur(20px)",
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              }}
-            >
-              <WalletIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-              <Typography color="text.secondary" fontStyle="italic">
-                No transactions found with the current filters.
-              </Typography>
-            </Paper>
+            <EmptyState
+              type="transactions"
+              title="Nenhuma transação encontrada"
+              description="Nenhuma transação encontrada com os filtros atuais."
+              compact
+            />
           )}
 
           {/* Mobile Action Menu */}
@@ -1487,7 +1491,23 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               <TableBody>
                 {paginatedData.length > 0 ? (
                   paginatedData.map((t, index) => (
-                    <TableRow key={t.id} sx={getRowSx(t, index)}>
+                    <TableRow
+                      key={t.id}
+                      sx={{
+                        ...getRowSx(t, index),
+                        animation: `fadeInUp 0.4s ease-out ${index * 0.03}s both`,
+                        "@keyframes fadeInUp": {
+                          from: {
+                            opacity: 0,
+                            transform: "translateY(10px)",
+                          },
+                          to: {
+                            opacity: 1,
+                            transform: "translateY(0)",
+                          },
+                        },
+                      }}
+                    >
                       <TableCell sx={{ textAlign: "center" }}>
                         <Tooltip
                           title={t.isVirtual ? "Mark recurring occurrence" : (t.isPaid !== false ? "Paid" : "Not paid")}

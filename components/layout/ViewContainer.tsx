@@ -2,8 +2,6 @@ import React, { Suspense } from "react";
 import { Box, CircularProgress, useTheme, alpha } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
 
-const MotionBox = motion.create(Box);
-
 interface ViewContainerProps {
   /** Unique key to trigger animation on view change */
   viewKey: string;
@@ -72,7 +70,7 @@ const ViewContainer: React.FC<ViewContainerProps> = ({
   return (
     <Suspense fallback={fallback || defaultFallback}>
       <AnimatePresence mode="wait">
-        <MotionBox
+        <motion.div
           key={viewKey}
           initial={{ opacity: 0, y: 12 }}
           animate={{ 
@@ -91,13 +89,13 @@ const ViewContainer: React.FC<ViewContainerProps> = ({
               duration: 0.15,
             },
           }}
-          sx={{
+          style={{
             width: "100%",
             willChange: "transform, opacity",
           }}
         >
           {children}
-        </MotionBox>
+        </motion.div>
       </AnimatePresence>
     </Suspense>
   );

@@ -3,9 +3,6 @@ import { Box, Typography, Button, useTheme, alpha } from "@mui/material";
 import { Add as AddIcon } from "@mui/icons-material";
 import { motion } from "framer-motion";
 
-const MotionBox = motion.create(Box);
-const MotionButton = motion.create(Button);
-
 export type EmptyStateType =
   | "transactions"
   | "budgets"
@@ -550,39 +547,43 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
+  const containerStyle = {
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    paddingTop: compact ? 32 : 64,
+    paddingBottom: compact ? 32 : 64,
+    paddingLeft: 24,
+    paddingRight: 24,
+    textAlign: "center" as const,
+    color: theme.palette.primary.main,
+    borderRadius: "20px",
+    background: isDarkMode
+      ? `linear-gradient(135deg, ${alpha(NIX_PURPLE, 0.06)} 0%, ${alpha(CYBER_TEAL, 0.03)} 100%)`
+      : `linear-gradient(135deg, ${alpha(NIX_PURPLE, 0.03)} 0%, ${alpha(CYBER_TEAL, 0.02)} 100%)`,
+  };
+
   return (
-    <MotionBox
+    <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        py: compact ? 4 : 8,
-        px: 3,
-        textAlign: "center",
-        color: theme.palette.primary.main,
-        borderRadius: "20px",
-        background: isDarkMode
-          ? `linear-gradient(135deg, ${alpha(NIX_PURPLE, 0.06)} 0%, ${alpha(CYBER_TEAL, 0.03)} 100%)`
-          : `linear-gradient(135deg, ${alpha(NIX_PURPLE, 0.03)} 0%, ${alpha(CYBER_TEAL, 0.02)} 100%)`,
-      }}
+      style={containerStyle}
     >
       {/* Animated Illustration */}
-      <MotionBox
+      <motion.div
         variants={floatVariants}
         initial="initial"
         animate="animate"
-        sx={{
-          mb: 3,
+        style={{
+          marginBottom: 24,
           opacity: 1,
           transform: compact ? "scale(0.8)" : "scale(1)",
         }}
       >
         <motion.div variants={itemVariants}>{illustrations[type]}</motion.div>
-      </MotionBox>
+      </motion.div>
 
       {/* Title with staggered entrance */}
       <motion.div variants={itemVariants}>
@@ -611,34 +612,40 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       {/* Action Button with premium animation */}
       {actionLabel && onAction && (
         <motion.div variants={itemVariants}>
-          <MotionButton
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onAction}
+          <motion.div
             whileHover={{
               y: -3,
               scale: 1.02,
-              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
             }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            sx={{
-              mt: 1,
-              px: 3,
-              py: 1.25,
-              borderRadius: "20px",
-              fontWeight: 600,
-              boxShadow: `0 4px 14px ${alpha(
-                theme.palette.primary.main,
-                0.25
-              )}`,
-            }}
           >
-            {actionLabel}
-          </MotionButton>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onAction}
+              sx={{
+                mt: 1,
+                px: 3,
+                py: 1.25,
+                borderRadius: "20px",
+                fontWeight: 600,
+                boxShadow: `0 4px 14px ${alpha(
+                  theme.palette.primary.main,
+                  0.25
+                )}`,
+                transition: "box-shadow 0.2s ease-in-out",
+                "&:hover": {
+                  boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
+                },
+              }}
+            >
+              {actionLabel}
+            </Button>
+          </motion.div>
         </motion.div>
       )}
-    </MotionBox>
+    </motion.div>
   );
 };
 

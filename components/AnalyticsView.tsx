@@ -37,6 +37,7 @@ import {
 } from "recharts";
 import { Transaction } from "../types";
 import type { Dayjs } from "dayjs";
+import EmptyState from "./EmptyState";
 
 interface AdvancedFiltersInfo {
   startDate: Dayjs | null;
@@ -1175,12 +1176,14 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             </Box>
           ))}
           {categoryData.length === 0 && (
-            <Typography
-              color="text.secondary"
-              sx={{ py: 2, textAlign: "center" }}
-            >
-              Nenhuma despesa registrada
-            </Typography>
+            <Box sx={{ py: 2 }}>
+              <EmptyState
+                type="transactions"
+                title="Nenhuma despesa registrada"
+                description="Não há despesas para exibir no gráfico"
+                compact
+              />
+            </Box>
           )}
         </Box>
       </Paper>

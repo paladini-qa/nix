@@ -106,22 +106,7 @@ const PendingTransactionForm: React.FC<PendingTransactionFormProps> = ({
     try {
       setIsSaving(true);
 
-      // Atualiza transação pendente
-      await openFinanceService.updatePendingTransaction(
-        transaction.id,
-        userId,
-        {
-          description,
-          amount: parseFloat(amount),
-          date: date!.format("YYYY-MM-DD"),
-          type,
-          category,
-          paymentMethod,
-          status: "confirmed",
-        }
-      );
-
-      // Cria transação normal
+      // Cria transação normal primeiro
       const newTransaction: Omit<Transaction, "id" | "createdAt"> = {
         description,
         amount: parseFloat(amount),
@@ -136,14 +121,29 @@ const PendingTransactionForm: React.FC<PendingTransactionFormProps> = ({
         await onTransactionCreate(newTransaction);
       }
 
+      // Atualiza transação pendente apenas após sucesso na criação
+      await openFinanceService.updatePendingTransaction(
+        transaction.id,
+        userId,
+        {
+          description,
+          amount: parseFloat(amount),
+          date: date!.format("YYYY-MM-DD"),
+          type,
+          category,
+          paymentMethod,
+          status: "confirmed",
+        }
+      );
+
       showNotification({ message: "Transação confirmada com sucesso", severity: "success" });
       onClose();
     } catch (error: any) {
       console.error("Error confirming transaction:", error);
-      showNotification(
-        error.message || "Erro ao confirmar transação",
-        "error"
-      );
+      showNotification({
+        message: error.message || "Erro ao confirmar transação",
+        severity: "error",
+      });
     } finally {
       setIsSaving(false);
     }

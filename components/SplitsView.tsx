@@ -61,6 +61,7 @@ import TransactionTags from "./TransactionTags";
 import SearchBar from "./SearchBar";
 import { getHeaderCellSx } from "../utils/tableStyles";
 import { Transaction } from "../types";
+import EmptyState from "./EmptyState";
 
 interface SplitsViewProps {
   transactions: Transaction[];
@@ -1269,27 +1270,12 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           {filteredGroups.map((group) => renderInstallmentCard(group))}
         </Box>
       ) : (
-        <Paper 
-          elevation={0}
-          sx={{ 
-            p: 4, 
-            textAlign: "center",
-            borderRadius: "16px",
-            bgcolor: isDarkMode
-              ? alpha(theme.palette.background.paper, 0.7)
-              : alpha("#FFFFFF", 0.9),
-            backdropFilter: "blur(20px)",
-            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-          }}
-        >
-          <CreditCardIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Nenhum parcelamento encontrado
-          </Typography>
-          <Typography variant="body2" color="text.disabled">
-            Crie uma transação parcelada para gerenciá-la aqui
-          </Typography>
-        </Paper>
+        <EmptyState
+          type="recurring"
+          title="Nenhum parcelamento encontrado"
+          description="Crie uma transação parcelada para gerenciá-la aqui"
+          compact
+        />
       )}
 
       {/* Mobile Action Menu */}

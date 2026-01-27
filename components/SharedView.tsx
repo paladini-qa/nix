@@ -60,6 +60,7 @@ import {
 } from "../utils/tableStyles";
 import { Transaction } from "../types";
 import { generateFriendReport, prepareFriendReportData } from "../services/pdfService";
+import EmptyState from "./EmptyState";
 
 interface SharedViewProps {
   transactions: Transaction[];
@@ -658,8 +659,16 @@ const SharedView: React.FC<SharedViewProps> = ({
       </Grid>
 
       {/* Friend Balance Cards */}
-      {friendBalances.length > 0 && (
-        <Box>
+      {friendBalances.length === 0 ? (
+        <EmptyState
+          type="shared"
+          title="Nenhum gasto compartilhado ainda"
+          description="Crie um gasto compartilhado para acompanhar saldos com amigos!"
+          actionLabel="Criar Gasto Compartilhado"
+          onAction={onNewTransaction}
+        />
+      ) : (
+        <>
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
             Saldo por Amigo
           </Typography>
@@ -818,7 +827,7 @@ const SharedView: React.FC<SharedViewProps> = ({
               </Grid>
             ))}
           </Grid>
-        </Box>
+        </>
       )}
 
       {/* Filters */}

@@ -38,6 +38,7 @@ import {
 import { Goal, GoalProgress } from "../types";
 import { goalService } from "../services/api";
 import { useNotification, useConfirmDialog } from "../contexts";
+import EmptyState from "./EmptyState";
 
 interface GoalsViewProps {
   userId: string;
@@ -412,49 +413,13 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
           <Typography color="text.secondary">Loading goals...</Typography>
         </Box>
       ) : activeGoals.length === 0 && completedGoals.length === 0 ? (
-        <Card
-          elevation={0}
-          sx={{
-            position: "relative",
-            overflow: "hidden",
-            background: theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-            backdropFilter: "blur(16px)",
-            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            borderRadius: "20px",
-          }}
-        >
-          <CardContent sx={{ p: 4, textAlign: "center" }}>
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mx: "auto",
-                mb: 2,
-                background: theme.palette.mode === "dark"
-                  ? alpha("#6366f1", 0.15)
-                  : alpha("#6366f1", 0.1),
-                border: `1px solid ${alpha("#6366f1", 0.2)}`,
-              }}
-            >
-              <SavingsIcon sx={{ fontSize: 32, color: "#6366f1" }} />
-            </Box>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
-              No goals yet
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Create your first financial goal to start tracking your savings
-            </Typography>
-            <Button variant="contained" onClick={() => handleOpenForm()}>
-              Create Goal
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          type="goals"
+          title="Nenhuma meta ainda"
+          description="Crie sua primeira meta financeira para começar a acompanhar suas economias"
+          actionLabel="Criar Meta"
+          onAction={() => handleOpenForm()}
+        />
       ) : (
         <>
           {/* Active Goals */}

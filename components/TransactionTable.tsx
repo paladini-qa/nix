@@ -403,12 +403,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             </TableCell>
           </TableRow>
         </TableHead>
-        <TableBody
-          component={motion.tbody}
-          variants={containerVariants}
-          initial={false}
-          animate="visible"
-        >
+        <TableBody>
           <AnimatePresence mode="popLayout">
             {transactions.map((transaction, index) => {
               const barWidth = ((transaction.amount || 0) / maxAmount) * 100;

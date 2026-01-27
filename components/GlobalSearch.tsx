@@ -35,6 +35,7 @@ import {
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "../types";
+import EmptyState from "./EmptyState";
 
 interface GlobalSearchProps {
   open: boolean;
@@ -414,11 +415,12 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
 
           {/* Empty State */}
           {allResults.length === 0 && query.trim() && (
-            <Box sx={{ py: 4, textAlign: "center" }}>
-              <Typography color="text.secondary">
-                Nenhum resultado encontrado para "{query}"
-              </Typography>
-            </Box>
+            <EmptyState
+              type="search"
+              title={`Nenhum resultado encontrado para "${query}"`}
+              description="Tente usar termos diferentes ou verifique a ortografia"
+              compact
+            />
           )}
         </Box>
 

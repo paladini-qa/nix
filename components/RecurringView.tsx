@@ -58,6 +58,7 @@ import {
   getRowSx,
 } from "../utils/tableStyles";
 import { Transaction } from "../types";
+import EmptyState from "./EmptyState";
 
 interface RecurringViewProps {
   transactions: Transaction[];
@@ -1251,27 +1252,12 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
       {/* Recurring Items List */}
       {recurringTransactions.length === 0 ? (
-        <Paper 
-          elevation={0}
-          sx={{ 
-            p: 4, 
-            textAlign: "center",
-            borderRadius: "16px",
-            bgcolor: isDarkMode
-              ? alpha(theme.palette.background.paper, 0.7)
-              : alpha("#FFFFFF", 0.9),
-            backdropFilter: "blur(20px)",
-            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-          }}
-        >
-          <RepeatIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Nenhuma recorrência encontrada
-          </Typography>
-          <Typography variant="body2" color="text.disabled">
-            Crie uma transação recorrente para gerenciá-la aqui
-          </Typography>
-        </Paper>
+        <EmptyState
+          type="recurring"
+          title="Nenhuma recorrência encontrada"
+          description="Crie uma transação recorrente para gerenciá-la aqui"
+          compact
+        />
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {recurringTransactions.map((t) => renderRecurringCard(t))}

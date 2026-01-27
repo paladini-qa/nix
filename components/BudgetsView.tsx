@@ -42,6 +42,7 @@ import { budgetService } from "../services/api";
 import { useNotification } from "../contexts";
 import { useConfirmDialog } from "../contexts";
 import DateFilter from "./DateFilter";
+import EmptyState from "./EmptyState";
 
 interface BudgetsViewProps {
   transactions: Transaction[];
@@ -442,54 +443,13 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
           <Typography color="text.secondary">Loading budgets...</Typography>
         </Box>
       ) : budgetsWithSpending.length === 0 ? (
-        <Card
-          elevation={0}
-          sx={{
-            position: "relative",
-            overflow: "hidden",
-            background: theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-            backdropFilter: "blur(16px)",
-            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            borderRadius: "20px",
-          }}
-        >
-          <CardContent sx={{ p: 4, textAlign: "center" }}>
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mx: "auto",
-                mb: 2,
-                background: theme.palette.mode === "dark"
-                  ? alpha("#6366f1", 0.15)
-                  : alpha("#6366f1", 0.1),
-                border: `1px solid ${alpha("#6366f1", 0.2)}`,
-              }}
-            >
-              <TrendingDownIcon sx={{ fontSize: 32, color: "#6366f1" }} />
-            </Box>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
-              No budgets set for this month
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Create budgets to track your spending against limits
-            </Typography>
-            <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
-              <Button variant="outlined" onClick={handleCopyFromPreviousMonth}>
-                Copy from Previous Month
-              </Button>
-              <Button variant="contained" onClick={() => handleOpenForm()}>
-                Create Budget
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
+        <EmptyState
+          type="budgets"
+          title="Nenhum orçamento definido para este mês"
+          description="Crie orçamentos para acompanhar seus gastos em relação aos limites"
+          actionLabel="Criar Orçamento"
+          onAction={() => handleOpenForm()}
+        />
       ) : (
         <Grid container spacing={2}>
           {budgetsWithSpending.map((budget) => {
