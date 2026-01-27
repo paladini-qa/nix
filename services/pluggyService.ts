@@ -188,23 +188,28 @@ export const pluggyService = {
 
   /**
    * Cria um connect token para iniciar o fluxo de conexão
+   * Permite criar token sem connectorId para que o usuário escolha o banco no widget
    */
   async createConnectToken(
-    connectorId: string,
+    connectorId?: string,
     clientUserId?: string
   ): Promise<{ connectToken: string; connectUrl: string }> {
     try {
-      // Valida se o connectorId foi fornecido
-      if (!connectorId) {
-        throw new Error("connectorId é obrigatório para criar o connect token");
-      }
-
-      const requestBody = {
-        connectorId,
+      const requestBody: any = {
         ...(clientUserId && { clientUserId }),
       };
 
-      console.log("Creating connect token with:", { connectorId, hasClientUserId: !!clientUserId });
+      // Se connectorId foi fornecido, inclui no body
+      // Se não, o usuário poderá escolher o banco dentro do widget da Pluggy
+      if (connectorId) {
+        requestBody.connectorId = connectorId;
+      }
+
+      console.log("Creating connect token with:", { 
+        hasConnectorId: !!connectorId, 
+        connectorId: connectorId || "none (user will choose)",
+        hasClientUserId: !!clientUserId 
+      });
 
       const response = await retryFetch(() =>
         authenticatedFetch("/connect_token", {

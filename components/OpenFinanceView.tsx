@@ -35,6 +35,7 @@ import AddConnectionDialog from "./AddConnectionDialog";
 import EditConnectionDialog from "./EditConnectionDialog";
 import PendingTransactionsView from "./PendingTransactionsView";
 import { pluggyService } from "../services/pluggyService";
+import { PluggyConnect } from "react-pluggy-connect";
 
 const MotionCard = motion.create(Card);
 
@@ -64,6 +65,9 @@ const OpenFinanceView: React.FC<OpenFinanceViewProps> = ({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState<OpenFinanceConnection | null>(null);
   const [pendingViewOpen, setPendingViewOpen] = useState(false);
+  const [connectToken, setConnectToken] = useState<string | null>(null);
+  const [isWidgetOpen, setIsWidgetOpen] = useState(false);
+  const [loadingToken, setLoadingToken] = useState(false);
 
   // Carrega conexões e transações pendentes
   const loadData = useCallback(async () => {
@@ -180,121 +184,22 @@ const OpenFinanceView: React.FC<OpenFinanceViewProps> = ({
     setEditDialogOpen(true);
   }, []);
 
-  // Abre modal da Pluggy diretamente
+  // Abre modal da Pluggy diretamente usando o componente PluggyConnect
   const handleOpenPluggyModal = useCallback(async () => {
+    setLoadingToken(true);
     try {
-      // Carrega todos os conectores disponíveis (não apenas CREDIT_CARD)
-      const connectors = await pluggyService.getAllConnectors();
-      
-      if (connectors.length === 0) {
-        showNotification({
-          message: "Nenhum banco disponível no momento. Verifique suas credenciais da Pluggy.",
-          severity: "warning",
-        });
-        return;
-      }
-
-      // Usa o primeiro conector disponível (ou pode ser modificado para permitir escolha)
-      const connector = connectors[0];
-
-      // Valida se o conector tem um ID válido
-      if (!connector || !connector.id) {
-        showNotification({
-          message: "Conector inválido. Tente novamente.",
-          severity: "error",
-        });
-        return;
-      }
-
-      console.log("Using connector:", { id: connector.id, name: connector.name });
-
-      // Cria connect token
-      const { connectToken, connectUrl } = await pluggyService.createConnectToken(
-        connector.id,
+      // Cria connect token sem connectorId - permite que o usuário escolha o banco no widget
+      const { connectToken: token } = await pluggyService.createConnectToken(
+        undefined, // Sem connectorId - usuário escolhe no widget
         userId
       );
 
-      // Valida se o token foi retornado
-      if (!connectToken || !connectUrl) {
+      if (!token) {
         throw new Error("Token de conexão não foi retornado pela API");
       }
 
-      // Valida se a URL contém o token (sem codificação)
-      if (!connectUrl.includes(connectToken)) {
-        console.warn("URL não contém o token completo - pode ser um problema de truncamento");
-      }
-
-      console.log("Pluggy Connect URL:", connectUrl);
-
-      // Abre janela do Pluggy Connect
-      const width = 600;
-      const height = 700;
-      const left = window.screen.width / 2 - width / 2;
-      const top = window.screen.height / 2 - height / 2;
-
-      const connectWindow = window.open(
-        connectUrl,
-        "Pluggy Connect",
-        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-      );
-
-      if (!connectWindow) {
-        throw new Error("Não foi possível abrir a janela de conexão");
-      }
-
-      // Listener para mensagens do Pluggy (postMessage)
-      const messageHandler = async (event: MessageEvent) => {
-        // Verifica origem (Pluggy pode enviar mensagens)
-        if (event.origin !== "https://connect.pluggy.ai") {
-          return;
-        }
-
-        // Se recebeu item_id, cria a conexão
-        if (event.data?.itemId) {
-          window.removeEventListener("message", messageHandler);
-          connectWindow.close();
-
-          try {
-            // Busca informações do item
-            const item = await pluggyService.getItem(event.data.itemId);
-
-            // Cria conexão no banco
-            await openFinanceService.createConnection(userId, {
-              pluggyItemId: item.id,
-              pluggyConnectorId: connector.id,
-              institutionName: connector.name,
-            });
-
-            showNotification({ message: "Conexão criada com sucesso!", severity: "success" });
-            await loadData();
-          } catch (error: any) {
-            console.error("Error creating connection:", error);
-            showNotification({
-              message: error.message || "Erro ao criar conexão",
-              severity: "error",
-            });
-          }
-        }
-      };
-
-      window.addEventListener("message", messageHandler);
-
-      // Monitora quando a janela fecha (fallback)
-      const checkClosed = setInterval(() => {
-        if (connectWindow.closed) {
-          clearInterval(checkClosed);
-          window.removeEventListener("message", messageHandler);
-        }
-      }, 500);
-
-      // Timeout de segurança
-      setTimeout(() => {
-        if (!connectWindow.closed) {
-          connectWindow.close();
-        }
-        clearInterval(checkClosed);
-        window.removeEventListener("message", messageHandler);
-      }, 300000); // 5 minutos
+      setConnectToken(token);
+      setIsWidgetOpen(true);
     } catch (error: any) {
       console.error("Error opening Pluggy modal:", error);
       
@@ -314,8 +219,46 @@ const OpenFinanceView: React.FC<OpenFinanceViewProps> = ({
         message: errorMessage,
         severity: "error",
       });
+    } finally {
+      setLoadingToken(false);
     }
-  }, [userId, loadData, showNotification]);
+  }, [userId, showNotification]);
+
+  // Handle successful connection from Pluggy widget
+  const handleConnectSuccess = useCallback(
+    async (data: { item: { id: string } }) => {
+      setIsWidgetOpen(false);
+      setConnectToken(null);
+
+      try {
+        // Busca informações do item para obter o connector
+        const item = await pluggyService.getItem(data.item.id);
+
+        // Cria conexão no banco
+        await openFinanceService.createConnection(userId, {
+          pluggyItemId: item.id,
+          pluggyConnectorId: item.connector.id,
+          institutionName: item.connector.name,
+        });
+
+        showNotification({ message: "Conexão criada com sucesso!", severity: "success" });
+        await loadData();
+      } catch (error: any) {
+        console.error("Error creating connection:", error);
+        showNotification({
+          message: error.message || "Erro ao criar conexão",
+          severity: "error",
+        });
+      }
+    },
+    [userId, loadData, showNotification]
+  );
+
+  // Handle widget close
+  const handleConnectClose = useCallback(() => {
+    setIsWidgetOpen(false);
+    setConnectToken(null);
+  }, []);
 
   // Fecha dialog de edição e recarrega
   const handleEditClose = useCallback(() => {
@@ -383,8 +326,15 @@ const OpenFinanceView: React.FC<OpenFinanceViewProps> = ({
 
           <Button
             variant="contained"
-            startIcon={<AddIcon />}
+            startIcon={
+              loadingToken ? (
+                <CircularProgress size={18} color="inherit" />
+              ) : (
+                <AddIcon />
+              )
+            }
             onClick={handleOpenPluggyModal}
+            disabled={loadingToken}
             sx={{
               borderRadius: "20px",
               px: 2.5,
@@ -600,6 +550,23 @@ const OpenFinanceView: React.FC<OpenFinanceViewProps> = ({
         onTransactionCreate={onTransactionCreate}
         onUpdate={loadData}
       />
+
+      {/* Pluggy Connect Widget */}
+      {isWidgetOpen && connectToken && (
+        <PluggyConnect
+          connectToken={connectToken}
+          onSuccess={handleConnectSuccess}
+          onClose={handleConnectClose}
+          onError={(error) => {
+            console.error("Pluggy Connect error:", error);
+            showNotification({
+              message: "Erro na conexão. Tente novamente.",
+              severity: "error",
+            });
+            handleConnectClose();
+          }}
+        />
+      )}
     </Box>
   );
 };
