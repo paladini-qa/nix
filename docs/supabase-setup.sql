@@ -491,3 +491,132 @@ END $$;
 -- GROUP BY installment_group_id, description, installments
 -- ORDER BY parcelas DESC;
 
+-- =============================================
+-- 11. TABELA: open_finance_connections
+-- =============================================
+-- Armazena as conexões do usuário com instituições financeiras via Pluggy
+
+CREATE TABLE IF NOT EXISTS public.open_finance_connections (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    pluggy_item_id TEXT NOT NULL UNIQUE, -- ID do item no Pluggy
+    pluggy_connector_id TEXT NOT NULL, -- ID do conector (banco)
+    institution_name TEXT NOT NULL, -- Nome da instituição
+    payment_method_id TEXT, -- ID do payment method vinculado (nullable)
+    is_active BOOLEAN DEFAULT TRUE,
+    last_sync_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_open_finance_connections_user_id ON public.open_finance_connections(user_id);
+CREATE INDEX IF NOT EXISTS idx_open_finance_connections_pluggy_item_id ON public.open_finance_connections(pluggy_item_id);
+CREATE INDEX IF NOT EXISTS idx_open_finance_connections_is_active ON public.open_finance_connections(is_active);
+
+-- Comentários
+COMMENT ON TABLE public.open_finance_connections IS 'Conexões do usuário com instituições financeiras via Pluggy';
+COMMENT ON COLUMN public.open_finance_connections.pluggy_item_id IS 'ID único do item no Pluggy';
+COMMENT ON COLUMN public.open_finance_connections.pluggy_connector_id IS 'ID do conector (banco) no Pluggy';
+COMMENT ON COLUMN public.open_finance_connections.payment_method_id IS 'ID do payment method vinculado (pode ser null)';
+COMMENT ON COLUMN public.open_finance_connections.is_active IS 'Se a conexão está ativa';
+
+-- =============================================
+-- 12. TABELA: pending_transactions
+-- =============================================
+-- Armazena transações sincronizadas do Open Finance que aguardam confirmação
+
+CREATE TABLE IF NOT EXISTS public.pending_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    connection_id UUID NOT NULL REFERENCES public.open_finance_connections(id) ON DELETE CASCADE,
+    pluggy_transaction_id TEXT NOT NULL UNIQUE, -- ID da transação no Pluggy
+    raw_description TEXT NOT NULL, -- Descrição original da transação
+    raw_amount NUMERIC(12, 2) NOT NULL,
+    raw_date DATE NOT NULL, -- Data original da transação
+    raw_type TEXT NOT NULL CHECK (raw_type IN ('DEBIT', 'CREDIT')),
+    -- Campos editáveis pelo usuário antes de confirmar
+    description TEXT, -- Pode ser editado
+    amount NUMERIC(12, 2), -- Pode ser editado
+    date DATE, -- Pode ser editado
+    type TEXT CHECK (type IN ('income', 'expense')), -- Pode ser editado
+    category TEXT, -- Pode ser editado
+    payment_method TEXT, -- Pode ser editado
+    -- Status
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_pending_transactions_user_id ON public.pending_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_pending_transactions_connection_id ON public.pending_transactions(connection_id);
+CREATE INDEX IF NOT EXISTS idx_pending_transactions_pluggy_transaction_id ON public.pending_transactions(pluggy_transaction_id);
+CREATE INDEX IF NOT EXISTS idx_pending_transactions_status ON public.pending_transactions(status);
+
+-- Comentários
+COMMENT ON TABLE public.pending_transactions IS 'Transações sincronizadas do Open Finance que aguardam confirmação';
+COMMENT ON COLUMN public.pending_transactions.pluggy_transaction_id IS 'ID único da transação no Pluggy';
+COMMENT ON COLUMN public.pending_transactions.raw_description IS 'Descrição original da transação (não editada)';
+COMMENT ON COLUMN public.pending_transactions.raw_type IS 'Tipo original: DEBIT ou CREDIT';
+COMMENT ON COLUMN public.pending_transactions.status IS 'Status: pending, confirmed ou cancelled';
+
+-- RLS para open_finance_connections e pending_transactions
+ALTER TABLE public.open_finance_connections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pending_transactions ENABLE ROW LEVEL SECURITY;
+
+-- Políticas para open_finance_connections
+CREATE POLICY "Usuários podem ver apenas suas próprias conexões"
+    ON public.open_finance_connections
+    FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem inserir suas próprias conexões"
+    ON public.open_finance_connections
+    FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem atualizar suas próprias conexões"
+    ON public.open_finance_connections
+    FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem deletar suas próprias conexões"
+    ON public.open_finance_connections
+    FOR DELETE
+    USING (auth.uid() = user_id);
+
+-- Políticas para pending_transactions
+CREATE POLICY "Usuários podem ver apenas suas próprias transações pendentes"
+    ON public.pending_transactions
+    FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem inserir suas próprias transações pendentes"
+    ON public.pending_transactions
+    FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem atualizar suas próprias transações pendentes"
+    ON public.pending_transactions
+    FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Usuários podem deletar suas próprias transações pendentes"
+    ON public.pending_transactions
+    FOR DELETE
+    USING (auth.uid() = user_id);
+
+-- Triggers para updated_at
+CREATE TRIGGER on_open_finance_connections_updated
+    BEFORE UPDATE ON public.open_finance_connections
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
+CREATE TRIGGER on_pending_transactions_updated
+    BEFORE UPDATE ON public.pending_transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+

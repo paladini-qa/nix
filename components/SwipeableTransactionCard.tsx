@@ -53,7 +53,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
-  const { formatCurrency } = useCurrency();
+  const { format } = useCurrency();
   const { privacyStyles } = usePrivacyMode();
 
   const isIncome = t.type === "income";
@@ -258,7 +258,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
                 color={isIncome ? "success.main" : "error.main"}
                 sx={{ flexShrink: 0, ...privacyStyles }}
               >
-                {isIncome ? "+" : "-"} {formatCurrency(t.amount || 0)}
+                {isIncome ? "+" : "-"} {format(t.amount || 0)}
               </Typography>
             </Box>
 

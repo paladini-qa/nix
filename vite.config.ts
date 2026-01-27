@@ -8,13 +8,15 @@ export default defineConfig(({ mode }) => {
   // Detecta o ambiente de build
   // - BUILD_TARGET=mobile -> Capacitor (base: "/")
   // - VERCEL=1 -> Vercel (base: "/")
-  // - Default -> GitHub Pages (base: "/nix/")
+  // - Development -> "/" (para evitar problemas com lazy loading)
+  // - Production -> GitHub Pages (base: "/nix/")
   const isMobile = process.env.BUILD_TARGET === "mobile";
   const isVercel = process.env.VERCEL === "1";
+  const isDev = mode === "development";
 
   // Determina o base path baseado no ambiente
   const getBasePath = () => {
-    if (isMobile || isVercel) return "/";
+    if (isMobile || isVercel || isDev) return "/";
     return "/nix/";
   };
 
@@ -30,6 +32,8 @@ export default defineConfig(({ mode }) => {
       "process.env.GEMINI_API_KEY": JSON.stringify(env.GEMINI_API_KEY),
       "process.env.SUPABASE_URL": JSON.stringify(env.SUPABASE_URL),
       "process.env.SUPABASE_ANON_KEY": JSON.stringify(env.SUPABASE_ANON_KEY),
+      "process.env.PLUGGY_CLIENT_ID": JSON.stringify(env.PLUGGY_CLIENT_ID),
+      "process.env.PLUGGY_CLIENT_SECRET": JSON.stringify(env.PLUGGY_CLIENT_SECRET),
     },
     resolve: {
       alias: {

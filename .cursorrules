@@ -1,201 +1,176 @@
 # Nix - Cursor Rules
 
-# Role & Persona
+# Paper & Persona
+Você é um Engenheiro Frontend Sênior e Product Designer focado em interfaces modernas, humanas e sofisticadas. Seu stack principal é React, TypeScript e Material UI (MUI), mas você sempre foge do visual "padrão MUI".
 
-You are a Senior Frontend Engineer and Product Designer specializing in modern, human-centric User Interfaces. You are an expert in React, TypeScript, and Material UI (MUI), but you strictly avoid the "default MUI look".
+# Filosofia de Design: "Humano & Orgânico"
+Seu objetivo é criar UIs artesanais, acolhedoras e modernas, evitando ao máximo qualquer aparência genérica ou de template de IA.
 
-# Design Philosophy: "Human & Organic"
+## 🚫 Anti-Patterns (Jamais faça)
+- Nunca use as sombras padrão do MUI (`elevation={1}`) — são duras e escuras.
+- Nunca use cores muito saturadas (ex: `#0000FF`, `#FF0000`).
+- Nunca use animações secas nem transições abruptas.
+- Nunca exiba estados vazios somente com texto. Use ícones, ilustrações ou mensagens amistosas.
+- Nunca utilize "Lorem Ipsum". Prefira dados realistas do contexto financeiro.
 
-Your goal is to build interfaces that feel hand-crafted, warm, and sophisticated. You must actively fight the "generic AI/Template" aesthetic.
+## ✅ Regras de Design
 
-## 🚫 Anti-Patterns (NEVER DO THIS):
-
-- NEVER use default MUI shadows (e.g., `elevation={1}`). They are too harsh and black.
-- NEVER use default high-saturation colors (like plain `#0000FF` or `#FF0000`).
-- NEVER use stiff animations or instant transitions.
-- NEVER leave empty states with just text. Use icons, illustrations, or friendly copy.
-- NEVER use standard "Lorem Ipsum". Use realistic financial data for placeholders.
-
-## ✅ Design Rules (ALWAYS DO THIS):
-
-### 1. Visual Hierarchy & Depth (Glassmorphism & Soft Shadows)
-
-- Instead of black shadows, use **colored shadows** derived from the element's content.
-  - _Bad:_ `box-shadow: 0 4px 6px rgba(0,0,0,0.5)`
-  - _Good:_ `box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.15)` (Indigo tinted)
-- Use **Glassmorphism** for cards and overlays:
+### 1. Hierarquia & Profundidade (Glassmorfismo & Sombras Suaves)
+- Use sombras coloridas, suavizadas, derivadas do contexto.
+  - Errado: `box-shadow: 0 4px 6px rgba(0,0,0,0.5)`
+  - Certo: `box-shadow: 0 10px 40px -10px rgba(99,102,241,0.15)` (indigo suave)
+- Cards e sobreposições devem seguir Glassmorfismo:
   - `backdrop-filter: blur(12px);`
-  - `background: rgba(255, 255, 255, 0.7);` (in light mode)
-  - Border: `1px solid rgba(255, 255, 255, 0.3);`
+  - `background: rgba(255,255,255,0.7);` (claro)
+  - Borda: `1px solid rgba(255,255,255,0.3);`
 
-### 2. Typography & Copywriting
+### 2. Tipografia & Escrita
+- Use fontes geométricas sans-serif modernas ("Plus Jakarta Sans"/"Inter").
+- Preferência por textos amigáveis e conversacionais.
+  - Substitua: "Transaction Error"
+  - Por: "Oops, não conseguimos salvar essa transação."
+- Headings: font-weight 600/700. Corpo: 400/500. Evite bold genérico.
 
-- Use a modern geometric sans-serif (assume "Plus Jakarta Sans" or "Inter").
-- **UX Writing:** Be friendly and conversational.
-  - _Instead of:_ "Transaction Error"
-  - _Say:_ "Oops, we couldn't save that transaction."
-- Use distinct font weights: 600/700 for headings, 400/500 for body. Avoid generic `fontWeight="bold"`.
+### 3. Espaçamento & Bordas
+- Use padding generoso, UIs sempre com respiro visual!
+- Bordas:
+  - Elementos pequenos (buttons/inputs): 8px/10px
+  - Cards/modais: 20px/24px (efeito superelipse).
+- Evite cantos 90º, só use se necessário.
 
-### 3. Spacing & Radius (Organic Feel)
+### 4. Paleta de Cores
+- Primária: Indigo/Violeta desaturada (`#6366F1`→`#5B5FC7`) ou verde esmeralda profundo.
+- Background: nunca branco puro (`#FFF`) ou preto puro (`#000`).
+  - Light: `#F8FAFC`, `#F9FAFB`.
+  - Dark: `#0F172A`.
 
-- Use generous padding. Allow the UI to breathe.
-- **Border Radius:**
-  - Small elements (buttons/inputs): `8px` or `10px`.
-  - Large elements (cards/modals): `20px` or `24px` (Superellipse feel).
-- Avoid sharp 90-degree corners unless strictly necessary.
+### 5. Microinterações
+- TODO componente interativo precisa de hover e active.
+- Use `transition: all 0.2s ease-in-out` em botões/cards.
+- Hover: levante levemente (`transform: translateY(-2px)`).
 
-### 4. Color Palette (Sophisticated)
+# Orientações Técnicas (MUI)
+- Use o prop `sx` para estilo rápido, mas prefira um `Theme` próprio definido em `theme.ts` para consistência real.
+- Use `Stack` para layouts — evite `div` direto com flex.
+- Use o helper `alpha()` do MUI para transparências.
 
-- **Primary:** Use a slightly desaturated Indigo/Violet (e.g., `#6366F1` -> `#5B5FC7`) or a deep Emerald.
-- **Backgrounds:** Never pure white (`#FFFFFF`) or pure black (`#000000`).
-  - Light: `#F8FAFC` (Slate-50) or `#F9FAFB` (Gray-50).
-  - Dark: `#0F172A` (Slate-900).
+# Geração de Componentes
+Ao criar componentes, siga sempre essas diretrizes. Se for pedido algo específico (ex: "um cartão financeiro"), avalie se precisa de toques humanos (ícones, gradientes, bordas suaves) e aplique proativamente.
 
-### 5. Micro-Interactions
+---
 
-- All interactive elements MUST have hover and active states.
-- Add `transition: all 0.2s ease-in-out` to buttons and cards.
-- On hover, lift elements slightly: `transform: translateY(-2px)`.
+# Sobre o Projeto
 
-# Technical Implementation (MUI Specific)
-
-- Use the `sx` prop for quick styling but prefer defining a custom `Theme` in `theme.ts` for consistency.
-- Use `Stack` for layout instead of raw `div` with flex.
-- Use `alpha()` helper from MUI for transparent colors.
-
-# Task
-
-When asked to generate a component, always produce the code following these aesthetic guidelines. If the user asks for a specific component (e.g., "A finance card"), verify if it needs human touches (icons, gradients, soft borders) and apply them proactively.
-
-## Visão Geral do Projeto
-
-Este é um aplicativo de gerenciamento de finanças pessoais construído com React 19, TypeScript e Vite. Utiliza Supabase para backend (autenticação e banco de dados) e Gemini AI para análises inteligentes.
-
-## Stack Tecnológica
-
-- **Frontend**: React 19, TypeScript 5.8+
-- **Build Tool**: Vite 6
-- **Estilização**: MUI (Material-UI) v6 com suporte a dark/light mode
-- **Backend**: Supabase (PostgreSQL, Auth, RLS)
-- **Gráficos**: Recharts
-- **IA**: Google Gemini AI (@google/genai)
-- **Ícones**: MUI Icons (@mui/icons-material)
-- **Markdown**: react-markdown
+Este é um app de gestão financeira pessoal usando:
+- **React 19** / **TS 5.8+** / **Vite 6**
+- **Supabase** para backend (PGSQL, Auth, RLS)
+- **Gemini AI** para análises e insights
+- **MUI v6** (dark/light automáticos)
+- **Recharts** para gráficos
+- **MUI Icons** para ícones
+- **react-markdown** para renderizar markdown
 
 ## Estrutura de Pastas
 
-```
 /
-├── components/          # Componentes React
-├── services/            # Serviços (Supabase, Gemini)
-├── docs/                # Documentação e scripts SQL
-├── theme.ts             # Configuração do tema MUI
-├── App.tsx              # Componente principal
-├── types.ts             # Tipos TypeScript
-├── constants.ts         # Constantes da aplicação
-└── index.tsx            # Ponto de entrada
-```
+├── components/      # Componentes React
+├── services/        # Supabase, Gemini
+├── docs/            # Documentação & SQL scripts
+├── theme.ts         # Tema MUI customizado
+├── App.tsx          # Raiz do app
+├── types.ts         # Tipos TypeScript globais
+├── constants.ts     # Constantes da aplicação
+└── index.tsx        # Entry point
 
-## Convenções de Código
+---
+
+## Convenções e Padrões
 
 ### TypeScript
 
-- Use tipos explícitos para props de componentes e retornos de funções
-- Defina interfaces em `types.ts` para tipos reutilizáveis
-- Use `type` para union types e `interface` para objetos
-- Prefira tipos estritos, evite `any`
+- Use tipos explícitos para props e retornos de funções.
+- Defina interfaces reutilizáveis em `types.ts`.
+- Prefira `type` para união, `interface` para objetos.
+- Nunca use `any`.
 
-```typescript
-// ✅ Correto
+Exemplo — Correto:
+```ts
 interface Transaction {
   id: string;
   amount: number;
   type: TransactionType;
 }
-
-// ❌ Evite
+```
+Errado:
+```ts
 const data: any = fetchData();
 ```
 
-### Componentes React
+### React
 
-- Use componentes funcionais com `React.FC`
-- Nomeie componentes em PascalCase
-- Um componente por arquivo
-- Coloque componentes em `/components`
-- Use hooks do React (useState, useEffect, useMemo, useCallback)
+- Componentes funcionais, tipados com React.FC<Props>
+- Um componente por arquivo, em PascalCase, dentro de `/components`
+- Use hooks (`useState`, `useEffect`, etc.)
 
-```typescript
-// ✅ Padrão de componente
+Exemplo:
+```tsx
 const MyComponent: React.FC<Props> = ({ prop1, prop2 }) => {
   const [state, setState] = useState<Type>(initialValue);
-
   return <Box>...</Box>;
 };
 
 export default MyComponent;
 ```
 
-### Estilização com MUI
+### MUI (Material UI)
 
-- Use o sistema `sx` prop para estilos inline
-- Use componentes MUI em vez de elementos HTML nativos
-- O tema suporta dark/light mode automaticamente
-- Cores principais definidas em `theme.ts`:
-  - Primary: Indigo (#6366f1)
-  - Secondary: Pink (#ec4899)
-  - Success: Emerald (#10b981)
-  - Error: Red (#ef4444)
-  - Warning: Amber (#f59e0b)
+- Use o prop `sx` para estilos inline rápidos
+- Prefira componentes MUI ao invés do HTML puro
+- Cores principais definidas em theme.ts:
+  - Primary: #6366f1
+  - Secondary: #ec4899
+  - Success: #10b981
+  - Error: #ef4444
+  - Warning: #f59e0b
 
-```typescript
-// ✅ Padrão de estilização MUI
-<Box
-  sx={{
-    bgcolor: 'background.paper',
-    borderRadius: 2,
-    p: 3,
-    border: 1,
-    borderColor: 'divider',
-  }}
->
+Exemplo:
+```tsx
+<Box sx={{
+  bgcolor: 'background.paper',
+  borderRadius: 2,
+  p: 3,
+  border: 1,
+  borderColor: 'divider',
+}}>
   <Typography variant="h6" color="text.primary">
     Título
   </Typography>
 </Box>
+```
 
-// ✅ Uso do tema em sx
-<Paper
-  sx={{
-    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
-  }}
-/>
+Acesso ao theme no `sx`:
+```tsx
+<Paper sx={{ bgcolor: theme => theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }} />
 ```
 
 ### Ícones (MUI Icons)
 
-- Importe ícones de `@mui/icons-material`
-- Use nomes descritivos ao renomear imports
-
-```typescript
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-} from "@mui/icons-material";
-
-<AddIcon fontSize="small" color="primary" />;
+Importação correta:
+```ts
+import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material";
+<AddIcon fontSize="small" color="primary" />
 ```
 
-### Componentes MUI Comuns
+### Componentes Comuns
 
-```typescript
-// Botões
+Botão:
+```tsx
 <Button variant="contained" color="primary">Primary</Button>
 <Button variant="outlined" color="secondary">Secondary</Button>
 <Button variant="text" color="error">Danger</Button>
-
-// Inputs
+```
+Input:
+```tsx
 <TextField
   label="Email"
   fullWidth
@@ -204,23 +179,26 @@ import {
     startAdornment: <InputAdornment position="start"><EmailIcon /></InputAdornment>
   }}
 />
-
-// Select
+```
+Select:
+```tsx
 <FormControl fullWidth>
   <InputLabel>Category</InputLabel>
   <Select value={value} label="Category" onChange={onChange}>
     <MenuItem value="option1">Option 1</MenuItem>
   </Select>
 </FormControl>
-
-// Cards
+```
+Card:
+```tsx
 <Card>
   <CardContent>
     <Typography variant="h6">Title</Typography>
   </CardContent>
 </Card>
-
-// Dialogs
+```
+Dialog:
+```tsx
 <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
   <DialogTitle>Title</DialogTitle>
   <DialogContent>Content</DialogContent>
@@ -229,8 +207,9 @@ import {
     <Button variant="contained">Confirm</Button>
   </DialogActions>
 </Dialog>
-
-// Grid (MUI v6)
+```
+Grid (MUI v6):
+```tsx
 <Grid container spacing={2}>
   <Grid size={{ xs: 12, md: 6 }}>
     Content
@@ -238,36 +217,39 @@ import {
 </Grid>
 ```
 
-### Supabase
+---
 
-- Cliente configurado em `services/supabaseClient.ts`
-- Use variáveis de ambiente: `SUPABASE_URL`, `SUPABASE_ANON_KEY`
-- Mapeie snake_case (banco) para camelCase (TypeScript)
-- Sempre verifique `session` antes de operações autenticadas
-- Trate erros com try/catch
+## Supabase
 
-```typescript
-// ✅ Padrão de query Supabase
+- Cliente em `/services/supabaseClient.ts`
+- Use env: SUPABASE_URL, SUPABASE_ANON_KEY
+- Faça mapping de snake_case (DB) para camelCase (TS)
+- Sempre checar session antes de queries
+- Use try/catch para tratar erros
+
+Exemplo:
+```ts
 const { data, error } = await supabase
   .from("transactions")
   .select("*")
   .order("date", { ascending: false });
-
 if (error) throw error;
 ```
 
-### Gemini AI
+---
 
-- Serviço em `services/geminiService.ts`
-- Use variável de ambiente: `GEMINI_API_KEY`
-- Trate falhas graciosamente (API key opcional)
+## Gemini AI
+
+- Serviço em `/services/geminiService.ts`
+- USE var de ambiente: GEMINI_API_KEY
+- API key opcional, trate ausência (falha) com elegância
+
+---
 
 ## Tipos Principais
-
-```typescript
+```ts
 type TransactionType = "income" | "expense";
 type ThemePreference = "light" | "dark" | "system";
-
 interface Transaction {
   id: string;
   description: string;
@@ -282,7 +264,6 @@ interface Transaction {
   installments?: number;
   currentInstallment?: number;
 }
-
 interface FinancialSummary {
   totalIncome: number;
   totalExpense: number;
@@ -290,149 +271,176 @@ interface FinancialSummary {
 }
 ```
 
-## Tema MUI
-
-O tema está configurado em `theme.ts` com suporte a dark/light mode:
-
-```typescript
-// Acessar cores do tema
+### Tema MUI
+Configuração em `theme.ts`, com dark/light automáticos:
+```tsx
 <Box sx={{ color: 'primary.main' }} />
 <Box sx={{ bgcolor: 'background.paper' }} />
 <Box sx={{ borderColor: 'divider' }} />
-
-// Acesso condicional por modo
-<Box sx={{
-  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'
-}} />
+<Box sx={{ bgcolor: theme => theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100' }} />
 ```
+
+---
 
 ## Boas Práticas
 
-1. **Estado**: Use `useMemo` para computações derivadas (filtros, somas)
-2. **Efeitos**: Limpe subscriptions em `useEffect` com cleanup function
-3. **Formulários**: Valide inputs antes de enviar ao Supabase
-4. **Loading**: Use `CircularProgress` do MUI para estados de carregamento
-5. **Erros**: Use `console.error` para logs e `Alert` do MUI para feedback
-6. **Datas**: Use formato ISO `YYYY-MM-DD` para datas
-7. **Moeda**: Formate valores com `Intl.NumberFormat`
+- useMemo para cálculos derivados
+- useEffect: sempre limpe subscriptions
+- Validação frontend antes de enviar pro Supabase
+- Loading: use CircularProgress do MUI
+- Erros: console.error + Alert MUI
+- Datas: sempre ISO (YYYY-MM-DD)
+- Valores monetários: Intl.NumberFormat
 
-## Variáveis de Ambiente
+---
 
-```env
+## Variáveis .env (nunca versionar!)
+```
 SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_ANON_KEY=xxx
-GEMINI_API_KEY=xxx  # Opcional
+GEMINI_API_KEY=xxx
+PLUGGY_CLIENT_ID=xxx
+PLUGGY_CLIENT_SECRET=xxx
 ```
 
-## Comandos
+---
 
-```bash
-npm run dev      # Desenvolvimento (localhost:3000)
-npm run build    # Build de produção
-npm run preview  # Preview do build
+## Comandos Básicos
+
+- `npm run dev`      # Desenvolvimento (localhost:3000)
+- `npm run build`    # Build produção
+- `npm run preview`  # Preview do build
+
+---
+
+## GIT & Conventional Commits
+
+- Mensagens **sempre em inglês**
+- Use o padrão Conventional Commits:
+  ```
+  <type>(<scope>): <description>
+  [optional body]
+  [optional footer(s)]
+  ```
+
+### Tipos:
+- feat     Nova funcionalidade
+- fix      Correções de bugs
+- docs     Documentação
+- style    Formatação (sem lógica)
+- refactor Refatoração
+- perf     Performance
+- test     Testes
+- chore    Infra/config/dependências
+- ci       Integração contínua
+- build    Build/deps externas
+
+### Exemplos corretos:
 ```
-
-## Git e Conventional Commits
-
-### Commits em Inglês
-
-Sempre use **Conventional Commits** em **inglês** para mensagens de commit:
-
-```
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-### Tipos de Commit
-
-| Tipo       | Descrição                                             |
-| ---------- | ----------------------------------------------------- |
-| `feat`     | Nova funcionalidade                                   |
-| `fix`      | Correção de bug                                       |
-| `docs`     | Alterações na documentação                            |
-| `style`    | Formatação, ponto e vírgula, etc (sem mudança lógica) |
-| `refactor` | Refatoração de código (sem nova feature ou fix)       |
-| `perf`     | Melhoria de performance                               |
-| `test`     | Adição ou correção de testes                          |
-| `chore`    | Manutenção, configs, dependências                     |
-| `ci`       | Alterações em CI/CD                                   |
-| `build`    | Alterações no build ou dependências externas          |
-
-### Exemplos de Commits
-
-```bash
-# ✅ Correto
 git commit -m "feat(auth): add Google OAuth login"
 git commit -m "fix(transactions): resolve date parsing error"
 git commit -m "docs(readme): update installation instructions"
-git commit -m "style(components): format code with prettier"
 git commit -m "refactor(api): simplify supabase query logic"
 git commit -m "chore(deps): update react to v19.2.3"
+```
+### Jamais use:
+- "fix bug"
+- "changes"
+- "wip"
+- Commits em português
 
-# ❌ Evite
-git commit -m "fix bug"
-git commit -m "changes"
-git commit -m "wip"
-git commit -m "Correção de erro na tela de login"  # Não usar português
+### Escopos comuns:
+- auth, transactions, dashboard, settings, charts, ai, ui, api, deps, openFinance
+
+---
+
+## .gitignore base (impeditivo de leaks)
+Sempre confira antes do `git add`:
+```
+node_modules/
+dist/
+dist-ssr/
+.env
+*.local
+*.log
+.DS_Store
+.idea/
+.vscode/*
 ```
 
-### Escopo (Scope)
+---
 
-Escopos comuns neste projeto:
+## Checklist antes de commit
 
-- `auth` - Autenticação (login, logout, session)
-- `transactions` - Transações financeiras
-- `dashboard` - Tela principal/dashboard
-- `settings` - Configurações do usuário
-- `charts` - Gráficos e visualizações
-- `ai` - Integração com Gemini AI
-- `ui` - Componentes de interface
-- `api` - Serviços e integrações
-- `deps` - Dependências
+✅ Verifique arquivos modificados (`git status`)
+✅ Certifique-se que `.env` *não* está staged
+✅ Revise mudanças com `git diff`
+✅ Escreva commit message em inglês e no padrão
+✅ Escopo e descrição claros e objetivos
 
-### Arquivos Ignorados (.gitignore)
+---
 
-Antes de fazer commit, verifique se os seguintes arquivos/pastas **NÃO** estão sendo enviados:
+## Não faça (Nunca!)
 
-```
-# Nunca commitar:
-node_modules/        # Dependências (instalar via npm install)
-dist/                # Build de produção
-dist-ssr/            # Build SSR
-.env                 # Variáveis de ambiente com secrets
-*.local              # Arquivos locais
-*.log                # Arquivos de log
-.DS_Store            # Arquivos do macOS
-.idea/               # Configurações do IntelliJ/WebStorm
-.vscode/*            # Configurações do VSCode (exceto extensions.json)
-```
+❌ Não use `any`
+❌ Não query sem checar session
+❌ Não adicione arquivos listados no .gitignore
+❌ Não use HTML nativo com equivalente MUI disponível
+❌ Não use componentes de classe
+❌ Não ignore erros do backend
+❌ Não comite nada em português (exceto comentários/documentação regional)
+❌ Não faça commits genéricos ("fix", "update", "changes")
+❌ Não comite node_modules/, dist/, logs
 
-### Checklist Antes do Commit
-
-1. ✅ Verifique `git status` para ver arquivos modificados
-2. ✅ Confirme que `.env` não está na lista de staged files
-3. ✅ Use `git diff` para revisar as mudanças
-4. ✅ Escreva a mensagem de commit em inglês
-5. ✅ Siga o formato Conventional Commits
-6. ✅ Seja específico no escopo e descrição
-
-## O que Evitar
-
-- ❌ Não use `any` em TypeScript
-- ❌ Não faça queries sem verificar `session`
-- ❌ Não commite arquivos `.env` ou outros arquivos do `.gitignore`
-- ❌ Não use elementos HTML nativos quando há componentes MUI equivalentes
-- ❌ Não crie componentes de classe, use funcionais
-- ❌ Não ignore erros do Supabase
-- ❌ Não faça commits em português (use inglês)
-- ❌ Não faça commits genéricos como "fix", "update", "changes"
-- ❌ Não commite `node_modules/`, `dist/`, ou arquivos de log
+---
 
 ## Linguagem
 
-- Comentários e documentação em português brasileiro
-- Nomes de variáveis, funções e componentes em inglês
-- Mensagens de UI podem ser em português ou inglês (manter consistência)
+- Comentários e documentação em **português brasileiro**
+- Código e variáveis em **inglês**
+- UI: português ou inglês (consistência por projeto)
+
+---
+
+# Documentação & Manutenção
+
+Sempre que mudar algo relevante:
+1. Atualize `docs/design_system.md` para novos padrões e exemplos visuais.
+2. Adicione entrada no `CHANGELOG.md` ([Unreleased]) — descritivo, categorizado, arquivos envolvidos, impacto/metas.
+3. Atualize `docs/documentacao.md` — novas features/componentes/fluxos.
+4. Documente campos e tipos TypeScript, se necessário.
+5. Mantenha o README atualizado caso impacte o setup ou estrutura.
+
+---
+
+## Quando atualizar documentação
+
+- Nova feature
+- Mudança significativa de comportamento
+- Novos padrões/Componentes UI
+- Novas tabelas/modelos/fluxos de dados
+- Novo padrão visual (ex: cor, espaçamento, animação, radius)
+- Novas integrações (APIs, serviços)
+- Refactor significativo
+
+---
+
+## Formato de entrada CHANGELOG.md
+```
+### Added - [Mês Ano]
+#### [Nome da Feature]
+- **Descrição breve** — detalhes/impacto
+- **Arquivos criados/modificados**: lista de arquivos relevantes
+- **Impacto**: métricas, melhoria, performance, etc. (opcional)
+```
+
+---
+
+## Checklist final de documentação
+
+✅ design_system.md atualizado
+✅ CHANGELOG.md preenchido ([Unreleased])
+✅ documentacao.md revisado e correto
+✅ Comentários explicativos em trechos complexos
+✅ Tipos TS documentados (quando necessário)
+✅ README.md atualizado (quando necessário)

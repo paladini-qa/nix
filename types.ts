@@ -147,3 +147,93 @@ export interface ParsedTransaction {
   confidence: number; // 0-1, nível de confiança da IA
   rawInput: string; // input original para debug
 }
+
+// Open Finance com Pluggy
+export interface OpenFinanceConnection {
+  id: string;
+  userId: string;
+  pluggyItemId: string;
+  pluggyConnectorId: string;
+  institutionName: string;
+  paymentMethodId?: string | null;
+  isActive: boolean;
+  lastSyncAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PendingTransactionStatus = "pending" | "confirmed" | "cancelled";
+
+export interface PendingTransaction {
+  id: string;
+  userId: string;
+  connectionId: string;
+  pluggyTransactionId: string;
+  rawDescription: string;
+  rawAmount: number;
+  rawDate: string; // YYYY-MM-DD
+  rawType: "DEBIT" | "CREDIT";
+  // Campos editáveis
+  description?: string | null;
+  amount?: number | null;
+  date?: string | null; // YYYY-MM-DD
+  type?: TransactionType | null;
+  category?: string | null;
+  paymentMethod?: string | null;
+  // Status
+  status: PendingTransactionStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Tipos da API Pluggy
+export interface PluggyConnector {
+  id: string;
+  name: string;
+  imageUrl?: string;
+  primaryColor?: string;
+  type: "PERSONAL_BANK" | "BUSINESS_BANK" | "CREDIT_CARD" | "INVESTMENT" | "OTHER";
+  country: string;
+  products?: string[];
+}
+
+export interface PluggyItem {
+  id: string;
+  connector: {
+    id: string;
+    name: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  status: "UPDATING" | "UPDATED" | "LOGIN_ERROR" | "WAITING_USER_INPUT" | "USER_INPUT_ERROR" | "OUTDATED" | "PARTIAL";
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+export interface PluggyTransaction {
+  id: string;
+  accountId: string;
+  amount: number;
+  date: string; // ISO date string
+  description: string;
+  type: "DEBIT" | "CREDIT";
+  category?: string;
+  subcategory?: string;
+  currencyCode: string;
+  status: "PENDING" | "POSTED";
+  merchant?: {
+    name: string;
+    website?: string;
+  };
+}
+
+export interface PluggyAccount {
+  id: string;
+  type: "BANK" | "CREDIT";
+  subtype?: string;
+  name: string;
+  balance?: number;
+  currencyCode: string;
+}

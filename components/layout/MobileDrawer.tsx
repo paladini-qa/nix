@@ -28,6 +28,7 @@ import {
   Flag as GoalIcon,
   Category as CategoryIcon,
   Payment as PaymentIcon,
+  AccountBalance as AccountBalanceIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -51,7 +52,8 @@ type ViewType =
   | "analytics"
   | "settings"
   | "paymentMethods"
-  | "categories";
+  | "categories"
+  | "openFinance";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -125,6 +127,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
   // Itens de cadastro
   const registrationNavItems: NavItem[] = [
+    { icon: AccountBalanceIcon, label: "Open Finance", id: "openFinance" },
     { icon: PaymentIcon, label: "Payment Methods", id: "paymentMethods" },
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
   ];

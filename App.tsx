@@ -50,7 +50,7 @@ import Sidebar from "./components/Sidebar";
 import ProfileModal from "./components/ProfileModal";
 import LoginView from "./components/LoginView";
 import DateFilter from "./components/DateFilter";
-import { MobileHeader, MobileDrawer } from "./components/layout";
+import { MobileHeader, MobileDrawer, MobileNavigation } from "./components/layout";
 import TransactionOptionsPanel, { ActionType, OptionType } from "./components/TransactionOptionsPanel";
 
 // Type aliases for backward compatibility
@@ -73,6 +73,7 @@ import AnalyticsView from "./components/AnalyticsView";
 const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
 const PaymentMethodsView = lazy(() => import("./components/PaymentMethodsView"));
 const CategoriesView = lazy(() => import("./components/CategoriesView"));
+const OpenFinanceView = lazy(() => import("./components/OpenFinanceView"));
 const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
 
 import type { AdvancedFiltersState } from "./components/AdvancedFilters";
@@ -192,7 +193,7 @@ const AppContent: React.FC<{
   onRefreshData,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { showError, showSuccess } = useNotification();
   const { confirm, choice } = useConfirmDialog();
 
@@ -207,6 +208,7 @@ const AppContent: React.FC<{
     | "goals"
     | "paymentMethods"
     | "categories"
+    | "openFinance"
   >("dashboard");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -3896,6 +3898,18 @@ const AppContent: React.FC<{
                     onClearInitialCategory={() => setSelectedCategoryNav(null)}
                   />
                 </Suspense>
+              ) : currentView === "openFinance" ? (
+                <Suspense fallback={<ViewLoading />}>
+                  <OpenFinanceView
+                    userId={session.user.id}
+                    paymentMethods={paymentMethods}
+                    categories={categories}
+                    onTransactionCreate={async (newTx) => {
+                      await handleAddTransaction(newTx);
+                      await onRefreshData();
+                    }}
+                  />
+                </Suspense>
               ) : null}
             </Box>
           </Box>
@@ -4000,6 +4014,14 @@ const AppContent: React.FC<{
             />
           </Suspense>
 
+          {/* Mobile Bottom Navigation */}
+          {isMobile && (
+            <MobileNavigation
+              currentView={currentView}
+              onNavigate={setCurrentView}
+            />
+          )}
+
         </Box>
       </ColorsContext.Provider>
     </ThemeContext.Provider>
@@ -4090,7 +4112,7 @@ const App: React.FC = () => {
   );
 
   // Detecta se é mobile
-  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   // Salva preferência de tema no localStorage
   useEffect(() => {

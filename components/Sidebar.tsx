@@ -30,6 +30,7 @@ import {
   Payment as PaymentIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
+  AccountBalance as AccountBalanceIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,7 +53,8 @@ type ViewType =
   | "budgets"
   | "goals"
   | "paymentMethods"
-  | "categories";
+  | "categories"
+  | "openFinance";
 
 interface SidebarProps {
   themePreference: ThemePreference;
@@ -124,6 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
     { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
+    { icon: AccountBalanceIcon, label: "Open Finance", id: "openFinance" },
     { icon: PaymentIcon, label: "Payment Methods", id: "paymentMethods" },
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
   ];
