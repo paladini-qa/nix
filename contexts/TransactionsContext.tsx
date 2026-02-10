@@ -9,11 +9,7 @@ import React, {
 } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "../services/supabaseClient";
-import {
-  Transaction,
-  FilterState,
-  FinancialSummary,
-} from "../types";
+import { Transaction, FilterState, FinancialSummary } from "../types";
 import { getInitialMonthYear } from "../hooks/useFilters";
 
 // ============================================
@@ -25,14 +21,14 @@ interface TransactionsContextValue {
   transactions: Transaction[];
   filteredTransactions: Transaction[];
   summary: FinancialSummary;
-  
+
   // Filters
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
-  
+
   // Loading states
   isLoading: boolean;
-  
+
   // Actions
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
   refreshTransactions: () => Promise<void>;
@@ -69,7 +65,7 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
   // Fetch transactions from Supabase
   const fetchTransactions = useCallback(async () => {
     if (!session?.user?.id) return;
-    
+
     setIsLoading(true);
     try {
       const { data: txs, error } = await supabase
@@ -162,6 +158,24 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
           return; // Não gera a transação virtual para esta data
         }
 
+        // Não gerar virtual se já existe transação real neste mês para esta recorrência
+        const hasRealInTargetMonth = transactions.some(
+          (tx) =>
+            !tx.isVirtual &&
+            tx.date &&
+            tx.date.startsWith(
+              `${targetYear}-${String(targetMonth).padStart(2, "0")}`
+            ) &&
+            (tx.recurringGroupId === t.id ||
+              (tx.description === t.description &&
+                tx.category === t.category &&
+                Number(tx.amount) === Number(t.amount) &&
+                tx.type === t.type))
+        );
+        if (hasRealInTargetMonth) {
+          return;
+        }
+
         virtualTransactions.push({
           ...t,
           id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
@@ -182,16 +196,17 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
   const filteredTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
       const [y, m] = t.date.split("-");
-      const isCurrentMonth = parseInt(y) === filters.year && parseInt(m) === filters.month + 1;
-      
+      const isCurrentMonth =
+        parseInt(y) === filters.year && parseInt(m) === filters.month + 1;
+
       if (!isCurrentMonth) return false;
-      
+
       // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
       // Isso acontece quando o usuário exclui a primeira ocorrência com "apenas esta"
       if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
         return false; // Não exibe a transação recorrente se sua própria data foi excluída
       }
-      
+
       return true;
     });
 
@@ -253,4 +268,3 @@ export const useTransactions = (): TransactionsContextValue => {
 };
 
 export default TransactionsContext;
-

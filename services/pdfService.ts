@@ -449,7 +449,7 @@ export const generateFriendReport = (data: FriendReportData): void => {
     doc.setFont("helvetica", "italic");
     doc.text(
       "Nenhuma despesa compartilhada registrada com este amigo.",
-      boxCenter,
+      pageWidth / 2,
       yPos + 20,
       { align: "center" }
     );
@@ -550,46 +550,40 @@ export const prepareFriendReportData = (
       }
     } else if (t.type === "income") {
       // INCOME compartilhada: representa o valor que o amigo me deve
-      // Se tem relatedTransactionId, o valor já é 50% da despesa original
-      // Se não tem, pode ser uma income avulsa compartilhada
       const hasRelatedExpense = !!t.relatedTransactionId;
       const incomeAmount = hasRelatedExpense ? t.amount : t.amount / 2;
-
       theyOweMeTransactions.push(t);
       theyOweMeTotal += incomeAmount;
     }
   });
 
-  // Calcula saldo líquido considerando apenas o que está pendente
-  let pendingTheyOweMe = 0;
-  let pendingIOwe = 0;
-
-  theyOweMeTransactions.forEach((t) => {
+  // Considera "pago" para exibição no PDF: não incluir no relatório
+  const isTheyOweMePaid = (t: Transaction): boolean => {
     if (t.type === "expense") {
-      // Para expenses, verifica se a income relacionada está paga
       const relatedIncome = allTransactions.find(
         (inc) => inc.id === t.relatedTransactionId
       );
-      if (!relatedIncome?.isPaid) {
-        pendingTheyOweMe += t.amount / 2;
-      }
-    } else if (t.type === "income") {
-      // Para incomes compartilhadas, verifica se a própria income está paga
-      if (!t.isPaid) {
-        const hasRelatedExpense = !!t.relatedTransactionId;
-        const incomeAmount = hasRelatedExpense ? t.amount : t.amount / 2;
-        pendingTheyOweMe += incomeAmount;
-      }
+      return relatedIncome?.isPaid ?? false;
     }
-  });
+    return t.isPaid ?? false;
+  };
 
-  iOweThemTransactions.forEach((t) => {
-    if (!t.isPaid) {
-      pendingIOwe += t.amount;
-    }
-  });
+  const pendingTheyOweMeList = theyOweMeTransactions.filter(
+    (t) => !isTheyOweMePaid(t)
+  );
+  const pendingIOweThemList = iOweThemTransactions.filter((t) => !t.isPaid);
 
-  const netBalance = pendingTheyOweMe - pendingIOwe;
+  const pendingTheyOweMeTotal = pendingTheyOweMeList.reduce((sum, t) => {
+    if (t.type === "expense") return sum + t.amount / 2;
+    const hasRelatedExpense = !!t.relatedTransactionId;
+    return sum + (hasRelatedExpense ? t.amount : t.amount / 2);
+  }, 0);
+  const pendingIOweThemTotal = pendingIOweThemList.reduce(
+    (sum, t) => sum + t.amount,
+    0
+  );
+
+  const netBalance = pendingTheyOweMeTotal - pendingIOweThemTotal;
 
   return {
     friendName,
@@ -598,12 +592,12 @@ export const prepareFriendReportData = (
     month,
     year,
     theyOweMe: {
-      transactions: theyOweMeTransactions,
-      total: theyOweMeTotal,
+      transactions: pendingTheyOweMeList,
+      total: pendingTheyOweMeTotal,
     },
     iOweThem: {
-      transactions: iOweThemTransactions,
-      total: iOweThemTotal,
+      transactions: pendingIOweThemList,
+      total: pendingIOweThemTotal,
     },
     netBalance,
   };

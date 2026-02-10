@@ -51,8 +51,15 @@ import Sidebar from "./components/Sidebar";
 import ProfileModal from "./components/ProfileModal";
 import LoginView from "./components/LoginView";
 import DateFilter from "./components/DateFilter";
-import { MobileHeader, MobileDrawer, MobileNavigation } from "./components/layout";
-import TransactionOptionsPanel, { ActionType, OptionType } from "./components/TransactionOptionsPanel";
+import {
+  MobileHeader,
+  MobileDrawer,
+  MobileNavigation,
+} from "./components/layout";
+import TransactionOptionsPanel, {
+  ActionType,
+  OptionType,
+} from "./components/TransactionOptionsPanel";
 
 // Type aliases for backward compatibility
 type EditOption = OptionType;
@@ -73,7 +80,9 @@ const GoalsView = lazy(() => import("./components/GoalsView"));
 const PlanningView = lazy(() => import("./components/PlanningView"));
 import AnalyticsView from "./components/AnalyticsView";
 const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
-const PaymentMethodsView = lazy(() => import("./components/PaymentMethodsView"));
+const PaymentMethodsView = lazy(
+  () => import("./components/PaymentMethodsView")
+);
 const CategoriesView = lazy(() => import("./components/CategoriesView"));
 const OpenFinanceView = lazy(() => import("./components/OpenFinanceView"));
 const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
@@ -256,15 +265,21 @@ const AppContent: React.FC<{
 
   // Unified state for transaction options panel (edit/delete)
   const [optionsPanelOpen, setOptionsPanelOpen] = useState(false);
-  const [optionsPanelActionType, setOptionsPanelActionType] = useState<ActionType>("edit");
-  const [optionsPanelTransaction, setOptionsPanelTransaction] = useState<Transaction | null>(null);
-  
+  const [optionsPanelActionType, setOptionsPanelActionType] =
+    useState<ActionType>("edit");
+  const [optionsPanelTransaction, setOptionsPanelTransaction] =
+    useState<Transaction | null>(null);
+
   // Estados para o diálogo de transações compartilhadas
   const [sharedOptionsOpen, setSharedOptionsOpen] = useState(false);
-  const [sharedOptionsActionType, setSharedOptionsActionType] = useState<"edit" | "delete">("edit");
-  const [sharedOptionsTransaction, setSharedOptionsTransaction] = useState<Transaction | null>(null);
-  const [pendingSharedEditOption, setPendingSharedEditOption] = useState<SharedEditOption | null>(null);
-  
+  const [sharedOptionsActionType, setSharedOptionsActionType] = useState<
+    "edit" | "delete"
+  >("edit");
+  const [sharedOptionsTransaction, setSharedOptionsTransaction] =
+    useState<Transaction | null>(null);
+  const [pendingSharedEditOption, setPendingSharedEditOption] =
+    useState<SharedEditOption | null>(null);
+
   const [currentEditMode, setCurrentEditMode] = useState<EditOption | null>(
     null
   );
@@ -277,9 +292,14 @@ const AppContent: React.FC<{
 
   // Estados para o formulário de edição de recorrência
   const [isRecurringFormOpen, setIsRecurringFormOpen] = useState(false);
-  const [recurringEditTransaction, setRecurringEditTransaction] = useState<Transaction | null>(null);
-  const [recurringEditMode, setRecurringEditMode] = useState<EditOption | null>(null);
-  const [recurringVirtualDate, setRecurringVirtualDate] = useState<string | undefined>(undefined);
+  const [recurringEditTransaction, setRecurringEditTransaction] =
+    useState<Transaction | null>(null);
+  const [recurringEditMode, setRecurringEditMode] = useState<EditOption | null>(
+    null
+  );
+  const [recurringVirtualDate, setRecurringVirtualDate] = useState<
+    string | undefined
+  >(undefined);
 
   // Estados para filtros avançados do Dashboard
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -292,7 +312,8 @@ const AppContent: React.FC<{
   });
 
   // Legacy alias for pending delete transaction (uses unified panel state)
-  const pendingDeleteTransaction = optionsPanelActionType === "delete" ? optionsPanelTransaction : null;
+  const pendingDeleteTransaction =
+    optionsPanelActionType === "delete" ? optionsPanelTransaction : null;
 
   // Helper: Gera transações recorrentes virtuais para o mês/ano selecionado
   // Apenas para transações recorrentes SEM parcelas (parceladas já existem no banco)
@@ -343,6 +364,25 @@ const AppContent: React.FC<{
           return; // Não gera a transação virtual para esta data
         }
 
+        // Não gerar virtual se já existe transação real neste mês para esta recorrência
+        // (materializada com recurring_group_id OU outra com mesma desc/categoria/valor/tipo)
+        const hasRealInTargetMonth = transactions.some(
+          (tx) =>
+            !tx.isVirtual &&
+            tx.date &&
+            tx.date.startsWith(
+              `${targetYear}-${String(targetMonth).padStart(2, "0")}`
+            ) &&
+            (tx.recurringGroupId === t.id ||
+              (tx.description === t.description &&
+                tx.category === t.category &&
+                Number(tx.amount) === Number(t.amount) &&
+                tx.type === t.type))
+        );
+        if (hasRealInTargetMonth) {
+          return;
+        }
+
         virtualTransactions.push({
           ...t,
           id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
@@ -364,16 +404,17 @@ const AppContent: React.FC<{
   const filteredTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
       const [y, m] = t.date.split("-");
-      const isCurrentMonth = parseInt(y) === filters.year && parseInt(m) === filters.month + 1;
-      
+      const isCurrentMonth =
+        parseInt(y) === filters.year && parseInt(m) === filters.month + 1;
+
       if (!isCurrentMonth) return false;
-      
+
       // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
       // Isso acontece quando o usuário exclui a primeira ocorrência com "apenas esta"
       if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
         return false; // Não exibe a transação recorrente se sua própria data foi excluída
       }
-      
+
       return true;
     });
 
@@ -395,11 +436,11 @@ const AppContent: React.FC<{
     endMonth: number
   ): Transaction[] => {
     const virtualTransactions: Transaction[] = [];
-    
+
     // Itera por todos os meses no intervalo
     let currentYear = startYear;
     let currentMonth = startMonth;
-    
+
     while (
       currentYear < endYear ||
       (currentYear === endYear && currentMonth <= endMonth)
@@ -409,15 +450,17 @@ const AppContent: React.FC<{
         if (t.installments && t.installments > 1) return;
 
         const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
-        
+
         // Não gera antes da data original
         if (
           currentYear < origYear ||
           (currentYear === origYear && currentMonth < origMonth)
-        ) return;
+        )
+          return;
 
         // Não gera no mês original (já existe no banco)
-        const isOriginalMonth = origYear === currentYear && origMonth === currentMonth;
+        const isOriginalMonth =
+          origYear === currentYear && origMonth === currentMonth;
         if (isOriginalMonth) return;
 
         let shouldAppear = false;
@@ -429,13 +472,25 @@ const AppContent: React.FC<{
         }
 
         if (shouldAppear) {
-          const daysInTargetMonth = new Date(currentYear, currentMonth, 0).getDate();
+          const daysInTargetMonth = new Date(
+            currentYear,
+            currentMonth,
+            0
+          ).getDate();
           const adjustedDay = Math.min(origDay, daysInTargetMonth);
-          const virtualDate = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+          const virtualDate = `${currentYear}-${String(currentMonth).padStart(
+            2,
+            "0"
+          )}-${String(adjustedDay).padStart(2, "0")}`;
 
           // Verifica se já foi adicionada ao array virtual
           const alreadyAdded = virtualTransactions.some(
-            (vt) => vt.id === `${t.id}_recurring_${currentYear}-${String(currentMonth).padStart(2, "0")}`
+            (vt) =>
+              vt.id ===
+              `${t.id}_recurring_${currentYear}-${String(currentMonth).padStart(
+                2,
+                "0"
+              )}`
           );
 
           // Verifica se esta data está no excluded_dates da transação original
@@ -443,10 +498,27 @@ const AppContent: React.FC<{
           const excludedDates = t.excludedDates || [];
           const isExcluded = excludedDates.includes(virtualDate);
 
-          if (!alreadyAdded && !isExcluded) {
+          // Não gerar virtual se já existe transação real neste mês para esta recorrência
+          const hasRealInTargetMonth = transactions.some(
+            (tx) =>
+              !tx.isVirtual &&
+              tx.date &&
+              tx.date.startsWith(
+                `${currentYear}-${String(currentMonth).padStart(2, "0")}`
+              ) &&
+              (tx.recurringGroupId === t.id ||
+                (tx.description === t.description &&
+                  tx.category === t.category &&
+                  Number(tx.amount) === Number(t.amount) &&
+                  tx.type === t.type))
+          );
+
+          if (!alreadyAdded && !isExcluded && !hasRealInTargetMonth) {
             virtualTransactions.push({
               ...t,
-              id: `${t.id}_recurring_${currentYear}-${String(currentMonth).padStart(2, "0")}`,
+              id: `${t.id}_recurring_${currentYear}-${String(
+                currentMonth
+              ).padStart(2, "0")}`,
               date: virtualDate,
               isVirtual: true,
               originalTransactionId: t.id,
@@ -485,12 +557,22 @@ const AppContent: React.FC<{
     let recurringForRange: Transaction[] = [];
     if (advancedFilters.startDate || advancedFilters.endDate) {
       const now = new Date();
-      const startYear = advancedFilters.startDate?.year() ?? now.getFullYear() - 1;
-      const startMonth = advancedFilters.startDate ? advancedFilters.startDate.month() + 1 : 1;
+      const startYear =
+        advancedFilters.startDate?.year() ?? now.getFullYear() - 1;
+      const startMonth = advancedFilters.startDate
+        ? advancedFilters.startDate.month() + 1
+        : 1;
       const endYear = advancedFilters.endDate?.year() ?? now.getFullYear() + 1;
-      const endMonth = advancedFilters.endDate ? advancedFilters.endDate.month() + 1 : 12;
-      
-      recurringForRange = generateRecurringForDateRange(startYear, startMonth, endYear, endMonth);
+      const endMonth = advancedFilters.endDate
+        ? advancedFilters.endDate.month() + 1
+        : 12;
+
+      recurringForRange = generateRecurringForDateRange(
+        startYear,
+        startMonth,
+        endYear,
+        endMonth
+      );
     }
 
     // Quando há filtros avançados ativos, usa todas as transações + recorrentes do período
@@ -502,94 +584,108 @@ const AppContent: React.FC<{
       }
       return true;
     });
-    const baseTransactions = [...filteredBaseTransactions, ...recurringForRange];
+    const baseTransactions = [
+      ...filteredBaseTransactions,
+      ...recurringForRange,
+    ];
 
-    return baseTransactions.filter((tx) => {
-      // Filtro por data - normaliza para comparar apenas as datas (sem timezone)
-      if (advancedFilters.startDate) {
-        const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
-        const startYear = advancedFilters.startDate.year();
-        const startMonth = advancedFilters.startDate.month() + 1;
-        const startDay = advancedFilters.startDate.date();
-        
-        const txDateNum = txYear * 10000 + txMonth * 100 + txDay;
-        const startDateNum = startYear * 10000 + startMonth * 100 + startDay;
-        
-        if (txDateNum < startDateNum) return false;
-      }
-      if (advancedFilters.endDate) {
-        const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
-        const endYear = advancedFilters.endDate.year();
-        const endMonth = advancedFilters.endDate.month() + 1;
-        const endDay = advancedFilters.endDate.date();
-        
-        const txDateNum = txYear * 10000 + txMonth * 100 + txDay;
-        const endDateNum = endYear * 10000 + endMonth * 100 + endDay;
-        
-        if (txDateNum > endDateNum) return false;
-      }
+    return baseTransactions
+      .filter((tx) => {
+        // Filtro por data - normaliza para comparar apenas as datas (sem timezone)
+        if (advancedFilters.startDate) {
+          const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
+          const startYear = advancedFilters.startDate.year();
+          const startMonth = advancedFilters.startDate.month() + 1;
+          const startDay = advancedFilters.startDate.date();
 
-      // Filtro por tipo
-      if (advancedFilters.type !== "all" && tx.type !== advancedFilters.type) {
-        return false;
-      }
+          const txDateNum = txYear * 10000 + txMonth * 100 + txDay;
+          const startDateNum = startYear * 10000 + startMonth * 100 + startDay;
 
-      // Filtro por categoria
-      if (
-        advancedFilters.categories.length > 0 &&
-        !advancedFilters.categories.includes(tx.category)
-      ) {
-        return false;
-      }
+          if (txDateNum < startDateNum) return false;
+        }
+        if (advancedFilters.endDate) {
+          const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
+          const endYear = advancedFilters.endDate.year();
+          const endMonth = advancedFilters.endDate.month() + 1;
+          const endDay = advancedFilters.endDate.date();
 
-      // Filtro por método de pagamento
-      if (
-        advancedFilters.paymentMethods.length > 0 &&
-        !advancedFilters.paymentMethods.includes(tx.paymentMethod)
-      ) {
-        return false;
-      }
+          const txDateNum = txYear * 10000 + txMonth * 100 + txDay;
+          const endDateNum = endYear * 10000 + endMonth * 100 + endDay;
 
-      return true;
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          if (txDateNum > endDateNum) return false;
+        }
+
+        // Filtro por tipo
+        if (
+          advancedFilters.type !== "all" &&
+          tx.type !== advancedFilters.type
+        ) {
+          return false;
+        }
+
+        // Filtro por categoria
+        if (
+          advancedFilters.categories.length > 0 &&
+          !advancedFilters.categories.includes(tx.category)
+        ) {
+          return false;
+        }
+
+        // Filtro por método de pagamento
+        if (
+          advancedFilters.paymentMethods.length > 0 &&
+          !advancedFilters.paymentMethods.includes(tx.paymentMethod)
+        ) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [filteredTransactions, transactions, advancedFilters]);
 
   // Transações para os gráficos do Analytics (inclui recorrentes)
   // Com filtro avançado: gera recorrentes para o período do filtro
   // Sem filtro avançado: gera recorrentes desde a primeira transação até 3 meses no futuro
   const analyticsTransactions = useMemo(() => {
-    const hasAdvancedDates = advancedFilters.startDate !== null || advancedFilters.endDate !== null;
-    const hasOtherFilters = advancedFilters.type !== "all" ||
+    const hasAdvancedDates =
+      advancedFilters.startDate !== null || advancedFilters.endDate !== null;
+    const hasOtherFilters =
+      advancedFilters.type !== "all" ||
       advancedFilters.categories.length > 0 ||
       advancedFilters.paymentMethods.length > 0;
-    
+
     // Calcula o mês de referência atual (até dia 10 = mês corrente, após = próximo)
     const now = new Date();
     const day = now.getDate();
     let refMonth = now.getMonth();
     let refYear = now.getFullYear();
-    
+
     if (day > 10) {
       refMonth = refMonth === 11 ? 0 : refMonth + 1;
       refYear = refMonth === 0 ? refYear + 1 : refYear;
     }
-    
+
     let startYear: number;
     let startMonth: number;
     let endYear: number;
     let endMonth: number;
-    
+
     if (hasAdvancedDates) {
       // Com filtro avançado com datas: usa as datas do filtro
       startYear = advancedFilters.startDate?.year() ?? refYear - 1;
-      startMonth = advancedFilters.startDate ? advancedFilters.startDate.month() + 1 : 1;
+      startMonth = advancedFilters.startDate
+        ? advancedFilters.startDate.month() + 1
+        : 1;
       endYear = advancedFilters.endDate?.year() ?? refYear + 1;
-      endMonth = advancedFilters.endDate ? advancedFilters.endDate.month() + 1 : 12;
+      endMonth = advancedFilters.endDate
+        ? advancedFilters.endDate.month() + 1
+        : 12;
     } else {
       // Sem filtro de datas: encontra a primeira transação recorrente
       startYear = refYear;
       startMonth = refMonth + 1;
-      
+
       transactions.forEach((t) => {
         if (t.isRecurring && t.frequency) {
           const [year, month] = t.date.split("-").map(Number);
@@ -599,7 +695,7 @@ const AppContent: React.FC<{
           }
         }
       });
-      
+
       // Fim do período (3 meses depois do mês atual)
       endMonth = refMonth + 4; // +3 meses + 1 para formato 1-12
       endYear = refYear;
@@ -608,15 +704,15 @@ const AppContent: React.FC<{
         endYear += 1;
       }
     }
-    
+
     // Gera transações recorrentes para o período
     const recurringForAnalytics = generateRecurringForDateRange(
-      startYear, 
+      startYear,
       startMonth,
-      endYear, 
+      endYear,
       endMonth
     );
-    
+
     // Combina transações originais com as recorrentes geradas
     // Filtra transações recorrentes originais cuja data está no excludedDates
     const filteredBaseTransactions = transactions.filter((t) => {
@@ -626,8 +722,11 @@ const AppContent: React.FC<{
       }
       return true;
     });
-    let allTransactions = [...filteredBaseTransactions, ...recurringForAnalytics];
-    
+    let allTransactions = [
+      ...filteredBaseTransactions,
+      ...recurringForAnalytics,
+    ];
+
     // Aplica filtros se necessário
     if (hasAdvancedDates || hasOtherFilters) {
       allTransactions = allTransactions.filter((tx) => {
@@ -637,10 +736,10 @@ const AppContent: React.FC<{
           const startYear = advancedFilters.startDate.year();
           const startMonth = advancedFilters.startDate.month() + 1;
           const startDay = advancedFilters.startDate.date();
-          
+
           const txDateNum = txYear * 10000 + txMonth * 100 + txDay;
           const startDateNum = startYear * 10000 + startMonth * 100 + startDay;
-          
+
           if (txDateNum < startDateNum) return false;
         }
         if (advancedFilters.endDate) {
@@ -648,15 +747,18 @@ const AppContent: React.FC<{
           const endYear = advancedFilters.endDate.year();
           const endMonth = advancedFilters.endDate.month() + 1;
           const endDay = advancedFilters.endDate.date();
-          
+
           const txDateNum = txYear * 10000 + txMonth * 100 + txDay;
           const endDateNum = endYear * 10000 + endMonth * 100 + endDay;
-          
+
           if (txDateNum > endDateNum) return false;
         }
 
         // Filtro por tipo
-        if (advancedFilters.type !== "all" && tx.type !== advancedFilters.type) {
+        if (
+          advancedFilters.type !== "all" &&
+          tx.type !== advancedFilters.type
+        ) {
           return false;
         }
 
@@ -679,7 +781,7 @@ const AppContent: React.FC<{
         return true;
       });
     }
-    
+
     return allTransactions;
   }, [transactions, advancedFilters, generateRecurringForDateRange]);
 
@@ -734,7 +836,18 @@ const AppContent: React.FC<{
   // Handlers
   const handleLogout = async () => {
     // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleLogout',message:'user logout called',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'explicit'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "App.tsx:handleLogout",
+        message: "user logout called",
+        data: {},
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "explicit",
+      }),
+    }).catch(() => {});
     // #endregion
     try {
       // Limpa flags de sessão ao fazer logout
@@ -813,13 +926,19 @@ const AppContent: React.FC<{
 
           // Tratamento especial para transações recorrentes com "all_future"
           // Precisamos materializar as ocorrências passadas antes de atualizar
-          if (originalTx.isRecurring && editMode === "all_future" && originalTx.frequency) {
+          if (
+            originalTx.isRecurring &&
+            editMode === "all_future" &&
+            originalTx.frequency
+          ) {
             const targetDate = new Date(newTx.date);
             const targetYear = targetDate.getFullYear();
             const targetMonth = targetDate.getMonth() + 1; // 1-12
 
-            const [origYear, origMonth, origDay] = originalTx.date.split("-").map(Number);
-            
+            const [origYear, origMonth, origDay] = originalTx.date
+              .split("-")
+              .map(Number);
+
             // Gerar transações materializadas para meses passados
             const materializedTransactions: Array<{
               user_id: string;
@@ -846,22 +965,35 @@ const AppContent: React.FC<{
             ) {
               // Pula o mês original (já existe como transação real)
               if (!(currentYear === origYear && currentMonth === origMonth)) {
-                const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+                const daysInMonth = new Date(
+                  currentYear,
+                  currentMonth,
+                  0
+                ).getDate();
                 const adjustedDay = Math.min(origDay, daysInMonth);
-                const materializedDate = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+                const materializedDate = `${currentYear}-${String(
+                  currentMonth
+                ).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
 
                 // Verifica se já existe uma transação materializada para esta data
                 const alreadyExists = transactions.some((mt) => {
                   if (mt.isRecurring || mt.isVirtual) return false;
                   if (mt.id === originalTx.id) return false;
-                  
-                  const sameDescription = mt.description === originalTx.description;
+
+                  const sameDescription =
+                    mt.description === originalTx.description;
                   const sameCategory = mt.category === originalTx.category;
                   const sameAmount = mt.amount === originalTx.amount;
                   const sameDate = mt.date === materializedDate;
                   const sameType = mt.type === originalTx.type;
-                  
-                  return sameDescription && sameCategory && sameAmount && sameDate && sameType;
+
+                  return (
+                    sameDescription &&
+                    sameCategory &&
+                    sameAmount &&
+                    sameDate &&
+                    sameType
+                  );
                 });
 
                 if (!alreadyExists) {
@@ -896,8 +1028,10 @@ const AppContent: React.FC<{
 
             // Inserir transações materializadas no banco
             // E adicionar as datas ao excluded_dates para evitar duplicatas virtuais
-            const materializedDates: string[] = materializedTransactions.map(mt => mt.date);
-            
+            const materializedDates: string[] = materializedTransactions.map(
+              (mt) => mt.date
+            );
+
             if (materializedTransactions.length > 0) {
               const { data: insertedData, error: insertError } = await supabase
                 .from("transactions")
@@ -905,26 +1039,31 @@ const AppContent: React.FC<{
                 .select();
 
               if (insertError) {
-                console.error("Error materializing past transactions:", insertError);
+                console.error(
+                  "Error materializing past transactions:",
+                  insertError
+                );
               } else if (insertedData) {
                 // Adicionar transações materializadas ao estado local
-                const newTransactions: Transaction[] = insertedData.map((d) => ({
-                  id: d.id,
-                  description: d.description,
-                  amount: d.amount,
-                  type: d.type,
-                  category: d.category,
-                  paymentMethod: d.payment_method,
-                  date: d.date,
-                  createdAt: new Date(d.created_at).getTime(),
-                  isRecurring: false,
-                  isPaid: d.is_paid ?? false,
-                  isShared: d.is_shared,
-                  sharedWith: d.shared_with,
-                  recurringGroupId: d.recurring_group_id,
-                }));
+                const newTransactions: Transaction[] = insertedData.map(
+                  (d) => ({
+                    id: d.id,
+                    description: d.description,
+                    amount: d.amount,
+                    type: d.type,
+                    category: d.category,
+                    paymentMethod: d.payment_method,
+                    date: d.date,
+                    createdAt: new Date(d.created_at).getTime(),
+                    isRecurring: false,
+                    isPaid: d.is_paid ?? false,
+                    isShared: d.is_shared,
+                    sharedWith: d.shared_with,
+                    recurringGroupId: d.recurring_group_id,
+                  })
+                );
                 setTransactions((prev) => [...newTransactions, ...prev]);
-                
+
                 // NOTA: Não adicionamos as datas ao excluded_dates aqui porque:
                 // 1. A recorrência original terá nova data de início (não gerará virtuais para datas anteriores)
                 // 2. As transações materializadas têm recurring_group_id e podem ser identificadas
@@ -952,7 +1091,8 @@ const AppContent: React.FC<{
             // Handle shared transaction income creation for recurring
             if (isNowShared && !wasShared && newTx.type === "expense") {
               const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-              const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
+              const incomeAmount =
+                Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
               const incomePayload = {
                 user_id: session.user.id,
@@ -1017,7 +1157,8 @@ const AppContent: React.FC<{
             // Update existing income if still shared
             if (wasShared && isNowShared && originalTx.relatedTransactionId) {
               const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-              const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
+              const incomeAmount =
+                Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
               await supabase
                 .from("transactions")
@@ -1046,8 +1187,15 @@ const AppContent: React.FC<{
 
             // Calcular os excluded_dates atualizados
             const currentExcludedDates = originalTx.excludedDates || [];
-            const materializedDatesForState = materializedTransactions.map(mt => mt.date);
-            const updatedExcludedDates = [...new Set([...currentExcludedDates, ...materializedDatesForState])];
+            const materializedDatesForState = materializedTransactions.map(
+              (mt) => mt.date
+            );
+            const updatedExcludedDates = [
+              ...new Set([
+                ...currentExcludedDates,
+                ...materializedDatesForState,
+              ]),
+            ];
 
             setTransactions((prev) =>
               prev.map((t) => {
@@ -1080,9 +1228,10 @@ const AppContent: React.FC<{
           const relatedTxs = transactions.filter((t) => {
             // Se tem installmentGroupId, usa ele para encontrar parcelas relacionadas
             if (originalTx.installmentGroupId && t.installmentGroupId) {
-              const sameGroup = t.installmentGroupId === originalTx.installmentGroupId;
+              const sameGroup =
+                t.installmentGroupId === originalTx.installmentGroupId;
               if (!sameGroup) return false;
-              
+
               if (editMode === "all_future") {
                 return (
                   (t.currentInstallment || 1) >=
@@ -1091,7 +1240,7 @@ const AppContent: React.FC<{
               }
               return true; // editMode === "all"
             }
-            
+
             // Fallback para transações sem installmentGroupId (legado)
             const sameDescription = t.description === originalTx.description;
             const samePaymentMethod =
@@ -1142,7 +1291,8 @@ const AppContent: React.FC<{
           // Se agora é compartilhado e antes não era, criar income para a transação principal
           if (isNowShared && !wasShared && newTx.type === "expense") {
             const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-            const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
+            const incomeAmount =
+              Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
             const incomePayload = {
               user_id: session.user.id,
@@ -1208,7 +1358,8 @@ const AppContent: React.FC<{
           // Se era e continua sendo compartilhado, atualizar a income existente
           if (wasShared && isNowShared && originalTx.relatedTransactionId) {
             const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-            const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
+            const incomeAmount =
+              Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
             await supabase
               .from("transactions")
@@ -1298,7 +1449,8 @@ const AppContent: React.FC<{
             // Se agora é compartilhado e antes não era, criar income
             if (isNowShared && !wasShared) {
               const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-              const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
+              const incomeAmount =
+                Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
               const incomePayload = {
                 user_id: session.user.id,
@@ -1358,7 +1510,8 @@ const AppContent: React.FC<{
               oldTransaction?.relatedTransactionId
             ) {
               const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-              const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
+              const incomeAmount =
+                Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
               await supabase
                 .from("transactions")
@@ -1575,10 +1728,16 @@ const AppContent: React.FC<{
 
           // Se é uma DESPESA vinculada a amigo com conta dividida (não iOwe), cria income de 50%
           // Se iOwe = true (conta única), significa que EU devo ao amigo, então não cria income
-          if (newTx.isShared && newTx.sharedWith && newTx.type === "expense" && !newTx.iOwe) {
+          if (
+            newTx.isShared &&
+            newTx.sharedWith &&
+            newTx.type === "expense" &&
+            !newTx.iOwe
+          ) {
             const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
             // Conta dividida: amigo me deve 50% do valor
-            const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
+            const incomeAmount =
+              Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
             const incomePayload = {
               user_id: session.user.id,
@@ -1643,10 +1802,16 @@ const AppContent: React.FC<{
 
           // Se estava editando uma transação virtual como "single", adiciona a data ao excluded_dates
           if (pendingVirtualEdit) {
-            const originalTransaction = transactions.find((t) => t.id === pendingVirtualEdit.originalId);
+            const originalTransaction = transactions.find(
+              (t) => t.id === pendingVirtualEdit.originalId
+            );
             if (originalTransaction) {
-              const currentExcludedDates = originalTransaction.excludedDates || [];
-              const newExcludedDates = [...currentExcludedDates, pendingVirtualEdit.excludeDate];
+              const currentExcludedDates =
+                originalTransaction.excludedDates || [];
+              const newExcludedDates = [
+                ...currentExcludedDates,
+                pendingVirtualEdit.excludeDate,
+              ];
 
               await supabase
                 .from("transactions")
@@ -1695,8 +1860,9 @@ const AppContent: React.FC<{
 
   const handleEditTransaction = (transaction: Transaction) => {
     // PRIMEIRO: Verificar se é uma transação compartilhada com relacionada
-    const isSharedWithRelated = transaction.isShared && transaction.relatedTransactionId;
-    
+    const isSharedWithRelated =
+      transaction.isShared && transaction.relatedTransactionId;
+
     if (isSharedWithRelated) {
       // Mostra o diálogo de opções de transação compartilhada primeiro
       setSharedOptionsTransaction(transaction);
@@ -1704,18 +1870,19 @@ const AppContent: React.FC<{
       setSharedOptionsOpen(true);
       return;
     }
-    
+
     // Fluxo normal para transações não compartilhadas
     proceedWithEdit(transaction);
   };
-  
+
   // Função auxiliar para continuar com a edição após escolha de transação compartilhada
   const proceedWithEdit = (transaction: Transaction) => {
     const isVirtual = transaction.isVirtual;
     const isInstallment =
       transaction.installments && transaction.installments > 1;
     // Transações recorrentes originais (não virtuais) também devem mostrar o dialog
-    const isRecurringOriginal = transaction.isRecurring && !transaction.isVirtual;
+    const isRecurringOriginal =
+      transaction.isRecurring && !transaction.isVirtual;
     // Transações materializadas (que pertencem a uma recorrência via recurringGroupId)
     const isMaterializedRecurring = !!transaction.recurringGroupId;
 
@@ -1724,7 +1891,12 @@ const AppContent: React.FC<{
     // 2. Transações parceladas (múltiplas transações reais) - permite editar single/all_future/all
     // 3. Transações recorrentes originais - permite editar apenas esta, futuras ou todas
     // 4. Transações materializadas (vinculadas a recorrência) - permite editar esta, futuras ou todas
-    if (isVirtual || isInstallment || isRecurringOriginal || isMaterializedRecurring) {
+    if (
+      isVirtual ||
+      isInstallment ||
+      isRecurringOriginal ||
+      isMaterializedRecurring
+    ) {
       setOptionsPanelTransaction(transaction);
       setOptionsPanelActionType("edit");
       setOptionsPanelOpen(true);
@@ -1736,14 +1908,14 @@ const AppContent: React.FC<{
       setIsFormOpen(true);
     }
   };
-  
+
   // Handler para quando o usuário seleciona uma opção no diálogo de transações compartilhadas (edit)
   const handleSharedEditOptionSelect = (option: SharedEditOption) => {
     if (!sharedOptionsTransaction) return;
-    
+
     setSharedOptionsOpen(false);
     setPendingSharedEditOption(option);
-    
+
     if (option === "both") {
       // Editar ambas - continua com a transação atual, a relacionada será atualizada automaticamente
       proceedWithEdit(sharedOptionsTransaction);
@@ -1760,14 +1932,14 @@ const AppContent: React.FC<{
       }
     }
   };
-  
+
   // Handler para quando o usuário seleciona uma opção no diálogo de transações compartilhadas (delete)
   const handleSharedDeleteOptionSelect = async (option: SharedEditOption) => {
     if (!sharedOptionsTransaction) return;
-    
+
     setSharedOptionsOpen(false);
     setPendingSharedEditOption(option);
-    
+
     if (option === "both") {
       // Deletar ambas - continua com a transação atual e a relacionada será deletada também
       await proceedWithDelete(sharedOptionsTransaction);
@@ -1786,7 +1958,8 @@ const AppContent: React.FC<{
   };
 
   // Computed alias for edit transaction
-  const pendingEditTransaction = optionsPanelActionType === "edit" ? optionsPanelTransaction : null;
+  const pendingEditTransaction =
+    optionsPanelActionType === "edit" ? optionsPanelTransaction : null;
 
   const handleEditOptionSelect = async (option: EditOption) => {
     if (!pendingEditTransaction || !session) return;
@@ -1802,15 +1975,26 @@ const AppContent: React.FC<{
       // Para transação virtual, encontra a original
       const originalId = pendingEditTransaction.originalTransactionId;
       const originalTransaction = transactions.find((t) => t.id === originalId);
-      
+
       // Extrai a data da ocorrência virtual
       const virtualDatePart = pendingEditTransaction.id.split("_recurring_")[1];
       if (originalTransaction && virtualDatePart) {
-        const [origYear, origMonth, origDay] = originalTransaction.date.split("-").map(Number);
-        const [targetYear, targetMonth] = virtualDatePart.split("-").map(Number);
-        const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
+        const [origYear, origMonth, origDay] = originalTransaction.date
+          .split("-")
+          .map(Number);
+        const [targetYear, targetMonth] = virtualDatePart
+          .split("-")
+          .map(Number);
+        const daysInTargetMonth = new Date(
+          targetYear,
+          targetMonth,
+          0
+        ).getDate();
         const adjustedDay = Math.min(origDay, daysInTargetMonth);
-        virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+        virtualDate = `${targetYear}-${String(targetMonth).padStart(
+          2,
+          "0"
+        )}-${String(adjustedDay).padStart(2, "0")}`;
       }
 
       if (originalTransaction) {
@@ -1830,12 +2014,19 @@ const AppContent: React.FC<{
     } else {
       // Para transação parcelada real ou recorrente original
       transactionToEdit = pendingEditTransaction;
-      
+
       // Para "single" em transação recorrente original, configura o pending virtual edit
       // para que a data original seja adicionada ao excluded_dates
-      if (option === "single" && pendingEditTransaction.isRecurring && !pendingEditTransaction.isVirtual) {
+      if (
+        option === "single" &&
+        pendingEditTransaction.isRecurring &&
+        !pendingEditTransaction.isVirtual
+      ) {
         const excludeDate = pendingEditTransaction.date;
-        setPendingVirtualEdit({ originalId: pendingEditTransaction.id, excludeDate });
+        setPendingVirtualEdit({
+          originalId: pendingEditTransaction.id,
+          excludeDate,
+        });
       }
     }
 
@@ -1857,22 +2048,26 @@ const AppContent: React.FC<{
 
     try {
       const originalTx = recurringEditTransaction.isVirtual
-        ? transactions.find((t) => t.id === recurringEditTransaction.originalTransactionId)
+        ? transactions.find(
+            (t) => t.id === recurringEditTransaction.originalTransactionId
+          )
         : recurringEditTransaction;
 
       if (!originalTx) return;
 
       if (editMode === "single") {
         // Verifica se é uma parcela real (não virtual, não recorrente, tem installmentGroupId)
-        const isRealInstallment = recurringEditTransaction.installmentGroupId && 
-                                   !recurringEditTransaction.isVirtual && 
-                                   !recurringEditTransaction.isRecurring;
-        
+        const isRealInstallment =
+          recurringEditTransaction.installmentGroupId &&
+          !recurringEditTransaction.isVirtual &&
+          !recurringEditTransaction.isRecurring;
+
         // Verifica se é uma transação materializada (já foi editada antes de uma recorrência)
         // Não é virtual, não é recorrente, tem recurringGroupId
-        const isMaterializedTransaction = !recurringEditTransaction.isVirtual && 
-                                          !recurringEditTransaction.isRecurring && 
-                                          recurringEditTransaction.recurringGroupId;
+        const isMaterializedTransaction =
+          !recurringEditTransaction.isVirtual &&
+          !recurringEditTransaction.isRecurring &&
+          recurringEditTransaction.recurringGroupId;
 
         if (isRealInstallment || isMaterializedTransaction) {
           // Para parcelas reais OU transações materializadas, faz UPDATE no registro existente
@@ -1899,13 +2094,16 @@ const AppContent: React.FC<{
 
           if (data) {
             // Se é uma transação materializada compartilhada, também atualiza a receita relacionada
-            if (isMaterializedTransaction && 
-                recurringEditTransaction.isShared && 
-                recurringEditTransaction.relatedTransactionId &&
-                pendingSharedEditOption === "both") {
-              const newIncomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+            if (
+              isMaterializedTransaction &&
+              recurringEditTransaction.isShared &&
+              recurringEditTransaction.relatedTransactionId &&
+              pendingSharedEditOption === "both"
+            ) {
+              const newIncomeAmount =
+                Math.round((newTx.amount / 2) * 100) / 100;
               const newIncomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-              
+
               const { error: incomeError } = await supabase
                 .from("transactions")
                 .update({
@@ -1915,7 +2113,7 @@ const AppContent: React.FC<{
                   date: newTx.date,
                 })
                 .eq("id", recurringEditTransaction.relatedTransactionId);
-              
+
               if (!incomeError) {
                 // Atualiza a receita relacionada no estado local
                 setTransactions((prev) =>
@@ -1933,7 +2131,7 @@ const AppContent: React.FC<{
                 );
               }
             }
-            
+
             // Atualiza o estado local com a transação editada
             setTransactions((prev) =>
               prev.map((t) =>
@@ -1959,7 +2157,7 @@ const AppContent: React.FC<{
           // IMPORTANTE: Para virtuais, precisamos usar a data do formulário (newTx.date) que foi
           // inicializada com a data virtual correta, não a data da transação original
           const excludeDate = recurringVirtualDate || newTx.date;
-          
+
           const dbPayload = {
             user_id: session.user.id,
             description: newTx.description,
@@ -1987,22 +2185,25 @@ const AppContent: React.FC<{
 
           if (data) {
             let newRelatedTransactionId: string | undefined;
-            
+
             // Se é compartilhada e a opção foi "both", cria também a transação de receita correspondente
-            const shouldCreateRelatedIncome = pendingSharedEditOption === "both" && 
-              originalTx.isShared && 
-              originalTx.sharedWith && 
+            const shouldCreateRelatedIncome =
+              pendingSharedEditOption === "both" &&
+              originalTx.isShared &&
+              originalTx.sharedWith &&
               originalTx.relatedTransactionId &&
               newTx.type === "expense";
-            
+
             if (shouldCreateRelatedIncome) {
-              const relatedRecurringTx = transactions.find(t => t.id === originalTx.relatedTransactionId);
-              
+              const relatedRecurringTx = transactions.find(
+                (t) => t.id === originalTx.relatedTransactionId
+              );
+
               if (relatedRecurringTx) {
                 // Calcula o valor proporcional (50% do novo valor)
                 const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
                 const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
-                
+
                 const incomePayload = {
                   user_id: session.user.id,
                   description: incomeDescription,
@@ -2018,22 +2219,22 @@ const AppContent: React.FC<{
                   is_shared: true,
                   shared_with: newTx.sharedWith,
                 };
-                
+
                 const { data: incomeData, error: incomeError } = await supabase
                   .from("transactions")
                   .insert(incomePayload)
                   .select()
                   .single();
-                
+
                 if (!incomeError && incomeData) {
                   newRelatedTransactionId = incomeData.id;
-                  
+
                   // Atualiza a despesa criada para vincular à receita
                   await supabase
                     .from("transactions")
                     .update({ related_transaction_id: incomeData.id })
                     .eq("id", data.id);
-                  
+
                   // Adiciona a receita ao estado
                   const incomeTransaction: Transaction = {
                     id: incomeData.id,
@@ -2052,16 +2253,20 @@ const AppContent: React.FC<{
                     sharedWith: newTx.sharedWith,
                   };
                   setTransactions((prev) => [incomeTransaction, ...prev]);
-                  
+
                   // Adiciona a data ao excluded_dates da receita recorrente relacionada
-                  const relatedExcludedDates = relatedRecurringTx.excludedDates || [];
-                  const newRelatedExcludedDates = [...relatedExcludedDates, excludeDate];
-                  
+                  const relatedExcludedDates =
+                    relatedRecurringTx.excludedDates || [];
+                  const newRelatedExcludedDates = [
+                    ...relatedExcludedDates,
+                    excludeDate,
+                  ];
+
                   await supabase
                     .from("transactions")
                     .update({ excluded_dates: newRelatedExcludedDates })
                     .eq("id", relatedRecurringTx.id);
-                  
+
                   setTransactions((prev) =>
                     prev.map((t) =>
                       t.id === relatedRecurringTx.id
@@ -2072,7 +2277,7 @@ const AppContent: React.FC<{
                 }
               }
             }
-            
+
             const transaction: Transaction = {
               id: data.id,
               description: data.description,
@@ -2113,16 +2318,20 @@ const AppContent: React.FC<{
         }
       } else if (editMode === "all_future") {
         // Verifica se é uma parcela (tem installmentGroupId)
-        const isInstallment = recurringEditTransaction.installmentGroupId && 
-                              !recurringEditTransaction.isVirtual && 
-                              !recurringEditTransaction.isRecurring;
+        const isInstallment =
+          recurringEditTransaction.installmentGroupId &&
+          !recurringEditTransaction.isVirtual &&
+          !recurringEditTransaction.isRecurring;
 
         if (isInstallment) {
           // Para parcelas, encontra todas as parcelas do mesmo grupo a partir da atual
-          const currentInstallment = recurringEditTransaction.currentInstallment || 1;
+          const currentInstallment =
+            recurringEditTransaction.currentInstallment || 1;
           const relatedInstallments = transactions.filter(
-            (t) => t.installmentGroupId === recurringEditTransaction.installmentGroupId &&
-                   (t.currentInstallment || 1) >= currentInstallment
+            (t) =>
+              t.installmentGroupId ===
+                recurringEditTransaction.installmentGroupId &&
+              (t.currentInstallment || 1) >= currentInstallment
           );
           const idsToUpdate = relatedInstallments.map((t) => t.id);
 
@@ -2166,7 +2375,9 @@ const AppContent: React.FC<{
           const targetYear = targetDate.getFullYear();
           const targetMonth = targetDate.getMonth() + 1;
 
-          const [origYear, origMonth, origDay] = originalTx.date.split("-").map(Number);
+          const [origYear, origMonth, origDay] = originalTx.date
+            .split("-")
+            .map(Number);
 
           // Gerar transações materializadas para meses passados (vinculadas ao grupo)
           const materializedTransactions: Array<{
@@ -2192,9 +2403,15 @@ const AppContent: React.FC<{
             (currentYear === targetYear && currentMonth < targetMonth)
           ) {
             // Inclui a primeira ocorrência também (data original)
-            const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+            const daysInMonth = new Date(
+              currentYear,
+              currentMonth,
+              0
+            ).getDate();
             const adjustedDay = Math.min(origDay, daysInMonth);
-            const materializedDate = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+            const materializedDate = `${currentYear}-${String(
+              currentMonth
+            ).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
 
             // Verifica se não está no excluded_dates E se não é uma transação já modificada
             const excludedDates = originalTx.excludedDates || [];
@@ -2227,7 +2444,9 @@ const AppContent: React.FC<{
           }
 
           // Inserir transações materializadas
-          const materializedDates: string[] = materializedTransactions.map((mt) => mt.date);
+          const materializedDates: string[] = materializedTransactions.map(
+            (mt) => mt.date
+          );
 
           if (materializedTransactions.length > 0) {
             const { data: insertedData, error: insertError } = await supabase
@@ -2236,7 +2455,10 @@ const AppContent: React.FC<{
               .select();
 
             if (insertError) {
-              console.error("Error materializing past transactions:", insertError);
+              console.error(
+                "Error materializing past transactions:",
+                insertError
+              );
             } else if (insertedData) {
               const newTransactions: Transaction[] = insertedData.map((d) => ({
                 id: d.id,
@@ -2260,7 +2482,9 @@ const AppContent: React.FC<{
           // Atualizar a transação original com nova data e novos valores
           // Adiciona as datas materializadas ao excluded_dates para não gerar duplicatas
           const currentExcludedDates = originalTx.excludedDates || [];
-          const updatedExcludedDates = [...new Set([...currentExcludedDates, ...materializedDates])];
+          const updatedExcludedDates = [
+            ...new Set([...currentExcludedDates, ...materializedDates]),
+          ];
 
           const updatedPayload = {
             description: newTx.description,
@@ -2307,14 +2531,17 @@ const AppContent: React.FC<{
         }
       } else if (editMode === "all") {
         // Verifica se é uma parcela (tem installmentGroupId)
-        const isInstallment = recurringEditTransaction.installmentGroupId && 
-                              !recurringEditTransaction.isVirtual && 
-                              !recurringEditTransaction.isRecurring;
+        const isInstallment =
+          recurringEditTransaction.installmentGroupId &&
+          !recurringEditTransaction.isVirtual &&
+          !recurringEditTransaction.isRecurring;
 
         if (isInstallment) {
           // Para parcelas, encontra todas as parcelas do mesmo grupo
           const relatedInstallments = transactions.filter(
-            (t) => t.installmentGroupId === recurringEditTransaction.installmentGroupId
+            (t) =>
+              t.installmentGroupId ===
+              recurringEditTransaction.installmentGroupId
           );
           const idsToUpdate = relatedInstallments.map((t) => t.id);
 
@@ -2418,14 +2645,16 @@ const AppContent: React.FC<{
       const originalId = id.split("_recurring_")[0];
       const virtualDatePart = id.split("_recurring_")[1]; // formato: YYYY-MM
       const originalTransaction = transactions.find((t) => t.id === originalId);
-      
+
       if (!originalTransaction) return;
 
       // Cria um objeto de transação virtual para o dialog
       transactionToDelete = {
         ...originalTransaction,
         id: id,
-        date: virtualDatePart ? `${virtualDatePart}-01` : originalTransaction.date,
+        date: virtualDatePart
+          ? `${virtualDatePart}-01`
+          : originalTransaction.date,
         isVirtual: true,
         originalTransactionId: originalId,
       };
@@ -2435,8 +2664,9 @@ const AppContent: React.FC<{
     }
 
     // PRIMEIRO: Verificar se é uma transação compartilhada com relacionada
-    const isSharedWithRelated = transactionToDelete.isShared && transactionToDelete.relatedTransactionId;
-    
+    const isSharedWithRelated =
+      transactionToDelete.isShared && transactionToDelete.relatedTransactionId;
+
     if (isSharedWithRelated) {
       // Mostra o diálogo de opções de transação compartilhada primeiro
       setSharedOptionsTransaction(transactionToDelete);
@@ -2448,7 +2678,7 @@ const AppContent: React.FC<{
     // Fluxo normal para transações não compartilhadas
     await proceedWithDelete(transactionToDelete);
   };
-  
+
   // Função auxiliar para continuar com a deleção após escolha de transação compartilhada
   const proceedWithDelete = async (transactionToDelete: Transaction) => {
     const isVirtualTransaction = transactionToDelete.id.includes("_recurring_");
@@ -2458,13 +2688,20 @@ const AppContent: React.FC<{
     // 2. Transações parceladas (múltiplas transações reais) - permite deletar single/all_future/all
     // 3. Transações recorrentes originais - permite deletar apenas esta ocorrência, futuras ou todas
     // 4. Transações materializadas (vinculadas a recorrência) - permite deletar esta, futuras ou todas
-    const isInstallment = transactionToDelete.installments && transactionToDelete.installments > 1;
+    const isInstallment =
+      transactionToDelete.installments && transactionToDelete.installments > 1;
     // Transações recorrentes originais (não virtuais) também devem mostrar o dialog
-    const isRecurringOriginal = transactionToDelete.isRecurring && !transactionToDelete.isVirtual;
+    const isRecurringOriginal =
+      transactionToDelete.isRecurring && !transactionToDelete.isVirtual;
     // Transações materializadas (que pertencem a uma recorrência via recurringGroupId)
     const isMaterializedRecurring = !!transactionToDelete.recurringGroupId;
 
-    if (isVirtualTransaction || isInstallment || isRecurringOriginal || isMaterializedRecurring) {
+    if (
+      isVirtualTransaction ||
+      isInstallment ||
+      isRecurringOriginal ||
+      isMaterializedRecurring
+    ) {
       setOptionsPanelTransaction(transactionToDelete);
       setOptionsPanelActionType("delete");
       setOptionsPanelOpen(true);
@@ -2574,12 +2811,14 @@ const AppContent: React.FC<{
     if (!pendingDeleteTransaction || !session) return;
 
     setOptionsPanelOpen(false);
-    
+
     const isVirtual = pendingDeleteTransaction.isVirtual;
-    const isInstallment = pendingDeleteTransaction.installments && pendingDeleteTransaction.installments > 1;
+    const isInstallment =
+      pendingDeleteTransaction.installments &&
+      pendingDeleteTransaction.installments > 1;
     const isRecurring = pendingDeleteTransaction.isRecurring && !isInstallment;
-    const originalId = isVirtual 
-      ? pendingDeleteTransaction.originalTransactionId 
+    const originalId = isVirtual
+      ? pendingDeleteTransaction.originalTransactionId
       : pendingDeleteTransaction.id;
 
     if (!originalId) return;
@@ -2591,11 +2830,13 @@ const AppContent: React.FC<{
 
     // Função helper para deletar a transação relacionada se necessário
     const deleteRelatedIfNeeded = async (idsAlreadyRemoved: string[]) => {
-      if (!shouldDeleteRelated || !relatedTransactionId) return idsAlreadyRemoved;
-      
+      if (!shouldDeleteRelated || !relatedTransactionId)
+        return idsAlreadyRemoved;
+
       const relatedTx = transactions.find((t) => t.id === relatedTransactionId);
-      if (!relatedTx || idsAlreadyRemoved.includes(relatedTransactionId)) return idsAlreadyRemoved;
-      
+      if (!relatedTx || idsAlreadyRemoved.includes(relatedTransactionId))
+        return idsAlreadyRemoved;
+
       try {
         // Se a transação relacionada também é recorrente, deletamos ela também
         if (relatedTx.isRecurring) {
@@ -2603,9 +2844,12 @@ const AppContent: React.FC<{
             .from("transactions")
             .delete()
             .eq("id", relatedTransactionId);
-          
+
           if (error) {
-            console.error("Error deleting related recurring transaction:", error);
+            console.error(
+              "Error deleting related recurring transaction:",
+              error
+            );
             return idsAlreadyRemoved;
           }
         } else {
@@ -2614,13 +2858,13 @@ const AppContent: React.FC<{
             .from("transactions")
             .delete()
             .eq("id", relatedTransactionId);
-          
+
           if (error) {
             console.error("Error deleting related transaction:", error);
             return idsAlreadyRemoved;
           }
         }
-        
+
         return [...idsAlreadyRemoved, relatedTransactionId];
       } catch (err) {
         console.error("Error in deleteRelatedIfNeeded:", err);
@@ -2633,18 +2877,33 @@ const AppContent: React.FC<{
         // Deletar apenas esta transação/ocorrência específica
         if (isVirtual) {
           // Para transação virtual (recorrente automática), adiciona a data ao excluded_dates
-          const virtualDatePart = pendingDeleteTransaction.id.split("_recurring_")[1];
-          const originalTransaction = transactions.find((t) => t.id === originalId);
-          
+          const virtualDatePart =
+            pendingDeleteTransaction.id.split("_recurring_")[1];
+          const originalTransaction = transactions.find(
+            (t) => t.id === originalId
+          );
+
           if (originalTransaction && virtualDatePart) {
-            const [origYear, origMonth, origDay] = originalTransaction.date.split("-").map(Number);
-            const [targetYear, targetMonth] = virtualDatePart.split("-").map(Number);
-            const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
+            const [origYear, origMonth, origDay] = originalTransaction.date
+              .split("-")
+              .map(Number);
+            const [targetYear, targetMonth] = virtualDatePart
+              .split("-")
+              .map(Number);
+            const daysInTargetMonth = new Date(
+              targetYear,
+              targetMonth,
+              0
+            ).getDate();
             const adjustedDay = Math.min(origDay, daysInTargetMonth);
-            const skipDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+            const skipDate = `${targetYear}-${String(targetMonth).padStart(
+              2,
+              "0"
+            )}-${String(adjustedDay).padStart(2, "0")}`;
 
             // Adiciona a data ao excluded_dates da transação original
-            const currentExcludedDates = originalTransaction.excludedDates || [];
+            const currentExcludedDates =
+              originalTransaction.excludedDates || [];
             const newExcludedDates = [...currentExcludedDates, skipDate];
 
             const { error } = await supabase
@@ -2662,7 +2921,7 @@ const AppContent: React.FC<{
               if (t.isRecurring || t.isVirtual) return false;
               if (t.id === originalTransaction.id) return false;
               if (!t.recurringGroupId) return false; // Deve ter recurringGroupId
-              
+
               return t.recurringGroupId === originalId && t.date === skipDate;
             });
 
@@ -2672,23 +2931,31 @@ const AppContent: React.FC<{
                 .from("transactions")
                 .delete()
                 .eq("id", materializedWithGroup.id);
-              
+
               if (deleteError) {
-                console.error("Error deleting materialized transaction:", deleteError);
+                console.error(
+                  "Error deleting materialized transaction:",
+                  deleteError
+                );
               } else {
                 idsToRemove.push(materializedWithGroup.id);
-                
+
                 // Se a materializada tem uma transação relacionada (compartilhada), deleta também
                 if (materializedWithGroup.relatedTransactionId) {
                   const { error: relatedDeleteError } = await supabase
                     .from("transactions")
                     .delete()
                     .eq("id", materializedWithGroup.relatedTransactionId);
-                  
+
                   if (relatedDeleteError) {
-                    console.error("Error deleting related materialized transaction:", relatedDeleteError);
+                    console.error(
+                      "Error deleting related materialized transaction:",
+                      relatedDeleteError
+                    );
                   } else {
-                    idsToRemove.push(materializedWithGroup.relatedTransactionId);
+                    idsToRemove.push(
+                      materializedWithGroup.relatedTransactionId
+                    );
                   }
                 }
               }
@@ -2700,14 +2967,21 @@ const AppContent: React.FC<{
               if (t.isRecurring || t.isVirtual) return false;
               if (t.id === originalTransaction.id) return false;
               if (t.recurringGroupId) return false; // Não é órfã se tem recurringGroupId
-              
-              const sameDescription = t.description === originalTransaction.description;
+
+              const sameDescription =
+                t.description === originalTransaction.description;
               const sameCategory = t.category === originalTransaction.category;
               const sameAmount = t.amount === originalTransaction.amount;
               const sameDate = t.date === skipDate;
               const sameType = t.type === originalTransaction.type;
-              
-              return sameDescription && sameCategory && sameAmount && sameDate && sameType;
+
+              return (
+                sameDescription &&
+                sameCategory &&
+                sameAmount &&
+                sameDate &&
+                sameType
+              );
             });
 
             if (orphanMaterialized) {
@@ -2716,9 +2990,12 @@ const AppContent: React.FC<{
                 .from("transactions")
                 .delete()
                 .eq("id", orphanMaterialized.id);
-              
+
               if (deleteError) {
-                console.error("Error deleting orphan materialized transaction:", deleteError);
+                console.error(
+                  "Error deleting orphan materialized transaction:",
+                  deleteError
+                );
               } else {
                 idsToRemove.push(orphanMaterialized.id);
               }
@@ -2727,20 +3004,29 @@ const AppContent: React.FC<{
             // Se foi escolhido "both" (excluir ambas compartilhadas), trata a transação relacionada
             let relatedExcludedDatesTx: string | null = null;
             if (shouldDeleteRelated && relatedTransactionId) {
-              const relatedTx = transactions.find((t) => t.id === relatedTransactionId);
+              const relatedTx = transactions.find(
+                (t) => t.id === relatedTransactionId
+              );
               if (relatedTx) {
                 if (relatedTx.isRecurring) {
                   // Se a relacionada também é recorrente, adiciona a mesma data ao excluded_dates dela
-                  const relatedCurrentExcludedDates = relatedTx.excludedDates || [];
-                  const relatedNewExcludedDates = [...relatedCurrentExcludedDates, skipDate];
-                  
+                  const relatedCurrentExcludedDates =
+                    relatedTx.excludedDates || [];
+                  const relatedNewExcludedDates = [
+                    ...relatedCurrentExcludedDates,
+                    skipDate,
+                  ];
+
                   const { error: relatedError } = await supabase
                     .from("transactions")
                     .update({ excluded_dates: relatedNewExcludedDates })
                     .eq("id", relatedTransactionId);
-                  
+
                   if (relatedError) {
-                    console.error("Error updating related transaction excluded_dates:", relatedError);
+                    console.error(
+                      "Error updating related transaction excluded_dates:",
+                      relatedError
+                    );
                   } else {
                     relatedExcludedDatesTx = relatedTransactionId;
                   }
@@ -2750,9 +3036,12 @@ const AppContent: React.FC<{
                     .from("transactions")
                     .delete()
                     .eq("id", relatedTransactionId);
-                  
+
                   if (relatedError) {
-                    console.error("Error deleting related transaction:", relatedError);
+                    console.error(
+                      "Error deleting related transaction:",
+                      relatedError
+                    );
                   } else {
                     idsToRemove.push(relatedTransactionId);
                   }
@@ -2761,7 +3050,7 @@ const AppContent: React.FC<{
             }
 
             // Atualiza o estado local com a nova lista de datas excluídas e remove órfãs
-            setTransactions((prev) => 
+            setTransactions((prev) =>
               prev
                 .filter((t) => !idsToRemove.includes(t.id))
                 .map((t) => {
@@ -2769,9 +3058,17 @@ const AppContent: React.FC<{
                     return { ...t, excludedDates: newExcludedDates };
                   }
                   // Atualiza a transação relacionada se necessário
-                  if (relatedExcludedDatesTx && t.id === relatedExcludedDatesTx) {
-                    const relatedTx = transactions.find((tx) => tx.id === relatedExcludedDatesTx);
-                    const relatedNewExcludedDates = [...(relatedTx?.excludedDates || []), skipDate];
+                  if (
+                    relatedExcludedDatesTx &&
+                    t.id === relatedExcludedDatesTx
+                  ) {
+                    const relatedTx = transactions.find(
+                      (tx) => tx.id === relatedExcludedDatesTx
+                    );
+                    const relatedNewExcludedDates = [
+                      ...(relatedTx?.excludedDates || []),
+                      skipDate,
+                    ];
                     return { ...t, excludedDates: relatedNewExcludedDates };
                   }
                   return t;
@@ -2782,7 +3079,9 @@ const AppContent: React.FC<{
           // Para parcela específica, deleta apenas esta parcela
           const confirmed = await confirm({
             title: "Delete This Installment",
-            message: `Delete only installment ${pendingDeleteTransaction.currentInstallment || 1}/${pendingDeleteTransaction.installments}?`,
+            message: `Delete only installment ${
+              pendingDeleteTransaction.currentInstallment || 1
+            }/${pendingDeleteTransaction.installments}?`,
             confirmText: "Delete",
             cancelText: "Cancel",
             variant: "danger",
@@ -2803,7 +3102,8 @@ const AppContent: React.FC<{
           // Para transação recorrente original (não virtual), adiciona a data ao excluded_dates
           // Isso preserva a recorrência mas pula essa ocorrência específica
           const skipDate = pendingDeleteTransaction.date;
-          const currentExcludedDates = pendingDeleteTransaction.excludedDates || [];
+          const currentExcludedDates =
+            pendingDeleteTransaction.excludedDates || [];
           const newExcludedDates = [...currentExcludedDates, skipDate];
 
           const { error } = await supabase
@@ -2821,8 +3121,11 @@ const AppContent: React.FC<{
             if (t.isRecurring || t.isVirtual) return false;
             if (t.id === pendingDeleteTransaction.id) return false;
             if (!t.recurringGroupId) return false; // Deve ter recurringGroupId
-            
-            return t.recurringGroupId === pendingDeleteTransaction.id && t.date === skipDate;
+
+            return (
+              t.recurringGroupId === pendingDeleteTransaction.id &&
+              t.date === skipDate
+            );
           });
 
           if (materializedWithGroup) {
@@ -2831,21 +3134,27 @@ const AppContent: React.FC<{
               .from("transactions")
               .delete()
               .eq("id", materializedWithGroup.id);
-            
+
             if (deleteError) {
-              console.error("Error deleting materialized transaction:", deleteError);
+              console.error(
+                "Error deleting materialized transaction:",
+                deleteError
+              );
             } else {
               idsToRemove.push(materializedWithGroup.id);
-              
+
               // Se a materializada tem uma transação relacionada (compartilhada), deleta também
               if (materializedWithGroup.relatedTransactionId) {
                 const { error: relatedDeleteError } = await supabase
                   .from("transactions")
                   .delete()
                   .eq("id", materializedWithGroup.relatedTransactionId);
-                
+
                 if (relatedDeleteError) {
-                  console.error("Error deleting related materialized transaction:", relatedDeleteError);
+                  console.error(
+                    "Error deleting related materialized transaction:",
+                    relatedDeleteError
+                  );
                 } else {
                   idsToRemove.push(materializedWithGroup.relatedTransactionId);
                 }
@@ -2859,14 +3168,22 @@ const AppContent: React.FC<{
             if (t.isRecurring || t.isVirtual) return false;
             if (t.id === pendingDeleteTransaction.id) return false;
             if (t.recurringGroupId) return false; // Não é órfã se tem recurringGroupId
-            
-            const sameDescription = t.description === pendingDeleteTransaction.description;
-            const sameCategory = t.category === pendingDeleteTransaction.category;
+
+            const sameDescription =
+              t.description === pendingDeleteTransaction.description;
+            const sameCategory =
+              t.category === pendingDeleteTransaction.category;
             const sameAmount = t.amount === pendingDeleteTransaction.amount;
             const sameDate = t.date === skipDate;
             const sameType = t.type === pendingDeleteTransaction.type;
-            
-            return sameDescription && sameCategory && sameAmount && sameDate && sameType;
+
+            return (
+              sameDescription &&
+              sameCategory &&
+              sameAmount &&
+              sameDate &&
+              sameType
+            );
           });
 
           if (orphanMaterialized) {
@@ -2875,9 +3192,12 @@ const AppContent: React.FC<{
               .from("transactions")
               .delete()
               .eq("id", orphanMaterialized.id);
-            
+
             if (deleteError) {
-              console.error("Error deleting orphan materialized transaction:", deleteError);
+              console.error(
+                "Error deleting orphan materialized transaction:",
+                deleteError
+              );
             } else {
               idsToRemove.push(orphanMaterialized.id);
             }
@@ -2886,20 +3206,29 @@ const AppContent: React.FC<{
           // Se foi escolhido "both" (excluir ambas compartilhadas), trata a transação relacionada
           let relatedExcludedDatesTx: string | null = null;
           if (shouldDeleteRelated && relatedTransactionId) {
-            const relatedTx = transactions.find((t) => t.id === relatedTransactionId);
+            const relatedTx = transactions.find(
+              (t) => t.id === relatedTransactionId
+            );
             if (relatedTx) {
               if (relatedTx.isRecurring) {
                 // Se a relacionada também é recorrente, adiciona a mesma data ao excluded_dates dela
-                const relatedCurrentExcludedDates = relatedTx.excludedDates || [];
-                const relatedNewExcludedDates = [...relatedCurrentExcludedDates, skipDate];
-                
+                const relatedCurrentExcludedDates =
+                  relatedTx.excludedDates || [];
+                const relatedNewExcludedDates = [
+                  ...relatedCurrentExcludedDates,
+                  skipDate,
+                ];
+
                 const { error: relatedError } = await supabase
                   .from("transactions")
                   .update({ excluded_dates: relatedNewExcludedDates })
                   .eq("id", relatedTransactionId);
-                
+
                 if (relatedError) {
-                  console.error("Error updating related transaction excluded_dates:", relatedError);
+                  console.error(
+                    "Error updating related transaction excluded_dates:",
+                    relatedError
+                  );
                 } else {
                   relatedExcludedDatesTx = relatedTransactionId;
                 }
@@ -2909,9 +3238,12 @@ const AppContent: React.FC<{
                   .from("transactions")
                   .delete()
                   .eq("id", relatedTransactionId);
-                
+
                 if (relatedError) {
-                  console.error("Error deleting related transaction:", relatedError);
+                  console.error(
+                    "Error deleting related transaction:",
+                    relatedError
+                  );
                 } else {
                   idsToRemove.push(relatedTransactionId);
                 }
@@ -2928,8 +3260,13 @@ const AppContent: React.FC<{
                 }
                 // Atualiza a transação relacionada se necessário
                 if (relatedExcludedDatesTx && t.id === relatedExcludedDatesTx) {
-                  const relatedTx = transactions.find((tx) => tx.id === relatedExcludedDatesTx);
-                  const relatedNewExcludedDates = [...(relatedTx?.excludedDates || []), skipDate];
+                  const relatedTx = transactions.find(
+                    (tx) => tx.id === relatedExcludedDatesTx
+                  );
+                  const relatedNewExcludedDates = [
+                    ...(relatedTx?.excludedDates || []),
+                    skipDate,
+                  ];
                   return { ...t, excludedDates: relatedNewExcludedDates };
                 }
                 return t;
@@ -2938,7 +3275,7 @@ const AppContent: React.FC<{
         } else {
           // Para transação normal não recorrente (incluindo materializadas de recorrência)
           let idsToRemove = [pendingDeleteTransaction.id];
-          
+
           // Se a transação tem recurringGroupId, é uma materializada de recorrência
           // Precisamos adicionar a data ao excluded_dates da recorrência original
           if (pendingDeleteTransaction.recurringGroupId) {
@@ -2946,10 +3283,16 @@ const AppContent: React.FC<{
               (t) => t.id === pendingDeleteTransaction.recurringGroupId
             );
             if (originalRecurring) {
-              const currentExcludedDates = originalRecurring.excludedDates || [];
-              if (!currentExcludedDates.includes(pendingDeleteTransaction.date)) {
-                const newExcludedDates = [...currentExcludedDates, pendingDeleteTransaction.date];
-                
+              const currentExcludedDates =
+                originalRecurring.excludedDates || [];
+              if (
+                !currentExcludedDates.includes(pendingDeleteTransaction.date)
+              ) {
+                const newExcludedDates = [
+                  ...currentExcludedDates,
+                  pendingDeleteTransaction.date,
+                ];
+
                 await supabase
                   .from("transactions")
                   .update({ excluded_dates: newExcludedDates })
@@ -2957,23 +3300,29 @@ const AppContent: React.FC<{
               }
             }
           }
-          
+
           // Se foi escolhido "both" e tem transação relacionada, deleta ela também
-          if (shouldDeleteRelated && pendingDeleteTransaction.relatedTransactionId) {
+          if (
+            shouldDeleteRelated &&
+            pendingDeleteTransaction.relatedTransactionId
+          ) {
             const relatedTxId = pendingDeleteTransaction.relatedTransactionId;
-            
+
             const { error: relatedError } = await supabase
               .from("transactions")
               .delete()
               .eq("id", relatedTxId);
-            
+
             if (relatedError) {
-              console.error("Error deleting related transaction:", relatedError);
+              console.error(
+                "Error deleting related transaction:",
+                relatedError
+              );
             } else {
               idsToRemove.push(relatedTxId);
             }
           }
-          
+
           const { error } = await supabase
             .from("transactions")
             .delete()
@@ -2985,10 +3334,23 @@ const AppContent: React.FC<{
               .filter((t) => !idsToRemove.includes(t.id))
               .map((t) => {
                 // Atualiza o excluded_dates da recorrência original se necessário
-                if (pendingDeleteTransaction.recurringGroupId && t.id === pendingDeleteTransaction.recurringGroupId) {
+                if (
+                  pendingDeleteTransaction.recurringGroupId &&
+                  t.id === pendingDeleteTransaction.recurringGroupId
+                ) {
                   const currentExcludedDates = t.excludedDates || [];
-                  if (!currentExcludedDates.includes(pendingDeleteTransaction.date)) {
-                    return { ...t, excludedDates: [...currentExcludedDates, pendingDeleteTransaction.date] };
+                  if (
+                    !currentExcludedDates.includes(
+                      pendingDeleteTransaction.date
+                    )
+                  ) {
+                    return {
+                      ...t,
+                      excludedDates: [
+                        ...currentExcludedDates,
+                        pendingDeleteTransaction.date,
+                      ],
+                    };
                   }
                 }
                 return t;
@@ -2999,27 +3361,41 @@ const AppContent: React.FC<{
         // Deletar esta e todas as futuras
         if (isInstallment) {
           // Para parcelas, deleta esta e as próximas
-          const currentInstallment = pendingDeleteTransaction.currentInstallment || 1;
-          
+          const currentInstallment =
+            pendingDeleteTransaction.currentInstallment || 1;
+
           // Encontra todas as parcelas relacionadas usando installment_group_id (preferido) ou fallback
           let relatedInstallments: typeof transactions;
-          
+
           if (pendingDeleteTransaction.installmentGroupId) {
             // Usar installment_group_id para encontrar parcelas relacionadas
-            relatedInstallments = transactions.filter((t) => 
-              t.installmentGroupId === pendingDeleteTransaction.installmentGroupId &&
-              (t.currentInstallment || 1) >= currentInstallment
+            relatedInstallments = transactions.filter(
+              (t) =>
+                t.installmentGroupId ===
+                  pendingDeleteTransaction.installmentGroupId &&
+                (t.currentInstallment || 1) >= currentInstallment
             );
           } else {
             // Fallback para transações antigas sem installment_group_id
             relatedInstallments = transactions.filter((t) => {
-              const sameDescription = t.description === pendingDeleteTransaction.description;
-              const sameCategory = t.category === pendingDeleteTransaction.category;
-              const samePaymentMethod = t.paymentMethod === pendingDeleteTransaction.paymentMethod;
-              const sameInstallments = t.installments === pendingDeleteTransaction.installments;
-              const isFutureOrCurrent = (t.currentInstallment || 1) >= currentInstallment;
-              
-              return sameDescription && sameCategory && samePaymentMethod && sameInstallments && isFutureOrCurrent;
+              const sameDescription =
+                t.description === pendingDeleteTransaction.description;
+              const sameCategory =
+                t.category === pendingDeleteTransaction.category;
+              const samePaymentMethod =
+                t.paymentMethod === pendingDeleteTransaction.paymentMethod;
+              const sameInstallments =
+                t.installments === pendingDeleteTransaction.installments;
+              const isFutureOrCurrent =
+                (t.currentInstallment || 1) >= currentInstallment;
+
+              return (
+                sameDescription &&
+                sameCategory &&
+                samePaymentMethod &&
+                sameInstallments &&
+                isFutureOrCurrent
+              );
             });
           }
 
@@ -3029,7 +3405,11 @@ const AppContent: React.FC<{
 
           const confirmed = await confirm({
             title: "Delete Future Installments",
-            message: `Delete installments ${currentInstallment} to ${pendingDeleteTransaction.installments}? (${idsToDelete.length} installment${idsToDelete.length > 1 ? 's' : ''})`,
+            message: `Delete installments ${currentInstallment} to ${
+              pendingDeleteTransaction.installments
+            }? (${idsToDelete.length} installment${
+              idsToDelete.length > 1 ? "s" : ""
+            })`,
             confirmText: "Delete",
             cancelText: "Cancel",
             variant: "danger",
@@ -3050,7 +3430,8 @@ const AppContent: React.FC<{
           // Para recorrentes, deleta a transação original (que para as virtuais futuras)
           const confirmed = await confirm({
             title: "Delete Future Occurrences",
-            message: "This will delete the recurring transaction and stop all future occurrences. Are you sure?",
+            message:
+              "This will delete the recurring transaction and stop all future occurrences. Are you sure?",
             confirmText: "Delete",
             cancelText: "Cancel",
             variant: "danger",
@@ -3065,7 +3446,7 @@ const AppContent: React.FC<{
           if (error) throw error;
 
           let idsToRemove = [originalId];
-          
+
           // Deleta a transação relacionada se foi escolhido "both" no diálogo de compartilhada
           idsToRemove = await deleteRelatedIfNeeded(idsToRemove);
 
@@ -3078,21 +3459,32 @@ const AppContent: React.FC<{
         if (isInstallment) {
           // Para parcelas, deleta todas as parcelas relacionadas usando installment_group_id (preferido) ou fallback
           let relatedInstallments: typeof transactions;
-          
+
           if (pendingDeleteTransaction.installmentGroupId) {
             // Usar installment_group_id para encontrar parcelas relacionadas
-            relatedInstallments = transactions.filter((t) => 
-              t.installmentGroupId === pendingDeleteTransaction.installmentGroupId
+            relatedInstallments = transactions.filter(
+              (t) =>
+                t.installmentGroupId ===
+                pendingDeleteTransaction.installmentGroupId
             );
           } else {
             // Fallback para transações antigas sem installment_group_id
             relatedInstallments = transactions.filter((t) => {
-              const sameDescription = t.description === pendingDeleteTransaction.description;
-              const sameCategory = t.category === pendingDeleteTransaction.category;
-              const samePaymentMethod = t.paymentMethod === pendingDeleteTransaction.paymentMethod;
-              const sameInstallments = t.installments === pendingDeleteTransaction.installments;
-              
-              return sameDescription && sameCategory && samePaymentMethod && sameInstallments;
+              const sameDescription =
+                t.description === pendingDeleteTransaction.description;
+              const sameCategory =
+                t.category === pendingDeleteTransaction.category;
+              const samePaymentMethod =
+                t.paymentMethod === pendingDeleteTransaction.paymentMethod;
+              const sameInstallments =
+                t.installments === pendingDeleteTransaction.installments;
+
+              return (
+                sameDescription &&
+                sameCategory &&
+                samePaymentMethod &&
+                sameInstallments
+              );
             });
           }
 
@@ -3123,7 +3515,8 @@ const AppContent: React.FC<{
           // Para recorrentes, deleta a transação original
           const confirmed = await confirm({
             title: "Delete All Occurrences",
-            message: "This will delete the recurring transaction and all its occurrences. Are you sure?",
+            message:
+              "This will delete the recurring transaction and all its occurrences. Are you sure?",
             confirmText: "Delete All",
             cancelText: "Cancel",
             variant: "danger",
@@ -3138,7 +3531,7 @@ const AppContent: React.FC<{
           if (error) throw error;
 
           let idsToRemove = [originalId];
-          
+
           // Deleta a transação relacionada se foi escolhido "both" no diálogo de compartilhada
           idsToRemove = await deleteRelatedIfNeeded(idsToRemove);
 
@@ -3169,16 +3562,29 @@ const AppContent: React.FC<{
         // Para transações virtuais, materializa criando uma nova transação no banco
         const originalId = id.split("_recurring_")[0];
         const virtualDatePart = id.split("_recurring_")[1]; // formato: YYYY-MM
-        const originalTransaction = transactions.find((t) => t.id === originalId);
+        const originalTransaction = transactions.find(
+          (t) => t.id === originalId
+        );
 
         if (!originalTransaction) return;
 
         // Calcula a data correta para a ocorrência virtual
-        const [origYear, origMonth, origDay] = originalTransaction.date.split("-").map(Number);
-        const [targetYear, targetMonth] = virtualDatePart.split("-").map(Number);
-        const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
+        const [origYear, origMonth, origDay] = originalTransaction.date
+          .split("-")
+          .map(Number);
+        const [targetYear, targetMonth] = virtualDatePart
+          .split("-")
+          .map(Number);
+        const daysInTargetMonth = new Date(
+          targetYear,
+          targetMonth,
+          0
+        ).getDate();
         const adjustedDay = Math.min(origDay, daysInTargetMonth);
-        const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+        const virtualDate = `${targetYear}-${String(targetMonth).padStart(
+          2,
+          "0"
+        )}-${String(adjustedDay).padStart(2, "0")}`;
 
         // Cria uma nova transação materializada (cópia da original com a data da ocorrência)
         const newTransaction = {
@@ -3255,10 +3661,7 @@ const AppContent: React.FC<{
     try {
       // Atualiza cada parcela com sua nova data
       const updatePromises = newDates.map(({ id, date }) =>
-        supabase
-          .from("transactions")
-          .update({ date })
-          .eq("id", id)
+        supabase.from("transactions").update({ date }).eq("id", id)
       );
 
       const results = await Promise.all(updatePromises);
@@ -3426,7 +3829,9 @@ const AppContent: React.FC<{
 
     const confirmed = await confirm({
       title: "Pagar Fatura Completa",
-      message: `Deseja marcar todas as despesas não pagas de "${paymentMethod}" em ${month + 1}/${year} como pagas?`,
+      message: `Deseja marcar todas as despesas não pagas de "${paymentMethod}" em ${
+        month + 1
+      }/${year} como pagas?`,
       confirmText: "Pagar Tudo",
       cancelText: "Cancelar",
       variant: "info",
@@ -3463,9 +3868,7 @@ const AppContent: React.FC<{
 
       // Atualiza estado local
       setTransactions((prev) =>
-        prev.map((t) =>
-          unpaidIds.includes(t.id) ? { ...t, isPaid: true } : t
-        )
+        prev.map((t) => (unpaidIds.includes(t.id) ? { ...t, isPaid: true } : t))
       );
     } catch (err) {
       console.error("Error paying all transactions:", err);
@@ -3629,13 +4032,18 @@ const AppContent: React.FC<{
                             advancedFilters.paymentMethods.length > 0
                           }
                           activeFiltersCount={
-                            (advancedFilters.startDate || advancedFilters.endDate ? 1 : 0) +
+                            (advancedFilters.startDate ||
+                            advancedFilters.endDate
+                              ? 1
+                              : 0) +
                             (advancedFilters.type !== "all" ? 1 : 0) +
                             advancedFilters.categories.length +
                             advancedFilters.paymentMethods.length
                           }
                           showFilters={showAdvancedFilters}
-                          onToggleFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                          onToggleFilters={() =>
+                            setShowAdvancedFilters(!showAdvancedFilters)
+                          }
                           compact={isMobile}
                         />
                         <DateFilter
@@ -3655,7 +4063,7 @@ const AppContent: React.FC<{
                           }
                           disabledMessage="Remova os filtros avançados para usar o filtro de mês"
                         />
-                        
+
                         {/* Refresh Button */}
                         <Tooltip title="Atualizar dados">
                           <IconButton
@@ -3677,7 +4085,9 @@ const AppContent: React.FC<{
                           >
                             <RefreshIcon
                               sx={{
-                                animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                                animation: isRefreshing
+                                  ? "spin 1s linear infinite"
+                                  : "none",
                                 "@keyframes spin": {
                                   "0%": { transform: "rotate(0deg)" },
                                   "100%": { transform: "rotate(360deg)" },
@@ -3686,7 +4096,7 @@ const AppContent: React.FC<{
                             />
                           </IconButton>
                         </Tooltip>
-                        
+
                         {!isMobile && (
                           <Button
                             variant="contained"
@@ -3711,7 +4121,9 @@ const AppContent: React.FC<{
                         filters={advancedFilters}
                         onFiltersChange={setAdvancedFilters}
                         showFilters={showAdvancedFilters}
-                        onToggleFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                        onToggleFilters={() =>
+                          setShowAdvancedFilters(!showAdvancedFilters)
+                        }
                       />
                     </Suspense>
 
@@ -3736,8 +4148,8 @@ const AppContent: React.FC<{
                     />
 
                     {/* Analytics Charts */}
-                    <AnalyticsView 
-                      transactions={analyticsTransactions} 
+                    <AnalyticsView
+                      transactions={analyticsTransactions}
                       hasAdvancedFilters={
                         advancedFilters.startDate !== null ||
                         advancedFilters.endDate !== null ||
@@ -3747,7 +4159,6 @@ const AppContent: React.FC<{
                       }
                       advancedFilters={advancedFilters}
                     />
-
                   </>
                 )
               ) : currentView === "transactions" ? (
@@ -3870,7 +4281,9 @@ const AppContent: React.FC<{
                       onPayAll={handlePayAllTransactions}
                       onAddPaymentMethod={handleAddPaymentMethod}
                       onRemovePaymentMethod={handleRemovePaymentMethod}
-                      onUpdatePaymentMethodColor={handleUpdatePaymentMethodColor}
+                      onUpdatePaymentMethodColor={
+                        handleUpdatePaymentMethodColor
+                      }
                     />
                   </Suspense>
                 )
@@ -3945,7 +4358,10 @@ const AppContent: React.FC<{
             transaction={sharedOptionsTransaction}
             relatedTransaction={
               sharedOptionsTransaction?.relatedTransactionId
-                ? transactions.find((t) => t.id === sharedOptionsTransaction.relatedTransactionId) || null
+                ? transactions.find(
+                    (t) =>
+                      t.id === sharedOptionsTransaction.relatedTransactionId
+                  ) || null
                 : null
             }
             actionType={sharedOptionsActionType}
@@ -4019,7 +4435,6 @@ const AppContent: React.FC<{
               onCreateTransaction={handleNewTransaction}
             />
           )}
-
         </Box>
       </ColorsContext.Provider>
     </ThemeContext.Provider>
@@ -4119,8 +4534,13 @@ const App: React.FC = () => {
 
   // Evita double getSession no Strict Mode (dois refreshs = "refresh token already used" → SIGNED_OUT)
   const getSessionRunRef = useRef(false);
-  const authSubRef = useRef<ReturnType<typeof supabase.auth.onAuthStateChange>["data"]["subscription"] | null>(null);
-  const authRecoveryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const authSubRef = useRef<
+    | ReturnType<typeof supabase.auth.onAuthStateChange>["data"]["subscription"]
+    | null
+  >(null);
+  const authRecoveryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   // Auth & Data Fetching
   useEffect(() => {
@@ -4130,42 +4550,102 @@ const App: React.FC = () => {
     if (!getSessionRunRef.current) {
       getSessionRunRef.current = true;
       supabase.auth.getSession().then(async ({ data: { session } }) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getSession',message:'getSession callback',data:{hasSession:!!session},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C'})}).catch(()=>{});
-      // #endregion
-      // Verifica se a sessão era temporária (usuário não marcou "Manter-me conectado")
-      // Se tem sessão, não tem "remember_session" no localStorage, e não tem "temp_session" no sessionStorage
-      // significa que o navegador foi fechado e reaberto - devemos fazer signOut
-      if (session) {
-        const rememberSession = localStorage.getItem("nix_remember_session");
-        const tempSession = sessionStorage.getItem("nix_temp_session");
         // #region agent log
-        fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:authFlags',message:'flags when session exists',data:{rememberSession:!!rememberSession,tempSession:!!tempSession,willSignOut:!rememberSession&&!tempSession},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,E'})}).catch(()=>{});
+        fetch(
+          "http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              location: "App.tsx:getSession",
+              message: "getSession callback",
+              data: { hasSession: !!session },
+              timestamp: Date.now(),
+              sessionId: "debug-session",
+              hypothesisId: "A,B,C",
+            }),
+          }
+        ).catch(() => {});
         // #endregion
-
-        if (!rememberSession && !tempSession) {
+        // Verifica se a sessão era temporária (usuário não marcou "Manter-me conectado")
+        // Se tem sessão, não tem "remember_session" no localStorage, e não tem "temp_session" no sessionStorage
+        // significa que o navegador foi fechado e reaberto - devemos fazer signOut
+        if (session) {
+          const rememberSession = localStorage.getItem("nix_remember_session");
+          const tempSession = sessionStorage.getItem("nix_temp_session");
           // #region agent log
-          fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:autoSignOut',message:'auto signOut path (no remember no temp)',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E'})}).catch(()=>{});
+          fetch(
+            "http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                location: "App.tsx:authFlags",
+                message: "flags when session exists",
+                data: {
+                  rememberSession: !!rememberSession,
+                  tempSession: !!tempSession,
+                  willSignOut: !rememberSession && !tempSession,
+                },
+                timestamp: Date.now(),
+                sessionId: "debug-session",
+                hypothesisId: "A,B,E",
+              }),
+            }
+          ).catch(() => {});
           // #endregion
-          // Sessão era temporária e navegador foi fechado - fazer signOut
-          await supabase.auth.signOut();
-          setSession(null);
-          setLoadingInitial(false);
-          return;
-        }
-      }
 
-      setSession(session);
-      if (session) fetchData(session.user.id);
-      else setLoadingInitial(false);
-    });
+          if (!rememberSession && !tempSession) {
+            // #region agent log
+            fetch(
+              "http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  location: "App.tsx:autoSignOut",
+                  message: "auto signOut path (no remember no temp)",
+                  data: {},
+                  timestamp: Date.now(),
+                  sessionId: "debug-session",
+                  hypothesisId: "A,B,C,E",
+                }),
+              }
+            ).catch(() => {});
+            // #endregion
+            // Sessão era temporária e navegador foi fechado - fazer signOut
+            await supabase.auth.signOut();
+            setSession(null);
+            setLoadingInitial(false);
+            return;
+          }
+        }
+
+        setSession(session);
+        if (session) fetchData(session.user.id);
+        else setLoadingInitial(false);
+      });
     }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:onAuthStateChange',message:'auth state change',data:{event:_event,hasSession:!!session},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+      fetch(
+        "http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "App.tsx:onAuthStateChange",
+            message: "auth state change",
+            data: { event: _event, hasSession: !!session },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            hypothesisId: "D",
+          }),
+        }
+      ).catch(() => {});
       // #endregion
       if (_event === "SIGNED_OUT") {
         const rememberSession = localStorage.getItem("nix_remember_session");
@@ -4173,18 +4653,20 @@ const App: React.FC = () => {
           // Usuário pediu "Manter-me conectado" — pode ser falha de refresh; tenta recuperar sessão
           authRecoveryTimeoutRef.current = window.setTimeout(() => {
             authRecoveryTimeoutRef.current = null;
-            supabase.auth.getSession().then(({ data: { session: recovered } }) => {
-              if (recovered) {
-                setSession(recovered);
-                fetchData(recovered.user.id);
-              } else {
-                setSession(null);
-                setTransactions([]);
-                setCategories(DEFAULT_CATEGORIES);
-                setPaymentMethods(DEFAULT_PAYMENT_METHODS);
-                setLoadingInitial(false);
-              }
-            });
+            supabase.auth
+              .getSession()
+              .then(({ data: { session: recovered } }) => {
+                if (recovered) {
+                  setSession(recovered);
+                  fetchData(recovered.user.id);
+                } else {
+                  setSession(null);
+                  setTransactions([]);
+                  setCategories(DEFAULT_CATEGORIES);
+                  setPaymentMethods(DEFAULT_PAYMENT_METHODS);
+                  setLoadingInitial(false);
+                }
+              });
           }, 150);
           return;
         }
@@ -4225,15 +4707,17 @@ const App: React.FC = () => {
         const recurringOriginalIds = new Set<string>(
           txs.filter((t: any) => t.is_recurring).map((t: any) => t.id)
         );
-        
+
         const mappedTxs: Transaction[] = txs.map((t: any) => {
           // Se a transação tem recurring_group_id mas o "pai" não existe,
           // promover para recorrente original (fix para transações órfãs)
-          const hasOrphanRecurringGroupId = t.recurring_group_id && !recurringOriginalIds.has(t.recurring_group_id);
-          
+          const hasOrphanRecurringGroupId =
+            t.recurring_group_id &&
+            !recurringOriginalIds.has(t.recurring_group_id);
+
           // Se é órfã, promover para recorrente original com frequency padrão "monthly"
           const shouldPromoteToRecurring = hasOrphanRecurringGroupId;
-          
+
           return {
             id: t.id,
             description: t.description,
@@ -4246,7 +4730,8 @@ const App: React.FC = () => {
             // Se é órfã, promover para recorrente original (mesmo sem frequency)
             isRecurring: t.is_recurring || shouldPromoteToRecurring,
             // Se é órfã e não tem frequency, usar "monthly" como padrão
-            frequency: t.frequency || (shouldPromoteToRecurring ? "monthly" : undefined),
+            frequency:
+              t.frequency || (shouldPromoteToRecurring ? "monthly" : undefined),
             installments: t.installments,
             currentInstallment: t.current_installment,
             isPaid: t.is_paid ?? true, // Default true para transações existentes
@@ -4257,7 +4742,9 @@ const App: React.FC = () => {
             installmentGroupId: t.installment_group_id,
             excludedDates: t.excluded_dates ?? [],
             // Se é órfã, remover o vínculo para que apareça como original
-            recurringGroupId: shouldPromoteToRecurring ? undefined : t.recurring_group_id,
+            recurringGroupId: shouldPromoteToRecurring
+              ? undefined
+              : t.recurring_group_id,
           };
         });
         setTransactions(mappedTxs);
@@ -4362,10 +4849,17 @@ const App: React.FC = () => {
   // Loading screen
   if (loadingInitial) {
     return (
-      <Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large">
+      <Theme
+        appearance={darkMode ? "dark" : "light"}
+        accentColor="purple"
+        radius="large"
+      >
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            adapterLocale="pt-br"
+          >
             <Box
               sx={{
                 minHeight: "100vh",
@@ -4386,10 +4880,17 @@ const App: React.FC = () => {
   // Login screen
   if (!session) {
     return (
-      <Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large">
+      <Theme
+        appearance={darkMode ? "dark" : "light"}
+        accentColor="purple"
+        radius="large"
+      >
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            adapterLocale="pt-br"
+          >
             <LoginView />
           </LocalizationProvider>
         </ThemeProvider>
@@ -4398,7 +4899,11 @@ const App: React.FC = () => {
   }
 
   return (
-    <Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large">
+    <Theme
+      appearance={darkMode ? "dark" : "light"}
+      accentColor="purple"
+      radius="large"
+    >
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
