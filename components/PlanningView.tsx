@@ -17,7 +17,6 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
-  Fab,
   Card,
   CardContent,
   CardActions,
@@ -46,6 +45,7 @@ import { planningService } from "../services/api";
 import { useNotification } from "../contexts";
 import { useConfirmDialog } from "../contexts";
 import EmptyState from "./EmptyState";
+import NixButton from "./radix/Button";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PlanningViewProps {
@@ -795,12 +795,15 @@ const PlanningView: React.FC<PlanningViewProps> = ({
         />
       )}
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB - padronizado 64px, border-radius 20px */}
       {isMobile && (
-        <Fab
-          color="primary"
+        <NixButton
+          size="fab"
+          variant="solid"
+          color="purple"
           onClick={() => handleOpenPlanningForm()}
-          sx={{
+          className="nix-fab-create"
+          style={{
             position: "fixed",
             bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
             right: 16,
@@ -808,7 +811,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
           }}
         >
           <AddIcon />
-        </Fab>
+        </NixButton>
       )}
     </Box>
   );

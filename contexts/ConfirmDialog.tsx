@@ -5,11 +5,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  Button,
   Box,
   Typography,
   Stack,
 } from "@mui/material";
+import NixButton from "../components/radix/Button";
 import {
   Warning as WarningIcon,
   Delete as DeleteIcon,
@@ -194,18 +194,18 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
               {confirmOpts.message}
             </DialogContentText>
           </DialogContent>
-          <DialogActions sx={{ p: 2.5, pt: 1 }}>
-            <Button onClick={() => handleClose(false)} color="inherit">
+          <DialogActions sx={{ p: 2.5, pt: 1, gap: 1.5 }}>
+            <NixButton size="medium" variant="soft" color="gray" onClick={() => handleClose(false)}>
               {confirmOpts.cancelText || "Cancel"}
-            </Button>
-            <Button
+            </NixButton>
+            <NixButton
+              size="medium"
+              variant="solid"
+              color={variantStyles.confirmColor === "error" ? "red" : "purple"}
               onClick={() => handleClose(true)}
-              variant="contained"
-              color={variantStyles.confirmColor}
-              autoFocus
             >
               {confirmOpts.confirmText || "Confirm"}
-            </Button>
+            </NixButton>
           </DialogActions>
         </>
       );
@@ -242,14 +242,14 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
             </DialogContentText>
           </DialogContent>
           <DialogActions sx={{ p: 2.5, pt: 1 }}>
-            <Button
+            <NixButton
+              size="medium"
+              variant="solid"
+              color={variantStyles.confirmColor === "error" ? "red" : "purple"}
               onClick={() => handleClose(undefined)}
-              variant="contained"
-              color={variantStyles.confirmColor}
-              autoFocus
             >
               {alertOpts.buttonText || "OK"}
-            </Button>
+            </NixButton>
           </DialogActions>
         </>
       );
@@ -288,23 +288,20 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
           <DialogActions sx={{ p: 2.5, pt: 0, flexDirection: "column", gap: 1 }}>
             <Stack direction="column" spacing={1} sx={{ width: "100%" }}>
               {choiceOpts.choices.map((choiceItem) => (
-                <Button
+                <NixButton
                   key={choiceItem.value}
+                  size="medium"
+                  variant={choiceItem.variant === "outlined" ? "soft" : "solid"}
+                  color="purple"
                   onClick={() => handleClose(choiceItem.value)}
-                  variant={choiceItem.variant || "contained"}
-                  color={choiceItem.color || "primary"}
-                  fullWidth
+                  style={{ width: "100%" }}
                 >
                   {choiceItem.label}
-                </Button>
+                </NixButton>
               ))}
-              <Button
-                onClick={() => handleClose(null)}
-                color="inherit"
-                fullWidth
-              >
+              <NixButton size="medium" variant="soft" color="gray" onClick={() => handleClose(null)} style={{ width: "100%" }}>
                 Cancel
-              </Button>
+              </NixButton>
             </Stack>
           </DialogActions>
         </>

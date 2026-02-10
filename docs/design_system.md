@@ -1,13 +1,53 @@
 # Design System - Nix Finance
 
-**Última atualização**: Janeiro 2026  
-**Versão**: 2.0
+**Última atualização**: Fevereiro 2026  
+**Versão**: 2.1
 
 ---
 
 ## Visão Geral
 
 O Design System do Nix Finance segue a filosofia **"Human & Organic"** - interfaces que parecem feitas à mão, acolhedoras e sofisticadas. O objetivo é evitar completamente a estética genérica de templates/AI.
+
+**Stack de UI**: O app utiliza **Radix UI** (Themes e primitives) como base de componentes, com customizações Nix (cores, glassmorphism, sombras coloridas). MUI permanece para layout (Box, Grid, Drawer), DatePicker e alguns componentes legados em migração.
+
+---
+
+## 🎨 Radix UI Components
+
+### Importações
+
+```typescript
+import { Theme, Button, Card, Dialog, Select, Text, Heading, IconButton, Avatar } from "@radix-ui/themes";
+import "@radix-ui/themes/styles.css";
+import "./radix-theme.css"; // Overrides Nix (purple accent, radius 20px, shadows)
+```
+
+### Componentes Base Nix
+
+Todos os componentes reutilizáveis estão em `components/radix/`:
+
+- **NixButton** – Botões com tamanhos contextuais (small 32px, medium 40px, large/fab 48–64px). Variants: `solid`, `soft`, `ghost`. Cores: `purple`, `gray`, `red`, `green`, `cyan`.
+- **NixCard** – Card com padding responsivo (24px desktop, 16px mobile), border-radius 20px, opção de glassmorphism e hover lift.
+- **NixInput** – Wrapper de `TextField.Root` com radius large (20px) e variant surface.
+- **Dialog** – Re-export de Radix Dialog; use `NixDialogContent` para fullscreen em mobile e padding 24px.
+- **Select** – Re-export de Radix Select; use `NixSelectTrigger` / `NixSelectContent` para radius 20px.
+- **EmptyState** – Componente unificado com ilustrações por tipo, animação flutuante e botão de ação consistente (size medium).
+
+### Tamanhos de Botões (padrão em todas as telas)
+
+| Contexto | Tamanho | Altura | Uso |
+|----------|---------|--------|-----|
+| FAB (Adicionar) | `fab` | 64px | Adicionar principal em mobile |
+| Ação primária (footer de modal) | `medium` | 40px | Salvar, Confirmar |
+| Ação secundária (modal) | `medium` + variant `soft` | 40px | Cancelar, Voltar |
+| Ação em card | `small` | 32px | Editar, Excluir em cards |
+| Icon button | Radix `IconButton` size="3" | 48px | Touch-friendly em header/nav |
+
+### Tema Radix (Nix)
+
+- **Arquivo**: `radix-theme.css` – sobrescreve `--accent-9` (purple Nix), `--radius-5`/`--radius-6` (20px), sombras coloridas e classe `.nix-glass-panel`.
+- **App.tsx**: `<Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large" />`.
 
 ---
 
@@ -19,7 +59,7 @@ Construir interfaces que parecem artesanais, acolhedoras e sofisticadas. Combate
 
 ### 🚫 Anti-Patterns (NUNCA FAZER)
 
-- ❌ **NUNCA** usar sombras padrão do MUI (ex: `elevation={1}`). Elas são muito duras e pretas.
+- ❌ **NUNCA** usar sombras pretas. Use sombras coloridas (roxa Nix) definidas em `radix-theme.css` ou `theme.ts`.
 - ❌ **NUNCA** usar cores de alta saturação (como `#0000FF` ou `#FF0000` puros).
 - ❌ **NUNCA** usar animações rígidas ou transições instantâneas.
 - ❌ **NUNCA** deixar empty states apenas com texto. Use ícones, ilustrações ou copy amigável.

@@ -20,7 +20,6 @@ import {
   Tooltip,
   LinearProgress,
   Button,
-  Fab,
   Collapse,
   Card,
   CardContent,
@@ -62,6 +61,7 @@ import SearchBar from "./SearchBar";
 import { getHeaderCellSx } from "../utils/tableStyles";
 import { Transaction } from "../types";
 import EmptyState from "./EmptyState";
+import NixButton from "./radix/Button";
 
 interface SplitsViewProps {
   transactions: Transaction[];
@@ -1059,42 +1059,11 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             Gerencie suas compras parceladas
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          {onRefreshData && (
-            <Tooltip title="Atualizar dados">
-              <IconButton
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                sx={{
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: "10px",
-                  "&:hover": { borderColor: theme.palette.primary.main },
-                }}
-              >
-                <RefreshIcon
-                  sx={{
-                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
-                    "@keyframes spin": {
-                      "0%": { transform: "rotate(0deg)" },
-                      "100%": { transform: "rotate(360deg)" },
-                    },
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-          )}
-          {!isMobile && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onNewTransaction}
-              sx={{ borderRadius: "10px" }}
-            >
-              Nova Transação
-            </Button>
-          )}
-        </Box>
+        {!isMobile && (
+          <NixButton size="medium" variant="solid" color="purple" onClick={onNewTransaction}>
+            <AddIcon /> Nova Transação
+          </NixButton>
+        )}
       </Box>
 
       {/* Summary Cards */}
@@ -1235,7 +1204,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           minWidth={180}
         />
 
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", flex: 1 }}>
+        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", flex: 1, alignItems: "center" }}>
           <FormControl size="small" sx={{ minWidth: 130 }}>
             <InputLabel>Status</InputLabel>
             <Select
@@ -1261,6 +1230,31 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               <MenuItem value="expense">Despesa</MenuItem>
             </Select>
           </FormControl>
+
+          {onRefreshData && (
+            <Tooltip title="Atualizar dados">
+              <IconButton
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: "20px",
+                  "&:hover": { borderColor: theme.palette.primary.main },
+                }}
+              >
+                <RefreshIcon
+                  sx={{
+                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </Paper>
 
@@ -1304,12 +1298,15 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         </MenuItem>
       </Menu>
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB - padronizado 64px, border-radius 20px */}
       {isMobile && (
-        <Fab
-          color="primary"
+        <NixButton
+          size="fab"
+          variant="solid"
+          color="purple"
           onClick={onNewTransaction}
-          sx={{
+          className="nix-fab-create"
+          style={{
             position: "fixed",
             bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
             right: 16,
@@ -1317,7 +1314,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           }}
         >
           <AddIcon />
-        </Fab>
+        </NixButton>
       )}
 
       {/* Painel lateral para alterar datas de vencimento */}
@@ -1564,38 +1561,24 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               : alpha("#FFFFFF", 0.8),
           }}
         >
-          <Button
+          <NixButton
+            size="medium"
+            variant="soft"
+            color="gray"
             onClick={handleCloseDateDialog}
             disabled={isUpdatingDates}
-            sx={{
-              textTransform: "none",
-              borderRadius: "12px",
-              px: 3,
-              color: "text.secondary",
-              "&:hover": {
-                bgcolor: alpha(theme.palette.action.hover, 0.08),
-              },
-            }}
           >
             Cancelar
-          </Button>
-          <Button
-            variant="contained"
+          </NixButton>
+          <NixButton
+            size="medium"
+            variant="solid"
+            color="purple"
             onClick={handleSaveDates}
             disabled={isUpdatingDates || !onUpdateInstallmentDates}
-            startIcon={isUpdatingDates ? <CircularProgress size={18} color="inherit" /> : <CalendarMonthIcon />}
-            sx={{
-              textTransform: "none",
-              borderRadius: "12px",
-              px: 3,
-              boxShadow: `0 4px 14px -4px ${alpha(theme.palette.primary.main, 0.4)}`,
-              "&:hover": {
-                boxShadow: `0 6px 20px -4px ${alpha(theme.palette.primary.main, 0.5)}`,
-              },
-            }}
           >
-            {isUpdatingDates ? "Atualizando..." : "Salvar Alterações"}
-          </Button>
+            {isUpdatingDates ? "Atualizando..." : <><CalendarMonthIcon /> Salvar Alterações</>}
+          </NixButton>
         </Box>
       </Drawer>
     </Box>

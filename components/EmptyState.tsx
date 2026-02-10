@@ -1,7 +1,9 @@
 import React from "react";
-import { Box, Typography, Button, useTheme, alpha } from "@mui/material";
-import { Add as AddIcon } from "@mui/icons-material";
+import { useTheme, alpha, useMediaQuery } from "@mui/material";
+import { Heading, Text } from "@radix-ui/themes";
 import { motion } from "framer-motion";
+import { Plus } from "lucide-react";
+import NixButton from "./radix/Button";
 
 export type EmptyStateType =
   | "transactions"
@@ -546,18 +548,19 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
+  const paddingVertical = compact ? 32 : isMobile ? 32 : 64;
   const containerStyle = {
     display: "flex",
     flexDirection: "column" as const,
     alignItems: "center" as const,
     justifyContent: "center" as const,
-    paddingTop: compact ? 32 : 64,
-    paddingBottom: compact ? 32 : 64,
+    paddingTop: paddingVertical,
+    paddingBottom: paddingVertical,
     paddingLeft: 24,
     paddingRight: 24,
     textAlign: "center" as const,
-    color: theme.palette.primary.main,
     borderRadius: "20px",
     background: isDarkMode
       ? `linear-gradient(135deg, ${alpha(NIX_PURPLE, 0.06)} 0%, ${alpha(CYBER_TEAL, 0.03)} 100%)`
@@ -570,8 +573,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       initial="hidden"
       animate="visible"
       style={containerStyle}
+      className="nix-empty-state"
     >
-      {/* Animated Illustration */}
+      {/* Animated Illustration - floating */}
       <motion.div
         variants={floatVariants}
         initial="initial"
@@ -586,62 +590,46 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       </motion.div>
 
       {/* Title with staggered entrance */}
-      <motion.div variants={itemVariants}>
-        <Typography
-          variant={compact ? "h6" : "h5"}
-          fontWeight={600}
-          gutterBottom
-          color="text.primary"
-          sx={{ maxWidth: 300 }}
+      <motion.div variants={itemVariants} style={{ marginBottom: 8 }}>
+        <Heading
+          size={compact ? "4" : "5"}
+          weight="bold"
+          style={{ maxWidth: 300, margin: "0 auto" }}
         >
           {title}
-        </Typography>
+        </Heading>
       </motion.div>
 
       {/* Description with staggered entrance */}
-      <motion.div variants={itemVariants}>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ maxWidth: 320, mb: onAction ? 3 : 0 }}
+      <motion.div variants={itemVariants} style={{ marginBottom: actionLabel && onAction ? 24 : 0 }}>
+        <Text
+          as="p"
+          size="2"
+          color="gray"
+          style={{ maxWidth: 320, margin: "0 auto", lineHeight: 1.5 }}
         >
           {description}
-        </Typography>
+        </Text>
       </motion.div>
 
-      {/* Action Button with premium animation */}
+      {/* Action Button - same size (medium) in all screens */}
       {actionLabel && onAction && (
         <motion.div variants={itemVariants}>
           <motion.div
-            whileHover={{
-              y: -3,
-              scale: 1.02,
-            }}
+            whileHover={{ y: -3, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
           >
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
+            <NixButton
+              size="medium"
+              variant="solid"
+              color="purple"
               onClick={onAction}
-              sx={{
-                mt: 1,
-                px: 3,
-                py: 1.25,
-                borderRadius: "20px",
-                fontWeight: 600,
-                boxShadow: `0 4px 14px ${alpha(
-                  theme.palette.primary.main,
-                  0.25
-                )}`,
-                transition: "box-shadow 0.2s ease-in-out",
-                "&:hover": {
-                  boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
-                },
-              }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
             >
+              <Plus size={18} strokeWidth={2.5} />
               {actionLabel}
-            </Button>
+            </NixButton>
           </motion.div>
         </motion.div>
       )}

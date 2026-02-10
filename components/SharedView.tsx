@@ -18,7 +18,6 @@ import {
   SelectChangeEvent,
   Checkbox,
   Button,
-  Fab,
   Card,
   CardContent,
   Divider,
@@ -59,8 +58,12 @@ import {
   getMobileCardSx,
 } from "../utils/tableStyles";
 import { Transaction } from "../types";
-import { generateFriendReport, prepareFriendReportData } from "../services/pdfService";
+import {
+  generateFriendReport,
+  prepareFriendReportData,
+} from "../services/pdfService";
 import EmptyState from "./EmptyState";
+import NixButton from "./radix/Button";
 
 interface SharedViewProps {
   transactions: Transaction[];
@@ -105,8 +108,12 @@ const SharedView: React.FC<SharedViewProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFriend, setSelectedFriend] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<PaymentStatus>("all");
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(
+    new Date().getMonth()
+  );
+  const [selectedYear, setSelectedYear] = useState<number>(
+    new Date().getFullYear()
+  );
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Handler de refresh
@@ -132,7 +139,10 @@ const SharedView: React.FC<SharedViewProps> = ({
   };
 
   // Gera o relatório PDF para um amigo específico (usando o mês filtrado)
-  const handleGeneratePdf = async (friendName: string, event: React.MouseEvent) => {
+  const handleGeneratePdf = async (
+    friendName: string,
+    event: React.MouseEvent
+  ) => {
     event.stopPropagation(); // Previne seleção do card
     setGeneratingPdf(friendName);
 
@@ -140,12 +150,15 @@ const SharedView: React.FC<SharedViewProps> = ({
       // Pequeno delay para mostrar o loading
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Usa sharedTransactions (já filtradas pelo mês) ao invés de todas as transações
+      // Usa lista sem duplicatas (só despesa por item; receita relacionada não aparece como linha separada)
+      const listForReport = sharedTransactions.filter(
+        (t) => t.type === "expense" || !t.relatedTransactionId
+      );
       const reportData = prepareFriendReportData(
         friendName,
         userName,
-        sharedTransactions,
-        sharedTransactions,
+        listForReport,
+        listForReport,
         selectedMonth,
         selectedYear
       );
@@ -158,32 +171,214 @@ const SharedView: React.FC<SharedViewProps> = ({
     }
   };
 
-  // Filtra transações vinculadas a amigos (tanto expenses quanto incomes) e pelo mês selecionado
-  const sharedTransactions = useMemo(() => {
-    return transactions.filter((t) => {
+  // Gera transações virtuais para recorrentes compartilhadas: do mês seguinte ao original até o mês selecionado
+  const sharedRecurringVirtuals = useMemo(() => {
+    const virtuals: Transaction[] = [];
+    const targetMonth1Based = selectedMonth + 1; // 1-12 para comparação
+
+    // #region agent log
+    const sharedRecurringCandidates = transactions.filter(
+      (t) => t.isShared && t.sharedWith && t.isRecurring
+    );
+    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "SharedView.tsx:sharedRecurringVirtuals",
+        message: "Shared recurring candidates and date range",
+        data: {
+          totalTransactions: transactions.length,
+          sharedRecurringCount: sharedRecurringCandidates.length,
+          candidates: sharedRecurringCandidates.map((t) => ({
+            id: t.id,
+            date: t.date,
+            frequency: t.frequency,
+            hasFrequency: !!t.frequency,
+            installments: t.installments,
+          })),
+          selectedMonth,
+          selectedYear,
+          targetMonth1Based,
+        },
+        timestamp: Date.now(),
+        hypothesisId: "H1-H2",
+      }),
+    }).catch(() => {});
+    // #endregion
+
+    transactions.forEach((t) => {
+      if (!t.isShared || !t.sharedWith || !t.isRecurring || !t.frequency)
+        return;
+      if (t.installments && t.installments > 1) return;
+
+      const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
+      let currentYear = origYear;
+      let currentMonth = origMonth;
+
+      while (
+        currentYear < selectedYear ||
+        (currentYear === selectedYear && currentMonth <= targetMonth1Based)
+      ) {
+        const isOriginalMonth =
+          currentYear === origYear && currentMonth === origMonth;
+        if (isOriginalMonth) {
+          currentMonth++;
+          if (currentMonth > 12) {
+            currentMonth = 1;
+            currentYear++;
+          }
+          continue;
+        }
+
+        let shouldAppear = false;
+        if (t.frequency === "monthly") {
+          shouldAppear = true;
+        } else if (t.frequency === "yearly") {
+          shouldAppear = origMonth === currentMonth && currentYear > origYear;
+        }
+
+        if (shouldAppear) {
+          const daysInTargetMonth = new Date(
+            currentYear,
+            currentMonth,
+            0
+          ).getDate();
+          const adjustedDay = Math.min(origDay, daysInTargetMonth);
+          const virtualDate = `${currentYear}-${String(currentMonth).padStart(
+            2,
+            "0"
+          )}-${String(adjustedDay).padStart(2, "0")}`;
+
+          const excludedDates = t.excludedDates || [];
+          if (!excludedDates.includes(virtualDate)) {
+            virtuals.push({
+              ...t,
+              id: `${t.id}_recurring_${currentYear}-${String(
+                currentMonth
+              ).padStart(2, "0")}`,
+              date: virtualDate,
+              isVirtual: true,
+              originalTransactionId: t.id,
+              isPaid: false,
+            });
+          }
+        }
+
+        currentMonth++;
+        if (currentMonth > 12) {
+          currentMonth = 1;
+          currentYear++;
+        }
+      }
+    });
+
+    // #region agent log
+    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "SharedView.tsx:sharedRecurringVirtuals-end",
+        message: "Virtuals generated",
+        data: {
+          virtualsCount: virtuals.length,
+          sampleVirtualDates: virtuals.slice(0, 5).map((v) => v.date),
+        },
+        timestamp: Date.now(),
+        hypothesisId: "H2-H3",
+      }),
+    }).catch(() => {});
+    // #endregion
+
+    return virtuals;
+  }, [transactions, selectedMonth, selectedYear]);
+
+  // Lista efetiva: transações reais + virtuais recorrentes (para aparecer aluguel etc. em qualquer mês)
+  const effectiveTransactions = useMemo(
+    () => [...transactions, ...sharedRecurringVirtuals],
+    [transactions, sharedRecurringVirtuals]
+  );
+
+  // Todas as transações compartilhadas (sem filtro de mês) — lista completa (reais + virtuais)
+  const allSharedTransactions = useMemo(() => {
+    const out = effectiveTransactions.filter((t) => {
       if (!t.isShared || !t.sharedWith) return false;
-      
-      // Filtra pelo mês e ano selecionados
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date))
+        return false;
+      return true;
+    });
+    // #region agent log
+    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "SharedView.tsx:allSharedTransactions",
+        message: "All shared transactions count",
+        data: {
+          total: out.length,
+          virtualCount: out.filter((t) => t.isVirtual).length,
+          expenseCount: out.filter((t) => t.type === "expense").length,
+          incomeCount: out.filter((t) => t.type === "income").length,
+        },
+        timestamp: Date.now(),
+        hypothesisId: "H3",
+      }),
+    }).catch(() => {});
+    // #endregion
+    return out;
+  }, [effectiveTransactions]);
+
+  // Apenas transações REAIS (sem virtuais) para cálculo de saldo — evita contar a mesma despesa recorrente várias vezes
+  const allSharedTransactionsForBalance = useMemo(
+    () => allSharedTransactions.filter((t) => !t.isVirtual),
+    [allSharedTransactions]
+  );
+
+  // Filtra transações vinculadas a amigos e pelo mês selecionado (lista do mês)
+  const sharedTransactions = useMemo(() => {
+    const out = allSharedTransactions.filter((t) => {
       const transactionDate = new Date(t.date);
       const transactionMonth = transactionDate.getMonth();
       const transactionYear = transactionDate.getFullYear();
-      
-      if (transactionMonth !== selectedMonth || transactionYear !== selectedYear) return false;
-      
-      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
-      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
-        return false;
-      }
-      
-      return true;
+      return (
+        transactionMonth === selectedMonth && transactionYear === selectedYear
+      );
     });
-  }, [transactions, selectedMonth, selectedYear]);
+    // #region agent log
+    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "SharedView.tsx:sharedTransactions",
+        message: "Shared transactions for selected month (list shown)",
+        data: {
+          count: out.length,
+          virtualInList: out.filter((t) => t.isVirtual).length,
+          selectedMonth,
+          selectedYear,
+        },
+        timestamp: Date.now(),
+        hypothesisId: "H3-H4",
+      }),
+    }).catch(() => {});
+    // #endregion
+    return out;
+  }, [allSharedTransactions, selectedMonth, selectedYear]);
 
-  // Calcula o balanço por amigo
+  // Lista para exibição na tabela: apenas despesas + receitas avulsas (sem duplicar a contrapartida da conta dividida)
+  // Exclui receitas que têm relatedTransactionId (são a "metade a receber" já representada pela linha da despesa)
+  const sharedTransactionsForList = useMemo(
+    () =>
+      sharedTransactions.filter(
+        (t) => t.type === "expense" || !t.relatedTransactionId
+      ),
+    [sharedTransactions]
+  );
+
+  // Calcula o balanço por amigo usando apenas transações REAIS (sem virtuais), para somas corretas de "A receber" e "Já acertado"
   const friendBalances = useMemo(() => {
     const balances: Map<string, FriendBalance> = new Map();
 
-    sharedTransactions.forEach((t) => {
+    allSharedTransactionsForBalance.forEach((t) => {
       if (!t.sharedWith) return;
 
       const friendName = t.sharedWith;
@@ -207,16 +402,14 @@ const SharedView: React.FC<SharedViewProps> = ({
       const balance = balances.get(friendName)!;
 
       const transactionAmount = t.amount || 0;
-      balance.transactionCount++;
 
       if (t.type === "expense") {
+        balance.transactionCount++;
         balance.expenses.push(t);
 
         if (t.iOwe) {
           // EXPENSE + Conta Única: EU devo ao amigo - valor integral (100%)
           balance.totalIOwe += transactionAmount;
-          
-          // Verifica se eu já paguei (isPaid na própria transação)
           if (t.isPaid) {
             balance.totalIPaid += transactionAmount;
           } else {
@@ -226,11 +419,44 @@ const SharedView: React.FC<SharedViewProps> = ({
           // EXPENSE + Conta Dividida: Amigo me deve - 50% do valor
           const halfAmount = transactionAmount / 2;
           balance.totalOwed += halfAmount;
-          
-          // Se a transação relacionada (income do reembolso) está paga
-          const relatedIncome = transactions.find(
+          // Busca a receita relacionada (50% a receber): primeiro em transactions, depois na própria lista de compartilhadas
+          let relatedIncome = transactions.find(
             (inc) => inc.id === t.relatedTransactionId
           );
+          if (!relatedIncome && t.relatedTransactionId) {
+            relatedIncome =
+              allSharedTransactionsForBalance.find(
+                (inc) => inc.id === t.relatedTransactionId
+              ) ?? undefined;
+          }
+          // #region agent log
+          if (t.isVirtual && balance.expenses.length <= 3) {
+            fetch(
+              "http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  location: "SharedView.tsx:friendBalances-expense",
+                  message: "Virtual expense balance contribution",
+                  data: {
+                    friendName,
+                    expenseId: t.id,
+                    relatedTransactionId: t.relatedTransactionId,
+                    foundRelatedIncome: !!relatedIncome,
+                    relatedIncomePaid: relatedIncome?.isPaid,
+                    halfAmount,
+                    addedTo: relatedIncome?.isPaid
+                      ? "totalPaid"
+                      : "pendingAmount",
+                  },
+                  timestamp: Date.now(),
+                  hypothesisId: "H5-H7",
+                }),
+              }
+            ).catch(() => {});
+          }
+          // #endregion
           if (relatedIncome?.isPaid) {
             balance.totalPaid += halfAmount;
           } else {
@@ -239,35 +465,53 @@ const SharedView: React.FC<SharedViewProps> = ({
         }
       } else if (t.type === "income") {
         balance.incomes.push(t);
-        
-        // INCOME vinculada a amigo: Amigo está me pagando
-        // Se tem relatedTransactionId, o valor já foi calculado como 50% da despesa original
-        // Se não tem, é uma income avulsa com conta dividida - dividir por 2
-        const hasRelatedExpense = !!t.relatedTransactionId;
-        const paymentAmount = t.iOwe ? transactionAmount : (hasRelatedExpense ? transactionAmount : transactionAmount / 2);
-        
+
+        // INCOME com relatedTransactionId: já foi contabilizada na despesa (conta dividida).
+        // Não somar de novo para evitar duplicar o valor que o amigo me deve.
+        if (t.relatedTransactionId) return;
+
+        balance.transactionCount++;
+        // INCOME avulsa (conta dividida sem despesa relacionada): amigo me paga 50%
+        const paymentAmount = t.iOwe
+          ? transactionAmount
+          : transactionAmount / 2;
+        balance.totalOwed += paymentAmount;
         if (t.isPaid) {
-          // Já recebi o pagamento
           balance.totalPaid += paymentAmount;
         } else {
-          // Ainda pendente de receber
           balance.pendingAmount += paymentAmount;
         }
-        // Aumenta o que o amigo me deve (será zerado quando marcar como pago)
-        balance.totalOwed += paymentAmount;
       }
     });
 
-    // Calcula o saldo líquido para cada amigo
     balances.forEach((balance) => {
-      // Positivo = amigo me deve | Negativo = eu devo ao amigo
       balance.netBalance = balance.pendingAmount - balance.pendingIOwe;
     });
 
-    return Array.from(balances.values()).sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
-  }, [sharedTransactions, transactions]);
+    // #region agent log
+    const balanceList = Array.from(balances.values());
+    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "SharedView.tsx:friendBalances-summary",
+        message: "Friend balances summary",
+        data: balanceList.map((f) => ({
+          name: f.name,
+          totalOwed: f.totalOwed,
+          pendingAmount: f.pendingAmount,
+          totalPaid: f.totalPaid,
+          expenseCount: f.expenses.length,
+          virtualExpenseCount: f.expenses.filter((e) => e.isVirtual).length,
+        })),
+        timestamp: Date.now(),
+        hypothesisId: "H5-H7",
+      }),
+    }).catch(() => {});
+    // #endregion
+
+    return balanceList.sort((a, b) => a.name.localeCompare(b.name));
+  }, [allSharedTransactionsForBalance, transactions]);
 
   // Combina amigos cadastrados com amigos de transações
   const allFriends = useMemo(() => {
@@ -281,9 +525,9 @@ const SharedView: React.FC<SharedViewProps> = ({
     return friendBalances.find((f) => f.name === friendName) || null;
   };
 
-  // Transações filtradas
+  // Transações filtradas (usa lista sem duplicatas: só despesa por item compartilhado)
   const filteredTransactions = useMemo(() => {
-    return sharedTransactions
+    return sharedTransactionsForList
       .filter((t) => {
         // Filtra por amigo
         if (selectedFriend !== "all" && t.sharedWith !== selectedFriend) {
@@ -312,7 +556,7 @@ const SharedView: React.FC<SharedViewProps> = ({
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [
-    sharedTransactions,
+    sharedTransactionsForList,
     selectedFriend,
     searchTerm,
     filterStatus,
@@ -451,13 +695,15 @@ const SharedView: React.FC<SharedViewProps> = ({
   };
 
   return (
-    <Box sx={{ 
-      display: "flex", 
-      flexDirection: "column", 
-      gap: isMobile ? 2 : 3,
-      // Extra padding para bottom navigation + FABs
-      pb: { xs: "180px", md: 0 },
-    }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: isMobile ? 2 : 3,
+        // Extra padding para bottom navigation + FABs
+        pb: { xs: "180px", md: 0 },
+      }}
+    >
       {/* Header */}
       <Box
         sx={{
@@ -478,13 +724,14 @@ const SharedView: React.FC<SharedViewProps> = ({
         </Box>
 
         {!isMobile && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
+          <NixButton
+            size="medium"
+            variant="solid"
+            color="purple"
             onClick={onNewTransaction}
           >
-            Transaction
-          </Button>
+            <AddIcon /> Transaction
+          </NixButton>
         )}
       </Box>
 
@@ -497,11 +744,22 @@ const SharedView: React.FC<SharedViewProps> = ({
               p: isMobile ? 1.5 : 2,
               position: "relative",
               overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              background:
+                theme.palette.mode === "dark"
+                  ? `linear-gradient(135deg, ${alpha(
+                      theme.palette.background.paper,
+                      0.7
+                    )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                  : `linear-gradient(135deg, ${alpha(
+                      "#FFFFFF",
+                      0.8
+                    )} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
               backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              border: `1px solid ${
+                theme.palette.mode === "dark"
+                  ? alpha("#FFFFFF", 0.08)
+                  : alpha("#000000", 0.06)
+              }`,
               boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
               borderRadius: "16px",
               transition: "all 0.2s ease-in-out",
@@ -509,24 +767,69 @@ const SharedView: React.FC<SharedViewProps> = ({
               "&::before": {
                 content: '""',
                 position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background:
+                  "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)",
                 pointerEvents: "none",
               },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
-              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#059669", 0.1), border: `1px solid ${alpha("#059669", 0.2)}` }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                mb: 0.5,
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: alpha("#059669", 0.1),
+                  border: `1px solid ${alpha("#059669", 0.2)}`,
+                }}
+              >
                 <TrendingUpIcon sx={{ fontSize: 14, color: "#059669" }} />
               </Box>
-              <Typography variant="overline" sx={{ color: "#059669", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "#059669",
+                  letterSpacing: "0.08em",
+                  fontSize: 9,
+                  fontWeight: 600,
+                }}
+              >
                 A Receber
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
+            <Typography
+              variant={isMobile ? "body1" : "h6"}
+              sx={{
+                fontWeight: 700,
+                color: "#059669",
+                letterSpacing: "-0.02em",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
               {formatCurrency(stats.totalPending)}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ position: "relative", zIndex: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ position: "relative", zIndex: 1 }}
+            >
               Amigos me devem
             </Typography>
           </Paper>
@@ -538,11 +841,22 @@ const SharedView: React.FC<SharedViewProps> = ({
               p: isMobile ? 1.5 : 2,
               position: "relative",
               overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              background:
+                theme.palette.mode === "dark"
+                  ? `linear-gradient(135deg, ${alpha(
+                      theme.palette.background.paper,
+                      0.7
+                    )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                  : `linear-gradient(135deg, ${alpha(
+                      "#FFFFFF",
+                      0.8
+                    )} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
               backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              border: `1px solid ${
+                theme.palette.mode === "dark"
+                  ? alpha("#FFFFFF", 0.08)
+                  : alpha("#000000", 0.06)
+              }`,
               boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
               borderRadius: "16px",
               transition: "all 0.2s ease-in-out",
@@ -550,24 +864,69 @@ const SharedView: React.FC<SharedViewProps> = ({
               "&::before": {
                 content: '""',
                 position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background:
+                  "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
                 pointerEvents: "none",
               },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
-              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#DC2626", 0.1), border: `1px solid ${alpha("#DC2626", 0.2)}` }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                mb: 0.5,
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: alpha("#DC2626", 0.1),
+                  border: `1px solid ${alpha("#DC2626", 0.2)}`,
+                }}
+              >
                 <TrendingDownIcon sx={{ fontSize: 14, color: "#DC2626" }} />
               </Box>
-              <Typography variant="overline" sx={{ color: "#DC2626", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "#DC2626",
+                  letterSpacing: "0.08em",
+                  fontSize: 9,
+                  fontWeight: 600,
+                }}
+              >
                 A Pagar
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
+            <Typography
+              variant={isMobile ? "body1" : "h6"}
+              sx={{
+                fontWeight: 700,
+                color: "#DC2626",
+                letterSpacing: "-0.02em",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
               {formatCurrency(stats.totalPendingIOwe)}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ position: "relative", zIndex: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ position: "relative", zIndex: 1 }}
+            >
               Eu devo
             </Typography>
           </Paper>
@@ -579,38 +938,109 @@ const SharedView: React.FC<SharedViewProps> = ({
               p: isMobile ? 1.5 : 2,
               position: "relative",
               overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              background:
+                theme.palette.mode === "dark"
+                  ? `linear-gradient(135deg, ${alpha(
+                      theme.palette.background.paper,
+                      0.7
+                    )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                  : `linear-gradient(135deg, ${alpha(
+                      "#FFFFFF",
+                      0.8
+                    )} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
               backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              boxShadow: `0 6px 24px -6px ${alpha(stats.netBalance >= 0 ? "#059669" : "#DC2626", 0.15)}`,
+              border: `1px solid ${
+                theme.palette.mode === "dark"
+                  ? alpha("#FFFFFF", 0.08)
+                  : alpha("#000000", 0.06)
+              }`,
+              boxShadow: `0 6px 24px -6px ${alpha(
+                stats.netBalance >= 0 ? "#059669" : "#DC2626",
+                0.15
+              )}`,
               borderRadius: "16px",
               transition: "all 0.2s ease-in-out",
               "&:hover": { transform: "translateY(-2px)" },
               "&::before": {
                 content: '""',
                 position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: stats.netBalance >= 0
-                  ? "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
-                  : "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background:
+                  stats.netBalance >= 0
+                    ? "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
+                    : "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
                 pointerEvents: "none",
               },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
-              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha(stats.netBalance >= 0 ? "#059669" : "#DC2626", 0.1), border: `1px solid ${alpha(stats.netBalance >= 0 ? "#059669" : "#DC2626", 0.2)}` }}>
-                <BalanceIcon sx={{ fontSize: 14, color: stats.netBalance >= 0 ? "#059669" : "#DC2626" }} />
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                mb: 0.5,
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: alpha(
+                    stats.netBalance >= 0 ? "#059669" : "#DC2626",
+                    0.1
+                  ),
+                  border: `1px solid ${alpha(
+                    stats.netBalance >= 0 ? "#059669" : "#DC2626",
+                    0.2
+                  )}`,
+                }}
+              >
+                <BalanceIcon
+                  sx={{
+                    fontSize: 14,
+                    color: stats.netBalance >= 0 ? "#059669" : "#DC2626",
+                  }}
+                />
               </Box>
-              <Typography variant="overline" sx={{ color: stats.netBalance >= 0 ? "#059669" : "#DC2626", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  color: stats.netBalance >= 0 ? "#059669" : "#DC2626",
+                  letterSpacing: "0.08em",
+                  fontSize: 9,
+                  fontWeight: 600,
+                }}
+              >
                 Saldo
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: stats.netBalance >= 0 ? "#059669" : "#DC2626", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
-              {stats.netBalance >= 0 ? "+" : ""}{formatCurrency(stats.netBalance)}
+            <Typography
+              variant={isMobile ? "body1" : "h6"}
+              sx={{
+                fontWeight: 700,
+                color: stats.netBalance >= 0 ? "#059669" : "#DC2626",
+                letterSpacing: "-0.02em",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              {stats.netBalance >= 0 ? "+" : ""}
+              {formatCurrency(stats.netBalance)}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ position: "relative", zIndex: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ position: "relative", zIndex: 1 }}
+            >
               {stats.netBalance >= 0 ? "A seu favor" : "Você deve"}
             </Typography>
           </Paper>
@@ -622,11 +1052,22 @@ const SharedView: React.FC<SharedViewProps> = ({
               p: isMobile ? 1.5 : 2,
               position: "relative",
               overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+              background:
+                theme.palette.mode === "dark"
+                  ? `linear-gradient(135deg, ${alpha(
+                      theme.palette.background.paper,
+                      0.7
+                    )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                  : `linear-gradient(135deg, ${alpha(
+                      "#FFFFFF",
+                      0.8
+                    )} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
               backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              border: `1px solid ${
+                theme.palette.mode === "dark"
+                  ? alpha("#FFFFFF", 0.08)
+                  : alpha("#000000", 0.06)
+              }`,
               boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
               borderRadius: "16px",
               transition: "all 0.2s ease-in-out",
@@ -634,24 +1075,69 @@ const SharedView: React.FC<SharedViewProps> = ({
               "&::before": {
                 content: '""',
                 position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.02) 100%)",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background:
+                  "linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.02) 100%)",
                 pointerEvents: "none",
               },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, position: "relative", zIndex: 1 }}>
-              <Box sx={{ width: 24, height: 24, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#6366f1", 0.1), border: `1px solid ${alpha("#6366f1", 0.2)}` }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                mb: 0.5,
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: alpha("#6366f1", 0.1),
+                  border: `1px solid ${alpha("#6366f1", 0.2)}`,
+                }}
+              >
                 <PeopleIcon sx={{ fontSize: 14, color: "#6366f1" }} />
               </Box>
-              <Typography variant="overline" sx={{ color: "#6366f1", letterSpacing: "0.08em", fontSize: 9, fontWeight: 600 }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "#6366f1",
+                  letterSpacing: "0.08em",
+                  fontSize: 9,
+                  fontWeight: 600,
+                }}
+              >
                 Amigos
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
+            <Typography
+              variant={isMobile ? "h6" : "h5"}
+              sx={{
+                fontWeight: 700,
+                color: "text.primary",
+                letterSpacing: "-0.02em",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
               {stats.friendCount}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ position: "relative", zIndex: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ position: "relative", zIndex: 1 }}
+            >
               Com transações
             </Typography>
           </Paper>
@@ -681,24 +1167,53 @@ const SharedView: React.FC<SharedViewProps> = ({
                     cursor: "pointer",
                     position: "relative",
                     overflow: "hidden",
-                    background: theme.palette.mode === "dark"
-                      ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                      : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                    background:
+                      theme.palette.mode === "dark"
+                        ? `linear-gradient(135deg, ${alpha(
+                            theme.palette.background.paper,
+                            0.7
+                          )} 0%, ${alpha(
+                            theme.palette.background.paper,
+                            0.5
+                          )} 100%)`
+                        : `linear-gradient(135deg, ${alpha(
+                            "#FFFFFF",
+                            0.85
+                          )} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
                     backdropFilter: "blur(16px)",
-                    border: selectedFriend === friend.name
-                      ? `2px solid ${theme.palette.primary.main}`
-                      : `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                    border:
+                      selectedFriend === friend.name
+                        ? `2px solid ${theme.palette.primary.main}`
+                        : `1px solid ${
+                            theme.palette.mode === "dark"
+                              ? alpha("#FFFFFF", 0.08)
+                              : alpha("#000000", 0.06)
+                          }`,
                     borderLeft: `3px solid ${getAvatarColor(friend.name)}`,
                     borderRadius: "16px",
-                    boxShadow: theme.palette.mode === "dark"
-                      ? `0 6px 24px -6px ${alpha(getAvatarColor(friend.name), 0.2)}`
-                      : `0 6px 24px -6px ${alpha(getAvatarColor(friend.name), 0.15)}`,
+                    boxShadow:
+                      theme.palette.mode === "dark"
+                        ? `0 6px 24px -6px ${alpha(
+                            getAvatarColor(friend.name),
+                            0.2
+                          )}`
+                        : `0 6px 24px -6px ${alpha(
+                            getAvatarColor(friend.name),
+                            0.15
+                          )}`,
                     transition: "all 0.2s ease-in-out",
                     "&:hover": {
                       transform: "translateY(-2px)",
-                      boxShadow: theme.palette.mode === "dark"
-                        ? `0 10px 32px -6px ${alpha(getAvatarColor(friend.name), 0.3)}`
-                        : `0 10px 32px -6px ${alpha(getAvatarColor(friend.name), 0.25)}`,
+                      boxShadow:
+                        theme.palette.mode === "dark"
+                          ? `0 10px 32px -6px ${alpha(
+                              getAvatarColor(friend.name),
+                              0.3
+                            )}`
+                          : `0 10px 32px -6px ${alpha(
+                              getAvatarColor(friend.name),
+                              0.25
+                            )}`,
                     },
                   }}
                   onClick={() =>
@@ -709,7 +1224,12 @@ const SharedView: React.FC<SharedViewProps> = ({
                 >
                   <CardContent>
                     <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        mb: 2,
+                      }}
                     >
                       <Avatar
                         sx={{
@@ -725,9 +1245,10 @@ const SharedView: React.FC<SharedViewProps> = ({
                           {friend.name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {friend.transactionCount} despesa
-                          {friend.transactionCount !== 1 ? "s" : ""} compartilhada
-                          {friend.transactionCount !== 1 ? "s" : ""}
+                          {friend.expenses.length} despesa
+                          {friend.expenses.length !== 1 ? "s" : ""}{" "}
+                          compartilhada
+                          {friend.expenses.length !== 1 ? "s" : ""}
                         </Typography>
                       </Box>
                       {/* Botão de gerar relatório PDF */}
@@ -745,7 +1266,10 @@ const SharedView: React.FC<SharedViewProps> = ({
                               transform: "translateY(-2px)",
                             },
                             "&:disabled": {
-                              bgcolor: alpha(theme.palette.action.disabled, 0.1),
+                              bgcolor: alpha(
+                                theme.palette.action.disabled,
+                                0.1
+                              ),
                             },
                           }}
                         >
@@ -761,17 +1285,17 @@ const SharedView: React.FC<SharedViewProps> = ({
                     <Divider sx={{ mb: 2 }} />
 
                     {/* Saldo líquido em destaque */}
-                    <Box 
-                      sx={{ 
-                        display: "flex", 
-                        justifyContent: "space-between", 
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
                         alignItems: "center",
                         mb: 2,
                         p: 1.5,
                         borderRadius: "20px",
                         bgcolor: alpha(
-                          friend.netBalance >= 0 
-                            ? theme.palette.success.main 
+                          friend.netBalance >= 0
+                            ? theme.palette.success.main
                             : theme.palette.error.main,
                           0.1
                         ),
@@ -780,10 +1304,12 @@ const SharedView: React.FC<SharedViewProps> = ({
                       <Typography variant="body2" fontWeight={600}>
                         {friend.netBalance >= 0 ? "A receber:" : "Você deve:"}
                       </Typography>
-                      <Typography 
-                        variant="h6" 
-                        fontWeight={700} 
-                        color={friend.netBalance >= 0 ? "success.main" : "error.main"}
+                      <Typography
+                        variant="h6"
+                        fontWeight={700}
+                        color={
+                          friend.netBalance >= 0 ? "success.main" : "error.main"
+                        }
                       >
                         {formatCurrency(Math.abs(friend.netBalance))}
                       </Typography>
@@ -791,29 +1317,54 @@ const SharedView: React.FC<SharedViewProps> = ({
 
                     {/* Detalhes */}
                     {friend.pendingAmount > 0 && (
-                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          mb: 0.5,
+                        }}
+                      >
                         <Typography variant="caption" color="text.secondary">
                           {friend.name} me deve:
                         </Typography>
-                        <Typography variant="caption" fontWeight={600} color="success.main">
+                        <Typography
+                          variant="caption"
+                          fontWeight={600}
+                          color="success.main"
+                        >
                           {formatCurrency(friend.pendingAmount)}
                         </Typography>
                       </Box>
                     )}
 
                     {friend.pendingIOwe > 0 && (
-                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          mb: 0.5,
+                        }}
+                      >
                         <Typography variant="caption" color="text.secondary">
                           Eu devo a {friend.name}:
                         </Typography>
-                        <Typography variant="caption" fontWeight={600} color="error.main">
+                        <Typography
+                          variant="caption"
+                          fontWeight={600}
+                          color="error.main"
+                        >
                           {formatCurrency(friend.pendingIOwe)}
                         </Typography>
                       </Box>
                     )}
 
                     {(friend.totalPaid > 0 || friend.totalIPaid > 0) && (
-                      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
                         <Typography variant="caption" color="text.secondary">
                           Já acertado:
                         </Typography>
@@ -836,11 +1387,16 @@ const SharedView: React.FC<SharedViewProps> = ({
         sx={{
           borderRadius: "20px",
           overflow: "hidden",
-          bgcolor: theme.palette.mode === "dark"
-            ? alpha(theme.palette.background.paper, 0.7)
-            : alpha("#FFFFFF", 0.9),
+          bgcolor:
+            theme.palette.mode === "dark"
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha("#FFFFFF", 0.9),
           backdropFilter: "blur(20px)",
-          border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          border: `1px solid ${
+            theme.palette.mode === "dark"
+              ? alpha("#FFFFFF", 0.08)
+              : alpha("#000000", 0.06)
+          }`,
           p: 2,
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
@@ -884,7 +1440,14 @@ const SharedView: React.FC<SharedViewProps> = ({
                 const balance = getFriendBalance(friendName);
                 return (
                   <MenuItem key={friendName} value={friendName}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        width: "100%",
+                      }}
+                    >
                       <Avatar
                         sx={{
                           width: 24,
@@ -896,10 +1459,10 @@ const SharedView: React.FC<SharedViewProps> = ({
                         {getInitials(friendName)}
                       </Avatar>
                       <Box sx={{ flex: 1 }}>{friendName}</Box>
-                      {balance && balance.transactionCount > 0 && (
+                      {balance && balance.expenses.length > 0 && (
                         <Chip
                           size="small"
-                          label={balance.transactionCount}
+                          label={balance.expenses.length}
                           sx={{ height: 20, fontSize: "0.7rem" }}
                         />
                       )}
@@ -955,7 +1518,9 @@ const SharedView: React.FC<SharedViewProps> = ({
               >
                 <RefreshIcon
                   sx={{
-                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                    animation: isRefreshing
+                      ? "spin 1s linear infinite"
+                      : "none",
                     "@keyframes spin": {
                       "0%": { transform: "rotate(0deg)" },
                       "100%": { transform: "rotate(360deg)" },
@@ -978,14 +1543,14 @@ const SharedView: React.FC<SharedViewProps> = ({
             backdropFilter: "blur(20px)",
             p: 2,
             bgcolor: alpha(
-              selectedFriendStats.netBalance >= 0 
-                ? theme.palette.success.main 
-                : theme.palette.error.main, 
+              selectedFriendStats.netBalance >= 0
+                ? theme.palette.success.main
+                : theme.palette.error.main,
               0.08
             ),
             border: `1px solid ${alpha(
-              selectedFriendStats.netBalance >= 0 
-                ? theme.palette.success.main 
+              selectedFriendStats.netBalance >= 0
+                ? theme.palette.success.main
                 : theme.palette.error.main,
               0.2
             )}`,
@@ -1006,8 +1571,8 @@ const SharedView: React.FC<SharedViewProps> = ({
                 {selectedFriendStats.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {selectedFriendStats.transactionCount} despesa
-                {selectedFriendStats.transactionCount !== 1 ? "s" : ""} • Saldo:{" "}
+                {selectedFriendStats.expenses.length} despesa
+                {selectedFriendStats.expenses.length !== 1 ? "s" : ""} • Saldo:{" "}
                 <Typography
                   component="span"
                   fontWeight={600}
@@ -1020,8 +1585,8 @@ const SharedView: React.FC<SharedViewProps> = ({
                   {selectedFriendStats.netBalance >= 0 ? "+" : ""}
                   {formatCurrency(selectedFriendStats.netBalance)}
                 </Typography>
-                {selectedFriendStats.netBalance >= 0 
-                  ? " (a receber)" 
+                {selectedFriendStats.netBalance >= 0
+                  ? " (a receber)"
                   : " (você deve)"}
               </Typography>
             </Box>
@@ -1064,21 +1629,27 @@ const SharedView: React.FC<SharedViewProps> = ({
         <Paper elevation={0} sx={getTableContainerSx(theme, isDarkMode)}>
           {isMobile ? (
             // Mobile: Cards
-            <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box
+              sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}
+            >
               {filteredTransactions.map((t) => {
                 const isPaid = isTransactionPaid(t);
                 const transactionAmount = t.amount || 0;
-                
+
                 // Calcula o valor de impacto no saldo
                 let displayAmount: number;
                 let isPositive: boolean;
                 let typeLabel: string;
-                
+
                 if (t.type === "income") {
                   // Se tem relatedTransactionId, o valor já foi calculado como 50% da despesa original
                   // Se não tem, é uma income avulsa com conta dividida - dividir por 2
                   const hasRelatedExpense = !!t.relatedTransactionId;
-                  displayAmount = t.iOwe ? transactionAmount : (hasRelatedExpense ? transactionAmount : transactionAmount / 2);
+                  displayAmount = t.iOwe
+                    ? transactionAmount
+                    : hasRelatedExpense
+                    ? transactionAmount
+                    : transactionAmount / 2;
                   isPositive = true;
                   typeLabel = "Receber";
                 } else if (t.iOwe) {
@@ -1095,7 +1666,11 @@ const SharedView: React.FC<SharedViewProps> = ({
                   <Paper
                     key={t.id}
                     elevation={0}
-                    sx={getMobileCardSx(theme, isDarkMode, isPositive ? "income" : "expense")}
+                    sx={getMobileCardSx(
+                      theme,
+                      isDarkMode,
+                      isPositive ? "income" : "expense"
+                    )}
                   >
                     <Box
                       sx={{
@@ -1121,10 +1696,10 @@ const SharedView: React.FC<SharedViewProps> = ({
                         >
                           {t.description}
                           {t.type === "income" && (
-                            <Chip 
-                              label="Receita" 
-                              size="small" 
-                              color="success" 
+                            <Chip
+                              label="Receita"
+                              size="small"
+                              color="success"
                               variant="outlined"
                               sx={{ ml: 1, height: 16, fontSize: "0.6rem" }}
                             />
@@ -1152,23 +1727,47 @@ const SharedView: React.FC<SharedViewProps> = ({
                             {t.sharedWith} • {formatDate(t.date)}
                           </Typography>
                         </Box>
-                        <Box sx={{ display: "flex", gap: 1, mt: 1, flexWrap: "wrap", alignItems: "center" }}>
-                          <Chip label={t.category} size="small" variant="outlined" />
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 1,
+                            mt: 1,
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
                           <Chip
-                            icon={isPaid ? <CheckCircleIcon /> : <ScheduleIcon />}
+                            label={t.category}
+                            size="small"
+                            variant="outlined"
+                          />
+                          <Chip
+                            icon={
+                              isPaid ? <CheckCircleIcon /> : <ScheduleIcon />
+                            }
                             label={
-                              isPaid 
-                                ? (isPositive ? "Recebido" : "Pago")
-                                : (isPositive ? "A receber" : "A pagar")
+                              isPaid
+                                ? isPositive
+                                  ? "Recebido"
+                                  : "Pago"
+                                : isPositive
+                                ? "A receber"
+                                : "A pagar"
                             }
                             size="small"
-                            color={isPaid ? "success" : (isPositive ? "warning" : "error")}
+                            color={
+                              isPaid
+                                ? "success"
+                                : isPositive
+                                ? "warning"
+                                : "error"
+                            }
                           />
                         </Box>
                         {/* Tags adicionais - Componente padronizado em formato pílula */}
-                        <TransactionTags 
-                          transaction={t} 
-                          showShared={false} 
+                        <TransactionTags
+                          transaction={t}
+                          showShared={false}
                           showPaymentStatus={false}
                         />
                       </Box>
@@ -1184,7 +1783,10 @@ const SharedView: React.FC<SharedViewProps> = ({
                           size="small"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setMobileActionAnchor({ element: e.currentTarget, transaction: t });
+                            setMobileActionAnchor({
+                              element: e.currentTarget,
+                              transaction: t,
+                            });
                           }}
                         >
                           <MoreVertIcon fontSize="small" />
@@ -1198,18 +1800,49 @@ const SharedView: React.FC<SharedViewProps> = ({
           ) : (
             // Desktop: Table
             <Table size="small">
-                <TableHead>
+              <TableHead>
                 <TableRow>
-                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 50 }}>Pago</TableCell>
-                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Descrição</TableCell>
-                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Amigo</TableCell>
-                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Categoria</TableCell>
-                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Data</TableCell>
-                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
-                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 120 }}>
+                  <TableCell
+                    sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 50 }}
+                  >
+                    Pago
+                  </TableCell>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                    Descrição
+                  </TableCell>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                    Amigo
+                  </TableCell>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                    Categoria
+                  </TableCell>
+                  <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                    Data
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      ...getHeaderCellSx(theme, isDarkMode),
+                      textAlign: "right",
+                    }}
+                  >
+                    Valor
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      ...getHeaderCellSx(theme, isDarkMode),
+                      textAlign: "center",
+                      width: 120,
+                    }}
+                  >
                     Status
                   </TableCell>
-                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>
+                  <TableCell
+                    sx={{
+                      ...getHeaderCellSx(theme, isDarkMode),
+                      textAlign: "center",
+                      width: 100,
+                    }}
+                  >
                     Ações
                   </TableCell>
                 </TableRow>
@@ -1218,20 +1851,28 @@ const SharedView: React.FC<SharedViewProps> = ({
                 {filteredTransactions.map((t) => {
                   const isPaid = isTransactionPaid(t);
                   const transactionAmount = t.amount || 0;
-                  
+
                   // Calcula o valor de impacto no saldo
                   let displayAmount: number;
                   let isPositive: boolean;
                   let typeLabel: string;
-                  
+
                   if (t.type === "income") {
                     // INCOME: amigo está me pagando
                     // Se tem relatedTransactionId, o valor já foi calculado como 50% da despesa original
                     // Se não tem, é uma income avulsa com conta dividida - dividir por 2
                     const hasRelatedExpense = !!t.relatedTransactionId;
-                    displayAmount = t.iOwe ? transactionAmount : (hasRelatedExpense ? transactionAmount : transactionAmount / 2);
+                    displayAmount = t.iOwe
+                      ? transactionAmount
+                      : hasRelatedExpense
+                      ? transactionAmount
+                      : transactionAmount / 2;
                     isPositive = true;
-                    typeLabel = t.iOwe ? "Pagamento" : (hasRelatedExpense ? "Pagamento (50%)" : "Pagamento (50%)");
+                    typeLabel = t.iOwe
+                      ? "Pagamento"
+                      : hasRelatedExpense
+                      ? "Pagamento (50%)"
+                      : "Pagamento (50%)";
                   } else if (t.iOwe) {
                     // EXPENSE + Conta Única: eu devo ao amigo
                     displayAmount = transactionAmount;
@@ -1272,17 +1913,19 @@ const SharedView: React.FC<SharedViewProps> = ({
                           {t.description}
                         </Typography>
                         {t.type === "income" && (
-                          <Chip 
-                            label="Receita" 
-                            size="small" 
-                            color="success" 
+                          <Chip
+                            label="Receita"
+                            size="small"
+                            color="success"
                             variant="outlined"
                             sx={{ ml: 1, height: 18, fontSize: "0.65rem" }}
                           />
                         )}
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Avatar
                             sx={{
                               width: 28,
@@ -1293,22 +1936,29 @@ const SharedView: React.FC<SharedViewProps> = ({
                           >
                             {getInitials(t.sharedWith || "")}
                           </Avatar>
-                          <Typography variant="body2">{t.sharedWith}</Typography>
+                          <Typography variant="body2">
+                            {t.sharedWith}
+                          </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Chip label={t.category} size="small" variant="outlined" />
+                        <Chip
+                          label={t.category}
+                          size="small"
+                          variant="outlined"
+                        />
                       </TableCell>
                       <TableCell>{formatDate(t.date)}</TableCell>
                       <TableCell
                         align="right"
                         sx={{ fontFamily: "monospace", fontWeight: 600 }}
                       >
-                        <Typography 
-                          color={isPositive ? "success.main" : "error.main"} 
+                        <Typography
+                          color={isPositive ? "success.main" : "error.main"}
                           fontWeight={600}
                         >
-                          {isPositive ? "+" : "-"}{formatCurrency(displayAmount)}
+                          {isPositive ? "+" : "-"}
+                          {formatCurrency(displayAmount)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {typeLabel}
@@ -1318,12 +1968,22 @@ const SharedView: React.FC<SharedViewProps> = ({
                         <Chip
                           icon={isPaid ? <CheckCircleIcon /> : <ScheduleIcon />}
                           label={
-                            isPaid 
-                              ? (isPositive ? "Recebido" : "Pago")
-                              : (isPositive ? "A receber" : "A pagar")
+                            isPaid
+                              ? isPositive
+                                ? "Recebido"
+                                : "Pago"
+                              : isPositive
+                              ? "A receber"
+                              : "A pagar"
                           }
                           size="small"
-                          color={isPaid ? "success" : (isPositive ? "warning" : "error")}
+                          color={
+                            isPaid
+                              ? "success"
+                              : isPositive
+                              ? "warning"
+                              : "error"
+                          }
                         />
                       </TableCell>
                       <TableCell align="center">
@@ -1350,17 +2010,22 @@ const SharedView: React.FC<SharedViewProps> = ({
           )}
         </Paper>
       ) : (
-        <Paper 
+        <Paper
           elevation={0}
-          sx={{ 
-            p: 4, 
+          sx={{
+            p: 4,
             textAlign: "center",
             borderRadius: "20px",
-            bgcolor: theme.palette.mode === "dark"
-              ? alpha(theme.palette.background.paper, 0.7)
-              : alpha("#FFFFFF", 0.9),
+            bgcolor:
+              theme.palette.mode === "dark"
+                ? alpha(theme.palette.background.paper, 0.7)
+                : alpha("#FFFFFF", 0.9),
             backdropFilter: "blur(20px)",
-            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            border: `1px solid ${
+              theme.palette.mode === "dark"
+                ? alpha("#FFFFFF", 0.08)
+                : alpha("#000000", 0.06)
+            }`,
           }}
         >
           <PeopleIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
@@ -1374,7 +2039,9 @@ const SharedView: React.FC<SharedViewProps> = ({
       <Menu
         anchorEl={mobileActionAnchor.element}
         open={Boolean(mobileActionAnchor.element)}
-        onClose={() => setMobileActionAnchor({ element: null, transaction: null })}
+        onClose={() =>
+          setMobileActionAnchor({ element: null, transaction: null })
+        }
       >
         <MenuItem
           onClick={() => {
@@ -1404,12 +2071,15 @@ const SharedView: React.FC<SharedViewProps> = ({
         </MenuItem>
       </Menu>
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB - padronizado 64px, border-radius 20px */}
       {isMobile && (
-        <Fab
-          color="primary"
+        <NixButton
+          size="fab"
+          variant="solid"
+          color="purple"
           onClick={onNewTransaction}
-          sx={{
+          className="nix-fab-create"
+          style={{
             position: "fixed",
             bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
             right: 16,
@@ -1417,11 +2087,10 @@ const SharedView: React.FC<SharedViewProps> = ({
           }}
         >
           <AddIcon />
-        </Fab>
+        </NixButton>
       )}
     </Box>
   );
 };
 
 export default SharedView;
-

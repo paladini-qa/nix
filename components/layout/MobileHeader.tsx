@@ -1,24 +1,10 @@
 import React from "react";
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
-  Box,
-  useTheme,
-  alpha,
-  Tooltip,
-} from "@mui/material";
-import {
-  Menu as MenuIcon,
-  Logout as LogOutIcon,
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
-} from "@mui/icons-material";
+import { Box, useTheme, alpha } from "@mui/material";
 import { motion } from "framer-motion";
+import { Menu, LogOut, Eye, EyeOff } from "lucide-react";
+import { IconButton, Text } from "@radix-ui/themes";
 import { usePrivacy } from "../../contexts";
 
-const MotionAppBar = motion.create(AppBar);
 const MotionBox = motion.create(Box);
 
 interface MobileHeaderProps {
@@ -45,13 +31,17 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
 
   return (
-    <MotionAppBar
-      position="fixed"
+    <MotionBox
+      component="header"
       initial={{ y: -80 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       sx={{
-        // Glassmorphism
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1100,
         bgcolor: isDarkMode
           ? alpha(theme.palette.background.paper, 0.9)
           : alpha("#FFFFFF", 0.92),
@@ -61,152 +51,87 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         boxShadow: isDarkMode
           ? `0 4px 20px -4px ${alpha("#000000", 0.4)}`
           : `0 4px 20px -4px ${alpha(theme.palette.primary.main, 0.1)}`,
+        display: "flex",
+        alignItems: "center",
+        minHeight: 64,
+        px: 1.5,
       }}
-      elevation={0}
     >
-      <Toolbar
+      <MotionBox
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
+        sx={{ display: { xs: "none", md: "block" } }}
+      >
+        <IconButton
+          size="3"
+          variant="ghost"
+          onClick={onMenuOpen}
+          aria-label="Open navigation menu"
+          style={{ width: 48, height: 48 }}
+        >
+          <Menu size={26} />
+        </IconButton>
+      </MotionBox>
+
+      <MotionBox
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, type: "spring", stiffness: 400 }}
         sx={{
-          minHeight: { xs: 64 }, // Taller for better touch
-          px: { xs: 1.5 },
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 1,
         }}
       >
-        {/* Hamburger Menu Button - Hidden on mobile (using bottom navigation) */}
-        <MotionBox
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
-          sx={{ display: { xs: "none", md: "block" } }}
-        >
-          <IconButton
-            onClick={onMenuOpen}
-            aria-label="Open navigation menu"
-            sx={{
-              width: 48,
-              height: 48,
-              color: "text.primary",
-              transition: "all 0.2s ease",
-              borderRadius: "14px",
-              "&:hover": {
-                bgcolor: isDarkMode
-                  ? alpha(theme.palette.primary.main, 0.15)
-                  : alpha(theme.palette.primary.main, 0.08),
-                transform: "scale(1.05)",
-              },
-              "&:active": {
-                transform: "scale(0.95)",
-              },
-            }}
-          >
-            <MenuIcon sx={{ fontSize: 26 }} />
-          </IconButton>
-        </MotionBox>
+        <Box
+          component="img"
+          src={`${import.meta.env.BASE_URL}logo.png`}
+          alt="Nix Logo"
+          sx={{ width: 32, height: 32, objectFit: "contain" }}
+        />
+        <Text size="5" weight="bold" style={{ letterSpacing: "-0.02em", fontSize: 20 }}>
+          Nix
+        </Text>
+      </MotionBox>
 
-        {/* Centered Logo */}
-        <MotionBox
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, type: "spring", stiffness: 400 }}
-          sx={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-          }}
+      <MotionBox
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.18, type: "spring", stiffness: 400 }}
+      >
+        <IconButton
+          size="3"
+          variant={isPrivacyMode ? "soft" : "ghost"}
+          color={isPrivacyMode ? "purple" : "gray"}
+          onClick={togglePrivacyMode}
+          aria-label={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
+          title={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
+          style={{ width: 48, height: 48 }}
         >
-          <Box
-            component="img"
-            src={`${import.meta.env.BASE_URL}logo.png`}
-            alt="Nix Logo"
-            sx={{
-              width: 32,
-              height: 32,
-              objectFit: "contain",
-            }}
-          />
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              color: "text.primary",
-              letterSpacing: "-0.02em",
-              fontSize: 20,
-            }}
-          >
-            Nix
-          </Typography>
-        </MotionBox>
+          {isPrivacyMode ? <EyeOff size={24} /> : <Eye size={24} />}
+        </IconButton>
+      </MotionBox>
 
-        {/* Privacy Toggle Button */}
-        <MotionBox
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.18, type: "spring", stiffness: 400 }}
+      <MotionBox
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
+      >
+        <IconButton
+          size="3"
+          variant="ghost"
+          color="red"
+          onClick={onLogout}
+          aria-label="Logout"
+          style={{ width: 48, height: 48 }}
         >
-          <Tooltip title={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}>
-            <IconButton
-              onClick={togglePrivacyMode}
-              aria-label={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
-              sx={{
-                width: 48,
-                height: 48,
-                color: isPrivacyMode ? theme.palette.primary.main : "text.secondary",
-                transition: "all 0.2s ease",
-                borderRadius: "14px",
-                bgcolor: isPrivacyMode
-                  ? isDarkMode
-                    ? alpha(theme.palette.primary.main, 0.15)
-                    : alpha(theme.palette.primary.main, 0.1)
-                  : "transparent",
-                "&:hover": {
-                  bgcolor: isDarkMode
-                    ? alpha(theme.palette.primary.main, 0.2)
-                    : alpha(theme.palette.primary.main, 0.12),
-                  transform: "scale(1.05)",
-                },
-                "&:active": {
-                  transform: "scale(0.95)",
-                },
-              }}
-            >
-              {isPrivacyMode ? (
-                <VisibilityOffIcon sx={{ fontSize: 24 }} />
-              ) : (
-                <VisibilityIcon sx={{ fontSize: 24 }} />
-              )}
-            </IconButton>
-          </Tooltip>
-        </MotionBox>
-
-        {/* Logout Button */}
-        <MotionBox
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
-        >
-          <IconButton
-            onClick={onLogout}
-            aria-label="Logout"
-            sx={{
-              width: 48,
-              height: 48,
-              color: theme.palette.error.main,
-              transition: "all 0.2s ease",
-              borderRadius: "14px",
-              "&:hover": {
-                bgcolor: alpha(theme.palette.error.main, 0.1),
-                transform: "scale(1.05)",
-              },
-              "&:active": {
-                transform: "scale(0.95)",
-              },
-            }}
-          >
-            <LogOutIcon sx={{ fontSize: 24 }} />
-          </IconButton>
-        </MotionBox>
-      </Toolbar>
-    </MotionAppBar>
+          <LogOut size={24} />
+        </IconButton>
+      </MotionBox>
+    </MotionBox>
   );
 };
 

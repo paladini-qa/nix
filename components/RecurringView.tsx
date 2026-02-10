@@ -20,7 +20,6 @@ import {
   Select,
   SelectChangeEvent,
   Button,
-  Fab,
   Collapse,
   Table,
   TableBody,
@@ -50,6 +49,7 @@ import {
   Refresh as RefreshIcon,
   AllInclusive as InfiniteIcon,
 } from "@mui/icons-material";
+import NixButton from "./radix/Button";
 import TransactionTags from "./TransactionTags";
 import SearchBar from "./SearchBar";
 import {
@@ -1040,14 +1040,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             </Tooltip>
           )}
           {!isMobile && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onNewTransaction}
-              sx={{ borderRadius: "10px" }}
-            >
-              Nova Transação
-            </Button>
+            <NixButton size="medium" variant="solid" color="purple" onClick={onNewTransaction}>
+              <AddIcon /> Nova Transação
+            </NixButton>
           )}
         </Box>
       </Box>
@@ -1264,12 +1259,15 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         </Box>
       )}
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB - padronizado 64px, border-radius 20px */}
       {isMobile && (
-        <Fab
-          color="primary"
+        <NixButton
+          size="fab"
+          variant="solid"
+          color="purple"
           onClick={onNewTransaction}
-          sx={{
+          className="nix-fab-create"
+          style={{
             position: "fixed",
             bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
             right: 16,
@@ -1277,7 +1275,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           }}
         >
           <AddIcon />
-        </Fab>
+        </NixButton>
       )}
 
       {/* Mobile Menus */}

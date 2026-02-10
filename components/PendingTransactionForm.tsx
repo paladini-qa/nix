@@ -31,6 +31,7 @@ import { PendingTransaction, TransactionType } from "../types";
 import { openFinanceService } from "../services/api";
 import { useNotification } from "../contexts";
 import { Transaction } from "../types";
+import NixButton from "./radix/Button";
 
 interface PendingTransactionFormProps {
   open: boolean;
@@ -390,31 +391,24 @@ const PendingTransactionForm: React.FC<PendingTransactionFormProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-        <Button
+        <NixButton
+          size="medium"
+          variant="soft"
+          color="red"
           onClick={handleCancel}
           disabled={isSaving}
-          color="error"
-          sx={{
-            borderRadius: "12px",
-            textTransform: "none",
-            fontWeight: 500,
-          }}
         >
           Cancelar
-        </Button>
-        <Button
-          variant="contained"
+        </NixButton>
+        <NixButton
+          size="medium"
+          variant="solid"
+          color="purple"
           onClick={handleConfirm}
           disabled={isSaving || !isValid()}
-          sx={{
-            borderRadius: "12px",
-            textTransform: "none",
-            fontWeight: 600,
-            px: 3,
-          }}
         >
           {isSaving ? "Confirmando..." : "Confirmar"}
-        </Button>
+        </NixButton>
       </DialogActions>
     </Dialog>
   );

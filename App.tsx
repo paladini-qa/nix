@@ -2,6 +2,7 @@ import React, {
   useState,
   useEffect,
   useMemo,
+  useRef,
   createContext,
   lazy,
   Suspense,
@@ -13,7 +14,6 @@ import {
   CircularProgress,
   Typography,
   useMediaQuery,
-  Fab,
   Button,
   useTheme,
   IconButton,
@@ -23,6 +23,7 @@ import { Add as AddIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
+import { Theme } from "@radix-ui/themes";
 import { lightTheme, darkTheme } from "./theme";
 import {
   Transaction,
@@ -732,6 +733,9 @@ const AppContent: React.FC<{
 
   // Handlers
   const handleLogout = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleLogout',message:'user logout called',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'explicit'})}).catch(()=>{});
+    // #endregion
     try {
       // Limpa flags de sessão ao fazer logout
       localStorage.removeItem("nix_remember_session");
@@ -4113,17 +4117,36 @@ const App: React.FC = () => {
     localStorage.setItem("themePreference", themePreference);
   }, [themePreference]);
 
+  // Evita double getSession no Strict Mode (dois refreshs = "refresh token already used" → SIGNED_OUT)
+  const getSessionRunRef = useRef(false);
+  const authSubRef = useRef<ReturnType<typeof supabase.auth.onAuthStateChange>["data"]["subscription"] | null>(null);
+  const authRecoveryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Auth & Data Fetching
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    authSubRef.current?.unsubscribe();
+    authSubRef.current = null;
+
+    if (!getSessionRunRef.current) {
+      getSessionRunRef.current = true;
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getSession',message:'getSession callback',data:{hasSession:!!session},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C'})}).catch(()=>{});
+      // #endregion
       // Verifica se a sessão era temporária (usuário não marcou "Manter-me conectado")
       // Se tem sessão, não tem "remember_session" no localStorage, e não tem "temp_session" no sessionStorage
       // significa que o navegador foi fechado e reaberto - devemos fazer signOut
       if (session) {
         const rememberSession = localStorage.getItem("nix_remember_session");
         const tempSession = sessionStorage.getItem("nix_temp_session");
+        // #region agent log
+        fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:authFlags',message:'flags when session exists',data:{rememberSession:!!rememberSession,tempSession:!!tempSession,willSignOut:!rememberSession&&!tempSession},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,E'})}).catch(()=>{});
+        // #endregion
 
         if (!rememberSession && !tempSession) {
+          // #region agent log
+          fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:autoSignOut',message:'auto signOut path (no remember no temp)',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C,E'})}).catch(()=>{});
+          // #endregion
           // Sessão era temporária e navegador foi fechado - fazer signOut
           await supabase.auth.signOut();
           setSession(null);
@@ -4136,10 +4159,36 @@ const App: React.FC = () => {
       if (session) fetchData(session.user.id);
       else setLoadingInitial(false);
     });
+    }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:onAuthStateChange',message:'auth state change',data:{event:_event,hasSession:!!session},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      if (_event === "SIGNED_OUT") {
+        const rememberSession = localStorage.getItem("nix_remember_session");
+        if (rememberSession) {
+          // Usuário pediu "Manter-me conectado" — pode ser falha de refresh; tenta recuperar sessão
+          authRecoveryTimeoutRef.current = window.setTimeout(() => {
+            authRecoveryTimeoutRef.current = null;
+            supabase.auth.getSession().then(({ data: { session: recovered } }) => {
+              if (recovered) {
+                setSession(recovered);
+                fetchData(recovered.user.id);
+              } else {
+                setSession(null);
+                setTransactions([]);
+                setCategories(DEFAULT_CATEGORIES);
+                setPaymentMethods(DEFAULT_PAYMENT_METHODS);
+                setLoadingInitial(false);
+              }
+            });
+          }, 150);
+          return;
+        }
+      }
       setSession(session);
       if (session) fetchData(session.user.id);
       else {
@@ -4150,7 +4199,15 @@ const App: React.FC = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    authSubRef.current = subscription;
+    return () => {
+      if (authRecoveryTimeoutRef.current) {
+        clearTimeout(authRecoveryTimeoutRef.current);
+        authRecoveryTimeoutRef.current = null;
+      }
+      authSubRef.current?.unsubscribe();
+      authSubRef.current = null;
+    };
   }, []);
 
   const fetchData = async (userId: string) => {
@@ -4305,72 +4362,78 @@ const App: React.FC = () => {
   // Loading screen
   if (loadingInitial) {
     return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
-          <Box
-            sx={{
-              minHeight: "100vh",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "background.default",
-            }}
-          >
-            <CircularProgress color="primary" size={48} />
-          </Box>
-        </LocalizationProvider>
-      </ThemeProvider>
+      <Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large">
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+            <Box
+              sx={{
+                minHeight: "100vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "background.default",
+              }}
+            >
+              <CircularProgress color="primary" size={48} />
+            </Box>
+          </LocalizationProvider>
+        </ThemeProvider>
+      </Theme>
     );
   }
 
   // Login screen
   if (!session) {
     return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
-          <LoginView />
-        </LocalizationProvider>
-      </ThemeProvider>
+      <Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large">
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+            <LoginView />
+          </LocalizationProvider>
+        </ThemeProvider>
+      </Theme>
     );
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
-        <NotificationProvider>
-          <ConfirmDialogProvider>
-            <PrivacyProvider>
-              <AppContent
-                session={session}
-                transactions={transactions}
-                setTransactions={setTransactions}
-                categories={categories}
-              setCategories={setCategories}
-              paymentMethods={paymentMethods}
-              setPaymentMethods={setPaymentMethods}
-              friends={friends}
-              setFriends={setFriends}
-              displayName={displayName}
-              setDisplayName={setDisplayName}
-              themePreference={themePreference}
-              updateThemePreference={updateThemePreference}
-              categoryColors={categoryColors}
-              setCategoryColors={setCategoryColors}
-              paymentMethodColors={paymentMethodColors}
-              setPaymentMethodColors={setPaymentMethodColors}
-              filters={filters}
-              setFilters={setFilters}
-              updateSettingsInDb={updateSettingsInDb}
-              onRefreshData={() => fetchData(session.user.id)}
-              />
-            </PrivacyProvider>
-          </ConfirmDialogProvider>
-        </NotificationProvider>
-      </LocalizationProvider>
-    </ThemeProvider>
+    <Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large">
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+          <NotificationProvider>
+            <ConfirmDialogProvider>
+              <PrivacyProvider>
+                <AppContent
+                  session={session}
+                  transactions={transactions}
+                  setTransactions={setTransactions}
+                  categories={categories}
+                  setCategories={setCategories}
+                  paymentMethods={paymentMethods}
+                  setPaymentMethods={setPaymentMethods}
+                  friends={friends}
+                  setFriends={setFriends}
+                  displayName={displayName}
+                  setDisplayName={setDisplayName}
+                  themePreference={themePreference}
+                  updateThemePreference={updateThemePreference}
+                  categoryColors={categoryColors}
+                  setCategoryColors={setCategoryColors}
+                  paymentMethodColors={paymentMethodColors}
+                  setPaymentMethodColors={setPaymentMethodColors}
+                  filters={filters}
+                  setFilters={setFilters}
+                  updateSettingsInDb={updateSettingsInDb}
+                  onRefreshData={() => fetchData(session.user.id)}
+                />
+              </PrivacyProvider>
+            </ConfirmDialogProvider>
+          </NotificationProvider>
+        </LocalizationProvider>
+      </ThemeProvider>
+    </Theme>
   );
 };
 

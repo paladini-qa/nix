@@ -14,12 +14,12 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
-  Fab,
   Card,
   CardContent,
   Avatar,
   alpha,
 } from "@mui/material";
+import NixButton from "./radix/Button";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import {
@@ -695,12 +695,15 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
         </>
       )}
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB - padronizado 64px, border-radius 20px */}
       {isMobile && (
-        <Fab
-          color="primary"
+        <NixButton
+          size="fab"
+          variant="solid"
+          color="purple"
           onClick={() => handleOpenForm()}
-          sx={{
+          className="nix-fab-create"
+          style={{
             position: "fixed",
             bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
             right: 16,
@@ -708,7 +711,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
           }}
         >
           <AddIcon />
-        </Fab>
+        </NixButton>
       )}
 
       {/* Side Panel Form */}

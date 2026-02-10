@@ -19,7 +19,6 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
-  Fab,
   Card,
   CardContent,
   Avatar,
@@ -28,6 +27,8 @@ import {
   FormControlLabel,
   alpha,
 } from "@mui/material";
+import EmptyState from "./EmptyState";
+import NixButton from "./radix/Button";
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -445,49 +446,13 @@ const AccountsView: React.FC<AccountsViewProps> = ({
           <Typography color="text.secondary">Loading accounts...</Typography>
         </Box>
       ) : displayedAccounts.length === 0 ? (
-        <Card
-          elevation={0}
-          sx={{
-            position: "relative",
-            overflow: "hidden",
-            background: theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-            backdropFilter: "blur(16px)",
-            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            borderRadius: "20px",
-          }}
-        >
-          <CardContent sx={{ p: 4, textAlign: "center" }}>
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mx: "auto",
-                mb: 2,
-                background: theme.palette.mode === "dark"
-                  ? alpha("#6366f1", 0.15)
-                  : alpha("#6366f1", 0.1),
-                border: `1px solid ${alpha("#6366f1", 0.2)}`,
-              }}
-            >
-              <BankIcon sx={{ fontSize: 32, color: "#6366f1" }} />
-            </Box>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
-              No accounts yet
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Add your bank accounts and wallets to track balances
-            </Typography>
-            <Button variant="contained" onClick={() => handleOpenForm()}>
-              Add Account
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          type="accounts"
+          title="No accounts yet"
+          description="Add your bank accounts and wallets to track balances"
+          actionLabel="Add Account"
+          onAction={() => handleOpenForm()}
+        />
       ) : (
         <>
           {/* Active Accounts */}
@@ -728,12 +693,15 @@ const AccountsView: React.FC<AccountsViewProps> = ({
         </>
       )}
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB - padronizado 64px, border-radius 20px */}
       {isMobile && (
-        <Fab
-          color="primary"
+        <NixButton
+          size="fab"
+          variant="solid"
+          color="purple"
           onClick={() => handleOpenForm()}
-          sx={{
+          className="nix-fab-create"
+          style={{
             position: "fixed",
             bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
             right: 16,
@@ -741,7 +709,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
           }}
         >
           <AddIcon />
-        </Fab>
+        </NixButton>
       )}
 
       {/* Form Dialog */}

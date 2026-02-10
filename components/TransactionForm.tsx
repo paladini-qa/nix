@@ -52,6 +52,7 @@ import {
   ChevronRight as ChevronRightIcon,
   ReceiptLong as ReceiptIcon,
 } from "@mui/icons-material";
+import NixButton from "./radix/Button";
 import { Transaction, TransactionType, FinancialSummary } from "../types";
 import { CATEGORY_KEYWORDS, QUICK_AMOUNTS } from "../constants";
 import { suggestCategoryWithAI, CategorySuggestion } from "../services/geminiService";
@@ -2050,54 +2051,19 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           }}
         >
           {!isMobile && (
-            <Button
-              onClick={onClose}
-              color="inherit"
-              sx={{
-                borderRadius: "14px",
-                px: 3,
-                py: 1.25,
-                fontWeight: 500,
-                color: "text.secondary",
-                bgcolor: isDarkMode
-                  ? alpha("#FFFFFF", 0.05)
-                  : alpha("#000000", 0.04),
-                transition: "all 0.15s ease",
-                "&:hover": {
-                  bgcolor: isDarkMode
-                    ? alpha("#FFFFFF", 0.1)
-                    : alpha("#000000", 0.08),
-                },
-              }}
-            >
+            <NixButton size="medium" variant="soft" color="gray" onClick={onClose} type="button">
               Cancelar
-            </Button>
+            </NixButton>
           )}
-          <Button
+          <NixButton
             type="submit"
-            variant="contained"
-            size="large"
-            fullWidth={isMobile}
-            startIcon={<SaveIcon />}
-            sx={{
-              flex: 1,
-              borderRadius: "14px",
-              py: 1.5,
-              fontWeight: 600,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              boxShadow: `0 8px 24px -8px ${alpha(theme.palette.primary.main, 0.5)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": {
-                transform: "translateY(-2px)",
-                boxShadow: `0 12px 32px -8px ${alpha(theme.palette.primary.main, 0.6)}`,
-              },
-              "&:active": {
-                transform: isMobile ? "scale(0.98)" : "translateY(0)",
-              },
-            }}
+            size="medium"
+            variant="solid"
+            color="purple"
+            style={{ flex: 1 }}
           >
-            {editTransaction ? "Salvar Alterações" : "Criar Transação"}
-          </Button>
+            <SaveIcon /> {editTransaction ? "Salvar Alterações" : "Criar Transação"}
+          </NixButton>
         </Box>
       </form>
     </Drawer>

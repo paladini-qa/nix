@@ -729,7 +729,8 @@ html, body {
   }
   
   /* Touch-friendly tap targets (minimum 48px) - Design System Accessibility */
-  button,
+  /* Exclui botões Radix (.rt-Button) para não sobrescrever estilos do Radix UI */
+  button:not(.rt-Button):not([class*="rt-"]),
   select,
   input[type="checkbox"],
   input[type="radio"],

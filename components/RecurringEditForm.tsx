@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Drawer,
-  Button,
   TextField,
   FormControl,
   InputLabel,
@@ -33,6 +32,7 @@ import {
   ChevronRight as ChevronRightIcon,
   Edit as EditIcon,
 } from "@mui/icons-material";
+import NixButton from "./radix/Button";
 import { Transaction, TransactionType } from "../types";
 import { OptionType as EditOption } from "./TransactionOptionsPanel";
 
@@ -597,54 +597,19 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
         }}
       >
         {!isMobile && (
-          <Button
-            onClick={onClose}
-            color="inherit"
-            sx={{
-              borderRadius: "14px",
-              px: 3,
-              py: 1.25,
-              fontWeight: 500,
-              color: "text.secondary",
-              bgcolor: isDarkMode
-                ? alpha("#FFFFFF", 0.05)
-                : alpha("#000000", 0.04),
-              transition: "all 0.15s ease",
-              "&:hover": {
-                bgcolor: isDarkMode
-                  ? alpha("#FFFFFF", 0.1)
-                  : alpha("#000000", 0.08),
-              },
-            }}
-          >
+          <NixButton size="medium" variant="soft" color="gray" onClick={onClose}>
             Cancelar
-          </Button>
+          </NixButton>
         )}
-        <Button
-          variant="contained"
-          size="large"
-          fullWidth={isMobile}
+        <NixButton
+          size="medium"
+          variant="solid"
+          color="purple"
           onClick={handleSave}
-          startIcon={<SaveIcon />}
-          sx={{
-            flex: 1,
-            borderRadius: "14px",
-            py: 1.5,
-            fontWeight: 600,
-            background: `linear-gradient(135deg, ${modeInfo.color} 0%, ${alpha(modeInfo.color, 0.8)} 100%)`,
-            boxShadow: `0 8px 24px -8px ${alpha(modeInfo.color, 0.5)}`,
-            transition: "all 0.2s ease-in-out",
-            "&:hover": {
-              transform: "translateY(-2px)",
-              boxShadow: `0 12px 32px -8px ${alpha(modeInfo.color, 0.6)}`,
-            },
-            "&:active": {
-              transform: isMobile ? "scale(0.98)" : "translateY(0)",
-            },
-          }}
+          style={{ flex: 1 }}
         >
-          Salvar Alterações
-        </Button>
+          <SaveIcon /> {editingTransaction ? "Atualizar" : "Salvar Alterações"}
+        </NixButton>
       </Box>
     </Drawer>
   );

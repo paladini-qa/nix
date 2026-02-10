@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  Paper,
-  BottomNavigation,
-  BottomNavigationAction,
-  Box,
-  useTheme,
-  alpha,
-  Fab,
-} from "@mui/material";
+import { Box, useTheme, alpha } from "@mui/material";
 import {
   Receipt as TransactionsIcon,
   CreditCard as PaymentMethodsIcon,
@@ -17,8 +9,9 @@ import {
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import OthersGridModal from "./OthersGridModal";
+import NixButton from "../radix/Button";
 
-const MotionPaper = motion.create(Paper);
+const MotionBox = motion.create(Box);
 
 // Altura da barra de navegação (para calcular fade gradient)
 const NAV_HEIGHT = 80;
@@ -104,7 +97,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           zIndex: 1199,
         }}
       />
-      <MotionPaper
+      <MotionBox
+        component="nav"
         initial={{ y: 100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 400, damping: 30, delay: 0.1 }}
@@ -114,7 +108,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           left: 0,
           right: 0,
           zIndex: 1200,
-          // Glassmorphism
           bgcolor: isDarkMode
             ? alpha(theme.palette.background.paper, 0.9)
             : alpha("#FFFFFF", 0.95),
@@ -124,11 +117,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           boxShadow: isDarkMode
             ? `0 -4px 20px -4px ${alpha("#000000", 0.4)}`
             : `0 -4px 20px -4px ${alpha(theme.palette.primary.main, 0.08)}`,
-          // Safe area for devices with home indicator
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
           borderRadius: 0,
         }}
-        elevation={0}
       >
         <Box
           sx={{
@@ -235,34 +226,18 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             </Box>
           </Box>
 
-          {/* Create Button - Central, maior */}
-          <Fab
-            color="primary"
+          {/* Create Button - Central FAB, 64px touch-friendly */}
+          <NixButton
+            size="fab"
+            variant="solid"
+            color="purple"
             onClick={() => handleNavigation("create")}
-            sx={{
-              width: 48,
-              height: 48,
-              flex: "0 0 auto",
-              boxShadow: `0 4px 16px -4px ${alpha(
-                theme.palette.primary.main,
-                0.4
-              )}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: `0 8px 24px -4px ${alpha(
-                  theme.palette.primary.main,
-                  0.5
-                )}`,
-              },
-              "&:active": {
-                transform: "translateY(-2px) scale(0.95)",
-              },
-            }}
             aria-label="Create transaction"
+            className="nix-fab-create"
+            style={{ flex: "0 0 auto" }}
           >
-            <AddIcon sx={{ fontSize: 24 }} />
-          </Fab>
+            <AddIcon style={{ fontSize: 24 }} />
+          </NixButton>
 
           {/* Payment Methods */}
           <Box
@@ -360,7 +335,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             </Box>
           </Box>
         </Box>
-      </MotionPaper>
+      </MotionBox>
 
       {/* Others Grid Modal */}
       <OthersGridModal

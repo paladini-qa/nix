@@ -1,19 +1,18 @@
 import React from "react";
 import {
   Box,
-  Drawer,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Typography,
-  Avatar,
   useTheme,
   alpha,
   Tooltip,
   IconButton,
 } from "@mui/material";
+import { Avatar, Text } from "@radix-ui/themes";
 import {
   Dashboard as DashboardIcon,
   AccountBalanceWallet as WalletIcon,
@@ -297,22 +296,22 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <Drawer
-      variant="permanent"
+    <Box
+      component="aside"
       sx={{
         width: DRAWER_WIDTH,
         flexShrink: 0,
-        "& .MuiDrawer-paper": {
-          width: DRAWER_WIDTH,
-          boxSizing: "border-box",
-          border: "none",
-          boxShadow: isDarkMode
-            ? `1px 0 24px -8px ${alpha("#000000", 0.4)}`
-            : `1px 0 24px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
-          bgcolor: isDarkMode
-            ? theme.palette.background.paper
-            : "#FFFFFF",
-        },
+        boxSizing: "border-box",
+        border: "none",
+        boxShadow: isDarkMode
+          ? `1px 0 24px -8px ${alpha("#000000", 0.4)}`
+          : `1px 0 24px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
+        bgcolor: isDarkMode
+          ? theme.palette.background.paper
+          : "#FFFFFF",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
       }}
     >
       {/* Logo Area */}
@@ -359,27 +358,13 @@ const Sidebar: React.FC<SidebarProps> = ({
             }}
           />
         </MotionBox>
-        <Box>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 700,
-              color: "text.primary",
-              letterSpacing: "-0.02em",
-            }}
-          >
+        <Box sx={{ color: "text.primary" }}>
+          <Text size="5" weight="bold" style={{ letterSpacing: "-0.02em", color: "inherit" }} as="span">
             Nix
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              fontWeight: 500,
-              letterSpacing: "0.02em",
-            }}
-          >
+          </Text>
+          <Text size="1" style={{ letterSpacing: "0.02em", display: "block", color: "inherit", opacity: 0.8 }} as="span">
             Finance Manager
-          </Typography>
+          </Text>
         </Box>
       </MotionBox>
 
@@ -392,18 +377,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Main Menu Label */}
         <motion.div variants={itemVariants}>
-          <Typography
-            variant="overline"
-            sx={{
-              px: 2,
-              color: "text.secondary",
-              fontWeight: 600,
-              letterSpacing: "0.1em",
-              fontSize: 12,
-            }}
-          >
+          <Text size="1" color="gray" weight="medium" style={{ paddingLeft: 16, paddingRight: 16, letterSpacing: "0.1em", fontSize: 12 }} as="p">
             Menu Principal
-          </Typography>
+          </Text>
         </motion.div>
 
         {/* Main Navigation Items */}
@@ -418,18 +394,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Reports Items - Flat (sem dropdown) */}
         <Box sx={{ mt: 2 }}>
           <motion.div variants={itemVariants}>
-            <Typography
-              variant="overline"
-              sx={{
-                px: 2,
-                color: "text.secondary",
-                fontWeight: 600,
-                letterSpacing: "0.1em",
-                fontSize: 12,
-              }}
-            >
+            <Text size="1" color="gray" weight="medium" style={{ paddingLeft: 16, paddingRight: 16, letterSpacing: "0.1em", fontSize: 12 }} as="p">
               Relatórios
-            </Typography>
+            </Text>
           </motion.div>
           <List sx={{ mt: 1 }}>
             {reportsNavItems.map((item, idx) => (
@@ -443,18 +410,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Footer Items */}
         <Box sx={{ mt: 2 }}>
           <motion.div variants={itemVariants}>
-            <Typography
-              variant="overline"
-              sx={{
-                px: 2,
-                color: "text.secondary",
-                fontWeight: 600,
-                letterSpacing: "0.1em",
-                fontSize: 12,
-              }}
-            >
+            <Text size="1" color="gray" weight="medium" style={{ paddingLeft: 16, paddingRight: 16, letterSpacing: "0.1em", fontSize: 12 }} as="p">
               Ferramentas
-            </Typography>
+            </Text>
           </motion.div>
           <List sx={{ mt: 1 }}>
             {footerNavItems.map((item, idx) => (
@@ -561,20 +519,16 @@ const Sidebar: React.FC<SidebarProps> = ({
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <Avatar
-              sx={{
+              size="3"
+              radius="full"
+              fallback={displayName ? displayName.charAt(0).toUpperCase() : "U"}
+              style={{
                 width: 42,
                 height: 42,
-                bgcolor: isDarkMode
-                  ? alpha(theme.palette.primary.main, 0.2)
-                  : alpha(theme.palette.primary.main, 0.1),
-                color: "primary.main",
-                fontWeight: 600,
-                fontSize: 16,
-                boxShadow: `inset 0 -2px 4px ${alpha("#000000", 0.1)}, 0 2px 8px -2px ${alpha(theme.palette.primary.main, 0.3)}`,
+                minWidth: 42,
+                minHeight: 42,
               }}
-            >
-              {displayName ? displayName.charAt(0).toUpperCase() : <UserIcon fontSize="small" />}
-            </Avatar>
+            />
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 variant="body2"
@@ -646,7 +600,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           />
         </MotionListItemButton>
       </MotionBox>
-    </Drawer>
+    </Box>
   );
 };
 

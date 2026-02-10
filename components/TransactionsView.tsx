@@ -23,7 +23,6 @@ import {
   CircularProgress,
   useMediaQuery,
   useTheme,
-  Fab,
   FormControl,
   InputLabel,
   Select,
@@ -64,6 +63,7 @@ import DateFilter from "./DateFilter";
 import { useNotification } from "../contexts";
 import { usePullToRefresh } from "../hooks";
 import EmptyState from "./EmptyState";
+import NixButton from "./radix/Button";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface TransactionsViewProps {
@@ -1437,20 +1437,22 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             </MenuItem>
           </Menu>
 
-          {/* Mobile FAB */}
-          <Fab
-            color="primary"
+          {/* Mobile FAB - padronizado 64px, border-radius 20px */}
+          <NixButton
+            size="fab"
+            variant="solid"
+            color="purple"
             onClick={onNewTransaction}
-            sx={{
+            className="nix-fab-create"
+            style={{
               position: "fixed",
-              // Posiciona acima da bottom navigation (64px) + safe area + margem
               bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
               right: 16,
               zIndex: 1100,
             }}
           >
             <AddIcon />
-          </Fab>
+          </NixButton>
         </Box>
       ) : (
         /* Desktop Table View */

@@ -134,12 +134,18 @@ const LoginView: React.FC = () => {
         if (rememberMe) {
           // Salva flag para manter sessão persistente
           localStorage.setItem("nix_remember_session", "true");
+          // #region agent log
+          fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginView.tsx:afterLogin',message:'login with rememberMe',data:{rememberMe:true},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
         } else {
           // Remove flag de persistência e marca sessão como temporária
           localStorage.removeItem("nix_remember_session");
           // Usa sessionStorage para indicar que é uma sessão temporária
           // Quando o navegador fechar, sessionStorage é limpo e o App fará signOut
           sessionStorage.setItem("nix_temp_session", "true");
+          // #region agent log
+          fetch('http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginView.tsx:afterLogin',message:'login without rememberMe (temp)',data:{rememberMe:false},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
         }
       }
     } catch (err: any) {

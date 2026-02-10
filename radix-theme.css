@@ -1,0 +1,95 @@
+/* ============================================
+   NIX - Radix UI Theme Overrides
+   Design System: Black & Purple
+   ============================================ */
+
+/* Accent (purple) - align with Nix brand in light/dark */
+.radix-themes:where(.light, .light-theme) {
+  --accent-9: #7B2CBF;
+  --accent-10: #6A27A8;
+  --accent-11: #5A189A;
+  --accent-12: #3D1266;
+  --purple-9: #7B2CBF;
+  --purple-10: #6A27A8;
+  --purple-11: #5A189A;
+  --purple-12: #3D1266;
+}
+
+.radix-themes:where(.dark, .dark-theme) {
+  --accent-9: #9D4EDD;
+  --accent-10: #B47AEA;
+  --accent-11: #7B2CBF;
+  --accent-12: #E8D5F9;
+  --purple-9: #9D4EDD;
+  --purple-10: #B47AEA;
+  --purple-11: #7B2CBF;
+  --purple-12: #E8D5F9;
+}
+
+/* Border radius - 20px for large, 12px for small (Nix Design System) */
+.radix-themes[data-radius='large'] {
+  --radius-4: 12px;
+  --radius-5: 20px;
+  --radius-6: 20px;
+}
+
+.radix-themes[data-radius='medium'] {
+  --radius-4: 10px;
+  --radius-5: 12px;
+  --radius-6: 16px;
+}
+
+/* Purple-tinted shadows (no black shadows) */
+.radix-themes:where(.light, .light-theme) {
+  --shadow-3: 0 0 0 1px rgba(123, 44, 191, 0.08), 0 4px 12px -2px rgba(123, 44, 191, 0.15), 0 4px 16px -8px rgba(18, 18, 18, 0.08);
+  --shadow-4: 0 0 0 1px rgba(123, 44, 191, 0.08), 0 8px 40px rgba(123, 44, 191, 0.1), 0 12px 32px -16px rgba(18, 18, 18, 0.12);
+  --shadow-5: 0 0 0 1px rgba(123, 44, 191, 0.1), 0 12px 60px rgba(123, 44, 191, 0.15), 0 12px 32px -16px rgba(18, 18, 18, 0.15);
+}
+
+.radix-themes:where(.dark, .dark-theme) {
+  --shadow-3: 0 0 0 1px rgba(157, 78, 221, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.3), 0 4px 16px -8px rgba(0, 0, 0, 0.25);
+  --shadow-4: 0 0 0 1px rgba(157, 78, 221, 0.15), 0 8px 40px rgba(0, 0, 0, 0.4), 0 12px 32px -16px rgba(0, 0, 0, 0.35);
+  --shadow-5: 0 0 0 1px rgba(157, 78, 221, 0.18), 0 12px 60px rgba(0, 0, 0, 0.5), 0 16px 64px rgba(157, 78, 221, 0.1);
+}
+
+/* Glassmorphism panel (optional use) */
+.nix-glass-panel {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.radix-themes:where(.light, .light-theme) .nix-glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(18, 18, 18, 0.06);
+}
+
+.radix-themes:where(.dark, .dark-theme) .nix-glass-panel {
+  background: rgba(26, 26, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Nix card hover - lift and shadow */
+.nix-card.nix-card--hover:hover {
+  transform: translateY(-4px);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Nix button hover - lift */
+.nix-button:hover {
+  transform: translateY(-2px);
+}
+
+/* Botão de criação (FAB) padronizado em todas as telas */
+.nix-fab-create {
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  min-height: 64px !important;
+  border-radius: 20px !important;
+}
+
+/* Garante que botões e ícones Radix dentro do tema usem o visual Nix (radius 20px) */
+.radix-themes .rt-Button,
+.radix-themes .rt-IconButton {
+  border-radius: 20px !important;
+}

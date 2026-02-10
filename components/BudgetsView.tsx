@@ -2,8 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
-  Paper,
-  Button,
   Grid,
   LinearProgress,
   IconButton,
@@ -20,12 +18,11 @@ import {
   useTheme,
   Tooltip,
   Alert,
-  Fab,
-  Card,
-  CardContent,
   Switch,
   alpha,
 } from "@mui/material";
+import NixButton from "./radix/Button";
+import NixCard from "./radix/Card";
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -273,14 +270,14 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         </Box>
 
         {!isMobile && (
-          <Button
-            variant="outlined"
-            startIcon={<CopyIcon />}
-            onClick={handleCopyFromPreviousMonth}
+          <NixButton
             size="small"
+            variant="soft"
+            color="purple"
+            onClick={handleCopyFromPreviousMonth}
           >
-            Copy Previous
-          </Button>
+            <CopyIcon /> Copy Previous
+          </NixButton>
         )}
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -291,13 +288,14 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
             compact={isMobile}
           />
           {!isMobile && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
+            <NixButton
+              size="medium"
+              variant="solid"
+              color="purple"
               onClick={() => handleOpenForm()}
             >
-              New Budget
-            </Button>
+              <AddIcon /> New Budget
+            </NixButton>
           )}
         </Box>
       </Box>
@@ -305,135 +303,44 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
       {/* Summary Cards */}
       <Grid container spacing={isMobile ? 1.5 : 2}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
-              borderRadius: "16px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%)",
-                pointerEvents: "none",
-              },
-            }}
-          >
-            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
-              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
-                Total Budgeted
-              </Typography>
-              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em" }}>
-                {formatCurrency(summary.totalBudgeted)}
-              </Typography>
-            </CardContent>
-          </Card>
+          <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+              Total Budgeted
+            </Typography>
+            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em" }}>
+              {formatCurrency(summary.totalBudgeted)}
+            </Typography>
+          </NixCard>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              boxShadow: `0 6px 24px -6px ${alpha("#64748B", 0.15)}`,
-              borderRadius: "16px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
-              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
-                Total Spent
-              </Typography>
-              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em" }}>
-                {formatCurrency(summary.totalSpent)}
-              </Typography>
-            </CardContent>
-          </Card>
+          <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+              Total Spent
+            </Typography>
+            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em" }}>
+              {formatCurrency(summary.totalSpent)}
+            </Typography>
+          </NixCard>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              boxShadow: `0 6px 24px -6px ${alpha(summary.overBudgetCount > 0 ? "#DC2626" : "#059669", 0.15)}`,
-              borderRadius: "16px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: summary.overBudgetCount > 0
-                  ? "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)"
-                  : "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)",
-                pointerEvents: "none",
-              },
-            }}
-          >
-            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
-              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
-                Over Budget
-              </Typography>
-              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.overBudgetCount > 0 ? "#DC2626" : "#059669", letterSpacing: "-0.02em" }}>
-                {summary.overBudgetCount}
-              </Typography>
-            </CardContent>
-          </Card>
+          <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+              Over Budget
+            </Typography>
+            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.overBudgetCount > 0 ? "#DC2626" : "#059669", letterSpacing: "-0.02em" }}>
+              {summary.overBudgetCount}
+            </Typography>
+          </NixCard>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              background: theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              boxShadow: `0 6px 24px -6px ${alpha(summary.warningCount > 0 ? "#F59E0B" : "#64748B", 0.15)}`,
-              borderRadius: "16px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-              "&::before": summary.warningCount > 0 ? {
-                content: '""',
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: "linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(251, 191, 36, 0.02) 100%)",
-                pointerEvents: "none",
-              } : undefined,
-            }}
-          >
-            <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
-              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
-                Near Limit
-              </Typography>
-              <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.warningCount > 0 ? "#F59E0B" : "text.primary", letterSpacing: "-0.02em" }}>
-                {summary.warningCount}
-              </Typography>
-            </CardContent>
-          </Card>
+          <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+              Near Limit
+            </Typography>
+            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.warningCount > 0 ? "#F59E0B" : "text.primary", letterSpacing: "-0.02em" }}>
+              {summary.warningCount}
+            </Typography>
+          </NixCard>
         </Grid>
       </Grid>
 
@@ -456,40 +363,15 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
             const budgetColor = budget.isOverBudget ? "#DC2626" : budget.percentage >= 80 ? "#F59E0B" : "#6366f1";
             return (
               <Grid key={budget.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    position: "relative",
-                    overflow: "hidden",
-                    background: theme.palette.mode === "dark"
-                      ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                      : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-                    backdropFilter: "blur(16px)",
-                    border: budget.isOverBudget
-                      ? `2px solid ${alpha("#DC2626", 0.5)}`
-                      : `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                <NixCard
+                  padding="medium"
+                  glass
+                  hover
+                  style={{
                     borderLeft: `3px solid ${budgetColor}`,
-                    borderRadius: "16px",
-                    boxShadow: theme.palette.mode === "dark"
-                      ? `0 6px 24px -6px ${alpha(budgetColor, 0.2)}`
-                      : `0 6px 24px -6px ${alpha(budgetColor, 0.15)}`,
-                    transition: "all 0.2s ease-in-out",
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow: theme.palette.mode === "dark"
-                        ? `0 10px 32px -6px ${alpha(budgetColor, 0.3)}`
-                        : `0 10px 32px -6px ${alpha(budgetColor, 0.25)}`,
-                    },
-                    "&::before": budget.isOverBudget ? {
-                      content: '""',
-                      position: "absolute",
-                      top: 0, left: 0, right: 0, bottom: 0,
-                      background: "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)",
-                      pointerEvents: "none",
-                    } : undefined,
+                    ...(budget.isOverBudget ? { border: `2px solid ${alpha("#DC2626", 0.5)}` } : {}),
                   }}
                 >
-                  <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
                     <Box
                       sx={{
                         display: "flex",
@@ -625,20 +507,22 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
                         </Typography>
                       </Box>
                     </Box>
-                  </CardContent>
-                </Card>
+                </NixCard>
               </Grid>
             );
           })}
         </Grid>
       )}
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB - padronizado 64px, border-radius 20px */}
       {isMobile && (
-        <Fab
-          color="primary"
+        <NixButton
+          size="fab"
+          variant="solid"
+          color="purple"
           onClick={() => handleOpenForm()}
-          sx={{
+          className="nix-fab-create"
+          style={{
             position: "fixed",
             bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
             right: 16,
@@ -646,7 +530,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
           }}
         >
           <AddIcon />
-        </Fab>
+        </NixButton>
       )}
 
       {/* Side Panel Form */}
@@ -825,17 +709,19 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
             gap: 1.5,
           }}
         >
-          <Button onClick={handleCloseForm} color="inherit" fullWidth variant="outlined">
+          <NixButton size="medium" variant="soft" color="gray" onClick={handleCloseForm} style={{ flex: 1 }}>
             Cancel
-          </Button>
-          <Button
+          </NixButton>
+          <NixButton
+            size="medium"
+            variant="solid"
+            color="purple"
             onClick={handleSave}
-            variant="contained"
-            fullWidth
             disabled={!formLimit || (!editingBudget && !formCategory)}
+            style={{ flex: 1 }}
           >
             {editingBudget ? "Update" : "Create"}
-          </Button>
+          </NixButton>
         </Box>
       </Drawer>
     </Box>
