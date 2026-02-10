@@ -121,8 +121,18 @@ export const generateFriendReport = (data: FriendReportData): void => {
 
   // Formata o nome do mês
   const monthNames = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
   ];
   const periodMonth = monthNames[data.month];
   const periodYear = data.year;
@@ -186,32 +196,66 @@ export const generateFriendReport = (data: FriendReportData): void => {
   // Linhas verticais divisórias (sutis)
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.3);
-  doc.line(margin + colWidth, yPos + 8, margin + colWidth, yPos + boxHeight - 8);
-  doc.line(margin + colWidth * 2, yPos + 8, margin + colWidth * 2, yPos + boxHeight - 8);
+  doc.line(
+    margin + colWidth,
+    yPos + 8,
+    margin + colWidth,
+    yPos + boxHeight - 8
+  );
+  doc.line(
+    margin + colWidth * 2,
+    yPos + 8,
+    margin + colWidth * 2,
+    yPos + boxHeight - 8
+  );
 
   // Coluna 1: Amigo deve ao usuário
   doc.setTextColor(...successRgb);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.text(`${data.friendName} deve a ${data.userName}:`, col1Center, yPos + 14, { align: "center" });
+  doc.text(
+    `${data.friendName} deve a ${data.userName}:`,
+    col1Center,
+    yPos + 14,
+    { align: "center" }
+  );
   doc.setFontSize(14);
-  doc.text(formatCurrency(data.theyOweMe.total), col1Center, yPos + 30, { align: "center" });
+  doc.text(formatCurrency(data.theyOweMe.total), col1Center, yPos + 30, {
+    align: "center",
+  });
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(120, 120, 120);
-  doc.text(`${data.theyOweMe.transactions.length} transação(ões)`, col1Center, yPos + 42, { align: "center" });
+  doc.text(
+    `${data.theyOweMe.transactions.length} transação(ões)`,
+    col1Center,
+    yPos + 42,
+    { align: "center" }
+  );
 
   // Coluna 2: Usuário deve ao amigo
   doc.setTextColor(...errorRgb);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.text(`${data.userName} deve a ${data.friendName}:`, col2Center, yPos + 14, { align: "center" });
+  doc.text(
+    `${data.userName} deve a ${data.friendName}:`,
+    col2Center,
+    yPos + 14,
+    { align: "center" }
+  );
   doc.setFontSize(14);
-  doc.text(formatCurrency(data.iOweThem.total), col2Center, yPos + 30, { align: "center" });
+  doc.text(formatCurrency(data.iOweThem.total), col2Center, yPos + 30, {
+    align: "center",
+  });
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(120, 120, 120);
-  doc.text(`${data.iOweThem.transactions.length} transação(ões)`, col2Center, yPos + 42, { align: "center" });
+  doc.text(
+    `${data.iOweThem.transactions.length} transação(ões)`,
+    col2Center,
+    yPos + 42,
+    { align: "center" }
+  );
 
   // Coluna 3: Saldo Líquido
   const netColor = data.netBalance >= 0 ? successRgb : errorRgb;
@@ -235,7 +279,8 @@ export const generateFriendReport = (data: FriendReportData): void => {
 
   const actionBoxHeight = 28;
   const actionColor = data.netBalance >= 0 ? successRgb : errorRgb;
-  const actionBgColor = data.netBalance >= 0 ? [220, 252, 231] : [254, 226, 226]; // green-100 ou red-100
+  const actionBgColor =
+    data.netBalance >= 0 ? [220, 252, 231] : [254, 226, 226]; // green-100 ou red-100
   const pageCenter = margin + contentWidth / 2;
 
   doc.setFillColor(actionBgColor[0], actionBgColor[1], actionBgColor[2]);
@@ -251,9 +296,13 @@ export const generateFriendReport = (data: FriendReportData): void => {
   if (Math.abs(data.netBalance) < 0.01) {
     actionText = `${data.friendName} e ${data.userName} estão quites! Nenhuma transferência necessária.`;
   } else if (data.netBalance > 0) {
-    actionText = `${data.friendName} precisa transferir ${formatCurrency(data.netBalance)} para ${data.userName}`;
+    actionText = `${data.friendName} precisa transferir ${formatCurrency(
+      data.netBalance
+    )} para ${data.userName}`;
   } else {
-    actionText = `${data.userName} precisa transferir ${formatCurrency(Math.abs(data.netBalance))} para ${data.friendName}`;
+    actionText = `${data.userName} precisa transferir ${formatCurrency(
+      Math.abs(data.netBalance)
+    )} para ${data.friendName}`;
   }
 
   doc.text(actionText, pageCenter, yPos + 18, { align: "center" });
@@ -268,7 +317,11 @@ export const generateFriendReport = (data: FriendReportData): void => {
     doc.setTextColor(...darkRgb);
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.text(`Despesas que ${data.userName} pagou (${data.friendName} deve)`, margin, yPos);
+    doc.text(
+      `Despesas que ${data.userName} pagou (${data.friendName} deve)`,
+      margin,
+      yPos
+    );
 
     yPos += 5;
 
@@ -287,15 +340,14 @@ export const generateFriendReport = (data: FriendReportData): void => {
         t.description,
         t.category,
         formatCurrency(amount),
-        t.isPaid ? "Recebido" : "Pendente",
       ];
     });
 
     autoTable(doc, {
       startY: yPos,
-      head: [["Data", "Descrição", "Categoria", "Valor Devido", "Status"]],
+      head: [["Data", "Descrição", "Categoria", "Valor Devido"]],
       body: theyOweMeData,
-      foot: [["", "", "TOTAL:", formatCurrency(data.theyOweMe.total), ""]],
+      foot: [["", "", "TOTAL:", formatCurrency(data.theyOweMe.total)]],
       margin: { left: margin, right: margin },
       styles: {
         fontSize: 9,
@@ -317,7 +369,6 @@ export const generateFriendReport = (data: FriendReportData): void => {
       columnStyles: {
         0: { cellWidth: 25 },
         3: { halign: "right" },
-        4: { halign: "center", cellWidth: 25 },
       },
     });
 
@@ -338,7 +389,11 @@ export const generateFriendReport = (data: FriendReportData): void => {
     doc.setTextColor(...darkRgb);
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.text(`Despesas que ${data.friendName} pagou (${data.userName} deve)`, margin, yPos);
+    doc.text(
+      `Despesas que ${data.friendName} pagou (${data.userName} deve)`,
+      margin,
+      yPos
+    );
 
     yPos += 5;
 
@@ -349,15 +404,14 @@ export const generateFriendReport = (data: FriendReportData): void => {
         t.description,
         t.category,
         formatCurrency(amount),
-        t.isPaid ? "Pago" : "Pendente",
       ];
     });
 
     autoTable(doc, {
       startY: yPos,
-      head: [["Data", "Descrição", "Categoria", "Valor Devido", "Status"]],
+      head: [["Data", "Descrição", "Categoria", "Valor Devido"]],
       body: iOweThemData,
-      foot: [["", "", "TOTAL:", formatCurrency(data.iOweThem.total), ""]],
+      foot: [["", "", "TOTAL:", formatCurrency(data.iOweThem.total)]],
       margin: { left: margin, right: margin },
       styles: {
         fontSize: 9,
@@ -379,7 +433,6 @@ export const generateFriendReport = (data: FriendReportData): void => {
       columnStyles: {
         0: { cellWidth: 25 },
         3: { halign: "right" },
-        4: { halign: "center", cellWidth: 25 },
       },
     });
 
@@ -387,7 +440,10 @@ export const generateFriendReport = (data: FriendReportData): void => {
   }
 
   // Se não há transações em nenhuma categoria
-  if (data.theyOweMe.transactions.length === 0 && data.iOweThem.transactions.length === 0) {
+  if (
+    data.theyOweMe.transactions.length === 0 &&
+    data.iOweThem.transactions.length === 0
+  ) {
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(12);
     doc.setFont("helvetica", "italic");
@@ -418,9 +474,14 @@ export const generateFriendReport = (data: FriendReportData): void => {
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text("Gerado por Nix - Finanças Inteligentes", margin, pageHeight - 12);
-    doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, pageHeight - 12, {
-      align: "right",
-    });
+    doc.text(
+      `Página ${i} de ${pageCount}`,
+      pageWidth - margin,
+      pageHeight - 12,
+      {
+        align: "right",
+      }
+    );
   }
 
   // ========================================
@@ -429,8 +490,18 @@ export const generateFriendReport = (data: FriendReportData): void => {
 
   // Formata nome do mês para o arquivo (sem acentos e minúsculo)
   const monthNamesFile = [
-    "janeiro", "fevereiro", "marco", "abril", "maio", "junho",
-    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+    "janeiro",
+    "fevereiro",
+    "marco",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro",
   ];
   const fileMonthName = monthNamesFile[data.month];
 
@@ -483,7 +554,7 @@ export const prepareFriendReportData = (
       // Se não tem, pode ser uma income avulsa compartilhada
       const hasRelatedExpense = !!t.relatedTransactionId;
       const incomeAmount = hasRelatedExpense ? t.amount : t.amount / 2;
-      
+
       theyOweMeTransactions.push(t);
       theyOweMeTotal += incomeAmount;
     }
@@ -542,4 +613,3 @@ export default {
   generateFriendReport,
   prepareFriendReportData,
 };
-
