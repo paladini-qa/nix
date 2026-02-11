@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  useCallback,
   createContext,
   lazy,
   Suspense,
@@ -18,6 +19,7 @@ import {
   useTheme,
   IconButton,
   Tooltip,
+  Fab,
 } from "@mui/material";
 import { Add as AddIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -41,6 +43,7 @@ import SharedOptionsDialog from "./components/SharedOptionsDialog";
 import {
   CATEGORIES as DEFAULT_CATEGORIES,
   PAYMENT_METHODS as DEFAULT_PAYMENT_METHODS,
+  CREATE_TRANSACTION_BUTTON,
 } from "./constants";
 // Core components (loaded immediately)
 import SummaryCards from "./components/SummaryCards";
@@ -248,6 +251,35 @@ const AppContent: React.FC<{
     name: string;
     type: "income" | "expense";
   } | null>(null);
+
+  // Contexto inicial ao abrir "Nova Transação" a partir de uma aba específica
+  type NewTransactionInitialContext = {
+    paymentMethod?: string;
+    category?: string;
+    type?: TransactionType;
+    isShared?: boolean;
+    isRecurring?: boolean;
+    hasInstallments?: boolean;
+  };
+  const [formInitialContext, setFormInitialContext] =
+    useState<NewTransactionInitialContext | null>(null);
+
+  const getContextFromCurrentView =
+    useCallback((): NewTransactionInitialContext | null => {
+      if (currentView === "paymentMethods" && selectedPaymentMethod) {
+        return { paymentMethod: selectedPaymentMethod };
+      }
+      if (currentView === "categories" && selectedCategoryNav) {
+        return {
+          category: selectedCategoryNav.name,
+          type: selectedCategoryNav.type,
+        };
+      }
+      if (currentView === "shared") return { isShared: true };
+      if (currentView === "recurring") return { isRecurring: true };
+      if (currentView === "splits") return { hasInstallments: true };
+      return null;
+    }, [currentView, selectedPaymentMethod, selectedCategoryNav]);
 
   // Reset selectedPaymentMethod quando sair da view paymentMethods
   useEffect(() => {
@@ -1850,11 +1882,12 @@ const AppContent: React.FC<{
     }
   };
 
-  // Função auxiliar para abrir o formulário para nova transação
+  // Função auxiliar para abrir o formulário para nova transação (com contexto da aba atual)
   const handleNewTransaction = () => {
     setEditingTransaction(null);
     setCurrentEditMode(null);
     setPendingVirtualEdit(null);
+    setFormInitialContext(getContextFromCurrentView());
     setIsFormOpen(true);
   };
 
@@ -3984,6 +4017,7 @@ const AppContent: React.FC<{
                         setFilters({ ...filters, month, year })
                       }
                       onBack={() => setSelectedPaymentMethod(null)}
+                      onNewTransaction={handleNewTransaction}
                       onEdit={handleEditTransaction}
                       onDelete={handleDeleteTransaction}
                       onTogglePaid={handleTogglePaid}
@@ -4102,13 +4136,9 @@ const AppContent: React.FC<{
                             variant="contained"
                             startIcon={<AddIcon />}
                             onClick={handleNewTransaction}
-                            sx={{
-                              height: 40,
-                              borderRadius: "20px",
-                              px: 2.5,
-                            }}
+                            sx={CREATE_TRANSACTION_BUTTON.sx}
                           >
-                            Transaction
+                            {CREATE_TRANSACTION_BUTTON.label}
                           </Button>
                         )}
                       </Box>
@@ -4260,6 +4290,7 @@ const AppContent: React.FC<{
                         setFilters({ ...filters, month, year })
                       }
                       onBack={() => setSelectedPaymentMethod(null)}
+                      onNewTransaction={handleNewTransaction}
                       onPayAll={handlePayAllTransactions}
                       onTogglePaid={handleTogglePaid}
                       onEdit={handleEditTransaction}
@@ -4324,6 +4355,24 @@ const AppContent: React.FC<{
             </Box>
           </Box>
 
+          {/* Botão global "Nova Transação" visível em todas as telas (desktop) */}
+          <Tooltip title="Nova Transação">
+            <Fab
+              color="primary"
+              aria-label="nova transação"
+              onClick={handleNewTransaction}
+              sx={{
+                position: "fixed",
+                bottom: 24,
+                right: 24,
+                display: { xs: "none", md: "flex" },
+                zIndex: (theme) => theme.zIndex.speedDial,
+              }}
+            >
+              <AddIcon />
+            </Fab>
+          </Tooltip>
+
           <TransactionForm
             isOpen={isFormOpen}
             onClose={() => {
@@ -4331,6 +4380,7 @@ const AppContent: React.FC<{
               setEditingTransaction(null);
               setCurrentEditMode(null);
               setPendingVirtualEdit(null);
+              setFormInitialContext(null);
             }}
             onSave={handleAddTransaction}
             categories={categories}
@@ -4340,6 +4390,7 @@ const AppContent: React.FC<{
             onAddFriend={handleAddFriend}
             transactions={transactions}
             currentBalance={summary.balance}
+            initialContext={formInitialContext}
           />
 
           <ProfileModal

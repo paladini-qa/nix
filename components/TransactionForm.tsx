@@ -55,7 +55,10 @@ import {
 import NixButton from "./radix/Button";
 import { Transaction, TransactionType, FinancialSummary } from "../types";
 import { CATEGORY_KEYWORDS, QUICK_AMOUNTS } from "../constants";
-import { suggestCategoryWithAI, CategorySuggestion } from "../services/geminiService";
+import {
+  suggestCategoryWithAI,
+  CategorySuggestion,
+} from "../services/geminiService";
 
 // Animação de entrada suave
 const slideInRight = keyframes`
@@ -88,6 +91,15 @@ interface TransactionFormProps {
   // Novas props para UX melhorada
   transactions?: Transaction[];
   currentBalance?: number;
+  /** Contexto inicial ao abrir a partir de uma aba (ex.: método de pagamento, categoria, compartilhada, etc.) */
+  initialContext?: {
+    paymentMethod?: string;
+    category?: string;
+    type?: TransactionType;
+    isShared?: boolean;
+    isRecurring?: boolean;
+    hasInstallments?: boolean;
+  } | null;
 }
 
 // Interface para template de transação frequente
@@ -163,7 +175,12 @@ const getInputSx = (theme: any, isDarkMode: boolean) => ({
 });
 
 // Estilos do toggle button/paper - premium feel
-const getTogglePaperSx = (isActive: boolean, accentColor: string, theme: any, isDarkMode: boolean) => ({
+const getTogglePaperSx = (
+  isActive: boolean,
+  accentColor: string,
+  theme: any,
+  isDarkMode: boolean
+) => ({
   p: 2,
   display: "flex",
   alignItems: "center",
@@ -171,29 +188,29 @@ const getTogglePaperSx = (isActive: boolean, accentColor: string, theme: any, is
   cursor: "pointer",
   borderRadius: "20px", // Consistente com theme
   transition: "all 0.2s ease-in-out",
-  border: `1.5px solid ${isActive
-    ? alpha(accentColor, 0.4)
-    : isDarkMode
+  border: `1.5px solid ${
+    isActive
+      ? alpha(accentColor, 0.4)
+      : isDarkMode
       ? alpha("#FFFFFF", 0.12)
-      : alpha("#000000", 0.1)}`,
+      : alpha("#000000", 0.1)
+  }`,
   bgcolor: isActive
     ? isDarkMode
       ? alpha(accentColor, 0.1)
       : alpha(accentColor, 0.06)
     : isDarkMode
-      ? alpha(theme.palette.background.default, 0.3)
-      : alpha("#FFFFFF", 0.6),
-  boxShadow: isActive
-    ? `0 4px 12px -4px ${alpha(accentColor, 0.25)}`
-    : "none",
+    ? alpha(theme.palette.background.default, 0.3)
+    : alpha("#FFFFFF", 0.6),
+  boxShadow: isActive ? `0 4px 12px -4px ${alpha(accentColor, 0.25)}` : "none",
   "&:hover": {
     bgcolor: isActive
       ? isDarkMode
         ? alpha(accentColor, 0.15)
         : alpha(accentColor, 0.1)
       : isDarkMode
-        ? alpha(theme.palette.background.default, 0.5)
-        : alpha(theme.palette.primary.main, 0.04),
+      ? alpha(theme.palette.background.default, 0.5)
+      : alpha(theme.palette.primary.main, 0.04),
     transform: "translateY(-1px)",
   },
 });
@@ -209,7 +226,7 @@ const suggestCategory = (
 
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     if (!availableCategories.includes(category)) continue;
-    
+
     for (const keyword of keywords) {
       if (lowerDesc.includes(keyword.toLowerCase())) {
         return category;
@@ -222,18 +239,18 @@ const suggestCategory = (
 // Função para parsear valor inteligente (suporta "1.5k", "50", etc.)
 const parseSmartAmount = (value: string): number | null => {
   if (!value) return null;
-  
+
   let cleanValue = value.trim().toLowerCase();
-  
+
   // Remove "r$" e espaços
   cleanValue = cleanValue.replace(/r\$\s*/gi, "").replace(/\s/g, "");
-  
+
   // Suporte a "k" para milhares (ex: "1.5k" = 1500)
   if (cleanValue.endsWith("k")) {
     const num = parseFloat(cleanValue.slice(0, -1));
     if (!isNaN(num)) return num * 1000;
   }
-  
+
   // Suporte a expressões simples (ex: "100+50")
   if (/^[\d.+\-*/()]+$/.test(cleanValue)) {
     try {
@@ -244,7 +261,7 @@ const parseSmartAmount = (value: string): number | null => {
       // Ignora erro e tenta parse normal
     }
   }
-  
+
   // Parse normal
   const num = parseFloat(cleanValue.replace(",", "."));
   return isNaN(num) ? null : num;
@@ -259,25 +276,28 @@ const findDuplicateTransaction = (
 ): Transaction | null => {
   const now = dayjs();
   const last24h = now.subtract(24, "hour");
-  
+
   const lowerDesc = description.toLowerCase().trim();
-  
-  return transactions.find((t) => {
-    const transactionDate = dayjs(t.createdAt || t.date);
-    if (transactionDate.isBefore(last24h)) return false;
-    if (t.type !== type) return false;
-    
-    // Verifica similaridade de descrição
-    const similarity = t.description.toLowerCase().includes(lowerDesc) ||
-      lowerDesc.includes(t.description.toLowerCase());
-    
-    // Se descrição é similar e valor é igual (ou próximo)
-    if (similarity && Math.abs(t.amount - amount) < 0.01) {
-      return true;
-    }
-    
-    return false;
-  }) || null;
+
+  return (
+    transactions.find((t) => {
+      const transactionDate = dayjs(t.createdAt || t.date);
+      if (transactionDate.isBefore(last24h)) return false;
+      if (t.type !== type) return false;
+
+      // Verifica similaridade de descrição
+      const similarity =
+        t.description.toLowerCase().includes(lowerDesc) ||
+        lowerDesc.includes(t.description.toLowerCase());
+
+      // Se descrição é similar e valor é igual (ou próximo)
+      if (similarity && Math.abs(t.amount - amount) < 0.01) {
+        return true;
+      }
+
+      return false;
+    }) || null
+  );
 };
 
 const TransactionForm: React.FC<TransactionFormProps> = ({
@@ -291,6 +311,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   onAddFriend,
   transactions = [],
   currentBalance = 0,
+  initialContext = null,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -311,22 +332,28 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [iOwe, setIOwe] = useState(false); // true = amigo pagou, eu devo | false = eu paguei, amigo deve
   const [newFriendName, setNewFriendName] = useState("");
   const [showAddFriend, setShowAddFriend] = useState(false);
-  
+
   // Novos estados para UX melhorada
-  const [suggestedCategory, setSuggestedCategory] = useState<string | null>(null);
-  const [aiSuggestion, setAiSuggestion] = useState<CategorySuggestion | null>(null);
+  const [suggestedCategory, setSuggestedCategory] = useState<string | null>(
+    null
+  );
+  const [aiSuggestion, setAiSuggestion] = useState<CategorySuggestion | null>(
+    null
+  );
   const [isLoadingAiSuggestion, setIsLoadingAiSuggestion] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  
+
   // Hook de notificações
   const { showError, showWarning, showSuccess } = useNotification();
-  
+
   // Estados para UX condicional - mostrar seções apenas quando relevante
   const [showQuickAmounts, setShowQuickAmounts] = useState(false);
   const [amountFieldFocused, setAmountFieldFocused] = useState(false);
-  
+
   // Estado para controlar tab do preview unificado
-  const [previewTab, setPreviewTab] = useState<"installments" | "shared" | "balance">("balance");
+  const [previewTab, setPreviewTab] = useState<
+    "installments" | "shared" | "balance"
+  >("balance");
 
   // Estado para controlar opções avançadas colapsáveis
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -336,13 +363,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   // Extrair transações frequentes do histórico
   const frequentTransactions = useMemo<FrequentTransaction[]>(() => {
     if (transactions.length === 0) return [];
-    
+
     const frequencyMap = new Map<string, FrequentTransaction>();
-    
+
     transactions.forEach((t) => {
-      const key = `${t.description.toLowerCase()}-${t.category}-${t.paymentMethod}`;
+      const key = `${t.description.toLowerCase()}-${t.category}-${
+        t.paymentMethod
+      }`;
       const existing = frequencyMap.get(key);
-      
+
       if (existing) {
         existing.count++;
       } else {
@@ -355,7 +384,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         });
       }
     });
-    
+
     // Retorna top 5 mais frequentes
     return Array.from(frequencyMap.values())
       .sort((a, b) => b.count - a.count)
@@ -375,8 +404,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   // Calcular saldo após transação
   const balanceAfter = useMemo(() => {
     if (parsedAmount === null) return currentBalance;
-    return type === "expense" 
-      ? currentBalance - parsedAmount 
+    return type === "expense"
+      ? currentBalance - parsedAmount
       : currentBalance + parsedAmount;
   }, [currentBalance, parsedAmount, type]);
 
@@ -411,9 +440,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           categories,
           type
         );
-        
+
         // Só mostra se confiança for boa e diferente da sugestão local
-        if (suggestion.confidence >= 0.6 && suggestion.category !== suggestedCategory) {
+        if (
+          suggestion.confidence >= 0.6 &&
+          suggestion.category !== suggestedCategory
+        ) {
           setAiSuggestion(suggestion);
         } else {
           setAiSuggestion(null);
@@ -431,42 +463,70 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
   // Efeito para detectar duplicatas (mostra notificação apenas uma vez por combinação)
   const [lastDuplicateKey, setLastDuplicateKey] = useState<string>("");
-  
+
   useEffect(() => {
     if (description && parsedAmount && parsedAmount > 0 && !editTransaction) {
-      const duplicate = findDuplicateTransaction(transactions, description, parsedAmount, type);
-      const duplicateKey = duplicate ? `${duplicate.id}-${duplicate.amount}` : "";
-      
+      const duplicate = findDuplicateTransaction(
+        transactions,
+        description,
+        parsedAmount,
+        type
+      );
+      const duplicateKey = duplicate
+        ? `${duplicate.id}-${duplicate.amount}`
+        : "";
+
       if (duplicate && duplicateKey !== lastDuplicateKey) {
         setLastDuplicateKey(duplicateKey);
         showWarning(
-          `"${duplicate.description}" - ${formatCurrency(duplicate.amount)} cadastrada recentemente`,
+          `"${duplicate.description}" - ${formatCurrency(
+            duplicate.amount
+          )} cadastrada recentemente`,
           "Possível duplicata detectada!"
         );
       }
     }
-  }, [description, parsedAmount, type, transactions, editTransaction, showWarning, lastDuplicateKey]);
+  }, [
+    description,
+    parsedAmount,
+    type,
+    transactions,
+    editTransaction,
+    showWarning,
+    lastDuplicateKey,
+  ]);
 
   // ========== LÓGICAS CONDICIONAIS (após todas as definições) ==========
-  
+
   // Lógica para mostrar Quick Amounts apenas quando relevante
   const shouldShowQuickAmounts = amountFieldFocused || !amount;
 
   // Lógica para mostrar Atalhos Rápidos apenas se campos não preenchidos
-  const filledFieldsCount = [description, category, paymentMethod].filter(Boolean).length;
-  const shouldShowFrequentTransactions = !editTransaction && frequentTransactions.length > 0 && filledFieldsCount < 2;
+  const filledFieldsCount = [description, category, paymentMethod].filter(
+    Boolean
+  ).length;
+  const shouldShowFrequentTransactions =
+    !editTransaction &&
+    frequentTransactions.length > 0 &&
+    filledFieldsCount < 2;
 
   // Lógica para mostrar preview de impacto no saldo apenas para valores significativos
-  const shouldShowBalanceImpact = parsedAmount !== null && parsedAmount > 100 && currentBalance !== undefined;
+  const shouldShowBalanceImpact =
+    parsedAmount !== null && parsedAmount > 100 && currentBalance !== undefined;
 
   // Decidir qual preview mostrar (unificado)
-  const hasInstallmentsPreview = type === "expense" && hasInstallments && parsedAmount && parseInt(installments) >= 2;
+  const hasInstallmentsPreview =
+    type === "expense" &&
+    hasInstallments &&
+    parsedAmount &&
+    parseInt(installments) >= 2;
   const hasSharedPreview = isShared && sharedWith && parsedAmount;
   const hasBalancePreview = shouldShowBalanceImpact;
-  
+
   // Mostrar preview unificado se pelo menos um preview estiver ativo
-  const shouldShowUnifiedPreview = hasInstallmentsPreview || hasSharedPreview || hasBalancePreview;
-  
+  const shouldShowUnifiedPreview =
+    hasInstallmentsPreview || hasSharedPreview || hasBalancePreview;
+
   // Auto-selecionar tab baseado no que está ativo
   useEffect(() => {
     if (hasInstallmentsPreview) {
@@ -520,14 +580,35 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     setLastDuplicateKey("");
     // Auto-expandir opções avançadas se editando transação com opções ativas
     if (editTransaction) {
-      const hasAdvanced = editTransaction.isRecurring || 
-        (editTransaction.installments !== undefined && editTransaction.installments > 1) ||
+      const hasAdvanced =
+        editTransaction.isRecurring ||
+        (editTransaction.installments !== undefined &&
+          editTransaction.installments > 1) ||
         editTransaction.isShared;
       setShowAdvanced(hasAdvanced);
     } else {
       setShowAdvanced(false);
+      // Aplicar contexto inicial quando abrindo a partir de uma aba específica
+      if (isOpen && initialContext) {
+        if (initialContext.paymentMethod)
+          setPaymentMethod(initialContext.paymentMethod);
+        if (initialContext.category) setCategory(initialContext.category);
+        if (initialContext.type) setType(initialContext.type);
+        if (initialContext.isShared !== undefined)
+          setIsShared(initialContext.isShared);
+        if (initialContext.isRecurring !== undefined)
+          setIsRecurring(initialContext.isRecurring);
+        if (initialContext.hasInstallments !== undefined) {
+          setHasInstallments(initialContext.hasInstallments);
+        }
+        const hasAdvancedFromContext =
+          initialContext.isShared ||
+          initialContext.isRecurring ||
+          initialContext.hasInstallments;
+        if (hasAdvancedFromContext) setShowAdvanced(true);
+      }
     }
-  }, [editTransaction, isOpen]);
+  }, [editTransaction, isOpen, initialContext]);
 
   // Handler para aplicar template de transação frequente
   const applyFrequentTransaction = useCallback((freq: FrequentTransaction) => {
@@ -552,39 +633,45 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   }, []);
 
   // Handler para aplicar data rápida
-  const applyQuickDate = useCallback((option: "today" | "yesterday" | "lastWeek") => {
-    switch (option) {
-      case "today":
-        setDate(dayjs());
-        break;
-      case "yesterday":
-        setDate(dayjs().subtract(1, "day"));
-        break;
-      case "lastWeek":
-        setDate(dayjs().subtract(7, "day"));
-        break;
-    }
-    setShowDatePicker(false);
-  }, []);
+  const applyQuickDate = useCallback(
+    (option: "today" | "yesterday" | "lastWeek") => {
+      switch (option) {
+        case "today":
+          setDate(dayjs());
+          break;
+        case "yesterday":
+          setDate(dayjs().subtract(1, "day"));
+          break;
+        case "lastWeek":
+          setDate(dayjs().subtract(7, "day"));
+          break;
+      }
+      setShowDatePicker(false);
+    },
+    []
+  );
 
   // Handler para autocomplete de descrição
-  const handleDescriptionSelect = useCallback((selectedDescription: string) => {
-    // Encontrar transação com essa descrição para auto-preencher
-    const matchingTransaction = transactions.find(
-      (t) => t.description === selectedDescription
-    );
-    
-    if (matchingTransaction) {
-      setDescription(selectedDescription);
-      setCategory(matchingTransaction.category);
-      setPaymentMethod(matchingTransaction.paymentMethod);
-      setType(matchingTransaction.type);
-    }
-  }, [transactions]);
+  const handleDescriptionSelect = useCallback(
+    (selectedDescription: string) => {
+      // Encontrar transação com essa descrição para auto-preencher
+      const matchingTransaction = transactions.find(
+        (t) => t.description === selectedDescription
+      );
+
+      if (matchingTransaction) {
+        setDescription(selectedDescription);
+        setCategory(matchingTransaction.category);
+        setPaymentMethod(matchingTransaction.paymentMethod);
+        setType(matchingTransaction.type);
+      }
+    },
+    [transactions]
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Valor é opcional - pode ser definido depois
     if (!description || !category || !paymentMethod || !date) {
       showError("Preencha todos os campos obrigatórios.", "Campos incompletos");
@@ -631,7 +718,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
     // Mostrar notificação de sucesso e fechar modal
     showSuccess(
-      editTransaction ? "Transação atualizada com sucesso!" : "Transação criada com sucesso!",
+      editTransaction
+        ? "Transação atualizada com sucesso!"
+        : "Transação criada com sucesso!",
       "Sucesso"
     );
     onClose();
@@ -677,7 +766,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           maxWidth: "100vw",
           bgcolor: isDarkMode ? theme.palette.background.default : "#FAFBFC",
           backgroundImage: "none", // Remove o overlay do MUI
-          borderLeft: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+          borderLeft: `1px solid ${
+            isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)
+          }`,
           boxShadow: isDarkMode
             ? `-24px 0 80px -20px ${alpha("#000000", 0.5)}`
             : `-24px 0 80px -20px ${alpha(theme.palette.primary.main, 0.12)}`,
@@ -697,7 +788,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             : alpha("#FAFBFC", 0.9),
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
-          borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.04)}`,
+          borderBottom: `1px solid ${
+            isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.04)
+          }`,
         }}
       >
         {/* Top Bar com Breadcrumb e Fechar */}
@@ -792,10 +885,22 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: type === "income"
-                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(theme.palette.success.main, 0.25)} 100%)`
-                  : `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.15)} 0%, ${alpha(theme.palette.error.main, 0.25)} 100%)`,
-                border: `1px solid ${alpha(type === "income" ? theme.palette.success.main : theme.palette.error.main, 0.2)}`,
+                background:
+                  type === "income"
+                    ? `linear-gradient(135deg, ${alpha(
+                        theme.palette.success.main,
+                        0.15
+                      )} 0%, ${alpha(theme.palette.success.main, 0.25)} 100%)`
+                    : `linear-gradient(135deg, ${alpha(
+                        theme.palette.error.main,
+                        0.15
+                      )} 0%, ${alpha(theme.palette.error.main, 0.25)} 100%)`,
+                border: `1px solid ${alpha(
+                  type === "income"
+                    ? theme.palette.success.main
+                    : theme.palette.error.main,
+                  0.2
+                )}`,
                 transition: "all 0.2s ease",
               }}
             >
@@ -822,7 +927,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               >
                 {editTransaction ? "Editar Transação" : "Nova Transação"}
               </Typography>
-              <Typography variant="caption" color="text.secondary" fontWeight={500}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={500}
+              >
                 {editTransaction
                   ? `Modificando ${editTransaction.description}`
                   : "Preencha os detalhes abaixo"}
@@ -874,11 +983,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             {/* Quick Actions - Transações Frequentes - Mostrar apenas se poucos campos preenchidos */}
             {shouldShowFrequentTransactions && (
               <Box>
-                <Typography 
-                  variant="caption" 
-                  color="text.secondary" 
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
                   fontWeight={600}
-                  sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1.5 }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    mb: 1.5,
+                  }}
                 >
                   <BoltIcon sx={{ fontSize: 16 }} />
                   ATALHOS RÁPIDOS
@@ -897,13 +1011,19 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         bgcolor: isDarkMode
                           ? alpha(theme.palette.primary.main, 0.1)
                           : alpha(theme.palette.primary.main, 0.08),
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                        border: `1px solid ${alpha(
+                          theme.palette.primary.main,
+                          0.2
+                        )}`,
                         color: theme.palette.primary.main,
                         transition: "all 0.2s ease",
                         "&:hover": {
                           bgcolor: alpha(theme.palette.primary.main, 0.2),
                           transform: "translateY(-1px)",
-                          boxShadow: `0 4px 12px -4px ${alpha(theme.palette.primary.main, 0.3)}`,
+                          boxShadow: `0 4px 12px -4px ${alpha(
+                            theme.palette.primary.main,
+                            0.3
+                          )}`,
                         },
                       }}
                     />
@@ -951,11 +1071,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 value="income"
                 sx={{
                   "&.Mui-selected": {
-                    bgcolor: alpha(theme.palette.success.main, isDarkMode ? 0.2 : 0.15),
+                    bgcolor: alpha(
+                      theme.palette.success.main,
+                      isDarkMode ? 0.2 : 0.15
+                    ),
                     color: theme.palette.success.main,
-                    boxShadow: `0 4px 12px -4px ${alpha(theme.palette.success.main, 0.3)}`,
+                    boxShadow: `0 4px 12px -4px ${alpha(
+                      theme.palette.success.main,
+                      0.3
+                    )}`,
                     "&:hover": {
-                      bgcolor: alpha(theme.palette.success.main, isDarkMode ? 0.25 : 0.2),
+                      bgcolor: alpha(
+                        theme.palette.success.main,
+                        isDarkMode ? 0.25 : 0.2
+                      ),
                     },
                   },
                 }}
@@ -966,11 +1095,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 value="expense"
                 sx={{
                   "&.Mui-selected": {
-                    bgcolor: alpha(theme.palette.error.main, isDarkMode ? 0.2 : 0.15),
+                    bgcolor: alpha(
+                      theme.palette.error.main,
+                      isDarkMode ? 0.2 : 0.15
+                    ),
                     color: theme.palette.error.main,
-                    boxShadow: `0 4px 12px -4px ${alpha(theme.palette.error.main, 0.3)}`,
+                    boxShadow: `0 4px 12px -4px ${alpha(
+                      theme.palette.error.main,
+                      0.3
+                    )}`,
                     "&:hover": {
-                      bgcolor: alpha(theme.palette.error.main, isDarkMode ? 0.25 : 0.2),
+                      bgcolor: alpha(
+                        theme.palette.error.main,
+                        isDarkMode ? 0.25 : 0.2
+                      ),
                     },
                   },
                 }}
@@ -1005,12 +1143,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           {uniqueDescriptions.length > 0 && (
                             <InputAdornment position="end">
                               <Tooltip title="Sugestões do histórico">
-                                <HistoryIcon 
-                                  sx={{ 
-                                    fontSize: 18, 
+                                <HistoryIcon
+                                  sx={{
+                                    fontSize: 18,
                                     color: "text.disabled",
                                     mr: 1,
-                                  }} 
+                                  }}
                                 />
                               </Tooltip>
                             </InputAdornment>
@@ -1025,8 +1163,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   const { key, ...otherProps } = props as any;
                   return (
                     <li key={key} {...otherProps}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <HistoryIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <HistoryIcon
+                          sx={{ fontSize: 16, color: "text.secondary" }}
+                        />
                         <Typography variant="body2">{option}</Typography>
                       </Box>
                     </li>
@@ -1060,12 +1202,21 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Collapse>
 
               {/* Sugestão de Categoria (IA) - aparece quando não há sugestão local */}
-              <Collapse in={!suggestedCategory && (!!aiSuggestion || isLoadingAiSuggestion)}>
+              <Collapse
+                in={
+                  !suggestedCategory &&
+                  (!!aiSuggestion || isLoadingAiSuggestion)
+                }
+              >
                 <Chip
-                  icon={isLoadingAiSuggestion ? undefined : <BoltIcon sx={{ fontSize: 14 }} />}
+                  icon={
+                    isLoadingAiSuggestion ? undefined : (
+                      <BoltIcon sx={{ fontSize: 14 }} />
+                    )
+                  }
                   label={
-                    isLoadingAiSuggestion 
-                      ? "🤖 Analisando..." 
+                    isLoadingAiSuggestion
+                      ? "🤖 Analisando..."
                       : `🤖 IA sugere: ${aiSuggestion?.category}`
                   }
                   onClick={() => {
@@ -1074,10 +1225,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       setAiSuggestion(null);
                     }
                   }}
-                  onDelete={aiSuggestion ? () => {
-                    setCategory(aiSuggestion.category);
-                    setAiSuggestion(null);
-                  } : undefined}
+                  onDelete={
+                    aiSuggestion
+                      ? () => {
+                          setCategory(aiSuggestion.category);
+                          setAiSuggestion(null);
+                        }
+                      : undefined
+                  }
                   deleteIcon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
                   disabled={isLoadingAiSuggestion}
                   size="small"
@@ -1094,7 +1249,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     "&:hover": {
                       bgcolor: alpha("#8A2BE2", 0.2),
                     },
-                    animation: isLoadingAiSuggestion ? "pulse 1.5s ease-in-out infinite" : undefined,
+                    animation: isLoadingAiSuggestion
+                      ? "pulse 1.5s ease-in-out infinite"
+                      : undefined,
                     "@keyframes pulse": {
                       "0%, 100%": { opacity: 0.7 },
                       "50%": { opacity: 1 },
@@ -1112,19 +1269,23 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 onFocus={() => setAmountFieldFocused(true)}
-                onBlur={() => setTimeout(() => setAmountFieldFocused(false), 200)}
+                onBlur={() =>
+                  setTimeout(() => setAmountFieldFocused(false), 200)
+                }
                 placeholder="Ex: 150, 1.5k, 100+50"
                 helperText={
-                  parsedAmount && parsedAmount !== parseFloat(amount) 
-                    ? `= ${formatCurrency(parsedAmount)}` 
-                    : !amount 
-                      ? "Você pode adicionar o valor depois" 
-                      : undefined
+                  parsedAmount && parsedAmount !== parseFloat(amount)
+                    ? `= ${formatCurrency(parsedAmount)}`
+                    : !amount
+                    ? "Você pode adicionar o valor depois"
+                    : undefined
                 }
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Typography fontWeight={600} color="text.secondary">R$</Typography>
+                      <Typography fontWeight={600} color="text.secondary">
+                        R$
+                      </Typography>
                     </InputAdornment>
                   ),
                 }}
@@ -1133,38 +1294,40 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
               {/* Quick Amount Buttons - Mostrar apenas quando campo focado ou vazio */}
               {shouldShowQuickAmounts && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
-                {QUICK_AMOUNTS.map((value) => (
-                  <Chip
-                    key={value}
-                    label={`R$${value}`}
-                    onClick={() => applyQuickAmount(value)}
-                    size="small"
-                    variant={parsedAmount === value ? "filled" : "outlined"}
-                    sx={{
-                      borderRadius: "20px",
-                      fontWeight: 600,
-                      minWidth: 60,
-                      transition: "all 0.15s ease",
-                      ...(parsedAmount === value
-                        ? {
-                            bgcolor: theme.palette.primary.main,
-                            color: "#fff",
-                            borderColor: theme.palette.primary.main,
-                          }
-                        : {
-                            borderColor: isDarkMode
-                              ? alpha("#FFFFFF", 0.2)
-                              : alpha("#000000", 0.2),
-                            "&:hover": {
-                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                <Box
+                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}
+                >
+                  {QUICK_AMOUNTS.map((value) => (
+                    <Chip
+                      key={value}
+                      label={`R$${value}`}
+                      onClick={() => applyQuickAmount(value)}
+                      size="small"
+                      variant={parsedAmount === value ? "filled" : "outlined"}
+                      sx={{
+                        borderRadius: "20px",
+                        fontWeight: 600,
+                        minWidth: 60,
+                        transition: "all 0.15s ease",
+                        ...(parsedAmount === value
+                          ? {
+                              bgcolor: theme.palette.primary.main,
+                              color: "#fff",
                               borderColor: theme.palette.primary.main,
-                            },
-                          }),
-                    }}
-                  />
-                ))}
-              </Box>
+                            }
+                          : {
+                              borderColor: isDarkMode
+                                ? alpha("#FFFFFF", 0.2)
+                                : alpha("#000000", 0.2),
+                              "&:hover": {
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                borderColor: theme.palette.primary.main,
+                              },
+                            }),
+                      }}
+                    />
+                  ))}
+                </Box>
               )}
             </Box>
 
@@ -1208,16 +1371,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
             {/* Data com Quick Picks */}
             <Box>
-              <Typography 
-                variant="caption" 
-                color="text.secondary" 
+              <Typography
+                variant="caption"
+                color="text.secondary"
                 fontWeight={600}
                 sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}
               >
                 <TodayIcon sx={{ fontSize: 16 }} />
                 DATA
               </Typography>
-              
+
               {/* Quick Date Picks */}
               <Box sx={{ display: "flex", gap: 1, mb: 1.5 }}>
                 <Chip
@@ -1244,7 +1407,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   label="Ontem"
                   onClick={() => applyQuickDate("yesterday")}
                   size="small"
-                  variant={date?.isSame(dayjs().subtract(1, "day"), "day") ? "filled" : "outlined"}
+                  variant={
+                    date?.isSame(dayjs().subtract(1, "day"), "day")
+                      ? "filled"
+                      : "outlined"
+                  }
                   sx={{
                     borderRadius: "20px",
                     fontWeight: 500,
@@ -1301,7 +1468,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 bgcolor: isDarkMode
                   ? alpha(theme.palette.background.default, 0.3)
                   : alpha("#000000", 0.02),
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                border: `1px solid ${
+                  isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+                }`,
                 transition: "all 0.2s ease",
                 "&:hover": {
                   bgcolor: isDarkMode
@@ -1310,7 +1479,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 },
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   <Box
                     sx={{
@@ -1320,18 +1495,23 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      bgcolor: (isRecurring || hasInstallments || isShared)
-                        ? alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.12)
-                        : alpha("#64748B", 0.1),
+                      bgcolor:
+                        isRecurring || hasInstallments || isShared
+                          ? alpha(
+                              theme.palette.primary.main,
+                              isDarkMode ? 0.2 : 0.12
+                            )
+                          : alpha("#64748B", 0.1),
                       transition: "all 0.2s ease",
                     }}
                   >
                     <SettingsIcon
                       fontSize="small"
                       sx={{
-                        color: (isRecurring || hasInstallments || isShared)
-                          ? "primary.main"
-                          : "text.secondary",
+                        color:
+                          isRecurring || hasInstallments || isShared
+                            ? "primary.main"
+                            : "text.secondary",
                         transition: "color 0.2s ease",
                       }}
                     />
@@ -1341,46 +1521,56 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       Opções Avançadas
                     </Typography>
                     {/* Chips mostrando opções ativas quando colapsado */}
-                    {!showAdvanced && (isRecurring || hasInstallments || isShared) && (
-                      <Box sx={{ display: "flex", gap: 0.5, mt: 0.5, flexWrap: "wrap" }}>
-                        {isRecurring && (
-                          <Chip
-                            label={`Recorrente (${frequency === "monthly" ? "Mensal" : "Anual"})`}
-                            size="small"
-                            sx={{
-                              height: 20,
-                              fontSize: "0.7rem",
-                              bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              color: theme.palette.primary.main,
-                            }}
-                          />
-                        )}
-                        {hasInstallments && (
-                          <Chip
-                            label={`${installments}x Parcelado`}
-                            size="small"
-                            sx={{
-                              height: 20,
-                              fontSize: "0.7rem",
-                              bgcolor: alpha(theme.palette.warning.main, 0.1),
-                              color: theme.palette.warning.main,
-                            }}
-                          />
-                        )}
-                        {isShared && sharedWith && (
-                          <Chip
-                            label={`Com ${sharedWith}`}
-                            size="small"
-                            sx={{
-                              height: 20,
-                              fontSize: "0.7rem",
-                              bgcolor: alpha(theme.palette.info.main, 0.1),
-                              color: theme.palette.info.main,
-                            }}
-                          />
-                        )}
-                      </Box>
-                    )}
+                    {!showAdvanced &&
+                      (isRecurring || hasInstallments || isShared) && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 0.5,
+                            mt: 0.5,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {isRecurring && (
+                            <Chip
+                              label={`Recorrente (${
+                                frequency === "monthly" ? "Mensal" : "Anual"
+                              })`}
+                              size="small"
+                              sx={{
+                                height: 20,
+                                fontSize: "0.7rem",
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                              }}
+                            />
+                          )}
+                          {hasInstallments && (
+                            <Chip
+                              label={`${installments}x Parcelado`}
+                              size="small"
+                              sx={{
+                                height: 20,
+                                fontSize: "0.7rem",
+                                bgcolor: alpha(theme.palette.warning.main, 0.1),
+                                color: theme.palette.warning.main,
+                              }}
+                            />
+                          )}
+                          {isShared && sharedWith && (
+                            <Chip
+                              label={`Com ${sharedWith}`}
+                              size="small"
+                              sx={{
+                                height: 20,
+                                fontSize: "0.7rem",
+                                bgcolor: alpha(theme.palette.info.main, 0.1),
+                                color: theme.palette.info.main,
+                              }}
+                            />
+                          )}
+                        </Box>
+                      )}
                   </Box>
                 </Box>
                 <ExpandMoreIcon
@@ -1394,69 +1584,193 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             </Paper>
 
             <Collapse in={showAdvanced} timeout={300}>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2.5,
+                  pt: 1,
+                }}
+              >
                 {/* Recorrente Toggle */}
                 <Grid container spacing={2.5}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Paper
-                  elevation={0}
-                  sx={getTogglePaperSx(isRecurring, theme.palette.primary.main, theme, isDarkMode)}
-                  onClick={() => {
-                    const newValue = !isRecurring;
-                    setIsRecurring(newValue);
-                    if (newValue) setHasInstallments(false);
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Box
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: "20px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor: isRecurring
-                          ? alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.12)
-                          : alpha("#64748B", 0.1),
-                        transition: "all 0.2s ease",
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Paper
+                      elevation={0}
+                      sx={getTogglePaperSx(
+                        isRecurring,
+                        theme.palette.primary.main,
+                        theme,
+                        isDarkMode
+                      )}
+                      onClick={() => {
+                        const newValue = !isRecurring;
+                        setIsRecurring(newValue);
+                        if (newValue) setHasInstallments(false);
                       }}
                     >
-                      <RepeatIcon
-                        fontSize="small"
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: "20px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            bgcolor: isRecurring
+                              ? alpha(
+                                  theme.palette.primary.main,
+                                  isDarkMode ? 0.2 : 0.12
+                                )
+                              : alpha("#64748B", 0.1),
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          <RepeatIcon
+                            fontSize="small"
+                            sx={{
+                              color: isRecurring
+                                ? "primary.main"
+                                : "text.secondary",
+                              transition: "color 0.2s ease",
+                            }}
+                          />
+                        </Box>
+                        <Typography variant="body2" fontWeight={500}>
+                          Recorrente?
+                        </Typography>
+                      </Box>
+                      <Switch
+                        checked={isRecurring}
+                        size="small"
                         sx={{
-                          color: isRecurring ? "primary.main" : "text.secondary",
-                          transition: "color 0.2s ease",
+                          "& .MuiSwitch-thumb": {
+                            boxShadow: `0 2px 4px ${alpha("#000000", 0.2)}`,
+                          },
                         }}
                       />
-                    </Box>
-                    <Typography variant="body2" fontWeight={500}>
-                      Recorrente?
-                    </Typography>
-                  </Box>
-                  <Switch
-                    checked={isRecurring}
-                    size="small"
-                    sx={{
-                      "& .MuiSwitch-thumb": {
-                        boxShadow: `0 2px 4px ${alpha("#000000", 0.2)}`,
-                      },
-                    }}
+                    </Paper>
+                  </Grid>
+                  {type === "expense" && (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Paper
+                        elevation={0}
+                        sx={getTogglePaperSx(
+                          hasInstallments,
+                          theme.palette.warning.main,
+                          theme,
+                          isDarkMode
+                        )}
+                        onClick={() => {
+                          const newValue = !hasInstallments;
+                          setHasInstallments(newValue);
+                          if (newValue) setIsRecurring(false);
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: "20px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              bgcolor: hasInstallments
+                                ? alpha(
+                                    theme.palette.warning.main,
+                                    isDarkMode ? 0.2 : 0.12
+                                  )
+                                : alpha("#64748B", 0.1),
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            <CreditCardIcon
+                              fontSize="small"
+                              sx={{
+                                color: hasInstallments
+                                  ? "warning.main"
+                                  : "text.secondary",
+                                transition: "color 0.2s ease",
+                              }}
+                            />
+                          </Box>
+                          <Typography variant="body2" fontWeight={500}>
+                            Parcelado?
+                          </Typography>
+                        </Box>
+                        <Switch
+                          checked={hasInstallments}
+                          size="small"
+                          color="warning"
+                        />
+                      </Paper>
+                    </Grid>
+                  )}
+                </Grid>
+
+                {/* Frequência para Recorrente */}
+                {isRecurring && (
+                  <FormControl fullWidth sx={inputSx}>
+                    <InputLabel>Frequência</InputLabel>
+                    <Select
+                      value={frequency}
+                      label="Frequência"
+                      onChange={(e) =>
+                        setFrequency(e.target.value as "monthly" | "yearly")
+                      }
+                    >
+                      <MenuItem value="monthly">Mensal</MenuItem>
+                      <MenuItem value="yearly">Anual</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
+
+                {/* Número de Parcelas */}
+                {hasInstallments && (
+                  <TextField
+                    label="Nº de Parcelas"
+                    type="number"
+                    fullWidth
+                    value={installments}
+                    onChange={(e) => setInstallments(e.target.value)}
+                    inputProps={{ min: 2, max: 48 }}
+                    sx={inputSx}
                   />
-                </Paper>
-              </Grid>
-              {type === "expense" && (
-                <Grid size={{ xs: 12, sm: 6 }}>
+                )}
+
+                {/* Vincular a Amigo Toggle - Disponível para INCOME e EXPENSE */}
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}
+                >
                   <Paper
                     elevation={0}
-                    sx={getTogglePaperSx(hasInstallments, theme.palette.warning.main, theme, isDarkMode)}
+                    sx={getTogglePaperSx(
+                      isShared,
+                      theme.palette.info.main,
+                      theme,
+                      isDarkMode
+                    )}
                     onClick={() => {
-                      const newValue = !hasInstallments;
-                      setHasInstallments(newValue);
-                      if (newValue) setIsRecurring(false);
+                      setIsShared(!isShared);
+                      if (isShared) {
+                        setSharedWith("");
+                        setIOwe(false);
+                      }
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                    >
                       <Box
                         sx={{
                           width: 36,
@@ -1465,361 +1779,381 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          bgcolor: hasInstallments
-                            ? alpha(theme.palette.warning.main, isDarkMode ? 0.2 : 0.12)
+                          bgcolor: isShared
+                            ? alpha(
+                                theme.palette.info.main,
+                                isDarkMode ? 0.2 : 0.12
+                              )
                             : alpha("#64748B", 0.1),
                           transition: "all 0.2s ease",
                         }}
                       >
-                        <CreditCardIcon
+                        <GroupIcon
                           fontSize="small"
                           sx={{
-                            color: hasInstallments ? "warning.main" : "text.secondary",
+                            color: isShared ? "info.main" : "text.secondary",
                             transition: "color 0.2s ease",
                           }}
                         />
                       </Box>
-                      <Typography variant="body2" fontWeight={500}>
-                        Parcelado?
-                      </Typography>
-                    </Box>
-                    <Switch checked={hasInstallments} size="small" color="warning" />
-                  </Paper>
-                </Grid>
-              )}
-            </Grid>
-
-            {/* Frequência para Recorrente */}
-            {isRecurring && (
-              <FormControl fullWidth sx={inputSx}>
-                <InputLabel>Frequência</InputLabel>
-                <Select
-                  value={frequency}
-                  label="Frequência"
-                  onChange={(e) =>
-                    setFrequency(e.target.value as "monthly" | "yearly")
-                  }
-                >
-                  <MenuItem value="monthly">Mensal</MenuItem>
-                  <MenuItem value="yearly">Anual</MenuItem>
-                </Select>
-              </FormControl>
-            )}
-
-            {/* Número de Parcelas */}
-            {hasInstallments && (
-              <TextField
-                label="Nº de Parcelas"
-                type="number"
-                fullWidth
-                value={installments}
-                onChange={(e) => setInstallments(e.target.value)}
-                inputProps={{ min: 2, max: 48 }}
-                sx={inputSx}
-              />
-            )}
-
-            {/* Vincular a Amigo Toggle - Disponível para INCOME e EXPENSE */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-              <Paper
-                elevation={0}
-                sx={getTogglePaperSx(isShared, theme.palette.info.main, theme, isDarkMode)}
-                onClick={() => {
-                  setIsShared(!isShared);
-                  if (isShared) {
-                    setSharedWith("");
-                    setIOwe(false);
-                  }
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: "20px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: isShared
-                        ? alpha(theme.palette.info.main, isDarkMode ? 0.2 : 0.12)
-                        : alpha("#64748B", 0.1),
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    <GroupIcon
-                      fontSize="small"
-                      sx={{
-                        color: isShared ? "info.main" : "text.secondary",
-                        transition: "color 0.2s ease",
-                      }}
-                    />
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" fontWeight={500}>
-                      Vincular a amigo
-                    </Typography>
-                    {isShared && (
-                      <Typography variant="caption" color="text.secondary">
-                        Afeta o saldo com o amigo
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-                <Switch checked={isShared} size="small" color="info" />
-              </Paper>
-
-              {/* Friend Selection e Opções */}
-              {isShared && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {/* Tipo de conta: Dividida ou Única */}
-                  <Box>
-                    <Typography 
-                      variant="caption" 
-                      color="text.secondary" 
-                      fontWeight={600}
-                      sx={{ display: "block", mb: 1 }}
-                    >
-                      TIPO DE CONTA
-                    </Typography>
-                    <ToggleButtonGroup
-                      value={iOwe ? "single" : "split"}
-                      exclusive
-                      onChange={(_, newValue) => {
-                        if (newValue) {
-                          setIOwe(newValue === "single");
-                        }
-                      }}
-                      fullWidth
-                      sx={{
-                      bgcolor: isDarkMode
-                        ? alpha(theme.palette.background.default, 0.3)
-                        : alpha("#000000", 0.02),
-                      borderRadius: "20px",
-                      p: 0.5,
-                      "& .MuiToggleButtonGroup-grouped": {
-                        border: 0,
-                        borderRadius: "20px !important",
-                        mx: 0.25,
-                      },
-                      "& .MuiToggleButton-root": {
-                        py: 1.25,
-                        fontWeight: 600,
-                        textTransform: "none",
-                          transition: "all 0.2s ease-in-out",
-                          "&:not(.Mui-selected)": {
-                            color: "text.secondary",
-                          },
-                        },
-                      }}
-                    >
-                      <ToggleButton
-                        value="split"
-                        sx={{
-                          "&.Mui-selected": {
-                            bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.15),
-                            color: theme.palette.primary.main,
-                            boxShadow: `0 4px 12px -4px ${alpha(theme.palette.primary.main, 0.3)}`,
-                            "&:hover": {
-                              bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.2),
-                            },
-                          },
-                        }}
-                      >
-                        ✂️ Conta Dividida (50%)
-                      </ToggleButton>
-                      <ToggleButton
-                        value="single"
-                        sx={{
-                          "&.Mui-selected": {
-                            bgcolor: alpha(theme.palette.secondary.main, isDarkMode ? 0.2 : 0.15),
-                            color: theme.palette.secondary.main,
-                            boxShadow: `0 4px 12px -4px ${alpha(theme.palette.secondary.main, 0.3)}`,
-                            "&:hover": {
-                              bgcolor: alpha(theme.palette.secondary.main, isDarkMode ? 0.25 : 0.2),
-                            },
-                          },
-                        }}
-                      >
-                        💯 Conta Única (100%)
-                      </ToggleButton>
-                    </ToggleButtonGroup>
-                  </Box>
-
-                  <FormControl fullWidth size="small" sx={inputSx}>
-                    <InputLabel>Selecionar Amigo</InputLabel>
-                    <Select
-                      value={sharedWith}
-                      label="Selecionar Amigo"
-                      onChange={(e) => {
-                        if (e.target.value === "__add_new__") {
-                          setShowAddFriend(true);
-                        } else {
-                          setSharedWith(e.target.value);
-                        }
-                      }}
-                    >
-                      {friends.length > 0 && (
-                        <ListSubheader>Amigos</ListSubheader>
-                      )}
-                      {friends.map((friend) => (
-                        <MenuItem key={friend} value={friend}>
-                          {friend}
-                        </MenuItem>
-                      ))}
-                      <Divider />
-                      <MenuItem value="__add_new__">
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <PersonAddIcon fontSize="small" color="primary" />
-                          <Typography color="primary" fontWeight={500}>
-                            Adicionar novo amigo...
+                      <Box>
+                        <Typography variant="body2" fontWeight={500}>
+                          Vincular a amigo
+                        </Typography>
+                        {isShared && (
+                          <Typography variant="caption" color="text.secondary">
+                            Afeta o saldo com o amigo
                           </Typography>
-                        </Box>
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
+                        )}
+                      </Box>
+                    </Box>
+                    <Switch checked={isShared} size="small" color="info" />
+                  </Paper>
 
-                  {/* Add New Friend Form */}
-                  {showAddFriend && (
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        p: 2.5,
-                        borderRadius: "20px",
-                        bgcolor: isDarkMode
-                          ? alpha(theme.palette.primary.main, 0.08)
-                          : alpha(theme.palette.primary.main, 0.04),
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
-                      }}
+                  {/* Friend Selection e Opções */}
+                  {isShared && (
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
                     >
-                      <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                        Novo Amigo
-                      </Typography>
-                      <Box sx={{ display: "flex", gap: 1.5 }}>
-                        <TextField
-                          size="small"
-                          placeholder="Nome do amigo"
-                          value={newFriendName}
-                          onChange={(e) => setNewFriendName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleAddNewFriend();
+                      {/* Tipo de conta: Dividida ou Única */}
+                      <Box>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          fontWeight={600}
+                          sx={{ display: "block", mb: 1 }}
+                        >
+                          TIPO DE CONTA
+                        </Typography>
+                        <ToggleButtonGroup
+                          value={iOwe ? "single" : "split"}
+                          exclusive
+                          onChange={(_, newValue) => {
+                            if (newValue) {
+                              setIOwe(newValue === "single");
                             }
                           }}
                           fullWidth
-                          autoFocus
-                          sx={inputSx}
-                        />
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={handleAddNewFriend}
-                          disabled={!newFriendName.trim()}
-                          sx={{ borderRadius: "20px", px: 2.5 }}
-                        >
-                          Add
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => {
-                            setShowAddFriend(false);
-                            setNewFriendName("");
+                          sx={{
+                            bgcolor: isDarkMode
+                              ? alpha(theme.palette.background.default, 0.3)
+                              : alpha("#000000", 0.02),
+                            borderRadius: "20px",
+                            p: 0.5,
+                            "& .MuiToggleButtonGroup-grouped": {
+                              border: 0,
+                              borderRadius: "20px !important",
+                              mx: 0.25,
+                            },
+                            "& .MuiToggleButton-root": {
+                              py: 1.25,
+                              fontWeight: 600,
+                              textTransform: "none",
+                              transition: "all 0.2s ease-in-out",
+                              "&:not(.Mui-selected)": {
+                                color: "text.secondary",
+                              },
+                            },
                           }}
-                          sx={{ borderRadius: "20px" }}
                         >
-                          Cancelar
-                        </Button>
+                          <ToggleButton
+                            value="split"
+                            sx={{
+                              "&.Mui-selected": {
+                                bgcolor: alpha(
+                                  theme.palette.primary.main,
+                                  isDarkMode ? 0.2 : 0.15
+                                ),
+                                color: theme.palette.primary.main,
+                                boxShadow: `0 4px 12px -4px ${alpha(
+                                  theme.palette.primary.main,
+                                  0.3
+                                )}`,
+                                "&:hover": {
+                                  bgcolor: alpha(
+                                    theme.palette.primary.main,
+                                    isDarkMode ? 0.25 : 0.2
+                                  ),
+                                },
+                              },
+                            }}
+                          >
+                            ✂️ Conta Dividida (50%)
+                          </ToggleButton>
+                          <ToggleButton
+                            value="single"
+                            sx={{
+                              "&.Mui-selected": {
+                                bgcolor: alpha(
+                                  theme.palette.secondary.main,
+                                  isDarkMode ? 0.2 : 0.15
+                                ),
+                                color: theme.palette.secondary.main,
+                                boxShadow: `0 4px 12px -4px ${alpha(
+                                  theme.palette.secondary.main,
+                                  0.3
+                                )}`,
+                                "&:hover": {
+                                  bgcolor: alpha(
+                                    theme.palette.secondary.main,
+                                    isDarkMode ? 0.25 : 0.2
+                                  ),
+                                },
+                              },
+                            }}
+                          >
+                            💯 Conta Única (100%)
+                          </ToggleButton>
+                        </ToggleButtonGroup>
                       </Box>
-                    </Paper>
-                  )}
 
-                  {/* Preview do impacto no saldo */}
-                  {sharedWith && parsedAmount && (
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        p: 2.5,
-                        borderRadius: "20px",
-                        bgcolor: isDarkMode
-                          ? alpha(
-                              type === "income" 
-                                ? theme.palette.success.main 
-                                : (iOwe ? theme.palette.error.main : theme.palette.success.main), 
-                              0.1
-                            )
-                          : alpha(
-                              type === "income" 
-                                ? theme.palette.success.main 
-                                : (iOwe ? theme.palette.error.main : theme.palette.success.main), 
-                              0.06
-                            ),
-                        border: `1px solid ${alpha(
-                          type === "income" 
-                            ? theme.palette.success.main 
-                            : (iOwe ? theme.palette.error.main : theme.palette.success.main), 
-                          0.2
-                        )}`,
-                      }}
-                    >
-                      {type === "income" ? (
-                        // INCOME vinculada a amigo
-                        <>
-                          <Typography variant="body2" color="success.main" fontWeight={600}>
-                            💰 {sharedWith} está te pagando:
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            "{description || "Transação"}"
-                          </Typography>
-                          <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
-                            +{formatCurrency(iOwe ? parsedAmount : parsedAmount / 2)}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-                            {iOwe 
-                              ? `Valor integral será somado ao saldo de ${sharedWith}`
-                              : `Metade do valor (conta dividida) será somada ao saldo de ${sharedWith}`
+                      <FormControl fullWidth size="small" sx={inputSx}>
+                        <InputLabel>Selecionar Amigo</InputLabel>
+                        <Select
+                          value={sharedWith}
+                          label="Selecionar Amigo"
+                          onChange={(e) => {
+                            if (e.target.value === "__add_new__") {
+                              setShowAddFriend(true);
+                            } else {
+                              setSharedWith(e.target.value);
                             }
+                          }}
+                        >
+                          {friends.length > 0 && (
+                            <ListSubheader>Amigos</ListSubheader>
+                          )}
+                          {friends.map((friend) => (
+                            <MenuItem key={friend} value={friend}>
+                              {friend}
+                            </MenuItem>
+                          ))}
+                          <Divider />
+                          <MenuItem value="__add_new__">
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <PersonAddIcon fontSize="small" color="primary" />
+                              <Typography color="primary" fontWeight={500}>
+                                Adicionar novo amigo...
+                              </Typography>
+                            </Box>
+                          </MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      {/* Add New Friend Form */}
+                      {showAddFriend && (
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2.5,
+                            borderRadius: "20px",
+                            bgcolor: isDarkMode
+                              ? alpha(theme.palette.primary.main, 0.08)
+                              : alpha(theme.palette.primary.main, 0.04),
+                            border: `1px solid ${alpha(
+                              theme.palette.primary.main,
+                              0.15
+                            )}`,
+                          }}
+                        >
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={600}
+                            gutterBottom
+                          >
+                            Novo Amigo
                           </Typography>
-                        </>
-                      ) : iOwe ? (
-                        // EXPENSE + Conta Única - Eu devo ao amigo
-                        <>
-                          <Typography variant="body2" color="error.main" fontWeight={600}>
-                            💸 Você está pagando para {sharedWith}:
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            "{description || "Transação"}"
-                          </Typography>
-                          <Typography variant="h5" fontWeight={700} color="error.main" sx={{ mt: 1 }}>
-                            -{formatCurrency(parsedAmount)}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-                            Este valor será descontado do que {sharedWith} te deve
-                          </Typography>
-                        </>
-                      ) : (
-                        // EXPENSE + Conta Dividida - Amigo me deve metade
-                        <>
-                          <Typography variant="body2" color="success.main" fontWeight={600}>
-                            ✨ {sharedWith} te deve (metade):
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            "{description || "Transação"}"
-                          </Typography>
-                          <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
-                            +{formatCurrency(parsedAmount / 2)}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-                            Receita de reembolso será criada automaticamente
-                          </Typography>
-                        </>
+                          <Box sx={{ display: "flex", gap: 1.5 }}>
+                            <TextField
+                              size="small"
+                              placeholder="Nome do amigo"
+                              value={newFriendName}
+                              onChange={(e) => setNewFriendName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleAddNewFriend();
+                                }
+                              }}
+                              fullWidth
+                              autoFocus
+                              sx={inputSx}
+                            />
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={handleAddNewFriend}
+                              disabled={!newFriendName.trim()}
+                              sx={{ borderRadius: "20px", px: 2.5 }}
+                            >
+                              Add
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() => {
+                                setShowAddFriend(false);
+                                setNewFriendName("");
+                              }}
+                              sx={{ borderRadius: "20px" }}
+                            >
+                              Cancelar
+                            </Button>
+                          </Box>
+                        </Paper>
                       )}
-                    </Paper>
+
+                      {/* Preview do impacto no saldo */}
+                      {sharedWith && parsedAmount && (
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2.5,
+                            borderRadius: "20px",
+                            bgcolor: isDarkMode
+                              ? alpha(
+                                  type === "income"
+                                    ? theme.palette.success.main
+                                    : iOwe
+                                    ? theme.palette.error.main
+                                    : theme.palette.success.main,
+                                  0.1
+                                )
+                              : alpha(
+                                  type === "income"
+                                    ? theme.palette.success.main
+                                    : iOwe
+                                    ? theme.palette.error.main
+                                    : theme.palette.success.main,
+                                  0.06
+                                ),
+                            border: `1px solid ${alpha(
+                              type === "income"
+                                ? theme.palette.success.main
+                                : iOwe
+                                ? theme.palette.error.main
+                                : theme.palette.success.main,
+                              0.2
+                            )}`,
+                          }}
+                        >
+                          {type === "income" ? (
+                            // INCOME vinculada a amigo
+                            <>
+                              <Typography
+                                variant="body2"
+                                color="success.main"
+                                fontWeight={600}
+                              >
+                                💰 {sharedWith} está te pagando:
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ mt: 0.5 }}
+                              >
+                                "{description || "Transação"}"
+                              </Typography>
+                              <Typography
+                                variant="h5"
+                                fontWeight={700}
+                                color="success.main"
+                                sx={{ mt: 1 }}
+                              >
+                                +
+                                {formatCurrency(
+                                  iOwe ? parsedAmount : parsedAmount / 2
+                                )}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ mt: 1, display: "block" }}
+                              >
+                                {iOwe
+                                  ? `Valor integral será somado ao saldo de ${sharedWith}`
+                                  : `Metade do valor (conta dividida) será somada ao saldo de ${sharedWith}`}
+                              </Typography>
+                            </>
+                          ) : iOwe ? (
+                            // EXPENSE + Conta Única - Eu devo ao amigo
+                            <>
+                              <Typography
+                                variant="body2"
+                                color="error.main"
+                                fontWeight={600}
+                              >
+                                💸 Você está pagando para {sharedWith}:
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ mt: 0.5 }}
+                              >
+                                "{description || "Transação"}"
+                              </Typography>
+                              <Typography
+                                variant="h5"
+                                fontWeight={700}
+                                color="error.main"
+                                sx={{ mt: 1 }}
+                              >
+                                -{formatCurrency(parsedAmount)}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ mt: 1, display: "block" }}
+                              >
+                                Este valor será descontado do que {sharedWith}{" "}
+                                te deve
+                              </Typography>
+                            </>
+                          ) : (
+                            // EXPENSE + Conta Dividida - Amigo me deve metade
+                            <>
+                              <Typography
+                                variant="body2"
+                                color="success.main"
+                                fontWeight={600}
+                              >
+                                ✨ {sharedWith} te deve (metade):
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ mt: 0.5 }}
+                              >
+                                "{description || "Transação"}"
+                              </Typography>
+                              <Typography
+                                variant="h5"
+                                fontWeight={700}
+                                color="success.main"
+                                sx={{ mt: 1 }}
+                              >
+                                +{formatCurrency(parsedAmount / 2)}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ mt: 1, display: "block" }}
+                              >
+                                Receita de reembolso será criada automaticamente
+                              </Typography>
+                            </>
+                          )}
+                        </Paper>
+                      )}
+                    </Box>
                   )}
                 </Box>
-              )}
-            </Box>
               </Box>
             </Collapse>
 
@@ -1833,7 +2167,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   bgcolor: isDarkMode
                     ? alpha(theme.palette.background.default, 0.5)
                     : alpha("#000000", 0.02),
-                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.08)}`,
+                  border: `1px solid ${
+                    isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.08)
+                  }`,
                   overflow: "hidden",
                 }}
               >
@@ -1842,7 +2178,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   value={previewTab}
                   onChange={(_, newValue) => setPreviewTab(newValue)}
                   sx={{
-                    borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                    borderBottom: `1px solid ${
+                      isDarkMode
+                        ? alpha("#FFFFFF", 0.08)
+                        : alpha("#000000", 0.06)
+                    }`,
                     minHeight: 48,
                     "& .MuiTab-root": {
                       minHeight: 48,
@@ -1876,7 +2216,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           mb: 1,
                         }}
                       >
-                        <Typography variant="body2" color="warning.main" fontWeight={500}>
+                        <Typography
+                          variant="body2"
+                          color="warning.main"
+                          fontWeight={500}
+                        >
                           {installments}x de
                         </Typography>
                         <Typography
@@ -1884,7 +2228,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           fontWeight={700}
                           color="warning.main"
                         >
-                          {formatCurrency(parsedAmount! / parseInt(installments))}
+                          {formatCurrency(
+                            parsedAmount! / parseInt(installments)
+                          )}
                         </Typography>
                       </Box>
                       <Typography variant="caption" color="text.secondary">
@@ -1898,49 +2244,103 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     <Box>
                       {type === "income" ? (
                         <>
-                          <Typography variant="body2" color="success.main" fontWeight={600}>
+                          <Typography
+                            variant="body2"
+                            color="success.main"
+                            fontWeight={600}
+                          >
                             💰 {sharedWith} está te pagando:
                           </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 0.5 }}
+                          >
                             "{description || "Transação"}"
                           </Typography>
-                          <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
-                            +{formatCurrency(iOwe ? parsedAmount! : parsedAmount! / 2)}
+                          <Typography
+                            variant="h5"
+                            fontWeight={700}
+                            color="success.main"
+                            sx={{ mt: 1 }}
+                          >
+                            +
+                            {formatCurrency(
+                              iOwe ? parsedAmount! : parsedAmount! / 2
+                            )}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-                            {iOwe 
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ mt: 1, display: "block" }}
+                          >
+                            {iOwe
                               ? `Valor integral será somado ao saldo de ${sharedWith}`
-                              : `Metade do valor (conta dividida) será somada ao saldo de ${sharedWith}`
-                            }
+                              : `Metade do valor (conta dividida) será somada ao saldo de ${sharedWith}`}
                           </Typography>
                         </>
                       ) : iOwe ? (
                         <>
-                          <Typography variant="body2" color="error.main" fontWeight={600}>
+                          <Typography
+                            variant="body2"
+                            color="error.main"
+                            fontWeight={600}
+                          >
                             💸 Você está pagando para {sharedWith}:
                           </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 0.5 }}
+                          >
                             "{description || "Transação"}"
                           </Typography>
-                          <Typography variant="h5" fontWeight={700} color="error.main" sx={{ mt: 1 }}>
+                          <Typography
+                            variant="h5"
+                            fontWeight={700}
+                            color="error.main"
+                            sx={{ mt: 1 }}
+                          >
                             -{formatCurrency(parsedAmount!)}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-                            Este valor será descontado do que {sharedWith} te deve
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ mt: 1, display: "block" }}
+                          >
+                            Este valor será descontado do que {sharedWith} te
+                            deve
                           </Typography>
                         </>
                       ) : (
                         <>
-                          <Typography variant="body2" color="success.main" fontWeight={600}>
+                          <Typography
+                            variant="body2"
+                            color="success.main"
+                            fontWeight={600}
+                          >
                             ✨ {sharedWith} te deve (metade):
                           </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 0.5 }}
+                          >
                             "{description || "Transação"}"
                           </Typography>
-                          <Typography variant="h5" fontWeight={700} color="success.main" sx={{ mt: 1 }}>
+                          <Typography
+                            variant="h5"
+                            fontWeight={700}
+                            color="success.main"
+                            sx={{ mt: 1 }}
+                          >
                             +{formatCurrency(parsedAmount! / 2)}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ mt: 1, display: "block" }}
+                          >
                             Receita de reembolso será criada automaticamente
                           </Typography>
                         </>
@@ -1951,17 +2351,29 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   {/* Preview de Impacto no Saldo */}
                   {previewTab === "balance" && hasBalancePreview && (
                     <Box>
-                      <Typography 
-                        variant="caption" 
-                        color="text.secondary" 
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
                         fontWeight={600}
                         sx={{ display: "block", mb: 1.5 }}
                       >
                         IMPACTO NO SALDO
                       </Typography>
-                      
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
                           <Typography variant="body2" color="text.secondary">
                             Saldo atual
                           </Typography>
@@ -1969,50 +2381,77 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             {formatCurrency(currentBalance!)}
                           </Typography>
                         </Box>
-                        
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
                             {type === "expense" ? (
-                              <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
+                              <TrendingDownIcon
+                                sx={{ fontSize: 16, color: "error.main" }}
+                              />
                             ) : (
-                              <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
+                              <TrendingUpIcon
+                                sx={{ fontSize: 16, color: "success.main" }}
+                              />
                             )}
                             <Typography variant="body2" color="text.secondary">
                               Esta transação
                             </Typography>
                           </Box>
-                          <Typography 
-                            variant="body2" 
+                          <Typography
+                            variant="body2"
                             fontWeight={600}
-                            color={type === "expense" ? "error.main" : "success.main"}
+                            color={
+                              type === "expense" ? "error.main" : "success.main"
+                            }
                           >
-                            {type === "expense" ? "-" : "+"}{formatCurrency(parsedAmount!)}
+                            {type === "expense" ? "-" : "+"}
+                            {formatCurrency(parsedAmount!)}
                           </Typography>
                         </Box>
-                        
+
                         <Divider sx={{ my: 0.5 }} />
-                        
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
                           <Typography variant="body2" fontWeight={600}>
                             Saldo após
                           </Typography>
-                          <Typography 
-                            variant="h6" 
+                          <Typography
+                            variant="h6"
                             fontWeight={700}
-                            color={balanceAfter < 0 ? "error.main" : "text.primary"}
+                            color={
+                              balanceAfter < 0 ? "error.main" : "text.primary"
+                            }
                           >
                             {formatCurrency(balanceAfter)}
                           </Typography>
                         </Box>
-                        
+
                         {balanceAfter < 0 && (
-                          <Alert 
-                            severity="warning" 
-                            sx={{ 
-                              mt: 1, 
-                              py: 0.5, 
+                          <Alert
+                            severity="warning"
+                            sx={{
+                              mt: 1,
+                              py: 0.5,
                               borderRadius: "20px",
-                              "& .MuiAlert-message": { py: 0 }
+                              "& .MuiAlert-message": { py: 0 },
                             }}
                           >
                             <Typography variant="caption">
@@ -2026,7 +2465,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 </Box>
               </Paper>
             )}
-
           </Box>
         </Box>
 
@@ -2036,13 +2474,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             position: "sticky",
             bottom: 0,
             p: 2.5,
-            pb: isMobile ? "calc(20px + env(safe-area-inset-bottom, 0px))" : 2.5,
+            pb: isMobile
+              ? "calc(20px + env(safe-area-inset-bottom, 0px))"
+              : 2.5,
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.default, 0.95)
               : alpha("#FAFBFC", 0.98),
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
-            borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.04)}`,
+            borderTop: `1px solid ${
+              isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.04)
+            }`,
             boxShadow: isDarkMode
               ? `0 -8px 32px -8px ${alpha("#000000", 0.3)}`
               : `0 -8px 32px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
@@ -2051,7 +2493,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           }}
         >
           {!isMobile && (
-            <NixButton size="medium" variant="soft" color="gray" onClick={onClose} type="button">
+            <NixButton
+              size="medium"
+              variant="soft"
+              color="gray"
+              onClick={onClose}
+              type="button"
+            >
               Cancelar
             </NixButton>
           )}
@@ -2062,7 +2510,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             color="purple"
             style={{ flex: 1 }}
           >
-            <SaveIcon /> {editTransaction ? "Salvar Alterações" : "Criar Transação"}
+            <SaveIcon />{" "}
+            {editTransaction ? "Salvar Alterações" : "Criar Transação"}
           </NixButton>
         </Box>
       </form>

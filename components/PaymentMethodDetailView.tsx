@@ -32,6 +32,7 @@ import {
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
+  Add as AddIcon,
   CreditCard as CreditCardIcon,
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
@@ -51,7 +52,7 @@ import {
   getMobileCardSx,
 } from "../utils/tableStyles";
 import { Transaction } from "../types";
-import { MONTHS } from "../constants";
+import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../constants";
 import { ColorsContext } from "../App";
 import DateFilter from "./DateFilter";
 
@@ -62,6 +63,7 @@ interface PaymentMethodDetailViewProps {
   selectedYear: number;
   onDateChange: (month: number, year: number) => void;
   onBack: () => void;
+  onNewTransaction?: () => void;
   onPayAll?: (paymentMethod: string, month: number, year: number) => void;
   onTogglePaid?: (id: string, isPaid: boolean) => void;
   onEdit?: (transaction: Transaction) => void;
@@ -75,6 +77,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   selectedYear,
   onDateChange,
   onBack,
+  onNewTransaction,
   onPayAll,
   onTogglePaid,
   onEdit,
@@ -87,10 +90,14 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   const colors = getPaymentMethodColor(paymentMethod);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
+  const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
+    "all"
+  );
   const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">("all");
-  
+  const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">(
+    "all"
+  );
+
   // Estado para menu de ações mobile
   const [mobileActionAnchor, setMobileActionAnchor] = useState<{
     element: HTMLElement | null;
@@ -104,7 +111,8 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
     const targetYear = selectedYear;
 
     transactions.forEach((t) => {
-      if (!t.isRecurring || !t.frequency || t.paymentMethod !== paymentMethod) return;
+      if (!t.isRecurring || !t.frequency || t.paymentMethod !== paymentMethod)
+        return;
       if (t.installments && t.installments > 1) return;
 
       const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
@@ -112,7 +120,8 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
 
       if (targetDate < new Date(origYear, origMonth - 1, 1)) return;
 
-      const isOriginalMonth = origYear === targetYear && origMonth === targetMonth;
+      const isOriginalMonth =
+        origYear === targetYear && origMonth === targetMonth;
       if (isOriginalMonth) return;
 
       let shouldAppear = false;
@@ -124,9 +133,16 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
       }
 
       if (shouldAppear) {
-        const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
+        const daysInTargetMonth = new Date(
+          targetYear,
+          targetMonth,
+          0
+        ).getDate();
         const adjustedDay = Math.min(origDay, daysInTargetMonth);
-        const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+        const virtualDate = `${targetYear}-${String(targetMonth).padStart(
+          2,
+          "0"
+        )}-${String(adjustedDay).padStart(2, "0")}`;
 
         // Verifica se esta data está no excluded_dates da transação original
         const excludedDates = t.excludedDates || [];
@@ -136,7 +152,10 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
 
         virtualTransactions.push({
           ...t,
-          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(2, "0")}`,
+          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
+            2,
+            "0"
+          )}`,
           date: virtualDate,
           isVirtual: true,
           originalTransactionId: t.id,
@@ -162,14 +181,18 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
         const [y, m] = t.date.split("-");
         const matchesDate =
           parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
-        
+
         if (!matchesDate || t.paymentMethod !== paymentMethod) return false;
-        
+
         // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
-        if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+        if (
+          t.isRecurring &&
+          !t.isVirtual &&
+          t.excludedDates?.includes(t.date)
+        ) {
           return false;
         }
-        
+
         return true;
       }),
       ...generateRecurringForMethod(),
@@ -181,7 +204,8 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
           t.category.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = filterType === "all" || t.type === filterType;
-        const matchesCategory = filterCategory === "all" || t.category === filterCategory;
+        const matchesCategory =
+          filterCategory === "all" || t.category === filterCategory;
         const matchesPaid =
           filterPaid === "all" ||
           (filterPaid === "paid" && t.isPaid) ||
@@ -189,7 +213,16 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
         return matchesSearch && matchesType && matchesCategory && matchesPaid;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, selectedMonth, selectedYear, paymentMethod, searchTerm, filterType, filterCategory, filterPaid]);
+  }, [
+    transactions,
+    selectedMonth,
+    selectedYear,
+    paymentMethod,
+    searchTerm,
+    filterType,
+    filterCategory,
+    filterPaid,
+  ]);
 
   // Calcula transações não pagas (todas, incluindo receitas e virtuais)
   const unpaidTransactions = useMemo(() => {
@@ -202,7 +235,10 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   }, [unpaidTransactions]);
 
   const unpaidCount = unpaidTransactions.length;
-  const unpaidExpenseAmount = unpaidExpenses.reduce((sum, t) => sum + (t.amount || 0), 0);
+  const unpaidExpenseAmount = unpaidExpenses.reduce(
+    (sum, t) => sum + (t.amount || 0),
+    0
+  );
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -297,6 +333,16 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             onDateChange={onDateChange}
             showIcon
           />
+          {!isMobile && onNewTransaction && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onNewTransaction}
+              sx={CREATE_TRANSACTION_BUTTON.sx}
+            >
+              {CREATE_TRANSACTION_BUTTON.label}
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -311,8 +357,14 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             flexWrap: "wrap",
             gap: 2,
             background: isDarkMode
-              ? `linear-gradient(135deg, ${alpha("#f59e0b", 0.15)} 0%, ${alpha("#f59e0b", 0.05)} 100%)`
-              : `linear-gradient(135deg, ${alpha("#f59e0b", 0.1)} 0%, ${alpha("#f59e0b", 0.02)} 100%)`,
+              ? `linear-gradient(135deg, ${alpha("#f59e0b", 0.15)} 0%, ${alpha(
+                  "#f59e0b",
+                  0.05
+                )} 100%)`
+              : `linear-gradient(135deg, ${alpha("#f59e0b", 0.1)} 0%, ${alpha(
+                  "#f59e0b",
+                  0.02
+                )} 100%)`,
             border: `1px solid ${alpha("#f59e0b", 0.3)}`,
           }}
         >
@@ -328,10 +380,15 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             </Box>
             <Box>
               <Typography variant="subtitle1" fontWeight={600}>
-                {unpaidCount === 1 ? "1 transação não paga" : `${unpaidCount} transações não pagas`}
+                {unpaidCount === 1
+                  ? "1 transação não paga"
+                  : `${unpaidCount} transações não pagas`}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Total a pagar: <strong style={{ color: "#f59e0b" }}>{formatCurrency(unpaidExpenseAmount)}</strong>
+                Total a pagar:{" "}
+                <strong style={{ color: "#f59e0b" }}>
+                  {formatCurrency(unpaidExpenseAmount)}
+                </strong>
               </Typography>
             </Box>
           </Box>
@@ -363,8 +420,14 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             alignItems: "center",
             gap: 2,
             background: isDarkMode
-              ? `linear-gradient(135deg, ${alpha("#10b981", 0.15)} 0%, ${alpha("#10b981", 0.05)} 100%)`
-              : `linear-gradient(135deg, ${alpha("#10b981", 0.1)} 0%, ${alpha("#10b981", 0.02)} 100%)`,
+              ? `linear-gradient(135deg, ${alpha("#10b981", 0.15)} 0%, ${alpha(
+                  "#10b981",
+                  0.05
+                )} 100%)`
+              : `linear-gradient(135deg, ${alpha("#10b981", 0.1)} 0%, ${alpha(
+                  "#10b981",
+                  0.02
+                )} 100%)`,
             border: `1px solid ${alpha("#10b981", 0.3)}`,
           }}
         >
@@ -389,8 +452,11 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           <Paper
             sx={{
               p: 2,
-              bgcolor: balance >= 0 ? alpha("#10b981", 0.08) : alpha("#ef4444", 0.08),
-              border: `1px solid ${balance >= 0 ? alpha("#10b981", 0.2) : alpha("#ef4444", 0.2)}`,
+              bgcolor:
+                balance >= 0 ? alpha("#10b981", 0.08) : alpha("#ef4444", 0.08),
+              border: `1px solid ${
+                balance >= 0 ? alpha("#10b981", 0.2) : alpha("#ef4444", 0.2)
+              }`,
             }}
           >
             <Typography
@@ -479,7 +545,9 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           <Select
             value={filterCategory}
             label="Category"
-            onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}
+            onChange={(e: SelectChangeEvent) =>
+              setFilterCategory(e.target.value)
+            }
           >
             <MenuItem value="all">All</MenuItem>
             {availableCategories.map((cat) => (
@@ -523,20 +591,46 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     overflow: "hidden",
                     opacity: t.isPaid !== false ? 0.6 : 1,
                     background: isDarkMode
-                      ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                      : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                      ? `linear-gradient(135deg, ${alpha(
+                          theme.palette.background.paper,
+                          0.7
+                        )} 0%, ${alpha(
+                          theme.palette.background.paper,
+                          0.5
+                        )} 100%)`
+                      : `linear-gradient(135deg, ${alpha(
+                          "#FFFFFF",
+                          0.85
+                        )} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
                     backdropFilter: "blur(12px)",
-                    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.05)}`,
+                    border: `1px solid ${
+                      isDarkMode
+                        ? alpha("#FFFFFF", 0.06)
+                        : alpha("#000000", 0.05)
+                    }`,
                     borderLeft: `3px solid ${accentColor}`,
                     borderRadius: "14px",
                     transition: "all 0.15s ease-in-out",
                   }}
                 >
-                  <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 }, display: "flex", alignItems: "flex-start", gap: 1 }}>
+                  <CardContent
+                    sx={{
+                      p: 1.5,
+                      "&:last-child": { pb: 1.5 },
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 1,
+                    }}
+                  >
                     {/* Checkbox */}
                     <Checkbox
                       checked={t.isPaid !== false}
-                      onChange={(e) => handleTogglePaid({ ...t, isPaid: e.target.checked } as Transaction)}
+                      onChange={(e) =>
+                        handleTogglePaid({
+                          ...t,
+                          isPaid: e.target.checked,
+                        } as Transaction)
+                      }
                       size="small"
                       color={isIncome ? "success" : "error"}
                       sx={{ mt: -0.5, ml: -1 }}
@@ -552,31 +646,81 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                         justifyContent: "center",
                         flexShrink: 0,
                         background: isDarkMode
-                          ? `linear-gradient(135deg, ${alpha(accentColor, 0.2)} 0%, ${alpha(accentColor, 0.1)} 100%)`
-                          : `linear-gradient(135deg, ${isIncome ? "#D1FAE5" : "#FEE2E2"} 0%, ${alpha(isIncome ? "#D1FAE5" : "#FEE2E2", 0.6)} 100%)`,
-                        border: `1px solid ${isDarkMode ? alpha(accentColor, 0.2) : alpha(accentColor, 0.15)}`,
+                          ? `linear-gradient(135deg, ${alpha(
+                              accentColor,
+                              0.2
+                            )} 0%, ${alpha(accentColor, 0.1)} 100%)`
+                          : `linear-gradient(135deg, ${
+                              isIncome ? "#D1FAE5" : "#FEE2E2"
+                            } 0%, ${alpha(
+                              isIncome ? "#D1FAE5" : "#FEE2E2",
+                              0.6
+                            )} 100%)`,
+                        border: `1px solid ${
+                          isDarkMode
+                            ? alpha(accentColor, 0.2)
+                            : alpha(accentColor, 0.15)
+                        }`,
                       }}
                     >
                       {isIncome ? (
-                        <ArrowUpIcon sx={{ fontSize: 16, color: accentColor }} />
+                        <ArrowUpIcon
+                          sx={{ fontSize: 16, color: accentColor }}
+                        />
                       ) : (
-                        <ArrowDownIcon sx={{ fontSize: 16, color: accentColor }} />
+                        <ArrowDownIcon
+                          sx={{ fontSize: 16, color: accentColor }}
+                        />
                       )}
                     </Box>
                     {/* Content */}
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
-                        <Typography variant="body2" fontWeight={600} sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          gap: 1,
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          sx={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           {t.description}
                         </Typography>
-                        <Typography variant="body2" fontWeight={700} color={isIncome ? "success.main" : "error.main"} sx={{ flexShrink: 0 }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={700}
+                          color={isIncome ? "success.main" : "error.main"}
+                          sx={{ flexShrink: 0 }}
+                        >
                           {isIncome ? "+" : "-"} {formatCurrency(t.amount || 0)}
                         </Typography>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5, flexWrap: "wrap" }}>
-                        <Typography variant="caption" color="text.secondary">{formatDate(t.date)}</Typography>
-                        <Typography variant="caption" color="text.disabled">•</Typography>
-                        <Typography variant="caption" color="text.secondary">{t.category}</Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mt: 0.5,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDate(t.date)}
+                        </Typography>
+                        <Typography variant="caption" color="text.disabled">
+                          •
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {t.category}
+                        </Typography>
                       </Box>
                       <TransactionTags transaction={t} />
                     </Box>
@@ -584,7 +728,12 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     {(onEdit || onDelete) && (
                       <IconButton
                         size="small"
-                        onClick={(e) => setMobileActionAnchor({ element: e.currentTarget, transaction: t })}
+                        onClick={(e) =>
+                          setMobileActionAnchor({
+                            element: e.currentTarget,
+                            transaction: t,
+                          })
+                        }
                         sx={{ color: "text.secondary", mt: -0.5, mr: -1 }}
                       >
                         <MoreVertIcon fontSize="small" />
@@ -595,7 +744,10 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               );
             })
           ) : (
-            <Card elevation={0} sx={{ p: 4, textAlign: "center", borderRadius: "16px" }}>
+            <Card
+              elevation={0}
+              sx={{ p: 4, textAlign: "center", borderRadius: "16px" }}
+            >
               <Typography color="text.secondary" fontStyle="italic">
                 No transactions with {paymentMethod} for this period.
               </Typography>
@@ -603,8 +755,21 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           )}
           {/* Total Summary for Mobile */}
           {filteredTransactions.length > 0 && (
-            <Paper sx={{ p: 2, borderRadius: "14px", bgcolor: alpha(colors.primary, 0.05), border: `1px solid ${alpha(colors.primary, 0.15)}` }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Paper
+              sx={{
+                p: 2,
+                borderRadius: "14px",
+                bgcolor: alpha(colors.primary, 0.05),
+                border: `1px solid ${alpha(colors.primary, 0.15)}`,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <Typography variant="body2" fontWeight={600}>
                   Total ({filteredTransactions.length} transactions)
                 </Typography>
@@ -622,196 +787,246 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
         </Box>
       ) : (
         // Desktop Table View
-        <TableContainer component={Paper} sx={getTableContainerSx(theme, isDarkMode)}>
+        <TableContainer
+          component={Paper}
+          sx={getTableContainerSx(theme, isDarkMode)}
+        >
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Date</TableCell>
-                <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Description</TableCell>
-                <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Category</TableCell>
-                <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>
+                <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                  Date
+                </TableCell>
+                <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                  Description
+                </TableCell>
+                <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                  Category
+                </TableCell>
+                <TableCell
+                  sx={{
+                    ...getHeaderCellSx(theme, isDarkMode),
+                    textAlign: "center",
+                  }}
+                >
                   Type
                 </TableCell>
-                <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>
+                <TableCell
+                  sx={{
+                    ...getHeaderCellSx(theme, isDarkMode),
+                    textAlign: "center",
+                  }}
+                >
                   Status
                 </TableCell>
-                <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>
+                <TableCell
+                  sx={{
+                    ...getHeaderCellSx(theme, isDarkMode),
+                    textAlign: "right",
+                  }}
+                >
                   Amount
                 </TableCell>
                 {(onEdit || onDelete) && (
-                  <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center", width: 100 }}>
+                  <TableCell
+                    sx={{
+                      ...getHeaderCellSx(theme, isDarkMode),
+                      textAlign: "center",
+                      width: 100,
+                    }}
+                  >
                     Actions
                   </TableCell>
                 )}
               </TableRow>
             </TableHead>
             <TableBody>
-            {filteredTransactions.length > 0 ? (
-              filteredTransactions.map((t, index) => (
-                <TableRow
-                  key={t.id}
-                  sx={{
-                    ...getRowSx(theme, isDarkMode, index),
-                    opacity: t.isPaid ? 0.7 : 1,
-                  }}
-                >
-                  <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
-                    {formatDate(t.date)}
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: "flex", flexDirection: "column" }}>
-                      <Typography
-                        variant="body2"
-                        fontWeight={500}
-                        sx={{
-                          textDecoration: t.isPaid ? "line-through" : "none",
-                          color: t.isPaid ? "text.secondary" : "text.primary",
-                        }}
-                      >
-                        {t.description}
-                      </Typography>
-                      {/* Tags - Componente padronizado em formato pílula */}
-                      <TransactionTags transaction={t} showShared={false} />
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={t.category} size="small" variant="outlined" />
-                  </TableCell>
-                  <TableCell sx={{ textAlign: "center" }}>
-                    {t.type === "income" ? (
-                      <ArrowUpIcon color="success" />
-                    ) : (
-                      <ArrowDownIcon color="error" />
-                    )}
-                  </TableCell>
-                  <TableCell sx={{ textAlign: "center" }}>
-                    <Tooltip title={t.isPaid ? "Marcar como não pago" : "Marcar como pago"}>
-                      <IconButton
+              {filteredTransactions.length > 0 ? (
+                filteredTransactions.map((t, index) => (
+                  <TableRow
+                    key={t.id}
+                    sx={{
+                      ...getRowSx(theme, isDarkMode, index),
+                      opacity: t.isPaid ? 0.7 : 1,
+                    }}
+                  >
+                    <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
+                      {formatDate(t.date)}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", flexDirection: "column" }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={500}
+                          sx={{
+                            textDecoration: t.isPaid ? "line-through" : "none",
+                            color: t.isPaid ? "text.secondary" : "text.primary",
+                          }}
+                        >
+                          {t.description}
+                        </Typography>
+                        {/* Tags - Componente padronizado em formato pílula */}
+                        <TransactionTags transaction={t} showShared={false} />
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={t.category}
                         size="small"
-                        onClick={() => handleTogglePaid(t)}
-                        sx={{
-                          color: t.isPaid ? "#10b981" : "text.disabled",
-                          "&:hover": {
-                            bgcolor: t.isPaid
-                              ? alpha("#ef4444", 0.1)
-                              : alpha("#10b981", 0.1),
-                          },
-                        }}
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "center" }}>
+                      {t.type === "income" ? (
+                        <ArrowUpIcon color="success" />
+                      ) : (
+                        <ArrowDownIcon color="error" />
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "center" }}>
+                      <Tooltip
+                        title={
+                          t.isPaid ? "Marcar como não pago" : "Marcar como pago"
+                        }
                       >
-                        {t.isPaid ? (
-                          <CheckCircleIcon fontSize="small" />
+                        <IconButton
+                          size="small"
+                          onClick={() => handleTogglePaid(t)}
+                          sx={{
+                            color: t.isPaid ? "#10b981" : "text.disabled",
+                            "&:hover": {
+                              bgcolor: t.isPaid
+                                ? alpha("#ef4444", 0.1)
+                                : alpha("#10b981", 0.1),
+                            },
+                          }}
+                        >
+                          {t.isPaid ? (
+                            <CheckCircleIcon fontSize="small" />
+                          ) : (
+                            <UnpaidIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        textAlign: "right",
+                        fontFamily: "monospace",
+                        fontWeight: 600,
+                        color: t.type === "income" ? "#10b981" : "#ef4444",
+                      }}
+                    >
+                      {t.type === "expense" && "- "}
+                      {formatCurrency(t.amount || 0)}
+                    </TableCell>
+                    {(onEdit || onDelete) && (
+                      <TableCell sx={{ textAlign: "center" }}>
+                        {isMobile ? (
+                          <IconButton
+                            size="small"
+                            onClick={(e) =>
+                              setMobileActionAnchor({
+                                element: e.currentTarget,
+                                transaction: t,
+                              })
+                            }
+                          >
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
                         ) : (
-                          <UnpaidIcon fontSize="small" />
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            {onEdit && (
+                              <Tooltip
+                                title={
+                                  t.isVirtual
+                                    ? "Editar recorrência"
+                                    : t.isRecurring
+                                    ? "Editar transação recorrente"
+                                    : t.installments && t.installments > 1
+                                    ? "Editar parcelas"
+                                    : "Editar"
+                                }
+                              >
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEdit(t)}
+                                  sx={{
+                                    color: colors.primary,
+                                    "&:hover": {
+                                      bgcolor: alpha(colors.primary, 0.1),
+                                    },
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            {onDelete && !t.isVirtual && (
+                              <Tooltip title="Excluir">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDelete(t)}
+                                  sx={{
+                                    color: "#ef4444",
+                                    "&:hover": {
+                                      bgcolor: alpha("#ef4444", 0.1),
+                                    },
+                                  }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </Box>
                         )}
-                      </IconButton>
-                    </Tooltip>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={onEdit || onDelete ? 7 : 6}
+                    sx={{ textAlign: "center", py: 6 }}
+                  >
+                    <Typography color="text.secondary" fontStyle="italic">
+                      No transactions with {paymentMethod} for this period.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+            {filteredTransactions.length > 0 && (
+              <TableFooter>
+                <TableRow sx={{ bgcolor: "action.hover" }}>
+                  <TableCell
+                    colSpan={5}
+                    sx={{ textAlign: "right", fontWeight: 600 }}
+                  >
+                    Total ({filteredTransactions.length} transactions):
                   </TableCell>
                   <TableCell
                     sx={{
                       textAlign: "right",
                       fontFamily: "monospace",
                       fontWeight: 600,
-                      color: t.type === "income" ? "#10b981" : "#ef4444",
+                      color: balance >= 0 ? "#10b981" : "#ef4444",
                     }}
                   >
-                    {t.type === "expense" && "- "}
-                    {formatCurrency(t.amount || 0)}
+                    {formatCurrency(balance)}
                   </TableCell>
-                  {(onEdit || onDelete) && (
-                    <TableCell sx={{ textAlign: "center" }}>
-                      {isMobile ? (
-                        <IconButton
-                          size="small"
-                          onClick={(e) =>
-                            setMobileActionAnchor({
-                              element: e.currentTarget,
-                              transaction: t,
-                            })
-                          }
-                        >
-                          <MoreVertIcon fontSize="small" />
-                        </IconButton>
-                      ) : (
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
-                          {onEdit && (
-                            <Tooltip title={
-                              t.isVirtual 
-                                ? "Editar recorrência" 
-                                : t.isRecurring 
-                                  ? "Editar transação recorrente"
-                                  : t.installments && t.installments > 1
-                                    ? "Editar parcelas"
-                                    : "Editar"
-                            }>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleEdit(t)}
-                                sx={{
-                                  color: colors.primary,
-                                  "&:hover": {
-                                    bgcolor: alpha(colors.primary, 0.1),
-                                  },
-                                }}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                          {onDelete && !t.isVirtual && (
-                            <Tooltip title="Excluir">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleDelete(t)}
-                                sx={{
-                                  color: "#ef4444",
-                                  "&:hover": {
-                                    bgcolor: alpha("#ef4444", 0.1),
-                                  },
-                                }}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Box>
-                      )}
-                    </TableCell>
-                  )}
+                  {(onEdit || onDelete) && <TableCell />}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={onEdit || onDelete ? 7 : 6} sx={{ textAlign: "center", py: 6 }}>
-                  <Typography color="text.secondary" fontStyle="italic">
-                    No transactions with {paymentMethod} for this period.
-                  </Typography>
-                </TableCell>
-              </TableRow>
+              </TableFooter>
             )}
-          </TableBody>
-          {filteredTransactions.length > 0 && (
-            <TableFooter>
-              <TableRow sx={{ bgcolor: "action.hover" }}>
-                <TableCell
-                  colSpan={5}
-                  sx={{ textAlign: "right", fontWeight: 600 }}
-                >
-                  Total ({filteredTransactions.length} transactions):
-                </TableCell>
-                <TableCell
-                  sx={{
-                    textAlign: "right",
-                    fontFamily: "monospace",
-                    fontWeight: 600,
-                    color: balance >= 0 ? "#10b981" : "#ef4444",
-                  }}
-                >
-                  {formatCurrency(balance)}
-                </TableCell>
-                {(onEdit || onDelete) && <TableCell />}
-              </TableRow>
-            </TableFooter>
-          )}
           </Table>
         </TableContainer>
       )}
@@ -820,7 +1035,9 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
       <Menu
         anchorEl={mobileActionAnchor.element}
         open={Boolean(mobileActionAnchor.element)}
-        onClose={() => setMobileActionAnchor({ element: null, transaction: null })}
+        onClose={() =>
+          setMobileActionAnchor({ element: null, transaction: null })
+        }
         PaperProps={{
           sx: {
             borderRadius: "20px",
@@ -841,13 +1058,14 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               <EditIcon fontSize="small" sx={{ color: colors.primary }} />
             </ListItemIcon>
             <ListItemText>
-              {mobileActionAnchor.transaction?.isVirtual 
-                ? "Editar Recorrência" 
-                : mobileActionAnchor.transaction?.isRecurring 
-                  ? "Editar Recorrente"
-                  : mobileActionAnchor.transaction?.installments && mobileActionAnchor.transaction.installments > 1
-                    ? "Editar Parcelas"
-                    : "Editar"}
+              {mobileActionAnchor.transaction?.isVirtual
+                ? "Editar Recorrência"
+                : mobileActionAnchor.transaction?.isRecurring
+                ? "Editar Recorrente"
+                : mobileActionAnchor.transaction?.installments &&
+                  mobileActionAnchor.transaction.installments > 1
+                ? "Editar Parcelas"
+                : "Editar"}
             </ListItemText>
           </MenuItem>
         )}

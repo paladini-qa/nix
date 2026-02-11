@@ -58,7 +58,7 @@ import SearchBar from "./SearchBar";
 import SwipeableTransactionCard from "./SwipeableTransactionCard";
 import PullToRefreshIndicator from "./PullToRefreshIndicator";
 import { Transaction } from "../types";
-import { MONTHS } from "../constants";
+import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../constants";
 import DateFilter from "./DateFilter";
 import { useNotification } from "../contexts";
 import { usePullToRefresh } from "../hooks";
@@ -79,7 +79,13 @@ interface TransactionsViewProps {
 }
 
 type SortDirection = "asc" | "desc";
-type SortColumn = "date" | "description" | "category" | "paymentMethod" | "type" | "amount";
+type SortColumn =
+  | "date"
+  | "description"
+  | "category"
+  | "paymentMethod"
+  | "type"
+  | "amount";
 
 interface SortConfig {
   column: SortColumn;
@@ -104,10 +110,16 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   // Estados de busca e filtros
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
+  const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
+    "all"
+  );
   const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [filterShared, setFilterShared] = useState<"all" | "shared" | "not_shared">("all");
-  const [filterPaymentStatus, setFilterPaymentStatus] = useState<"all" | "paid" | "pending">("all");
+  const [filterShared, setFilterShared] = useState<
+    "all" | "shared" | "not_shared"
+  >("all");
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState<
+    "all" | "paid" | "pending"
+  >("all");
   const [showFilters, setShowFilters] = useState(false);
 
   // Estado de ordenação
@@ -148,7 +160,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       if (targetDate < new Date(origYear, origMonth - 1, 1)) return;
 
       // Não duplica no mês original
-      const isOriginalMonth = origYear === targetYear && origMonth === targetMonth;
+      const isOriginalMonth =
+        origYear === targetYear && origMonth === targetMonth;
       if (isOriginalMonth) return;
 
       let shouldAppear = false;
@@ -160,23 +173,36 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       }
 
       if (shouldAppear) {
-        const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
+        const daysInTargetMonth = new Date(
+          targetYear,
+          targetMonth,
+          0
+        ).getDate();
         const adjustedDay = Math.min(origDay, daysInTargetMonth);
-        const virtualDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+        const virtualDate = `${targetYear}-${String(targetMonth).padStart(
+          2,
+          "0"
+        )}-${String(adjustedDay).padStart(2, "0")}`;
 
         // Verifica se já existe uma transação materializada para esta data
         // (transação com mesma descrição, categoria, valor e data, mas não recorrente)
         const hasMaterialized = transactions.some((mt) => {
           if (mt.isRecurring || mt.isVirtual) return false;
           if (mt.id === t.id) return false;
-          
+
           const sameDescription = mt.description === t.description;
           const sameCategory = mt.category === t.category;
           const sameAmount = mt.amount === t.amount;
           const sameDate = mt.date === virtualDate;
           const sameType = mt.type === t.type;
-          
-          return sameDescription && sameCategory && sameAmount && sameDate && sameType;
+
+          return (
+            sameDescription &&
+            sameCategory &&
+            sameAmount &&
+            sameDate &&
+            sameType
+          );
         });
 
         // Se já existe materializada, não gera a virtual
@@ -190,7 +216,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
         virtualTransactions.push({
           ...t,
-          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(2, "0")}`,
+          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
+            2,
+            "0"
+          )}`,
           date: virtualDate,
           isVirtual: true,
           originalTransactionId: t.id,
@@ -206,21 +235,27 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   const allTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
       const [y, m] = t.date.split("-");
-      const isCurrentMonth = parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
-      
+      const isCurrentMonth =
+        parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+
       if (!isCurrentMonth) return false;
-      
+
       // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
       // Isso acontece quando o usuário exclui a primeira ocorrência com "apenas esta"
       if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
         return false; // Não exibe a transação recorrente se sua própria data foi excluída
       }
-      
+
       return true;
     });
 
     return [...currentMonthTransactions, ...generateRecurringTransactions];
-  }, [transactions, selectedMonth, selectedYear, generateRecurringTransactions]);
+  }, [
+    transactions,
+    selectedMonth,
+    selectedYear,
+    generateRecurringTransactions,
+  ]);
 
   // Extrai categorias únicas das transações
   const availableCategories = useMemo(() => {
@@ -257,7 +292,13 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         filterPaymentStatus === "all" ||
         (filterPaymentStatus === "paid" && t.isPaid !== false) ||
         (filterPaymentStatus === "pending" && t.isPaid === false);
-      return matchesSearch && matchesType && matchesCategory && matchesShared && matchesPaymentStatus;
+      return (
+        matchesSearch &&
+        matchesType &&
+        matchesCategory &&
+        matchesShared &&
+        matchesPaymentStatus
+      );
     });
 
     // Ordenação
@@ -321,7 +362,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   const handleSort = useCallback((column: SortColumn) => {
     setSortConfig((prev) => ({
       column,
-      direction: prev.column === column && prev.direction === "asc" ? "desc" : "asc",
+      direction:
+        prev.column === column && prev.direction === "asc" ? "desc" : "asc",
     }));
   }, []);
 
@@ -568,11 +610,17 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     bgcolor: isDarkMode
       ? alpha(theme.palette.background.default, 0.5)
       : alpha(theme.palette.grey[50], 0.95),
-    borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.08)}`,
+    borderBottom: `1px solid ${
+      isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.08)
+    }`,
     whiteSpace: "nowrap" as const,
   };
 
-  const renderSortableHeader = (column: SortColumn, label: string, width?: number | string) => (
+  const renderSortableHeader = (
+    column: SortColumn,
+    label: string,
+    width?: number | string
+  ) => (
     <TableCell sx={{ ...headerCellSx, width }}>
       <TableSortLabel
         active={sortConfig.column === column}
@@ -582,7 +630,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         sx={{
           "& .MuiTableSortLabel-icon": {
             opacity: sortConfig.column === column ? 1 : 0.4,
-            color: sortConfig.column === column ? "primary.main" : "text.disabled",
+            color:
+              sortConfig.column === column ? "primary.main" : "text.disabled",
           },
           "&:hover": {
             color: "primary.main",
@@ -598,9 +647,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   // Estilos de linha - transações recorrentes/auto usam apenas tags para identificação
   const getRowSx = (_t: Transaction, index: number) => ({
     transition: "all 0.15s ease",
-    bgcolor: index % 2 === 0
-      ? "transparent"
-      : isDarkMode
+    bgcolor:
+      index % 2 === 0
+        ? "transparent"
+        : isDarkMode
         ? alpha(theme.palette.action.hover, 0.08)
         : alpha(theme.palette.action.hover, 0.06),
     "&:hover": {
@@ -609,16 +659,18 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         : alpha(theme.palette.primary.main, 0.04),
     },
     "& td": {
-      borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.04) : alpha("#000000", 0.04)}`,
+      borderBottom: `1px solid ${
+        isDarkMode ? alpha("#FFFFFF", 0.04) : alpha("#000000", 0.04)
+      }`,
       py: 1.5,
     },
   });
 
   return (
     <Box
-      sx={{ 
-        display: "flex", 
-        flexDirection: "column", 
+      sx={{
+        display: "flex",
+        flexDirection: "column",
         gap: isMobile ? 2 : 3,
         // Extra padding para FABs + bottom navigation (64px + safe area + FAB height + margem)
         pb: { xs: "180px", md: 0 },
@@ -644,7 +696,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               All Transactions
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {MONTHS[selectedMonth]} {selectedYear} • {filteredData.length} transactions
+              {MONTHS[selectedMonth]} {selectedYear} • {filteredData.length}{" "}
+              transactions
             </Typography>
           </Box>
 
@@ -654,8 +707,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               variant="contained"
               startIcon={<AddIcon />}
               onClick={onNewTransaction}
+              sx={CREATE_TRANSACTION_BUTTON.sx}
             >
-              Transaction
+              {CREATE_TRANSACTION_BUTTON.label}
             </Button>
           )}
         </Box>
@@ -671,20 +725,40 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               position: "relative",
               overflow: "hidden",
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+                ? `linear-gradient(135deg, ${alpha(
+                    theme.palette.background.paper,
+                    0.7
+                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
+                    "#FFFFFF",
+                    0.6
+                  )} 100%)`,
               backdropFilter: "blur(16px)",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              border: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+              }`,
               boxShadow: isDarkMode
-                ? `0 6px 24px -6px ${alpha(balance >= 0 ? "#059669" : "#DC2626", 0.2)}`
-                : `0 6px 24px -6px ${alpha(balance >= 0 ? "#059669" : "#DC2626", 0.15)}`,
+                ? `0 6px 24px -6px ${alpha(
+                    balance >= 0 ? "#059669" : "#DC2626",
+                    0.2
+                  )}`
+                : `0 6px 24px -6px ${alpha(
+                    balance >= 0 ? "#059669" : "#DC2626",
+                    0.15
+                  )}`,
               borderRadius: "16px",
               transition: "all 0.2s ease-in-out",
               "&:hover": {
                 transform: "translateY(-2px)",
                 boxShadow: isDarkMode
-                  ? `0 10px 32px -6px ${alpha(balance >= 0 ? "#059669" : "#DC2626", 0.3)}`
-                  : `0 10px 32px -6px ${alpha(balance >= 0 ? "#059669" : "#DC2626", 0.25)}`,
+                  ? `0 10px 32px -6px ${alpha(
+                      balance >= 0 ? "#059669" : "#DC2626",
+                      0.3
+                    )}`
+                  : `0 10px 32px -6px ${alpha(
+                      balance >= 0 ? "#059669" : "#DC2626",
+                      0.25
+                    )}`,
               },
               "&::before": {
                 content: '""',
@@ -693,11 +767,12 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: balance >= 0
-                  ? isDarkMode
-                    ? "linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%)"
-                    : "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
-                  : isDarkMode
+                background:
+                  balance >= 0
+                    ? isDarkMode
+                      ? "linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%)"
+                      : "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
+                    : isDarkMode
                     ? "linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(239, 68, 68, 0.06) 100%)"
                     : "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
                 pointerEvents: "none",
@@ -757,9 +832,24 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     justifyContent: "center",
                     flexShrink: 0,
                     background: isDarkMode
-                      ? `linear-gradient(135deg, ${alpha(balance >= 0 ? "#059669" : "#DC2626", 0.2)} 0%, ${alpha(balance >= 0 ? "#059669" : "#DC2626", 0.1)} 100%)`
-                      : `linear-gradient(135deg, ${balance >= 0 ? "#D1FAE5" : "#FEE2E2"} 0%, ${alpha(balance >= 0 ? "#D1FAE5" : "#FEE2E2", 0.6)} 100%)`,
-                    border: `1px solid ${isDarkMode ? alpha(balance >= 0 ? "#059669" : "#DC2626", 0.2) : alpha(balance >= 0 ? "#059669" : "#DC2626", 0.15)}`,
+                      ? `linear-gradient(135deg, ${alpha(
+                          balance >= 0 ? "#059669" : "#DC2626",
+                          0.2
+                        )} 0%, ${alpha(
+                          balance >= 0 ? "#059669" : "#DC2626",
+                          0.1
+                        )} 100%)`
+                      : `linear-gradient(135deg, ${
+                          balance >= 0 ? "#D1FAE5" : "#FEE2E2"
+                        } 0%, ${alpha(
+                          balance >= 0 ? "#D1FAE5" : "#FEE2E2",
+                          0.6
+                        )} 100%)`,
+                    border: `1px solid ${
+                      isDarkMode
+                        ? alpha(balance >= 0 ? "#059669" : "#DC2626", 0.2)
+                        : alpha(balance >= 0 ? "#059669" : "#DC2626", 0.15)
+                    }`,
                     boxShadow: isDarkMode
                       ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
                       : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
@@ -785,10 +875,18 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               position: "relative",
               overflow: "hidden",
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+                ? `linear-gradient(135deg, ${alpha(
+                    theme.palette.background.paper,
+                    0.7
+                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
+                    "#FFFFFF",
+                    0.6
+                  )} 100%)`,
               backdropFilter: "blur(16px)",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              border: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+              }`,
               boxShadow: isDarkMode
                 ? `0 6px 24px -6px ${alpha("#059669", 0.2)}`
                 : `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
@@ -870,9 +968,19 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     justifyContent: "center",
                     flexShrink: 0,
                     background: isDarkMode
-                      ? `linear-gradient(135deg, ${alpha("#059669", 0.2)} 0%, ${alpha("#059669", 0.1)} 100%)`
-                      : `linear-gradient(135deg, #D1FAE5 0%, ${alpha("#D1FAE5", 0.6)} 100%)`,
-                    border: `1px solid ${isDarkMode ? alpha("#059669", 0.2) : alpha("#059669", 0.15)}`,
+                      ? `linear-gradient(135deg, ${alpha(
+                          "#059669",
+                          0.2
+                        )} 0%, ${alpha("#059669", 0.1)} 100%)`
+                      : `linear-gradient(135deg, #D1FAE5 0%, ${alpha(
+                          "#D1FAE5",
+                          0.6
+                        )} 100%)`,
+                    border: `1px solid ${
+                      isDarkMode
+                        ? alpha("#059669", 0.2)
+                        : alpha("#059669", 0.15)
+                    }`,
                     boxShadow: isDarkMode
                       ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
                       : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
@@ -898,10 +1006,18 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               position: "relative",
               overflow: "hidden",
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+                ? `linear-gradient(135deg, ${alpha(
+                    theme.palette.background.paper,
+                    0.7
+                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
+                    "#FFFFFF",
+                    0.6
+                  )} 100%)`,
               backdropFilter: "blur(16px)",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              border: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+              }`,
               boxShadow: isDarkMode
                 ? `0 6px 24px -6px ${alpha("#DC2626", 0.2)}`
                 : `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
@@ -983,9 +1099,19 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     justifyContent: "center",
                     flexShrink: 0,
                     background: isDarkMode
-                      ? `linear-gradient(135deg, ${alpha("#DC2626", 0.2)} 0%, ${alpha("#DC2626", 0.1)} 100%)`
-                      : `linear-gradient(135deg, #FEE2E2 0%, ${alpha("#FEE2E2", 0.6)} 100%)`,
-                    border: `1px solid ${isDarkMode ? alpha("#DC2626", 0.2) : alpha("#DC2626", 0.15)}`,
+                      ? `linear-gradient(135deg, ${alpha(
+                          "#DC2626",
+                          0.2
+                        )} 0%, ${alpha("#DC2626", 0.1)} 100%)`
+                      : `linear-gradient(135deg, #FEE2E2 0%, ${alpha(
+                          "#FEE2E2",
+                          0.6
+                        )} 100%)`,
+                    border: `1px solid ${
+                      isDarkMode
+                        ? alpha("#DC2626", 0.2)
+                        : alpha("#DC2626", 0.15)
+                    }`,
                     boxShadow: isDarkMode
                       ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
                       : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
@@ -1014,7 +1140,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             ? alpha(theme.palette.background.paper, 0.7)
             : alpha("#FFFFFF", 0.9),
           backdropFilter: "blur(20px)",
-          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          border: `1px solid ${
+            isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+          }`,
         }}
       >
         {/* Toolbar principal */}
@@ -1045,10 +1173,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             sx={{
               borderRadius: "20px",
               minWidth: 100,
-              ...(activeFiltersCount > 0 && !showFilters && {
-                borderColor: theme.palette.primary.main,
-                color: theme.palette.primary.main,
-              }),
+              ...(activeFiltersCount > 0 &&
+                !showFilters && {
+                  borderColor: theme.palette.primary.main,
+                  color: theme.palette.primary.main,
+                }),
             }}
           >
             Filters
@@ -1090,7 +1219,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               >
                 <RefreshIcon
                   sx={{
-                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                    animation: isRefreshing
+                      ? "spin 1s linear infinite"
+                      : "none",
                     "@keyframes spin": {
                       "0%": { transform: "rotate(0deg)" },
                       "100%": { transform: "rotate(360deg)" },
@@ -1149,7 +1280,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               display: "flex",
               flexWrap: "wrap",
               gap: 2,
-              borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+              borderTop: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)
+              }`,
               bgcolor: isDarkMode
                 ? alpha(theme.palette.background.default, 0.3)
                 : alpha(theme.palette.grey[50], 0.5),
@@ -1204,7 +1337,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 value={filterShared}
                 label="Shared"
                 onChange={(e: SelectChangeEvent) =>
-                  setFilterShared(e.target.value as "all" | "shared" | "not_shared")
+                  setFilterShared(
+                    e.target.value as "all" | "shared" | "not_shared"
+                  )
                 }
               >
                 <MenuItem value="all">All</MenuItem>
@@ -1224,7 +1359,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 value={filterPaymentStatus}
                 label="Status"
                 onChange={(e: SelectChangeEvent) =>
-                  setFilterPaymentStatus(e.target.value as "all" | "paid" | "pending")
+                  setFilterPaymentStatus(
+                    e.target.value as "all" | "paid" | "pending"
+                  )
                 }
               >
                 <MenuItem value="all">All Status</MenuItem>
@@ -1330,14 +1467,31 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   position: "relative",
                   overflow: "hidden",
                   background: isDarkMode
-                    ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                    : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                    ? `linear-gradient(135deg, ${alpha(
+                        theme.palette.background.paper,
+                        0.7
+                      )} 0%, ${alpha(
+                        theme.palette.background.paper,
+                        0.5
+                      )} 100%)`
+                    : `linear-gradient(135deg, ${alpha(
+                        "#FFFFFF",
+                        0.85
+                      )} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
                   backdropFilter: "blur(12px)",
-                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                  border: `1px solid ${
+                    isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+                  }`,
                   borderRadius: "14px",
                   boxShadow: isDarkMode
-                    ? `0 4px 16px -4px ${alpha(balance >= 0 ? "#059669" : "#DC2626", 0.2)}`
-                    : `0 4px 16px -4px ${alpha(balance >= 0 ? "#059669" : "#DC2626", 0.15)}`,
+                    ? `0 4px 16px -4px ${alpha(
+                        balance >= 0 ? "#059669" : "#DC2626",
+                        0.2
+                      )}`
+                    : `0 4px 16px -4px ${alpha(
+                        balance >= 0 ? "#059669" : "#DC2626",
+                        0.15
+                      )}`,
                   "&::before": {
                     content: '""',
                     position: "absolute",
@@ -1345,11 +1499,12 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    background: balance >= 0
-                      ? isDarkMode
-                        ? "linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(16, 185, 129, 0.04) 100%)"
-                        : "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)"
-                      : isDarkMode
+                    background:
+                      balance >= 0
+                        ? isDarkMode
+                          ? "linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(16, 185, 129, 0.04) 100%)"
+                          : "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)"
+                        : isDarkMode
                         ? "linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(239, 68, 68, 0.04) 100%)"
                         : "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)",
                     pointerEvents: "none",
@@ -1417,7 +1572,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 <EditIcon fontSize="small" color="primary" />
               </ListItemIcon>
               <ListItemText>
-                {mobileActionAnchor.transaction?.isVirtual ? "Edit Recurring" : "Edit"}
+                {mobileActionAnchor.transaction?.isVirtual
+                  ? "Edit Recurring"
+                  : "Edit"}
               </ListItemText>
             </MenuItem>
             <MenuItem
@@ -1432,7 +1589,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 <DeleteIcon fontSize="small" color="error" />
               </ListItemIcon>
               <ListItemText>
-                {mobileActionAnchor.transaction?.isVirtual ? "Delete Recurring" : "Delete"}
+                {mobileActionAnchor.transaction?.isVirtual
+                  ? "Delete Recurring"
+                  : "Delete"}
               </ListItemText>
             </MenuItem>
           </Menu>
@@ -1465,7 +1624,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               ? alpha(theme.palette.background.paper, 0.7)
               : alpha("#FFFFFF", 0.9),
             backdropFilter: "blur(20px)",
-            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            border: `1px solid ${
+              isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+            }`,
           }}
         >
           <TableContainer>
@@ -1497,7 +1658,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       key={t.id}
                       sx={{
                         ...getRowSx(t, index),
-                        animation: `fadeInUp 0.4s ease-out ${index * 0.03}s both`,
+                        animation: `fadeInUp 0.4s ease-out ${
+                          index * 0.03
+                        }s both`,
                         "@keyframes fadeInUp": {
                           from: {
                             opacity: 0,
@@ -1512,7 +1675,13 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     >
                       <TableCell sx={{ textAlign: "center" }}>
                         <Tooltip
-                          title={t.isVirtual ? "Mark recurring occurrence" : (t.isPaid !== false ? "Paid" : "Not paid")}
+                          title={
+                            t.isVirtual
+                              ? "Mark recurring occurrence"
+                              : t.isPaid !== false
+                              ? "Paid"
+                              : "Not paid"
+                          }
                         >
                           <Checkbox
                             checked={t.isPaid !== false}
@@ -1568,8 +1737,21 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                         {formatCurrency(t.amount || 0)}
                       </TableCell>
                       <TableCell sx={{ textAlign: "center" }}>
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
-                          <Tooltip title={t.isVirtual ? "Edit recurring transaction" : "Edit"}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <Tooltip
+                            title={
+                              t.isVirtual
+                                ? "Edit recurring transaction"
+                                : "Edit"
+                            }
+                          >
                             <IconButton
                               size="small"
                               onClick={() => onEdit(t)}
@@ -1578,7 +1760,13 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title={t.isVirtual ? "Delete recurring transaction" : "Delete"}>
+                          <Tooltip
+                            title={
+                              t.isVirtual
+                                ? "Delete recurring transaction"
+                                : "Delete"
+                            }
+                          >
                             <IconButton
                               size="small"
                               onClick={() => onDelete(t.id)}
@@ -1594,7 +1782,15 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} sx={{ textAlign: "center", py: 6 }}>
-                      <WalletIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2, display: "block", mx: "auto" }} />
+                      <WalletIcon
+                        sx={{
+                          fontSize: 48,
+                          color: "text.disabled",
+                          mb: 2,
+                          display: "block",
+                          mx: "auto",
+                        }}
+                      />
                       <Typography color="text.secondary" fontStyle="italic">
                         No transactions found with the current filters.
                       </Typography>
@@ -1648,7 +1844,9 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               }}
               rowsPerPageOptions={[10, 25, 50, 100]}
               sx={{
-                borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+                borderTop: `1px solid ${
+                  isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)
+                }`,
               }}
             />
           )}

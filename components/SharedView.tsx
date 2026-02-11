@@ -64,6 +64,7 @@ import {
 } from "../services/pdfService";
 import EmptyState from "./EmptyState";
 import NixButton from "./radix/Button";
+import { CREATE_TRANSACTION_BUTTON } from "../constants";
 
 interface SharedViewProps {
   transactions: Transaction[];
@@ -724,14 +725,14 @@ const SharedView: React.FC<SharedViewProps> = ({
         </Box>
 
         {!isMobile && (
-          <NixButton
-            size="medium"
-            variant="solid"
-            color="purple"
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
             onClick={onNewTransaction}
+            sx={CREATE_TRANSACTION_BUTTON.sx}
           >
-            <AddIcon /> Transaction
-          </NixButton>
+            {CREATE_TRANSACTION_BUTTON.label}
+          </Button>
         )}
       </Box>
 

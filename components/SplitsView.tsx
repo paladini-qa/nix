@@ -62,6 +62,7 @@ import { getHeaderCellSx } from "../utils/tableStyles";
 import { Transaction } from "../types";
 import EmptyState from "./EmptyState";
 import NixButton from "./radix/Button";
+import { CREATE_TRANSACTION_BUTTON } from "../constants";
 
 interface SplitsViewProps {
   transactions: Transaction[];
@@ -111,13 +112,17 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<SplitStatus>("in_progress");
-  const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
+  const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
+    "all"
+  );
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedSharedTab, setSelectedSharedTab] = useState<Record<string, number>>({});
+  const [selectedSharedTab, setSelectedSharedTab] = useState<
+    Record<string, number>
+  >({});
 
   const [mobileActionAnchor, setMobileActionAnchor] = useState<{
     element: HTMLElement | null;
@@ -126,10 +131,15 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
   // Estado para o Dialog de alteração de datas
   const [dateDialogOpen, setDateDialogOpen] = useState(false);
-  const [selectedGroupForDateChange, setSelectedGroupForDateChange] = useState<InstallmentGroup | null>(null);
+  const [selectedGroupForDateChange, setSelectedGroupForDateChange] =
+    useState<InstallmentGroup | null>(null);
   const [newDueDay, setNewDueDay] = useState<number>(1);
-  const [newStartMonth, setNewStartMonth] = useState<number>(new Date().getMonth() + 1);
-  const [newStartYear, setNewStartYear] = useState<number>(new Date().getFullYear());
+  const [newStartMonth, setNewStartMonth] = useState<number>(
+    new Date().getMonth() + 1
+  );
+  const [newStartYear, setNewStartYear] = useState<number>(
+    new Date().getFullYear()
+  );
   const [isUpdatingDates, setIsUpdatingDates] = useState(false);
 
   const handleRefresh = useCallback(async () => {
@@ -164,35 +174,41 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   }, []);
 
   // Calcula as novas datas das parcelas
-  const calculateNewDates = useCallback((
-    installments: Transaction[],
-    dueDay: number,
-    startMonth: number,
-    startYear: number
-  ): { id: string; date: string }[] => {
-    const sortedInstallments = [...installments].sort(
-      (a, b) => (a.currentInstallment || 1) - (b.currentInstallment || 1)
-    );
+  const calculateNewDates = useCallback(
+    (
+      installments: Transaction[],
+      dueDay: number,
+      startMonth: number,
+      startYear: number
+    ): { id: string; date: string }[] => {
+      const sortedInstallments = [...installments].sort(
+        (a, b) => (a.currentInstallment || 1) - (b.currentInstallment || 1)
+      );
 
-    return sortedInstallments.map((inst, index) => {
-      let targetMonth = startMonth + index;
-      let targetYear = startYear;
+      return sortedInstallments.map((inst, index) => {
+        let targetMonth = startMonth + index;
+        let targetYear = startYear;
 
-      // Ajusta ano se passar de dezembro
-      while (targetMonth > 12) {
-        targetMonth -= 12;
-        targetYear += 1;
-      }
+        // Ajusta ano se passar de dezembro
+        while (targetMonth > 12) {
+          targetMonth -= 12;
+          targetYear += 1;
+        }
 
-      // Ajusta o dia para o último dia do mês se necessário
-      const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
-      const adjustedDay = Math.min(dueDay, daysInMonth);
+        // Ajusta o dia para o último dia do mês se necessário
+        const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+        const adjustedDay = Math.min(dueDay, daysInMonth);
 
-      const newDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedDay).padStart(2, "0")}`;
+        const newDate = `${targetYear}-${String(targetMonth).padStart(
+          2,
+          "0"
+        )}-${String(adjustedDay).padStart(2, "0")}`;
 
-      return { id: inst.id, date: newDate };
-    });
-  }, []);
+        return { id: inst.id, date: newDate };
+      });
+    },
+    []
+  );
 
   // Salva as novas datas
   const handleSaveDates = useCallback(async () => {
@@ -207,11 +223,13 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         newStartYear
       );
 
-      const installmentIds = selectedGroupForDateChange.installments.map((i) => i.id);
+      const installmentIds = selectedGroupForDateChange.installments.map(
+        (i) => i.id
+      );
       await onUpdateInstallmentDates(installmentIds, newDates);
-      
+
       handleCloseDateDialog();
-      
+
       // Refresh data após atualização
       if (onRefreshData) {
         await onRefreshData();
@@ -241,23 +259,42 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       newStartMonth,
       newStartYear
     );
-  }, [selectedGroupForDateChange, newDueDay, newStartMonth, newStartYear, calculateNewDates]);
+  }, [
+    selectedGroupForDateChange,
+    newDueDay,
+    newStartMonth,
+    newStartYear,
+    calculateNewDates,
+  ]);
 
   // IDs de transações relacionadas
   const relatedTransactionIds = useMemo(() => {
     const ids = new Set<string>();
     transactions
-      .filter((t) => t.installments && t.installments > 1 && t.isShared && t.relatedTransactionId)
+      .filter(
+        (t) =>
+          t.installments &&
+          t.installments > 1 &&
+          t.isShared &&
+          t.relatedTransactionId
+      )
       .forEach((t) => {
         if (t.relatedTransactionId) ids.add(t.relatedTransactionId);
       });
     return ids;
   }, [transactions]);
 
-  const getRelatedTransaction = useCallback((transaction: Transaction): Transaction | null => {
-    if (!transaction.isShared || !transaction.relatedTransactionId) return null;
-    return transactions.find((t) => t.id === transaction.relatedTransactionId) || null;
-  }, [transactions]);
+  const getRelatedTransaction = useCallback(
+    (transaction: Transaction): Transaction | null => {
+      if (!transaction.isShared || !transaction.relatedTransactionId)
+        return null;
+      return (
+        transactions.find((t) => t.id === transaction.relatedTransactionId) ||
+        null
+      );
+    },
+    [transactions]
+  );
 
   // Filtra apenas transações com parcelas
   const splitsTransactions = useMemo(() => {
@@ -271,8 +308,8 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     const groups: Map<string, InstallmentGroup> = new Map();
 
     splitsTransactions.forEach((t) => {
-      const key = t.installmentGroupId 
-        ? t.installmentGroupId 
+      const key = t.installmentGroupId
+        ? t.installmentGroupId
         : `${t.description}-${t.paymentMethod}-${t.category}-${t.type}-${t.installments}`;
 
       if (!groups.has(key)) {
@@ -301,16 +338,16 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       const group = groups.get(key)!;
       group.installments.push(t);
       group.totalAmount += t.amount;
-      
+
       if (!group.descriptions.includes(t.description)) {
         group.descriptions.push(t.description);
       }
-      
+
       if (t.isPaid !== false) {
         group.paidAmount += t.amount;
         group.paidCount++;
       }
-      
+
       if (t.date < group.startDate) group.startDate = t.date;
       if (t.date > group.endDate) group.endDate = t.date;
     });
@@ -318,16 +355,20 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     // Ordena parcelas e encontra descrição principal
     groups.forEach((group) => {
       group.installments.sort((a, b) => {
-        const installmentDiff = (a.currentInstallment || 1) - (b.currentInstallment || 1);
+        const installmentDiff =
+          (a.currentInstallment || 1) - (b.currentInstallment || 1);
         if (installmentDiff !== 0) return installmentDiff;
         return new Date(a.date).getTime() - new Date(b.date).getTime();
       });
-      
+
       const descriptionCounts = new Map<string, number>();
       group.installments.forEach((inst) => {
-        descriptionCounts.set(inst.description, (descriptionCounts.get(inst.description) || 0) + 1);
+        descriptionCounts.set(
+          inst.description,
+          (descriptionCounts.get(inst.description) || 0) + 1
+        );
       });
-      
+
       let maxCount = 0;
       let originalDesc = group.installments[0]?.description || "";
       descriptionCounts.forEach((count, desc) => {
@@ -364,16 +405,26 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
         return matchesSearch && matchesType && matchesStatus;
       })
-      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+      );
   }, [groupedSplits, searchTerm, filterType, filterStatus]);
 
   // Estatísticas
   const stats = useMemo(() => {
     // Usa o número real de parcelas existentes para determinar status
-    const inProgressGroups = groupedSplits.filter((g) => g.paidCount < g.installments.length);
-    const completedGroups = groupedSplits.filter((g) => g.paidCount >= g.installments.length);
+    const inProgressGroups = groupedSplits.filter(
+      (g) => g.paidCount < g.installments.length
+    );
+    const completedGroups = groupedSplits.filter(
+      (g) => g.paidCount >= g.installments.length
+    );
 
-    const totalRemaining = inProgressGroups.reduce((sum, g) => sum + (g.totalAmount - g.paidAmount), 0);
+    const totalRemaining = inProgressGroups.reduce(
+      (sum, g) => sum + (g.totalAmount - g.paidAmount),
+      0
+    );
     const totalPaid = groupedSplits.reduce((sum, g) => sum + g.paidAmount, 0);
     const totalAll = groupedSplits.reduce((sum, g) => sum + g.totalAmount, 0);
 
@@ -387,19 +438,39 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   }, [groupedSplits]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
   };
 
   const formatDateShort = (dateString: string) => {
     const [year, month] = dateString.split("-");
-    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const months = [
+      "Jan",
+      "Fev",
+      "Mar",
+      "Abr",
+      "Mai",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Set",
+      "Out",
+      "Nov",
+      "Dez",
+    ];
     return `${months[parseInt(month) - 1]} ${year}`;
   };
 
   const formatDateFull = (dateString: string) => {
     const [year, month, day] = dateString.split("-");
     const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const isCurrentMonth = (dateString: string) => {
@@ -410,7 +481,20 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
   const getPeriod = (dateString: string) => {
     const [year, month] = dateString.split("-");
-    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const months = [
+      "Jan",
+      "Fev",
+      "Mar",
+      "Abr",
+      "Mai",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Set",
+      "Out",
+      "Nov",
+      "Dez",
+    ];
     return `${months[parseInt(month) - 1]} ${year}`;
   };
 
@@ -434,10 +518,13 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     // Usa o número real de parcelas existentes para calcular progresso e status
     const actualInstallmentCount = group.installments.length;
     const isCompleted = group.paidCount >= actualInstallmentCount;
-    const progress = actualInstallmentCount > 0 ? (group.paidCount / actualInstallmentCount) * 100 : 0;
+    const progress =
+      actualInstallmentCount > 0
+        ? (group.paidCount / actualInstallmentCount) * 100
+        : 0;
     const isIncome = group.type === "income";
     const accentColor = isIncome ? "#059669" : "#F59E0B";
-    
+
     // Transações relacionadas (shared)
     const relatedTransactions = group.installments
       .map((inst) => getRelatedTransaction(inst))
@@ -451,10 +538,18 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           position: "relative",
           overflow: "hidden",
           background: isDarkMode
-            ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+            ? `linear-gradient(135deg, ${alpha(
+                theme.palette.background.paper,
+                0.7
+              )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha(
+                "#FFFFFF",
+                0.65
+              )} 100%)`,
           backdropFilter: "blur(16px)",
-          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          border: `1px solid ${
+            isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+          }`,
           borderLeft: `3px solid ${accentColor}`,
           borderRadius: "16px",
           boxShadow: isDarkMode
@@ -470,15 +565,29 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           "&::before": {
             content: '""',
             position: "absolute",
-            top: 0, left: 0, right: 0, bottom: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             background: isDarkMode
-              ? `linear-gradient(135deg, ${alpha(accentColor, 0.08)} 0%, ${alpha(accentColor, 0.02)} 100%)`
-              : `linear-gradient(135deg, ${alpha(accentColor, 0.04)} 0%, ${alpha(accentColor, 0.01)} 100%)`,
+              ? `linear-gradient(135deg, ${alpha(
+                  accentColor,
+                  0.08
+                )} 0%, ${alpha(accentColor, 0.02)} 100%)`
+              : `linear-gradient(135deg, ${alpha(
+                  accentColor,
+                  0.04
+                )} 0%, ${alpha(accentColor, 0.01)} 100%)`,
             pointerEvents: "none",
           },
         }}
       >
-        <CardContent sx={{ p: isMobile ? 2 : 2.5, "&:last-child": { pb: isMobile ? 2 : 2.5 } }}>
+        <CardContent
+          sx={{
+            p: isMobile ? 2 : 2.5,
+            "&:last-child": { pb: isMobile ? 2 : 2.5 },
+          }}
+        >
           {/* Header Row */}
           <Box
             sx={{
@@ -490,12 +599,23 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             onClick={() => toggleGroup(group.key)}
           >
             {/* Left: Icon + Info */}
-            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, flex: 1, minWidth: 0 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 1.5,
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
               <Box
                 sx={{
                   p: 1,
                   borderRadius: "12px",
-                  background: `linear-gradient(135deg, ${accentColor}, ${alpha(accentColor, 0.7)})`,
+                  background: `linear-gradient(135deg, ${accentColor}, ${alpha(
+                    accentColor,
+                    0.7
+                  )})`,
                   display: "flex",
                   flexShrink: 0,
                 }}
@@ -503,16 +623,27 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 <CreditCardIcon sx={{ color: "#fff", fontSize: 20 }} />
               </Box>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                  <Typography 
-                    variant="subtitle1" 
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Typography
+                    variant="subtitle1"
                     fontWeight={600}
-                    sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    sx={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
                   >
                     {group.description}
                   </Typography>
                   {group.descriptions.length > 1 && (
-                    <Chip 
+                    <Chip
                       label={`+${group.descriptions.length - 1}`}
                       size="small"
                       color="info"
@@ -521,11 +652,21 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                     />
                   )}
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mt: 0.25 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    flexWrap: "wrap",
+                    mt: 0.25,
+                  }}
+                >
                   <Typography variant="caption" color="text.secondary">
                     {group.category}
                   </Typography>
-                  <Typography variant="caption" color="text.disabled">•</Typography>
+                  <Typography variant="caption" color="text.disabled">
+                    •
+                  </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {group.paymentMethod}
                   </Typography>
@@ -541,10 +682,17 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 color={isIncome ? "success.main" : "warning.main"}
                 sx={{ fontFamily: "monospace", letterSpacing: "-0.02em" }}
               >
-                {isIncome ? "+" : "-"}{formatCurrency(group.totalAmount)}
+                {isIncome ? "+" : "-"}
+                {formatCurrency(group.totalAmount)}
               </Typography>
               <Chip
-                icon={isCompleted ? <CheckCircleIcon sx={{ fontSize: 14 }} /> : <ScheduleIcon sx={{ fontSize: 14 }} />}
+                icon={
+                  isCompleted ? (
+                    <CheckCircleIcon sx={{ fontSize: 14 }} />
+                  ) : (
+                    <ScheduleIcon sx={{ fontSize: 14 }} />
+                  )
+                }
                 label={`${group.paidCount}/${actualInstallmentCount}x`}
                 size="small"
                 color={isCompleted ? "success" : "warning"}
@@ -555,11 +703,23 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
           {/* Progress + Period */}
           <Box sx={{ mt: 2 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 0.5,
+              }}
+            >
               <Typography variant="caption" color="text.secondary">
-                {formatDateShort(group.startDate)} → {formatDateShort(group.endDate)}
+                {formatDateShort(group.startDate)} →{" "}
+                {formatDateShort(group.endDate)}
               </Typography>
-              <Typography variant="caption" fontWeight={600} color={accentColor}>
+              <Typography
+                variant="caption"
+                fontWeight={600}
+                color={accentColor}
+              >
                 {Math.round(progress)}% pago
               </Typography>
             </Box>
@@ -572,7 +732,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 bgcolor: alpha(accentColor, 0.1),
                 "& .MuiLinearProgress-bar": {
                   borderRadius: "4px",
-                  background: `linear-gradient(90deg, ${accentColor}, ${alpha(accentColor, 0.7)})`,
+                  background: `linear-gradient(90deg, ${accentColor}, ${alpha(
+                    accentColor,
+                    0.7
+                  )})`,
                 },
               }}
             />
@@ -589,22 +752,40 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 1,
+                }}
+              >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <ArrowUpIcon fontSize="small" color="success" />
                   <Typography variant="body2" fontWeight={500}>
                     Compartilhado com {group.sharedWith}
                   </Typography>
                 </Box>
-                <Typography variant="body2" fontWeight={700} color="success.main">
-                  +{formatCurrency(relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0))}
+                <Typography
+                  variant="body2"
+                  fontWeight={700}
+                  color="success.main"
+                >
+                  +
+                  {formatCurrency(
+                    relatedTransactions.reduce(
+                      (sum, t) => sum + (t.amount || 0),
+                      0
+                    )
+                  )}
                 </Typography>
               </Box>
             </Box>
           )}
 
           {/* Tags */}
-          <TransactionTags 
+          <TransactionTags
             transaction={{
               isRecurring: false,
               frequency: undefined,
@@ -616,13 +797,21 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               type: group.type,
               relatedTransactionId: group.relatedTransactionId,
               isPaid: undefined,
-            }} 
-            showRecurring={false} 
+            }}
+            showRecurring={false}
             showInstallments={false}
           />
 
           {/* Action Buttons */}
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mt: 1.5, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 1,
+              mt: 1.5,
+              flexWrap: "wrap",
+            }}
+          >
             <Button
               size="small"
               onClick={(e) => {
@@ -630,16 +819,18 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 toggleGroup(group.key);
               }}
               endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              sx={{ 
-                textTransform: "none", 
+              sx={{
+                textTransform: "none",
                 color: "text.secondary",
                 fontSize: 12,
-                "&:hover": { bgcolor: alpha(accentColor, 0.08) }
+                "&:hover": { bgcolor: alpha(accentColor, 0.08) },
               }}
             >
-              {isExpanded ? "Ocultar parcelas" : `Ver ${actualInstallmentCount} parcelas`}
+              {isExpanded
+                ? "Ocultar parcelas"
+                : `Ver ${actualInstallmentCount} parcelas`}
             </Button>
-            
+
             {onUpdateInstallmentDates && (
               <Tooltip title="Alterar datas de vencimento">
                 <Button
@@ -649,14 +840,14 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                     handleOpenDateDialog(group);
                   }}
                   startIcon={<CalendarMonthIcon sx={{ fontSize: 16 }} />}
-                  sx={{ 
-                    textTransform: "none", 
+                  sx={{
+                    textTransform: "none",
                     color: "text.secondary",
                     fontSize: 12,
-                    "&:hover": { 
+                    "&:hover": {
                       bgcolor: alpha(theme.palette.primary.main, 0.08),
-                      color: "primary.main"
-                    }
+                      color: "primary.main",
+                    },
                   }}
                 >
                   Alterar Datas
@@ -669,13 +860,23 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         {/* Expanded Content */}
         <Collapse in={isExpanded}>
           <Divider />
-          <Box sx={{ p: isMobile ? 2 : 2.5, bgcolor: alpha(theme.palette.background.default, 0.5) }}>
+          <Box
+            sx={{
+              p: isMobile ? 2 : 2.5,
+              bgcolor: alpha(theme.palette.background.default, 0.5),
+            }}
+          >
             {/* Tabs for shared transactions */}
             {relatedTransactions.length > 0 && (
               <Box sx={{ mb: 2 }}>
                 <Tabs
                   value={selectedSharedTab[group.key] || 0}
-                  onChange={(_, newValue) => setSelectedSharedTab((prev) => ({ ...prev, [group.key]: newValue }))}
+                  onChange={(_, newValue) =>
+                    setSelectedSharedTab((prev) => ({
+                      ...prev,
+                      [group.key]: newValue,
+                    }))
+                  }
                   variant="fullWidth"
                   sx={{
                     bgcolor: alpha(theme.palette.action.hover, 0.04),
@@ -690,7 +891,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                       fontWeight: 600,
                       fontSize: "0.8rem",
                       "&.Mui-selected": {
-                        bgcolor: isDarkMode 
+                        bgcolor: isDarkMode
                           ? alpha(theme.palette.primary.main, 0.2)
                           : alpha(theme.palette.primary.main, 0.1),
                         color: theme.palette.primary.main,
@@ -698,8 +899,26 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                     },
                   }}
                 >
-                  <Tab label={<Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}><ArrowDownIcon fontSize="small" />Despesa</Box>} />
-                  <Tab label={<Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}><ArrowUpIcon fontSize="small" />Compartilhado</Box>} />
+                  <Tab
+                    label={
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
+                        <ArrowDownIcon fontSize="small" />
+                        Despesa
+                      </Box>
+                    }
+                  />
+                  <Tab
+                    label={
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
+                        <ArrowUpIcon fontSize="small" />
+                        Compartilhado
+                      </Box>
+                    }
+                  />
                 </Tabs>
               </Box>
             )}
@@ -707,17 +926,23 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             {/* Tab: Expense Installments */}
             {(selectedSharedTab[group.key] || 0) === 0 && (
               <>
-                <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="subtitle2"
+                  gutterBottom
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
                   <VisibilityIcon fontSize="small" color="primary" />
                   Todas as {actualInstallmentCount} parcelas
                 </Typography>
 
                 {isMobile ? (
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
                     {group.installments.map((t) => {
                       const isPaid = t.isPaid !== false;
                       const isCurrent = isCurrentMonth(t.date);
-                      
+
                       return (
                         <Paper
                           key={t.id}
@@ -727,14 +952,22 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                             alignItems: "center",
                             gap: 1,
                             opacity: isPaid ? 0.6 : 1,
-                            bgcolor: isCurrent && !isPaid ? alpha(theme.palette.primary.main, 0.08) : "background.paper",
-                            border: isCurrent && !isPaid ? `2px solid ${theme.palette.primary.main}` : `1px solid ${theme.palette.divider}`,
+                            bgcolor:
+                              isCurrent && !isPaid
+                                ? alpha(theme.palette.primary.main, 0.08)
+                                : "background.paper",
+                            border:
+                              isCurrent && !isPaid
+                                ? `2px solid ${theme.palette.primary.main}`
+                                : `1px solid ${theme.palette.divider}`,
                             borderRadius: "10px",
                           }}
                         >
                           <Checkbox
                             checked={isPaid}
-                            onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                            onChange={(e) =>
+                              onTogglePaid(t.id, e.target.checked)
+                            }
                             size="small"
                             color="success"
                             sx={{ p: 0.5 }}
@@ -747,27 +980,62 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              bgcolor: isCurrent && !isPaid ? alpha(theme.palette.primary.main, 0.15) : alpha(theme.palette.action.hover, 0.1),
+                              bgcolor:
+                                isCurrent && !isPaid
+                                  ? alpha(theme.palette.primary.main, 0.15)
+                                  : alpha(theme.palette.action.hover, 0.1),
                             }}
                           >
-                            <Typography variant="caption" fontWeight={700} color={isCurrent && !isPaid ? "primary.main" : "text.secondary"} sx={{ fontSize: 10 }}>
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              color={
+                                isCurrent && !isPaid
+                                  ? "primary.main"
+                                  : "text.secondary"
+                              }
+                              sx={{ fontSize: 10 }}
+                            >
                               #{t.currentInstallment}
                             </Typography>
                           </Box>
                           <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography variant="body2" fontWeight={isCurrent ? 600 : 500} sx={{ textDecoration: isPaid ? "line-through" : "none" }}>
+                            <Typography
+                              variant="body2"
+                              fontWeight={isCurrent ? 600 : 500}
+                              sx={{
+                                textDecoration: isPaid
+                                  ? "line-through"
+                                  : "none",
+                              }}
+                            >
                               {formatDateFull(t.date)}
                             </Typography>
-                            {isCurrent && !isPaid && <Chip label="Atual" size="small" color="primary" sx={{ height: 16, fontSize: 9, mt: 0.5 }} />}
+                            {isCurrent && !isPaid && (
+                              <Chip
+                                label="Atual"
+                                size="small"
+                                color="primary"
+                                sx={{ height: 16, fontSize: 9, mt: 0.5 }}
+                              />
+                            )}
                           </Box>
-                          <Typography variant="body2" fontWeight={600} color={isIncome ? "success.main" : "warning.main"} sx={{ fontFamily: "monospace", fontSize: 12 }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color={isIncome ? "success.main" : "warning.main"}
+                            sx={{ fontFamily: "monospace", fontSize: 12 }}
+                          >
                             {formatCurrency(t.amount || 0)}
                           </Typography>
                           <IconButton
                             size="small"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setMobileActionAnchor({ element: e.currentTarget, transaction: t });
+                              setMobileActionAnchor({
+                                element: e.currentTarget,
+                                transaction: t,
+                              });
                             }}
                           >
                             <MoreVertIcon fontSize="small" />
@@ -780,32 +1048,69 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                   <Table size="small" sx={{ "& td, & th": { py: 1 } }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)} padding="checkbox">Pago</TableCell>
-                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>#</TableCell>
-                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Data</TableCell>
-                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Período</TableCell>
-                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
-                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>Status</TableCell>
-                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>Ações</TableCell>
+                        <TableCell
+                          sx={getHeaderCellSx(theme, isDarkMode)}
+                          padding="checkbox"
+                        >
+                          Pago
+                        </TableCell>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                          #
+                        </TableCell>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                          Data
+                        </TableCell>
+                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                          Período
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            ...getHeaderCellSx(theme, isDarkMode),
+                            textAlign: "right",
+                          }}
+                        >
+                          Valor
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            ...getHeaderCellSx(theme, isDarkMode),
+                            textAlign: "center",
+                          }}
+                        >
+                          Status
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            ...getHeaderCellSx(theme, isDarkMode),
+                            textAlign: "center",
+                          }}
+                        >
+                          Ações
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {group.installments.map((t) => {
                         const isPaid = t.isPaid !== false;
                         const isCurrent = isCurrentMonth(t.date);
-                        
+
                         return (
                           <TableRow
                             key={t.id}
                             sx={{
                               opacity: isPaid ? 0.6 : 1,
-                              bgcolor: isCurrent && !isPaid ? alpha(theme.palette.primary.main, 0.08) : "transparent",
+                              bgcolor:
+                                isCurrent && !isPaid
+                                  ? alpha(theme.palette.primary.main, 0.08)
+                                  : "transparent",
                             }}
                           >
                             <TableCell padding="checkbox">
                               <Checkbox
                                 checked={isPaid}
-                                onChange={(e) => onTogglePaid(t.id, e.target.checked)}
+                                onChange={(e) =>
+                                  onTogglePaid(t.id, e.target.checked)
+                                }
                                 size="small"
                                 color="success"
                               />
@@ -815,42 +1120,79 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                                 label={`#${t.currentInstallment}`}
                                 size="small"
                                 variant="outlined"
-                                color={isCurrent && !isPaid ? "primary" : "default"}
+                                color={
+                                  isCurrent && !isPaid ? "primary" : "default"
+                                }
                                 sx={{ fontWeight: 600, height: 22 }}
                               />
                             </TableCell>
                             <TableCell>
-                              <Typography variant="body2" fontWeight={isCurrent ? 600 : 400}>
+                              <Typography
+                                variant="body2"
+                                fontWeight={isCurrent ? 600 : 400}
+                              >
                                 {formatDateFull(t.date)}
                               </Typography>
                             </TableCell>
                             <TableCell>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
                                 {getPeriod(t.date)}
                               </Typography>
                             </TableCell>
                             <TableCell align="right">
-                              <Typography variant="body2" fontWeight={600} color={isIncome ? "success.main" : "warning.main"}>
+                              <Typography
+                                variant="body2"
+                                fontWeight={600}
+                                color={
+                                  isIncome ? "success.main" : "warning.main"
+                                }
+                              >
                                 {formatCurrency(t.amount || 0)}
                               </Typography>
                             </TableCell>
                             <TableCell align="center">
                               {isPaid ? (
-                                <Chip label="Pago" size="small" color="success" sx={{ height: 22 }} />
+                                <Chip
+                                  label="Pago"
+                                  size="small"
+                                  color="success"
+                                  sx={{ height: 22 }}
+                                />
                               ) : isCurrent ? (
-                                <Chip label="Atual" size="small" color="primary" sx={{ height: 22 }} />
+                                <Chip
+                                  label="Atual"
+                                  size="small"
+                                  color="primary"
+                                  sx={{ height: 22 }}
+                                />
                               ) : (
-                                <Chip label="Pendente" size="small" variant="outlined" sx={{ height: 22, opacity: 0.7 }} />
+                                <Chip
+                                  label="Pendente"
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ height: 22, opacity: 0.7 }}
+                                />
                               )}
                             </TableCell>
                             <TableCell align="center">
                               <Tooltip title="Editar">
-                                <IconButton size="small" onClick={() => onEdit(t)} color="primary">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => onEdit(t)}
+                                  color="primary"
+                                >
                                   <EditIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="Excluir">
-                                <IconButton size="small" onClick={() => onDelete(t.id)} color="error">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => onDelete(t.id)}
+                                  color="error"
+                                >
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
@@ -863,30 +1205,50 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 )}
 
                 {/* Summary */}
-                <Paper 
+                <Paper
                   elevation={0}
-                  sx={{ 
-                    p: 2, 
-                    mt: 2, 
+                  sx={{
+                    p: 2,
+                    mt: 2,
                     borderRadius: "12px",
                     bgcolor: alpha(accentColor, 0.05),
                     border: `1px solid ${alpha(accentColor, 0.15)}`,
                   }}
                 >
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
                     <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        fontWeight={500}
+                      >
                         Resumo do Parcelamento
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {group.paidCount}/{actualInstallmentCount} parcelas pagas
+                        {group.paidCount}/{actualInstallmentCount} parcelas
+                        pagas
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: "right" }}>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Restante: {formatCurrency(group.totalAmount - group.paidAmount)}
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        display="block"
+                      >
+                        Restante:{" "}
+                        {formatCurrency(group.totalAmount - group.paidAmount)}
                       </Typography>
-                      <Typography variant="h6" fontWeight={700} color={isIncome ? "success.main" : "warning.main"}>
+                      <Typography
+                        variant="h6"
+                        fontWeight={700}
+                        color={isIncome ? "success.main" : "warning.main"}
+                      >
                         Total: {formatCurrency(group.totalAmount)}
                       </Typography>
                     </Box>
@@ -896,123 +1258,264 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             )}
 
             {/* Tab: Shared (related income) */}
-            {(selectedSharedTab[group.key] || 0) === 1 && relatedTransactions.length > 0 && (
-              <>
-                <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <VisibilityIcon fontSize="small" color="success" />
-                  Parcelas Compartilhadas
-                </Typography>
+            {(selectedSharedTab[group.key] || 0) === 1 &&
+              relatedTransactions.length > 0 && (
+                <>
+                  <Typography
+                    variant="subtitle2"
+                    gutterBottom
+                    sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                  >
+                    <VisibilityIcon fontSize="small" color="success" />
+                    Parcelas Compartilhadas
+                  </Typography>
 
-                {isMobile ? (
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    {relatedTransactions.map((t) => {
-                      const isPaid = t.isPaid !== false;
-                      const isCurrent = isCurrentMonth(t.date);
-                      
-                      return (
-                        <Paper
-                          key={t.id}
-                          sx={{
-                            p: 1.5,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            opacity: isPaid ? 0.6 : 1,
-                            bgcolor: isCurrent && !isPaid ? alpha(theme.palette.success.main, 0.08) : "background.paper",
-                            border: isCurrent && !isPaid ? `2px solid ${theme.palette.success.main}` : `1px solid ${theme.palette.divider}`,
-                            borderRadius: "10px",
-                          }}
-                        >
-                          <Checkbox
-                            checked={isPaid}
-                            onChange={(e) => onTogglePaid(t.id, e.target.checked)}
-                            size="small"
-                            color="success"
-                            sx={{ p: 0.5 }}
-                          />
-                          <Box
-                            sx={{
-                              width: 28,
-                              height: 28,
-                              borderRadius: "8px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              bgcolor: isCurrent && !isPaid ? alpha(theme.palette.success.main, 0.15) : alpha(theme.palette.action.hover, 0.1),
-                            }}
-                          >
-                            <Typography variant="caption" fontWeight={700} color={isCurrent && !isPaid ? "success.main" : "text.secondary"} sx={{ fontSize: 10 }}>
-                              #{t.currentInstallment}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body2" fontWeight={isCurrent ? 600 : 500}>
-                              {formatDateFull(t.date)}
-                            </Typography>
-                          </Box>
-                          <Typography variant="body2" fontWeight={600} color="success.main" sx={{ fontFamily: "monospace", fontSize: 12 }}>
-                            +{formatCurrency(t.amount || 0)}
-                          </Typography>
-                          <Chip label={isPaid ? "Recebido" : "Pendente"} size="small" color={isPaid ? "success" : "warning"} sx={{ height: 20, fontSize: 10 }} />
-                        </Paper>
-                      );
-                    })}
-                  </Box>
-                ) : (
-                  <Table size="small" sx={{ "& td, & th": { py: 1 } }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)} padding="checkbox">Recebido</TableCell>
-                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>#</TableCell>
-                        <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>Data</TableCell>
-                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "right" }}>Valor</TableCell>
-                        <TableCell sx={{ ...getHeaderCellSx(theme, isDarkMode), textAlign: "center" }}>Status</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
+                  {isMobile ? (
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                    >
                       {relatedTransactions.map((t) => {
                         const isPaid = t.isPaid !== false;
                         const isCurrent = isCurrentMonth(t.date);
-                        
+
                         return (
-                          <TableRow key={t.id} sx={{ opacity: isPaid ? 0.6 : 1, bgcolor: isCurrent && !isPaid ? alpha(theme.palette.success.main, 0.08) : "transparent" }}>
-                            <TableCell padding="checkbox">
-                              <Checkbox checked={isPaid} onChange={(e) => onTogglePaid(t.id, e.target.checked)} size="small" color="success" />
-                            </TableCell>
-                            <TableCell>
-                              <Chip label={`#${t.currentInstallment}`} size="small" variant="outlined" color={isCurrent && !isPaid ? "success" : "default"} sx={{ fontWeight: 600, height: 22 }} />
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2" fontWeight={isCurrent ? 600 : 400}>{formatDateFull(t.date)}</Typography>
-                            </TableCell>
-                            <TableCell align="right">
-                              <Typography variant="body2" fontWeight={600} color="success.main">+{formatCurrency(t.amount || 0)}</Typography>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Chip label={isPaid ? "Recebido" : isCurrent ? "Atual" : "Pendente"} size="small" color={isPaid ? "success" : isCurrent ? "warning" : "default"} variant={isPaid || isCurrent ? "filled" : "outlined"} sx={{ height: 22 }} />
-                            </TableCell>
-                          </TableRow>
+                          <Paper
+                            key={t.id}
+                            sx={{
+                              p: 1.5,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              opacity: isPaid ? 0.6 : 1,
+                              bgcolor:
+                                isCurrent && !isPaid
+                                  ? alpha(theme.palette.success.main, 0.08)
+                                  : "background.paper",
+                              border:
+                                isCurrent && !isPaid
+                                  ? `2px solid ${theme.palette.success.main}`
+                                  : `1px solid ${theme.palette.divider}`,
+                              borderRadius: "10px",
+                            }}
+                          >
+                            <Checkbox
+                              checked={isPaid}
+                              onChange={(e) =>
+                                onTogglePaid(t.id, e.target.checked)
+                              }
+                              size="small"
+                              color="success"
+                              sx={{ p: 0.5 }}
+                            />
+                            <Box
+                              sx={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: "8px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                bgcolor:
+                                  isCurrent && !isPaid
+                                    ? alpha(theme.palette.success.main, 0.15)
+                                    : alpha(theme.palette.action.hover, 0.1),
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                fontWeight={700}
+                                color={
+                                  isCurrent && !isPaid
+                                    ? "success.main"
+                                    : "text.secondary"
+                                }
+                                sx={{ fontSize: 10 }}
+                              >
+                                #{t.currentInstallment}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography
+                                variant="body2"
+                                fontWeight={isCurrent ? 600 : 500}
+                              >
+                                {formatDateFull(t.date)}
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color="success.main"
+                              sx={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              +{formatCurrency(t.amount || 0)}
+                            </Typography>
+                            <Chip
+                              label={isPaid ? "Recebido" : "Pendente"}
+                              size="small"
+                              color={isPaid ? "success" : "warning"}
+                              sx={{ height: 20, fontSize: 10 }}
+                            />
+                          </Paper>
                         );
                       })}
-                    </TableBody>
-                  </Table>
-                )}
+                    </Box>
+                  ) : (
+                    <Table size="small" sx={{ "& td, & th": { py: 1 } }}>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell
+                            sx={getHeaderCellSx(theme, isDarkMode)}
+                            padding="checkbox"
+                          >
+                            Recebido
+                          </TableCell>
+                          <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                            #
+                          </TableCell>
+                          <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
+                            Data
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              ...getHeaderCellSx(theme, isDarkMode),
+                              textAlign: "right",
+                            }}
+                          >
+                            Valor
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              ...getHeaderCellSx(theme, isDarkMode),
+                              textAlign: "center",
+                            }}
+                          >
+                            Status
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {relatedTransactions.map((t) => {
+                          const isPaid = t.isPaid !== false;
+                          const isCurrent = isCurrentMonth(t.date);
 
-                <Paper 
-                  elevation={0}
-                  sx={{ p: 2, mt: 2, borderRadius: "12px", bgcolor: alpha("#059669", 0.05), border: `1px solid ${alpha("#059669", 0.15)}` }}
-                >
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {relatedTransactions.filter(t => t.isPaid).length}/{relatedTransactions.length} parcelas recebidas
-                    </Typography>
-                    <Typography variant="h6" fontWeight={700} color="success.main">
-                      +{formatCurrency(relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0))}
-                    </Typography>
-                  </Box>
-                </Paper>
-              </>
-            )}
+                          return (
+                            <TableRow
+                              key={t.id}
+                              sx={{
+                                opacity: isPaid ? 0.6 : 1,
+                                bgcolor:
+                                  isCurrent && !isPaid
+                                    ? alpha(theme.palette.success.main, 0.08)
+                                    : "transparent",
+                              }}
+                            >
+                              <TableCell padding="checkbox">
+                                <Checkbox
+                                  checked={isPaid}
+                                  onChange={(e) =>
+                                    onTogglePaid(t.id, e.target.checked)
+                                  }
+                                  size="small"
+                                  color="success"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={`#${t.currentInstallment}`}
+                                  size="small"
+                                  variant="outlined"
+                                  color={
+                                    isCurrent && !isPaid ? "success" : "default"
+                                  }
+                                  sx={{ fontWeight: 600, height: 22 }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight={isCurrent ? 600 : 400}
+                                >
+                                  {formatDateFull(t.date)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography
+                                  variant="body2"
+                                  fontWeight={600}
+                                  color="success.main"
+                                >
+                                  +{formatCurrency(t.amount || 0)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  label={
+                                    isPaid
+                                      ? "Recebido"
+                                      : isCurrent
+                                      ? "Atual"
+                                      : "Pendente"
+                                  }
+                                  size="small"
+                                  color={
+                                    isPaid
+                                      ? "success"
+                                      : isCurrent
+                                      ? "warning"
+                                      : "default"
+                                  }
+                                  variant={
+                                    isPaid || isCurrent ? "filled" : "outlined"
+                                  }
+                                  sx={{ height: 22 }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
+
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      mt: 2,
+                      borderRadius: "12px",
+                      bgcolor: alpha("#059669", 0.05),
+                      border: `1px solid ${alpha("#059669", 0.15)}`,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        {relatedTransactions.filter((t) => t.isPaid).length}/
+                        {relatedTransactions.length} parcelas recebidas
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight={700}
+                        color="success.main"
+                      >
+                        +
+                        {formatCurrency(
+                          relatedTransactions.reduce(
+                            (sum, t) => sum + (t.amount || 0),
+                            0
+                          )
+                        )}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </>
+              )}
           </Box>
         </Collapse>
       </Card>
@@ -1023,12 +1526,14 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   // MAIN RENDER
   // =============================================
   return (
-    <Box sx={{ 
-      display: "flex", 
-      flexDirection: "column", 
-      gap: isMobile ? 2 : 3,
-      pb: { xs: "180px", md: 0 },
-    }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: isMobile ? 2 : 3,
+        pb: { xs: "180px", md: 0 },
+      }}
+    >
       {/* Header */}
       <Box
         sx={{
@@ -1060,9 +1565,14 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           </Typography>
         </Box>
         {!isMobile && (
-          <NixButton size="medium" variant="solid" color="purple" onClick={onNewTransaction}>
-            <AddIcon /> Nova Transação
-          </NixButton>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={onNewTransaction}
+            sx={CREATE_TRANSACTION_BUTTON.sx}
+          >
+            {CREATE_TRANSACTION_BUTTON.label}
+          </Button>
         )}
       </Box>
 
@@ -1074,20 +1584,36 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             sx={{
               p: isMobile ? 1.5 : 2,
               borderRadius: "16px",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              border: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+              }`,
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+                ? `linear-gradient(135deg, ${alpha(
+                    theme.palette.background.paper,
+                    0.7
+                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
+                    "#FFFFFF",
+                    0.6
+                  )} 100%)`,
               backdropFilter: "blur(16px)",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
               <ScheduleIcon sx={{ color: "#F59E0B", fontSize: 20 }} />
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={600}
+              >
                 Em Andamento
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700} color="#F59E0B">
+            <Typography
+              variant={isMobile ? "h6" : "h5"}
+              fontWeight={700}
+              color="#F59E0B"
+            >
               {stats.inProgressCount}
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -1102,20 +1628,36 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             sx={{
               p: isMobile ? 1.5 : 2,
               borderRadius: "16px",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              border: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+              }`,
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+                ? `linear-gradient(135deg, ${alpha(
+                    theme.palette.background.paper,
+                    0.7
+                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
+                    "#FFFFFF",
+                    0.6
+                  )} 100%)`,
               backdropFilter: "blur(16px)",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
               <CheckCircleIcon sx={{ color: "#059669", fontSize: 20 }} />
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={600}
+              >
                 Concluídos
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700} color="#059669">
+            <Typography
+              variant={isMobile ? "h6" : "h5"}
+              fontWeight={700}
+              color="#059669"
+            >
               {stats.completedCount}
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -1130,20 +1672,36 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             sx={{
               p: isMobile ? 1.5 : 2,
               borderRadius: "16px",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              border: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+              }`,
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
+                ? `linear-gradient(135deg, ${alpha(
+                    theme.palette.background.paper,
+                    0.7
+                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
+                    "#FFFFFF",
+                    0.6
+                  )} 100%)`,
               backdropFilter: "blur(16px)",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
               <TrendingDownIcon sx={{ color: "#DC2626", fontSize: 20 }} />
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={600}
+              >
                 A Pagar
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#DC2626">
+            <Typography
+              variant={isMobile ? "body1" : "h6"}
+              fontWeight={700}
+              color="#DC2626"
+            >
               {formatCurrency(stats.totalRemaining)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -1163,12 +1721,22 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <CheckCircleIcon sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }} />
-              <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.8) }} fontWeight={600}>
+              <CheckCircleIcon
+                sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }}
+              />
+              <Typography
+                variant="caption"
+                sx={{ color: alpha("#FFFFFF", 0.8) }}
+                fontWeight={600}
+              >
                 Total Pago
               </Typography>
             </Box>
-            <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color="#FFFFFF">
+            <Typography
+              variant={isMobile ? "body1" : "h6"}
+              fontWeight={700}
+              color="#FFFFFF"
+            >
               {formatCurrency(stats.totalPaid)}
             </Typography>
             <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.7) }}>
@@ -1188,7 +1756,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             ? alpha(theme.palette.background.paper, 0.7)
             : alpha("#FFFFFF", 0.9),
           backdropFilter: "blur(20px)",
-          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          border: `1px solid ${
+            isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+          }`,
           p: 2,
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
@@ -1204,13 +1774,23 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           minWidth={180}
         />
 
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", flex: 1, alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1.5,
+            flexWrap: "wrap",
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
           <FormControl size="small" sx={{ minWidth: 130 }}>
             <InputLabel>Status</InputLabel>
             <Select
               value={filterStatus}
               label="Status"
-              onChange={(e: SelectChangeEvent) => setFilterStatus(e.target.value as SplitStatus)}
+              onChange={(e: SelectChangeEvent) =>
+                setFilterStatus(e.target.value as SplitStatus)
+              }
             >
               <MenuItem value="all">Todos</MenuItem>
               <MenuItem value="in_progress">Em Andamento</MenuItem>
@@ -1223,7 +1803,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             <Select
               value={filterType}
               label="Tipo"
-              onChange={(e: SelectChangeEvent) => setFilterType(e.target.value as "all" | "income" | "expense")}
+              onChange={(e: SelectChangeEvent) =>
+                setFilterType(e.target.value as "all" | "income" | "expense")
+              }
             >
               <MenuItem value="all">Todos</MenuItem>
               <MenuItem value="income">Receita</MenuItem>
@@ -1245,7 +1827,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               >
                 <RefreshIcon
                   sx={{
-                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                    animation: isRefreshing
+                      ? "spin 1s linear infinite"
+                      : "none",
                     "@keyframes spin": {
                       "0%": { transform: "rotate(0deg)" },
                       "100%": { transform: "rotate(360deg)" },
@@ -1276,24 +1860,32 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       <Menu
         anchorEl={mobileActionAnchor.element}
         open={Boolean(mobileActionAnchor.element)}
-        onClose={() => setMobileActionAnchor({ element: null, transaction: null })}
+        onClose={() =>
+          setMobileActionAnchor({ element: null, transaction: null })
+        }
       >
         <MenuItem
           onClick={() => {
-            if (mobileActionAnchor.transaction) onEdit(mobileActionAnchor.transaction);
+            if (mobileActionAnchor.transaction)
+              onEdit(mobileActionAnchor.transaction);
             setMobileActionAnchor({ element: null, transaction: null });
           }}
         >
-          <ListItemIcon><EditIcon fontSize="small" color="primary" /></ListItemIcon>
+          <ListItemIcon>
+            <EditIcon fontSize="small" color="primary" />
+          </ListItemIcon>
           <ListItemText>Editar</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() => {
-            if (mobileActionAnchor.transaction) onDelete(mobileActionAnchor.transaction.id);
+            if (mobileActionAnchor.transaction)
+              onDelete(mobileActionAnchor.transaction.id);
             setMobileActionAnchor({ element: null, transaction: null });
           }}
         >
-          <ListItemIcon><DeleteIcon fontSize="small" color="error" /></ListItemIcon>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" color="error" />
+          </ListItemIcon>
           <ListItemText>Excluir</ListItemText>
         </MenuItem>
       </Menu>
@@ -1328,7 +1920,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             maxWidth: "100vw",
             bgcolor: isDarkMode ? theme.palette.background.default : "#FAFBFC",
             backgroundImage: "none",
-            borderLeft: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+            borderLeft: `1px solid ${
+              isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)
+            }`,
             boxShadow: isDarkMode
               ? `-24px 0 80px -20px ${alpha("#000000", 0.5)}`
               : `-24px 0 80px -20px ${alpha(theme.palette.primary.main, 0.12)}`,
@@ -1349,7 +1943,14 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       >
         {/* Header */}
         <Box sx={{ p: 3, pb: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box
                 sx={{
@@ -1359,7 +1960,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.1),
+                  bgcolor: alpha(
+                    theme.palette.primary.main,
+                    isDarkMode ? 0.15 : 0.1
+                  ),
                   color: "primary.main",
                 }}
               >
@@ -1369,7 +1973,12 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 <Typography variant="h6" fontWeight={600}>
                   Alterar Datas de Vencimento
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 280 }} noWrap>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: 280 }}
+                  noWrap
+                >
                   {selectedGroupForDateChange?.description}
                 </Typography>
               </Box>
@@ -1401,10 +2010,16 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              Configure o dia de vencimento e o mês de início para recalcular as datas de todas as{" "}
-              <Typography component="span" fontWeight={600} color="primary.main">
+              Configure o dia de vencimento e o mês de início para recalcular as
+              datas de todas as{" "}
+              <Typography
+                component="span"
+                fontWeight={600}
+                color="primary.main"
+              >
                 {selectedGroupForDateChange?.totalInstallments} parcelas
-              </Typography>.
+              </Typography>
+              .
             </Typography>
           </Box>
         </Box>
@@ -1464,7 +2079,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 onChange={(e) => setNewStartYear(Number(e.target.value))}
                 sx={{ borderRadius: "12px" }}
               >
-                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => (
+                {Array.from(
+                  { length: 10 },
+                  (_, i) => new Date().getFullYear() - 2 + i
+                ).map((year) => (
                   <MenuItem key={year} value={year}>
                     {year}
                   </MenuItem>
@@ -1475,7 +2093,15 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             {/* Preview das novas datas */}
             {previewDates.length > 0 && (
               <Box>
-                <Typography variant="subtitle2" sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    mb: 1.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
                   <VisibilityIcon fontSize="small" color="primary" />
                   Prévia das Novas Datas
                 </Typography>
@@ -1494,19 +2120,29 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>Parcela</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>Data Atual</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>Nova Data</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                          Parcela
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                          Data Atual
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                          Nova Data
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {selectedGroupForDateChange?.installments
-                        .sort((a, b) => (a.currentInstallment || 1) - (b.currentInstallment || 1))
+                        .sort(
+                          (a, b) =>
+                            (a.currentInstallment || 1) -
+                            (b.currentInstallment || 1)
+                        )
                         .map((inst, idx) => {
                           const preview = previewDates[idx];
                           const currentDate = inst.date;
                           const hasChanged = currentDate !== preview?.date;
-                          
+
                           return (
                             <TableRow key={inst.id}>
                               <TableCell>
@@ -1522,7 +2158,12 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                                 <Typography
                                   variant="body2"
                                   color="text.secondary"
-                                  sx={{ textDecoration: hasChanged ? "line-through" : "none", fontSize: 12 }}
+                                  sx={{
+                                    textDecoration: hasChanged
+                                      ? "line-through"
+                                      : "none",
+                                    fontSize: 12,
+                                  }}
                                 >
                                   {formatDateFull(currentDate)}
                                 </Typography>
@@ -1531,7 +2172,11 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                                 <Typography
                                   variant="body2"
                                   fontWeight={hasChanged ? 600 : 400}
-                                  color={hasChanged ? "primary.main" : "text.secondary"}
+                                  color={
+                                    hasChanged
+                                      ? "primary.main"
+                                      : "text.secondary"
+                                  }
                                   sx={{ fontSize: 12 }}
                                 >
                                   {preview ? formatDateFull(preview.date) : "-"}
@@ -1577,7 +2222,13 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             onClick={handleSaveDates}
             disabled={isUpdatingDates || !onUpdateInstallmentDates}
           >
-            {isUpdatingDates ? "Atualizando..." : <><CalendarMonthIcon /> Salvar Alterações</>}
+            {isUpdatingDates ? (
+              "Atualizando..."
+            ) : (
+              <>
+                <CalendarMonthIcon /> Salvar Alterações
+              </>
+            )}
           </NixButton>
         </Box>
       </Drawer>
