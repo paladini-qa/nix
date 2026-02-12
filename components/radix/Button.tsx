@@ -34,7 +34,7 @@ const NixButton = React.forwardRef<HTMLButtonElement, NixButtonProps>(
         size={SIZE_MAP[size]}
         variant={VARIANT_MAP[variant]}
         color={color}
-        className={`nix-button nix-button--${size} ${className}`.trim()}
+        className={`nix-control nix-button nix-button--${size} ${className}`.trim()}
         style={{
           transition: "all 0.2s ease-in-out",
           ...style,
