@@ -32,7 +32,7 @@ const NixCard = React.forwardRef<HTMLDivElement, NixCardProps>(
         ref={ref}
         variant="surface"
         size="3"
-        className={`nix-card ${glass ? "nix-glass-panel" : ""} ${hover ? "nix-card--hover" : ""} ${className}`.trim()}
+        className={`nix-card nix-elevated-surface ${glass ? "nix-glass-panel" : ""} ${hover ? "nix-card--hover" : ""} ${className}`.trim()}
         style={{
           padding: paddingValue,
           borderRadius: "20px",

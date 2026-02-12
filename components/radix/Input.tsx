@@ -11,7 +11,7 @@ const NixInput = React.forwardRef<HTMLInputElement, NixInputProps>(
         size={size}
         variant={variant}
         radius={radius}
-        className={`nix-input ${className}`.trim()}
+        className={`nix-control nix-input ${className}`.trim()}
         style={{
           borderRadius: "20px",
         }}
