@@ -3948,7 +3948,9 @@ const AppContent: React.FC<{
       <ColorsContext.Provider value={colorsContextValue}>
         <Box
           sx={{
+            height: "100vh",
             minHeight: "100vh",
+            overflow: "hidden",
             bgcolor: "background.default",
             display: "flex",
           }}
@@ -3994,6 +3996,7 @@ const AppContent: React.FC<{
             component="main"
             sx={{
               flexGrow: 1,
+              minHeight: 0,
               p: { xs: 1.5, sm: 2, md: 3, lg: 4 },
               mt: { xs: "64px", lg: 0 },
               // Extra padding para bottom navigation (64px) + safe area + FABs

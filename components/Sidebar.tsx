@@ -147,11 +147,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Renderiza um item de navegação
   // Estilos especiais para o item NixAI conforme Brand Book
   const isNixAI = (itemId: string) => itemId === "nixai";
-  
-  const renderNavItem = (item: NavItem, isSubItem: boolean = false, index: number = 0) => {
+
+  const renderNavItem = (
+    item: NavItem,
+    isSubItem: boolean = false,
+    index: number = 0
+  ) => {
     const isActive = currentView === item.id;
     const isAIItem = isNixAI(item.id);
-    
+
     return (
       <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
         <MotionListItemButton
@@ -169,12 +173,13 @@ const Sidebar: React.FC<SidebarProps> = ({
             position: "relative",
             overflow: "hidden",
             // Estilo especial para NixAI: gradiente roxo suave
-            ...(isAIItem && !isActive && {
-              background: isDarkMode
-                ? "linear-gradient(135deg, rgba(138, 43, 226, 0.12) 0%, rgba(106, 13, 173, 0.08) 100%)"
-                : "linear-gradient(135deg, rgba(138, 43, 226, 0.06) 0%, rgba(106, 13, 173, 0.04) 100%)",
-              border: `1px solid ${alpha("#8A2BE2", isDarkMode ? 0.2 : 0.1)}`,
-            }),
+            ...(isAIItem &&
+              !isActive && {
+                background: isDarkMode
+                  ? "linear-gradient(135deg, rgba(138, 43, 226, 0.12) 0%, rgba(106, 13, 173, 0.08) 100%)"
+                  : "linear-gradient(135deg, rgba(138, 43, 226, 0.06) 0%, rgba(106, 13, 173, 0.04) 100%)",
+                border: `1px solid ${alpha("#8A2BE2", isDarkMode ? 0.2 : 0.1)}`,
+              }),
             ...(isActive && {
               bgcolor: isDarkMode
                 ? alpha(theme.palette.primary.main, 0.15)
@@ -218,12 +223,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                   height: 24,
                   borderRadius: "0 4px 4px 0",
                   bgcolor: "primary.main",
-                  boxShadow: `2px 0 8px ${alpha(theme.palette.primary.main, 0.4)}`,
+                  boxShadow: `2px 0 8px ${alpha(
+                    theme.palette.primary.main,
+                    0.4
+                  )}`,
                 }}
               />
             )}
           </AnimatePresence>
-          
+
           <ListItemIcon
             sx={{
               minWidth: isSubItem ? 36 : 44,
@@ -244,7 +252,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 justifyContent: "center",
                 // NixAI tem gradiente roxo no ícone (Brand Book)
                 ...(isAIItem && {
-                  background: "linear-gradient(135deg, #8A2BE2 0%, #6A0DAD 100%)",
+                  background:
+                    "linear-gradient(135deg, #8A2BE2 0%, #6A0DAD 100%)",
                   color: "#FFFFFF",
                   boxShadow: "0 4px 12px rgba(138, 43, 226, 0.3)",
                 }),
@@ -258,8 +267,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 transition: "all 0.2s ease",
               }}
             >
-              <item.icon 
-                fontSize={isSubItem ? "small" : "small"} 
+              <item.icon
+                fontSize={isSubItem ? "small" : "small"}
                 sx={isAIItem ? { color: "#FFFFFF" } : undefined}
               />
             </MotionBox>
@@ -285,7 +294,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                   height: 6,
                   borderRadius: "50%",
                   bgcolor: "primary.main",
-                  boxShadow: `0 0 8px ${alpha(theme.palette.primary.main, 0.6)}`,
+                  boxShadow: `0 0 8px ${alpha(
+                    theme.palette.primary.main,
+                    0.6
+                  )}`,
                 }}
               />
             )}
@@ -301,17 +313,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       sx={{
         width: DRAWER_WIDTH,
         flexShrink: 0,
+        height: "100vh",
         boxSizing: "border-box",
         border: "none",
         boxShadow: isDarkMode
           ? `1px 0 24px -8px ${alpha("#000000", 0.4)}`
           : `1px 0 24px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
-        bgcolor: isDarkMode
-          ? theme.palette.background.paper
-          : "#FFFFFF",
+        bgcolor: isDarkMode ? theme.palette.background.paper : "#FFFFFF",
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
+        overflow: "hidden",
       }}
     >
       {/* Logo Area */}
@@ -344,7 +355,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             flexShrink: 0,
             boxShadow: isDarkMode
               ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
-              : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 2px 8px -2px ${alpha(theme.palette.primary.main, 0.15)}`,
+              : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 2px 8px -2px ${alpha(
+                  theme.palette.primary.main,
+                  0.15
+                )}`,
           }}
         >
           <Box
@@ -359,10 +373,24 @@ const Sidebar: React.FC<SidebarProps> = ({
           />
         </MotionBox>
         <Box sx={{ color: "text.primary" }}>
-          <Text size="5" weight="bold" style={{ letterSpacing: "-0.02em", color: "inherit" }} as="span">
+          <Text
+            size="5"
+            weight="bold"
+            style={{ letterSpacing: "-0.02em", color: "inherit" }}
+            as="span"
+          >
             Nix
           </Text>
-          <Text size="1" style={{ letterSpacing: "0.02em", display: "block", color: "inherit", opacity: 0.8 }} as="span">
+          <Text
+            size="1"
+            style={{
+              letterSpacing: "0.02em",
+              display: "block",
+              color: "inherit",
+              opacity: 0.8,
+            }}
+            as="span"
+          >
             Finance Manager
           </Text>
         </Box>
@@ -377,7 +405,18 @@ const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Main Menu Label */}
         <motion.div variants={itemVariants}>
-          <Text size="1" color="gray" weight="medium" style={{ paddingLeft: 16, paddingRight: 16, letterSpacing: "0.1em", fontSize: 12 }} as="p">
+          <Text
+            size="1"
+            color="gray"
+            weight="medium"
+            style={{
+              paddingLeft: 16,
+              paddingRight: 16,
+              letterSpacing: "0.1em",
+              fontSize: 12,
+            }}
+            as="p"
+          >
             Menu Principal
           </Text>
         </motion.div>
@@ -394,7 +433,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Reports Items - Flat (sem dropdown) */}
         <Box sx={{ mt: 2 }}>
           <motion.div variants={itemVariants}>
-            <Text size="1" color="gray" weight="medium" style={{ paddingLeft: 16, paddingRight: 16, letterSpacing: "0.1em", fontSize: 12 }} as="p">
+            <Text
+              size="1"
+              color="gray"
+              weight="medium"
+              style={{
+                paddingLeft: 16,
+                paddingRight: 16,
+                letterSpacing: "0.1em",
+                fontSize: 12,
+              }}
+              as="p"
+            >
               Relatórios
             </Text>
           </motion.div>
@@ -410,7 +460,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Footer Items */}
         <Box sx={{ mt: 2 }}>
           <motion.div variants={itemVariants}>
-            <Text size="1" color="gray" weight="medium" style={{ paddingLeft: 16, paddingRight: 16, letterSpacing: "0.1em", fontSize: 12 }} as="p">
+            <Text
+              size="1"
+              color="gray"
+              weight="medium"
+              style={{
+                paddingLeft: 16,
+                paddingRight: 16,
+                letterSpacing: "0.1em",
+                fontSize: 12,
+              }}
+              as="p"
+            >
               Ferramentas
             </Text>
           </motion.div>
@@ -452,14 +513,20 @@ const Sidebar: React.FC<SidebarProps> = ({
               justifyContent: "space-between",
               mb: 1.5,
               pb: 1.5,
-              borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              borderBottom: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+              }`,
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {isPrivacyMode ? (
-                <VisibilityOffIcon sx={{ fontSize: 18, color: "primary.main" }} />
+                <VisibilityOffIcon
+                  sx={{ fontSize: 18, color: "primary.main" }}
+                />
               ) : (
-                <VisibilityIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                <VisibilityIcon
+                  sx={{ fontSize: 18, color: "text.secondary" }}
+                />
               )}
               <Typography
                 variant="body2"
@@ -471,7 +538,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 Modo Privado
               </Typography>
             </Box>
-            <Tooltip title={`${isPrivacyMode ? "Mostrar" : "Ocultar"} valores (Alt+P)`}>
+            <Tooltip
+              title={`${isPrivacyMode ? "Mostrar" : "Ocultar"} valores (Alt+P)`}
+            >
               <IconButton
                 onClick={togglePrivacyMode}
                 size="small"
@@ -481,7 +550,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                     : "transparent",
                   color: isPrivacyMode ? "primary.main" : "text.secondary",
                   "&:hover": {
-                    bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.15),
+                    bgcolor: alpha(
+                      theme.palette.primary.main,
+                      isDarkMode ? 0.25 : 0.15
+                    ),
                   },
                 }}
               >
@@ -493,7 +565,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </IconButton>
             </Tooltip>
           </Box>
-          
+
           {/* Theme Switch */}
           <ThemeSwitch value={themePreference} onChange={onThemeChange} />
         </Box>
@@ -511,7 +583,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.default, 0.6)
               : alpha("#FFFFFF", 0.8),
-            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${
+              isDarkMode
+                ? alpha("#FFFFFF", 0.08)
+                : alpha(theme.palette.primary.main, 0.08)
+            }`,
             boxShadow: isDarkMode
               ? `0 4px 16px -4px ${alpha("#000000", 0.3)}`
               : `0 4px 16px -4px ${alpha(theme.palette.primary.main, 0.1)}`,
@@ -549,7 +625,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             </Box>
             <MotionBox
               animate={{ x: [0, 3, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
             >
               <ChevronRightIcon
                 fontSize="small"
