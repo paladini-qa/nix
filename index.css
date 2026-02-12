@@ -928,3 +928,52 @@ body.sheet-open {
     backdrop-filter: none !important;
   }
 }
+
+/* ============================================
+   NIX UI STANDARDIZATION
+   ============================================ */
+.nix-control {
+  border-radius: 20px;
+  transition: transform 0.12s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.nix-control:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--nix-bg-base), 0 0 0 4px var(--nix-purple-glow);
+}
+
+.nix-button {
+  min-height: 40px;
+  font-weight: 600;
+}
+
+.nix-button--small {
+  min-height: 32px;
+}
+
+.nix-button--large,
+.nix-button--fab {
+  min-height: 48px;
+}
+
+.nix-elevated-surface {
+  border: 1px solid var(--nix-glass-border);
+  box-shadow: 0 10px 30px -20px var(--nix-purple-glow);
+}
+
+.nix-card--hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px -20px var(--nix-purple-glow);
+}
+
+.nix-input,
+.nix-select-content {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+@media (max-width: 768px) {
+  .nix-button {
+    min-height: 44px;
+  }
+}

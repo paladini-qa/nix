@@ -12,14 +12,15 @@ export const SelectSeparator = SelectRadix.Separator;
 export interface NixSelectTriggerProps extends React.ComponentPropsWithoutRef<typeof SelectRadix.Trigger> {}
 
 export const NixSelectTrigger = React.forwardRef<HTMLButtonElement, NixSelectTriggerProps>(
-  ({ size = "2", variant = "surface", radius = "large", ...props }, ref) => {
+  ({ size = "2", variant = "surface", radius = "large", className = "", style, ...props }, ref) => {
     return (
       <SelectRadix.Trigger
         ref={ref}
         size={size}
         variant={variant}
         radius={radius}
-        style={{ borderRadius: "20px" }}
+        className={`nix-control ${className}`.trim()}
+        style={{ borderRadius: "20px", ...style }}
         {...props}
       />
     );
@@ -31,12 +32,13 @@ NixSelectTrigger.displayName = "NixSelectTrigger";
 export interface NixSelectContentProps extends React.ComponentPropsWithoutRef<typeof SelectRadix.Content> {}
 
 export const NixSelectContent = React.forwardRef<HTMLDivElement, NixSelectContentProps>(
-  (props, ref) => {
+  ({ className = "", style, ...props }, ref) => {
     return (
       <SelectRadix.Content
         ref={ref}
         position="popper"
-        style={{ borderRadius: "20px" }}
+        className={`nix-select-content ${className}`.trim()}
+        style={{ borderRadius: "20px", ...style }}
         {...props}
       />
     );
