@@ -71,7 +71,8 @@ const AddConnectionDialog: React.FC<AddConnectionDialogProps> = ({
   const loadConnectors = async () => {
     try {
       setIsLoading(true);
-      const data = await pluggyService.getConnectors();
+      // getAllConnectors: todas as instituições (bancos, cartão). BR = Brasil.
+      const data = await pluggyService.getAllConnectors(["BR"]);
       setConnectors(data);
     } catch (error: any) {
       console.error("Error loading connectors:", error);
@@ -251,7 +252,7 @@ const AddConnectionDialog: React.FC<AddConnectionDialogProps> = ({
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            Selecione o banco para conectar seu cartão de crédito
+            Selecione a instituição para conectar sua conta ou cartão
           </Typography>
 
           {/* Busca */}

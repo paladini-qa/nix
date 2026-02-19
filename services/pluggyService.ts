@@ -160,26 +160,35 @@ export const pluggyService = {
   },
 
   /**
-   * Lista todos os conectores disponíveis sem filtro
-   * Útil para Open Finance onde queremos permitir todos os tipos
+   * Lista todos os conectores disponíveis sem filtro (bancos, cartão, etc.)
+   * Útil para Open Finance. Opcionalmente filtra por país (ex: BR).
    */
-  async getAllConnectors(): Promise<PluggyConnector[]> {
-    // Verifica cache (válido por 24 horas)
-    if (cachedConnectors && Date.now() < connectorsCacheExpiresAt) {
+  async getAllConnectors(countries?: string[]): Promise<PluggyConnector[]> {
+    // Verifica cache (válido por 24 horas) - só usa cache se não passou filtro de país
+    if (
+      !countries?.length &&
+      cachedConnectors &&
+      Date.now() < connectorsCacheExpiresAt
+    ) {
       return cachedConnectors;
     }
 
     try {
+      const params = countries?.length
+        ? `?countries=${countries.join(",")}`
+        : "";
       const response = await retryFetch(() =>
-        authenticatedFetch("/connectors")
+        authenticatedFetch(`/connectors${params}`)
       );
       const data = await response.json();
 
-      // Atualiza cache
-      cachedConnectors = data.results || [];
-      connectorsCacheExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 horas
+      const results = data.results || data.connectors || [];
+      if (!countries?.length) {
+        cachedConnectors = results;
+        connectorsCacheExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 horas
+      }
 
-      return cachedConnectors;
+      return results;
     } catch (error: any) {
       console.error("Error fetching all connectors:", error);
       throw error;
