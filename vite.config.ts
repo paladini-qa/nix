@@ -26,6 +26,18 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: "0.0.0.0",
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: (id) => {
+            if (id.includes("node_modules/recharts")) return "recharts";
+            if (id.includes("node_modules/@mui/material") || id.includes("node_modules/@mui/icons-material")) return "mui";
+            if (id.includes("node_modules/framer-motion")) return "framer-motion";
+            if (id.includes("node_modules/@supabase/supabase-js")) return "supabase";
+          },
+        },
+      },
+    },
     plugins: [react()],
     define: {
       "process.env.API_KEY": JSON.stringify(env.GEMINI_API_KEY),

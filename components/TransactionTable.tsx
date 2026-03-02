@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useMemo } from "react";
 import {
   Paper,
   Table,
@@ -15,6 +15,7 @@ import {
   useTheme,
   alpha,
 } from "@mui/material";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
@@ -198,11 +199,25 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     );
   }
 
+  const containerVariantsDynamic = useMemo(
+    () => ({
+      ...containerVariants,
+      visible: {
+        ...containerVariants.visible,
+        transition: {
+          staggerChildren: transactions.length > 30 ? 0.01 : 0.03,
+          delayChildren: 0,
+        },
+      },
+    }),
+    [transactions.length]
+  );
+
   // Mobile Card View - Glassmorphism Style with Animations
   if (isMobile) {
     return (
       <MotionBox
-        variants={containerVariants}
+        variants={containerVariantsDynamic}
         initial={false}
         animate="visible"
         sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
@@ -353,6 +368,17 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     );
   }
 
+  const VIRTUALIZE_THRESHOLD = 40;
+  const ROW_HEIGHT = 80;
+  const tableParentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: transactions.length,
+    getScrollElement: () => tableParentRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 5,
+    enabled: !isMobile && transactions.length > VIRTUALIZE_THRESHOLD,
+  });
+
   // Desktop Table View - Clean Card-Table Hybrid with Animations
   return (
     <TableContainer
@@ -374,6 +400,89 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           : `0 8px 32px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
       }}
     >
+      {!isMobile && transactions.length > VIRTUALIZE_THRESHOLD ? (
+        <>
+          <Table>
+            <TableHead>
+              <TableRow
+                sx={{
+                  bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.5) : alpha(theme.palette.grey[50], 0.8),
+                  "& th": { borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}` },
+                }}
+              >
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>DATA</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>DESCRIÇÃO</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>CATEGORIA</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>PAGAMENTO</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5, width: 200 }}>VALOR</TableCell>
+              </TableRow>
+            </TableHead>
+          </Table>
+          <Box ref={tableParentRef} sx={{ maxHeight: 400, overflow: "auto" }}>
+            <Box sx={{ height: rowVirtualizer.getTotalSize(), position: "relative" }}>
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const transaction = transactions[virtualRow.index];
+                const barWidth = ((transaction.amount || 0) / maxAmount) * 100;
+                const isIncome = transaction.type === "income";
+                const catConfig = getCategoryConfig(transaction.category);
+                const CategoryIcon = catConfig.icon;
+                return (
+                  <Box
+                    key={transaction.id}
+                    component="div"
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                      display: "flex",
+                      alignItems: "stretch",
+                      boxSizing: "border-box",
+                      borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.04) : alpha("#000000", 0.04)}`,
+                      "& .MuiTableCell-root": { py: 2.5 },
+                    }}
+                  >
+                    <TableCell component="div"><Typography variant="body2" fontWeight={500} color="text.primary">{formatDateFull(transaction.date)}</Typography></TableCell>
+                    <TableCell component="div">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Box sx={{ width: 32, height: 32, borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: isIncome ? alpha(theme.palette.success.main, 0.15) : alpha(theme.palette.error.main, 0.15) }}>
+                          {isIncome ? <ArrowUpIcon sx={{ fontSize: 16, color: theme.palette.success.main }} /> : <ArrowDownIcon sx={{ fontSize: 16, color: theme.palette.error.main }} />}
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" fontWeight={500}>{transaction.description}</Typography>
+                          <TransactionTags transaction={transaction} />
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell component="div">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Box sx={{ width: 36, height: 36, borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: isDarkMode ? alpha(catConfig.color, 0.15) : catConfig.bgLight }}>
+                          <CategoryIcon sx={{ fontSize: 18, color: catConfig.color }} />
+                        </Box>
+                        <Typography variant="body2" fontWeight={500} sx={{ color: catConfig.color }}>{transaction.category}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell component="div"><Typography variant="body2" color="text.secondary" fontWeight={500}>{transaction.paymentMethod}</Typography></TableCell>
+                    <TableCell component="div">
+                      <Box>
+                        <Typography variant="body2" fontWeight={700} sx={{ mb: 1, color: isIncome ? theme.palette.success.main : theme.palette.error.main, ...privacyStyles }}>
+                          {isIncome ? "+" : "-"} {formatCurrency(transaction.amount || 0)}
+                        </Typography>
+                        <Box sx={{ position: "relative", overflow: "hidden", borderRadius: "20px" }}>
+                          <LinearProgress variant="determinate" value={100} sx={{ height: 4, borderRadius: "20px", bgcolor: alpha(isIncome ? theme.palette.success.main : theme.palette.error.main, 0.1), "& .MuiLinearProgress-bar": { borderRadius: "20px", bgcolor: "transparent" } }} />
+                          <Box sx={{ position: "absolute", top: 0, left: 0, height: 4, borderRadius: "20px", width: `${barWidth}%`, bgcolor: isIncome ? theme.palette.success.main : theme.palette.error.main }} />
+                        </Box>
+                      </Box>
+                    </TableCell>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+        </>
+      ) : (
       <Table>
         <TableHead>
           <TableRow
@@ -583,6 +692,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           </AnimatePresence>
         </TableBody>
       </Table>
+      )}
     </TableContainer>
   );
 };

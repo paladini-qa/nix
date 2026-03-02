@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import {
   Box,
   Typography,
@@ -33,6 +33,7 @@ import {
   Card,
   CardContent,
 } from "@mui/material";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Add as AddIcon,
   Download as DownloadIcon,
@@ -357,6 +358,27 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     const start = page * rowsPerPage;
     return filteredData.slice(start, start + rowsPerPage);
   }, [filteredData, page, rowsPerPage, isMobile]);
+
+  const DESKTOP_ROW_HEIGHT = 56;
+  const VIRTUALIZE_THRESHOLD = 40;
+  const desktopTableParentRef = useRef<HTMLDivElement>(null);
+  const desktopRowVirtualizer = useVirtualizer({
+    count: paginatedData.length,
+    getScrollElement: () => desktopTableParentRef.current,
+    estimateSize: () => DESKTOP_ROW_HEIGHT,
+    overscan: 5,
+    enabled: !isMobile && paginatedData.length > VIRTUALIZE_THRESHOLD,
+  });
+
+  const mobileListParentRef = useRef<HTMLDivElement>(null);
+  const CARD_ESTIMATE_HEIGHT = 100;
+  const mobileListVirtualizer = useVirtualizer({
+    count: paginatedData.length,
+    getScrollElement: () => mobileListParentRef.current,
+    estimateSize: () => CARD_ESTIMATE_HEIGHT,
+    overscan: 3,
+    enabled: isMobile && paginatedData.length > 30,
+  });
 
   // Handler de ordenação
   const handleSort = useCallback((column: SortColumn) => {
@@ -1432,6 +1454,48 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
           {paginatedData.length > 0 ? (
             <>
+              {isMobile && paginatedData.length > 30 ? (
+                <Box
+                  ref={mobileListParentRef}
+                  sx={{ maxHeight: "70vh", overflow: "auto" }}
+                >
+                  <Box
+                    sx={{
+                      height: `${mobileListVirtualizer.getTotalSize()}px`,
+                      width: "100%",
+                      position: "relative",
+                    }}
+                  >
+                    {mobileListVirtualizer.getVirtualItems().map((virtualRow) => {
+                      const t = paginatedData[virtualRow.index];
+                      return (
+                        <Box
+                          key={t.id}
+                          sx={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            transform: `translateY(${virtualRow.start}px)`,
+                            py: 0.75,
+                          }}
+                        >
+                          <SwipeableTransactionCard
+                            transaction={t}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                            onTogglePaid={onTogglePaid}
+                            onOpenMenu={(element, transaction) =>
+                              setMobileActionAnchor({ element, transaction })
+                            }
+                            formatDateShort={formatDateShort}
+                          />
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              ) : (
               <AnimatePresence mode="popLayout">
                 {paginatedData.map((t, index) => (
                   <motion.div
@@ -1459,6 +1523,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   </motion.div>
                 ))}
               </AnimatePresence>
+              )}
 
               {/* Summary Footer */}
               <Card
@@ -1629,26 +1694,96 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             }`,
           }}
         >
+          {!isMobile && paginatedData.length > VIRTUALIZE_THRESHOLD ? (
+            <>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ ...headerCellSx, width: 50, textAlign: "center" }}>Paid</TableCell>
+                    {renderSortableHeader("date", "Date", 100)}
+                    {renderSortableHeader("description", "Description")}
+                    {renderSortableHeader("category", "Category", 140)}
+                    {renderSortableHeader("paymentMethod", "Method", 140)}
+                    {renderSortableHeader("type", "Type", 80)}
+                    {renderSortableHeader("amount", "Amount", 130)}
+                    <TableCell sx={{ ...headerCellSx, width: 100, textAlign: "center" }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+              </Table>
+              <Box
+                ref={desktopTableParentRef}
+                sx={{ maxHeight: 520, overflow: "auto" }}
+              >
+                <Box sx={{ height: desktopRowVirtualizer.getTotalSize(), position: "relative" }}>
+                  {desktopRowVirtualizer.getVirtualItems().map((virtualRow) => {
+                    const t = paginatedData[virtualRow.index];
+                    return (
+                      <Box
+                        key={t.id}
+                        component="div"
+                        sx={{
+                          ...getRowSx(t, virtualRow.index),
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: `${virtualRow.size}px`,
+                          transform: `translateY(${virtualRow.start}px)`,
+                          display: "flex",
+                          alignItems: "stretch",
+                          boxSizing: "border-box",
+                          borderBottom: `1px solid ${isDarkMode ? alpha("#FFF", 0.06) : alpha("#000", 0.06)}`,
+                        }}
+                      >
+                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 50px" }}>
+                          <Tooltip title={t.isVirtual ? "Mark recurring occurrence" : t.isPaid !== false ? "Paid" : "Not paid"}>
+                            <Checkbox checked={t.isPaid !== false} onChange={(e) => onTogglePaid(t.id, e.target.checked)} size="small" color={t.isVirtual ? "info" : "success"} />
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell component="div" sx={{ fontFamily: "monospace", fontSize: 12, flex: "0 0 100px" }}>{formatDate(t.date)}</TableCell>
+                        <TableCell component="div" sx={{ flex: 1, minWidth: 0 }}>
+                          <Box sx={{ display: "flex", flexDirection: "column" }}>
+                            <Typography variant="body2" fontWeight={500}>{t.description}</Typography>
+                            <TransactionTags transaction={t} />
+                          </Box>
+                        </TableCell>
+                        <TableCell component="div" sx={{ flex: "0 0 140px" }}><Chip label={t.category} size="small" variant="outlined" /></TableCell>
+                        <TableCell component="div" sx={{ flex: "0 0 140px" }}><Typography variant="caption" color="text.secondary">{t.paymentMethod}</Typography></TableCell>
+                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 80px" }}>
+                          {t.type === "income" ? <ArrowUpIcon fontSize="small" color="success" /> : <ArrowDownIcon fontSize="small" color="error" />}
+                        </TableCell>
+                        <TableCell component="div" sx={{ textAlign: "right", fontFamily: "monospace", fontWeight: 600, color: t.type === "income" ? "success.main" : "error.main", flex: "0 0 130px" }}>
+                          {t.type === "expense" && "- "}{formatCurrency(t.amount || 0)}
+                        </TableCell>
+                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 100px" }}>
+                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
+                            <Tooltip title={t.isVirtual ? "Edit recurring transaction" : "Edit"}>
+                              <IconButton size="small" onClick={() => onEdit(t)} color="primary"><EditIcon fontSize="small" /></IconButton>
+                            </Tooltip>
+                            <Tooltip title={t.isVirtual ? "Delete recurring transaction" : "Delete"}>
+                              <IconButton size="small" onClick={() => onDelete(t.id)} color="error"><DeleteIcon fontSize="small" /></IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+            </>
+          ) : (
           <TableContainer>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell
-                    sx={{ ...headerCellSx, width: 50, textAlign: "center" }}
-                  >
-                    Paid
-                  </TableCell>
+                  <TableCell sx={{ ...headerCellSx, width: 50, textAlign: "center" }}>Paid</TableCell>
                   {renderSortableHeader("date", "Date", 100)}
                   {renderSortableHeader("description", "Description")}
                   {renderSortableHeader("category", "Category", 140)}
                   {renderSortableHeader("paymentMethod", "Method", 140)}
                   {renderSortableHeader("type", "Type", 80)}
                   {renderSortableHeader("amount", "Amount", 130)}
-                  <TableCell
-                    sx={{ ...headerCellSx, width: 100, textAlign: "center" }}
-                  >
-                    Actions
-                  </TableCell>
+                  <TableCell sx={{ ...headerCellSx, width: 100, textAlign: "center" }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1829,6 +1964,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               )}
             </Table>
           </TableContainer>
+          )}
 
           {/* Paginação */}
           {filteredData.length > 0 && (

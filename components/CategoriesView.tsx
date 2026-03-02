@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useContext, useEffect } from "react";
+import React, { useState, useMemo, useContext, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -31,6 +31,7 @@ import {
   Checkbox,
   Button,
 } from "@mui/material";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
@@ -351,6 +352,16 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       )
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [monthTransactions, selectedCategory]);
+
+  const CATEGORIES_VIRTUALIZE_THRESHOLD = 40;
+  const categoryListRef = useRef<HTMLDivElement>(null);
+  const categoryVirtualizer = useVirtualizer({
+    count: selectedCategoryTransactions.length,
+    getScrollElement: () => categoryListRef.current,
+    estimateSize: () => 56,
+    overscan: 5,
+    enabled: selectedCategoryTransactions.length > CATEGORIES_VIRTUALIZE_THRESHOLD,
+  });
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -1053,6 +1064,15 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             )}
           </Box>
         ) : (
+          <Box
+            ref={categoryListRef}
+            sx={
+              selectedCategoryTransactions.length >
+              CATEGORIES_VIRTUALIZE_THRESHOLD
+                ? { maxHeight: 480, overflow: "auto" }
+                : undefined
+            }
+          >
           <TableContainer
             component={Paper}
             sx={getTableContainerSx(theme, isDarkMode)}
@@ -1231,6 +1251,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               )}
             </Table>
           </TableContainer>
+          </Box>
         )}
 
         {/* Mobile Menu */}

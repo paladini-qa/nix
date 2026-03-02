@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import {
   Box,
   Typography,
@@ -36,6 +36,7 @@ import {
   CircularProgress,
   Stack,
 } from "@mui/material";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
@@ -410,6 +411,16 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
       );
   }, [groupedSplits, searchTerm, filterType, filterStatus]);
+
+  const SPLITS_VIRTUALIZE_THRESHOLD = 30;
+  const splitsListRef = useRef<HTMLDivElement>(null);
+  const splitsVirtualizer = useVirtualizer({
+    count: filteredGroups.length,
+    getScrollElement: () => splitsListRef.current,
+    estimateSize: () => 180,
+    overscan: 3,
+    enabled: filteredGroups.length > SPLITS_VIRTUALIZE_THRESHOLD,
+  });
 
   // Estatísticas
   const stats = useMemo(() => {
@@ -1844,9 +1855,31 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
       {/* Installment Groups */}
       {filteredGroups.length > 0 ? (
+        filteredGroups.length > SPLITS_VIRTUALIZE_THRESHOLD ? (
+          <Box ref={splitsListRef} sx={{ maxHeight: "70vh", overflow: "auto" }}>
+            <Box sx={{ height: splitsVirtualizer.getTotalSize(), position: "relative" }}>
+              {splitsVirtualizer.getVirtualItems().map((virtualRow) => (
+                <Box
+                  key={filteredGroups[virtualRow.index].key}
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    transform: `translateY(${virtualRow.start}px)`,
+                    pb: 2,
+                  }}
+                >
+                  {renderInstallmentCard(filteredGroups[virtualRow.index])}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {filteredGroups.map((group) => renderInstallmentCard(group))}
         </Box>
+        )
       ) : (
         <EmptyState
           type="recurring"

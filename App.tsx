@@ -81,7 +81,7 @@ const SharedView = lazy(() => import("./components/SharedView"));
 const BudgetsView = lazy(() => import("./components/BudgetsView"));
 const GoalsView = lazy(() => import("./components/GoalsView"));
 const PlanningView = lazy(() => import("./components/PlanningView"));
-import AnalyticsView from "./components/AnalyticsView";
+const AnalyticsView = lazy(() => import("./components/AnalyticsView"));
 const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
 const PaymentMethodsView = lazy(
   () => import("./components/PaymentMethodsView")
@@ -93,6 +93,14 @@ const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
 import type { AdvancedFiltersState } from "./components/AdvancedFilters";
 import { AdvancedFiltersButton } from "./components/AdvancedFilters";
 import { getInitialMonthYear } from "./hooks/useFilters";
+import DashboardSkeleton from "./components/skeletons/DashboardSkeleton";
+import TransactionsSkeleton from "./components/skeletons/TransactionsSkeleton";
+import ListCardsSkeleton from "./components/skeletons/ListCardsSkeleton";
+import BudgetsSkeleton from "./components/skeletons/BudgetsSkeleton";
+import GoalsSkeleton from "./components/skeletons/GoalsSkeleton";
+import PlanningSkeleton from "./components/skeletons/PlanningSkeleton";
+import PaymentMethodsSkeleton from "./components/skeletons/PaymentMethodsSkeleton";
+import CategoriesSkeleton from "./components/skeletons/CategoriesSkeleton";
 
 // Loading fallback component
 const ViewLoading: React.FC = () => (
@@ -1891,32 +1899,15 @@ const AppContent: React.FC<{
   };
 
   // Função auxiliar para abrir o formulário para nova transação (com contexto da aba atual)
-  const handleNewTransaction = () => {
+  const handleNewTransaction = useCallback(() => {
     setEditingTransaction(null);
     setCurrentEditMode(null);
     setPendingVirtualEdit(null);
     setFormInitialContext(getContextFromCurrentView());
     setIsFormOpen(true);
-  };
+  }, [getContextFromCurrentView]);
 
-  const handleEditTransaction = (transaction: Transaction) => {
-    // PRIMEIRO: Verificar se é uma transação compartilhada com relacionada
-    const isSharedWithRelated =
-      transaction.isShared && transaction.relatedTransactionId;
-
-    if (isSharedWithRelated) {
-      // Mostra o diálogo de opções de transação compartilhada primeiro
-      setSharedOptionsTransaction(transaction);
-      setSharedOptionsActionType("edit");
-      setSharedOptionsOpen(true);
-      return;
-    }
-
-    // Fluxo normal para transações não compartilhadas
-    proceedWithEdit(transaction);
-  };
-
-  // Função auxiliar para continuar com a edição após escolha de transação compartilhada
+  // Função auxiliar para continuar com a edição após escolha de transação compartilhada (defined before handleEditTransaction)
   const proceedWithEdit = (transaction: Transaction) => {
     const isVirtual = transaction.isVirtual;
     const isInstallment =
@@ -1949,6 +1940,23 @@ const AppContent: React.FC<{
       setIsFormOpen(true);
     }
   };
+
+  const handleEditTransaction = useCallback((transaction: Transaction) => {
+    // PRIMEIRO: Verificar se é uma transação compartilhada com relacionada
+    const isSharedWithRelated =
+      transaction.isShared && transaction.relatedTransactionId;
+
+    if (isSharedWithRelated) {
+      // Mostra o diálogo de opções de transação compartilhada primeiro
+      setSharedOptionsTransaction(transaction);
+      setSharedOptionsActionType("edit");
+      setSharedOptionsOpen(true);
+      return;
+    }
+
+    // Fluxo normal para transações não compartilhadas
+    proceedWithEdit(transaction);
+  }, [proceedWithEdit]);
 
   // Handler para quando o usuário seleciona uma opção no diálogo de transações compartilhadas (edit)
   const handleSharedEditOptionSelect = (option: SharedEditOption) => {
@@ -4188,22 +4196,24 @@ const AppContent: React.FC<{
                       }}
                     />
 
-                    {/* Analytics Charts */}
-                    <AnalyticsView
-                      transactions={analyticsTransactions}
-                      hasAdvancedFilters={
-                        advancedFilters.startDate !== null ||
-                        advancedFilters.endDate !== null ||
-                        advancedFilters.type !== "all" ||
-                        advancedFilters.categories.length > 0 ||
-                        advancedFilters.paymentMethods.length > 0
-                      }
-                      advancedFilters={advancedFilters}
-                    />
+                    {/* Analytics Charts (lazy: Recharts loaded on demand) */}
+                    <Suspense fallback={<DashboardSkeleton />}>
+                      <AnalyticsView
+                        transactions={analyticsTransactions}
+                        hasAdvancedFilters={
+                          advancedFilters.startDate !== null ||
+                          advancedFilters.endDate !== null ||
+                          advancedFilters.type !== "all" ||
+                          advancedFilters.categories.length > 0 ||
+                          advancedFilters.paymentMethods.length > 0
+                        }
+                        advancedFilters={advancedFilters}
+                      />
+                    </Suspense>
                   </>
                 )
               ) : currentView === "transactions" ? (
-                <Suspense fallback={<ViewLoading />}>
+                <Suspense fallback={<TransactionsSkeleton />}>
                   <TransactionsView
                     transactions={transactions}
                     onNewTransaction={handleNewTransaction}
@@ -4219,7 +4229,7 @@ const AppContent: React.FC<{
                   />
                 </Suspense>
               ) : currentView === "splits" ? (
-                <Suspense fallback={<ViewLoading />}>
+                <Suspense fallback={<ListCardsSkeleton />}>
                   <SplitsView
                     transactions={transactions}
                     onNewTransaction={handleNewTransaction}
@@ -4231,7 +4241,7 @@ const AppContent: React.FC<{
                   />
                 </Suspense>
               ) : currentView === "shared" ? (
-                <Suspense fallback={<ViewLoading />}>
+                <Suspense fallback={<ListCardsSkeleton />}>
                   <SharedView
                     transactions={transactions}
                     friends={friends}
@@ -4244,7 +4254,7 @@ const AppContent: React.FC<{
                   />
                 </Suspense>
               ) : currentView === "recurring" ? (
-                <Suspense fallback={<ViewLoading />}>
+                <Suspense fallback={<ListCardsSkeleton />}>
                   <RecurringView
                     transactions={transactions}
                     onEdit={handleEditTransaction}
@@ -4264,7 +4274,7 @@ const AppContent: React.FC<{
                   />
                 </Suspense>
               ) : currentView === "budgets" ? (
-                <Suspense fallback={<ViewLoading />}>
+                <Suspense fallback={<BudgetsSkeleton />}>
                   <BudgetsView
                     transactions={transactions}
                     categories={categories}
@@ -4277,12 +4287,12 @@ const AppContent: React.FC<{
                   />
                 </Suspense>
               ) : currentView === "goals" ? (
-                <Suspense fallback={<ViewLoading />}>
+                <Suspense fallback={<GoalsSkeleton />}>
                   <GoalsView userId={session.user.id} />
                 </Suspense>
-              ) : currentView === "planning" ? (
-                <Suspense fallback={<ViewLoading />}>
-                  <PlanningView
+) : currentView === "planning" ? (
+                  <Suspense fallback={<PlanningSkeleton />}>
+                    <PlanningView
                     categories={categories}
                     paymentMethods={paymentMethods}
                     userId={session.user.id}
@@ -4309,7 +4319,7 @@ const AppContent: React.FC<{
                     />
                   </Suspense>
                 ) : (
-                  <Suspense fallback={<ViewLoading />}>
+                  <Suspense fallback={<PaymentMethodsSkeleton />}>
                     <PaymentMethodsView
                       transactions={transactions}
                       paymentMethods={paymentMethods}
@@ -4334,7 +4344,7 @@ const AppContent: React.FC<{
                   </Suspense>
                 )
               ) : currentView === "categories" ? (
-                <Suspense fallback={<ViewLoading />}>
+                <Suspense fallback={<CategoriesSkeleton />}>
                   <CategoriesView
                     transactions={transactions}
                     categories={categories}

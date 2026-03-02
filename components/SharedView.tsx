@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import {
   Box,
   Typography,
@@ -31,6 +31,7 @@ import {
   Tooltip,
   CircularProgress,
 } from "@mui/material";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
@@ -563,6 +564,16 @@ const SharedView: React.FC<SharedViewProps> = ({
     filterStatus,
     transactions,
   ]);
+
+  const SHARED_VIRTUALIZE_THRESHOLD = 40;
+  const sharedListRef = useRef<HTMLDivElement>(null);
+  const sharedVirtualizer = useVirtualizer({
+    count: filteredTransactions.length,
+    getScrollElement: () => sharedListRef.current,
+    estimateSize: () => 88,
+    overscan: 5,
+    enabled: filteredTransactions.length > SHARED_VIRTUALIZE_THRESHOLD,
+  });
 
   // Estatísticas gerais
   const stats = useMemo(() => {

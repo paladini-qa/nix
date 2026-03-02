@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useMemo, useState, useEffect } from "react";
 import { Box, CircularProgress, useTheme, alpha } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -26,6 +26,27 @@ const ViewContainer: React.FC<ViewContainerProps> = ({
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mq.matches);
+    const handler = () => setPrefersReducedMotion(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const transition = useMemo(
+    () =>
+      prefersReducedMotion
+        ? { duration: 0.08 }
+        : { type: "spring" as const, stiffness: 400, damping: 30 },
+    [prefersReducedMotion]
+  );
+  const exitTransition = useMemo(
+    () => (prefersReducedMotion ? { duration: 0.05 } : { duration: 0.15 }),
+    [prefersReducedMotion]
+  );
 
   const defaultFallback = (
     <Box
@@ -72,22 +93,16 @@ const ViewContainer: React.FC<ViewContainerProps> = ({
       <AnimatePresence mode="wait">
         <motion.div
           key={viewKey}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ 
-            opacity: 1, 
+          initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
+          animate={{
+            opacity: 1,
             y: 0,
-            transition: {
-              type: "spring",
-              stiffness: 400,
-              damping: 30,
-            },
+            transition,
           }}
-          exit={{ 
-            opacity: 0, 
-            y: -8,
-            transition: {
-              duration: 0.15,
-            },
+          exit={{
+            opacity: 0,
+            y: prefersReducedMotion ? 0 : -8,
+            transition: exitTransition,
           }}
           style={{
             width: "100%",

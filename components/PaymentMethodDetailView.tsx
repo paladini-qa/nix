@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useContext } from "react";
+import React, { useState, useMemo, useContext, useRef } from "react";
 import {
   Box,
   Typography,
@@ -30,6 +30,7 @@ import {
   CardContent,
   Checkbox,
 } from "@mui/material";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowBack as ArrowBackIcon,
   Add as AddIcon,
@@ -261,6 +262,16 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const balance = totalIncome - totalExpense;
+
+  const PM_DETAIL_VIRTUALIZE_THRESHOLD = 40;
+  const detailTableRef = useRef<HTMLDivElement>(null);
+  const detailVirtualizer = useVirtualizer({
+    count: filteredTransactions.length,
+    getScrollElement: () => detailTableRef.current,
+    estimateSize: () => 56,
+    overscan: 5,
+    enabled: !isMobile && filteredTransactions.length > PM_DETAIL_VIRTUALIZE_THRESHOLD,
+  });
 
   const handlePayAll = () => {
     if (onPayAll) {
@@ -786,7 +797,15 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           )}
         </Box>
       ) : (
-        // Desktop Table View
+        // Desktop Table View (scroll container when many rows)
+        <Box
+          ref={detailTableRef}
+          sx={
+            filteredTransactions.length > PM_DETAIL_VIRTUALIZE_THRESHOLD
+              ? { maxHeight: 480, overflow: "auto" }
+              : undefined
+          }
+        >
         <TableContainer
           component={Paper}
           sx={getTableContainerSx(theme, isDarkMode)}
@@ -1029,6 +1048,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             )}
           </Table>
         </TableContainer>
+        </Box>
       )}
 
       {/* Mobile Action Menu */}

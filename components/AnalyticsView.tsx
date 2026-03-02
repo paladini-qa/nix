@@ -73,22 +73,39 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDarkMode = theme.palette.mode === "dark";
   
-  // Hook para calcular largura dinâmica dos gráficos
+  // Chart width via ResizeObserver + debounce to avoid layout thrash
   const containerRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(800);
-  
-  const updateWidth = useCallback(() => {
-    if (containerRef.current) {
-      const width = containerRef.current.offsetWidth - (isMobile ? 32 : 48); // Padding do Paper
-      setChartWidth(Math.max(width, 300)); // Mínimo de 300px
-    }
-  }, [isMobile]);
-  
+
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let rafId: number;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const updateWidth = () => {
+      const width = el.offsetWidth - (isMobile ? 32 : 48);
+      setChartWidth(Math.max(width, 300));
+    };
+
+    const debouncedUpdate = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        rafId = requestAnimationFrame(updateWidth);
+      }, 100);
+    };
+
     updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
-  }, [updateWidth]);
+    const ro = new ResizeObserver(debouncedUpdate);
+    ro.observe(el);
+
+    return () => {
+      ro.disconnect();
+      if (timeoutId) clearTimeout(timeoutId);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [isMobile]);
   
   // Calcula o "mês atual" baseado na regra do dia 10
   // Até dia 10: mês corrente | Após dia 10: próximo mês

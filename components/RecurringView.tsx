@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import {
   Box,
   Typography,
@@ -31,6 +31,7 @@ import {
   Tooltip,
   LinearProgress,
 } from "@mui/material";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Repeat as RepeatIcon,
   Edit as EditIcon,
@@ -197,6 +198,16 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     filterCategory,
     relatedTransactionIds,
   ]);
+
+  const RECURRING_VIRTUALIZE_THRESHOLD = 30;
+  const recurringListRef = useRef<HTMLDivElement>(null);
+  const recurringVirtualizer = useVirtualizer({
+    count: recurringTransactions.length,
+    getScrollElement: () => recurringListRef.current,
+    estimateSize: () => 200,
+    overscan: 3,
+    enabled: recurringTransactions.length > RECURRING_VIRTUALIZE_THRESHOLD,
+  });
 
   // Estatísticas
   const stats = useMemo(() => {
@@ -1676,6 +1687,26 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           description="Crie uma transação recorrente para gerenciá-la aqui"
           compact
         />
+      ) : recurringTransactions.length > RECURRING_VIRTUALIZE_THRESHOLD ? (
+        <Box ref={recurringListRef} sx={{ maxHeight: "70vh", overflow: "auto" }}>
+          <Box sx={{ height: recurringVirtualizer.getTotalSize(), position: "relative" }}>
+            {recurringVirtualizer.getVirtualItems().map((virtualRow) => (
+              <Box
+                key={recurringTransactions[virtualRow.index].id}
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${virtualRow.start}px)`,
+                  pb: 2,
+                }}
+              >
+                {renderRecurringCard(recurringTransactions[virtualRow.index])}
+              </Box>
+            ))}
+          </Box>
+        </Box>
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {recurringTransactions.map((t) => renderRecurringCard(t))}
