@@ -16,6 +16,9 @@ import {
   Tabs,
   Tab,
   Collapse,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
   CreditCard as CreditCardIcon,
@@ -55,6 +58,8 @@ interface PaymentMethodsViewProps {
   onAddPaymentMethod: (method: string) => void;
   onRemovePaymentMethod: (method: string) => void;
   onUpdatePaymentMethodColor: (method: string, colors: ColorConfig) => void;
+  getPaymentMethodPaymentDay?: (method: string) => number | undefined;
+  onUpdatePaymentMethodPaymentDay?: (method: string, day: number | null) => void;
 }
 
 interface PaymentMethodSummary {
@@ -78,6 +83,8 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   onAddPaymentMethod,
   onRemovePaymentMethod,
   onUpdatePaymentMethodColor,
+  getPaymentMethodPaymentDay,
+  onUpdatePaymentMethodPaymentDay,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -1034,6 +1041,40 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                           )}
                         </Box>
                       </Box>
+                      {getPaymentMethodPaymentDay && onUpdatePaymentMethodPaymentDay && (
+                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.25 }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+                            Dia
+                          </Typography>
+                          <FormControl size="small" sx={{ minWidth: 56 }}>
+                            <Select
+                              value={getPaymentMethodPaymentDay(method) ?? ""}
+                              displayEmpty
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                const day = v === "" ? null : Number(v);
+                                if (day === null || (day >= 1 && day <= 31)) {
+                                  onUpdatePaymentMethodPaymentDay(method, day);
+                                }
+                              }}
+                              sx={{
+                                fontSize: "0.8rem",
+                                height: 32,
+                                "& .MuiSelect-select": { py: 0.5 },
+                              }}
+                            >
+                              <MenuItem value="">
+                                <em>—</em>
+                              </MenuItem>
+                              {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                                <MenuItem key={d} value={d}>
+                                  {d}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Box>
+                      )}
                       <Tooltip title="Remover método">
                         <IconButton
                           size="small"

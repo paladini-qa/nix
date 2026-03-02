@@ -54,7 +54,9 @@ interface SettingsContextValue {
   paymentMethods: string[];
   addPaymentMethod: (method: string) => void;
   removePaymentMethod: (method: string) => Promise<boolean>;
-  
+  getPaymentMethodPaymentDay: (method: string) => number | undefined;
+  updatePaymentMethodPaymentDay: (method: string, day: number | null) => Promise<void>;
+
   // Friends
   friends: string[];
   addFriend: (name: string) => Promise<void>;
@@ -127,7 +129,10 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
   const [paymentMethodColors, setPaymentMethodColors] = useState<PaymentMethodColors>(
     {}
   );
-  
+  const [paymentMethodPaymentDays, setPaymentMethodPaymentDays] = useState<Record<string, number>>(
+    {}
+  );
+
   // Theme
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>(() => {
     const saved = localStorage.getItem("themePreference") as ThemePreference;
@@ -174,6 +179,9 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
         }
         if (settings.payment_method_colors) {
           setPaymentMethodColors(settings.payment_method_colors);
+        }
+        if (settings.payment_method_payment_days) {
+          setPaymentMethodPaymentDays(settings.payment_method_payment_days);
         }
         if (settings.friends) {
           setFriends(settings.friends);
@@ -376,6 +384,37 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
     [paymentMethodColors, session?.user?.id]
   );
 
+  const getPaymentMethodPaymentDay = useCallback(
+    (method: string): number | undefined => {
+      const day = paymentMethodPaymentDays[method];
+      return day >= 1 && day <= 31 ? day : undefined;
+    },
+    [paymentMethodPaymentDays]
+  );
+
+  const updatePaymentMethodPaymentDay = useCallback(
+    async (method: string, day: number | null) => {
+      const next = day != null
+        ? { ...paymentMethodPaymentDays, [method]: day }
+        : (() => {
+            const { [method]: _, ...rest } = paymentMethodPaymentDays;
+            return rest;
+          })();
+      setPaymentMethodPaymentDays(next);
+      if (session?.user?.id) {
+        try {
+          await supabase.from("user_settings").upsert({
+            user_id: session.user.id,
+            payment_method_payment_days: next,
+          });
+        } catch (err) {
+          console.error("Error saving payment method payment day:", err);
+        }
+      }
+    },
+    [paymentMethodPaymentDays, session?.user?.id]
+  );
+
   // ============================================
   // Theme Functions
   // ============================================
@@ -430,6 +469,8 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       paymentMethods,
       addPaymentMethod,
       removePaymentMethod,
+      getPaymentMethodPaymentDay,
+      updatePaymentMethodPaymentDay,
       friends,
       addFriend,
       categoryColors,
@@ -451,6 +492,8 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       paymentMethods,
       addPaymentMethod,
       removePaymentMethod,
+      getPaymentMethodPaymentDay,
+      updatePaymentMethodPaymentDay,
       friends,
       addFriend,
       categoryColors,

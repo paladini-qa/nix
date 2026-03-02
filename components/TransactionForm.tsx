@@ -100,6 +100,8 @@ interface TransactionFormProps {
     isRecurring?: boolean;
     hasInstallments?: boolean;
   } | null;
+  /** Quando informado, ao selecionar um método com dia configurado, preenche a data com esse dia no mês atual */
+  getPaymentMethodPaymentDay?: (method: string) => number | undefined;
 }
 
 // Interface para template de transação frequente
@@ -312,6 +314,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   transactions = [],
   currentBalance = 0,
   initialContext = null,
+  getPaymentMethodPaymentDay,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -1357,7 +1360,19 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   <Select
                     value={paymentMethod}
                     label="Forma de Pagamento"
-                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    onChange={(e) => {
+                      const method = e.target.value;
+                      setPaymentMethod(method);
+                      if (!editTransaction && getPaymentMethodPaymentDay) {
+                        const day = getPaymentMethodPaymentDay(method);
+                        if (day != null && day >= 1 && day <= 31) {
+                          const base = dayjs();
+                          const daysInMonth = base.daysInMonth();
+                          const d = Math.min(day, daysInMonth);
+                          setDate(base.date(d));
+                        }
+                      }
+                    }}
                   >
                     {paymentMethods.map((method) => (
                       <MenuItem key={method} value={method}>

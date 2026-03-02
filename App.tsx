@@ -176,6 +176,11 @@ const AppContent: React.FC<{
   setPaymentMethodColors: React.Dispatch<
     React.SetStateAction<PaymentMethodColors>
   >;
+  getPaymentMethodPaymentDay: (method: string) => number | undefined;
+  updatePaymentMethodPaymentDay: (
+    method: string,
+    day: number | null
+  ) => Promise<void>;
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   updateSettingsInDb: (
@@ -201,6 +206,8 @@ const AppContent: React.FC<{
   setCategoryColors,
   paymentMethodColors,
   setPaymentMethodColors,
+  getPaymentMethodPaymentDay,
+  updatePaymentMethodPaymentDay,
   filters,
   setFilters,
   updateSettingsInDb,
@@ -893,6 +900,7 @@ const AppContent: React.FC<{
       setFriends([]);
       setCategoryColors({ income: {}, expense: {} });
       setPaymentMethodColors({});
+      setPaymentMethodPaymentDays({});
       setDisplayName("");
 
       // Faz o signOut do Supabase (isso também dispara o onAuthStateChange)
@@ -4318,6 +4326,10 @@ const AppContent: React.FC<{
                       onUpdatePaymentMethodColor={
                         handleUpdatePaymentMethodColor
                       }
+                      getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+                      onUpdatePaymentMethodPaymentDay={
+                        updatePaymentMethodPaymentDay
+                      }
                     />
                   </Suspense>
                 )
@@ -4394,6 +4406,7 @@ const AppContent: React.FC<{
             transactions={transactions}
             currentBalance={summary.balance}
             initialContext={formInitialContext}
+            getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
           />
 
           <ProfileModal
@@ -4518,6 +4531,9 @@ const App: React.FC = () => {
   });
   const [paymentMethodColors, setPaymentMethodColors] =
     useState<PaymentMethodColors>({});
+  const [paymentMethodPaymentDays, setPaymentMethodPaymentDays] = useState<
+    Record<string, number>
+  >({});
 
   // State for user profile
   const [displayName, setDisplayName] = useState<string>("");
@@ -4834,6 +4850,9 @@ const App: React.FC = () => {
         if (settings.payment_method_colors) {
           setPaymentMethodColors(settings.payment_method_colors);
         }
+        if (settings.payment_method_payment_days) {
+          setPaymentMethodPaymentDays(settings.payment_method_payment_days);
+        }
         // Load friends
         if (settings.friends) {
           setFriends(settings.friends);
@@ -4897,6 +4916,35 @@ const App: React.FC = () => {
       if (error) throw error;
     } catch (err) {
       console.error("Error saving display name:", err);
+    }
+  };
+
+  const getPaymentMethodPaymentDay = (method: string): number | undefined => {
+    const day = paymentMethodPaymentDays[method];
+    return day >= 1 && day <= 31 ? day : undefined;
+  };
+
+  const updatePaymentMethodPaymentDay = async (
+    method: string,
+    day: number | null
+  ) => {
+    const next =
+      day != null
+        ? { ...paymentMethodPaymentDays, [method]: day }
+        : (() => {
+            const { [method]: _, ...rest } = paymentMethodPaymentDays;
+            return rest;
+          })();
+    setPaymentMethodPaymentDays(next);
+    if (!session) return;
+    try {
+      const { error } = await supabase.from("user_settings").upsert({
+        user_id: session.user.id,
+        payment_method_payment_days: next,
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Error saving payment method payment day:", err);
     }
   };
 
@@ -4982,6 +5030,8 @@ const App: React.FC = () => {
                   setCategoryColors={setCategoryColors}
                   paymentMethodColors={paymentMethodColors}
                   setPaymentMethodColors={setPaymentMethodColors}
+                  getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+                  updatePaymentMethodPaymentDay={updatePaymentMethodPaymentDay}
                   filters={filters}
                   setFilters={setFilters}
                   updateSettingsInDb={updateSettingsInDb}

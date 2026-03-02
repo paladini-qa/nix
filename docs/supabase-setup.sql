@@ -93,9 +93,13 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     theme_preference TEXT DEFAULT 'system' CHECK (theme_preference IN ('light', 'dark', 'system')),
     category_colors JSONB DEFAULT '{}'::jsonb,
     payment_method_colors JSONB DEFAULT '{}'::jsonb,
+    payment_method_payment_days JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Para bancos existentes, adicione a coluna payment_method_payment_days (dia opcional 1-31 por método):
+-- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS payment_method_payment_days JSONB DEFAULT '{}'::jsonb;
 
 -- Para usuários existentes, adicione as colunas de cores:
 -- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS category_colors JSONB DEFAULT '{}'::jsonb;
@@ -113,6 +117,7 @@ COMMENT ON COLUMN public.user_settings.payment_methods IS 'Lista de métodos de 
 COMMENT ON COLUMN public.user_settings.theme_preference IS 'Preferência de tema: light, dark ou system';
 COMMENT ON COLUMN public.user_settings.category_colors IS 'Cores personalizadas para categorias (JSONB com primary e secondary)';
 COMMENT ON COLUMN public.user_settings.payment_method_colors IS 'Cores personalizadas para métodos de pagamento (JSONB com primary e secondary)';
+COMMENT ON COLUMN public.user_settings.payment_method_payment_days IS 'Dia opcional (1-31) por método de pagamento, ex: {"Credit Card": 15}';
 COMMENT ON COLUMN public.user_settings.friends IS 'Lista de amigos para shared expenses';
 
 -- =============================================
