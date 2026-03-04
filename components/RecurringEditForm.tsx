@@ -608,7 +608,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
           onClick={handleSave}
           style={{ flex: 1 }}
         >
-          <SaveIcon /> {editingTransaction ? "Atualizar" : "Salvar Alterações"}
+          <SaveIcon /> {transaction ? "Atualizar" : "Salvar Alterações"}
         </NixButton>
       </Box>
     </Drawer>
