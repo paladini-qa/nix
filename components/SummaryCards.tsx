@@ -192,7 +192,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
   // Estilos base do card - Simplificado (sem glassmorphism)
   const getGlassCardStyles = (accentColor: string) => ({
     height: "100%",
-    minHeight: isMobile ? 120 : 140,
+    minHeight: isMobile ? 100 : 140,
     position: "relative",
     overflow: "hidden",
     cursor: "pointer",
@@ -209,10 +209,10 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
 
   // Estilo do container do ícone - visual premium 3D-ish
   const getIconContainerStyles = (bgColor: string, lightBgColor: string) => ({
-    width: isMobile ? 36 : 52,
-    height: isMobile ? 36 : 52,
-    minWidth: isMobile ? 36 : 52,
-    borderRadius: isMobile ? "14px" : "20px",
+    width: isMobile ? 32 : 52,
+    height: isMobile ? 32 : 52,
+    minWidth: isMobile ? 32 : 52,
+    borderRadius: isMobile ? "12px" : "20px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -245,7 +245,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
         overflow: "hidden",
       }}
     >
-      <Grid container spacing={isMobile ? 1.5 : 2.5} sx={{ mx: 0, width: "100%" }}>
+      <Grid container spacing={isMobile ? 1 : 2.5} sx={{ mx: 0, width: "100%" }}>
         {/* Monthly Flow Card - Fluxo do mês selecionado */}
         <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
           <MotionCard
@@ -266,8 +266,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
               sx={{
                 position: "relative",
                 zIndex: 1,
-                p: isMobile ? 1.5 : 3,
-                "&:last-child": { pb: isMobile ? 1.5 : 3 },
+                p: isMobile ? 1.25 : 3,
+                "&:last-child": { pb: isMobile ? 1.25 : 3 },
               }}
             >
               {/* Título dinâmico baseado no fluxo mensal */}
@@ -276,7 +276,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.08em",
-                  fontSize: isMobile ? 10 : 12,
+                  fontSize: isMobile ? 9 : 12,
                   fontWeight: 600,
                   display: "block",
                   mb: 0.5,
@@ -357,7 +357,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 >
                   <WalletIcon
                     sx={{
-                      fontSize: isMobile ? 20 : 26,
+                      fontSize: isMobile ? 18 : 26,
                       color: flowStyles.accentColor,
                     }}
                   />
@@ -387,8 +387,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
               sx={{
                 position: "relative",
                 zIndex: 1,
-                p: isMobile ? 1.5 : 3,
-                "&:last-child": { pb: isMobile ? 1.5 : 3 },
+                p: isMobile ? 1.25 : 3,
+                "&:last-child": { pb: isMobile ? 1.25 : 3 },
               }}
             >
               {/* Título acima de tudo */}
@@ -397,7 +397,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.08em",
-                  fontSize: isMobile ? 10 : 12,
+                  fontSize: isMobile ? 9 : 12,
                   fontWeight: 600,
                   display: "block",
                   mb: 0.5,
@@ -497,7 +497,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 >
                   <TrendingUpIcon
                     sx={{
-                      fontSize: isMobile ? 20 : 26,
+                      fontSize: isMobile ? 18 : 26,
                       color: cardStyles.income.accentColor,
                     }}
                   />
@@ -527,8 +527,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
               sx={{
                 position: "relative",
                 zIndex: 1,
-                p: isMobile ? 1.5 : 3,
-                "&:last-child": { pb: isMobile ? 1.5 : 3 },
+                p: isMobile ? 1.25 : 3,
+                "&:last-child": { pb: isMobile ? 1.25 : 3 },
               }}
             >
               {/* Título acima de tudo */}
@@ -537,7 +537,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.08em",
-                  fontSize: isMobile ? 10 : 12,
+                  fontSize: isMobile ? 9 : 12,
                   fontWeight: 600,
                   display: "block",
                   mb: 0.5,
@@ -637,7 +637,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 >
                   <TrendingDownIcon
                     sx={{
-                      fontSize: isMobile ? 20 : 26,
+                      fontSize: isMobile ? 18 : 26,
                       color: cardStyles.expense.accentColor,
                     }}
                   />

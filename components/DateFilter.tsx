@@ -30,6 +30,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const useCompactStyle = isMobile || compact;
   // Cria um objeto dayjs com o mês e ano selecionados usando useMemo para garantir estabilidade
   const selectedDate = useMemo(
     () => dayjs().year(year).month(month).date(1),
@@ -64,9 +65,10 @@ const DateFilter: React.FC<DateFilterProps> = ({
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 0.5,
+        gap: useCompactStyle ? 0.25 : 0.5,
         opacity: disabled ? 0.5 : 1,
         transition: "opacity 0.2s ease-in-out",
+        minWidth: 0,
       }}
     >
       <IconButton
@@ -74,11 +76,12 @@ const DateFilter: React.FC<DateFilterProps> = ({
         size="small"
         disabled={disabled}
         sx={{
-          width: isMobile ? 36 : 40,
-          height: isMobile ? 36 : 40,
+          width: useCompactStyle ? 28 : 40,
+          height: useCompactStyle ? 28 : 40,
+          minWidth: useCompactStyle ? 28 : 40,
           border: 1,
           borderColor: "divider",
-          borderRadius: "20px",
+          borderRadius: useCompactStyle ? "10px" : "20px",
           "&:hover": {
             bgcolor: disabled ? undefined : "primary.main",
             color: disabled ? undefined : "primary.contrastText",
@@ -86,7 +89,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
           },
         }}
       >
-        <ChevronLeftIcon fontSize="small" />
+        <ChevronLeftIcon sx={{ fontSize: useCompactStyle ? 16 : 24 }} />
       </IconButton>
 
       <DatePicker
@@ -95,20 +98,22 @@ const DateFilter: React.FC<DateFilterProps> = ({
         value={selectedDate}
         onChange={handleDateChange}
         disabled={disabled}
-        format={isMobile ? "MMM YYYY" : "MMMM YYYY"}
+        format={useCompactStyle ? "MMM YYYY" : "MMMM YYYY"}
         slotProps={{
           textField: {
             size: "small",
             sx: {
-              minWidth: isMobile ? 120 : compact ? 160 : 200,
+              minWidth: useCompactStyle ? 88 : 200,
+              maxWidth: useCompactStyle ? 120 : undefined,
               "& .MuiOutlinedInput-root": {
-                borderRadius: "20px",
-                height: isMobile ? 36 : 40,
+                borderRadius: useCompactStyle ? "10px" : "20px",
+                height: useCompactStyle ? 28 : 40,
               },
               "& .MuiOutlinedInput-input": {
-                fontSize: isMobile ? 14 : 16,
+                fontSize: useCompactStyle ? 12 : 16,
                 textAlign: "center",
-                py: isMobile ? 0.75 : 1,
+                py: useCompactStyle ? 0.5 : 1,
+                px: useCompactStyle ? 0.5 : 1,
               },
             },
           },
@@ -120,11 +125,12 @@ const DateFilter: React.FC<DateFilterProps> = ({
         size="small"
         disabled={disabled}
         sx={{
-          width: isMobile ? 36 : 40,
-          height: isMobile ? 36 : 40,
+          width: useCompactStyle ? 28 : 40,
+          height: useCompactStyle ? 28 : 40,
+          minWidth: useCompactStyle ? 28 : 40,
           border: 1,
           borderColor: "divider",
-          borderRadius: "20px",
+          borderRadius: useCompactStyle ? "10px" : "20px",
           "&:hover": {
             bgcolor: disabled ? undefined : "primary.main",
             color: disabled ? undefined : "primary.contrastText",
@@ -132,7 +138,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
           },
         }}
       >
-        <ChevronRightIcon fontSize="small" />
+        <ChevronRightIcon sx={{ fontSize: useCompactStyle ? 16 : 24 }} />
       </IconButton>
     </Box>
   );

@@ -61,16 +61,20 @@ export const AdvancedFiltersButton: React.FC<{
   return (
     <Button
       variant={hasActiveFilters ? "contained" : "outlined"}
-      startIcon={<FilterListIcon />}
+      startIcon={<FilterListIcon sx={{ fontSize: compact ? 16 : 24 }} />}
       endIcon={!compact && (showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
       onClick={onToggleFilters}
       size={compact ? "small" : "medium"}
       sx={{
-        borderRadius: "20px",
+        borderRadius: compact ? "10px" : "20px",
         textTransform: "none",
-        minWidth: compact ? "auto" : undefined,
-        height: compact ? 36 : 40,
-        px: compact ? 1.5 : 2,
+        minWidth: compact ? 28 : undefined,
+        width: compact ? 28 : undefined,
+        height: compact ? 28 : 40,
+        p: compact ? 0 : undefined,
+        px: compact ? 0 : 2,
+        fontSize: compact ? 13 : undefined,
+        "& .MuiButton-startIcon": { mr: compact ? 0 : 1 },
         ...(hasActiveFilters && {
           background: `linear-gradient(135deg, ${alpha(
             "#6366f1",
@@ -80,12 +84,12 @@ export const AdvancedFiltersButton: React.FC<{
       }}
     >
       {compact ? "" : "Filtros"}
-      {hasActiveFilters && (
+      {!compact && hasActiveFilters && (
         <Chip
           size="small"
           label={activeFiltersCount}
           sx={{
-            ml: compact ? 0 : 1,
+            ml: 1,
             height: 20,
             minWidth: 20,
             bgcolor: "rgba(255,255,255,0.2)",

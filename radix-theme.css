@@ -79,13 +79,22 @@
   transform: translateY(-2px);
 }
 
-/* Botão de criação (FAB) padronizado em todas as telas */
+/* Botão de criação (FAB) padronizado em todas as telas - tamanho reduzido */
 .nix-fab-create {
-  width: 64px !important;
-  height: 64px !important;
-  min-width: 64px !important;
-  min-height: 64px !important;
-  border-radius: 20px !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+  border-radius: 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+/* Ícone + do FAB sempre branco sobre o fundo roxo */
+.nix-fab-create .MuiSvgIcon-root,
+.nix-fab-create svg {
+  color: #fff !important;
+  fill: currentColor !important;
 }
 
 /* Garante que botões e ícones Radix dentro do tema usem o visual Nix (radius 20px) */

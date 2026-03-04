@@ -7,6 +7,7 @@ import {
   Grid,
   Chip,
   useTheme,
+  useMediaQuery,
   alpha,
 } from "@mui/material";
 import {
@@ -30,6 +31,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   onCategoryClick,
 }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDarkMode = theme.palette.mode === "dark";
   const { getCategoryColor, getPaymentMethodColor } = useContext(ColorsContext);
 
@@ -116,13 +118,13 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   };
 
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={isMobile ? 2 : 3}>
       {/* Income by Category */}
       <Grid size={{ xs: 12, md: 6, xl: 4 }}>
         <Paper
           elevation={0}
           sx={{
-            p: 2.5,
+            p: isMobile ? 1.5 : 2.5,
             height: "100%",
             position: "relative",
             overflow: "hidden",
@@ -131,22 +133,22 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
               : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
             backdropFilter: "blur(16px)",
             border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            borderRadius: "20px",
+            borderRadius: isMobile ? "16px" : "20px",
             boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: isMobile ? 1 : 1.5, mb: isMobile ? 1.5 : 2 }}>
             <Box
               sx={{
-                p: 1,
-                borderRadius: "20px",
+                p: isMobile ? 0.75 : 1,
+                borderRadius: isMobile ? "12px" : "20px",
                 bgcolor: alpha("#059669", 0.1),
                 display: "flex",
               }}
             >
-              <TrendingUpIcon fontSize="small" sx={{ color: "#059669" }} />
+              <TrendingUpIcon sx={{ fontSize: isMobile ? 18 : 24, color: "#059669" }} />
             </Box>
-            <Typography variant="subtitle1" fontWeight={600}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ fontSize: isMobile ? 14 : undefined }}>
               Income by Category
             </Typography>
           </Box>
@@ -155,12 +157,12 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center", py: 3 }}
+              sx={{ textAlign: "center", py: isMobile ? 2 : 3, fontSize: isMobile ? 13 : undefined }}
             >
               No income for this period
             </Typography>
           ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 1 : 1.5 }}>
               {sortedIncome.map(([category, amount]) => {
                 const percentage =
                   totalIncome > 0 ? (amount / totalIncome) * 100 : 0;
@@ -173,8 +175,8 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       onClick={() => onCategoryClick && onCategoryClick(category, "income")}
                       sx={{
                         cursor: onCategoryClick ? "pointer" : "default",
-                        p: 1.5,
-                        borderRadius: "20px",
+                        p: isMobile ? 1 : 1.5,
+                        borderRadius: isMobile ? "14px" : "20px",
                         border: 1,
                         borderColor: "divider",
                         bgcolor: "transparent",
@@ -288,7 +290,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
         <Paper
           elevation={0}
           sx={{
-            p: 2.5,
+            p: isMobile ? 1.5 : 2.5,
             height: "100%",
             position: "relative",
             overflow: "hidden",
@@ -297,22 +299,22 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
               : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
             backdropFilter: "blur(16px)",
             border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            borderRadius: "20px",
+            borderRadius: isMobile ? "16px" : "20px",
             boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: isMobile ? 1 : 1.5, mb: isMobile ? 1.5 : 2 }}>
             <Box
               sx={{
-                p: 1,
-                borderRadius: "20px",
+                p: isMobile ? 0.75 : 1,
+                borderRadius: isMobile ? "12px" : "20px",
                 bgcolor: alpha("#DC2626", 0.1),
                 display: "flex",
               }}
             >
-              <TrendingDownIcon fontSize="small" sx={{ color: "#DC2626" }} />
+              <TrendingDownIcon sx={{ fontSize: isMobile ? 18 : 24, color: "#DC2626" }} />
             </Box>
-            <Typography variant="subtitle1" fontWeight={600}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ fontSize: isMobile ? 14 : undefined }}>
               Expenses by Category
             </Typography>
           </Box>
@@ -321,12 +323,12 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ textAlign: "center", py: 3 }}
+              sx={{ textAlign: "center", py: isMobile ? 2 : 3, fontSize: isMobile ? 13 : undefined }}
             >
               No expenses for this period
             </Typography>
           ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 1 : 1.5 }}>
               {sortedExpense.map(([category, amount]) => {
                 const percentage =
                   totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
@@ -339,8 +341,8 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
                       onClick={() => onCategoryClick && onCategoryClick(category, "expense")}
                       sx={{
                         cursor: onCategoryClick ? "pointer" : "default",
-                        p: 1.5,
-                        borderRadius: "20px",
+                        p: isMobile ? 1 : 1.5,
+                        borderRadius: isMobile ? "14px" : "20px",
                         border: 1,
                         borderColor: "divider",
                         bgcolor: "transparent",
@@ -450,7 +452,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
         <Paper
           elevation={0}
           sx={{
-            p: 2.5,
+            p: isMobile ? 1.5 : 2.5,
             height: "100%",
             position: "relative",
             overflow: "hidden",
@@ -459,22 +461,22 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
               : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
             backdropFilter: "blur(16px)",
             border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            borderRadius: "20px",
+            borderRadius: isMobile ? "16px" : "20px",
             boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: isMobile ? 1 : 1.5, mb: isMobile ? 1.5 : 2 }}>
             <Box
               sx={{
-                p: 1,
-                borderRadius: "20px",
+                p: isMobile ? 0.75 : 1,
+                borderRadius: isMobile ? "12px" : "20px",
                 bgcolor: alpha("#6366f1", 0.1),
                 display: "flex",
               }}
             >
-              <CreditCardIcon fontSize="small" sx={{ color: "#6366f1" }} />
+              <CreditCardIcon sx={{ fontSize: isMobile ? 18 : 24, color: "#6366f1" }} />
             </Box>
-            <Typography variant="subtitle1" fontWeight={600}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ fontSize: isMobile ? 14 : undefined }}>
               Expenses by Payment Method
             </Typography>
           </Box>

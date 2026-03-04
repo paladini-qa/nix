@@ -82,7 +82,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           flex: 1,
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "flex-start",
           gap: 1,
         }}
       >

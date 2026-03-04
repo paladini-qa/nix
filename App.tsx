@@ -93,6 +93,8 @@ const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
 import type { AdvancedFiltersState } from "./components/AdvancedFilters";
 import { AdvancedFiltersButton } from "./components/AdvancedFilters";
 import { getInitialMonthYear } from "./hooks/useFilters";
+import { usePullToRefresh } from "./hooks";
+import PullToRefreshIndicator from "./components/PullToRefreshIndicator";
 import DashboardSkeleton from "./components/skeletons/DashboardSkeleton";
 import TransactionsSkeleton from "./components/skeletons/TransactionsSkeleton";
 import ListCardsSkeleton from "./components/skeletons/ListCardsSkeleton";
@@ -1897,6 +1899,23 @@ const AppContent: React.FC<{
       setIsRefreshing(false);
     }
   };
+
+  // Pull-to-refresh no mobile (botão Atualizar fica oculto)
+  const touchStartYRef = useRef(0);
+  const {
+    y: pullY,
+    onPanStart: onPullPanStart,
+    onPan: onPullPan,
+    onPanEnd: onPullPanEnd,
+    isPulling: isPullPulling,
+    isRefreshing: isPullRefreshing,
+    indicatorOpacity: pullIndicatorOpacity,
+    indicatorScale: pullIndicatorScale,
+    indicatorRotation: pullIndicatorRotation,
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    enabled: isMobile,
+  });
 
   // Função auxiliar para abrir o formulário para nova transação (com contexto da aba atual)
   const handleNewTransaction = useCallback(() => {
@@ -4007,23 +4026,55 @@ const AppContent: React.FC<{
             </>
           )}
 
-          {/* Main Content */}
+          {/* Main Content - com pull-to-refresh no mobile */}
           <Box
             component="main"
+            {...(isMobile && {
+              "data-pull-to-refresh-container": true,
+              onTouchStart: (e: React.TouchEvent) => {
+                touchStartYRef.current = e.touches[0]?.clientY ?? 0;
+                onPullPanStart();
+              },
+              onTouchMove: (e: React.TouchEvent) => {
+                const y = (e.touches[0]?.clientY ?? 0) - touchStartYRef.current;
+                onPullPan(e, { offset: { y }, velocity: { y: 0 } });
+              },
+              onTouchEnd: () => {
+                onPullPanEnd();
+              },
+            })}
             sx={{
               flexGrow: 1,
               minHeight: 0,
-              p: { xs: 1.5, sm: 2, md: 3, lg: 4 },
+              p: { xs: 1.25, sm: 2, md: 3, lg: 4 },
               mt: { xs: "64px", lg: 0 },
-              // Extra padding para bottom navigation (64px) + safe area + FABs
               pb: { xs: "140px", lg: 4 },
               maxWidth: "100vw",
               overflowX: "hidden",
               overflowY: "auto",
               boxSizing: "border-box",
+              ...(isMobile && { position: "relative" }),
             }}
           >
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {isMobile && (
+              <PullToRefreshIndicator
+                opacity={pullIndicatorOpacity}
+                scale={pullIndicatorScale}
+                rotation={pullIndicatorRotation}
+                isRefreshing={isPullRefreshing}
+                isPulling={isPullPulling}
+                y={pullY}
+              />
+            )}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: { xs: 2, sm: 3 },
+                pt: isMobile && (isPullPulling || isPullRefreshing) ? 2 : 0,
+                transition: "padding-top 0.2s ease",
+              }}
+            >
               {currentView === "dashboard" ? (
                 selectedPaymentMethod ? (
                   <Suspense fallback={<ViewLoading />}>
@@ -4051,7 +4102,7 @@ const AppContent: React.FC<{
                         flexDirection: { xs: "column", sm: "row" },
                         justifyContent: "space-between",
                         alignItems: { xs: "flex-start", sm: "center" },
-                        gap: 2,
+                        gap: { xs: 1.5, sm: 2 },
                       }}
                     >
                       <Box>
@@ -4072,8 +4123,10 @@ const AppContent: React.FC<{
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 1.5,
+                          gap: { xs: 0.5, sm: 1.5 },
                           width: { xs: "100%", sm: "auto" },
+                          minWidth: 0,
+                          flexWrap: "nowrap",
                         }}
                       >
                         <AdvancedFiltersButton
@@ -4099,6 +4152,7 @@ const AppContent: React.FC<{
                           }
                           compact={isMobile}
                         />
+                        <Box sx={{ minWidth: 0, flex: isMobile ? 1 : "0 0 auto" }}>
                         <DateFilter
                           month={filters.month}
                           year={filters.year}
@@ -4116,39 +4170,44 @@ const AppContent: React.FC<{
                           }
                           disabledMessage="Remova os filtros avançados para usar o filtro de mês"
                         />
+                        </Box>
 
-                        {/* Refresh Button */}
-                        <Tooltip title="Atualizar dados">
-                          <IconButton
-                            onClick={handleRefresh}
-                            disabled={isRefreshing}
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              border: 1,
-                              borderColor: "divider",
-                              borderRadius: "20px",
-                              transition: "all 0.2s ease-in-out",
-                              "&:hover": {
-                                borderColor: theme.palette.primary.main,
-                                color: theme.palette.primary.main,
-                                transform: "translateY(-1px)",
-                              },
-                            }}
-                          >
-                            <RefreshIcon
+                        {/* Refresh Button - apenas desktop; no mobile usa pull-to-refresh */}
+                        {!isMobile && (
+                          <Tooltip title="Atualizar dados">
+                            <IconButton
+                              onClick={handleRefresh}
+                              disabled={isRefreshing}
                               sx={{
-                                animation: isRefreshing
-                                  ? "spin 1s linear infinite"
-                                  : "none",
-                                "@keyframes spin": {
-                                  "0%": { transform: "rotate(0deg)" },
-                                  "100%": { transform: "rotate(360deg)" },
+                                width: 40,
+                                height: 40,
+                                minWidth: 40,
+                                border: 1,
+                                borderColor: "divider",
+                                borderRadius: "20px",
+                                transition: "all 0.2s ease-in-out",
+                                "&:hover": {
+                                  borderColor: theme.palette.primary.main,
+                                  color: theme.palette.primary.main,
+                                  transform: "translateY(-1px)",
                                 },
                               }}
-                            />
-                          </IconButton>
-                        </Tooltip>
+                            >
+                              <RefreshIcon
+                                sx={{
+                                  fontSize: 24,
+                                  animation: isRefreshing
+                                    ? "spin 1s linear infinite"
+                                    : "none",
+                                  "@keyframes spin": {
+                                    "0%": { transform: "rotate(0deg)" },
+                                    "100%": { transform: "rotate(360deg)" },
+                                  },
+                                }}
+                              />
+                            </IconButton>
+                          </Tooltip>
+                        )}
 
                         {!isMobile && (
                           <Button

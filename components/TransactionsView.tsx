@@ -1156,7 +1156,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       <Paper
         elevation={0}
         sx={{
-          borderRadius: "20px",
+          borderRadius: isMobile ? "16px" : "20px",
           overflow: "hidden",
           bgcolor: isDarkMode
             ? alpha(theme.palette.background.paper, 0.7)
@@ -1170,102 +1170,133 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         {/* Toolbar principal */}
         <Box
           sx={{
-            p: 2,
+            p: isMobile ? 1.25 : 2,
             display: "flex",
             flexWrap: "wrap",
             alignItems: "center",
-            gap: 2,
+            gap: isMobile ? 1 : 2,
           }}
         >
-          {/* Campo de busca */}
+          {/* Campo de busca - full width no mobile */}
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
             placeholder="Search transactions..."
-            minWidth={200}
-            maxWidth={320}
+            minWidth={isMobile ? 0 : 200}
+            maxWidth={isMobile ? undefined : 320}
+            fullWidth={isMobile}
           />
 
-          {/* Botão de filtros */}
-          <Button
-            variant={showFilters ? "contained" : "outlined"}
-            size="small"
-            onClick={() => setShowFilters(!showFilters)}
-            startIcon={<FilterIcon />}
+          <Box
             sx={{
-              borderRadius: "20px",
-              minWidth: 100,
-              ...(activeFiltersCount > 0 &&
-                !showFilters && {
-                  borderColor: theme.palette.primary.main,
-                  color: theme.palette.primary.main,
-                }),
+              display: "flex",
+              alignItems: "center",
+              gap: isMobile ? 0.5 : 1,
+              minWidth: 0,
+              flex: isMobile ? 1 : "0 0 auto",
             }}
           >
-            Filters
-            {activeFiltersCount > 0 && (
-              <Chip
-                label={activeFiltersCount}
-                size="small"
-                color="primary"
-                sx={{ ml: 1, height: 20, fontSize: 11 }}
-              />
-            )}
-          </Button>
-
-          {/* Date Filter */}
-          <DateFilter
-            month={selectedMonth}
-            year={selectedYear}
-            onDateChange={onDateChange}
-            compact
-          />
-
-          {/* Refresh Button */}
-          {onRefreshData && (
-            <Tooltip title="Atualizar dados">
-              <IconButton
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                sx={{
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: "20px",
-                  transition: "all 0.2s ease-in-out",
-                  "&:hover": {
+            {/* Botão de filtros - compacto no mobile */}
+            <Button
+              variant={showFilters ? "contained" : "outlined"}
+              size="small"
+              onClick={() => setShowFilters(!showFilters)}
+              startIcon={<FilterIcon sx={{ fontSize: isMobile ? 18 : 24 }} />}
+              sx={{
+                borderRadius: isMobile ? "12px" : "20px",
+                minWidth: isMobile ? "auto" : 100,
+                height: isMobile ? 32 : 36,
+                px: isMobile ? 1 : 2,
+                fontSize: isMobile ? 13 : undefined,
+                "& .MuiButton-startIcon": { mr: isMobile ? 0.5 : 1 },
+                ...(activeFiltersCount > 0 &&
+                  !showFilters && {
                     borderColor: theme.palette.primary.main,
                     color: theme.palette.primary.main,
-                    transform: "translateY(-1px)",
-                  },
-                }}
-              >
-                <RefreshIcon
+                  }),
+              }}
+            >
+              {!isMobile && "Filters"}
+              {activeFiltersCount > 0 && (
+                <Chip
+                  label={activeFiltersCount}
+                  size="small"
+                  color="primary"
                   sx={{
-                    animation: isRefreshing
-                      ? "spin 1s linear infinite"
-                      : "none",
-                    "@keyframes spin": {
-                      "0%": { transform: "rotate(0deg)" },
-                      "100%": { transform: "rotate(360deg)" },
-                    },
+                    ml: isMobile ? 0.5 : 1,
+                    height: isMobile ? 18 : 20,
+                    minWidth: isMobile ? 18 : 20,
+                    fontSize: isMobile ? 11 : 11,
                   }}
                 />
-              </IconButton>
-            </Tooltip>
-          )}
+              )}
+            </Button>
 
-          {/* Export Button */}
-          <IconButton
-            onClick={(e) => setAnchorEl(e.currentTarget)}
-            disabled={isExporting || filteredData.length === 0}
-            sx={{
-              border: 1,
-              borderColor: "divider",
-              borderRadius: "20px",
-            }}
-          >
-            {isExporting ? <CircularProgress size={20} /> : <DownloadIcon />}
-          </IconButton>
+            {/* Date Filter */}
+            <DateFilter
+              month={selectedMonth}
+              year={selectedYear}
+              onDateChange={onDateChange}
+              compact={isMobile}
+            />
+
+            {/* Refresh Button */}
+            {onRefreshData && (
+              <Tooltip title="Atualizar dados">
+                <IconButton
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  size="small"
+                  sx={{
+                    width: isMobile ? 32 : 40,
+                    height: isMobile ? 32 : 40,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: isMobile ? "10px" : "20px",
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": {
+                      borderColor: theme.palette.primary.main,
+                      color: theme.palette.primary.main,
+                      transform: "translateY(-1px)",
+                    },
+                  }}
+                >
+                  <RefreshIcon
+                    sx={{
+                      fontSize: isMobile ? 18 : 24,
+                      animation: isRefreshing
+                        ? "spin 1s linear infinite"
+                        : "none",
+                      "@keyframes spin": {
+                        "0%": { transform: "rotate(0deg)" },
+                        "100%": { transform: "rotate(360deg)" },
+                      },
+                    }}
+                  />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            {/* Export Button */}
+            <IconButton
+              size="small"
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              disabled={isExporting || filteredData.length === 0}
+              sx={{
+                width: isMobile ? 32 : 40,
+                height: isMobile ? 32 : 40,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: isMobile ? "10px" : "20px",
+              }}
+            >
+              {isExporting ? (
+                <CircularProgress size={isMobile ? 18 : 20} />
+              ) : (
+                <DownloadIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
+              )}
+            </IconButton>
+          </Box>
 
           <Menu
             anchorEl={anchorEl}
@@ -1297,11 +1328,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         {showFilters && (
           <Box
             sx={{
-              p: 2,
+              p: isMobile ? 1.25 : 2,
               pt: 0,
               display: "flex",
               flexWrap: "wrap",
-              gap: 2,
+              gap: isMobile ? 1 : 2,
               borderTop: `1px solid ${
                 isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)
               }`,
@@ -1310,7 +1341,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 : alpha(theme.palette.grey[50], 0.5),
             }}
           >
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl size="small" sx={{ minWidth: isMobile ? 100 : 120 }}>
               <InputLabel>Type</InputLabel>
               <Select
                 value={filterType}
@@ -1661,22 +1692,24 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             </MenuItem>
           </Menu>
 
-          {/* Mobile FAB - padronizado 64px, border-radius 20px */}
-          <NixButton
-            size="fab"
-            variant="solid"
-            color="purple"
-            onClick={onNewTransaction}
-            className="nix-fab-create"
-            style={{
-              position: "fixed",
-              bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
-              right: 16,
-              zIndex: 1100,
-            }}
-          >
-            <AddIcon />
-          </NixButton>
+          {/* FAB apenas no desktop; no mobile o botão central da bottom nav já cria transação */}
+          {!isMobile && (
+            <NixButton
+              size="fab"
+              variant="solid"
+              color="purple"
+              onClick={onNewTransaction}
+              className="nix-fab-create"
+              style={{
+                position: "fixed",
+                bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
+                right: 16,
+                zIndex: 1100,
+              }}
+            >
+              <AddIcon />
+            </NixButton>
+          )}
         </Box>
       ) : (
         /* Desktop Table View */

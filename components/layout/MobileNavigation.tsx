@@ -9,7 +9,6 @@ import {
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import OthersGridModal from "./OthersGridModal";
-import NixButton from "../radix/Button";
 
 const MotionBox = motion.create(Box);
 
@@ -134,8 +133,16 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         >
           {/* Dashboard */}
           <Box
+            component="button"
+            type="button"
+            role="button"
+            aria-label="Dashboard"
             onClick={() => handleNavigation("dashboard")}
             sx={{
+              border: 0,
+              background: "none",
+              padding: 0,
+              font: "inherit",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -181,8 +188,16 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
           {/* Transactions */}
           <Box
+            component="button"
+            type="button"
+            role="button"
+            aria-label="Transactions"
             onClick={() => handleNavigation("transactions")}
             sx={{
+              border: 0,
+              background: "none",
+              padding: 0,
+              font: "inherit",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -226,23 +241,58 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             </Box>
           </Box>
 
-          {/* Create Button - Central FAB, 64px touch-friendly */}
-          <NixButton
-            size="fab"
-            variant="solid"
-            color="purple"
-            onClick={() => handleNavigation("create")}
+          {/* Create Button - Central FAB, 48px - botão MUI para o + aparecer */}
+          <Box
+            component="button"
+            type="button"
+            role="button"
             aria-label="Create transaction"
+            onClick={() => handleNavigation("create")}
             className="nix-fab-create"
-            style={{ flex: "0 0 auto" }}
+            sx={{
+              flex: "0 0 auto",
+              width: 48,
+              height: 48,
+              minWidth: 48,
+              minHeight: 48,
+              borderRadius: "16px",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: theme.palette.primary.main,
+              color: "#fff",
+              boxShadow: theme.palette.mode === "dark"
+                ? `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`
+                : `0 4px 14px ${alpha(theme.palette.primary.main, 0.35)}`,
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: theme.palette.primary.dark,
+                transform: "scale(1.05)",
+                boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.45)}`,
+              },
+              "&:active": {
+                transform: "scale(0.98)",
+              },
+            }}
           >
-            <AddIcon style={{ fontSize: 24 }} />
-          </NixButton>
+            <AddIcon sx={{ fontSize: 26, color: "#fff" }} />
+          </Box>
 
           {/* Payment Methods */}
           <Box
+            component="button"
+            type="button"
+            role="button"
+            aria-label="Payment Methods"
             onClick={() => handleNavigation("paymentMethods")}
             sx={{
+              border: 0,
+              background: "none",
+              padding: 0,
+              font: "inherit",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -290,8 +340,16 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
           {/* Others */}
           <Box
+            component="button"
+            type="button"
+            role="button"
+            aria-label="Others"
             onClick={() => handleNavigation("others")}
             sx={{
+              border: 0,
+              background: "none",
+              padding: 0,
+              font: "inherit",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
