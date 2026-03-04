@@ -424,50 +424,6 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
             sx={{
               p: isMobile ? 1.5 : 2,
               borderRadius: "16px",
-              border: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-              }`,
-              background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(
-                    theme.palette.background.paper,
-                    0.7
-                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
-                    "#FFFFFF",
-                    0.6
-                  )} 100%)`,
-              backdropFilter: "blur(16px)",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <TrendingUpIcon sx={{ color: "#059669", fontSize: 20 }} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={600}
-              >
-                Total Receitas
-              </Typography>
-            </Box>
-            <Typography
-              variant={isMobile ? "body1" : "h6"}
-              fontWeight={700}
-              color="#059669"
-            >
-              {formatCurrency(stats.totalIncome)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              no mês
-            </Typography>
-          </Paper>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: isMobile ? 1.5 : 2,
-              borderRadius: "16px",
               background:
                 stats.totalUnpaid > 0
                   ? `linear-gradient(135deg, #f59e0b 0%, #d97706 100%)`

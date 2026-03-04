@@ -91,10 +91,14 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   const colors = getPaymentMethodColor(paymentMethod);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
-    "all"
-  );
+  const [filterType] = useState<"all" | "income" | "expense">("expense");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+
+  // Método de pagamento exibe apenas despesas (não exibir receitas)
+  const expenseOnlyTransactions = useMemo(
+    () => transactions.filter((t) => t.type === "expense"),
+    [transactions]
+  );
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">(
     "all"
   );
@@ -111,7 +115,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
     const targetMonth = selectedMonth + 1; // 1-12
     const targetYear = selectedYear;
 
-    transactions.forEach((t) => {
+    expenseOnlyTransactions.forEach((t) => {
       if (!t.isRecurring || !t.frequency || t.paymentMethod !== paymentMethod)
         return;
       if (t.installments && t.installments > 1) return;
@@ -170,15 +174,15 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   // Extrai categorias únicas das transações deste método de pagamento
   const availableCategories = useMemo(() => {
     const categories = new Set<string>();
-    transactions
+    expenseOnlyTransactions
       .filter((t) => t.paymentMethod === paymentMethod)
       .forEach((t) => categories.add(t.category));
     return Array.from(categories).sort();
-  }, [transactions, paymentMethod]);
+  }, [expenseOnlyTransactions, paymentMethod]);
 
   const filteredTransactions = useMemo(() => {
     const baseTransactions = [
-      ...transactions.filter((t) => {
+      ...expenseOnlyTransactions.filter((t) => {
         const [y, m] = t.date.split("-");
         const matchesDate =
           parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
@@ -215,7 +219,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [
-    transactions,
+    expenseOnlyTransactions,
     selectedMonth,
     selectedYear,
     paymentMethod,
@@ -489,22 +493,6 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           <Paper
             sx={{
               p: 2,
-              bgcolor: alpha("#10b981", 0.08),
-              border: `1px solid ${alpha("#10b981", 0.2)}`,
-            }}
-          >
-            <Typography variant="overline" color="#10b981">
-              Income
-            </Typography>
-            <Typography variant="h5" fontWeight="bold" color="#10b981">
-              {formatCurrency(totalIncome)}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Paper
-            sx={{
-              p: 2,
               bgcolor: alpha("#ef4444", 0.08),
               border: `1px solid ${alpha("#ef4444", 0.2)}`,
             }}
@@ -535,21 +523,6 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           placeholder="Search..."
           minWidth={150}
         />
-
-        <FormControl size="small" sx={{ minWidth: 100 }}>
-          <InputLabel>Type</InputLabel>
-          <Select
-            value={filterType}
-            label="Type"
-            onChange={(e: SelectChangeEvent) =>
-              setFilterType(e.target.value as "all" | "income" | "expense")
-            }
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="income">Income</MenuItem>
-            <MenuItem value="expense">Expense</MenuItem>
-          </Select>
-        </FormControl>
 
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Category</InputLabel>
