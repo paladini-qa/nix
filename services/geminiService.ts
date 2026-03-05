@@ -558,6 +558,200 @@ IMPORTANTE: Responda APENAS com um objeto JSON válido.
   }
 };
 
+// ========================================
+// Cadastro em lote - extração de múltiplas transações
+// ========================================
+
+/**
+ * Prompt para extrair uma ou várias transações (cadastro em lote).
+ * Retorna sempre um array; o modelo deve identificar se é uma ou várias transações.
+ */
+const getBatchTransactionParsingPrompt = (
+  categories: { income: string[]; expense: string[] },
+  paymentMethods: string[]
+): string => {
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+
+  return `Você é um assistente especializado em extrair informações de transações financeiras.
+O usuário pode descrever UMA ou VÁRIAS transações no mesmo texto/áudio/imagem.
+Sua tarefa é identificar TODAS as transações mencionadas e extrair os dados de cada uma.
+
+Para CADA transação extraia:
+- description: Descrição breve (ex: "Mercado Extra", "Uber")
+- amount: Valor numérico (apenas número). Se não conseguir, retorne null
+- type: "income" (receita) ou "expense" (despesa)
+- category: Categoria mais apropriada da lista abaixo
+- paymentMethod: Método de pagamento da lista abaixo
+- date: Data no formato YYYY-MM-DD
+- confidence: Número de 0 a 1 indicando confiança na extração
+
+CATEGORIAS DE RECEITA:
+${categories.income.map((c) => `- ${c}`).join("\n")}
+
+CATEGORIAS DE DESPESA:
+${categories.expense.map((c) => `- ${c}`).join("\n")}
+
+MÉTODOS DE PAGAMENTO:
+${paymentMethods.map((m) => `- ${m}`).join("\n")}
+
+REGRAS:
+1. HOJE = ${todayStr}. Use para "hoje", "ontem", "semana passada", "mês passado" quando aplicável.
+2. Se não houver data, use ${todayStr}.
+3. Se o usuário listar várias compras/gastos/receitas, retorne um objeto para cada uma.
+4. Em recibos ou listas com múltiplos itens, cada linha/item pode ser uma transação.
+5. Sempre retorne um ARRAY de objetos, mesmo que seja apenas uma transação.
+
+Responda APENAS com um JSON válido: um array de objetos.
+Formato: [ { "description": "...", "amount": number ou null, "type": "income" ou "expense", "category": "...", "paymentMethod": "...", "date": "YYYY-MM-DD", "confidence": number }, ... ]`;
+};
+
+/**
+ * Normaliza e valida um array de transações extraídas pela IA
+ */
+function normalizeBatchResult(
+  parsed: unknown,
+  categories: { income: string[]; expense: string[] },
+  paymentMethods: string[],
+  rawInput: string
+): ParsedTransaction[] {
+  const todayStr = new Date().toISOString().split("T")[0];
+  const arr = Array.isArray(parsed) ? parsed : [parsed];
+
+  return arr.map((item: any, index: number) => {
+    const validCategories =
+      (item?.type === "income" ? categories.income : categories.expense) || categories.expense;
+    const cat = item?.category && validCategories.includes(item.category)
+      ? item.category
+      : validCategories[0] || "Other";
+    const pm = item?.paymentMethod && paymentMethods.includes(item.paymentMethod)
+      ? item.paymentMethod
+      : paymentMethods[0] || "Pix";
+
+    return {
+      description: typeof item?.description === "string" ? item.description.slice(0, 100) : `Transação ${index + 1}`,
+      amount: typeof item?.amount === "number" ? item.amount : null,
+      type: (item?.type === "income" || item?.type === "expense" ? item.type : "expense") as TransactionType,
+      category: cat,
+      paymentMethod: pm,
+      date: typeof item?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(item.date) ? item.date : todayStr,
+      confidence: typeof item?.confidence === "number" ? Math.min(1, Math.max(0, item.confidence)) : 0.5,
+      rawInput: index === 0 ? rawInput : "[lote]",
+    };
+  });
+}
+
+/**
+ * Extrai uma ou várias transações a partir de texto (cadastro em lote)
+ */
+export const parseBatchFromText = async (
+  text: string,
+  categories: { income: string[]; expense: string[] },
+  paymentMethods: string[]
+): Promise<ParsedTransaction[]> => {
+  const prompt = getBatchTransactionParsingPrompt(categories, paymentMethods);
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `${prompt}\n\nINPUT DO USUÁRIO:\n"${text}"`,
+    });
+
+    const responseText = response.text || "";
+    const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    return normalizeBatchResult(parsed, categories, paymentMethods, text);
+  } catch (error) {
+    console.error("Error parsing batch from text:", error);
+    const single = await parseTransactionFromText(text, categories, paymentMethods);
+    return [single];
+  }
+};
+
+/**
+ * Extrai uma ou várias transações a partir de áudio (cadastro em lote)
+ */
+export const parseBatchFromAudio = async (
+  audioBlob: Blob,
+  categories: { income: string[]; expense: string[] },
+  paymentMethods: string[]
+): Promise<ParsedTransaction[]> => {
+  const prompt = getBatchTransactionParsingPrompt(categories, paymentMethods);
+
+  try {
+    const audioBase64 = await blobToBase64(audioBlob);
+    const mimeType = audioBlob.type || "audio/webm";
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `${prompt}\n\nO usuário gravou um áudio descrevendo uma ou várias transações. Transcreva e extraia TODAS as transações. Responda APENAS com o array JSON.`,
+            },
+            { inlineData: { mimeType, data: audioBase64 } },
+          ],
+        },
+      ],
+    });
+
+    const responseText = response.text || "";
+    const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    return normalizeBatchResult(parsed, categories, paymentMethods, "[áudio]");
+  } catch (error) {
+    console.error("Error parsing batch from audio:", error);
+    const single = await parseTransactionFromAudio(audioBlob, categories, paymentMethods);
+    return [single];
+  }
+};
+
+/**
+ * Extrai uma ou várias transações a partir de imagem (cadastro em lote)
+ */
+export const parseBatchFromImage = async (
+  imageBase64: string,
+  mimeType: string,
+  categories: { income: string[]; expense: string[] },
+  paymentMethods: string[]
+): Promise<ParsedTransaction[]> => {
+  const todayStr = new Date().toISOString().split("T")[0];
+  const prompt = getBatchTransactionParsingPrompt(categories, paymentMethods);
+
+  const imageInstruction = `Analise a imagem (recibo, comprovante, lista de compras ou extrato).
+Ela pode conter UMA ou VÁRIAS transações. Extraia TODAS que conseguir identificar.
+Cada item de uma lista, cada linha de um extrato ou cada compra no recibo pode ser uma transação.
+Responda APENAS com um array JSON de objetos (mesmo que seja só um).`;
+
+  try {
+    const cleanBase64 = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: `${prompt}\n\n${imageInstruction}` },
+            { inlineData: { mimeType: mimeType || "image/jpeg", data: cleanBase64 } },
+          ],
+        },
+      ],
+    });
+
+    const responseText = response.text || "";
+    const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    return normalizeBatchResult(parsed, categories, paymentMethods, "[imagem]");
+  } catch (error) {
+    console.error("Error parsing batch from image:", error);
+    const single = await parseTransactionFromImage(imageBase64, mimeType, categories, paymentMethods);
+    return [single];
+  }
+};
+
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;

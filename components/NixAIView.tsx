@@ -23,6 +23,16 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Slider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import {
   Send as SendIcon,
@@ -39,6 +49,7 @@ import {
   Category as CategoryIcon,
   CreditCard as PaymentIcon,
   Today as DateIcon,
+  Delete as DeleteIcon,
 } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
@@ -46,9 +57,9 @@ import NixAISkeleton from "./skeletons/NixAISkeleton";
 import { Transaction, ParsedTransaction, SmartInputMode, TransactionType } from "../types";
 import {
   chatWithNixAI,
-  parseTransactionFromText,
-  parseTransactionFromAudio,
-  parseTransactionFromImage,
+  parseBatchFromText,
+  parseBatchFromAudio,
+  parseBatchFromImage,
   detectTransactionIntent,
 } from "../services/geminiService";
 
@@ -485,6 +496,264 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
   );
 };
 
+// Tipo editável para uma linha do lote (sem confidence/rawInput)
+export type EditableBatchRow = {
+  description: string;
+  amount: number | null;
+  type: TransactionType;
+  category: string;
+  paymentMethod: string;
+  date: string;
+};
+
+// Tabela editável para cadastro em lote
+interface BatchTransactionTableProps {
+  transactions: ParsedTransaction[];
+  categories: { income: string[]; expense: string[] };
+  paymentMethods: string[];
+  onConfirmAll: (rows: EditableBatchRow[]) => void;
+  onCancel: () => void;
+}
+
+const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
+  transactions,
+  categories,
+  paymentMethods,
+  onConfirmAll,
+  onCancel,
+}) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const [rows, setRows] = useState<EditableBatchRow[]>(() =>
+    transactions.map((t) => ({
+      description: t.description,
+      amount: t.amount,
+      type: t.type,
+      category: t.category,
+      paymentMethod: t.paymentMethod,
+      date: t.date,
+    }))
+  );
+
+  const updateRow = (index: number, field: keyof EditableBatchRow, value: string | number | null) => {
+    setRows((prev) => {
+      const next = [...prev];
+      const row = { ...next[index] };
+      if (field === "amount") {
+        row.amount = value === "" || value === null ? null : Number(value);
+      } else {
+        (row as any)[field] = value;
+        if (field === "type") {
+          const cats = value === "income" ? categories.income : categories.expense;
+          if (!cats.includes(row.category)) row.category = cats[0] || "";
+        }
+      }
+      next[index] = row;
+      return next;
+    });
+  };
+
+  const removeRow = (index: number) => {
+    setRows((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleConfirm = () => {
+    const valid = rows.filter((r) => r.description.trim());
+    if (valid.length === 0) return;
+    onConfirmAll(valid);
+  };
+
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  return (
+    <MotionPaper
+      initial={{ opacity: 0, scale: 0.98, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.98, y: -10 }}
+      transition={{ type: "spring", damping: 22, stiffness: 300 }}
+      elevation={0}
+      sx={{
+        p: 2,
+        borderRadius: "20px",
+        bgcolor: isDarkMode ? alpha("#FFFFFF", 0.05) : alpha("#FFFFFF", 0.95),
+        border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
+        overflow: "auto",
+        maxHeight: isMobile ? "70vh" : "65vh",
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+        <Typography variant="subtitle2" fontWeight={700}>
+          Cadastro em lote – {rows.length} transação(ões)
+        </Typography>
+        <Chip
+          size="small"
+          label="Edite as células e confirme"
+          sx={{
+            bgcolor: alpha(NIX_BRAND.purple, 0.12),
+            color: NIX_BRAND.purple,
+            fontWeight: 500,
+            fontSize: 11,
+          }}
+        />
+      </Box>
+
+      <TableContainer sx={{ overflowX: "auto", mb: 2 }}>
+        <Table size="small" stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Descrição</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Valor</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Tipo</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Categoria</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Pagamento</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Data</TableCell>
+              {!isMobile && (
+                <TableCell sx={{ fontWeight: 700, fontSize: 11 }} align="right">
+                  Ação
+                </TableCell>
+              )}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((row, index) => (
+              <TableRow key={index}>
+                <TableCell padding="none" sx={{ minWidth: 120 }}>
+                  <TextField
+                    size="small"
+                    value={row.description}
+                    onChange={(e) => updateRow(index, "description", e.target.value)}
+                    placeholder="Descrição"
+                    fullWidth
+                    sx={{ "& .MuiInput-root": { fontSize: 13 } }}
+                  />
+                </TableCell>
+                <TableCell padding="none" sx={{ minWidth: 90 }}>
+                  <TextField
+                    size="small"
+                    type="number"
+                    value={row.amount ?? ""}
+                    onChange={(e) =>
+                      updateRow(index, "amount", e.target.value === "" ? null : e.target.value)
+                    }
+                    placeholder="0"
+                    inputProps={{ min: 0, step: 0.01 }}
+                    sx={{ "& .MuiInput-root": { fontSize: 13 } }}
+                  />
+                </TableCell>
+                <TableCell padding="none" sx={{ minWidth: 95 }}>
+                  <FormControl size="small" fullWidth>
+                    <Select
+                      value={row.type}
+                      onChange={(e) => updateRow(index, "type", e.target.value as TransactionType)}
+                      sx={{ fontSize: 13, py: 0.25 }}
+                    >
+                      <MenuItem value="expense">Despesa</MenuItem>
+                      <MenuItem value="income">Receita</MenuItem>
+                    </Select>
+                  </FormControl>
+                </TableCell>
+                <TableCell padding="none" sx={{ minWidth: 110 }}>
+                  <FormControl size="small" fullWidth>
+                    <Select
+                      value={row.category}
+                      onChange={(e) => updateRow(index, "category", e.target.value)}
+                      sx={{ fontSize: 13, py: 0.25 }}
+                    >
+                      {(row.type === "income" ? categories.income : categories.expense).map((c) => (
+                        <MenuItem key={c} value={c}>
+                          {c}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </TableCell>
+                <TableCell padding="none" sx={{ minWidth: 100 }}>
+                  <FormControl size="small" fullWidth>
+                    <Select
+                      value={row.paymentMethod}
+                      onChange={(e) => updateRow(index, "paymentMethod", e.target.value)}
+                      sx={{ fontSize: 13, py: 0.25 }}
+                    >
+                      {paymentMethods.map((m) => (
+                        <MenuItem key={m} value={m}>
+                          {m}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </TableCell>
+                <TableCell padding="none" sx={{ minWidth: 125 }}>
+                  <TextField
+                    size="small"
+                    type="date"
+                    value={row.date}
+                    onChange={(e) => updateRow(index, "date", e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ "& .MuiInput-root": { fontSize: 13 } }}
+                  />
+                </TableCell>
+                {!isMobile && (
+                  <TableCell padding="none" align="right">
+                    <IconButton
+                      size="small"
+                      onClick={() => removeRow(index)}
+                      sx={{ color: "text.secondary" }}
+                      aria-label="Remover linha"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Box sx={{ display: "flex", gap: 1.5 }}>
+        <Button
+          variant="outlined"
+          color="inherit"
+          size="small"
+          startIcon={<CloseIcon />}
+          onClick={onCancel}
+          sx={{
+            borderRadius: "12px",
+            fontWeight: 600,
+            textTransform: "none",
+            borderColor: "divider",
+            color: "text.secondary",
+          }}
+        >
+          Cancelar
+        </Button>
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<CheckIcon />}
+          onClick={handleConfirm}
+          disabled={rows.every((r) => !r.description.trim())}
+          sx={{
+            flex: 1,
+            borderRadius: "12px",
+            fontWeight: 600,
+            textTransform: "none",
+            background: NIX_BRAND.gradient,
+            boxShadow: `0 4px 16px ${alpha(NIX_BRAND.purple, 0.35)}`,
+            "&:hover": {
+              boxShadow: `0 6px 20px ${alpha(NIX_BRAND.purple, 0.45)}`,
+            },
+          }}
+        >
+          Confirmar todas ({rows.filter((r) => r.description.trim()).length})
+        </Button>
+      </Box>
+    </MotionPaper>
+  );
+};
+
 // Componente de Mensagem
 interface ChatMessageProps {
   message: Message;
@@ -619,8 +888,9 @@ const NixAIView: React.FC<NixAIViewProps> = ({
   // Estado para upload de imagem
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Estado para transação pendente
+  // Estado para transação pendente (uma) ou lote (várias)
   const [pendingTransaction, setPendingTransaction] = useState<ParsedTransaction | null>(null);
+  const [pendingBatch, setPendingBatch] = useState<ParsedTransaction[] | null>(null);
   const [smartInputError, setSmartInputError] = useState<string | null>(null);
 
   const scrollToBottom = () => {
@@ -629,7 +899,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, pendingTransaction]);
+  }, [messages, pendingTransaction, pendingBatch]);
 
   // Cleanup ao desmontar
   useEffect(() => {
@@ -667,17 +937,30 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       }
 
       try {
-        const result = await parseTransactionFromText(text, categories, paymentMethods);
+        const batch = await parseBatchFromText(text, categories, paymentMethods);
 
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "Entendi! Dá uma conferida nos dados abaixo e confirma pra eu salvar:",
-          timestamp: new Date(),
-          parsedTransaction: result,
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-        setPendingTransaction(result);
+        if (batch.length === 1) {
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: "Entendi! Dá uma conferida nos dados abaixo e confirma pra eu salvar:",
+            timestamp: new Date(),
+            parsedTransaction: batch[0],
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+          setPendingTransaction(batch[0]);
+          setPendingBatch(null);
+        } else {
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: `Identifiquei **${batch.length} transações**. Confira a tabela, edite se precisar e confirme para salvar todas:`,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+          setPendingBatch(batch);
+          setPendingTransaction(null);
+        }
       } catch (error) {
         console.error("Error parsing text:", error);
         const errorMessage: Message = {
@@ -754,17 +1037,30 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const result = await parseTransactionFromAudio(audioBlob, categories, paymentMethods);
+      const batch = await parseBatchFromAudio(audioBlob, categories, paymentMethods);
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Entendi o áudio! Confere se tá tudo certo:",
-        timestamp: new Date(),
-        parsedTransaction: result,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setPendingTransaction(result);
+      if (batch.length === 1) {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "Entendi o áudio! Confere se tá tudo certo:",
+          timestamp: new Date(),
+          parsedTransaction: batch[0],
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        setPendingTransaction(batch[0]);
+        setPendingBatch(null);
+      } else {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: `Identifiquei **${batch.length} transações** no áudio. Confira a tabela, edite se precisar e confirme:`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        setPendingBatch(batch);
+        setPendingTransaction(null);
+      }
     } catch (error) {
       console.error("Error parsing audio:", error);
       const errorMessage: Message = {
@@ -806,17 +1102,30 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       reader.onload = async (e) => {
         const imageBase64 = e.target?.result as string;
 
-        const result = await parseTransactionFromImage(imageBase64, file.type, categories, paymentMethods);
+        const batch = await parseBatchFromImage(imageBase64, file.type, categories, paymentMethods);
 
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "Li o recibo! Confere os dados:",
-          timestamp: new Date(),
-          parsedTransaction: result,
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-        setPendingTransaction(result);
+        if (batch.length === 1) {
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: "Li o recibo! Confere os dados:",
+            timestamp: new Date(),
+            parsedTransaction: batch[0],
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+          setPendingTransaction(batch[0]);
+          setPendingBatch(null);
+        } else {
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: `Identifiquei **${batch.length} transações** na imagem. Confira a tabela, edite se precisar e confirme:`,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+          setPendingBatch(batch);
+          setPendingTransaction(null);
+        }
         setIsLoading(false);
       };
       reader.readAsDataURL(file);
@@ -861,6 +1170,39 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     };
     setMessages((prev) => [...prev, cancelMessage]);
     setPendingTransaction(null);
+  };
+
+  const handleConfirmBatch = (rows: EditableBatchRow[]) => {
+    if (!onTransactionCreate) return;
+    rows.forEach((row) => {
+      onTransactionCreate({
+        description: row.description,
+        amount: row.amount ?? 0,
+        type: row.type,
+        category: row.category,
+        paymentMethod: row.paymentMethod,
+        date: row.date,
+      });
+    });
+    const confirmMessage: Message = {
+      id: Date.now().toString(),
+      role: "assistant",
+      content: `✅ **Pronto!** ${rows.length} transação(ões) salva(s). Posso ajudar com mais alguma coisa?`,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, confirmMessage]);
+    setPendingBatch(null);
+  };
+
+  const handleCancelBatch = () => {
+    const cancelMessage: Message = {
+      id: Date.now().toString(),
+      role: "assistant",
+      content: "Sem problemas! Cancelei o lote. Me avisa se precisar de algo. 👍",
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, cancelMessage]);
+    setPendingBatch(null);
   };
 
   const handleSmartInputAction = (mode: SmartInputMode) => {
@@ -1003,7 +1345,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           ))}
         </AnimatePresence>
 
-        {/* Preview de transação pendente */}
+        {/* Preview de transação pendente (uma) */}
         <AnimatePresence>
           {pendingTransaction && onTransactionCreate && (
             <TransactionPreviewCard
@@ -1012,6 +1354,19 @@ const NixAIView: React.FC<NixAIViewProps> = ({
               paymentMethods={paymentMethods}
               onConfirm={handleConfirmTransaction}
               onCancel={handleCancelTransaction}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Tabela editável para cadastro em lote (várias transações) */}
+        <AnimatePresence>
+          {pendingBatch && pendingBatch.length > 0 && onTransactionCreate && (
+            <BatchTransactionTable
+              transactions={pendingBatch}
+              categories={categories}
+              paymentMethods={paymentMethods}
+              onConfirmAll={handleConfirmBatch}
+              onCancel={handleCancelBatch}
             />
           )}
         </AnimatePresence>
