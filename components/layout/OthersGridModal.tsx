@@ -14,7 +14,6 @@ import {
   CreditCard as CreditCardIcon,
   People as PeopleIcon,
   Repeat as RepeatIcon,
-  AccountBalance as AccountBalanceIcon,
   Category as CategoryIcon,
   PieChart as BudgetIcon,
   Flag as GoalIcon,
@@ -29,7 +28,6 @@ type ViewType =
   | "splits"
   | "shared"
   | "recurring"
-  | "openFinance"
   | "categories"
   | "budgets"
   | "goals"
@@ -52,7 +50,6 @@ const gridItems: GridItem[] = [
   { id: "splits", label: "Splits", icon: CreditCardIcon },
   { id: "shared", label: "Shared", icon: PeopleIcon },
   { id: "recurring", label: "Recurring", icon: RepeatIcon },
-  { id: "openFinance", label: "Open Finance", icon: AccountBalanceIcon },
   { id: "categories", label: "Categorias", icon: CategoryIcon },
   { id: "budgets", label: "Budgets", icon: BudgetIcon },
   { id: "goals", label: "Goals", icon: GoalIcon },

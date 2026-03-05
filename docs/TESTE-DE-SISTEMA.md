@@ -43,7 +43,7 @@
 
 ### 2.5 Others (modal)
 - **Resultado:** OK  
-- Abre modal “Outras Telas” com: Splits, Shared, Recurring, Open Finance, Categorias, Budgets, Goals, Planejamentos, NixAI.
+- Abre modal “Outras Telas” com: Splits, Shared, Recurring, Categorias, Budgets, Goals, Planejamentos, NixAI.
 - Navegação para NixAI funcionando.
 
 ### 2.6 NixAI
@@ -101,7 +101,7 @@
 - Formulário de nova transação com campos e atalhos de valor acessíveis.
 
 ### 4.2 Desktop (≥1024px)
-- Sidebar com navegação completa (Dashboard, Transações, Splits, Shared, Recurring, NixAI, Budgets, Goals, Planning, Métodos de Pagamento, Categorias, Open Finance).
+- Sidebar com navegação completa (Nix AI, Dashboard, Transações, Splits, Shared, Recurring, Métodos de Pagamento, Categorias, Relatórios: Budgets, Goals, Planning).
 - Conteúdo principal com mais espaço; tabelas e gráficos aproveitam a largura.
 
 ### 4.3 Acessibilidade

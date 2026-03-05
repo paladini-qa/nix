@@ -87,7 +87,6 @@ const PaymentMethodsView = lazy(
   () => import("./components/PaymentMethodsView")
 );
 const CategoriesView = lazy(() => import("./components/CategoriesView"));
-const OpenFinanceView = lazy(() => import("./components/OpenFinanceView"));
 const AdvancedFilters = lazy(() => import("./components/AdvancedFilters"));
 
 import type { AdvancedFiltersState } from "./components/AdvancedFilters";
@@ -240,7 +239,6 @@ const AppContent: React.FC<{
     | "planning"
     | "paymentMethods"
     | "categories"
-    | "openFinance"
   >("dashboard");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -4426,18 +4424,6 @@ const AppContent: React.FC<{
                     onDeleteTransaction={handleDeleteTransaction}
                     initialSelectedCategory={selectedCategoryNav}
                     onClearInitialCategory={() => setSelectedCategoryNav(null)}
-                  />
-                </Suspense>
-              ) : currentView === "openFinance" ? (
-                <Suspense fallback={<ViewLoading />}>
-                  <OpenFinanceView
-                    userId={session.user.id}
-                    paymentMethods={paymentMethods}
-                    categories={categories}
-                    onTransactionCreate={async (newTx) => {
-                      await handleAddTransaction(newTx);
-                      await onRefreshData();
-                    }}
                   />
                 </Suspense>
               ) : null}

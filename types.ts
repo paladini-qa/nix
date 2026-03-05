@@ -150,44 +150,6 @@ export interface ParsedTransaction {
   rawInput: string; // input original para debug
 }
 
-// Open Finance com Pluggy
-export interface OpenFinanceConnection {
-  id: string;
-  userId: string;
-  pluggyItemId: string;
-  pluggyConnectorId: string;
-  institutionName: string;
-  paymentMethodId?: string | null;
-  isActive: boolean;
-  lastSyncAt?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type PendingTransactionStatus = "pending" | "confirmed" | "cancelled";
-
-export interface PendingTransaction {
-  id: string;
-  userId: string;
-  connectionId: string;
-  pluggyTransactionId: string;
-  rawDescription: string;
-  rawAmount: number;
-  rawDate: string; // YYYY-MM-DD
-  rawType: "DEBIT" | "CREDIT";
-  // Campos editáveis
-  description?: string | null;
-  amount?: number | null;
-  date?: string | null; // YYYY-MM-DD
-  type?: TransactionType | null;
-  category?: string | null;
-  paymentMethod?: string | null;
-  // Status
-  status: PendingTransactionStatus;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // Tipos da API Pluggy
 export interface PluggyConnector {
   id: string;

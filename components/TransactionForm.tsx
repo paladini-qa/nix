@@ -53,7 +53,8 @@ import {
   ReceiptLong as ReceiptIcon,
 } from "@mui/icons-material";
 import NixButton from "./radix/Button";
-import { Transaction, TransactionType, FinancialSummary } from "../types";
+import NixAIView from "./NixAIView";
+import { Transaction, TransactionType, FinancialSummary, ParsedTransaction } from "../types";
 import { CATEGORY_KEYWORDS, QUICK_AMOUNTS, MONTHS } from "../constants";
 import {
   suggestCategoryWithAI,
@@ -102,15 +103,6 @@ interface TransactionFormProps {
   } | null;
   /** Quando informado, ao selecionar um método com dia configurado, preenche a data com esse dia no mês atual */
   getPaymentMethodPaymentDay?: (method: string) => number | undefined;
-}
-
-// Interface para template de transação frequente
-interface FrequentTransaction {
-  description: string;
-  category: string;
-  paymentMethod: string;
-  type: TransactionType;
-  count: number;
 }
 
 // Estilos do input customizado - soft e orgânico
@@ -361,6 +353,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   // Estado para controlar opções avançadas colapsáveis
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Aba do drawer: formulário manual ou Nix AI (só para nova transação)
+  const [formTab, setFormTab] = useState<"manual" | "nixai">("manual");
+
   // Vencimento da fatura (só quando forma de pagamento tem dia cadastrado); usuário edita apenas mês/ano
   const [invoiceDueMonth, setInvoiceDueMonth] = useState<number>(dayjs().month() + 1); // 1-12
   const [invoiceDueYear, setInvoiceDueYear] = useState<number>(dayjs().year());
@@ -387,37 +382,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     },
     []
   );
-
-  // Extrair transações frequentes do histórico
-  const frequentTransactions = useMemo<FrequentTransaction[]>(() => {
-    if (transactions.length === 0) return [];
-
-    const frequencyMap = new Map<string, FrequentTransaction>();
-
-    transactions.forEach((t) => {
-      const key = `${t.description.toLowerCase()}-${t.category}-${
-        t.paymentMethod
-      }`;
-      const existing = frequencyMap.get(key);
-
-      if (existing) {
-        existing.count++;
-      } else {
-        frequencyMap.set(key, {
-          description: t.description,
-          category: t.category,
-          paymentMethod: t.paymentMethod,
-          type: t.type,
-          count: 1,
-        });
-      }
-    });
-
-    // Retorna top 5 mais frequentes
-    return Array.from(frequencyMap.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-  }, [transactions]);
 
   // Extrair descrições únicas para autocomplete
   const uniqueDescriptions = useMemo(() => {
@@ -528,15 +492,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
   // Lógica para mostrar Quick Amounts apenas quando relevante
   const shouldShowQuickAmounts = amountFieldFocused || !amount;
-
-  // Lógica para mostrar Atalhos Rápidos apenas se campos não preenchidos
-  const filledFieldsCount = [description, category, paymentMethod].filter(
-    Boolean
-  ).length;
-  const shouldShowFrequentTransactions =
-    !editTransaction &&
-    frequentTransactions.length > 0 &&
-    filledFieldsCount < 2;
 
   // Lógica para mostrar preview de impacto no saldo apenas para valores significativos
   const shouldShowBalanceImpact =
@@ -664,14 +619,29 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   }, [editTransaction, isOpen, initialContext, getPaymentMethodPaymentDay, getSuggestedInvoiceDueMonthYear]);
 
-  // Handler para aplicar template de transação frequente
-  const applyFrequentTransaction = useCallback((freq: FrequentTransaction) => {
-    setDescription(freq.description);
-    setCategory(freq.category);
-    setPaymentMethod(freq.paymentMethod);
-    setType(freq.type);
-    setSuggestedCategory(null);
-  }, []);
+  // Em modo edição, mostrar apenas a aba Formulário
+  useEffect(() => {
+    if (editTransaction) setFormTab("manual");
+  }, [editTransaction]);
+
+  // Handler para transação criada via Nix AI (aba Nix AI)
+  const handleNixAITransactionCreate = useCallback(
+    (parsedTx: Omit<ParsedTransaction, "confidence" | "rawInput">) => {
+      const transaction: Omit<Transaction, "id" | "createdAt"> = {
+        description: parsedTx.description,
+        amount: parsedTx.amount ?? 0,
+        type: parsedTx.type,
+        category: parsedTx.category,
+        paymentMethod: parsedTx.paymentMethod,
+        date: parsedTx.date,
+        isRecurring: false,
+        isPaid: false,
+      };
+      onSave(transaction);
+      onClose();
+    },
+    [onSave, onClose]
+  );
 
   // Handler para aplicar sugestão de categoria
   const applySuggestedCategory = useCallback(() => {
@@ -1004,7 +974,25 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         </Box>
       </Box>
 
-      {/* ====== FORM CONTENT ====== */}
+      {/* Abas: Formulário manual ou Nix AI (apenas para nova transação) */}
+      {!editTransaction && (
+        <Box sx={{ px: 3, pt: 1, pb: 0 }}>
+          <Tabs
+            value={formTab}
+            onChange={(_, v) => v && setFormTab(v)}
+            sx={{
+              minHeight: 40,
+              "& .MuiTab-root": { minHeight: 40, py: 1, textTransform: "none", fontWeight: 600 },
+              "& .MuiTabs-indicator": { borderRadius: "10px 10px 0 0" },
+            }}
+          >
+            <Tab value="manual" label="Formulário" />
+            <Tab value="nixai" label="Nix AI" />
+          </Tabs>
+        </Box>
+      )}
+
+      {formTab === "manual" && (
       <form
         id="transaction-form"
         onSubmit={handleSubmit}
@@ -1043,58 +1031,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           }}
         >
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            {/* Quick Actions - Transações Frequentes - Mostrar apenas se poucos campos preenchidos */}
-            {shouldShowFrequentTransactions && (
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  fontWeight={600}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.5,
-                    mb: 1.5,
-                  }}
-                >
-                  <BoltIcon sx={{ fontSize: 16 }} />
-                  ATALHOS RÁPIDOS
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                  {frequentTransactions.map((freq, index) => (
-                    <Chip
-                      key={index}
-                      label={freq.description}
-                      onClick={() => applyFrequentTransaction(freq)}
-                      icon={<HistoryIcon sx={{ fontSize: 16 }} />}
-                      size="small"
-                      sx={{
-                        borderRadius: "20px",
-                        fontWeight: 500,
-                        bgcolor: isDarkMode
-                          ? alpha(theme.palette.primary.main, 0.1)
-                          : alpha(theme.palette.primary.main, 0.08),
-                        border: `1px solid ${alpha(
-                          theme.palette.primary.main,
-                          0.2
-                        )}`,
-                        color: theme.palette.primary.main,
-                        transition: "all 0.2s ease",
-                        "&:hover": {
-                          bgcolor: alpha(theme.palette.primary.main, 0.2),
-                          transform: "translateY(-1px)",
-                          boxShadow: `0 4px 12px -4px ${alpha(
-                            theme.palette.primary.main,
-                            0.3
-                          )}`,
-                        },
-                      }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
-
             {/* Type Toggle - Premium Style */}
             <ToggleButtonGroup
               value={type}
@@ -2646,6 +2582,26 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           </NixButton>
         </Box>
       </form>
+      )}
+
+      {formTab === "nixai" && (
+        <Box
+          sx={{
+            flex: 1,
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+        >
+          <NixAIView
+            transactions={transactions}
+            categories={categories}
+            paymentMethods={paymentMethods}
+            onTransactionCreate={handleNixAITransactionCreate}
+          />
+        </Box>
+      )}
     </Drawer>
   );
 };

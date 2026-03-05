@@ -29,7 +29,6 @@ type ViewType =
   | "settings"
   | "paymentMethods"
   | "categories"
-  | "openFinance"
   | "planning";
 
 interface MobileNavigationProps {
@@ -57,7 +56,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       currentView === "splits" ||
       currentView === "shared" ||
       currentView === "recurring" ||
-      currentView === "openFinance" ||
       currentView === "categories" ||
       currentView === "budgets" ||
       currentView === "goals" ||

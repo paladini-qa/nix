@@ -95,22 +95,6 @@ Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais co
 - **Gráficos Interativos**: Visualizações com Recharts
 - **Filtros Avançados**: Análise por período, categoria, etc.
 
-### 🔌 Open Finance
-
-#### Integração com Pluggy
-- **Conexões Bancárias**: Conecte suas contas via Pluggy
-- **Apenas Cartões**: Foco em monitoramento de cartões de crédito
-- **Sincronização Automática**: Sincronize transações automaticamente
-- **Gerenciamento de Conexões**: Adicionar, editar e excluir conexões
-- **Vinculação a Payment Methods**: Vincule conexões a métodos de pagamento
-
-#### Transações Pendentes
-- **Sistema de Confirmação**: Transações sincronizadas aguardam confirmação
-- **Edição Completa**: Edite descrição, valor, data, tipo, categoria e payment method
-- **Confirmação**: Confirme transações para criar transações normais
-- **Cancelamento**: Cancele transações que não deseja adicionar
-- **Exclusão**: Exclua transações pendentes indesejadas
-
 ### 🤖 Inteligência Artificial
 
 #### Nix AI
@@ -197,19 +181,6 @@ Tags personalizadas:
 - Nome e cor
 - Relacionamento many-to-many com transações
 
-#### `open_finance_connections`
-Conexões com instituições financeiras via Pluggy:
-- Informações do Pluggy (pluggy_item_id, pluggy_connector_id)
-- Nome da instituição
-- Vinculação a payment method
-- Status ativo e última sincronização
-
-#### `pending_transactions`
-Transações sincronizadas aguardando confirmação:
-- Dados originais do Open Finance (raw_description, raw_amount, raw_date, raw_type)
-- Campos editáveis (description, amount, date, type, category, payment_method)
-- Status (pending, confirmed, cancelled)
-
 ---
 
 ## 🔧 Tecnologias e Stack
@@ -230,7 +201,6 @@ Transações sincronizadas aguardando confirmação:
 
 ### Integrações
 - **Google Gemini AI** - Inteligência artificial
-- **Pluggy API** - Open Finance
 
 ### Mobile
 - **Capacitor 8** - Builds nativos Android/iOS

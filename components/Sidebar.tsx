@@ -29,7 +29,6 @@ import {
   Payment as PaymentIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-  AccountBalance as AccountBalanceIcon,
   EventNote as PlanningIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
@@ -54,8 +53,7 @@ type ViewType =
   | "goals"
   | "planning"
   | "paymentMethods"
-  | "categories"
-  | "openFinance";
+  | "categories";
 
 interface SidebarProps {
   themePreference: ThemePreference;
@@ -120,14 +118,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   const isDarkMode = theme.palette.mode === "dark";
   const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
 
-  // Itens de menu principais
+  // Itens de menu principais (Nix AI logo acima do Painel)
   const mainNavItems: NavItem[] = [
+    { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" },
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
     { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
     { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
-    { icon: AccountBalanceIcon, label: "Open Finance", id: "openFinance" },
     { icon: PaymentIcon, label: "Payment Methods", id: "paymentMethods" },
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
   ];
@@ -137,11 +135,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" },
     { icon: GoalIcon, label: t("nav.goals"), id: "goals" },
     { icon: PlanningIcon, label: "Planejamentos", id: "planning" },
-  ];
-
-  // Itens de menu no final
-  const footerNavItems: NavItem[] = [
-    { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" },
   ];
 
   // Renderiza um item de navegação
@@ -450,33 +443,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </motion.div>
           <List sx={{ mt: 1 }}>
             {reportsNavItems.map((item, idx) => (
-              <motion.div key={item.id} variants={itemVariants}>
-                {renderNavItem(item, false, idx)}
-              </motion.div>
-            ))}
-          </List>
-        </Box>
-
-        {/* Footer Items */}
-        <Box sx={{ mt: 2 }}>
-          <motion.div variants={itemVariants}>
-            <Text
-              size="1"
-              color="gray"
-              weight="medium"
-              style={{
-                paddingLeft: 16,
-                paddingRight: 16,
-                letterSpacing: "0.1em",
-                fontSize: 12,
-              }}
-              as="p"
-            >
-              Ferramentas
-            </Text>
-          </motion.div>
-          <List sx={{ mt: 1 }}>
-            {footerNavItems.map((item, idx) => (
               <motion.div key={item.id} variants={itemVariants}>
                 {renderNavItem(item, false, idx)}
               </motion.div>

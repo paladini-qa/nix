@@ -72,18 +72,7 @@ Documento de referência para ajustes de UI. Cada aba/visão foi acessada e mape
 
 ---
 
-## 6. Open Finance (`currentView: "openFinance"`)
-
-- **Componente:** `OpenFinanceView`
-- **Arquivo:** `components/OpenFinanceView.tsx`
-- **Título:** Open Finance | "Gerencie suas conexões bancárias e sincronize transações automaticamente"
-- **Elementos principais:**
-  - **+ Adicionar Conexão** (header e centro)
-  - Estado vazio: ilustração, "Nenhuma conexão configurada", texto de CTA
-
----
-
-## 7. Payment Methods / Métodos de Pagamento (`currentView: "paymentMethods"`)
+## 6. Payment Methods / Métodos de Pagamento (`currentView: "paymentMethods"`)
 
 - **Componente:** `PaymentMethodsView` (+ `PaymentMethodDetailView` ao clicar em um método)
 - **Arquivo:** `components/PaymentMethodsView.tsx`, `PaymentMethodDetailView.tsx`
@@ -96,7 +85,7 @@ Documento de referência para ajustes de UI. Cada aba/visão foi acessada e mape
 
 ---
 
-## 8. Categorias (`currentView: "categories"`)
+## 7. Categorias (`currentView: "categories"`)
 
 - **Componente:** `CategoriesView`
 - **Arquivo:** `components/CategoriesView.tsx`
@@ -109,7 +98,7 @@ Documento de referência para ajustes de UI. Cada aba/visão foi acessada e mape
 
 ---
 
-## 9. Budgets (`currentView: "budgets"`)
+## 8. Budgets (`currentView: "budgets"`)
 
 - **Componente:** `BudgetsView`
 - **Arquivo:** `components/BudgetsView.tsx`
@@ -121,7 +110,7 @@ Documento de referência para ajustes de UI. Cada aba/visão foi acessada e mape
 
 ---
 
-## 10. Goals (`currentView: "goals"`)
+## 9. Goals (`currentView: "goals"`)
 
 - **Componente:** `GoalsView`
 - **Arquivo:** `components/GoalsView.tsx`
@@ -133,7 +122,7 @@ Documento de referência para ajustes de UI. Cada aba/visão foi acessada e mape
 
 ---
 
-## 11. Planejamentos (`currentView: "planning"`)
+## 10. Planejamentos (`currentView: "planning"`)
 
 - **Componente:** `PlanningView`
 - **Arquivo:** `components/PlanningView.tsx`
@@ -144,7 +133,7 @@ Documento de referência para ajustes de UI. Cada aba/visão foi acessada e mape
 
 ---
 
-## 12. NixAI (`currentView: "nixai"`)
+## 11. NixAI (`currentView: "nixai"`)
 
 - **Componente:** `NixAIView`
 - **Arquivo:** `components/NixAIView.tsx`
@@ -162,9 +151,8 @@ Documento de referência para ajustes de UI. Cada aba/visão foi acessada e mape
 - **Componente:** `Sidebar` (+ `MobileDrawer` / `MobileNavigation` em mobile)
 - **Arquivo:** `components/Sidebar.tsx`, `components/layout/MobileNavigation.tsx`
 - **Seções:**
-  - **Menu Principal:** Dashboard, Transactions, Splits, Shared, Recurring, Open Finance, Payment Methods, Categorias
+  - **Menu Principal:** Nix AI, Dashboard, Transactions, Splits, Shared, Recurring, Payment Methods, Categorias
   - **Relatórios:** Budgets, Goals, Planejamentos
-  - **Ferramentas:** NixAI
   - **Modo Privado:** Ocultar valores (Alt+P)
   - **Theme:** combobox (Light/Dark/System)
   - Usuário (nome), **Logout**
@@ -180,13 +168,12 @@ Capturas salvas em `%TEMP%\cursor\screenshots\` com os nomes:
 - `nix-ui-map-03-splits.png`
 - `nix-ui-map-04-shared.png`
 - `nix-ui-map-05-recurring.png`
-- `nix-ui-map-06-open-finance.png`
-- `nix-ui-map-07-payment-methods.png`
-- `nix-ui-map-08-categorias.png`
-- `nix-ui-map-09-budgets.png`
-- `nix-ui-map-10-goals.png`
-- `nix-ui-map-11-planejamentos.png`
-- `nix-ui-map-12-nixai.png`
+- `nix-ui-map-06-payment-methods.png`
+- `nix-ui-map-07-categorias.png`
+- `nix-ui-map-08-budgets.png`
+- `nix-ui-map-09-goals.png`
+- `nix-ui-map-10-planejamentos.png`
+- `nix-ui-map-11-nixai.png`
 
 ---
 
@@ -199,7 +186,6 @@ Capturas salvas em `%TEMP%\cursor\screenshots\` com os nomes:
 | splits         | SplitsView         | SplitsView.tsx         |
 | shared         | SharedView         | SharedView.tsx         |
 | recurring      | RecurringView      | RecurringView.tsx      |
-| openFinance    | OpenFinanceView    | OpenFinanceView.tsx    |
 | paymentMethods | PaymentMethodsView | PaymentMethodsView.tsx |
 | categories     | CategoriesView     | CategoriesView.tsx     |
 | budgets        | BudgetsView        | BudgetsView.tsx        |

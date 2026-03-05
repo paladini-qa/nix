@@ -28,16 +28,10 @@ import {
   Send as SendIcon,
   AutoAwesome as SparklesIcon,
   Person as PersonIcon,
-  TrendingUp as TrendingUpIcon,
-  Savings as SavingsIcon,
   Receipt as ReceiptIcon,
-  PieChart as PieChartIcon,
-  Lightbulb as LightbulbIcon,
-  CalendarMonth as CalendarIcon,
   Mic as MicIcon,
   PhotoCamera as CameraIcon,
   Stop as StopIcon,
-  Add as AddIcon,
   Check as CheckIcon,
   Close as CloseIcon,
   Edit as EditIcon,
@@ -96,23 +90,6 @@ const NIX_BRAND = {
   error: "#FF6B6B",
   gradient: "linear-gradient(135deg, #8A2BE2 0%, #6A0DAD 100%)",
 };
-
-// Sugestões de perguntas pré-definidas
-const SUGGESTED_QUESTIONS = [
-  { icon: <TrendingUpIcon sx={{ fontSize: 16 }} />, text: "Como estão meus gastos este mês?", color: NIX_BRAND.purple },
-  { icon: <SavingsIcon sx={{ fontSize: 16 }} />, text: "Onde posso economizar dinheiro?", color: NIX_BRAND.success },
-  { icon: <ReceiptIcon sx={{ fontSize: 16 }} />, text: "Qual minha maior despesa?", color: NIX_BRAND.error },
-  { icon: <PieChartIcon sx={{ fontSize: 16 }} />, text: "Analise meus gastos por categoria", color: NIX_BRAND.purpleLight },
-  { icon: <LightbulbIcon sx={{ fontSize: 16 }} />, text: "Dicas para melhorar minhas finanças", color: NIX_BRAND.teal },
-  { icon: <CalendarIcon sx={{ fontSize: 16 }} />, text: "Compare com o mês anterior", color: NIX_BRAND.purpleDark },
-];
-
-// Ações de cadastro inteligente
-const SMART_INPUT_ACTIONS = [
-  { icon: <AddIcon sx={{ fontSize: 16 }} />, text: "Cadastrar por texto", color: NIX_BRAND.purple, mode: "text" as SmartInputMode },
-  { icon: <MicIcon sx={{ fontSize: 16 }} />, text: "Cadastrar por áudio", color: NIX_BRAND.purpleLight, mode: "audio" as SmartInputMode },
-  { icon: <CameraIcon sx={{ fontSize: 16 }} />, text: "Foto de recibo", color: NIX_BRAND.teal, mode: "image" as SmartInputMode },
-];
 
 interface Message {
   id: string;
@@ -603,146 +580,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isMobile }) => {
   );
 };
 
-// Componente de Sugestões
-interface SuggestionsProps {
-  onSmartInput: (mode: SmartInputMode) => void;
-  onQuestionClick: (text: string) => void;
-}
-
-const Suggestions: React.FC<SuggestionsProps> = ({ onSmartInput, onQuestionClick }) => {
-  const theme = useTheme();
-  const isDarkMode = theme.palette.mode === "dark";
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.05 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 15, scale: 0.95 },
-    visible: { opacity: 1, y: 0, scale: 1 },
-  };
-
-  const SectionTitle: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon, title }) => (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 0.75,
-        mb: 1.5,
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 24,
-          height: 24,
-          borderRadius: "8px",
-          bgcolor: alpha(NIX_BRAND.purple, 0.1),
-          color: NIX_BRAND.purple,
-        }}
-      >
-        {icon}
-      </Box>
-      <Typography
-        variant="caption"
-        sx={{
-          color: "text.secondary",
-          fontWeight: 700,
-          letterSpacing: 0.3,
-          textTransform: "uppercase",
-          fontSize: 11,
-        }}
-      >
-        {title}
-      </Typography>
-    </Box>
-  );
-
-  return (
-    <MotionBox
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}
-    >
-      {/* Cadastro Inteligente */}
-      <Box>
-        <SectionTitle icon={<SparklesIcon sx={{ fontSize: 14 }} />} title="Cadastro Inteligente" />
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {SMART_INPUT_ACTIONS.map((action, index) => (
-            <MotionBox key={index} variants={itemVariants}>
-              <Chip
-                icon={action.icon}
-                label={action.text}
-                onClick={() => onSmartInput(action.mode)}
-                sx={{
-                  px: 1.5,
-                  py: 2.5,
-                  borderRadius: "14px",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  bgcolor: isDarkMode ? alpha(action.color, 0.12) : alpha(action.color, 0.08),
-                  color: action.color,
-                  border: `1.5px solid ${alpha(action.color, 0.2)}`,
-                  cursor: "pointer",
-                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                  "& .MuiChip-icon": { color: action.color },
-                  "&:hover": {
-                    bgcolor: alpha(action.color, 0.18),
-                    transform: "translateY(-3px)",
-                    boxShadow: `0 8px 24px ${alpha(action.color, 0.25)}`,
-                  },
-                  "&:active": { transform: "translateY(-1px)" },
-                }}
-              />
-            </MotionBox>
-          ))}
-        </Box>
-      </Box>
-
-      {/* Perguntas Sugeridas */}
-      <Box>
-        <SectionTitle icon={<LightbulbIcon sx={{ fontSize: 14 }} />} title="Perguntas Sugeridas" />
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {SUGGESTED_QUESTIONS.map((suggestion, index) => (
-            <MotionBox key={index} variants={itemVariants}>
-              <Chip
-                icon={suggestion.icon}
-                label={suggestion.text}
-                onClick={() => onQuestionClick(suggestion.text)}
-                sx={{
-                  px: 1.5,
-                  py: 2.5,
-                  borderRadius: "14px",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  bgcolor: isDarkMode ? alpha(suggestion.color, 0.1) : alpha(suggestion.color, 0.06),
-                  color: suggestion.color,
-                  border: `1px solid ${alpha(suggestion.color, 0.15)}`,
-                  cursor: "pointer",
-                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                  "& .MuiChip-icon": { color: suggestion.color },
-                  "&:hover": {
-                    bgcolor: alpha(suggestion.color, 0.15),
-                    transform: "translateY(-2px)",
-                    boxShadow: `0 6px 20px ${alpha(suggestion.color, 0.2)}`,
-                  },
-                }}
-              />
-            </MotionBox>
-          ))}
-        </Box>
-      </Box>
-    </MotionBox>
-  );
-};
-
 // ============================================
 // Componente Principal
 // ============================================
@@ -1137,8 +974,6 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     }
   };
 
-  const showSuggestions = messages.length === 1 && messages[0].id === "welcome" && !pendingTransaction;
-
   return (
     <Box
       sx={{
@@ -1167,11 +1002,6 @@ const NixAIView: React.FC<NixAIViewProps> = ({
             <ChatMessage key={message.id} message={message} isMobile={isMobile} />
           ))}
         </AnimatePresence>
-
-        {/* Sugestões iniciais */}
-        {showSuggestions && !isLoading && (
-          <Suggestions onSmartInput={handleSmartInputAction} onQuestionClick={handleSuggestionClick} />
-        )}
 
         {/* Preview de transação pendente */}
         <AnimatePresence>
