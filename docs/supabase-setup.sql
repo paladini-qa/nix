@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     installment_group_id UUID,
     excluded_dates JSONB DEFAULT '[]'::jsonb,
     recurring_group_id UUID, -- ID da recorrência original (para manter vínculo após edição "single")
+    invoice_due_date DATE, -- Data de vencimento da fatura (quando forma de pagamento tem dia cadastrado)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -57,6 +58,9 @@ CREATE TABLE IF NOT EXISTS public.transactions (
 -- Para bancos existentes, adicione a coluna recurring_group_id (vincula transações modificadas à recorrência original):
 -- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS recurring_group_id UUID;
 
+-- Para bancos existentes, adicione a coluna invoice_due_date (vencimento da fatura quando método tem dia cadastrado):
+-- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS invoice_due_date DATE;
+
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.transactions(date DESC);
@@ -77,6 +81,7 @@ COMMENT ON COLUMN public.transactions.related_transaction_id IS 'ID da transaç�
 COMMENT ON COLUMN public.transactions.installment_group_id IS 'UUID que agrupa todas as parcelas de um mesmo parcelamento';
 COMMENT ON COLUMN public.transactions.excluded_dates IS 'Array JSON de datas (YYYY-MM-DD) excluídas de recorrências';
 COMMENT ON COLUMN public.transactions.recurring_group_id IS 'ID da transação recorrente original (para manter vínculo após edição single)';
+COMMENT ON COLUMN public.transactions.invoice_due_date IS 'Data de vencimento da fatura (quando forma de pagamento tem dia cadastrado); usuário edita só mês/ano';
 
 -- =============================================
 -- 2. TABELA: user_settings

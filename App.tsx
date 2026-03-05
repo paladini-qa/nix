@@ -958,7 +958,7 @@ const AppContent: React.FC<{
       if (editId) {
         const editMode = currentEditMode;
 
-        const dbPayload = {
+        const dbPayload: Record<string, unknown> = {
           description: newTx.description,
           amount: newTx.amount,
           type: newTx.type,
@@ -969,6 +969,7 @@ const AppContent: React.FC<{
           is_shared: newTx.isShared,
           shared_with: newTx.sharedWith,
         };
+        if (newTx.invoiceDueDate !== undefined) dbPayload.invoice_due_date = newTx.invoiceDueDate;
 
         if (editMode === "all" || editMode === "all_future") {
           const originalTx = editingTransaction;
@@ -1727,7 +1728,7 @@ const AppContent: React.FC<{
           }
         }
       } else {
-        const dbPayload = {
+        const dbPayload: Record<string, unknown> = {
           user_id: session.user.id,
           description: newTx.description,
           amount: newTx.amount,
@@ -1744,6 +1745,7 @@ const AppContent: React.FC<{
           shared_with: newTx.sharedWith,
           i_owe: newTx.iOwe,
         };
+        if (newTx.invoiceDueDate) dbPayload.invoice_due_date = newTx.invoiceDueDate;
 
         const { data, error } = await supabase
           .from("transactions")
@@ -1762,6 +1764,7 @@ const AppContent: React.FC<{
             category: data.category,
             paymentMethod: data.payment_method,
             date: data.date,
+            invoiceDueDate: data.invoice_due_date ?? undefined,
             createdAt: new Date(data.created_at).getTime(),
             isRecurring: data.is_recurring,
             frequency: data.frequency,
@@ -3655,7 +3658,7 @@ const AppContent: React.FC<{
         )}-${String(adjustedDay).padStart(2, "0")}`;
 
         // Cria uma nova transação materializada (cópia da original com a data da ocorrência)
-        const newTransaction = {
+        const newTransaction: Record<string, unknown> = {
           description: originalTransaction.description,
           amount: originalTransaction.amount,
           type: originalTransaction.type,
@@ -3672,6 +3675,7 @@ const AppContent: React.FC<{
           related_transaction_id: originalTransaction.relatedTransactionId,
           user_id: session?.user?.id,
         };
+        if (originalTransaction.invoiceDueDate) newTransaction.invoice_due_date = originalTransaction.invoiceDueDate;
 
         const { data, error } = await supabase
           .from("transactions")
@@ -3690,6 +3694,7 @@ const AppContent: React.FC<{
             category: data.category,
             paymentMethod: data.payment_method,
             date: data.date,
+            invoiceDueDate: data.invoice_due_date ?? undefined,
             createdAt: new Date(data.created_at).getTime(),
             isRecurring: data.is_recurring,
             frequency: data.frequency,

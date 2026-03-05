@@ -132,6 +132,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
       isShared: transaction.isShared,
       sharedWith: transaction.sharedWith,
       iOwe: transaction.iOwe,
+      ...(transaction.invoiceDueDate && { invoiceDueDate: transaction.invoiceDueDate }),
     };
 
     // Para "single" de virtual, passa undefined como editId para criar nova transação

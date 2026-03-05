@@ -23,6 +23,10 @@ export const transactionSchema = z.object({
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  invoiceDueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid invoice due date format (YYYY-MM-DD)")
+    .optional(),
   isRecurring: z.boolean().optional(),
   frequency: frequencySchema.optional(),
   installments: z

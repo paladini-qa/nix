@@ -11,7 +11,9 @@ export interface Transaction {
   type: TransactionType;
   category: string;
   paymentMethod: string;
-  date: string; // ISO String YYYY-MM-DD
+  date: string; // ISO String YYYY-MM-DD - data em que a transação ocorreu
+  /** Data de vencimento da fatura (quando a forma de pagamento tem dia cadastrado); só mês/ano editável na UI */
+  invoiceDueDate?: string; // YYYY-MM-DD
   createdAt: number;
   isRecurring?: boolean;
   frequency?: "monthly" | "yearly";

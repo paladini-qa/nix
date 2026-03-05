@@ -84,6 +84,7 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
           category: t.category,
           paymentMethod: t.payment_method,
           date: t.date,
+          invoiceDueDate: t.invoice_due_date ?? undefined,
           createdAt: new Date(t.created_at).getTime(),
           isRecurring: t.is_recurring,
           frequency: t.frequency,

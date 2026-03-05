@@ -37,6 +37,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           category: t.category,
           paymentMethod: t.payment_method,
           date: t.date,
+          invoiceDueDate: t.invoice_due_date ?? undefined,
           createdAt: new Date(t.created_at).getTime(),
           isRecurring: t.is_recurring,
           frequency: t.frequency,
@@ -63,7 +64,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       userId: string
     ): Promise<Transaction | null> => {
       try {
-        const dbPayload = {
+        const dbPayload: Record<string, unknown> = {
           user_id: userId,
           description: tx.description,
           amount: tx.amount,
@@ -77,6 +78,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           current_installment: tx.currentInstallment,
           is_paid: tx.isPaid ?? false,
         };
+        if (tx.invoiceDueDate) dbPayload.invoice_due_date = tx.invoiceDueDate;
 
         const { data, error } = await supabase
           .from("transactions")
@@ -95,6 +97,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
             category: data.category,
             paymentMethod: data.payment_method,
             date: data.date,
+            invoiceDueDate: data.invoice_due_date ?? undefined,
             createdAt: new Date(data.created_at).getTime(),
             isRecurring: data.is_recurring,
             frequency: data.frequency,
@@ -137,9 +140,10 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           Math.round((txAmount - totalFromInstallments) * 100) / 100;
 
         const payloads = [];
+        const baseDueDate = tx.invoiceDueDate || tx.date; // para parcelas, cada uma vence no mês correspondente
         for (let i = 0; i < installments; i++) {
           const amount = i === 0 ? installmentAmount + remainder : installmentAmount;
-          payloads.push({
+          const payload: Record<string, unknown> = {
             user_id: userId,
             description: tx.description,
             amount: amount,
@@ -152,7 +156,9 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
             installments: installments,
             current_installment: i + 1,
             is_paid: false,
-          });
+          };
+          if (tx.invoiceDueDate) payload.invoice_due_date = addMonths(baseDueDate, i);
+          payloads.push(payload);
         }
 
         const { data, error } = await supabase
@@ -171,6 +177,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
             category: d.category,
             paymentMethod: d.payment_method,
             date: d.date,
+            invoiceDueDate: d.invoice_due_date ?? undefined,
             createdAt: new Date(d.created_at).getTime(),
             isRecurring: d.is_recurring,
             frequency: d.frequency,
@@ -212,6 +219,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         if (updates.installments !== undefined) dbPayload.installments = updates.installments;
         if (updates.currentInstallment !== undefined) dbPayload.current_installment = updates.currentInstallment;
         if (updates.isPaid !== undefined) dbPayload.is_paid = updates.isPaid;
+        if (updates.invoiceDueDate !== undefined) dbPayload.invoice_due_date = updates.invoiceDueDate;
 
         const { data, error } = await supabase
           .from("transactions")
@@ -231,6 +239,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
             category: data.category,
             paymentMethod: data.payment_method,
             date: data.date,
+            invoiceDueDate: data.invoice_due_date ?? undefined,
             createdAt: new Date(data.created_at).getTime(),
             isRecurring: data.is_recurring,
             frequency: data.frequency,

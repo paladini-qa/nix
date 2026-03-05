@@ -54,7 +54,7 @@ import {
 } from "@mui/icons-material";
 import NixButton from "./radix/Button";
 import { Transaction, TransactionType, FinancialSummary } from "../types";
-import { CATEGORY_KEYWORDS, QUICK_AMOUNTS } from "../constants";
+import { CATEGORY_KEYWORDS, QUICK_AMOUNTS, MONTHS } from "../constants";
 import {
   suggestCategoryWithAI,
   CategorySuggestion,
@@ -361,7 +361,32 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   // Estado para controlar opções avançadas colapsáveis
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Vencimento da fatura (só quando forma de pagamento tem dia cadastrado); usuário edita apenas mês/ano
+  const [invoiceDueMonth, setInvoiceDueMonth] = useState<number>(dayjs().month() + 1); // 1-12
+  const [invoiceDueYear, setInvoiceDueYear] = useState<number>(dayjs().year());
+
   const inputSx = getInputSx(theme, isDarkMode);
+
+  // Retorna dia de vencimento do método (1-31) ou undefined
+  const paymentMethodDueDay = getPaymentMethodPaymentDay?.(paymentMethod);
+  const hasInvoiceDueDate = paymentMethodDueDay != null && paymentMethodDueDay >= 1 && paymentMethodDueDay <= 31;
+
+  /**
+   * Sugere mês/ano do vencimento da fatura a partir da data da transação.
+   * Regra: mesmo mês da transação; se o dia da transação for maior que o dia de vencimento do método,
+   * usa o próximo mês (fatura do próximo fechamento).
+   */
+  const getSuggestedInvoiceDueMonthYear = useCallback(
+    (txDate: Dayjs, dueDay: number): { month: number; year: number } => {
+      const txDay = txDate.date();
+      if (txDay > dueDay) {
+        const next = txDate.add(1, "month");
+        return { month: next.month() + 1, year: next.year() };
+      }
+      return { month: txDate.month() + 1, year: txDate.year() };
+    },
+    []
+  );
 
   // Extrair transações frequentes do histórico
   const frequentTransactions = useMemo<FrequentTransaction[]>(() => {
@@ -559,6 +584,22 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setIsShared(editTransaction.isShared || false);
       setSharedWith(editTransaction.sharedWith || "");
       setIOwe(editTransaction.iOwe || false);
+      // Vencimento da fatura: usar valor salvo ou sugerir a partir da data da transação
+      const dueDay = getPaymentMethodPaymentDay?.(editTransaction.paymentMethod);
+      if (dueDay != null && dueDay >= 1 && dueDay <= 31) {
+        if (editTransaction.invoiceDueDate) {
+          const d = dayjs(editTransaction.invoiceDueDate);
+          setInvoiceDueMonth(d.month() + 1);
+          setInvoiceDueYear(d.year());
+        } else {
+          const { month, year } = getSuggestedInvoiceDueMonthYear(
+            dayjs(editTransaction.date),
+            dueDay
+          );
+          setInvoiceDueMonth(month);
+          setInvoiceDueYear(year);
+        }
+      }
     } else {
       setDescription("");
       setAmount("");
@@ -573,6 +614,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setIsShared(false);
       setSharedWith("");
       setIOwe(false);
+      const now = dayjs();
+      setInvoiceDueMonth(now.month() + 1);
+      setInvoiceDueYear(now.year());
     }
     setNewFriendName("");
     setShowAddFriend(false);
@@ -593,8 +637,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setShowAdvanced(false);
       // Aplicar contexto inicial quando abrindo a partir de uma aba específica
       if (isOpen && initialContext) {
-        if (initialContext.paymentMethod)
+        if (initialContext.paymentMethod) {
           setPaymentMethod(initialContext.paymentMethod);
+          const dueDay = getPaymentMethodPaymentDay?.(initialContext.paymentMethod);
+          if (dueDay != null && dueDay >= 1 && dueDay <= 31) {
+            const { month, year } = getSuggestedInvoiceDueMonthYear(dayjs(), dueDay);
+            setInvoiceDueMonth(month);
+            setInvoiceDueYear(year);
+          }
+        }
         if (initialContext.category) setCategory(initialContext.category);
         if (initialContext.type) setType(initialContext.type);
         if (initialContext.isShared !== undefined)
@@ -611,7 +662,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         if (hasAdvancedFromContext) setShowAdvanced(true);
       }
     }
-  }, [editTransaction, isOpen, initialContext]);
+  }, [editTransaction, isOpen, initialContext, getPaymentMethodPaymentDay, getSuggestedInvoiceDueMonthYear]);
 
   // Handler para aplicar template de transação frequente
   const applyFrequentTransaction = useCallback((freq: FrequentTransaction) => {
@@ -698,6 +749,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
     const finalAmount = parsedAmount || 0;
 
+    // Data de vencimento da fatura: só quando método tem dia cadastrado; dia fixo, mês/ano do form
+    let invoiceDueDate: string | undefined;
+    if (hasInvoiceDueDate && paymentMethodDueDay != null) {
+      const daysInMonth = dayjs().year(invoiceDueYear).month(invoiceDueMonth - 1).daysInMonth();
+      const d = Math.min(paymentMethodDueDay, daysInMonth);
+      invoiceDueDate = `${invoiceDueYear}-${String(invoiceDueMonth).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+
     onSave(
       {
         description,
@@ -706,6 +765,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         category,
         paymentMethod,
         date: date.format("YYYY-MM-DD"),
+        ...(invoiceDueDate && { invoiceDueDate }),
         isRecurring,
         frequency: isRecurring ? frequency : undefined,
         installments: hasInstallments ? installmentsValue : undefined,
@@ -1363,13 +1423,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     onChange={(e) => {
                       const method = e.target.value;
                       setPaymentMethod(method);
-                      if (!editTransaction && getPaymentMethodPaymentDay) {
+                      // Ao selecionar método com dia de vencimento, preenche mês/ano da fatura (não altera data da transação)
+                      if (getPaymentMethodPaymentDay) {
                         const day = getPaymentMethodPaymentDay(method);
-                        if (day != null && day >= 1 && day <= 31) {
-                          const base = dayjs();
-                          const daysInMonth = base.daysInMonth();
-                          const d = Math.min(day, daysInMonth);
-                          setDate(base.date(d));
+                        if (day != null && day >= 1 && day <= 31 && date) {
+                          const { month, year } = getSuggestedInvoiceDueMonthYear(date, day);
+                          setInvoiceDueMonth(month);
+                          setInvoiceDueYear(year);
                         }
                       }
                     }}
@@ -1471,6 +1531,62 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 }}
               />
             </Box>
+
+            {/* Vencimento da fatura (só quando forma de pagamento tem dia cadastrado); usuário edita apenas mês/ano */}
+            {hasInvoiceDueDate && paymentMethodDueDay != null && (
+              <Box sx={{ mt: 2 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  fontWeight={600}
+                  sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}
+                >
+                  <ReceiptIcon sx={{ fontSize: 16 }} />
+                  Vencimento da fatura
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 6 }}>
+                    <FormControl fullWidth size="small" sx={inputSx}>
+                      <InputLabel>Mês</InputLabel>
+                      <Select
+                        value={invoiceDueMonth}
+                        label="Mês"
+                        onChange={(e) =>
+                          setInvoiceDueMonth(Number(e.target.value))
+                        }
+                      >
+                        {MONTHS.map((name, i) => (
+                          <MenuItem key={name} value={i + 1}>
+                            {name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <FormControl fullWidth size="small" sx={inputSx}>
+                      <InputLabel>Ano</InputLabel>
+                      <Select
+                        value={invoiceDueYear}
+                        label="Ano"
+                        onChange={(e) =>
+                          setInvoiceDueYear(Number(e.target.value))
+                        }
+                      >
+                        {Array.from({ length: 11 }, (_, i) => dayjs().year() - 2 + i).map((y) => (
+                          <MenuItem key={y} value={y}>
+                            {y}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                  Dia {paymentMethodDueDay} (fixo pelo método de pagamento)
+                </Typography>
+              </Box>
+            )}
 
             {/* ========== OPÇÕES AVANÇADAS - Colapsável ========== */}
             <Paper

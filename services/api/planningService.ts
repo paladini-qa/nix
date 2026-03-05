@@ -306,7 +306,7 @@ export const planningService = {
     // Opcionalmente, remove o planejamento vazio
     // await this.delete(planningId);
 
-    return (transactions || []).map((t) => ({
+    return (transactions || []).map((t: any) => ({
       id: t.id,
       description: t.description,
       amount: parseFloat(t.amount),
@@ -314,6 +314,7 @@ export const planningService = {
       category: t.category,
       paymentMethod: t.payment_method,
       date: t.date,
+      invoiceDueDate: t.invoice_due_date ?? undefined,
       createdAt: new Date(t.created_at).getTime(),
       isPaid: t.is_paid ?? false,
     }));
