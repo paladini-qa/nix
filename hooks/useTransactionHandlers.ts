@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "../services/supabaseClient";
 import { Transaction } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import { useNotification, useConfirmDialog } from "../contexts";
 
 // ============================================
@@ -1010,7 +1011,7 @@ export const useTransactionHandlers = ({
         const targetMonth = month + 1;
         const unpaidIds = transactions
           .filter((t) => {
-            const [y, m] = t.date.split("-");
+            const [y, m] = getReportDate(t).split("-");
             return (
               t.paymentMethod === paymentMethod &&
               parseInt(y) === year &&

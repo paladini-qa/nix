@@ -35,6 +35,7 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 import { Budget, BudgetWithSpending, Transaction, TransactionType } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import { budgetService } from "../services/api";
 import { useNotification } from "../contexts";
 import { useConfirmDialog } from "../contexts";
@@ -92,10 +93,10 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
     }
   };
 
-  // Filter transactions for current month
+  // Filter transactions for current month (usa data de relatório)
   const monthTransactions = useMemo(() => {
     return transactions.filter((t) => {
-      const [y, m] = t.date.split("-");
+      const [y, m] = getReportDate(t).split("-");
       const isCurrentMonth = parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
       
       if (!isCurrentMonth) return false;

@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { Transaction, ParsedTransaction, TransactionType } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -767,9 +768,9 @@ export const chatWithNixAI = async (
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  // Get current month transactions
+  // Get current month transactions (usa data de relatório)
   const currentMonthTxs = transactions.filter((t) => {
-    const [y, m] = t.date.split("-");
+    const [y, m] = getReportDate(t).split("-");
     return parseInt(y) === currentYear && parseInt(m) === currentMonth + 1;
   });
 

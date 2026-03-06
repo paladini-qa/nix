@@ -59,6 +59,7 @@ import SearchBar from "./SearchBar";
 import SwipeableTransactionCard from "./SwipeableTransactionCard";
 import PullToRefreshIndicator from "./PullToRefreshIndicator";
 import { Transaction } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../constants";
 import DateFilter from "./DateFilter";
 import { useNotification } from "../contexts";
@@ -232,10 +233,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     return virtualTransactions;
   }, [transactions, selectedMonth, selectedYear]);
 
-  // Combina transações reais + virtuais
+  // Combina transações reais + virtuais (filtro por mês usa data de relatório)
   const allTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
-      const [y, m] = t.date.split("-");
+      const [y, m] = getReportDate(t).split("-");
       const isCurrentMonth =
         parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
 

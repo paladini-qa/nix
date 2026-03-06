@@ -62,6 +62,7 @@ import {
   ColorConfig,
   CategoryColors,
 } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import { ColorsContext } from "../App";
 import ColorPicker from "./ColorPicker";
 import DateFilter from "./DateFilter";
@@ -220,10 +221,10 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     return virtualTransactions;
   }, [transactions, selectedMonth, selectedYear]);
 
-  // Filtra transações do mês
+  // Filtra transações do mês (usa data de relatório)
   const monthTransactions = useMemo(() => {
     const baseTransactions = transactions.filter((t) => {
-      const [y, m] = t.date.split("-");
+      const [y, m] = getReportDate(t).split("-");
       const isCurrentMonth =
         parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
 

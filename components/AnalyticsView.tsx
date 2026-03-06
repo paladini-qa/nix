@@ -36,6 +36,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Transaction } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import type { Dayjs } from "dayjs";
 import EmptyState from "./EmptyState";
 
@@ -154,11 +155,11 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       isCurrentMonth: boolean;
     }[] = [];
 
-    // Agrupa por mês as transações
+    // Agrupa por mês as transações (usa data de relatório: vencimento da fatura quando existir)
     const monthlyMap = new Map<string, { income: number; expense: number }>();
 
     transactions.forEach((tx) => {
-      const [year, month] = tx.date.split("-");
+      const [year, month] = getReportDate(tx).split("-");
       const key = `${year}-${month}`;
       const current = monthlyMap.get(key) || { income: 0, expense: 0 };
 
@@ -260,11 +261,11 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
-    // Agrupa por mês com detalhes de receita e despesa
+    // Agrupa por mês com detalhes de receita e despesa (usa data de relatório)
     const monthlyData = new Map<string, { income: number; expense: number }>();
 
     sortedTxs.forEach((tx) => {
-      const [year, month] = tx.date.split("-");
+      const [year, month] = getReportDate(tx).split("-");
       const key = `${year}-${month}`;
       const current = monthlyData.get(key) || { income: 0, expense: 0 };
       
@@ -363,13 +364,13 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
     return data;
   }, [transactions, hasAdvancedFilters, advancedFilters, currentReferenceMonth, currentMonthKey, getMonthKey]);
 
-  // Fluxo de caixa diário (últimos 30 dias)
+  // Fluxo de caixa diário (últimos 30 dias; usa data de relatório para agrupar por dia)
   const cashFlow = useMemo(() => {
     const data: { day: string; inflow: number; outflow: number }[] = [];
     const dailyMap = new Map<string, { inflow: number; outflow: number }>();
 
     transactions.forEach((tx) => {
-      const dateStr = tx.date;
+      const dateStr = getReportDate(tx);
       const current = dailyMap.get(dateStr) || { inflow: 0, outflow: 0 };
 
       if (tx.type === "income") {

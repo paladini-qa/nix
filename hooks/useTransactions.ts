@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { Transaction, TransactionType, FilterState } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import { supabase } from "../services/supabaseClient";
 
 export interface UseTransactionsOptions {
@@ -298,11 +299,11 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     []
   );
 
-  // Filtra transações por mês/ano
+  // Filtra transações por mês/ano (usa data de relatório)
   const getFilteredByDate = useCallback(
     (month: number, year: number): Transaction[] => {
       return transactions.filter((t) => {
-        const [y, m] = t.date.split("-");
+        const [y, m] = getReportDate(t).split("-");
         return parseInt(y) === year && parseInt(m) === month + 1;
       });
     },

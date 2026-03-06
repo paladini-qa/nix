@@ -39,6 +39,7 @@ import {
   ParsedTransaction,
   SharedEditOption,
 } from "./types";
+import { getReportDate } from "./utils/transactionUtils";
 import SharedOptionsDialog from "./components/SharedOptionsDialog";
 import {
   CATEGORIES as DEFAULT_CATEGORIES,
@@ -450,7 +451,7 @@ const AppContent: React.FC<{
   // Filtered Transactions (by month/year)
   const filteredTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
-      const [y, m] = t.date.split("-");
+      const [y, m] = getReportDate(t).split("-");
       const isCurrentMonth =
         parseInt(y) === filters.year && parseInt(m) === filters.month + 1;
 
@@ -777,9 +778,10 @@ const AppContent: React.FC<{
     // Aplica filtros se necessário
     if (hasAdvancedDates || hasOtherFilters) {
       allTransactions = allTransactions.filter((tx) => {
-        // Filtro por data
+        // Filtro por data (usa data de relatório: vencimento da fatura quando existir)
+        const reportDateStr = getReportDate(tx);
         if (advancedFilters.startDate) {
-          const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
+          const [txYear, txMonth, txDay] = reportDateStr.split("-").map(Number);
           const startYear = advancedFilters.startDate.year();
           const startMonth = advancedFilters.startDate.month() + 1;
           const startDay = advancedFilters.startDate.date();
@@ -790,7 +792,7 @@ const AppContent: React.FC<{
           if (txDateNum < startDateNum) return false;
         }
         if (advancedFilters.endDate) {
-          const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
+          const [txYear, txMonth, txDay] = reportDateStr.split("-").map(Number);
           const endYear = advancedFilters.endDate.year();
           const endMonth = advancedFilters.endDate.month() + 1;
           const endDay = advancedFilters.endDate.date();
@@ -3915,7 +3917,7 @@ const AppContent: React.FC<{
       const targetMonth = month + 1;
       const unpaidIds = transactions
         .filter((t) => {
-          const [y, m] = t.date.split("-");
+          const [y, m] = getReportDate(t).split("-");
           return (
             t.paymentMethod === paymentMethod &&
             parseInt(y) === year &&

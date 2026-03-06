@@ -17,6 +17,7 @@ import {
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import { FinancialSummary, Transaction } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import { CountUp, formatBRL, formatBRLFull } from "./motion";
 import { usePrivacyMode } from "../hooks";
 
@@ -134,9 +135,9 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
     const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
-    // Transações do mês anterior
+    // Transações do mês anterior (usa data de relatório)
     const prevMonthTxs = transactions.filter((t) => {
-      const [y, m] = t.date.split("-");
+      const [y, m] = getReportDate(t).split("-");
       const isPrevMonth = parseInt(y) === prevYear && parseInt(m) === prevMonth + 1;
       
       if (!isPrevMonth) return false;

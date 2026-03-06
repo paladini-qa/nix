@@ -53,6 +53,7 @@ import {
   getMobileCardSx,
 } from "../utils/tableStyles";
 import { Transaction } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../constants";
 import { ColorsContext } from "../App";
 import DateFilter from "./DateFilter";
@@ -183,7 +184,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   const filteredTransactions = useMemo(() => {
     const baseTransactions = [
       ...expenseOnlyTransactions.filter((t) => {
-        const [y, m] = t.date.split("-");
+        const [y, m] = getReportDate(t).split("-");
         const matchesDate =
           parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
 

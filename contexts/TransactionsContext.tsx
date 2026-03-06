@@ -11,6 +11,7 @@ import { Session } from "@supabase/supabase-js";
 import { supabase } from "../services/supabaseClient";
 import { Transaction, FilterState, FinancialSummary } from "../types";
 import { getInitialMonthYear } from "../hooks/useFilters";
+import { getReportDate } from "../utils/transactionUtils";
 
 // ============================================
 // Context Types
@@ -196,7 +197,7 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
   // Filtered transactions for current month/year
   const filteredTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
-      const [y, m] = t.date.split("-");
+      const [y, m] = getReportDate(t).split("-");
       const isCurrentMonth =
         parseInt(y) === filters.year && parseInt(m) === filters.month + 1;
 

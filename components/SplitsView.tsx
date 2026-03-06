@@ -61,6 +61,7 @@ import TransactionTags from "./TransactionTags";
 import SearchBar from "./SearchBar";
 import { getHeaderCellSx } from "../utils/tableStyles";
 import { Transaction } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import EmptyState from "./EmptyState";
 import NixButton from "./radix/Button";
 import { CREATE_TRANSACTION_BUTTON } from "../constants";
@@ -952,7 +953,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                   >
                     {group.installments.map((t) => {
                       const isPaid = t.isPaid !== false;
-                      const isCurrent = isCurrentMonth(t.date);
+                      const isCurrent = isCurrentMonth(getReportDate(t));
 
                       return (
                         <Paper
@@ -1103,7 +1104,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                     <TableBody>
                       {group.installments.map((t) => {
                         const isPaid = t.isPaid !== false;
-                        const isCurrent = isCurrentMonth(t.date);
+                        const isCurrent = isCurrentMonth(getReportDate(t));
 
                         return (
                           <TableRow
@@ -1287,7 +1288,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                     >
                       {relatedTransactions.map((t) => {
                         const isPaid = t.isPaid !== false;
-                        const isCurrent = isCurrentMonth(t.date);
+                        const isCurrent = isCurrentMonth(getReportDate(t));
 
                         return (
                           <Paper
@@ -1408,7 +1409,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                       <TableBody>
                         {relatedTransactions.map((t) => {
                           const isPaid = t.isPaid !== false;
-                          const isCurrent = isCurrentMonth(t.date);
+                          const isCurrent = isCurrentMonth(getReportDate(t));
 
                           return (
                             <TableRow

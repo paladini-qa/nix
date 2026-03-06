@@ -36,6 +36,7 @@ import {
   AccountBalanceWallet as WalletIcon,
 } from "@mui/icons-material";
 import { Transaction, ColorConfig, PaymentMethodColors } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import { ColorsContext } from "../App";
 import DateFilter from "./DateFilter";
 import ColorPicker from "./ColorPicker";
@@ -173,10 +174,10 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
     return virtualTransactions;
   }, [transactions, selectedMonth, selectedYear]);
 
-  // Filtra transações do mês selecionado
+  // Filtra transações do mês selecionado (usa data de relatório)
   const monthTransactions = useMemo(() => {
     const baseTransactions = transactions.filter((t) => {
-      const [y, m] = t.date.split("-");
+      const [y, m] = getReportDate(t).split("-");
       const isCurrentMonth =
         parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
 

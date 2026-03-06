@@ -59,6 +59,7 @@ import {
   getMobileCardSx,
 } from "../utils/tableStyles";
 import { Transaction } from "../types";
+import { getReportDate } from "../utils/transactionUtils";
 import {
   generateFriendReport,
   prepareFriendReportData,
@@ -335,10 +336,11 @@ const SharedView: React.FC<SharedViewProps> = ({
     [allSharedTransactions]
   );
 
-  // Filtra transações vinculadas a amigos e pelo mês selecionado (lista do mês)
+  // Filtra transações vinculadas a amigos e pelo mês selecionado (usa data de relatório)
   const sharedTransactions = useMemo(() => {
     const out = allSharedTransactions.filter((t) => {
-      const transactionDate = new Date(t.date);
+      const reportDateStr = getReportDate(t);
+      const transactionDate = new Date(reportDateStr);
       const transactionMonth = transactionDate.getMonth();
       const transactionYear = transactionDate.getFullYear();
       return (
