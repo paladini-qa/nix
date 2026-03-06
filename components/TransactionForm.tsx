@@ -56,6 +56,7 @@ import NixButton from "./radix/Button";
 import NixAIView from "./NixAIView";
 import { Transaction, TransactionType, FinancialSummary, ParsedTransaction } from "../types";
 import { CATEGORY_KEYWORDS, QUICK_AMOUNTS, MONTHS } from "../constants";
+import { SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH_MOBILE, TOUCH_TARGET_MIN } from "../layoutConstants";
 import {
   suggestCategoryWithAI,
   CategorySuggestion,
@@ -72,10 +73,6 @@ const slideInRight = keyframes`
     transform: translateX(0);
   }
 `;
-
-// Largura do Side Panel
-const SIDE_PANEL_WIDTH = 520;
-const SIDE_PANEL_WIDTH_MOBILE = "100vw";
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -359,12 +356,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   // Vencimento da fatura (só quando forma de pagamento tem dia cadastrado); usuário edita apenas mês/ano
   const [invoiceDueMonth, setInvoiceDueMonth] = useState<number>(dayjs().month() + 1); // 1-12
   const [invoiceDueYear, setInvoiceDueYear] = useState<number>(dayjs().year());
+  // Mês/ano da fatura para relatório quando o método NÃO tem dia de vencimento (ex.: Revolut) — opcional
+  const [optionalInvoiceReportMonth, setOptionalInvoiceReportMonth] = useState<number | null>(null); // 1-12 ou null
+  const [optionalInvoiceReportYear, setOptionalInvoiceReportYear] = useState<number | null>(null);
 
   const inputSx = getInputSx(theme, isDarkMode);
 
   // Retorna dia de vencimento do método (1-31) ou undefined
   const paymentMethodDueDay = getPaymentMethodPaymentDay?.(paymentMethod);
   const hasInvoiceDueDate = paymentMethodDueDay != null && paymentMethodDueDay >= 1 && paymentMethodDueDay <= 31;
+  const hasOptionalInvoiceReport = !hasInvoiceDueDate && paymentMethod !== "";
 
   /**
    * Sugere mês/ano do vencimento da fatura a partir da data da transação.
@@ -554,6 +555,19 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           setInvoiceDueMonth(month);
           setInvoiceDueYear(year);
         }
+        setOptionalInvoiceReportMonth(null);
+        setOptionalInvoiceReportYear(null);
+      } else if (editTransaction.invoiceDueDate) {
+        // Método sem dia de vencimento mas transação já tem fatura definida (ex.: Revolut)
+        const d = dayjs(editTransaction.invoiceDueDate);
+        setOptionalInvoiceReportMonth(d.month() + 1);
+        setOptionalInvoiceReportYear(d.year());
+      } else {
+        // Método sem dia (ex.: Revolut): sugere próximo mês como fatura (ex.: gasto em março → fatura abril)
+        const txDate = dayjs(editTransaction.date);
+        const nextMonth = txDate.add(1, "month");
+        setOptionalInvoiceReportMonth(nextMonth.month() + 1);
+        setOptionalInvoiceReportYear(nextMonth.year());
       }
     } else {
       setDescription("");
@@ -572,6 +586,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       const now = dayjs();
       setInvoiceDueMonth(now.month() + 1);
       setInvoiceDueYear(now.year());
+      setOptionalInvoiceReportMonth(null);
+      setOptionalInvoiceReportYear(null);
     }
     setNewFriendName("");
     setShowAddFriend(false);
@@ -719,12 +735,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
     const finalAmount = parsedAmount || 0;
 
-    // Data de vencimento da fatura: só quando método tem dia cadastrado; dia fixo, mês/ano do form
-    let invoiceDueDate: string | undefined;
+    // Data de vencimento da fatura: (1) método com dia cadastrado → dia fixo + mês/ano do form; (2) método sem dia (ex. Revolut) → opcional mês/ano, salvo como dia 1; (3) opcional vazio → enviar null para limpar
+    let invoiceDueDate: string | null | undefined;
     if (hasInvoiceDueDate && paymentMethodDueDay != null) {
       const daysInMonth = dayjs().year(invoiceDueYear).month(invoiceDueMonth - 1).daysInMonth();
       const d = Math.min(paymentMethodDueDay, daysInMonth);
       invoiceDueDate = `${invoiceDueYear}-${String(invoiceDueMonth).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    } else if (hasOptionalInvoiceReport) {
+      invoiceDueDate =
+        optionalInvoiceReportMonth != null && optionalInvoiceReportYear != null
+          ? `${optionalInvoiceReportYear}-${String(optionalInvoiceReportMonth).padStart(2, "0")}-01`
+          : null;
     }
 
     onSave(
@@ -735,7 +756,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         category,
         paymentMethod,
         date: date.format("YYYY-MM-DD"),
-        ...(invoiceDueDate && { invoiceDueDate }),
+        ...(invoiceDueDate !== undefined && { invoiceDueDate }),
         isRecurring,
         frequency: isRecurring ? frequency : undefined,
         installments: hasInstallments ? installmentsValue : undefined,
@@ -834,7 +855,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             justifyContent: "space-between",
             px: 2.5,
             py: 1.5,
-            minHeight: 52,
+            minHeight: TOUCH_TARGET_MIN,
           }}
         >
           {/* Breadcrumb estilo Notion */}
@@ -981,8 +1002,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             value={formTab}
             onChange={(_, v) => v && setFormTab(v)}
             sx={{
-              minHeight: 40,
-              "& .MuiTab-root": { minHeight: 40, py: 1, textTransform: "none", fontWeight: 600 },
+              minHeight: TOUCH_TARGET_MIN,
+              "& .MuiTab-root": { minHeight: TOUCH_TARGET_MIN, py: 1, textTransform: "none", fontWeight: 600 },
               "& .MuiTabs-indicator": { borderRadius: "10px 10px 0 0" },
             }}
           >
@@ -1366,6 +1387,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           const { month, year } = getSuggestedInvoiceDueMonthYear(date, day);
                           setInvoiceDueMonth(month);
                           setInvoiceDueYear(year);
+                          setOptionalInvoiceReportMonth(null);
+                          setOptionalInvoiceReportYear(null);
+                        } else {
+                          setOptionalInvoiceReportMonth(null);
+                          setOptionalInvoiceReportYear(null);
                         }
                       }
                     }}
@@ -1521,6 +1547,66 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
                   Dia {paymentMethodDueDay} (fixo pelo método de pagamento)
                 </Typography>
+              </Box>
+            )}
+
+            {/* Mês da fatura para relatório (métodos sem dia de vencimento, ex.: Revolut) — opcional */}
+            {hasOptionalInvoiceReport && (
+              <Box sx={{ mt: 2 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  fontWeight={600}
+                  sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}
+                >
+                  <ReceiptIcon sx={{ fontSize: 16 }} />
+                  Incluir na fatura de (mês/ano)
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                  Define em qual mês esta transação aparece no dashboard e relatórios (ex.: fatura de abril).
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 6 }}>
+                    <FormControl fullWidth size="small" sx={inputSx}>
+                      <InputLabel>Mês</InputLabel>
+                      <Select
+                        value={optionalInvoiceReportMonth ?? ""}
+                        label="Mês"
+                        displayEmpty
+                        onChange={(e) =>
+                          setOptionalInvoiceReportMonth(e.target.value === "" ? null : Number(e.target.value))
+                        }
+                      >
+                        <MenuItem value="">— Não definir</MenuItem>
+                        {MONTHS.map((name, i) => (
+                          <MenuItem key={name} value={i + 1}>
+                            {name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <FormControl fullWidth size="small" sx={inputSx}>
+                      <InputLabel>Ano</InputLabel>
+                      <Select
+                        value={optionalInvoiceReportYear ?? ""}
+                        label="Ano"
+                        displayEmpty
+                        onChange={(e) =>
+                          setOptionalInvoiceReportYear(e.target.value === "" ? null : Number(e.target.value))
+                        }
+                      >
+                        <MenuItem value="">—</MenuItem>
+                        {Array.from({ length: 11 }, (_, i) => dayjs().year() - 2 + i).map((y) => (
+                          <MenuItem key={y} value={y}>
+                            {y}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
               </Box>
             )}
 

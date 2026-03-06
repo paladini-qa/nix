@@ -59,6 +59,7 @@ import {
   getMobileCardSx,
 } from "../utils/tableStyles";
 import { Transaction } from "../types";
+import { useLayoutSpacing } from "../hooks";
 import { getReportDate } from "../utils/transactionUtils";
 import {
   generateFriendReport,
@@ -108,6 +109,7 @@ const SharedView: React.FC<SharedViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { gridSpacing } = useLayoutSpacing();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFriend, setSelectedFriend] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<PaymentStatus>("all");
@@ -750,7 +752,7 @@ const SharedView: React.FC<SharedViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
+      <Grid container spacing={gridSpacing}>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
             elevation={0}
@@ -1172,7 +1174,7 @@ const SharedView: React.FC<SharedViewProps> = ({
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
             Saldo por Amigo
           </Typography>
-          <Grid container spacing={2}>
+          <Grid container spacing={gridSpacing}>
             {friendBalances.map((friend) => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={friend.name}>
                 <Card

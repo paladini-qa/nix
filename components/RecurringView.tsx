@@ -60,6 +60,7 @@ import {
   getRowSx,
 } from "../utils/tableStyles";
 import { Transaction } from "../types";
+import { useLayoutSpacing } from "../hooks";
 import EmptyState from "./EmptyState";
 
 interface RecurringViewProps {
@@ -95,6 +96,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { gridSpacing } = useLayoutSpacing();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
@@ -1402,7 +1404,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
+      <Grid container spacing={gridSpacing}>
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}

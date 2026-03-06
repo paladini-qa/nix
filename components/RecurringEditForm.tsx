@@ -35,6 +35,7 @@ import {
 import NixButton from "./radix/Button";
 import { Transaction, TransactionType } from "../types";
 import { OptionType as EditOption } from "./TransactionOptionsPanel";
+import { SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH_MOBILE } from "../layoutConstants";
 
 // Animação de entrada suave
 const slideInRight = keyframes`
@@ -47,10 +48,6 @@ const slideInRight = keyframes`
     transform: translateX(0);
   }
 `;
-
-// Largura do Side Panel
-const SIDE_PANEL_WIDTH = 520;
-const SIDE_PANEL_WIDTH_MOBILE = "100vw";
 
 interface RecurringEditFormProps {
   isOpen: boolean;

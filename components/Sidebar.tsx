@@ -36,6 +36,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ThemePreference } from "../types";
 import ThemeSwitch from "./ThemeSwitch";
 import { usePrivacy } from "../contexts";
+import { SIDEBAR_WIDTH } from "../layoutConstants";
 
 // Motion-enabled components
 const MotionBox = motion.create(Box);
@@ -71,8 +72,6 @@ interface NavItem {
   label: string;
   id: ViewType;
 }
-
-const DRAWER_WIDTH = 280;
 
 // Animation variants
 const sidebarVariants = {
@@ -304,7 +303,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <Box
       component="aside"
       sx={{
-        width: DRAWER_WIDTH,
+        width: SIDEBAR_WIDTH,
         flexShrink: 0,
         height: "100vh",
         boxSizing: "border-box",

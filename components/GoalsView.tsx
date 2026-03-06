@@ -38,6 +38,7 @@ import {
 import { Goal, GoalProgress } from "../types";
 import { goalService } from "../services/api";
 import { useNotification, useConfirmDialog } from "../contexts";
+import { useLayoutSpacing } from "../hooks";
 import EmptyState from "./EmptyState";
 
 interface GoalsViewProps {
@@ -65,6 +66,7 @@ const GOAL_COLORS = [
 const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { gridSpacing } = useLayoutSpacing();
   const { showSuccess, showError } = useNotification();
   const { confirmDelete } = useConfirmDialog();
 
@@ -268,7 +270,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
+      <Grid container spacing={gridSpacing}>
         <Grid size={{ xs: 6, md: 3 }}>
           <Card
             elevation={0}
@@ -428,7 +430,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
               <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
                 Active Goals ({activeGoals.length})
               </Typography>
-              <Grid container spacing={2}>
+              <Grid container spacing={gridSpacing}>
                 {activeGoals.map((goal) => (
                   <Grid key={goal.id} size={{ xs: 12, sm: 6, lg: 4 }}>
                     <Card
@@ -616,7 +618,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
               <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
                 Completed Goals ({completedGoals.length})
               </Typography>
-              <Grid container spacing={2}>
+              <Grid container spacing={gridSpacing}>
                 {completedGoals.map((goal) => (
                   <Grid key={goal.id} size={{ xs: 12, sm: 6, lg: 4 }}>
                     <Card

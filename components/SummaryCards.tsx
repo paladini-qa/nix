@@ -19,7 +19,7 @@ import { motion } from "framer-motion";
 import { FinancialSummary, Transaction } from "../types";
 import { getReportDate } from "../utils/transactionUtils";
 import { CountUp, formatBRL, formatBRLFull } from "./motion";
-import { usePrivacyMode } from "../hooks";
+import { usePrivacyMode, useLayoutSpacing } from "../hooks";
 
 // Create motion-enabled components
 const MotionCard = motion.create(Card);
@@ -124,6 +124,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDarkMode = theme.palette.mode === "dark";
   const { privacyStylesStrong } = usePrivacyMode();
+  const { gridSpacing, cardMinHeight, iconSize } = useLayoutSpacing();
 
   // Calcula comparação com mês anterior
   const comparison = useMemo(() => {
@@ -193,7 +194,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
   // Estilos base do card - Simplificado (sem glassmorphism)
   const getGlassCardStyles = (accentColor: string) => ({
     height: "100%",
-    minHeight: isMobile ? 100 : 140,
+    minHeight: cardMinHeight,
     position: "relative",
     overflow: "hidden",
     cursor: "pointer",
@@ -210,9 +211,9 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
 
   // Estilo do container do ícone - visual premium 3D-ish
   const getIconContainerStyles = (bgColor: string, lightBgColor: string) => ({
-    width: isMobile ? 32 : 52,
-    height: isMobile ? 32 : 52,
-    minWidth: isMobile ? 32 : 52,
+    width: iconSize,
+    height: iconSize,
+    minWidth: iconSize,
     borderRadius: isMobile ? "12px" : "20px",
     display: "flex",
     alignItems: "center",
@@ -246,7 +247,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
         overflow: "hidden",
       }}
     >
-      <Grid container spacing={isMobile ? 1 : 2.5} sx={{ mx: 0, width: "100%" }}>
+      <Grid container spacing={gridSpacing} sx={{ mx: 0, width: "100%" }}>
         {/* Monthly Flow Card - Fluxo do mês selecionado */}
         <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
           <MotionCard

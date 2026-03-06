@@ -25,6 +25,7 @@ import {
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import { Transaction, SharedEditOption } from "../types";
+import { SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH_MOBILE } from "../layoutConstants";
 
 const MotionBox = motion.create(Box);
 
@@ -36,10 +37,6 @@ interface SharedOptionsDialogProps {
   onSelect: (option: SharedEditOption) => void;
   onCancel: () => void;
 }
-
-// Padronizado com TransactionOptionsPanel
-const SIDE_PANEL_WIDTH = 520;
-const SIDE_PANEL_WIDTH_MOBILE = "100vw";
 
 /**
  * Side Panel para escolher como editar/deletar transações compartilhadas.

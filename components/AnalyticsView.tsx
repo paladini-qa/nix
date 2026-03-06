@@ -36,6 +36,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Transaction } from "../types";
+import { useLayoutSpacing } from "../hooks";
 import { getReportDate } from "../utils/transactionUtils";
 import type { Dayjs } from "dayjs";
 import EmptyState from "./EmptyState";
@@ -72,6 +73,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { gridSpacing } = useLayoutSpacing();
   const isDarkMode = theme.palette.mode === "dark";
   
   // Chart width via ResizeObserver + debounce to avoid layout thrash
@@ -511,7 +513,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       }}
     >
       {/* Summary Stats */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
+      <Grid container spacing={gridSpacing}>
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}
@@ -971,7 +973,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       </Paper>
 
       {/* Pie Charts Row */}
-      <Grid container spacing={isMobile ? 2 : 3} sx={{ minWidth: 0 }}>
+      <Grid container spacing={gridSpacing} sx={{ minWidth: 0 }}>
         {/* Expenses by Category */}
         <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
           <Paper

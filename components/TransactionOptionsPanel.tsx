@@ -34,6 +34,7 @@ import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import "dayjs/locale/pt-br";
 import { Transaction } from "../types";
+import { SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH_MOBILE } from "../layoutConstants";
 
 const MotionBox = motion.create(Box);
 
@@ -47,10 +48,6 @@ interface TransactionOptionsPanelProps {
   actionType: ActionType;
   onSelect: (option: OptionType) => void;
 }
-
-// Padronizado com TransactionForm e RecurringEditForm
-const SIDE_PANEL_WIDTH = 520;
-const SIDE_PANEL_WIDTH_MOBILE = "100vw";
 
 const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
   open,

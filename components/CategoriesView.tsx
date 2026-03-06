@@ -62,6 +62,7 @@ import {
   ColorConfig,
   CategoryColors,
 } from "../types";
+import { useLayoutSpacing } from "../hooks";
 import { getReportDate } from "../utils/transactionUtils";
 import { ColorsContext } from "../App";
 import ColorPicker from "./ColorPicker";
@@ -126,6 +127,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { gridSpacing } = useLayoutSpacing();
   const isDarkMode = theme.palette.mode === "dark";
   const { getCategoryColor } = useContext(ColorsContext);
 
@@ -761,7 +763,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         </Box>
 
         {/* Summary Cards */}
-        <Grid container spacing={isMobile ? 1.5 : 2}>
+        <Grid container spacing={gridSpacing}>
           <Grid size={{ xs: 6, md: 4 }}>
             <Paper
               elevation={0}
@@ -1351,7 +1353,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
+      <Grid container spacing={gridSpacing}>
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}
@@ -1595,7 +1597,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
 
       {/* Tab: Overview */}
       <Collapse in={tabValue === 0} unmountOnExit>
-        <Grid container spacing={isMobile ? 2 : 3}>
+        <Grid container spacing={gridSpacing}>
           {/* Income */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -1756,7 +1758,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
 
       {/* Tab: Manage */}
       <Collapse in={tabValue === 1} unmountOnExit>
-        <Grid container spacing={isMobile ? 2 : 3}>
+        <Grid container spacing={gridSpacing}>
           {/* Income */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>

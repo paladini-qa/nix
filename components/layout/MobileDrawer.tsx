@@ -34,6 +34,7 @@ import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemePreference } from "../../types";
 import ThemeSwitch from "../ThemeSwitch";
+import { MOBILE_DRAWER_WIDTH, TOUCH_TARGET_MIN } from "../../layoutConstants";
 
 // Motion-enabled components
 const MotionBox = motion.create(Box);
@@ -73,8 +74,6 @@ interface NavItem {
   label: string;
   id: ViewType;
 }
-
-const DRAWER_WIDTH = 300;
 
 // Animation variants
 const itemVariants = {
@@ -175,7 +174,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
             borderRadius: "16px",
             py: 1.5,
             px: 2,
-            minHeight: 52, // Touch-friendly size
+            minHeight: TOUCH_TARGET_MIN,
             position: "relative",
             overflow: "hidden",
             // Estilo especial para NixAI
@@ -334,7 +333,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: DRAWER_WIDTH,
+          width: MOBILE_DRAWER_WIDTH,
           maxWidth: "85vw",
           boxSizing: "border-box",
           border: "none",
@@ -567,7 +566,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
             mt: 2,
             borderRadius: "16px",
             py: 1.5,
-            minHeight: 52,
+            minHeight: TOUCH_TARGET_MIN,
             color: "text.secondary",
             bgcolor: isDarkMode
               ? alpha(theme.palette.error.main, 0.08)

@@ -42,8 +42,8 @@ import {
 } from "@mui/icons-material";
 import { Planning, PlanningItem, PlanningWithItems, Transaction } from "../types";
 import { planningService } from "../services/api";
-import { useNotification } from "../contexts";
-import { useConfirmDialog } from "../contexts";
+import { useNotification, useConfirmDialog } from "../contexts";
+import { useLayoutSpacing } from "../hooks";
 import EmptyState from "./EmptyState";
 import NixButton from "./radix/Button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -63,6 +63,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { gridSpacing } = useLayoutSpacing();
   const isDarkMode = theme.palette.mode === "dark";
   const { showSuccess, showError } = useNotification();
   const { confirm } = useConfirmDialog();
@@ -464,7 +465,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
           </Box>
 
           {planning.items.length > 0 ? (
-            <Grid container spacing={isMobile ? 1.5 : 2}>
+            <Grid container spacing={gridSpacing}>
               {planning.items.map((item) => (
                 <Grid key={item.id} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Card
@@ -637,7 +638,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
 
       {/* Plannings List */}
       {plannings.length > 0 ? (
-        <Grid container spacing={isMobile ? 2 : 3}>
+        <Grid container spacing={gridSpacing}>
           <AnimatePresence mode="popLayout">
             {plannings.map((planning) => (
               <Grid key={planning.id} size={{ xs: 12, sm: 6, md: 4 }}>

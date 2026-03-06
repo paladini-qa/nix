@@ -61,6 +61,8 @@ import TransactionTags from "./TransactionTags";
 import SearchBar from "./SearchBar";
 import { getHeaderCellSx } from "../utils/tableStyles";
 import { Transaction } from "../types";
+import { useLayoutSpacing } from "../hooks";
+import { TOUCH_TARGET_MIN } from "../layoutConstants";
 import { getReportDate } from "../utils/transactionUtils";
 import EmptyState from "./EmptyState";
 import NixButton from "./radix/Button";
@@ -114,6 +116,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { gridSpacing } = useLayoutSpacing();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<SplitStatus>("in_progress");
@@ -894,10 +897,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                     bgcolor: alpha(theme.palette.action.hover, 0.04),
                     borderRadius: "10px",
                     p: 0.5,
-                    minHeight: 36,
+                    minHeight: TOUCH_TARGET_MIN,
                     "& .MuiTabs-indicator": { display: "none" },
                     "& .MuiTab-root": {
-                      minHeight: 32,
+                      minHeight: TOUCH_TARGET_MIN,
                       borderRadius: "8px",
                       textTransform: "none",
                       fontWeight: 600,
@@ -1589,7 +1592,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
+      <Grid container spacing={gridSpacing}>
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}

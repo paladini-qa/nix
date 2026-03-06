@@ -36,6 +36,7 @@ import {
   AccountBalanceWallet as WalletIcon,
 } from "@mui/icons-material";
 import { Transaction, ColorConfig, PaymentMethodColors } from "../types";
+import { useLayoutSpacing } from "../hooks";
 import { getReportDate } from "../utils/transactionUtils";
 import { ColorsContext } from "../App";
 import DateFilter from "./DateFilter";
@@ -89,6 +90,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { gridSpacing } = useLayoutSpacing();
   const isDarkMode = theme.palette.mode === "dark";
   const { getPaymentMethodColor } = useContext(ColorsContext);
 
@@ -332,7 +334,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       </Box>
 
       {/* Summary Cards - Always Visible */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
+      <Grid container spacing={gridSpacing}>
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}
@@ -542,7 +544,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
           {/* Payment Methods Grid */}
           {paymentMethodsSummary.filter((s) => s.transactionCount > 0).length >
           0 ? (
-            <Grid container spacing={isMobile ? 1.5 : 2}>
+            <Grid container spacing={gridSpacing}>
               {paymentMethodsSummary
                 .filter((s) => s.transactionCount > 0)
                 .map((summary) => {
@@ -913,7 +915,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
 
           {/* Payment Methods List */}
           {paymentMethods.length > 0 ? (
-            <Grid container spacing={isMobile ? 1.5 : 2}>
+            <Grid container spacing={gridSpacing}>
               {paymentMethods.map((method) => {
                 const colors =
                   paymentMethodColors[method] || DEFAULT_PAYMENT_COLORS;

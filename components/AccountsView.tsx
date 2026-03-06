@@ -50,6 +50,7 @@ import {
 } from "../types";
 import { accountService } from "../services/api";
 import { useNotification, useConfirmDialog } from "../contexts";
+import { useLayoutSpacing } from "../hooks";
 
 interface AccountsViewProps {
   userId: string;
@@ -82,6 +83,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { gridSpacing } = useLayoutSpacing();
   const { showSuccess, showError } = useNotification();
   const { confirmDelete } = useConfirmDialog();
 
@@ -297,7 +299,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
+      <Grid container spacing={gridSpacing}>
         <Grid size={{ xs: 6, md: 3 }}>
           <Card
             elevation={0}
@@ -457,7 +459,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
         <>
           {/* Active Accounts */}
           {activeAccounts.length > 0 && (
-            <Grid container spacing={2}>
+            <Grid container spacing={gridSpacing}>
               {activeAccounts.map((account) => (
                 <Grid key={account.id} size={{ xs: 12, sm: 6, lg: 4 }}>
                   <Card
@@ -606,7 +608,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
                 <ArchiveIcon fontSize="small" />
                 Archived Accounts ({archivedAccounts.length})
               </Typography>
-              <Grid container spacing={2}>
+              <Grid container spacing={gridSpacing}>
                 {archivedAccounts.map((account) => (
                   <Grid key={account.id} size={{ xs: 12, sm: 6, lg: 4 }}>
                     <Card

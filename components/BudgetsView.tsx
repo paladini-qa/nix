@@ -39,6 +39,7 @@ import { getReportDate } from "../utils/transactionUtils";
 import { budgetService } from "../services/api";
 import { useNotification } from "../contexts";
 import { useConfirmDialog } from "../contexts";
+import { useLayoutSpacing } from "../hooks";
 import DateFilter from "./DateFilter";
 import EmptyState from "./EmptyState";
 
@@ -61,6 +62,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { gridSpacing } = useLayoutSpacing();
   const { showSuccess, showError } = useNotification();
   const { confirmDelete } = useConfirmDialog();
 
@@ -302,7 +304,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
+      <Grid container spacing={gridSpacing}>
         <Grid size={{ xs: 6, md: 3 }}>
           <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
             <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
@@ -359,7 +361,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
           onAction={() => handleOpenForm()}
         />
       ) : (
-        <Grid container spacing={2}>
+        <Grid container spacing={gridSpacing}>
           {budgetsWithSpending.map((budget) => {
             const budgetColor = budget.isOverBudget ? "#DC2626" : budget.percentage >= 80 ? "#F59E0B" : "#6366f1";
             return (

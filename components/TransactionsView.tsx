@@ -63,7 +63,7 @@ import { getReportDate } from "../utils/transactionUtils";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../constants";
 import DateFilter from "./DateFilter";
 import { useNotification } from "../contexts";
-import { usePullToRefresh } from "../hooks";
+import { usePullToRefresh, useLayoutSpacing } from "../hooks";
 import EmptyState from "./EmptyState";
 import NixButton from "./radix/Button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -108,6 +108,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDarkMode = theme.palette.mode === "dark";
+  const { gridSpacing } = useLayoutSpacing();
   const { showWarning, showError } = useNotification();
 
   // Estados de busca e filtros
@@ -739,7 +740,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       </Box>
 
       {/* Summary Cards - Modern Compact Style */}
-      <Grid container spacing={isMobile ? 1.5 : 2}>
+      <Grid container spacing={gridSpacing}>
         {/* Balance Card */}
         <Grid size={{ xs: 12, sm: 4 }}>
           <Card

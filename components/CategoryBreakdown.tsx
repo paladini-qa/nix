@@ -18,6 +18,7 @@ import {
 } from "@mui/icons-material";
 import { Transaction, TransactionType } from "../types";
 import { ColorsContext } from "../App";
+import { useLayoutSpacing } from "../hooks";
 
 interface CategoryBreakdownProps {
   transactions: Transaction[];
@@ -33,6 +34,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDarkMode = theme.palette.mode === "dark";
+  const { gridSpacing } = useLayoutSpacing();
   const { getCategoryColor, getPaymentMethodColor } = useContext(ColorsContext);
 
   const formatCurrency = (value: number) => {
@@ -118,7 +120,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   };
 
   return (
-    <Grid container spacing={isMobile ? 2 : 3}>
+    <Grid container spacing={gridSpacing}>
       {/* Income by Category */}
       <Grid size={{ xs: 12, md: 6, xl: 4 }}>
         <Paper

@@ -27,6 +27,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
 import { Theme } from "@radix-ui/themes";
 import { lightTheme, darkTheme } from "./theme";
+import { CONTENT_PADDING, SECTION_GAP, CONTENT_MAX_WIDTH } from "./layoutConstants";
 import {
   Transaction,
   FilterState,
@@ -639,9 +640,10 @@ const AppContent: React.FC<{
 
     return baseTransactions
       .filter((tx) => {
-        // Filtro por data - normaliza para comparar apenas as datas (sem timezone)
+        // Filtro por data (usa data de relatório: vencimento da fatura quando existir)
+        const reportDateStr = getReportDate(tx);
         if (advancedFilters.startDate) {
-          const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
+          const [txYear, txMonth, txDay] = reportDateStr.split("-").map(Number);
           const startYear = advancedFilters.startDate.year();
           const startMonth = advancedFilters.startDate.month() + 1;
           const startDay = advancedFilters.startDate.date();
@@ -652,7 +654,7 @@ const AppContent: React.FC<{
           if (txDateNum < startDateNum) return false;
         }
         if (advancedFilters.endDate) {
-          const [txYear, txMonth, txDay] = tx.date.split("-").map(Number);
+          const [txYear, txMonth, txDay] = reportDateStr.split("-").map(Number);
           const endYear = advancedFilters.endDate.year();
           const endMonth = advancedFilters.endDate.month() + 1;
           const endDay = advancedFilters.endDate.date();
@@ -1597,6 +1599,7 @@ const AppContent: React.FC<{
               category: data.category,
               paymentMethod: data.payment_method,
               date: data.date,
+              invoiceDueDate: data.invoice_due_date ?? undefined,
               createdAt: new Date(data.created_at).getTime(),
               isRecurring: data.is_recurring,
               frequency: data.frequency,
@@ -4051,10 +4054,11 @@ const AppContent: React.FC<{
             sx={{
               flexGrow: 1,
               minHeight: 0,
-              p: { xs: 1.25, sm: 2, md: 3, lg: 4 },
+              p: CONTENT_PADDING,
               mt: { xs: "64px", lg: 0 },
               pb: { xs: "140px", lg: 4 },
-              maxWidth: "100vw",
+              maxWidth: { xs: "100vw", lg: CONTENT_MAX_WIDTH },
+              mx: { xs: 0, lg: "auto" },
               overflowX: "hidden",
               overflowY: "auto",
               boxSizing: "border-box",
@@ -4075,7 +4079,7 @@ const AppContent: React.FC<{
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: { xs: 2, sm: 3 },
+                gap: SECTION_GAP,
                 pt: isMobile && (isPullPulling || isPullRefreshing) ? 2 : 0,
                 transition: "padding-top 0.2s ease",
               }}
@@ -4858,6 +4862,7 @@ const App: React.FC = () => {
             category: t.category,
             paymentMethod: t.payment_method,
             date: t.date,
+            invoiceDueDate: t.invoice_due_date ?? undefined,
             createdAt: new Date(t.created_at).getTime(),
             // Se é órfã, promover para recorrente original (mesmo sem frequency)
             isRecurring: t.is_recurring || shouldPromoteToRecurring,
