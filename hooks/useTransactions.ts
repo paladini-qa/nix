@@ -141,7 +141,9 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           Math.round((txAmount - totalFromInstallments) * 100) / 100;
 
         const payloads = [];
-        const baseDueDate = tx.invoiceDueDate || tx.date; // para parcelas, cada uma vence no mês correspondente
+        // Data base das parcelas: se tem data da fatura, a primeira parcela começa nesse mês (ex.: fatura em abril → parcelas em abr, mai, jun...)
+        const baseDateForInstallments = tx.invoiceDueDate ?? tx.date;
+        const baseDueDate = tx.invoiceDueDate || tx.date; // para invoice_due_date de cada parcela
         for (let i = 0; i < installments; i++) {
           const amount = i === 0 ? installmentAmount + remainder : installmentAmount;
           const payload: Record<string, unknown> = {
@@ -151,7 +153,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
             type: tx.type,
             category: tx.category,
             payment_method: tx.paymentMethod,
-            date: addMonths(tx.date, i),
+            date: addMonths(baseDateForInstallments, i),
             is_recurring: tx.isRecurring,
             frequency: tx.frequency,
             installments: installments,

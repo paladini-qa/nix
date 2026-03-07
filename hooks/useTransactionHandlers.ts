@@ -644,19 +644,22 @@ export const useTransactionHandlers = ({
           // Gera um UUID único para agrupar todas as parcelas deste parcelamento
           const installmentGroupId = crypto.randomUUID();
 
+          // Data base das parcelas: se tem data da fatura, a primeira parcela começa nesse mês (ex.: fatura em abril → parcelas em abr, mai, jun...)
+          const baseDateForInstallments = newTx.invoiceDueDate ?? newTx.date;
+
           const installmentPayloads = [];
           for (let i = 0; i < totalInstallments; i++) {
             const amount =
               i === 0 ? installmentAmount + remainder : installmentAmount;
 
-            installmentPayloads.push({
+            const payload: Record<string, unknown> = {
               user_id: session.user.id,
               description: newTx.description,
               amount: amount,
               type: newTx.type,
               category: newTx.category,
               payment_method: newTx.paymentMethod,
-              date: addMonths(newTx.date, i),
+              date: addMonths(baseDateForInstallments, i),
               is_recurring: newTx.isRecurring,
               frequency: newTx.frequency,
               installments: totalInstallments,
@@ -665,7 +668,9 @@ export const useTransactionHandlers = ({
               is_shared: newTx.isShared,
               shared_with: newTx.sharedWith,
               installment_group_id: installmentGroupId,
-            });
+            };
+            if (newTx.invoiceDueDate) payload.invoice_due_date = addMonths(baseDateForInstallments, i);
+            installmentPayloads.push(payload);
           }
 
           const { data, error } = await supabase
@@ -684,6 +689,7 @@ export const useTransactionHandlers = ({
               category: d.category,
               paymentMethod: d.payment_method,
               date: d.date,
+              invoiceDueDate: d.invoice_due_date ?? undefined,
               createdAt: new Date(d.created_at).getTime(),
               isRecurring: d.is_recurring,
               frequency: d.frequency,
