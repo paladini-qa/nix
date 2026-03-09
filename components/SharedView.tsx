@@ -463,7 +463,8 @@ const SharedView: React.FC<SharedViewProps> = ({
             ).catch(() => {});
           }
           // #endregion
-          if (relatedIncome?.isPaid) {
+          // Só considera "já acertado" quando a receita relacionada está explicitamente marcada como paga
+          if (relatedIncome?.isPaid === true) {
             balance.totalPaid += halfAmount;
           } else {
             balance.pendingAmount += halfAmount;
@@ -579,34 +580,87 @@ const SharedView: React.FC<SharedViewProps> = ({
     enabled: filteredTransactions.length > SHARED_VIRTUALIZE_THRESHOLD,
   });
 
-  // Estatísticas gerais
+  // Helper: mesmo valor exibido em cada linha da aba Shared (usa só amount e tipo, não isPaid)
+  const getDisplayAmountAndSign = useCallback(
+    (t: Transaction): { displayAmount: number; isPositive: boolean } => {
+      const amount = t.amount || 0;
+      if (t.type === "income") {
+        const hasRelatedExpense = !!t.relatedTransactionId;
+        const displayAmount = t.iOwe
+          ? amount
+          : hasRelatedExpense
+            ? amount
+            : amount / 2;
+        return { displayAmount, isPositive: true };
+      }
+      if (t.iOwe) {
+        return { displayAmount: amount, isPositive: false };
+      }
+      return { displayAmount: amount / 2, isPositive: true };
+    },
+    []
+  );
+
+  // Estatísticas = soma dos valores das transações EXIBIDAS na aba (filtro de mês, amigo, busca, status)
   const stats = useMemo(() => {
+    let totalToReceive = 0;
+    let totalToPay = 0;
+    const friendNames = new Set<string>();
+
+    filteredTransactions.forEach((t) => {
+      const { displayAmount, isPositive } = getDisplayAmountAndSign(t);
+      if (isPositive) {
+        totalToReceive += displayAmount;
+      } else {
+        totalToPay += displayAmount;
+      }
+      if (t.sharedWith) friendNames.add(t.sharedWith);
+    });
+
+    const netBalance = totalToReceive - totalToPay;
+    const friendCount = friendNames.size;
+
+    // Mantém totais por amigo para selectedFriendStats e cards "Saldo por Amigo"
     const totalOwed = friendBalances.reduce((sum, f) => sum + f.totalOwed, 0);
     const totalIOwe = friendBalances.reduce((sum, f) => sum + f.totalIOwe, 0);
     const totalPaid = friendBalances.reduce((sum, f) => sum + f.totalPaid, 0);
     const totalIPaid = friendBalances.reduce((sum, f) => sum + f.totalIPaid, 0);
-    const totalPending = friendBalances.reduce(
-      (sum, f) => sum + f.pendingAmount,
-      0
-    );
-    const totalPendingIOwe = friendBalances.reduce(
-      (sum, f) => sum + f.pendingIOwe,
-      0
-    );
-    const netBalance = totalPending - totalPendingIOwe; // Positivo = a receber, Negativo = a pagar
-    const friendCount = friendBalances.length;
 
     return {
       totalOwed,
       totalIOwe,
       totalPaid,
       totalIPaid,
-      totalPending,
-      totalPendingIOwe,
+      totalPending: totalToReceive,
+      totalPendingIOwe: totalToPay,
       netBalance,
       friendCount,
     };
-  }, [friendBalances]);
+  }, [filteredTransactions, getDisplayAmountAndSign, friendBalances]);
+
+  // Por amigo: soma dos valores das transações EXIBIDAS (mesma regra do resumo)
+  const friendDisplayedTotals = useMemo(() => {
+    const map = new Map<
+      string,
+      { toReceive: number; toPay: number; netBalance: number }
+    >();
+    filteredTransactions.forEach((t) => {
+      if (!t.sharedWith) return;
+      const name = t.sharedWith;
+      if (!map.has(name)) {
+        map.set(name, { toReceive: 0, toPay: 0, netBalance: 0 });
+      }
+      const entry = map.get(name)!;
+      const { displayAmount, isPositive } = getDisplayAmountAndSign(t);
+      if (isPositive) {
+        entry.toReceive += displayAmount;
+      } else {
+        entry.toPay += displayAmount;
+      }
+      entry.netBalance = entry.toReceive - entry.toPay;
+    });
+    return map;
+  }, [filteredTransactions, getDisplayAmountAndSign]);
 
   // Estatísticas do amigo selecionado
   const selectedFriendStats = useMemo(() => {
@@ -1300,95 +1354,162 @@ const SharedView: React.FC<SharedViewProps> = ({
 
                     <Divider sx={{ mb: 2 }} />
 
-                    {/* Saldo líquido em destaque */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 2,
-                        p: 1.5,
-                        borderRadius: "20px",
-                        bgcolor: alpha(
-                          friend.netBalance >= 0
-                            ? theme.palette.success.main
-                            : theme.palette.error.main,
-                          0.1
-                        ),
-                      }}
-                    >
-                      <Typography variant="body2" fontWeight={600}>
-                        {friend.netBalance >= 0 ? "A receber:" : "Você deve:"}
-                      </Typography>
-                      <Typography
-                        variant="h6"
-                        fontWeight={700}
-                        color={
-                          friend.netBalance >= 0 ? "success.main" : "error.main"
-                        }
-                      >
-                        {formatCurrency(Math.abs(friend.netBalance))}
-                      </Typography>
-                    </Box>
+                    {/* A receber / Você deve: soma das transações EXIBIDAS na aba (mesmo critério do resumo) */}
+                    {(() => {
+                      const displayed =
+                        friendDisplayedTotals.get(friend.name) ?? {
+                          toReceive: 0,
+                          toPay: 0,
+                          netBalance: 0,
+                        };
+                      return (
+                        <>
+                          {displayed.toReceive > 0 && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                mb: 2,
+                                p: 1.5,
+                                borderRadius: "20px",
+                                bgcolor: alpha(
+                                  theme.palette.success.main,
+                                  0.1
+                                ),
+                              }}
+                            >
+                              <Typography variant="body2" fontWeight={600}>
+                                A receber:
+                              </Typography>
+                              <Typography
+                                variant="h6"
+                                fontWeight={700}
+                                color="success.main"
+                              >
+                                {formatCurrency(displayed.toReceive)}
+                              </Typography>
+                            </Box>
+                          )}
+                          {displayed.toPay > 0 && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                mb: 2,
+                                p: 1.5,
+                                borderRadius: "20px",
+                                bgcolor: alpha(
+                                  theme.palette.error.main,
+                                  0.1
+                                ),
+                              }}
+                            >
+                              <Typography variant="body2" fontWeight={600}>
+                                Você deve:
+                              </Typography>
+                              <Typography
+                                variant="h6"
+                                fontWeight={700}
+                                color="error.main"
+                              >
+                                {formatCurrency(displayed.toPay)}
+                              </Typography>
+                            </Box>
+                          )}
+                          {displayed.toReceive === 0 && displayed.toPay === 0 && (
+                            <Box sx={{ mb: 2 }} />
+                          )}
 
-                    {/* Detalhes */}
-                    {friend.pendingAmount > 0 && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          mb: 0.5,
-                        }}
-                      >
-                        <Typography variant="caption" color="text.secondary">
-                          {friend.name} me deve:
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          fontWeight={600}
-                          color="success.main"
-                        >
-                          {formatCurrency(friend.pendingAmount)}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {friend.pendingIOwe > 0 && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          mb: 0.5,
-                        }}
-                      >
-                        <Typography variant="caption" color="text.secondary">
-                          Eu devo a {friend.name}:
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          fontWeight={600}
-                          color="error.main"
-                        >
-                          {formatCurrency(friend.pendingIOwe)}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {(friend.totalPaid > 0 || friend.totalIPaid > 0) && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Typography variant="caption" color="text.secondary">
-                          Já acertado:
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {formatCurrency(friend.totalPaid + friend.totalIPaid)}
-                        </Typography>
-                      </Box>
-                    )}
+                          {/* Detalhes */}
+                          {displayed.toReceive > 0 && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                mb: 0.5,
+                              }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                {friend.name} me deve:
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                fontWeight={600}
+                                color="success.main"
+                              >
+                                {formatCurrency(displayed.toReceive)}
+                              </Typography>
+                            </Box>
+                          )}
+                          {displayed.toPay > 0 && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                mb: 0.5,
+                              }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                Eu devo a {friend.name}:
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                fontWeight={600}
+                                color="error.main"
+                              >
+                                {formatCurrency(displayed.toPay)}
+                              </Typography>
+                            </Box>
+                          )}
+                          {(friend.totalPaid > 0 || friend.totalIPaid > 0) && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                mb: 0.5,
+                              }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                Já acertado:
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatCurrency(friend.totalPaid + friend.totalIPaid)}
+                              </Typography>
+                            </Box>
+                          )}
+                          {displayed.toReceive > 0 && displayed.toPay > 0 && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                mt: 1,
+                                pt: 1,
+                                borderTop: 1,
+                                borderColor: "divider",
+                              }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                Saldo líquido:
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                fontWeight={600}
+                                color={
+                                  displayed.netBalance >= 0
+                                    ? "success.main"
+                                    : "error.main"
+                                }
+                              >
+                                {displayed.netBalance >= 0 ? "+" : ""}
+                                {formatCurrency(displayed.netBalance)}
+                              </Typography>
+                            </Box>
+                          )}
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               </Grid>

@@ -91,7 +91,8 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
           frequency: t.frequency,
           installments: t.installments,
           currentInstallment: t.current_installment,
-          isPaid: t.is_paid ?? true,
+          // Default false: transações sem is_paid no banco = pendente (evita somar "a receber" em "já acertado" na aba Shared)
+          isPaid: t.is_paid ?? false,
           isShared: t.is_shared,
           sharedWith: t.shared_with,
           iOwe: t.i_owe,
