@@ -2,7 +2,29 @@ import { GoogleGenAI } from "@google/genai";
 import { Transaction, ParsedTransaction, TransactionType } from "../types";
 import { getReportDate } from "../utils/transactionUtils";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+/**
+ * Single env name (Vite injects GEMINI_API_KEY from .env).
+ * Use isGeminiConfigured() before calling AI; show GEMINI_NOT_CONFIGURED_MESSAGE in UI when false.
+ */
+const GEMINI_API_KEY = (process.env.GEMINI_API_KEY || "").trim();
+
+export const isGeminiConfigured = (): boolean => GEMINI_API_KEY.length > 0;
+
+/** User-facing copy when Smart Input / Nix AI is used without API key */
+export const GEMINI_NOT_CONFIGURED_MESSAGE =
+  "Configure GEMINI_API_KEY in your .env file to use Nix AI and Smart Input.";
+
+const ai = new GoogleGenAI({
+  apiKey: GEMINI_API_KEY || "placeholder-key-not-used",
+});
+
+function throwIfGeminiNotConfigured(): void {
+  if (!isGeminiConfigured()) {
+    const err = new Error("GEMINI_NOT_CONFIGURED");
+    (err as Error & { code?: string }).code = "GEMINI_NOT_CONFIGURED";
+    throw err;
+  }
+}
 
 // ========================================
 // Intent Detection - Detecção de Intenção de Cadastro
@@ -101,6 +123,9 @@ export const detectTransactionIntentWithAI = async (
   }
   
   // Se não tem certeza, usa IA
+  if (!isGeminiConfigured()) {
+    return patternResult;
+  }
   try {
     const prompt = `Analise se o texto a seguir indica uma intenção do usuário de REGISTRAR/CADASTRAR uma transação financeira (gasto ou receita).
 
@@ -234,6 +259,7 @@ export const parseTransactionFromText = async (
   categories: { income: string[]; expense: string[] },
   paymentMethods: string[]
 ): Promise<ParsedTransaction> => {
+  throwIfGeminiNotConfigured();
   const systemPrompt = getTransactionParsingPrompt(categories, paymentMethods);
 
   try {
@@ -330,6 +356,7 @@ export const parseTransactionFromAudio = async (
   categories: { income: string[]; expense: string[] },
   paymentMethods: string[]
 ): Promise<ParsedTransaction> => {
+  throwIfGeminiNotConfigured();
   const systemPrompt = getTransactionParsingPrompt(categories, paymentMethods);
 
   try {
@@ -430,6 +457,7 @@ export const parseTransactionFromImage = async (
   categories: { income: string[]; expense: string[] },
   paymentMethods: string[]
 ): Promise<ParsedTransaction> => {
+  throwIfGeminiNotConfigured();
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
@@ -650,6 +678,7 @@ export const parseBatchFromText = async (
   categories: { income: string[]; expense: string[] },
   paymentMethods: string[]
 ): Promise<ParsedTransaction[]> => {
+  throwIfGeminiNotConfigured();
   const prompt = getBatchTransactionParsingPrompt(categories, paymentMethods);
 
   try {
@@ -677,6 +706,7 @@ export const parseBatchFromAudio = async (
   categories: { income: string[]; expense: string[] },
   paymentMethods: string[]
 ): Promise<ParsedTransaction[]> => {
+  throwIfGeminiNotConfigured();
   const prompt = getBatchTransactionParsingPrompt(categories, paymentMethods);
 
   try {
@@ -718,6 +748,7 @@ export const parseBatchFromImage = async (
   categories: { income: string[]; expense: string[] },
   paymentMethods: string[]
 ): Promise<ParsedTransaction[]> => {
+  throwIfGeminiNotConfigured();
   const todayStr = new Date().toISOString().split("T")[0];
   const prompt = getBatchTransactionParsingPrompt(categories, paymentMethods);
 
@@ -763,6 +794,7 @@ export const chatWithNixAI = async (
   transactions: Transaction[],
   conversationHistory: ChatMessage[]
 ): Promise<string> => {
+  throwIfGeminiNotConfigured();
   // Prepare transaction summary for context
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -887,6 +919,9 @@ export const suggestCategoryWithAI = async (
   }
 
   // Se não tem certeza, usa IA
+  if (!isGeminiConfigured()) {
+    return localSuggestion;
+  }
   try {
     const availableCategories = type === "income" ? categories.income : categories.expense;
 
@@ -1025,6 +1060,7 @@ export const getFinancialInsights = async (
   month: string,
   year: number
 ): Promise<string> => {
+  throwIfGeminiNotConfigured();
   if (transactions.length === 0) {
     return "There are not enough transactions in this period to generate an analysis.";
   }

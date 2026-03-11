@@ -1,10 +1,13 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { Box, Typography, Button, Paper } from "@mui/material";
+import { reportErrorToEndpoint } from "../utils/errorReporting";
 import { Error as ErrorIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  /** Optional callback when an error is caught (e.g. Sentry.captureException) */
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
@@ -38,8 +41,15 @@ class ErrorBoundary extends Component<Props, State> {
     
     this.setState({ errorInfo });
 
-    // Aqui você pode enviar para serviço de monitoramento (Sentry, etc.)
-    // logErrorToService(error, errorInfo);
+    this.props.onError?.(error, errorInfo);
+
+    reportErrorToEndpoint({
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      url: typeof window !== "undefined" ? window.location.href : "",
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+    });
   }
 
   handleRetry = () => {

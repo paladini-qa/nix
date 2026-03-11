@@ -38,31 +38,17 @@ import { ThemePreference } from "../types";
 import ThemeSwitch from "./ThemeSwitch";
 import { usePrivacy } from "../contexts";
 import { SIDEBAR_WIDTH } from "../layoutConstants";
+import type { AppCurrentView } from "../types/appView";
 
 // Motion-enabled components
 const MotionBox = motion.create(Box);
 const MotionListItemButton = motion.create(ListItemButton);
 
-// Tipo para todas as views disponíveis
-type ViewType =
-  | "dashboard"
-  | "batchRegistration"
-  | "transactions"
-  | "splits"
-  | "shared"
-  | "recurring"
-  | "nixai"
-  | "budgets"
-  | "goals"
-  | "planning"
-  | "paymentMethods"
-  | "categories";
-
 interface SidebarProps {
   themePreference: ThemePreference;
   onThemeChange: (theme: ThemePreference) => void;
-  currentView: ViewType;
-  onNavigate: (view: ViewType) => void;
+  currentView: AppCurrentView;
+  onNavigate: (view: AppCurrentView) => void;
   onLogout: () => void;
   displayName: string;
   userEmail: string;
@@ -72,7 +58,7 @@ interface SidebarProps {
 interface NavItem {
   icon: React.ElementType;
   label: string;
-  id: ViewType;
+  id: AppCurrentView;
 }
 
 // Animation variants

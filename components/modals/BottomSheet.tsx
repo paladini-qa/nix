@@ -196,6 +196,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
               <IconButton
                 onClick={onClose}
                 size="small"
+                aria-label="Close"
                 sx={{
                   color: "text.secondary",
                   "&:hover": {
@@ -346,6 +347,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                   <IconButton
                     onClick={onClose}
                     size="small"
+                    aria-label="Close"
                     sx={{
                       color: "text.secondary",
                       transition: "all 0.2s ease",

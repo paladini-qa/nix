@@ -52,11 +52,14 @@ export default {
   dashboard: {
     title: "Painel",
     welcome: "Bem-vindo",
+    welcomeWithName: "Bem-vindo, {{name}}",
     transactionHistory: "Histórico de Transações",
     totalIncome: "Total de Receitas",
     totalExpenses: "Total de Despesas",
     balance: "Saldo",
     newTransaction: "Nova Transação",
+    removeAdvancedFiltersForMonth:
+      "Remova os filtros avançados para usar o filtro de mês",
   },
 
   // Transactions

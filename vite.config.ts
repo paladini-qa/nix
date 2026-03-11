@@ -40,6 +40,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [react()],
     define: {
+      // Legacy alias — prefer GEMINI_API_KEY in code (see geminiService.ts)
       "process.env.API_KEY": JSON.stringify(env.GEMINI_API_KEY),
       "process.env.GEMINI_API_KEY": JSON.stringify(env.GEMINI_API_KEY),
       "process.env.SUPABASE_URL": JSON.stringify(env.SUPABASE_URL),

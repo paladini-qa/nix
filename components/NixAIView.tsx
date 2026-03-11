@@ -57,6 +57,8 @@ import {
   parseBatchFromAudio,
   parseBatchFromImage,
   detectTransactionIntent,
+  isGeminiConfigured,
+  GEMINI_NOT_CONFIGURED_MESSAGE,
 } from "../services/geminiService";
 
 // Motion components
@@ -810,11 +812,14 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       }
     } catch (error) {
       console.error("Error parsing audio:", error);
+      const notConfigured =
+        error instanceof Error && error.message === "GEMINI_NOT_CONFIGURED";
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content:
-          "Não consegui entender o áudio. 🎤\n\nTenta falar mais devagar: \"Gastei cinquenta reais no Uber\"",
+        content: notConfigured
+          ? GEMINI_NOT_CONFIGURED_MESSAGE
+          : "Não consegui entender o áudio. 🎤\n\nTenta falar mais devagar: \"Gastei cinquenta reais no Uber\"",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -878,10 +883,14 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       reader.readAsDataURL(file);
     } catch (error) {
       console.error("Error parsing image:", error);
+      const notConfigured =
+        error instanceof Error && error.message === "GEMINI_NOT_CONFIGURED";
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Não consegui ler a imagem. 📷\n\nTenta tirar uma foto com mais luz e o recibo bem reto.",
+        content: notConfigured
+          ? GEMINI_NOT_CONFIGURED_MESSAGE
+          : "Não consegui ler a imagem. 📷\n\nTenta tirar uma foto com mais luz e o recibo bem reto.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -1052,10 +1061,14 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error:", error);
+      const isNotConfigured =
+        error instanceof Error && error.message === "GEMINI_NOT_CONFIGURED";
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Ops, algo deu errado. 😅 Tenta de novo?",
+        content: isNotConfigured
+          ? GEMINI_NOT_CONFIGURED_MESSAGE
+          : "Ops, algo deu errado. 😅 Tenta de novo?",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -1087,6 +1100,11 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           gap: 2,
         }}
       >
+        {!isGeminiConfigured() && (
+          <Alert severity="warning" sx={{ borderRadius: "14px", mb: 1 }}>
+            {GEMINI_NOT_CONFIGURED_MESSAGE}
+          </Alert>
+        )}
         <AnimatePresence mode="popLayout">
           {messages.map((message) => (
             <ChatMessage key={message.id} message={message} isMobile={isMobile} />

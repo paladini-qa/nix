@@ -427,6 +427,8 @@ function DataTable<T>({
       ) : (
         // Vista desktop em tabela
         <TableContainer
+          role="region"
+          aria-label={title || "Data table"}
           sx={{
             maxHeight: maxHeight,
             ...(stickyHeader && {

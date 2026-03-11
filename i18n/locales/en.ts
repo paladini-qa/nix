@@ -52,11 +52,14 @@ export default {
   dashboard: {
     title: "Dashboard",
     welcome: "Welcome",
+    welcomeWithName: "Welcome, {{name}}",
     transactionHistory: "Transaction History",
     totalIncome: "Total Income",
     totalExpenses: "Total Expenses",
     balance: "Balance",
     newTransaction: "New Transaction",
+    removeAdvancedFiltersForMonth:
+      "Remove advanced filters to use the month filter",
   },
 
   // Transactions

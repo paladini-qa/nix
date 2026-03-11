@@ -52,6 +52,8 @@ import {
   parseTransactionFromText,
   parseTransactionFromAudio,
   parseTransactionFromImage,
+  isGeminiConfigured,
+  GEMINI_NOT_CONFIGURED_MESSAGE,
 } from "../services/geminiService";
 
 // Animação de pulso para gravação de áudio
@@ -280,7 +282,11 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
       setParsedResult(result);
     } catch (err) {
       console.error("Error processing input:", err);
-      setError(err instanceof Error ? err.message : "Erro ao processar. Tente novamente.");
+      if (err instanceof Error && err.message === "GEMINI_NOT_CONFIGURED") {
+        setError(GEMINI_NOT_CONFIGURED_MESSAGE);
+      } else {
+        setError(err instanceof Error ? err.message : "Erro ao processar. Tente novamente.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -868,6 +874,11 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
 
       <DialogContent sx={{ pt: 1, pb: 2 }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          {!isGeminiConfigured() && (
+            <Alert severity="warning" sx={{ borderRadius: "20px" }}>
+              {GEMINI_NOT_CONFIGURED_MESSAGE}
+            </Alert>
+          )}
           {/* Error alert */}
           <Collapse in={!!error}>
             <Alert
