@@ -29,6 +29,7 @@ import {
   Category as CategoryIcon,
   Payment as PaymentIcon,
   EventNote as PlanningIcon,
+  PlaylistAdd as BatchRegistrationIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,6 +44,7 @@ const MotionListItemButton = motion.create(ListItemButton);
 // Tipo para todas as views disponíveis
 type ViewType =
   | "dashboard"
+  | "batchRegistration"
   | "transactions"
   | "splits"
   | "shared"
@@ -118,6 +120,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
   // Itens de menu principais
   const mainNavItems: NavItem[] = [
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
+    { icon: BatchRegistrationIcon, label: t("nav.batchRegistration"), id: "batchRegistration" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
     { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
     { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },

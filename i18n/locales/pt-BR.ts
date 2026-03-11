@@ -44,6 +44,7 @@ export default {
     shared: "Compartilhado",
     settings: "Configurações",
     nixai: "NixAI",
+    batchRegistration: "Cadastro em lote",
     logout: "Sair",
   },
 

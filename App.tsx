@@ -77,6 +77,9 @@ const PaymentMethodDetailView = lazy(
   () => import("./components/PaymentMethodDetailView")
 );
 const NixAIView = lazy(() => import("./components/NixAIView"));
+const BatchRegistrationView = lazy(
+  () => import("./components/BatchRegistrationView")
+);
 const RecurringView = lazy(() => import("./components/RecurringView"));
 const SplitsView = lazy(() => import("./components/SplitsView"));
 const SharedView = lazy(() => import("./components/SharedView"));
@@ -231,6 +234,7 @@ const AppContent: React.FC<{
 
   const [currentView, setCurrentView] = useState<
     | "dashboard"
+    | "batchRegistration"
     | "transactions"
     | "splits"
     | "shared"
@@ -3974,7 +3978,9 @@ const AppContent: React.FC<{
 
   // Handler para transações criadas via Smart Input (IA)
   const handleSmartInputTransaction = (
-    parsedTx: Omit<ParsedTransaction, "confidence" | "rawInput">
+    parsedTx: Omit<ParsedTransaction, "confidence" | "rawInput"> & {
+      invoiceDueDate?: string;
+    }
   ) => {
     // Converte o ParsedTransaction para o formato esperado pelo handleAddTransaction
     const transaction: Omit<Transaction, "id" | "createdAt"> = {
@@ -3986,6 +3992,7 @@ const AppContent: React.FC<{
       date: parsedTx.date,
       isRecurring: false,
       isPaid: false,
+      ...(parsedTx.invoiceDueDate && { invoiceDueDate: parsedTx.invoiceDueDate }),
     };
     handleAddTransaction(transaction);
   };
@@ -4345,6 +4352,16 @@ const AppContent: React.FC<{
                     categories={categories}
                     paymentMethods={paymentMethods}
                     onTransactionCreate={handleSmartInputTransaction}
+                    getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+                  />
+                </Suspense>
+              ) : currentView === "batchRegistration" ? (
+                <Suspense fallback={<ViewLoading />}>
+                  <BatchRegistrationView
+                    categories={categories}
+                    paymentMethods={paymentMethods}
+                    onTransactionCreate={handleSmartInputTransaction}
+                    getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
                   />
                 </Suspense>
               ) : currentView === "budgets" ? (

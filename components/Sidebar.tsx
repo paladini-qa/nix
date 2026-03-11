@@ -30,6 +30,7 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   EventNote as PlanningIcon,
+  PlaylistAdd as BatchRegistrationIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,6 +46,7 @@ const MotionListItemButton = motion.create(ListItemButton);
 // Tipo para todas as views disponíveis
 type ViewType =
   | "dashboard"
+  | "batchRegistration"
   | "transactions"
   | "splits"
   | "shared"
@@ -121,6 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const mainNavItems: NavItem[] = [
     { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" },
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
+    { icon: BatchRegistrationIcon, label: t("nav.batchRegistration"), id: "batchRegistration" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
     { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
     { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },

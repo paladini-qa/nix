@@ -32,6 +32,7 @@ import {
   AccountBalance as AccountIcon,
   Analytics as AnalyticsIcon,
   ArrowForward as ArrowIcon,
+  PlaylistAdd as BatchRegistrationIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "../types";
@@ -47,6 +48,7 @@ interface GlobalSearchProps {
 
 type ViewId =
   | "dashboard"
+  | "batchRegistration"
   | "transactions"
   | "splits"
   | "shared"
@@ -83,6 +85,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
   const navigationItems: NavigationItem[] = useMemo(
     () => [
       { id: "dashboard", label: t("nav.dashboard"), icon: <DashboardIcon />, keywords: ["home", "inicio", "painel"] },
+      { id: "batchRegistration", label: t("nav.batchRegistration"), icon: <BatchRegistrationIcon />, keywords: ["cadastro lote", "lote", "batch", "varias transacoes", "multiplas"] },
       { id: "transactions", label: t("nav.transactions"), icon: <WalletIcon />, keywords: ["transacao", "pagamento", "gasto"] },
       { id: "splits", label: t("nav.splits"), icon: <CreditCardIcon />, keywords: ["parcela", "credito", "cartao"] },
       { id: "shared", label: t("nav.shared"), icon: <PeopleIcon />, keywords: ["compartilhado", "amigo", "dividir"] },

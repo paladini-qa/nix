@@ -44,6 +44,7 @@ export default {
     shared: "Shared",
     settings: "Settings",
     nixai: "NixAI",
+    batchRegistration: "Batch registration",
     logout: "Logout",
   },
 
