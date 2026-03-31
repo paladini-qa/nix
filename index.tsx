@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { ErrorBoundary } from "./contexts";
 import { initializeCapacitor, hideSplashScreen } from "./services/capacitorService";
@@ -16,11 +17,16 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
+// Remove barra final para compatibilidade com React Router basename
+const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <App />
+      <BrowserRouter basename={basename}>
+        <App />
+      </BrowserRouter>
     </ErrorBoundary>
   </React.StrictMode>
 );

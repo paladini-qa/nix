@@ -8,6 +8,7 @@ import React, {
   lazy,
   Suspense,
 } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ThemeProvider,
   CssBaseline,
@@ -54,6 +55,7 @@ import Sidebar from "./components/Sidebar";
 import AppViewSwitcher from "./components/AppViewSwitcher";
 import AppProviders from "./components/AppProviders";
 import type { AppCurrentView } from "./types/appView";
+import { VIEW_ROUTES, ROUTE_VIEWS } from "./routes";
 import ProfileModal from "./components/ProfileModal";
 import LoginView from "./components/LoginView";
 import {
@@ -211,7 +213,20 @@ const AppContent: React.FC<{
   const { showError, showSuccess } = useNotification();
   const { confirm, choice } = useConfirmDialog();
 
-  const [currentView, setCurrentView] = useState<AppCurrentView>("dashboard");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentView: AppCurrentView = ROUTE_VIEWS[location.pathname] ?? "dashboard";
+  const navigateTo = useCallback((view: AppCurrentView) => {
+    navigate(VIEW_ROUTES[view]);
+  }, [navigate]);
+
+  // Redireciona para /dashboard se o path não corresponder a nenhuma view
+  useEffect(() => {
+    if (!ROUTE_VIEWS[location.pathname]) {
+      navigate(VIEW_ROUTES.dashboard, { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -3983,7 +3998,7 @@ const AppContent: React.FC<{
               themePreference={themePreference}
               onThemeChange={updateThemePreference}
               currentView={currentView}
-              onNavigate={setCurrentView}
+              onNavigate={navigateTo}
               onLogout={handleLogout}
               displayName={displayName}
               userEmail={session.user.email || ""}
@@ -4004,7 +4019,7 @@ const AppContent: React.FC<{
                 themePreference={themePreference}
                 onThemeChange={updateThemePreference}
                 currentView={currentView}
-                onNavigate={setCurrentView}
+                onNavigate={navigateTo}
                 onLogout={handleLogout}
                 displayName={displayName}
                 userEmail={session.user.email || ""}
@@ -4065,7 +4080,7 @@ const AppContent: React.FC<{
             >
               <AppViewSwitcher
                 currentView={currentView}
-                setCurrentView={setCurrentView}
+                setCurrentView={navigateTo}
                 selectedPaymentMethod={selectedPaymentMethod}
                 setSelectedPaymentMethod={setSelectedPaymentMethod}
                 selectedCategoryNav={selectedCategoryNav}
@@ -4227,7 +4242,7 @@ const AppContent: React.FC<{
               open={isSearchOpen}
               onClose={() => setIsSearchOpen(false)}
               transactions={transactions}
-              onNavigate={(view) => setCurrentView(view as typeof currentView)}
+              onNavigate={(view) => navigateTo(view as AppCurrentView)}
               onSelectTransaction={(tx) => {
                 handleEditTransaction(tx);
               }}
@@ -4238,7 +4253,7 @@ const AppContent: React.FC<{
           {isMobile && (
             <MobileNavigation
               currentView={currentView}
-              onNavigate={setCurrentView}
+              onNavigate={navigateTo}
               onCreateTransaction={handleNewTransaction}
             />
           )}

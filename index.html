@@ -29,6 +29,23 @@
         font-family: "Inter", sans-serif;
       }
     </style>
+    <script>
+      // Restaura o path codificado pelo 404.html para o React Router (GitHub Pages SPA fallback).
+      // Ref: https://github.com/rafgraph/spa-github-pages
+      (function() {
+        var redirect = window.location.search.match(/[?&]p=([^&]*)/);
+        if (redirect) {
+          var path = decodeURIComponent(redirect[1].replace(/~and~/g, '&'));
+          var query = window.location.search
+            .replace(/[?&]p=[^&]*/, '')
+            .replace(/^&/, '?');
+          window.history.replaceState(
+            null, null,
+            window.location.pathname.replace(/\/$/, '') + path + query + window.location.hash
+          );
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -10,6 +10,7 @@ import type {
 import type { AdvancedFiltersState } from "./AdvancedFilters";
 import DashboardMainSection from "./DashboardMainSection";
 import type { FinancialSummary } from "../types";
+import PageTransition from "./motion/PageTransition";
 
 const PaymentMethodDetailView = lazy(() => import("./PaymentMethodDetailView"));
 const TransactionsView = lazy(() => import("./TransactionsView"));
@@ -41,7 +42,7 @@ const ViewLoadingMui: React.FC = () => (
 
 export interface AppViewSwitcherProps {
   currentView: AppCurrentView;
-  setCurrentView: React.Dispatch<React.SetStateAction<AppCurrentView>>;
+  setCurrentView: (view: AppCurrentView) => void;
   selectedPaymentMethod: string | null;
   setSelectedPaymentMethod: React.Dispatch<React.SetStateAction<string | null>>;
   selectedCategoryNav: { name: string; type: "income" | "expense" } | null;
@@ -94,6 +95,9 @@ export interface AppViewSwitcherProps {
 /**
  * Renders the main content area based on currentView.
  * Extracted from App.tsx to isolate navigation switching.
+ * Cada view é envolvida em PageTransition para garantir feedback visual em toda navegação.
+ * O key nas Suspense boundaries garante que o skeleton seja exibido ao navegar para uma view
+ * mesmo que o chunk já esteja em cache (React cria nova boundary na troca de currentView).
  */
 const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
   const {
@@ -141,249 +145,260 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
     handleUpdateInstallmentDates,
   } = props;
 
-  if (currentView === "dashboard") {
-    if (selectedPaymentMethod) {
+  // Chave composta: inclui selectedPaymentMethod para animar a transição dentro de paymentMethods/dashboard
+  const transitionKey = `${currentView}-${selectedPaymentMethod ?? ""}`;
+
+  const renderView = () => {
+    if (currentView === "dashboard") {
+      if (selectedPaymentMethod) {
+        return (
+          <Suspense key={transitionKey} fallback={<ViewLoadingMui />}>
+            <PaymentMethodDetailView
+              paymentMethod={selectedPaymentMethod}
+              transactions={transactions}
+              selectedMonth={filters.month}
+              selectedYear={filters.year}
+              onDateChange={(month, year) => setFilters({ ...filters, month, year })}
+              onBack={() => setSelectedPaymentMethod(null)}
+              onNewTransaction={handleNewTransaction}
+              onEdit={handleEditTransaction}
+              onDelete={handleDeleteTransaction}
+              onTogglePaid={handleTogglePaid}
+            />
+          </Suspense>
+        );
+      }
       return (
-        <Suspense fallback={<ViewLoadingMui />}>
-          <PaymentMethodDetailView
-            paymentMethod={selectedPaymentMethod}
+        <DashboardMainSection
+          isMobile={isMobile}
+          displayName={displayName}
+          session={session}
+          filters={filters}
+          setFilters={setFilters}
+          advancedFilters={advancedFilters}
+          setAdvancedFilters={setAdvancedFilters}
+          showAdvancedFilters={showAdvancedFilters}
+          setShowAdvancedFilters={setShowAdvancedFilters}
+          isRefreshing={isRefreshing}
+          onRefresh={onRefresh}
+          onNewTransaction={handleNewTransaction}
+          transactions={transactions}
+          dashboardFilteredTransactions={dashboardFilteredTransactions}
+          summary={summary}
+          analyticsTransactions={analyticsTransactions}
+          onPaymentMethodClick={(method) => {
+            setSelectedPaymentMethod(method);
+            setCurrentView("paymentMethods");
+          }}
+          onCategoryClick={(category, type) => {
+            setSelectedCategoryNav({ name: category, type });
+            setCurrentView("categories");
+          }}
+        />
+      );
+    }
+
+    if (currentView === "transactions") {
+      return (
+        <Suspense key={currentView} fallback={<TransactionsSkeleton />}>
+          <TransactionsView
             transactions={transactions}
-            selectedMonth={filters.month}
-            selectedYear={filters.year}
-            onDateChange={(month, year) => setFilters({ ...filters, month, year })}
-            onBack={() => setSelectedPaymentMethod(null)}
             onNewTransaction={handleNewTransaction}
             onEdit={handleEditTransaction}
             onDelete={handleDeleteTransaction}
             onTogglePaid={handleTogglePaid}
+            selectedMonth={filters.month}
+            selectedYear={filters.year}
+            onDateChange={(month, year) => setFilters({ ...filters, month, year })}
+            onRefreshData={onRefreshData}
           />
         </Suspense>
       );
     }
-    return (
-      <DashboardMainSection
-        isMobile={isMobile}
-        displayName={displayName}
-        session={session}
-        filters={filters}
-        setFilters={setFilters}
-        advancedFilters={advancedFilters}
-        setAdvancedFilters={setAdvancedFilters}
-        showAdvancedFilters={showAdvancedFilters}
-        setShowAdvancedFilters={setShowAdvancedFilters}
-        isRefreshing={isRefreshing}
-        onRefresh={onRefresh}
-        onNewTransaction={handleNewTransaction}
-        transactions={transactions}
-        dashboardFilteredTransactions={dashboardFilteredTransactions}
-        summary={summary}
-        analyticsTransactions={analyticsTransactions}
-        onPaymentMethodClick={(method) => {
-          setSelectedPaymentMethod(method);
-          setCurrentView("paymentMethods");
-        }}
-        onCategoryClick={(category, type) => {
-          setSelectedCategoryNav({ name: category, type });
-          setCurrentView("categories");
-        }}
-      />
-    );
-  }
 
-  if (currentView === "transactions") {
-    return (
-      <Suspense fallback={<TransactionsSkeleton />}>
-        <TransactionsView
-          transactions={transactions}
-          onNewTransaction={handleNewTransaction}
-          onEdit={handleEditTransaction}
-          onDelete={handleDeleteTransaction}
-          onTogglePaid={handleTogglePaid}
-          selectedMonth={filters.month}
-          selectedYear={filters.year}
-          onDateChange={(month, year) => setFilters({ ...filters, month, year })}
-          onRefreshData={onRefreshData}
-        />
-      </Suspense>
-    );
-  }
-
-  if (currentView === "splits") {
-    return (
-      <Suspense fallback={<ListCardsSkeleton />}>
-        <SplitsView
-          transactions={transactions}
-          onNewTransaction={handleNewTransaction}
-          onEdit={handleEditTransaction}
-          onDelete={handleDeleteTransaction}
-          onTogglePaid={handleTogglePaid}
-          onRefreshData={onRefreshData}
-          onUpdateInstallmentDates={handleUpdateInstallmentDates}
-        />
-      </Suspense>
-    );
-  }
-
-  if (currentView === "shared") {
-    return (
-      <Suspense fallback={<ListCardsSkeleton />}>
-        <SharedView
-          transactions={transactions}
-          friends={friends}
-          userName={displayName}
-          onNewTransaction={handleNewTransaction}
-          onEdit={handleEditTransaction}
-          onDelete={handleDeleteTransaction}
-          onTogglePaid={handleTogglePaid}
-          onRefreshData={onRefreshData}
-        />
-      </Suspense>
-    );
-  }
-
-  if (currentView === "recurring") {
-    return (
-      <Suspense fallback={<ListCardsSkeleton />}>
-        <RecurringView
-          transactions={transactions}
-          onEdit={handleEditTransaction}
-          onDelete={handleDeleteTransaction}
-          onTogglePaid={handleTogglePaid}
-          onNewTransaction={handleNewTransaction}
-          onRefreshData={onRefreshData}
-        />
-      </Suspense>
-    );
-  }
-
-  if (currentView === "nixai") {
-    return (
-      <Suspense fallback={<ViewLoadingMui />}>
-        <NixAIView
-          transactions={transactions}
-          categories={categories}
-          paymentMethods={paymentMethods}
-          onTransactionCreate={handleSmartInputTransaction}
-          getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
-        />
-      </Suspense>
-    );
-  }
-
-  if (currentView === "batchRegistration") {
-    return (
-      <Suspense fallback={<ViewLoadingMui />}>
-        <BatchRegistrationView
-          categories={categories}
-          paymentMethods={paymentMethods}
-          onTransactionCreate={handleSmartInputTransaction}
-          getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
-        />
-      </Suspense>
-    );
-  }
-
-  if (currentView === "budgets") {
-    return (
-      <Suspense fallback={<BudgetsSkeleton />}>
-        <BudgetsView
-          transactions={transactions}
-          categories={categories}
-          userId={session.user.id}
-          selectedMonth={filters.month}
-          selectedYear={filters.year}
-          onDateChange={(month, year) => setFilters({ ...filters, month, year })}
-        />
-      </Suspense>
-    );
-  }
-
-  if (currentView === "goals") {
-    return (
-      <Suspense fallback={<GoalsSkeleton />}>
-        <GoalsView userId={session.user.id} />
-      </Suspense>
-    );
-  }
-
-  if (currentView === "planning") {
-    return (
-      <Suspense fallback={<PlanningSkeleton />}>
-        <PlanningView
-          categories={categories}
-          paymentMethods={paymentMethods}
-          userId={session.user.id}
-          onTransactionCreated={onRefreshData}
-        />
-      </Suspense>
-    );
-  }
-
-  if (currentView === "paymentMethods") {
-    if (selectedPaymentMethod) {
+    if (currentView === "splits") {
       return (
-        <Suspense fallback={<ViewLoadingMui />}>
-          <PaymentMethodDetailView
-            paymentMethod={selectedPaymentMethod}
+        <Suspense key={currentView} fallback={<ListCardsSkeleton />}>
+          <SplitsView
             transactions={transactions}
+            onNewTransaction={handleNewTransaction}
+            onEdit={handleEditTransaction}
+            onDelete={handleDeleteTransaction}
+            onTogglePaid={handleTogglePaid}
+            onRefreshData={onRefreshData}
+            onUpdateInstallmentDates={handleUpdateInstallmentDates}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "shared") {
+      return (
+        <Suspense key={currentView} fallback={<ListCardsSkeleton />}>
+          <SharedView
+            transactions={transactions}
+            friends={friends}
+            userName={displayName}
+            onNewTransaction={handleNewTransaction}
+            onEdit={handleEditTransaction}
+            onDelete={handleDeleteTransaction}
+            onTogglePaid={handleTogglePaid}
+            onRefreshData={onRefreshData}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "recurring") {
+      return (
+        <Suspense key={currentView} fallback={<ListCardsSkeleton />}>
+          <RecurringView
+            transactions={transactions}
+            onEdit={handleEditTransaction}
+            onDelete={handleDeleteTransaction}
+            onTogglePaid={handleTogglePaid}
+            onNewTransaction={handleNewTransaction}
+            onRefreshData={onRefreshData}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "nixai") {
+      return (
+        <Suspense key={currentView} fallback={<ViewLoadingMui />}>
+          <NixAIView
+            transactions={transactions}
+            categories={categories}
+            paymentMethods={paymentMethods}
+            onTransactionCreate={handleSmartInputTransaction}
+            getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "batchRegistration") {
+      return (
+        <Suspense key={currentView} fallback={<ViewLoadingMui />}>
+          <BatchRegistrationView
+            categories={categories}
+            paymentMethods={paymentMethods}
+            onTransactionCreate={handleSmartInputTransaction}
+            getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "budgets") {
+      return (
+        <Suspense key={currentView} fallback={<BudgetsSkeleton />}>
+          <BudgetsView
+            transactions={transactions}
+            categories={categories}
+            userId={session.user.id}
             selectedMonth={filters.month}
             selectedYear={filters.year}
             onDateChange={(month, year) => setFilters({ ...filters, month, year })}
-            onBack={() => setSelectedPaymentMethod(null)}
-            onNewTransaction={handleNewTransaction}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "goals") {
+      return (
+        <Suspense key={currentView} fallback={<GoalsSkeleton />}>
+          <GoalsView userId={session.user.id} />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "planning") {
+      return (
+        <Suspense key={currentView} fallback={<PlanningSkeleton />}>
+          <PlanningView
+            categories={categories}
+            paymentMethods={paymentMethods}
+            userId={session.user.id}
+            onTransactionCreated={onRefreshData}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "paymentMethods") {
+      if (selectedPaymentMethod) {
+        return (
+          <Suspense key={transitionKey} fallback={<ViewLoadingMui />}>
+            <PaymentMethodDetailView
+              paymentMethod={selectedPaymentMethod}
+              transactions={transactions}
+              selectedMonth={filters.month}
+              selectedYear={filters.year}
+              onDateChange={(month, year) => setFilters({ ...filters, month, year })}
+              onBack={() => setSelectedPaymentMethod(null)}
+              onNewTransaction={handleNewTransaction}
+              onPayAll={handlePayAllTransactions}
+              onTogglePaid={handleTogglePaid}
+              onEdit={handleEditTransaction}
+              onDelete={handleDeleteTransaction}
+            />
+          </Suspense>
+        );
+      }
+      return (
+        <Suspense key={currentView} fallback={<PaymentMethodsSkeleton />}>
+          <PaymentMethodsView
+            transactions={transactions}
+            paymentMethods={paymentMethods}
+            paymentMethodColors={paymentMethodColors}
+            selectedMonth={filters.month}
+            selectedYear={filters.year}
+            onDateChange={(month, year) => setFilters({ ...filters, month, year })}
+            onSelectPaymentMethod={setSelectedPaymentMethod}
             onPayAll={handlePayAllTransactions}
-            onTogglePaid={handleTogglePaid}
-            onEdit={handleEditTransaction}
-            onDelete={handleDeleteTransaction}
+            onAddPaymentMethod={handleAddPaymentMethod}
+            onRemovePaymentMethod={handleRemovePaymentMethod}
+            onUpdatePaymentMethodColor={handleUpdatePaymentMethodColor}
+            getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+            onUpdatePaymentMethodPaymentDay={updatePaymentMethodPaymentDay}
           />
         </Suspense>
       );
     }
-    return (
-      <Suspense fallback={<PaymentMethodsSkeleton />}>
-        <PaymentMethodsView
-          transactions={transactions}
-          paymentMethods={paymentMethods}
-          paymentMethodColors={paymentMethodColors}
-          selectedMonth={filters.month}
-          selectedYear={filters.year}
-          onDateChange={(month, year) => setFilters({ ...filters, month, year })}
-          onSelectPaymentMethod={setSelectedPaymentMethod}
-          onPayAll={handlePayAllTransactions}
-          onAddPaymentMethod={handleAddPaymentMethod}
-          onRemovePaymentMethod={handleRemovePaymentMethod}
-          onUpdatePaymentMethodColor={handleUpdatePaymentMethodColor}
-          getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
-          onUpdatePaymentMethodPaymentDay={updatePaymentMethodPaymentDay}
-        />
-      </Suspense>
-    );
-  }
 
-  if (currentView === "categories") {
-    return (
-      <Suspense fallback={<CategoriesSkeleton />}>
-        <CategoriesView
-          transactions={transactions}
-          categories={categories}
-          categoryColors={categoryColors}
-          selectedMonth={filters.month}
-          selectedYear={filters.year}
-          onDateChange={(month, year) => setFilters({ ...filters, month, year })}
-          onAddCategory={handleAddCategory}
-          onRemoveCategory={handleRemoveCategory}
-          onUpdateCategoryColor={handleUpdateCategoryColor}
-          onTogglePaid={handleTogglePaid}
-          onEditTransaction={handleEditTransaction}
-          onDeleteTransaction={handleDeleteTransaction}
-          initialSelectedCategory={selectedCategoryNav}
-          onClearInitialCategory={() => setSelectedCategoryNav(null)}
-        />
-      </Suspense>
-    );
-  }
+    if (currentView === "categories") {
+      return (
+        <Suspense key={currentView} fallback={<CategoriesSkeleton />}>
+          <CategoriesView
+            transactions={transactions}
+            categories={categories}
+            categoryColors={categoryColors}
+            selectedMonth={filters.month}
+            selectedYear={filters.year}
+            onDateChange={(month, year) => setFilters({ ...filters, month, year })}
+            onAddCategory={handleAddCategory}
+            onRemoveCategory={handleRemoveCategory}
+            onUpdateCategoryColor={handleUpdateCategoryColor}
+            onTogglePaid={handleTogglePaid}
+            onEditTransaction={handleEditTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
+            initialSelectedCategory={selectedCategoryNav}
+            onClearInitialCategory={() => setSelectedCategoryNav(null)}
+          />
+        </Suspense>
+      );
+    }
 
-  return null;
+    return null;
+  };
+
+  return (
+    <PageTransition transitionKey={transitionKey} type="slideUp" duration={0.22} mode="sync">
+      {renderView()}
+    </PageTransition>
+  );
 };
 
 export default AppViewSwitcher;
