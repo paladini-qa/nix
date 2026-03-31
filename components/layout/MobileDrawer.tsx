@@ -24,11 +24,8 @@ import {
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
   People as PeopleIcon,
-  PieChart as BudgetIcon,
-  Flag as GoalIcon,
   Category as CategoryIcon,
   Payment as PaymentIcon,
-  EventNote as PlanningIcon,
   PlaylistAdd as BatchRegistrationIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
@@ -50,9 +47,6 @@ type ViewType =
   | "shared"
   | "recurring"
   | "nixai"
-  | "budgets"
-  | "goals"
-  | "planning"
   | "analytics"
   | "settings"
   | "paymentMethods"
@@ -133,12 +127,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
   ];
 
-  // Itens de relatórios
-  const reportsNavItems: NavItem[] = [
-    { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" },
-    { icon: GoalIcon, label: t("nav.goals"), id: "goals" },
-    { icon: PlanningIcon, label: "Planejamentos", id: "planning" },
-  ];
 
   // Itens de ferramentas
   const toolsNavItems: NavItem[] = [
@@ -460,7 +448,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
       >
         {renderSection("Menu Principal", mainNavItems)}
         {renderSection("Cadastro", registrationNavItems)}
-        {renderSection("Relatórios", reportsNavItems)}
         {renderSection("Ferramentas", toolsNavItems)}
       </Box>
 

@@ -24,13 +24,10 @@ type ViewType =
   | "shared"
   | "recurring"
   | "nixai"
-  | "budgets"
-  | "goals"
   | "analytics"
   | "settings"
   | "paymentMethods"
-  | "categories"
-  | "planning";
+  | "categories";
 
 interface MobileNavigationProps {
   currentView: ViewType;
@@ -58,9 +55,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       currentView === "shared" ||
       currentView === "recurring" ||
       currentView === "categories" ||
-      currentView === "budgets" ||
-      currentView === "goals" ||
-      currentView === "planning" ||
       currentView === "nixai" ||
       currentView === "batchRegistration"
     ) {

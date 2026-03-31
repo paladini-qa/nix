@@ -19,17 +19,11 @@ const SharedView = lazy(() => import("./SharedView"));
 const RecurringView = lazy(() => import("./RecurringView"));
 const NixAIView = lazy(() => import("./NixAIView"));
 const BatchRegistrationView = lazy(() => import("./BatchRegistrationView"));
-const BudgetsView = lazy(() => import("./BudgetsView"));
-const GoalsView = lazy(() => import("./GoalsView"));
-const PlanningView = lazy(() => import("./PlanningView"));
 const PaymentMethodsView = lazy(() => import("./PaymentMethodsView"));
 const CategoriesView = lazy(() => import("./CategoriesView"));
 
 import TransactionsSkeleton from "./skeletons/TransactionsSkeleton";
 import ListCardsSkeleton from "./skeletons/ListCardsSkeleton";
-import BudgetsSkeleton from "./skeletons/BudgetsSkeleton";
-import GoalsSkeleton from "./skeletons/GoalsSkeleton";
-import PlanningSkeleton from "./skeletons/PlanningSkeleton";
 import PaymentMethodsSkeleton from "./skeletons/PaymentMethodsSkeleton";
 import CategoriesSkeleton from "./skeletons/CategoriesSkeleton";
 import { Box, CircularProgress } from "@mui/material";
@@ -286,42 +280,6 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
             paymentMethods={paymentMethods}
             onTransactionCreate={handleSmartInputTransaction}
             getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
-          />
-        </Suspense>
-      );
-    }
-
-    if (currentView === "budgets") {
-      return (
-        <Suspense key={currentView} fallback={<BudgetsSkeleton />}>
-          <BudgetsView
-            transactions={transactions}
-            categories={categories}
-            userId={session.user.id}
-            selectedMonth={filters.month}
-            selectedYear={filters.year}
-            onDateChange={(month, year) => setFilters({ ...filters, month, year })}
-          />
-        </Suspense>
-      );
-    }
-
-    if (currentView === "goals") {
-      return (
-        <Suspense key={currentView} fallback={<GoalsSkeleton />}>
-          <GoalsView userId={session.user.id} />
-        </Suspense>
-      );
-    }
-
-    if (currentView === "planning") {
-      return (
-        <Suspense key={currentView} fallback={<PlanningSkeleton />}>
-          <PlanningView
-            categories={categories}
-            paymentMethods={paymentMethods}
-            userId={session.user.id}
-            onTransactionCreated={onRefreshData}
           />
         </Suspense>
       );

@@ -23,13 +23,10 @@ import {
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
   People as PeopleIcon,
-  PieChart as BudgetIcon,
-  Flag as GoalIcon,
   Category as CategoryIcon,
   Payment as PaymentIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-  EventNote as PlanningIcon,
   PlaylistAdd as BatchRegistrationIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
@@ -118,12 +115,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
   ];
 
-  // Itens de relatórios (agora flat, sem dropdown)
-  const reportsNavItems: NavItem[] = [
-    { icon: BudgetIcon, label: t("nav.budgets"), id: "budgets" },
-    { icon: GoalIcon, label: t("nav.goals"), id: "goals" },
-    { icon: PlanningIcon, label: "Planejamentos", id: "planning" },
-  ];
 
   // Renderiza um item de navegação
   // Estilos especiais para o item NixAI conforme Brand Book
@@ -412,31 +403,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         </List>
 
         {/* Reports Items - Flat (sem dropdown) */}
-        <Box sx={{ mt: 2 }}>
-          <motion.div variants={itemVariants}>
-            <Text
-              size="1"
-              color="gray"
-              weight="medium"
-              style={{
-                paddingLeft: 16,
-                paddingRight: 16,
-                letterSpacing: "0.1em",
-                fontSize: 12,
-              }}
-              as="p"
-            >
-              Relatórios
-            </Text>
-          </motion.div>
-          <List sx={{ mt: 1 }}>
-            {reportsNavItems.map((item, idx) => (
-              <motion.div key={item.id} variants={itemVariants}>
-                {renderNavItem(item, false, idx)}
-              </motion.div>
-            ))}
-          </List>
-        </Box>
       </MotionBox>
 
       {/* Bottom Actions */}

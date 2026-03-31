@@ -10,8 +10,5 @@ export type AppCurrentView =
   | "shared"
   | "recurring"
   | "nixai"
-  | "budgets"
-  | "goals"
-  | "planning"
   | "paymentMethods"
   | "categories";

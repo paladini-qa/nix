@@ -15,9 +15,6 @@ import {
   People as PeopleIcon,
   Repeat as RepeatIcon,
   Category as CategoryIcon,
-  PieChart as BudgetIcon,
-  Flag as GoalIcon,
-  EventNote as PlanningIcon,
   AutoAwesome as SparklesIcon,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,9 +26,6 @@ type ViewType =
   | "shared"
   | "recurring"
   | "categories"
-  | "budgets"
-  | "goals"
-  | "planning"
   | "nixai";
 
 interface OthersGridModalProps {
@@ -51,9 +45,6 @@ const gridItems: GridItem[] = [
   { id: "shared", label: "Shared", icon: PeopleIcon },
   { id: "recurring", label: "Recurring", icon: RepeatIcon },
   { id: "categories", label: "Categorias", icon: CategoryIcon },
-  { id: "budgets", label: "Budgets", icon: BudgetIcon },
-  { id: "goals", label: "Goals", icon: GoalIcon },
-  { id: "planning", label: "Planejamentos", icon: PlanningIcon },
 ];
 
 /**
