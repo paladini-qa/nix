@@ -242,12 +242,12 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
       initial="hidden"
       animate="visible"
       sx={{
-        // Previne overflow horizontal em telas pequenas
         width: "100%",
-        overflow: "hidden",
+        // overflow hidden aqui cortava as margens negativas do Grid e anulava o spacing
+        overflowX: "clip",
       }}
     >
-      <Grid container spacing={gridSpacing} sx={{ mx: 0, width: "100%" }}>
+      <Grid container columnSpacing={{ xs: 1.5, sm: 2, md: 2.5, lg: 3 }} rowSpacing={{ xs: 1.5, sm: 2, md: 2.5 }} sx={{ width: "100%" }}>
         {/* Monthly Flow Card - Fluxo do mês selecionado */}
         <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
           <MotionCard

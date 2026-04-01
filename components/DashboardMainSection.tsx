@@ -6,6 +6,7 @@ import {
   Button,
   IconButton,
   Tooltip,
+  Stack,
   useTheme,
 } from "@mui/material";
 import { Add as AddIcon, Refresh as RefreshIcon } from "@mui/icons-material";
@@ -84,7 +85,7 @@ const DashboardMainSection: React.FC<DashboardMainSectionProps> = ({
     advancedFilters.paymentMethods.length;
 
   return (
-    <>
+    <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
       <Box
         sx={{
           display: "flex",
@@ -217,7 +218,7 @@ const DashboardMainSection: React.FC<DashboardMainSectionProps> = ({
           advancedFilters={advancedFilters}
         />
       </Suspense>
-    </>
+    </Stack>
   );
 };
 
