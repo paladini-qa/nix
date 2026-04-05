@@ -156,6 +156,22 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           return; // Não gera a transação virtual para esta data
         }
 
+        // Não gerar virtual se já existe transação real neste mês para esta recorrência (evita duplicata após materialização)
+        const hasRealInTargetMonth = expenseOnlyTransactions.some(
+          (tx) =>
+            !tx.isVirtual &&
+            tx.paymentMethod === paymentMethod &&
+            getReportDate(tx).startsWith(
+              `${targetYear}-${String(targetMonth).padStart(2, "0")}`
+            ) &&
+            (tx.recurringGroupId === t.id ||
+              (tx.description === t.description &&
+                tx.category === t.category &&
+                Number(tx.amount) === Number(t.amount) &&
+                tx.type === t.type))
+        );
+        if (hasRealInTargetMonth) return;
+
         virtualTransactions.push({
           ...t,
           id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(

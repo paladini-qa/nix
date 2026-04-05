@@ -255,7 +255,20 @@ const SharedView: React.FC<SharedViewProps> = ({
           )}-${String(adjustedDay).padStart(2, "0")}`;
 
           const excludedDates = t.excludedDates || [];
-          if (!excludedDates.includes(virtualDate)) {
+          // Não gerar virtual se já existe transação real neste mês para esta recorrência (evita duplicata após materialização)
+          const hasRealInTargetMonth = transactions.some(
+            (tx) =>
+              !tx.isVirtual &&
+              getReportDate(tx).startsWith(
+                `${currentYear}-${String(currentMonth).padStart(2, "0")}`
+              ) &&
+              (tx.recurringGroupId === t.id ||
+                (tx.description === t.description &&
+                  tx.category === t.category &&
+                  Number(tx.amount) === Number(t.amount) &&
+                  tx.type === t.type))
+          );
+          if (!excludedDates.includes(virtualDate) && !hasRealInTargetMonth) {
             virtuals.push({
               ...t,
               id: `${t.id}_recurring_${currentYear}-${String(
