@@ -149,7 +149,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
         const hasRealInTargetMonth = transactions.some(
           (tx) =>
             !tx.isVirtual &&
-            tx.date?.startsWith(
+            getReportDate(tx).startsWith(
               `${targetYear}-${String(targetMonth).padStart(2, "0")}`
             ) &&
             (tx.recurringGroupId === t.id ||
