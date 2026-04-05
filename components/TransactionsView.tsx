@@ -1203,13 +1203,14 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               variant={showFilters ? "contained" : "outlined"}
               size="small"
               onClick={() => setShowFilters(!showFilters)}
-              startIcon={<FilterIcon sx={{ fontSize: isMobile ? 18 : 24 }} />}
+              startIcon={<FilterIcon sx={{ fontSize: isMobile ? 16 : 20 }} />}
               sx={{
-                borderRadius: isMobile ? "12px" : "20px",
+                borderRadius: isMobile ? "10px" : "20px",
                 minWidth: isMobile ? "auto" : 100,
-                height: isMobile ? 32 : 36,
+                height: isMobile ? 32 : 40,
                 px: isMobile ? 1 : 2,
-                fontSize: isMobile ? 13 : undefined,
+                fontSize: isMobile ? 12 : undefined,
+                flexShrink: 0,
                 "& .MuiButton-startIcon": { mr: isMobile ? 0.5 : 1 },
                 ...(activeFiltersCount > 0 &&
                   !showFilters && {
@@ -1226,9 +1227,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   color="primary"
                   sx={{
                     ml: isMobile ? 0.5 : 1,
-                    height: isMobile ? 18 : 20,
-                    minWidth: isMobile ? 18 : 20,
-                    fontSize: isMobile ? 11 : 11,
+                    height: 16,
+                    minWidth: 16,
+                    fontSize: 10,
+                    "& .MuiChip-label": { px: 0.5 },
                   }}
                 />
               )}
@@ -1242,19 +1244,20 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               compact={isMobile}
             />
 
-            {/* Refresh Button */}
-            {onRefreshData && (
+            {/* Refresh Button — apenas desktop; mobile usa pull-to-refresh */}
+            {onRefreshData && !isMobile && (
               <Tooltip title="Atualizar dados">
                 <IconButton
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                   size="small"
                   sx={{
-                    width: isMobile ? 32 : 40,
-                    height: isMobile ? 32 : 40,
+                    width: 40,
+                    height: 40,
+                    flexShrink: 0,
                     border: 1,
                     borderColor: "divider",
-                    borderRadius: isMobile ? "10px" : "20px",
+                    borderRadius: "20px",
                     transition: "all 0.2s ease-in-out",
                     "&:hover": {
                       borderColor: theme.palette.primary.main,
@@ -1265,7 +1268,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 >
                   <RefreshIcon
                     sx={{
-                      fontSize: isMobile ? 18 : 24,
+                      fontSize: 20,
                       animation: isRefreshing
                         ? "spin 1s linear infinite"
                         : "none",
@@ -1287,15 +1290,16 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               sx={{
                 width: isMobile ? 32 : 40,
                 height: isMobile ? 32 : 40,
+                flexShrink: 0,
                 border: 1,
                 borderColor: "divider",
                 borderRadius: isMobile ? "10px" : "20px",
               }}
             >
               {isExporting ? (
-                <CircularProgress size={isMobile ? 18 : 20} />
+                <CircularProgress size={14} />
               ) : (
-                <DownloadIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
+                <DownloadIcon sx={{ fontSize: isMobile ? 16 : 20 }} />
               )}
             </IconButton>
           </Box>

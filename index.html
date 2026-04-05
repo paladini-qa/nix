@@ -30,6 +30,24 @@
       }
     </style>
     <script>
+      // Aplica o tema antes do React renderizar para evitar flash branco (FOUC).
+      // Lê "themePreference" do localStorage — mesma chave usada pelo App.tsx.
+      (function() {
+        try {
+          var pref = localStorage.getItem('themePreference');
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var isDark = pref === 'dark' || (pref !== 'light' && prefersDark);
+          if (isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script>
       // Restaura o path codificado pelo 404.html para o React Router (GitHub Pages SPA fallback).
       // Ref: https://github.com/rafgraph/spa-github-pages
       (function() {

@@ -1,7 +1,7 @@
 # Design System - Nix Finance
 
-**Última atualização**: Fevereiro 2026  
-**Versão**: 2.1
+**Última atualização**: Abril 2026  
+**Versão**: 2.2
 
 ---
 
@@ -27,27 +27,99 @@ import "./radix-theme.css"; // Overrides Nix (purple accent, radius 20px, shadow
 
 Todos os componentes reutilizáveis estão em `components/radix/`:
 
-- **NixButton** – Botões com tamanhos contextuais (small 32px, medium 40px, large/fab 48–64px). Variants: `solid`, `soft`, `ghost`. Cores: `purple`, `gray`, `red`, `green`, `cyan`.
+- **NixButton** – Botões com tamanhos canônicos `sm` (32px), `md` (40px), `lg/fab` (48px). Aliases legados `small/medium/large` aceitos. Prop `loading` desabilita + `cursor: wait`. Hover: lift; active: sink; disabled: opacidade 0.45. Variants: `solid`, `soft`, `ghost`, `outline`, `surface`. Cores: `purple`, `gray`, `red`, `green`, `cyan`.
 - **NixCard** – Card com padding responsivo (24px desktop, 16px mobile), border-radius 20px, opção de glassmorphism e hover lift.
-- **NixInput** – Wrapper de `TextField.Root` com radius large (20px) e variant surface.
+- **NixInput** – Wrapper de `TextField.Root` com radius large (20px), suporte a `startAdornment`/`endAdornment` (via `TextField.Slot`) e `errorMessage` exibida inline abaixo do campo com cor de erro.
 - **Dialog** – Re-export de Radix Dialog; use `NixDialogContent` para fullscreen em mobile e padding 24px.
 - **Select** – Re-export de Radix Select; use `NixSelectTrigger` / `NixSelectContent` para radius 20px.
 - **EmptyState** – Componente unificado com ilustrações por tipo, animação flutuante e botão de ação consistente (size medium).
+
+### Usando NixInput com Adornamentos
+
+```tsx
+import NixInput from "@/components/radix/Input";
+import { Search as SearchIcon, Visibility as EyeIcon } from "@mui/icons-material";
+
+// Input com ícone de busca
+<NixInput
+  placeholder="Pesquisar..."
+  startAdornment={<SearchIcon fontSize="small" />}
+/>
+
+// Input com validação
+<NixInput
+  type="email"
+  placeholder="seu@email.com"
+  errorMessage="E-mail inválido"
+  endAdornment={<EyeIcon fontSize="small" />}
+/>
+```
+
+### Usando NixButton com Loading
+
+```tsx
+import NixButton from "@/components/radix/Button";
+
+<NixButton size="md" loading={isSubmitting} onClick={handleSave}>
+  Salvar
+</NixButton>
+
+// Tamanhos canônicos
+<NixButton size="sm">Pequeno</NixButton>
+<NixButton size="md">Médio</NixButton>
+<NixButton size="lg">Grande</NixButton>
+```
 
 ### Tamanhos de Botões (padrão em todas as telas)
 
 | Contexto | Tamanho | Altura | Uso |
 |----------|---------|--------|-----|
 | FAB (Adicionar) | `fab` | 64px | Adicionar principal em mobile |
-| Ação primária (footer de modal) | `medium` | 40px | Salvar, Confirmar |
-| Ação secundária (modal) | `medium` + variant `soft` | 40px | Cancelar, Voltar |
-| Ação em card | `small` | 32px | Editar, Excluir em cards |
+| Ação primária (footer de modal) | `md` | 40px | Salvar, Confirmar |
+| Ação secundária (modal) | `md` + variant `soft` | 40px | Cancelar, Voltar |
+| Ação em card | `sm` | 32px | Editar, Excluir em cards |
+| Ação grande/CTA | `lg` | 48px | CTA de destaque |
 | Icon button | Radix `IconButton` size="3" | 48px | Touch-friendly em header/nav |
+
+> **Nota**: os aliases `small/medium/large` também são aceitos para retrocompatibilidade.
 
 ### Tema Radix (Nix)
 
 - **Arquivo**: `radix-theme.css` – sobrescreve `--accent-9` (purple Nix), `--radius-5`/`--radius-6` (20px), sombras coloridas e classe `.nix-glass-panel`.
 - **App.tsx**: `<Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large" />`.
+
+---
+
+## 🎨 Tokens CSS (index.css)
+
+Todos os tokens ficam em `:root` no `index.css` e estão disponíveis via `var()` em qualquer contexto (MUI `sx`, Radix, CSS puro):
+
+### Tokens de Raio
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `--radius-card` | `20px` | Cards, Paper, modais |
+| `--radius-input` | `20px` | Inputs, Selects |
+| `--radius-button-sm` | `10px` | Botões pequenos |
+| `--radius-button-md` | `12px` | Botões médios |
+| `--radius-button-lg` | `14px` | Botões grandes |
+
+### Tokens de Sombra
+
+| Token | Uso |
+|-------|-----|
+| `--shadow-soft` | Sombra padrão de card (roxa suave) |
+| `--shadow-card` | Sombra de card em repouso |
+| `--shadow-elevated` | Sombra de elemento elevado (modal, dropdown) |
+| `--shadow-teal-soft` | Sombra teal para elementos de receita/sucesso |
+
+```tsx
+// Usando no sx do MUI
+<Paper sx={{ boxShadow: "var(--shadow-soft)", borderRadius: "var(--radius-card)" }}>
+
+// Usando em CSS
+.meu-card { box-shadow: var(--shadow-card); border-radius: var(--radius-card); }
+```
 
 ---
 

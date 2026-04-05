@@ -1,7 +1,7 @@
 # Documentação - Nix Finance
 
-**Última atualização**: Janeiro 2026  
-**Versão**: 2.0
+**Última atualização**: Abril 2026  
+**Versão**: 2.2
 
 ---
 
@@ -291,6 +291,41 @@ PLUGGY_CLIENT_SECRET=xxx
 
 ---
 
+## 🛡️ Modo Privacidade
+
+O modo de privacidade oculta valores monetários em ambientes públicos usando blur animado.
+
+- **Ativação**: Botão olho (Eye/EyeOff) no `MobileHeader` ou atalho `Alt+P`
+- **Persistência**: `localStorage` com chave `nix_privacy_mode`
+- **Efeito visual**: `filter: blur(8px)` com transição `cubic-bezier(0.4, 0, 0.2, 1)` de 0.3s para suavidade máxima — sem substituição abrupta de texto
+- **Variantes**: `privacyStyles` (blur 8px), `privacyStylesLight` (6px), `privacyStylesStrong` (12px)
+
+```tsx
+const { privacyStyles, privacyStylesStrong } = usePrivacyMode();
+
+// Aplica blur suave em qualquer elemento
+<Typography sx={privacyStyles}>{formatCurrency(amount)}</Typography>
+```
+
+---
+
+## 📊 DataTable Mobile
+
+O `DataTable` detecta automaticamente telas mobile (`md` breakpoint = 1024px) e alterna para o modo de cards:
+
+- Se `renderMobileCard` for fornecido → usa os cards customizados
+- Se não for fornecido → **auto-gera cards expansíveis** a partir das colunas: as 2 primeiras colunas ficam sempre visíveis, as demais ficam colapsáveis com botão de expand
+
+```tsx
+// Com renderMobileCard customizado
+<DataTable renderMobileCard={(row) => <MeuCard row={row} />} ... />
+
+// Sem renderMobileCard — auto-cards são gerados
+<DataTable columns={columns} data={data} ... />
+```
+
+---
+
 ## 📚 Documentação Adicional
 
 - **Design System**: `docs/design_system.md` - Guia completo de design
@@ -300,4 +335,4 @@ PLUGGY_CLIENT_SECRET=xxx
 ---
 
 **Mantido por**: Equipe Nix  
-**Versão**: 2.0
+**Versão**: 2.2

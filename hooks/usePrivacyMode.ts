@@ -28,11 +28,11 @@ export const usePrivacyMode = () => {
         ? {
             filter: "blur(8px)",
             userSelect: "none" as const,
-            transition: "filter 0.2s ease-in-out",
+            transition: "filter 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           }
         : {
-            filter: "none",
-            transition: "filter 0.2s ease-in-out",
+            filter: "blur(0px)",
+            transition: "filter 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           },
     [isPrivacyMode]
   );
@@ -44,11 +44,11 @@ export const usePrivacyMode = () => {
         ? {
             filter: "blur(6px)",
             userSelect: "none" as const,
-            transition: "filter 0.2s ease-in-out",
+            transition: "filter 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           }
         : {
-            filter: "none",
-            transition: "filter 0.2s ease-in-out",
+            filter: "blur(0px)",
+            transition: "filter 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           },
     [isPrivacyMode]
   );
@@ -60,11 +60,11 @@ export const usePrivacyMode = () => {
         ? {
             filter: "blur(12px)",
             userSelect: "none" as const,
-            transition: "filter 0.2s ease-in-out",
+            transition: "filter 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           }
         : {
-            filter: "none",
-            transition: "filter 0.2s ease-in-out",
+            filter: "blur(0px)",
+            transition: "filter 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           },
     [isPrivacyMode]
   );

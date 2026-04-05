@@ -54,6 +54,21 @@
   
   /* Noise texture opacity */
   --nix-noise-opacity: 0.02;
+
+  /* ============================================
+     DESIGN TOKENS — Radius, Shadow, Spacing
+     Usados em MUI (sx) e Radix via CSS vars
+     ============================================ */
+  --radius-card: 20px;
+  --radius-input: 20px;
+  --radius-button-sm: 10px;
+  --radius-button-md: 12px;
+  --radius-button-lg: 14px;
+
+  --shadow-soft: 0 10px 40px -10px rgba(157, 78, 221, 0.12);
+  --shadow-card: 0 8px 32px -8px rgba(157, 78, 221, 0.10);
+  --shadow-elevated: 0 20px 60px -15px rgba(157, 78, 221, 0.20);
+  --shadow-teal-soft: 0 10px 40px -10px rgba(0, 212, 255, 0.12);
 }
 
 /* Dark mode variables - Design System Black & Purple */
@@ -110,7 +125,7 @@ body {
   background-color: var(--nix-bg-base);
   min-height: 100vh;
   position: relative;
-  transition: background-color 0.4s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
   overflow-x: hidden;
 }
 
@@ -942,23 +957,46 @@ body.sheet-open {
   box-shadow: 0 0 0 2px var(--nix-bg-base), 0 0 0 4px var(--nix-purple-glow);
 }
 
+/* Botões — alturas canônicas: sm=32px, md=40px, lg=48px */
 .nix-button {
   min-height: 40px;
   font-weight: 600;
 }
 
+.nix-button--sm,
 .nix-button--small {
   min-height: 32px;
 }
 
+.nix-button--lg,
 .nix-button--large,
 .nix-button--fab {
   min-height: 48px;
 }
 
+/* Estado hover: leve elevação */
+.nix-button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+/* Estado active: leve sink */
+.nix-button:not(:disabled):active {
+  transform: translateY(0px) scale(0.98);
+}
+
+/* Estado disabled: opacidade e cursor */
+.nix-button:disabled,
+.rt-Button:disabled,
+[class*="rt-Button"]:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
 .nix-elevated-surface {
   border: 1px solid var(--nix-glass-border);
-  box-shadow: 0 10px 30px -20px var(--nix-purple-glow);
+  box-shadow: var(--shadow-soft);
 }
 
 .nix-card--hover:hover {
@@ -966,10 +1004,18 @@ body.sheet-open {
   box-shadow: 0 14px 36px -20px var(--nix-purple-glow);
 }
 
+/* Input padrão */
 .nix-input,
 .nix-select-content {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+/* Input em estado de erro */
+.nix-input--error .rt-TextFieldRoot,
+.nix-input--error {
+  --accent-9: var(--red-9) !important;
+  box-shadow: inset 0 0 0 1.5px var(--nix-error) !important;
 }
 
 @media (max-width: 768px) {

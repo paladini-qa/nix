@@ -353,7 +353,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
   };
 
   return (
-    <PageTransition transitionKey={transitionKey} type="slideUp" duration={0.22} mode="sync">
+    <PageTransition transitionKey={transitionKey} type="slideLeft" duration={0.2} mode="sync">
       {renderView()}
     </PageTransition>
   );

@@ -9,6 +9,39 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added - Abril 2026
+
+#### UI/UX Overhaul — 4 Fases de Modernização
+
+##### Fase 1: Padronização do Design System
+- **NixInput enriquecido** — Suporte a `startAdornment`, `endAdornment` (ReactNode/ícone) e `errorMessage` com exibição inline abaixo do campo
+- **NixButton padronizado** — Aliases canônicos `sm/md/lg` além dos legados (`small/medium/large`); prop `loading` que desabilita o botão e aplica `cursor: wait`; estados hover (lift), active (sink) e disabled (opacidade 0.45) uniformes
+- **Tokens CSS ampliados em `index.css`** — Novos tokens de raio (`--radius-card`, `--radius-input`, `--radius-button-*`) e sombra (`--shadow-soft`, `--shadow-card`, `--shadow-elevated`, `--shadow-teal-soft`) disponíveis para MUI (`sx`) e Radix
+- **Arquivos modificados**: `components/radix/Input.tsx`, `components/radix/Button.tsx`, `index.css`
+
+##### Fase 2: Estilização Moderna e Fluida
+- **SmartInputFAB** — Overlay com `backdrop-filter: blur(4px)` + fundo semi-transparente quando o SpeedDial abre; fechar clicando no overlay
+- **MobileHeader** — Glassmorphism migrado para variáveis CSS (`--nix-glass-bg`, `--nix-glass-border`, `--nix-glass-blur`); `paddingTop: env(safe-area-inset-top)` para safe area nativa
+- **AppViewSwitcher** — Transição de navegação trocada de `slideUp` para `slideLeft` (efeito lateral app-like)
+- **Modo Privacidade** — Blur animado com curva `cubic-bezier(0.4, 0, 0.2, 1)` e duração 0.3s; transição usa `filter: blur(0px)` → `blur(8px)` em vez de `filter: none` para interpolação suave
+- **TransactionsSkeleton** — Reescrito para espelhar exatamente o layout do `TransactionTable`: mobile (cards 44px + linha dupla de texto + chip) e desktop (grid 5 colunas + barra de progresso)
+- **Arquivos modificados**: `components/SmartInputFAB.tsx`, `components/layout/MobileHeader.tsx`, `components/AppViewSwitcher.tsx`, `hooks/usePrivacyMode.ts`, `components/skeletons/TransactionsSkeleton.tsx`
+
+##### Fase 3: Apresentação de Dados
+- **DataTable** — Auto-cards expansíveis em mobile quando `renderMobileCard` não é fornecido: mostra coluna primária + secundária sempre visíveis, demais colunas colapsáveis com ícone expand
+- **AnalyticsView** — Tooltips Recharts com `wrapperStyle={{ zIndex: 9999 }}`, `allowEscapeViewBox={{ x: true, y: true }}` e `cursor` touch-friendly; tooltips inline também atualizados
+- **useCurrency** — Novo retorno `noWrapStyle: { whiteSpace: "nowrap" }` para aplicar onde valores são exibidos; `SwipeableTransactionCard` atualizado para usá-lo
+- **Arquivos modificados**: `components/DataTable.tsx`, `components/AnalyticsView.tsx`, `hooks/useCurrency.ts`, `components/SwipeableTransactionCard.tsx`
+
+##### Fase 4: Correções Técnicas
+- **TransactionTable** — Wrapper `<Box position="relative">` + `TableContainer` com `overflowX: "auto"` e gradientes `::before`/`::after` nas bordas para indicar scroll horizontal
+- **Anti-flash de tema** — Script inline no `<head>` do `index.html` que lê `localStorage.themePreference` antes do React hidratar e aplica `data-theme`/classe `dark`; `body` agora transiciona `background-color` e `color` em 0.3s
+- **SmartInputModal** — `window.visualViewport` listener (`resize` + `scroll`) detecta teclado virtual e ajusta `marginBottom` do `PaperProps` dinamicamente com transição suave
+- **useTransactions** — Adicionados `transactionsById` (Map para O(1) lookup), `incomeTransactions` e `expenseTransactions` como valores memoizados para evitar re-filtragem nos consumidores
+- **Arquivos modificados**: `components/TransactionTable.tsx`, `index.html`, `index.css`, `components/SmartInputModal.tsx`, `hooks/useTransactions.ts`
+
+---
+
 ### Added - Janeiro 2026
 
 #### Open Finance com Pluggy

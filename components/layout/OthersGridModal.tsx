@@ -16,6 +16,7 @@ import {
   Repeat as RepeatIcon,
   Category as CategoryIcon,
   AutoAwesome as SparklesIcon,
+  PlaylistAdd as BatchIcon,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -26,7 +27,8 @@ type ViewType =
   | "shared"
   | "recurring"
   | "categories"
-  | "nixai";
+  | "nixai"
+  | "batchRegistration";
 
 interface OthersGridModalProps {
   open: boolean;
@@ -42,9 +44,10 @@ interface GridItem {
 
 const gridItems: GridItem[] = [
   { id: "splits", label: "Splits", icon: CreditCardIcon },
-  { id: "shared", label: "Shared", icon: PeopleIcon },
-  { id: "recurring", label: "Recurring", icon: RepeatIcon },
+  { id: "shared", label: "Divididos", icon: PeopleIcon },
+  { id: "recurring", label: "Recorrentes", icon: RepeatIcon },
   { id: "categories", label: "Categorias", icon: CategoryIcon },
+  { id: "batchRegistration", label: "Cadastro em Lote", icon: BatchIcon },
 ];
 
 /**
@@ -146,11 +149,11 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
             </Box>
 
             {/* Grid */}
-            <Grid container spacing={2.5} sx={{ mb: 3 }}>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
               {gridItems.map((item, index) => {
                 const IconComponent = item.icon;
                 return (
-                  <Grid size={{ xs: 4 }} key={item.id}>
+                  <Grid size={{ xs: 6, sm: 4 }} key={item.id}>
                     <MotionBox
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -167,28 +170,34 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                         justifyContent: "center",
                         gap: 1,
                         p: 2,
-                        borderRadius: 1,
-                        bgcolor: theme.palette.primary.main,
-                        color: "white",
+                        borderRadius: "16px",
+                        bgcolor: isDarkMode
+                          ? alpha(theme.palette.primary.main, 0.15)
+                          : alpha(theme.palette.primary.main, 0.08),
+                        color: theme.palette.primary.main,
+                        border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.15)}`,
                         cursor: "pointer",
                         transition: "all 0.2s ease-in-out",
-                        minHeight: 100,
+                        minHeight: 90,
                         "&:hover": {
-                          transform: "translateY(-4px)",
+                          bgcolor: isDarkMode
+                            ? alpha(theme.palette.primary.main, 0.25)
+                            : alpha(theme.palette.primary.main, 0.14),
+                          transform: "translateY(-3px)",
                           boxShadow: `0 8px 24px -4px ${alpha(
                             theme.palette.primary.main,
-                            0.4
+                            0.25
                           )}`,
                         },
                         "&:active": {
-                          transform: "translateY(-2px) scale(0.98)",
+                          transform: "translateY(-1px) scale(0.97)",
                         },
                       }}
                     >
                       <IconComponent
                         sx={{
-                          fontSize: 32,
-                          color: "white",
+                          fontSize: 28,
+                          color: theme.palette.primary.main,
                         }}
                       />
                       <Typography
@@ -196,8 +205,9 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                         sx={{
                           fontWeight: 600,
                           textAlign: "center",
-                          color: "white",
-                          fontSize: "0.75rem",
+                          color: theme.palette.primary.main,
+                          fontSize: "0.7rem",
+                          lineHeight: 1.2,
                         }}
                       >
                         {item.label}
@@ -220,19 +230,19 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                 startIcon={<SparklesIcon />}
                 sx={{
                   py: 1.5,
-                  borderRadius: 1,
-                  bgcolor: theme.palette.primary.main,
+                  borderRadius: "16px",
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main ?? theme.palette.primary.dark})`,
                   color: "white",
-                  fontWeight: 600,
+                  fontWeight: 700,
                   textTransform: "none",
                   fontSize: "1rem",
+                  boxShadow: `0 4px 16px -4px ${alpha(theme.palette.primary.main, 0.4)}`,
                   transition: "all 0.2s ease-in-out",
                   "&:hover": {
-                    bgcolor: theme.palette.primary.dark,
                     transform: "translateY(-2px)",
                     boxShadow: `0 8px 24px -4px ${alpha(
                       theme.palette.primary.main,
-                      0.4
+                      0.5
                     )}`,
                   },
                   "&:active": {
@@ -240,7 +250,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                   },
                 }}
               >
-                NixAI
+                NixAI — Análise Inteligente
               </Button>
             </MotionBox>
           </MotionBox>

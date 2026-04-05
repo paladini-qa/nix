@@ -259,28 +259,34 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
       sx={{
         display: "flex",
         flexDirection: "column",
-        height: isMobile ? "calc(100vh - 140px)" : "calc(100vh - 100px)",
+        // No mobile: ocupa tela inteira menos header (64px) e nav bottom (80px) + safe area
+        height: isMobile
+          ? "calc(100dvh - 64px - 80px - env(safe-area-inset-bottom, 0px))"
+          : "calc(100vh - 100px)",
         maxWidth: 900,
         mx: "auto",
         width: "100%",
-        px: isMobile ? 2 : 3,
-        py: 2,
+        px: isMobile ? 1.5 : 3,
+        pt: isMobile ? 1.5 : 2,
+        pb: 0,
         overflow: "hidden",
       }}
     >
-      <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5 }}>
-        Cadastro em lote
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Envie texto, foto de recibo ou áudio. A IA extrai as transações para você
-        revisar, editar ou remover linhas antes de confirmar.
-      </Typography>
+      {/* Cabeçalho */}
+      <Box sx={{ px: isMobile ? 0.5 : 0, mb: isMobile ? 1 : 1.5 }}>
+        <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={700} sx={{ mb: 0.25 }}>
+          Cadastro em lote
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: isMobile ? 12 : 14 }}>
+          Envie texto, foto ou áudio — a IA extrai as transações para você revisar antes de salvar.
+        </Typography>
+      </Box>
 
       <Collapse in={!!successMessage}>
         <Alert
           severity="success"
           onClose={() => setSuccessMessage(null)}
-          sx={{ borderRadius: "14px", mb: 2 }}
+          sx={{ borderRadius: "14px", mb: 1.5 }}
         >
           {successMessage}
         </Alert>
@@ -290,13 +296,22 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
         <Alert
           severity="error"
           onClose={() => setSmartInputError(null)}
-          sx={{ borderRadius: "14px", mb: 2 }}
+          sx={{ borderRadius: "14px", mb: 1.5 }}
         >
           {smartInputError}
         </Alert>
       </Collapse>
 
-      <Box sx={{ flex: 1, overflow: "auto", pb: 2 }}>
+      {/* Área de conteúdo scrollável */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          overflowX: "hidden",
+          pb: 2,
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
         <AnimatePresence>
           {pendingBatch && pendingBatch.length > 0 && onTransactionCreate && (
             <BatchTransactionTable
@@ -317,14 +332,36 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
         )}
 
         {!pendingBatch && !isLoading && (
-          <Typography variant="body2" color="text.disabled" sx={{ py: 2 }}>
-            Nenhum lote carregado. Use o campo abaixo para enviar texto, imagem ou
-            áudio.
-          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              py: 6,
+              gap: 1,
+              color: "text.disabled",
+            }}
+          >
+            <Typography variant="body2" textAlign="center">
+              Nenhum lote carregado.
+            </Typography>
+            <Typography variant="caption" textAlign="center">
+              Use o campo abaixo para enviar texto, imagem ou áudio.
+            </Typography>
+          </Box>
         )}
       </Box>
 
-      <Box sx={{ pt: 1 }}>
+      {/* Input bar — fixo no fundo, não scrollável */}
+      <Box
+        sx={{
+          pt: 1,
+          pb: isMobile ? 0.5 : 0,
+          borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.04)}`,
+          flexShrink: 0,
+        }}
+      >
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp"

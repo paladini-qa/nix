@@ -86,6 +86,24 @@ const SmartInputFAB: React.FC<SmartInputFABProps> = ({
 
   return (
     <>
+      {/* Overlay com blur quando o SpeedDial está aberto */}
+      {isOpen && (
+        <Box
+          onClick={() => setIsOpen(false)}
+          sx={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1049,
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+            backgroundColor: isDarkMode
+              ? alpha("#0A0A0A", 0.35)
+              : alpha("#F4F4F9", 0.35),
+            transition: "opacity 0.2s ease",
+          }}
+        />
+      )}
+
       <Box
         sx={{
           position: "fixed",

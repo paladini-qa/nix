@@ -132,6 +132,35 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // VisualViewport: ajusta padding inferior do Dialog quando teclado virtual sobe
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  useEffect(() => {
+    if (!isMobile || !open) {
+      setKeyboardOffset(0);
+      return;
+    }
+
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const handleViewportResize = () => {
+      const windowHeight = window.innerHeight;
+      const viewportHeight = vv.height;
+      // Diferença é o espaço ocupado pelo teclado
+      const offset = Math.max(0, windowHeight - viewportHeight - (vv.offsetTop || 0));
+      setKeyboardOffset(offset);
+    };
+
+    vv.addEventListener("resize", handleViewportResize);
+    vv.addEventListener("scroll", handleViewportResize);
+
+    return () => {
+      vv.removeEventListener("resize", handleViewportResize);
+      vv.removeEventListener("scroll", handleViewportResize);
+    };
+  }, [isMobile, open]);
+
   // Reset ao abrir/fechar modal
   useEffect(() => {
     if (open) {
@@ -807,6 +836,11 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
           boxShadow: isDarkMode
             ? `0 24px 80px -20px ${alpha("#000000", 0.6)}`
             : `0 24px 80px -20px ${alpha(theme.palette.primary.main, 0.2)}`,
+          // Empurra o Paper para cima quando o teclado virtual estiver visível
+          ...(isMobile && keyboardOffset > 0 && {
+            marginBottom: `${keyboardOffset}px`,
+            transition: "margin-bottom 0.2s ease",
+          }),
         },
       }}
       slotProps={{

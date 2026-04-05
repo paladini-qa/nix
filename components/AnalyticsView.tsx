@@ -473,7 +473,14 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       color: isDarkMode ? "#fff" : "#1e293b",
       boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)",
       backdropFilter: "blur(8px)",
+      fontSize: "13px",
+      padding: "10px 14px",
     },
+    // Evita que o tooltip seja cortado nas bordas da tela
+    wrapperStyle: { zIndex: 9999 },
+    // Área de cursor touch-friendly
+    cursor: { strokeWidth: 2 },
+    allowEscapeViewBox: { x: true, y: true },
   };
 
   const SectionHeader: React.FC<{ icon: React.ReactNode; title: string }> = ({
@@ -723,6 +730,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 }}
                 labelStyle={{ color: theme.palette.text.primary, fontWeight: 600, marginBottom: 4 }}
                 itemStyle={{ padding: "2px 0" }}
+                wrapperStyle={{ zIndex: 9999 }}
+                allowEscapeViewBox={{ x: true, y: true }}
               />
               <Legend 
                 content={() => (
@@ -860,6 +869,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                     </div>
                   );
                 }}
+                wrapperStyle={{ zIndex: 9999 }}
+                allowEscapeViewBox={{ x: true, y: true }}
               />
               {/* Linha de referência vertical para o mês atual */}
               {balanceEvolution.find(d => d.isCurrentMonth) && (

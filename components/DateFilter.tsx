@@ -60,12 +60,16 @@ const DateFilter: React.FC<DateFilterProps> = ({
     onDateChange(newDate.month(), newDate.year());
   };
 
+  // Tamanho base dos botões: 32px no compacto, 40px no normal
+  const btnSize = useCompactStyle ? 32 : 40;
+  const iconSize = useCompactStyle ? 16 : 22;
+
   const filterContent = (
     <Box
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: useCompactStyle ? 0.25 : 0.5,
+        gap: useCompactStyle ? 0.5 : 0.5,
         opacity: disabled ? 0.5 : 1,
         transition: "opacity 0.2s ease-in-out",
         minWidth: 0,
@@ -76,9 +80,10 @@ const DateFilter: React.FC<DateFilterProps> = ({
         size="small"
         disabled={disabled}
         sx={{
-          width: useCompactStyle ? 28 : 40,
-          height: useCompactStyle ? 28 : 40,
-          minWidth: useCompactStyle ? 28 : 40,
+          width: btnSize,
+          height: btnSize,
+          minWidth: btnSize,
+          flexShrink: 0,
           border: 1,
           borderColor: "divider",
           borderRadius: useCompactStyle ? "10px" : "20px",
@@ -89,7 +94,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
           },
         }}
       >
-        <ChevronLeftIcon sx={{ fontSize: useCompactStyle ? 16 : 24 }} />
+        <ChevronLeftIcon sx={{ fontSize: iconSize }} />
       </IconButton>
 
       <DatePicker
@@ -98,22 +103,34 @@ const DateFilter: React.FC<DateFilterProps> = ({
         value={selectedDate}
         onChange={handleDateChange}
         disabled={disabled}
-        format={useCompactStyle ? "MMM YYYY" : "MMMM YYYY"}
+        format={useCompactStyle ? "MMM/YYYY" : "MMMM YYYY"}
         slotProps={{
           textField: {
             size: "small",
             sx: {
-              minWidth: useCompactStyle ? 88 : 200,
-              maxWidth: useCompactStyle ? 120 : undefined,
+              // Largura calculada para "MMM/YYYY" + ícone reduzido
+              minWidth: useCompactStyle ? 126 : 200,
+              maxWidth: useCompactStyle ? 148 : undefined,
               "& .MuiOutlinedInput-root": {
                 borderRadius: useCompactStyle ? "10px" : "20px",
-                height: useCompactStyle ? 28 : 40,
+                height: btnSize,
               },
               "& .MuiOutlinedInput-input": {
-                fontSize: useCompactStyle ? 12 : 16,
+                fontSize: useCompactStyle ? 12 : 15,
+                fontWeight: useCompactStyle ? 600 : 400,
                 textAlign: "center",
-                py: useCompactStyle ? 0.5 : 1,
+                py: 0,
                 px: useCompactStyle ? 0.5 : 1,
+              },
+              // Reduz tamanho do botão do calendário para não engolir o texto
+              "& .MuiInputAdornment-root": {
+                marginLeft: 0,
+              },
+              "& .MuiInputAdornment-root .MuiIconButton-root": {
+                padding: useCompactStyle ? "3px" : "8px",
+              },
+              "& .MuiInputAdornment-root .MuiIconButton-root svg": {
+                fontSize: useCompactStyle ? 14 : 20,
               },
             },
           },
@@ -125,9 +142,10 @@ const DateFilter: React.FC<DateFilterProps> = ({
         size="small"
         disabled={disabled}
         sx={{
-          width: useCompactStyle ? 28 : 40,
-          height: useCompactStyle ? 28 : 40,
-          minWidth: useCompactStyle ? 28 : 40,
+          width: btnSize,
+          height: btnSize,
+          minWidth: btnSize,
+          flexShrink: 0,
           border: 1,
           borderColor: "divider",
           borderRadius: useCompactStyle ? "10px" : "20px",
@@ -138,7 +156,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
           },
         }}
       >
-        <ChevronRightIcon sx={{ fontSize: useCompactStyle ? 16 : 24 }} />
+        <ChevronRightIcon sx={{ fontSize: iconSize }} />
       </IconButton>
     </Box>
   );

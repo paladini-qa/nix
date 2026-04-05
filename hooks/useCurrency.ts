@@ -94,6 +94,8 @@ export function useCurrency(options: CurrencyOptions = {}) {
     currencySymbol,
     locale: mergedOptions.locale,
     currency: mergedOptions.currency,
+    /** Aplique em sx/style para evitar que símbolo e valor quebrem em linhas diferentes */
+    noWrapStyle: { whiteSpace: "nowrap" as const },
   };
 }
 

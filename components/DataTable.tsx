@@ -19,10 +19,14 @@ import {
   Stack,
   Chip,
   Button,
+  Divider,
+  IconButton,
 } from "@mui/material";
 import {
   FilterList as FilterIcon,
   UnfoldMore as UnsortedIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from "@mui/icons-material";
 import SearchBar from "./SearchBar";
 import EmptyState from "./EmptyState";
@@ -263,6 +267,92 @@ function DataTable<T>({
     return row[column.accessor] as React.ReactNode;
   };
 
+  // Auto-card expandível para mobile quando renderMobileCard não é fornecido
+  const AutoMobileCard: React.FC<{ row: T; index: number }> = ({ row, index }) => {
+    const [expanded, setExpanded] = useState(false);
+    const primaryCol = visibleColumns[0];
+    const secondaryCol = visibleColumns[1];
+    const restCols = visibleColumns.slice(2);
+
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: "16px",
+          border: `1px solid ${isDarkMode ? alpha("#FFF", 0.08) : alpha("#000", 0.06)}`,
+          bgcolor: isDarkMode
+            ? alpha(theme.palette.background.paper, 0.6)
+            : alpha("#FFF", 0.9),
+          overflow: "hidden",
+          transition: "box-shadow 0.2s ease",
+          "&:hover": {
+            boxShadow: isDarkMode
+              ? `0 4px 16px -4px ${alpha("#000", 0.4)}`
+              : `0 4px 16px -4px ${alpha(theme.palette.primary.main, 0.12)}`,
+          },
+        }}
+      >
+        {/* Linha principal — sempre visível */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 2,
+            py: 1.5,
+            cursor: restCols.length > 0 ? "pointer" : "default",
+          }}
+          onClick={() => restCols.length > 0 && setExpanded((v) => !v)}
+        >
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            {primaryCol && (
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                noWrap
+                sx={{ mb: secondaryCol ? 0.25 : 0 }}
+              >
+                {renderCell(row, primaryCol, index)}
+              </Typography>
+            )}
+            {secondaryCol && (
+              <Typography variant="caption" color="text.secondary" component="div">
+                {renderCell(row, secondaryCol, index)}
+              </Typography>
+            )}
+          </Box>
+          {restCols.length > 0 && (
+            <IconButton size="small" sx={{ ml: 1, flexShrink: 0, color: "text.disabled" }}>
+              {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            </IconButton>
+          )}
+        </Box>
+
+        {/* Detalhes expandíveis */}
+        {restCols.length > 0 && (
+          <Collapse in={expanded}>
+            <Divider sx={{ borderColor: isDarkMode ? alpha("#FFF", 0.06) : alpha("#000", 0.06) }} />
+            <Box sx={{ px: 2, py: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
+              {restCols.map((col) => (
+                <Box
+                  key={col.id}
+                  sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}
+                >
+                  <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>
+                    {col.label}
+                  </Typography>
+                  <Typography variant="body2" color="text.primary" sx={{ textAlign: "right" }}>
+                    {renderCell(row, col, index)}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Collapse>
+        )}
+      </Paper>
+    );
+  };
+
   // Estilos de header
   const headerCellSx = {
     fontWeight: 600,
@@ -405,13 +495,31 @@ function DataTable<T>({
 
       {/* Tabela ou Cards Mobile */}
       {isMobile && renderMobileCard ? (
-        // Vista mobile em cards
+        // Vista mobile em cards fornecidos externamente
         <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
           {paginatedData.length > 0 ? (
             paginatedData.map((row, index) => (
               <React.Fragment key={keyExtractor(row)}>
                 {renderMobileCard(row, index)}
               </React.Fragment>
+            ))
+          ) : (
+            <Box sx={{ py: 6, textAlign: "center" }}>
+              {emptyIcon && (
+                <Box sx={{ mb: 2, color: "text.disabled" }}>{emptyIcon}</Box>
+              )}
+              <Typography color="text.secondary" fontStyle="italic">
+                {emptyMessage}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      ) : isMobile && !renderMobileCard ? (
+        // Vista mobile com auto-cards expansíveis gerados das colunas
+        <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {paginatedData.length > 0 ? (
+            paginatedData.map((row, index) => (
+              <AutoMobileCard key={keyExtractor(row)} row={row} index={index} />
             ))
           ) : (
             <Box sx={{ py: 6, textAlign: "center" }}>

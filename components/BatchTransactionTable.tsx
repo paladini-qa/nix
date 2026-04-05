@@ -19,13 +19,22 @@ import {
   Select,
   MenuItem,
   FormControl,
+  InputLabel,
+  InputAdornment,
   Tooltip,
+  Collapse,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import {
   Check as CheckIcon,
   Close as CloseIcon,
   Delete as DeleteIcon,
   WarningAmber as WarningIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  TrendingDown as ExpenseIcon,
+  TrendingUp as IncomeIcon,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import { ParsedTransaction, TransactionType } from "../types";
@@ -94,6 +103,285 @@ function rowNeedsAttention(row: EditableBatchRow): boolean {
   return lowConfidence || missingAmount;
 }
 
+// ─── Mobile Card Component ────────────────────────────────────────────────────
+
+interface MobileBatchRowProps {
+  row: EditableBatchRow;
+  index: number;
+  categories: { income: string[]; expense: string[] };
+  paymentMethods: string[];
+  requireAmount: boolean;
+  onUpdate: (field: keyof EditableBatchRow, value: string | number | null) => void;
+  onRemove: () => void;
+}
+
+const MobileBatchRow: React.FC<MobileBatchRowProps> = ({
+  row,
+  categories,
+  paymentMethods,
+  requireAmount,
+  onUpdate,
+  onRemove,
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+  const needsAttention = rowNeedsAttention(row);
+  const isIncome = row.type === "income";
+
+  const formattedDate = row.date
+    ? new Date(row.date + "T00:00:00").toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+      })
+    : "—";
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: "16px",
+        overflow: "hidden",
+        border: `1px solid ${
+          needsAttention
+            ? alpha(theme.palette.warning.main, 0.4)
+            : isDarkMode
+            ? alpha("#FFFFFF", 0.08)
+            : alpha("#000000", 0.06)
+        }`,
+        bgcolor: needsAttention
+          ? alpha(theme.palette.warning.main, isDarkMode ? 0.06 : 0.03)
+          : isDarkMode
+          ? alpha("#FFFFFF", 0.04)
+          : "#FFFFFF",
+        transition: "all 0.2s ease",
+      }}
+    >
+      {/* Barra lateral colorida de tipo */}
+      <Box sx={{ display: "flex" }}>
+        <Box
+          sx={{
+            width: 4,
+            flexShrink: 0,
+            bgcolor: isIncome ? "success.main" : "error.main",
+            borderRadius: "4px 0 0 4px",
+          }}
+        />
+
+        <Box sx={{ flex: 1, p: 1.5 }}>
+          {/* Linha 1: Descrição + botão excluir */}
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, mb: 1 }}>
+            <TextField
+              size="small"
+              fullWidth
+              value={row.description}
+              onChange={(e) => onUpdate("description", e.target.value)}
+              placeholder="Descrição"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "10px",
+                  fontSize: 14,
+                },
+              }}
+            />
+            <IconButton
+              size="small"
+              onClick={onRemove}
+              sx={{
+                color: "text.secondary",
+                flexShrink: 0,
+                mt: 0.25,
+                "&:hover": { color: "error.main" },
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          {/* Linha 2: Valor + Tipo */}
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 0.5 }}>
+            <TextField
+              size="small"
+              type="number"
+              value={row.amount ?? ""}
+              onChange={(e) =>
+                onUpdate("amount", e.target.value === "" ? null : e.target.value)
+              }
+              placeholder="0,00"
+              error={requireAmount && (row.amount == null || row.amount <= 0)}
+              inputProps={{ min: 0, step: 0.01 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                      R$
+                    </Typography>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                width: 130,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "10px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: isIncome ? "success.main" : "error.main",
+                },
+              }}
+            />
+
+            <ToggleButtonGroup
+              value={row.type}
+              exclusive
+              size="small"
+              onChange={(_, v) => v && onUpdate("type", v)}
+              sx={{ height: 36, flex: 1 }}
+            >
+              <ToggleButton
+                value="expense"
+                sx={{
+                  flex: 1,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  textTransform: "none",
+                  borderRadius: "10px 0 0 10px !important",
+                  "&.Mui-selected": {
+                    bgcolor: alpha(theme.palette.error.main, 0.12),
+                    color: "error.main",
+                    borderColor: alpha(theme.palette.error.main, 0.3),
+                  },
+                }}
+              >
+                <ExpenseIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                Despesa
+              </ToggleButton>
+              <ToggleButton
+                value="income"
+                sx={{
+                  flex: 1,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  textTransform: "none",
+                  borderRadius: "0 10px 10px 0 !important",
+                  "&.Mui-selected": {
+                    bgcolor: alpha(theme.palette.success.main, 0.12),
+                    color: "success.main",
+                    borderColor: alpha(theme.palette.success.main, 0.3),
+                  },
+                }}
+              >
+                <IncomeIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                Receita
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+
+          {/* Linha 3: Resumo / botão expandir */}
+          <Box
+            onClick={() => setExpanded(!expanded)}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              cursor: "pointer",
+              py: 0.5,
+              px: 0.5,
+              borderRadius: "8px",
+              color: "text.secondary",
+              transition: "all 0.15s ease",
+              "&:hover": {
+                bgcolor: isDarkMode ? alpha("#FFFFFF", 0.04) : alpha("#000000", 0.03),
+              },
+            }}
+          >
+            <Typography variant="caption" sx={{ fontSize: 11, lineHeight: 1.3 }}>
+              {expanded
+                ? "Menos detalhes"
+                : `${row.category} · ${row.paymentMethod} · ${formattedDate}`}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              {row.confidence !== undefined && (
+                <Chip
+                  size="small"
+                  label={`IA ${Math.round(row.confidence * 100)}%`}
+                  color={row.confidence < CONFIDENCE_LOW ? "warning" : "default"}
+                  sx={{ height: 18, fontSize: 9, "& .MuiChip-label": { px: 0.75 } }}
+                />
+              )}
+              {expanded ? (
+                <ExpandLessIcon sx={{ fontSize: 16 }} />
+              ) : (
+                <ExpandMoreIcon sx={{ fontSize: 16 }} />
+              )}
+            </Box>
+          </Box>
+
+          {/* Expansão: categoria, pagamento, data */}
+          <Collapse in={expanded}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 1.25,
+                mt: 1.25,
+                pt: 1.25,
+                borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.05)}`,
+              }}
+            >
+              <FormControl size="small" fullWidth>
+                <InputLabel sx={{ fontSize: 13 }}>Categoria</InputLabel>
+                <Select
+                  value={row.category}
+                  onChange={(e) => onUpdate("category", e.target.value)}
+                  label="Categoria"
+                  sx={{ fontSize: 13, borderRadius: "10px" }}
+                >
+                  {(isIncome ? categories.income : categories.expense).map((c) => (
+                    <MenuItem key={c} value={c} sx={{ fontSize: 13 }}>
+                      {c}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" fullWidth>
+                <InputLabel sx={{ fontSize: 13 }}>Pagamento</InputLabel>
+                <Select
+                  value={row.paymentMethod}
+                  onChange={(e) => onUpdate("paymentMethod", e.target.value)}
+                  label="Pagamento"
+                  sx={{ fontSize: 13, borderRadius: "10px" }}
+                >
+                  {paymentMethods.map((m) => (
+                    <MenuItem key={m} value={m} sx={{ fontSize: 13 }}>
+                      {m}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <TextField
+                size="small"
+                type="date"
+                value={row.date}
+                onChange={(e) => onUpdate("date", e.target.value)}
+                label="Data"
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+                sx={{
+                  "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: 13 },
+                }}
+              />
+            </Box>
+          </Collapse>
+        </Box>
+      </Box>
+    </Paper>
+  );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
   transactions,
   categories,
@@ -107,7 +395,6 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  // Mês/ano da fatura para todo o lote (opcional). Default: mês da 1ª transação ou atual.
   const initialDate = transactions[0]?.date;
   const initialY = initialDate
     ? parseInt(initialDate.slice(0, 4), 10)
@@ -142,7 +429,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
       if (field === "amount") {
         row.amount = value === "" || value === null ? null : Number(value);
       } else if (field === "confidence") {
-        // not editable via form
+        // não editável via formulário
       } else {
         (row as Record<string, unknown>)[field] = value;
         if (field === "type") {
@@ -185,22 +472,10 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
 
   const yearOptions = Array.from({ length: 7 }, (_, i) => initialY - 2 + i);
 
-  return (
-    <MotionPaper
-      initial={{ opacity: 0, scale: 0.98, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.98, y: -10 }}
-      transition={{ type: "spring", damping: 22, stiffness: 300 }}
-      elevation={0}
-      sx={{
-        p: 2,
-        borderRadius: "20px",
-        bgcolor: isDarkMode ? alpha("#FFFFFF", 0.05) : alpha("#FFFFFF", 0.95),
-        border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
-        overflow: "auto",
-        maxHeight: isMobile ? "70vh" : "65vh",
-      }}
-    >
+  // ── Header comum ──────────────────────────────────────────────────────────
+
+  const headerSection = (
+    <>
       <Box
         sx={{
           display: "flex",
@@ -212,11 +487,11 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
         }}
       >
         <Typography variant="subtitle2" fontWeight={700}>
-          Cadastro em lote – {rows.length} transação(ões)
+          {rows.length} transação(ões) para revisar
         </Typography>
         <Chip
           size="small"
-          label="Edite e confirme para salvar todas"
+          label="Edite e confirme para salvar"
           sx={{
             bgcolor: alpha(NIX_BRAND.purple, 0.12),
             color: NIX_BRAND.purple,
@@ -236,7 +511,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
         />
       )}
 
-      {/* Mês/ano da fatura: aplica a todas as linhas ao confirmar (dashboard/relatórios usam essa data) */}
+      {/* Mês/ano da fatura */}
       <Box
         sx={{
           mb: 2,
@@ -246,19 +521,24 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
           border: `1px solid ${alpha(NIX_BRAND.purple, 0.15)}`,
         }}
       >
-        <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" sx={{ mb: 1 }}>
+        <Typography
+          variant="caption"
+          fontWeight={700}
+          color="text.secondary"
+          display="block"
+          sx={{ mb: 0.5 }}
+        >
           Vencimento da fatura (opcional)
         </Typography>
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-          Marque e escolha mês/ano para que todas as transações entrem na fatura correta
-          (cartão com dia de vencimento usa esse dia no mês escolhido; demais usam dia 1).
+          Marque para que todas as transações entrem na fatura correta.
         </Typography>
         <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
-          <FormControl size="small" sx={{ minWidth: 100 }}>
+          <FormControl size="small" sx={{ minWidth: 110 }}>
             <Select
               value={useBatchInvoice ? 1 : 0}
               onChange={(e) => setUseBatchInvoice(Number(e.target.value) === 1)}
-              sx={{ fontSize: 13 }}
+              sx={{ fontSize: 13, borderRadius: "10px" }}
             >
               <MenuItem value={0}>Não definir</MenuItem>
               <MenuItem value={1}>Definir mês/ano</MenuItem>
@@ -266,11 +546,11 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
           </FormControl>
           {useBatchInvoice && (
             <>
-              <FormControl size="small" sx={{ minWidth: 100 }}>
+              <FormControl size="small" sx={{ minWidth: 80 }}>
                 <Select
                   value={batchInvoiceMonth}
                   onChange={(e) => setBatchInvoiceMonth(Number(e.target.value))}
-                  sx={{ fontSize: 13 }}
+                  sx={{ fontSize: 13, borderRadius: "10px" }}
                 >
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                     <MenuItem key={m} value={m}>
@@ -286,7 +566,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                 <Select
                   value={batchInvoiceYear}
                   onChange={(e) => setBatchInvoiceYear(Number(e.target.value))}
-                  sx={{ fontSize: 13 }}
+                  sx={{ fontSize: 13, borderRadius: "10px" }}
                 >
                   {yearOptions.map((y) => (
                     <MenuItem key={y} value={y}>
@@ -299,16 +579,126 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
           )}
         </Box>
       </Box>
+    </>
+  );
+
+  // ── Footer de ações ───────────────────────────────────────────────────────
+
+  const actionFooter = (
+    <Box sx={{ display: "flex", gap: 1.5, pt: isMobile ? 2 : 0, mt: isMobile ? 0 : 2 }}>
+      <Button
+        variant="outlined"
+        color="inherit"
+        size="small"
+        startIcon={<CloseIcon />}
+        onClick={onCancel}
+        sx={{
+          borderRadius: "12px",
+          fontWeight: 600,
+          textTransform: "none",
+          borderColor: "divider",
+          color: "text.secondary",
+        }}
+      >
+        Cancelar
+      </Button>
+      <Button
+        variant="contained"
+        size="small"
+        startIcon={<CheckIcon />}
+        onClick={handleConfirm}
+        disabled={validRows.length === 0 || hasInvalidAmount}
+        sx={{
+          flex: 1,
+          borderRadius: "12px",
+          fontWeight: 600,
+          textTransform: "none",
+          background: NIX_BRAND.gradient,
+          boxShadow: `0 4px 16px ${alpha(NIX_BRAND.purple, 0.35)}`,
+          "&:hover": {
+            boxShadow: `0 6px 20px ${alpha(NIX_BRAND.purple, 0.45)}`,
+          },
+        }}
+      >
+        Confirmar todas ({validRows.length})
+      </Button>
+    </Box>
+  );
+
+  // ── Mobile: cards ─────────────────────────────────────────────────────────
+
+  if (isMobile) {
+    return (
+      <MotionPaper
+        initial={{ opacity: 0, scale: 0.98, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.98, y: -10 }}
+        transition={{ type: "spring", damping: 22, stiffness: 300 }}
+        elevation={0}
+        sx={{
+          p: 2,
+          borderRadius: "20px",
+          bgcolor: isDarkMode ? alpha("#FFFFFF", 0.04) : alpha("#FFFFFF", 0.95),
+          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
+        }}
+      >
+        {headerSection}
+
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, mb: 2 }}>
+          {rows.map((row, index) => (
+            <MobileBatchRow
+              key={index}
+              row={row}
+              index={index}
+              categories={categories}
+              paymentMethods={paymentMethods}
+              requireAmount={requireAmount}
+              onUpdate={(field, value) => updateRow(index, field, value)}
+              onRemove={() => removeRow(index)}
+            />
+          ))}
+
+          {rows.length === 0 && (
+            <Typography
+              variant="body2"
+              color="text.disabled"
+              textAlign="center"
+              sx={{ py: 3 }}
+            >
+              Nenhuma linha restante.
+            </Typography>
+          )}
+        </Box>
+
+        {actionFooter}
+      </MotionPaper>
+    );
+  }
+
+  // ── Desktop: tabela ───────────────────────────────────────────────────────
+
+  return (
+    <MotionPaper
+      initial={{ opacity: 0, scale: 0.98, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.98, y: -10 }}
+      transition={{ type: "spring", damping: 22, stiffness: 300 }}
+      elevation={0}
+      sx={{
+        p: 2,
+        borderRadius: "20px",
+        bgcolor: isDarkMode ? alpha("#FFFFFF", 0.05) : alpha("#FFFFFF", 0.95),
+        border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
+        overflow: "auto",
+        maxHeight: "65vh",
+      }}
+    >
+      {headerSection}
 
       <TableContainer sx={{ overflowX: "auto", mb: 2 }}>
         <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
-              {isMobile && (
-                <TableCell sx={{ fontWeight: 700, fontSize: 11, width: 40 }}>
-                  {""}
-                </TableCell>
-              )}
               <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Descrição</TableCell>
               <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Valor</TableCell>
               <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Tipo</TableCell>
@@ -318,11 +708,9 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
               <TableCell sx={{ fontWeight: 700, fontSize: 11 }} align="center">
                 IA
               </TableCell>
-              {!isMobile && (
-                <TableCell sx={{ fontWeight: 700, fontSize: 11 }} align="right">
-                  Ação
-                </TableCell>
-              )}
+              <TableCell sx={{ fontWeight: 700, fontSize: 11 }} align="right">
+                Ação
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -335,31 +723,15 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                     : undefined,
                 }}
               >
-                {isMobile && (
-                  <TableCell padding="none" sx={{ verticalAlign: "middle" }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => removeRow(index)}
-                      sx={{ color: "text.secondary" }}
-                      aria-label="Remover linha"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                )}
                 <TableCell padding="none" sx={{ minWidth: 120 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <TextField
-                      size="small"
-                      value={row.description}
-                      onChange={(e) =>
-                        updateRow(index, "description", e.target.value)
-                      }
-                      placeholder="Descrição"
-                      fullWidth
-                      sx={{ "& .MuiInput-root": { fontSize: 13 } }}
-                    />
-                  </Box>
+                  <TextField
+                    size="small"
+                    value={row.description}
+                    onChange={(e) => updateRow(index, "description", e.target.value)}
+                    placeholder="Descrição"
+                    fullWidth
+                    sx={{ "& .MuiInput-root": { fontSize: 13 } }}
+                  />
                 </TableCell>
                 <TableCell padding="none" sx={{ minWidth: 90 }}>
                   <TextField
@@ -397,9 +769,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                   <FormControl size="small" fullWidth>
                     <Select
                       value={row.category}
-                      onChange={(e) =>
-                        updateRow(index, "category", e.target.value)
-                      }
+                      onChange={(e) => updateRow(index, "category", e.target.value)}
                       sx={{ fontSize: 13, py: 0.25 }}
                     >
                       {(row.type === "income"
@@ -472,65 +842,23 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                     </span>
                   </Tooltip>
                 </TableCell>
-                {!isMobile && (
-                  <TableCell padding="none" align="right">
-                    <IconButton
-                      size="small"
-                      onClick={() => removeRow(index)}
-                      sx={{ color: "text.secondary" }}
-                      aria-label="Remover linha"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                )}
+                <TableCell padding="none" align="right">
+                  <IconButton
+                    size="small"
+                    onClick={() => removeRow(index)}
+                    sx={{ color: "text.secondary" }}
+                    aria-label="Remover linha"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
 
-      <Box sx={{ display: "flex", gap: 1.5 }}>
-        <Button
-          variant="outlined"
-          color="inherit"
-          size="small"
-          startIcon={<CloseIcon />}
-          onClick={onCancel}
-          sx={{
-            borderRadius: "12px",
-            fontWeight: 600,
-            textTransform: "none",
-            borderColor: "divider",
-            color: "text.secondary",
-          }}
-        >
-          Cancelar
-        </Button>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<CheckIcon />}
-          onClick={handleConfirm}
-          disabled={
-            validRows.length === 0 ||
-            hasInvalidAmount
-          }
-          sx={{
-            flex: 1,
-            borderRadius: "12px",
-            fontWeight: 600,
-            textTransform: "none",
-            background: NIX_BRAND.gradient,
-            boxShadow: `0 4px 16px ${alpha(NIX_BRAND.purple, 0.35)}`,
-            "&:hover": {
-              boxShadow: `0 6px 20px ${alpha(NIX_BRAND.purple, 0.45)}`,
-            },
-          }}
-        >
-          Confirmar todas ({validRows.length})
-        </Button>
-      </Box>
+      {actionFooter}
     </MotionPaper>
   );
 };

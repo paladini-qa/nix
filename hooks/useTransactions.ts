@@ -434,6 +434,23 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     []
   );
 
+  // Mapa de transações por ID — acesso O(1) para lookups frequentes
+  const transactionsById = useMemo(
+    () => new Map(transactions.map((t) => [t.id, t])),
+    [transactions]
+  );
+
+  // Listas pré-filtradas por tipo — evita re-filtragem nos consumidores
+  const incomeTransactions = useMemo(
+    () => transactions.filter((t) => t.type === "income"),
+    [transactions]
+  );
+
+  const expenseTransactions = useMemo(
+    () => transactions.filter((t) => t.type === "expense"),
+    [transactions]
+  );
+
   return {
     transactions,
     setTransactions,
@@ -450,6 +467,9 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     getSummary,
     generateRecurringForMonth,
     updateInstallmentDates,
+    transactionsById,
+    incomeTransactions,
+    expenseTransactions,
   };
 }
 

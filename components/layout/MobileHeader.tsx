@@ -42,12 +42,11 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         left: 0,
         right: 0,
         zIndex: 1100,
-        bgcolor: isDarkMode
-          ? alpha(theme.palette.background.paper, 0.9)
-          : alpha("#FFFFFF", 0.92),
-        backdropFilter: "blur(20px) saturate(180%)",
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+        // Glassmorphism via CSS vars do design system
+        bgcolor: "var(--nix-glass-bg)",
+        backdropFilter: "blur(var(--nix-glass-blur)) saturate(180%)",
+        WebkitBackdropFilter: "blur(var(--nix-glass-blur)) saturate(180%)",
+        borderBottom: "1px solid var(--nix-glass-border)",
         boxShadow: isDarkMode
           ? `0 4px 20px -4px ${alpha("#000000", 0.4)}`
           : `0 4px 20px -4px ${alpha(theme.palette.primary.main, 0.1)}`,
@@ -55,6 +54,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         alignItems: "center",
         minHeight: 64,
         px: 1.5,
+        // Respeita status bar nativo (safe area)
+        paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
       <MotionBox

@@ -381,25 +381,52 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   // Desktop Table View - Clean Card-Table Hybrid with Animations
   return (
-    <TableContainer
-      component={MotionPaper}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      elevation={0}
-      sx={{
-        borderRadius: "20px",
-        overflow: "hidden",
-        bgcolor: isDarkMode
-          ? alpha(theme.palette.background.paper, 0.6)
-          : alpha("#FFFFFF", 0.9),
-        backdropFilter: "blur(20px)",
-        border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-        boxShadow: isDarkMode
-          ? `0 8px 32px -8px ${alpha("#000000", 0.3)}`
-          : `0 8px 32px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
-      }}
-    >
+    <Box sx={{ position: "relative" }}>
+      <TableContainer
+        component={MotionPaper}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        elevation={0}
+        sx={{
+          borderRadius: "20px",
+          overflowX: "auto",
+          overflowY: "hidden",
+          position: "relative",
+          WebkitOverflowScrolling: "touch",
+          bgcolor: isDarkMode
+            ? alpha(theme.palette.background.paper, 0.6)
+            : alpha("#FFFFFF", 0.9),
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+          boxShadow: isDarkMode
+            ? `0 8px 32px -8px ${alpha("#000000", 0.3)}`
+            : `0 8px 32px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
+          // Gradiente de scroll: indica continuidade nas bordas laterais
+          "&::before, &::after": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            width: 32,
+            pointerEvents: "none",
+            zIndex: 1,
+            borderRadius: "inherit",
+          },
+          "&::before": {
+            left: 0,
+            background: isDarkMode
+              ? `linear-gradient(to right, ${alpha(theme.palette.background.paper, 0.7)}, transparent)`
+              : `linear-gradient(to right, ${alpha("#FFFFFF", 0.85)}, transparent)`,
+          },
+          "&::after": {
+            right: 0,
+            background: isDarkMode
+              ? `linear-gradient(to left, ${alpha(theme.palette.background.paper, 0.7)}, transparent)`
+              : `linear-gradient(to left, ${alpha("#FFFFFF", 0.85)}, transparent)`,
+          },
+        }}
+      >
       {!isMobile && transactions.length > VIRTUALIZE_THRESHOLD ? (
         <>
           <Table>
@@ -694,6 +721,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       </Table>
       )}
     </TableContainer>
+    </Box>
   );
 };
 
