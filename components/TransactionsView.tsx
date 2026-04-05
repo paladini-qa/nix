@@ -32,6 +32,9 @@ import {
   alpha,
   Card,
   CardContent,
+  SwipeableDrawer,
+  Divider,
+  Stack,
 } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -53,6 +56,7 @@ import {
   CheckCircleOutline as PaidIcon,
   AccessTime as PendingIcon,
   Refresh as RefreshIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import SearchBar from "./SearchBar";
@@ -1193,48 +1197,153 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: isMobile ? 0.5 : 1,
+              gap: isMobile ? 0.75 : 1,
               minWidth: 0,
               flex: isMobile ? 1 : "0 0 auto",
+              justifyContent: isMobile ? "flex-end" : undefined,
             }}
           >
-            {/* Botão de filtros - compacto no mobile */}
-            <Button
-              variant={showFilters ? "contained" : "outlined"}
-              size="small"
-              onClick={() => setShowFilters(!showFilters)}
-              startIcon={<FilterIcon sx={{ fontSize: isMobile ? 16 : 20 }} />}
-              sx={{
-                borderRadius: isMobile ? "10px" : "20px",
-                minWidth: isMobile ? "auto" : 100,
-                height: isMobile ? 32 : 40,
-                px: isMobile ? 1 : 2,
-                fontSize: isMobile ? 12 : undefined,
-                flexShrink: 0,
-                "& .MuiButton-startIcon": { mr: isMobile ? 0.5 : 1 },
-                ...(activeFiltersCount > 0 &&
-                  !showFilters && {
-                    borderColor: theme.palette.primary.main,
-                    color: theme.palette.primary.main,
+            {isMobile ? (
+              /* ── Mobile: pílula única filtro + download ── */
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "stretch",
+                  height: 32,
+                  border: "1px solid",
+                  borderColor: activeFiltersCount > 0 ? "primary.main" : "divider",
+                  borderRadius: "10px",
+                  overflow: "hidden",
+                  flexShrink: 0,
+                  transition: "border-color 0.2s",
+                  ...(activeFiltersCount > 0 && {
+                    background: `linear-gradient(135deg, ${alpha("#6366f1", 0.08)} 0%, ${alpha("#8b5cf6", 0.06)} 100%)`,
                   }),
-              }}
-            >
-              {!isMobile && "Filters"}
-              {activeFiltersCount > 0 && (
-                <Chip
-                  label={activeFiltersCount}
-                  size="small"
-                  color="primary"
+                }}
+              >
+                {/* Botão de filtros */}
+                <Box
+                  onClick={() => setShowFilters(!showFilters)}
                   sx={{
-                    ml: isMobile ? 0.5 : 1,
-                    height: 16,
-                    minWidth: 16,
-                    fontSize: 10,
-                    "& .MuiChip-label": { px: 0.5 },
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 40,
+                    cursor: "pointer",
+                    transition: "background 0.15s",
+                    "&:active": { bgcolor: alpha(theme.palette.primary.main, 0.1) },
                   }}
-                />
-              )}
-            </Button>
+                >
+                  <FilterIcon sx={{ fontSize: 15, color: activeFiltersCount > 0 ? "primary.main" : "text.secondary" }} />
+                  {activeFiltersCount > 0 && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        bgcolor: "primary.main",
+                        color: "#fff",
+                        fontSize: 8,
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {activeFiltersCount}
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Divisor */}
+                <Box sx={{ width: "1px", bgcolor: "divider", flexShrink: 0 }} />
+
+                {/* Botão de download */}
+                <Box
+                  onClick={isExporting || filteredData.length === 0 ? undefined : (e) => setAnchorEl(e.currentTarget as HTMLElement)}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 40,
+                    cursor: isExporting || filteredData.length === 0 ? "default" : "pointer",
+                    opacity: filteredData.length === 0 ? 0.35 : 1,
+                    transition: "background 0.15s",
+                    "&:active": filteredData.length === 0 ? undefined : { bgcolor: alpha(theme.palette.primary.main, 0.1) },
+                  }}
+                >
+                  {isExporting ? (
+                    <CircularProgress size={12} />
+                  ) : (
+                    <DownloadIcon sx={{ fontSize: 15, color: "text.secondary" }} />
+                  )}
+                </Box>
+              </Box>
+            ) : (
+              /* ── Desktop: botões separados ── */
+              <>
+                {/* Botão de filtros */}
+                <Box sx={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+                  <Button
+                    variant={activeFiltersCount > 0 ? "contained" : "outlined"}
+                    size="small"
+                    onClick={() => setShowFilters(!showFilters)}
+                    startIcon={<FilterIcon sx={{ fontSize: 18 }} />}
+                    sx={{
+                      borderRadius: "20px",
+                      minWidth: 100,
+                      height: 40,
+                      px: 2,
+                      "& .MuiButton-startIcon": { mr: 1 },
+                      ...(activeFiltersCount > 0 && {
+                        background: `linear-gradient(135deg, ${alpha("#6366f1", 0.9)} 0%, ${alpha("#8b5cf6", 0.9)} 100%)`,
+                      }),
+                    }}
+                  >
+                    Filters
+                    {activeFiltersCount > 0 && (
+                      <Chip
+                        label={activeFiltersCount}
+                        size="small"
+                        sx={{ ml: 1, height: 18, minWidth: 18, fontSize: 10, bgcolor: "rgba(255,255,255,0.2)", color: "inherit", "& .MuiChip-label": { px: 0.5 } }}
+                      />
+                    )}
+                  </Button>
+                </Box>
+
+                {/* Export Button */}
+                <IconButton
+                  size="small"
+                  onClick={(e) => setAnchorEl(e.currentTarget)}
+                  disabled={isExporting || filteredData.length === 0}
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    flexShrink: 0,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: "20px",
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": {
+                      borderColor: theme.palette.primary.main,
+                      color: theme.palette.primary.main,
+                      transform: "translateY(-1px)",
+                    },
+                  }}
+                >
+                  {isExporting ? (
+                    <CircularProgress size={14} />
+                  ) : (
+                    <DownloadIcon sx={{ fontSize: 20 }} />
+                  )}
+                </IconButton>
+              </>
+            )}
 
             {/* Date Filter */}
             <DateFilter
@@ -1244,7 +1353,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               compact={isMobile}
             />
 
-            {/* Refresh Button — apenas desktop; mobile usa pull-to-refresh */}
+            {/* Refresh Button — apenas desktop */}
             {onRefreshData && !isMobile && (
               <Tooltip title="Atualizar dados">
                 <IconButton
@@ -1269,9 +1378,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   <RefreshIcon
                     sx={{
                       fontSize: 20,
-                      animation: isRefreshing
-                        ? "spin 1s linear infinite"
-                        : "none",
+                      animation: isRefreshing ? "spin 1s linear infinite" : "none",
                       "@keyframes spin": {
                         "0%": { transform: "rotate(0deg)" },
                         "100%": { transform: "rotate(360deg)" },
@@ -1281,27 +1388,6 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 </IconButton>
               </Tooltip>
             )}
-
-            {/* Export Button */}
-            <IconButton
-              size="small"
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              disabled={isExporting || filteredData.length === 0}
-              sx={{
-                width: isMobile ? 32 : 40,
-                height: isMobile ? 32 : 40,
-                flexShrink: 0,
-                border: 1,
-                borderColor: "divider",
-                borderRadius: isMobile ? "10px" : "20px",
-              }}
-            >
-              {isExporting ? (
-                <CircularProgress size={14} />
-              ) : (
-                <DownloadIcon sx={{ fontSize: isMobile ? 16 : 20 }} />
-              )}
-            </IconButton>
           </Box>
 
           <Menu
@@ -1330,130 +1416,271 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           </Menu>
         </Box>
 
-        {/* Área de filtros expandíveis */}
-        {showFilters && (
-          <Box
-            sx={{
-              p: isMobile ? 1.25 : 2,
-              pt: 0,
-              display: "flex",
-              flexWrap: "wrap",
-              gap: isMobile ? 1 : 2,
-              borderTop: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)
-              }`,
-              bgcolor: isDarkMode
-                ? alpha(theme.palette.background.default, 0.3)
-                : alpha(theme.palette.grey[50], 0.5),
+        {/* ── Filtros: bottom sheet no mobile, inline no desktop ── */}
+        {isMobile ? (
+          <SwipeableDrawer
+            anchor="bottom"
+            open={showFilters}
+            onClose={() => setShowFilters(false)}
+            onOpen={() => setShowFilters(true)}
+            disableSwipeToOpen
+            PaperProps={{
+              sx: {
+                borderRadius: "20px 20px 0 0",
+                maxHeight: "80vh",
+                overflowY: "auto",
+                background: isDarkMode
+                  ? `linear-gradient(160deg, ${alpha("#1e293b", 0.98)} 0%, ${alpha("#0f172a", 1)} 100%)`
+                  : "linear-gradient(160deg, #ffffff 0%, #f8fafc 100%)",
+              },
             }}
           >
-            <FormControl size="small" sx={{ minWidth: isMobile ? 100 : 120 }}>
-              <InputLabel>Type</InputLabel>
-              <Select
-                value={filterType}
-                label="Type"
-                onChange={(e: SelectChangeEvent) =>
-                  setFilterType(e.target.value as "all" | "income" | "expense")
-                }
-              >
-                <MenuItem value="all">All Types</MenuItem>
-                <MenuItem value="income">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <ArrowUpIcon fontSize="small" color="success" />
-                    Income
-                  </Box>
-                </MenuItem>
-                <MenuItem value="expense">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <ArrowDownIcon fontSize="small" color="error" />
-                    Expense
-                  </Box>
-                </MenuItem>
-              </Select>
-            </FormControl>
+            {/* Alça */}
+            <Box sx={{ display: "flex", justifyContent: "center", pt: 1.5, pb: 0.5 }}>
+              <Box sx={{ width: 36, height: 4, borderRadius: 2, bgcolor: alpha(theme.palette.text.primary, 0.15) }} />
+            </Box>
 
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={filterCategory}
-                label="Category"
-                onChange={(e: SelectChangeEvent) =>
-                  setFilterCategory(e.target.value)
-                }
-              >
-                <MenuItem value="all">All Categories</MenuItem>
-                {availableCategories.map((cat) => (
-                  <MenuItem key={cat} value={cat}>
-                    {cat}
+            {/* Header do drawer */}
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <FilterIcon fontSize="small" color="primary" />
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Filtros
+                </Typography>
+                {activeFiltersCount > 0 && (
+                  <Chip
+                    label={activeFiltersCount}
+                    size="small"
+                    color="primary"
+                    sx={{ height: 20, minWidth: 20, fontSize: 11, "& .MuiChip-label": { px: 0.75 } }}
+                  />
+                )}
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                {activeFiltersCount > 0 && (
+                  <Button
+                    size="small"
+                    onClick={() => { setFilterType("all"); setFilterCategory("all"); setFilterShared("all"); setFilterPaymentStatus("all"); }}
+                    sx={{ textTransform: "none", fontSize: 12, color: "error.main", minWidth: "auto" }}
+                  >
+                    Limpar
+                  </Button>
+                )}
+                <IconButton size="small" onClick={() => setShowFilters(false)} sx={{ color: "text.secondary" }}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+
+            <Divider />
+
+            {/* Conteúdo dos filtros */}
+            <Stack spacing={2} sx={{ p: 2.5, pb: 4 }}>
+              {/* Chips de filtros ativos */}
+              {activeFiltersCount > 0 && (
+                <Stack direction="row" flexWrap="wrap" gap={1}>
+                  {filterType !== "all" && (
+                    <Chip
+                      label={filterType === "income" ? "Receita" : "Despesa"}
+                      onDelete={() => setFilterType("all")}
+                      size="small"
+                      sx={{ bgcolor: alpha(filterType === "income" ? "#10b981" : "#ef4444", 0.1), color: filterType === "income" ? "#10b981" : "#ef4444" }}
+                    />
+                  )}
+                  {filterCategory !== "all" && (
+                    <Chip label={filterCategory} onDelete={() => setFilterCategory("all")} size="small" sx={{ bgcolor: alpha("#8b5cf6", 0.1) }} />
+                  )}
+                  {filterShared !== "all" && (
+                    <Chip label={filterShared === "shared" ? "Compartilhado" : "Não compartilhado"} onDelete={() => setFilterShared("all")} size="small" sx={{ bgcolor: alpha("#06b6d4", 0.1) }} />
+                  )}
+                  {filterPaymentStatus !== "all" && (
+                    <Chip label={filterPaymentStatus === "paid" ? "Pago" : "Pendente"} onDelete={() => setFilterPaymentStatus("all")} size="small" sx={{ bgcolor: alpha("#f59e0b", 0.1), color: "#f59e0b" }} />
+                  )}
+                </Stack>
+              )}
+
+              {/* Tipo */}
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 }}>
+                  Tipo
+                </Typography>
+                <Stack direction="row" gap={1}>
+                  {(["all", "income", "expense"] as const).map((val) => (
+                    <Chip
+                      key={val}
+                      label={val === "all" ? "Todos" : val === "income" ? "Receitas" : "Despesas"}
+                      onClick={() => setFilterType(val)}
+                      variant={filterType === val ? "filled" : "outlined"}
+                      size="medium"
+                      sx={{
+                        borderRadius: "10px",
+                        flex: 1,
+                        cursor: "pointer",
+                        fontWeight: filterType === val ? 600 : 400,
+                        ...(filterType === val && val === "income" && { bgcolor: alpha("#10b981", 0.15), color: "#10b981", border: "none" }),
+                        ...(filterType === val && val === "expense" && { bgcolor: alpha("#ef4444", 0.15), color: "#ef4444", border: "none" }),
+                        ...(filterType === val && val === "all" && { bgcolor: "primary.main", color: "#fff", border: "none" }),
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+
+              {/* Status */}
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 }}>
+                  Status
+                </Typography>
+                <Stack direction="row" gap={1}>
+                  {(["all", "paid", "pending"] as const).map((val) => (
+                    <Chip
+                      key={val}
+                      label={val === "all" ? "Todos" : val === "paid" ? "Pago" : "Pendente"}
+                      onClick={() => setFilterPaymentStatus(val)}
+                      variant={filterPaymentStatus === val ? "filled" : "outlined"}
+                      size="medium"
+                      sx={{
+                        borderRadius: "10px",
+                        flex: 1,
+                        cursor: "pointer",
+                        fontWeight: filterPaymentStatus === val ? 600 : 400,
+                        ...(filterPaymentStatus === val && val === "paid" && { bgcolor: alpha("#10b981", 0.15), color: "#10b981", border: "none" }),
+                        ...(filterPaymentStatus === val && val === "pending" && { bgcolor: alpha("#f59e0b", 0.15), color: "#f59e0b", border: "none" }),
+                        ...(filterPaymentStatus === val && val === "all" && { bgcolor: "primary.main", color: "#fff", border: "none" }),
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+
+              {/* Categoria */}
+              <FormControl fullWidth size="small">
+                <InputLabel>Categoria</InputLabel>
+                <Select
+                  value={filterCategory}
+                  label="Categoria"
+                  onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}
+                  sx={{ borderRadius: "12px" }}
+                >
+                  <MenuItem value="all">Todas as categorias</MenuItem>
+                  {availableCategories.map((cat) => (
+                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* Compartilhado */}
+              <FormControl fullWidth size="small">
+                <InputLabel>Compartilhado</InputLabel>
+                <Select
+                  value={filterShared}
+                  label="Compartilhado"
+                  onChange={(e: SelectChangeEvent) => setFilterShared(e.target.value as "all" | "shared" | "not_shared")}
+                  sx={{ borderRadius: "12px" }}
+                >
+                  <MenuItem value="all">Todos</MenuItem>
+                  <MenuItem value="shared">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <GroupIcon fontSize="small" color="info" />
+                      Compartilhado
+                    </Box>
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                  <MenuItem value="not_shared">Não compartilhado</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+          </SwipeableDrawer>
+        ) : (
+          /* ── Desktop: filtros inline ── */
+          showFilters && (
+            <Box
+              sx={{
+                p: 2,
+                pt: 0,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 2,
+                borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+                bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.3) : alpha(theme.palette.grey[50], 0.5),
+              }}
+            >
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Type</InputLabel>
+                <Select
+                  value={filterType}
+                  label="Type"
+                  onChange={(e: SelectChangeEvent) => setFilterType(e.target.value as "all" | "income" | "expense")}
+                >
+                  <MenuItem value="all">All Types</MenuItem>
+                  <MenuItem value="income">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <ArrowUpIcon fontSize="small" color="success" />
+                      Income
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="expense">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <ArrowDownIcon fontSize="small" color="error" />
+                      Expense
+                    </Box>
+                  </MenuItem>
+                </Select>
+              </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 130 }}>
-              <InputLabel>Shared</InputLabel>
-              <Select
-                value={filterShared}
-                label="Shared"
-                onChange={(e: SelectChangeEvent) =>
-                  setFilterShared(
-                    e.target.value as "all" | "shared" | "not_shared"
-                  )
-                }
-              >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="shared">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <GroupIcon fontSize="small" color="info" />
-                    Shared
-                  </Box>
-                </MenuItem>
-                <MenuItem value="not_shared">Not Shared</MenuItem>
-              </Select>
-            </FormControl>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>Category</InputLabel>
+                <Select value={filterCategory} label="Category" onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}>
+                  <MenuItem value="all">All Categories</MenuItem>
+                  {availableCategories.map((cat) => (
+                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 130 }}>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={filterPaymentStatus}
-                label="Status"
-                onChange={(e: SelectChangeEvent) =>
-                  setFilterPaymentStatus(
-                    e.target.value as "all" | "paid" | "pending"
-                  )
-                }
-              >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="paid">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PaidIcon fontSize="small" color="success" />
-                    Paid
-                  </Box>
-                </MenuItem>
-                <MenuItem value="pending">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PendingIcon fontSize="small" color="warning" />
-                    Pending
-                  </Box>
-                </MenuItem>
-              </Select>
-            </FormControl>
+              <FormControl size="small" sx={{ minWidth: 130 }}>
+                <InputLabel>Shared</InputLabel>
+                <Select value={filterShared} label="Shared" onChange={(e: SelectChangeEvent) => setFilterShared(e.target.value as "all" | "shared" | "not_shared")}>
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="shared">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <GroupIcon fontSize="small" color="info" />
+                      Shared
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="not_shared">Not Shared</MenuItem>
+                </Select>
+              </FormControl>
 
-            {activeFiltersCount > 0 && (
-              <Button
-                size="small"
-                onClick={() => {
-                  setFilterType("all");
-                  setFilterCategory("all");
-                  setFilterShared("all");
-                  setFilterPaymentStatus("all");
-                }}
-                sx={{ textTransform: "none" }}
-              >
-                Clear filters
-              </Button>
-            )}
-          </Box>
+              <FormControl size="small" sx={{ minWidth: 130 }}>
+                <InputLabel>Status</InputLabel>
+                <Select value={filterPaymentStatus} label="Status" onChange={(e: SelectChangeEvent) => setFilterPaymentStatus(e.target.value as "all" | "paid" | "pending")}>
+                  <MenuItem value="all">All Status</MenuItem>
+                  <MenuItem value="paid">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <PaidIcon fontSize="small" color="success" />
+                      Paid
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="pending">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <PendingIcon fontSize="small" color="warning" />
+                      Pending
+                    </Box>
+                  </MenuItem>
+                </Select>
+              </FormControl>
+
+              {activeFiltersCount > 0 && (
+                <Button
+                  size="small"
+                  onClick={() => { setFilterType("all"); setFilterCategory("all"); setFilterShared("all"); setFilterPaymentStatus("all"); }}
+                  sx={{ textTransform: "none" }}
+                >
+                  Clear filters
+                </Button>
+              )}
+            </Box>
+          )
         )}
       </Paper>
 

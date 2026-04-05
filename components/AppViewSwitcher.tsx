@@ -353,7 +353,13 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
   };
 
   return (
-    <PageTransition transitionKey={transitionKey} type="slideLeft" duration={0.2} mode="sync">
+    <PageTransition
+      transitionKey={transitionKey}
+      type="slideLeft"
+      duration={0.2}
+      mode="sync"
+      sx={currentView === "nixai" ? { height: "100%", display: "flex", flexDirection: "column" } : undefined}
+    >
       {renderView()}
     </PageTransition>
   );

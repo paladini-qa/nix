@@ -4048,14 +4048,18 @@ const AppContent: React.FC<{
             sx={{
               flexGrow: 1,
               minHeight: 0,
-              p: CONTENT_PADDING,
+              p: currentView === "nixai" ? 0 : CONTENT_PADDING,
               mt: { xs: "64px", lg: 0 },
-              pb: { xs: "140px", lg: 4 },
+              pb: currentView === "nixai"
+                ? { xs: `calc(80px + env(safe-area-inset-bottom, 0px))`, lg: 0 }
+                : { xs: "140px", lg: 4 },
               maxWidth: { xs: "100vw", lg: CONTENT_MAX_WIDTH },
               mx: { xs: 0, lg: "auto" },
               overflowX: "hidden",
-              overflowY: "auto",
+              overflowY: currentView === "nixai" ? "hidden" : "auto",
               boxSizing: "border-box",
+              display: currentView === "nixai" ? "flex" : undefined,
+              flexDirection: currentView === "nixai" ? "column" : undefined,
               ...(isMobile && { position: "relative" }),
             }}
           >
@@ -4073,9 +4077,10 @@ const AppContent: React.FC<{
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: SECTION_GAP,
+                gap: currentView === "nixai" ? 0 : SECTION_GAP,
                 pt: isMobile && (isPullPulling || isPullRefreshing) ? 2 : 0,
                 transition: "padding-top 0.2s ease",
+                ...(currentView === "nixai" && { flex: 1, minHeight: 0 }),
               }}
             >
               <AppViewSwitcher

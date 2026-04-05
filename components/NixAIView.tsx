@@ -8,7 +8,6 @@ import {
   Avatar,
   useMediaQuery,
   useTheme,
-  InputAdornment,
   Chip,
   alpha,
   Tooltip,
@@ -22,11 +21,11 @@ import {
   Grow,
   ToggleButton,
   ToggleButtonGroup,
-  Slider,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
+  Divider,
 } from "@mui/material";
 import {
   Send as SendIcon,
@@ -512,6 +511,76 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isMobile }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isUser = message.role === "user";
+  const isWelcome = message.id === "welcome";
+
+  // Card especial para mensagem de boas-vindas
+  if (isWelcome) {
+    return (
+      <MotionBox
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      >
+        <Box
+          sx={{
+            p: 2.5,
+            borderRadius: "20px",
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha("#1e293b", 0.9)} 0%, ${alpha("#0f172a", 0.95)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#f8fafc", 0.95)} 0%, ${alpha("#f1f5f9", 0.9)} 100%)`,
+            border: `1px solid ${alpha(NIX_BRAND.purple, 0.2)}`,
+            boxShadow: `0 8px 32px ${alpha(NIX_BRAND.purple, 0.1)}`,
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          {/* Header do card */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: "14px",
+                background: NIX_BRAND.gradient,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: `0 4px 14px ${alpha(NIX_BRAND.purple, 0.4)}`,
+                flexShrink: 0,
+              }}
+            >
+              <SparklesIcon sx={{ fontSize: 20, color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.2 }}>
+                Nix AI
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#10b981", boxShadow: "0 0 4px #10b981" }} />
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>
+                  Online
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Conteúdo com Markdown */}
+          <Box
+            sx={{
+              "& p": { m: 0, mb: 0.75, fontSize: 14, lineHeight: 1.65, color: "text.primary" },
+              "& p:last-child": { mb: 0 },
+              "& ul": { m: 0, pl: 2, mb: 0.5 },
+              "& li": { mb: 0.5, fontSize: 14, lineHeight: 1.55 },
+              "& strong": { fontWeight: 700, color: isDarkMode ? "#e2e8f0" : "#1e293b" },
+            }}
+          >
+            <ReactMarkdown>{message.content}</ReactMarkdown>
+          </Box>
+
+          <MessageTimestamp date={message.timestamp} />
+        </Box>
+      </MotionBox>
+    );
+  }
 
   return (
     <MotionBox
@@ -528,25 +597,23 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isMobile }) => {
       {/* Avatar */}
       <Avatar
         sx={{
-          width: 36,
-          height: 36,
+          width: 30,
+          height: 30,
+          flexShrink: 0,
           background: isUser
-            ? isDarkMode
-              ? alpha("#FFFFFF", 0.1)
-              : alpha("#000000", 0.08)
+            ? isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.08)
             : NIX_BRAND.gradient,
           color: isUser ? "text.primary" : "#FFFFFF",
-          boxShadow: isUser ? "none" : `0 4px 16px ${alpha(NIX_BRAND.purple, 0.35)}`,
-          transition: "all 0.2s ease",
+          boxShadow: isUser ? "none" : `0 3px 10px ${alpha(NIX_BRAND.purple, 0.3)}`,
         }}
       >
-        {isUser ? <PersonIcon sx={{ fontSize: 18 }} /> : <SparklesIcon sx={{ fontSize: 18 }} />}
+        {isUser ? <PersonIcon sx={{ fontSize: 15 }} /> : <SparklesIcon sx={{ fontSize: 15 }} />}
       </Avatar>
 
-      {/* Bolha de mensagem */}
+      {/* Bolha */}
       <Box
         sx={{
-          maxWidth: isMobile ? "80%" : "65%",
+          maxWidth: isMobile ? "78%" : "65%",
           display: "flex",
           flexDirection: "column",
           alignItems: isUser ? "flex-end" : "flex-start",
@@ -554,24 +621,25 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isMobile }) => {
       >
         <Box
           sx={{
-            py: 1.5,
-            px: 2,
-            borderRadius: "18px",
-            borderTopRightRadius: isUser ? "4px" : "18px",
-            borderTopLeftRadius: isUser ? "18px" : "4px",
-            bgcolor: isUser
-              ? NIX_BRAND.purple
-              : isDarkMode
-              ? alpha("#FFFFFF", 0.08)
-              : alpha("#000000", 0.04),
-            color: isUser ? "#FFFFFF" : "text.primary",
-            boxShadow: isUser
-              ? `0 4px 16px ${alpha(NIX_BRAND.purple, 0.25)}`
-              : "none",
-            // Markdown styles
-            "& p": { m: 0, mb: 0.75, fontSize: 14, lineHeight: 1.6 },
+            py: 1.25,
+            px: 1.75,
+            borderRadius: "16px",
+            borderTopRightRadius: isUser ? "4px" : "16px",
+            borderTopLeftRadius: isUser ? "16px" : "4px",
+            ...(isUser
+              ? {
+                  background: NIX_BRAND.gradient,
+                  color: "#FFFFFF",
+                  boxShadow: `0 3px 12px ${alpha(NIX_BRAND.purple, 0.25)}`,
+                }
+              : {
+                  bgcolor: isDarkMode ? alpha("#FFFFFF", 0.07) : alpha("#000000", 0.04),
+                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.05)}`,
+                  color: "text.primary",
+                }),
+            "& p": { m: 0, mb: 0.5, fontSize: 14, lineHeight: 1.6 },
             "& p:last-child": { mb: 0 },
-            "& ul, & ol": { m: 0, pl: 2.5, mb: 0.75 },
+            "& ul, & ol": { m: 0, pl: 2, mb: 0.5 },
             "& ul:last-child, & ol:last-child": { mb: 0 },
             "& li": { mb: 0.25, fontSize: 14 },
             "& strong": { fontWeight: 600 },
@@ -1082,26 +1150,84 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       sx={{
         display: "flex",
         flexDirection: "column",
-        height: isMobile ? "calc(100vh - 140px)" : "calc(100vh - 100px)",
-        position: "relative",
+        height: "100%",
         overflow: "hidden",
       }}
     >
-      {/* Messages Area */}
+      {/* ── Header ── */}
+      <Box
+        sx={{
+          px: isMobile ? 2 : 3,
+          pt: 1.5,
+          pb: 1.25,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          flexShrink: 0,
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+        }}
+      >
+        <Box
+          sx={{
+            width: 38,
+            height: 38,
+            borderRadius: "12px",
+            background: NIX_BRAND.gradient,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: `0 4px 14px ${alpha(NIX_BRAND.purple, 0.4)}`,
+            flexShrink: 0,
+          }}
+        >
+          <SparklesIcon sx={{ fontSize: 19, color: "#fff" }} />
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.25 }}>
+            Nix AI
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11, lineHeight: 1 }}>
+            Seu copiloto financeiro
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Box
+            sx={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              bgcolor: isGeminiConfigured() ? "#10b981" : "#f59e0b",
+              boxShadow: isGeminiConfigured() ? "0 0 5px #10b981" : "0 0 5px #f59e0b",
+            }}
+          />
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+            {isGeminiConfigured() ? "Online" : "Sem API Key"}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ── Messages Area ── */}
       <Box
         sx={{
           flex: 1,
           overflow: "auto",
           px: isMobile ? 2 : 3,
-          pt: 2,
-          pb: 16,
+          py: 2,
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: 1.5,
+          /* Scroll suave */
+          scrollBehavior: "smooth",
+          "&::-webkit-scrollbar": { width: 4 },
+          "&::-webkit-scrollbar-track": { background: "transparent" },
+          "&::-webkit-scrollbar-thumb": {
+            background: alpha(theme.palette.text.primary, 0.12),
+            borderRadius: 2,
+          },
         }}
       >
         {!isGeminiConfigured() && (
-          <Alert severity="warning" sx={{ borderRadius: "14px", mb: 1 }}>
+          <Alert severity="warning" sx={{ borderRadius: "14px" }}>
             {GEMINI_NOT_CONFIGURED_MESSAGE}
           </Alert>
         )}
@@ -1111,7 +1237,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           ))}
         </AnimatePresence>
 
-        {/* Preview de transação pendente (uma) */}
+        {/* Preview de transação pendente */}
         <AnimatePresence>
           {pendingTransaction && onTransactionCreate && (
             <TransactionPreviewCard
@@ -1124,7 +1250,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           )}
         </AnimatePresence>
 
-        {/* Tabela editável para cadastro em lote (várias transações) */}
+        {/* Tabela de lote */}
         <AnimatePresence>
           {pendingBatch && pendingBatch.length > 0 && onTransactionCreate && (
             <BatchTransactionTable
@@ -1140,16 +1266,12 @@ const NixAIView: React.FC<NixAIViewProps> = ({
 
         {/* Erro */}
         <Collapse in={!!smartInputError}>
-          <Alert
-            severity="error"
-            onClose={() => setSmartInputError(null)}
-            sx={{ borderRadius: "14px", mb: 2 }}
-          >
+          <Alert severity="error" onClose={() => setSmartInputError(null)} sx={{ borderRadius: "14px" }}>
             {smartInputError}
           </Alert>
         </Collapse>
 
-        {/* Loading Skeleton */}
+        {/* Loading */}
         <AnimatePresence>
           {isLoading && (
             <motion.div
@@ -1166,33 +1288,15 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         <div ref={messagesEndRef} />
       </Box>
 
-      {/* Gradient overlay */}
+      {/* ── Input Area ── */}
       <Box
         sx={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 140,
-          background: isDarkMode
-            ? "linear-gradient(to top, rgba(15, 23, 42, 1) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(15, 23, 42, 0) 100%)"
-            : "linear-gradient(to top, rgba(248, 250, 252, 1) 0%, rgba(248, 250, 252, 0.98) 50%, rgba(248, 250, 252, 0) 100%)",
-          pointerEvents: "none",
-          zIndex: 1,
-        }}
-      />
-
-      {/* Input Area */}
-      <Box
-        sx={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
+          flexShrink: 0,
           px: isMobile ? 2 : 3,
-          pb: isMobile ? 2 : 2.5,
           pt: 1,
-          zIndex: 2,
+          pb: isMobile ? 1.5 : 2,
+          borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+          bgcolor: "background.default",
         }}
       >
         <Box sx={{ maxWidth: 720, mx: "auto" }}>
@@ -1209,41 +1313,41 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           <AnimatePresence>
             {isRecording && (
               <MotionPaper
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
+                exit={{ opacity: 0, y: 8 }}
                 elevation={0}
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 2,
-                  p: 1.5,
-                  mb: 1.5,
-                  borderRadius: "14px",
-                  bgcolor: alpha(theme.palette.error.main, 0.1),
-                  border: `1px solid ${alpha(theme.palette.error.main, 0.25)}`,
+                  p: 1.25,
+                  mb: 1,
+                  borderRadius: "12px",
+                  bgcolor: alpha(theme.palette.error.main, 0.08),
+                  border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
                 }}
               >
                 <Box
                   sx={{
-                    width: 10,
-                    height: 10,
+                    width: 8,
+                    height: 8,
                     borderRadius: "50%",
                     bgcolor: "error.main",
                     animation: `${pulseAnimation} 1.5s infinite`,
                   }}
                 />
-                <Typography variant="body2" fontWeight={600} color="error.main">
+                <Typography variant="body2" fontWeight={600} color="error.main" sx={{ fontSize: 13 }}>
                   Gravando {formatTime(recordingTime)}
                 </Typography>
                 <Button
                   variant="contained"
                   color="error"
                   size="small"
-                  startIcon={<StopIcon />}
+                  startIcon={<StopIcon sx={{ fontSize: 14 }} />}
                   onClick={stopRecording}
-                  sx={{ borderRadius: "10px", fontWeight: 600, textTransform: "none" }}
+                  sx={{ borderRadius: "8px", fontWeight: 600, textTransform: "none", fontSize: 12, py: 0.5 }}
                 >
                   Parar
                 </Button>
@@ -1251,87 +1355,101 @@ const NixAIView: React.FC<NixAIViewProps> = ({
             )}
           </AnimatePresence>
 
-          {/* Main input */}
-          <TextField
-            inputRef={inputRef}
-            fullWidth
-            multiline
-            maxRows={4}
-            placeholder={isRecording ? "Gravando áudio..." : "Digite sua mensagem..."}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={isLoading || isRecording}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start" sx={{ mr: 0.5, gap: 0.5 }}>
-                  <Tooltip title="Gravar áudio">
-                    <IconButton
-                      onClick={() => (isRecording ? stopRecording() : startRecording())}
-                      disabled={isLoading}
-                      size="small"
-                      sx={{
-                        bgcolor: isRecording ? alpha(theme.palette.error.main, 0.1) : "transparent",
-                        color: isRecording ? "error.main" : "text.secondary",
-                        "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.08) },
-                      }}
-                    >
-                      {isRecording ? <StopIcon fontSize="small" /> : <MicIcon fontSize="small" />}
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Enviar foto">
-                    <IconButton
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isLoading || isRecording}
-                      size="small"
-                      sx={{
-                        color: "text.secondary",
-                        "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.08) },
-                      }}
-                    >
-                      <CameraIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={handleSendMessage}
-                    disabled={!inputValue.trim() || isLoading || isRecording}
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      bgcolor: inputValue.trim() ? NIX_BRAND.purple : "transparent",
-                      color: inputValue.trim() ? "#FFFFFF" : "text.disabled",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        bgcolor: inputValue.trim() ? NIX_BRAND.purpleDark : "transparent",
-                      },
-                    }}
-                  >
-                    <SendIcon sx={{ fontSize: 18 }} />
-                  </IconButton>
-                </InputAdornment>
-              ),
-              sx: {
-                borderRadius: "16px",
-                bgcolor: isDarkMode ? alpha("#FFFFFF", 0.05) : "#FFFFFF",
-                boxShadow: isDarkMode
-                  ? `0 2px 16px ${alpha("#000000", 0.3)}`
-                  : `0 2px 16px ${alpha("#000000", 0.08)}`,
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                "& fieldset": { border: "none" },
-                py: 0.5,
-              },
+          {/* Input bar */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              px: 1.25,
+              py: 0.75,
+              borderRadius: "16px",
+              bgcolor: isDarkMode ? alpha("#FFFFFF", 0.05) : "#FFFFFF",
+              boxShadow: isDarkMode
+                ? `0 2px 20px ${alpha("#000000", 0.35)}, 0 0 0 1px ${alpha("#FFFFFF", 0.07)}`
+                : `0 2px 16px ${alpha("#000000", 0.08)}, 0 0 0 1px ${alpha("#000000", 0.06)}`,
             }}
-          />
+          >
+            <Box sx={{ display: "flex", gap: 0.25, flexShrink: 0 }}>
+              <Tooltip title={isRecording ? "Parar gravação" : "Gravar áudio"}>
+                <IconButton
+                  onClick={() => isRecording ? stopRecording() : startRecording()}
+                  disabled={isLoading}
+                  size="small"
+                  sx={{
+                    width: 34, height: 34, borderRadius: "10px",
+                    bgcolor: isRecording ? alpha(theme.palette.error.main, 0.12) : "transparent",
+                    color: isRecording ? "error.main" : "text.secondary",
+                    transition: "all 0.15s",
+                    "&:hover": { bgcolor: alpha(NIX_BRAND.purple, 0.1), color: NIX_BRAND.purple },
+                  }}
+                >
+                  {isRecording ? <StopIcon sx={{ fontSize: 17 }} /> : <MicIcon sx={{ fontSize: 17 }} />}
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Enviar foto de recibo">
+                <IconButton
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading || isRecording}
+                  size="small"
+                  sx={{
+                    width: 34, height: 34, borderRadius: "10px",
+                    color: "text.secondary",
+                    transition: "all 0.15s",
+                    "&:hover": { bgcolor: alpha(NIX_BRAND.purple, 0.1), color: NIX_BRAND.purple },
+                  }}
+                >
+                  <CameraIcon sx={{ fontSize: 17 }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
 
-          {/* Hint */}
+            <Box sx={{ width: "1px", height: 20, bgcolor: "divider", flexShrink: 0 }} />
+
+            <TextField
+              inputRef={inputRef}
+              fullWidth
+              multiline
+              maxRows={4}
+              placeholder={isRecording ? "Gravando áudio..." : "Digite sua mensagem..."}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              disabled={isLoading || isRecording}
+              variant="standard"
+              InputProps={{
+                disableUnderline: true,
+                sx: { fontSize: 14, lineHeight: 1.5, px: 0.5, "& textarea": { py: 0.5 } },
+              }}
+            />
+
+            <IconButton
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isLoading || isRecording}
+              size="small"
+              sx={{
+                width: 36, height: 36, flexShrink: 0, borderRadius: "11px",
+                background: inputValue.trim() ? NIX_BRAND.gradient : "transparent",
+                color: inputValue.trim() ? "#FFFFFF" : alpha(theme.palette.text.primary, 0.25),
+                boxShadow: inputValue.trim() ? `0 3px 10px ${alpha(NIX_BRAND.purple, 0.35)}` : "none",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  background: inputValue.trim()
+                    ? `linear-gradient(135deg, ${NIX_BRAND.purpleDark} 0%, ${NIX_BRAND.purple} 100%)`
+                    : "transparent",
+                  transform: inputValue.trim() ? "translateY(-1px)" : "none",
+                },
+                "&.Mui-disabled": { background: "transparent", color: alpha(theme.palette.text.primary, 0.2) },
+              }}
+            >
+              <SendIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Box>
+
           <Typography
             variant="caption"
             color="text.disabled"
-            sx={{ display: "block", textAlign: "center", mt: 1, fontSize: 11 }}
+            sx={{ display: "block", textAlign: "center", mt: 0.75, fontSize: 10.5 }}
           >
             Diga algo como "gastei 50 no Uber" e o Nix entende automaticamente
           </Typography>
