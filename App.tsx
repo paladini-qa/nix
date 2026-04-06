@@ -417,6 +417,17 @@ const AppContent: React.FC<{
           return;
         }
 
+        // Avança o invoiceDueDate para o mesmo dia do mês virtual (evita herdar o mês original)
+        let virtualInvoiceDueDate: string | undefined = undefined;
+        if (t.invoiceDueDate) {
+          const origInvDay = Number(t.invoiceDueDate.split("-")[2]);
+          const daysInTargetMonthInv = new Date(targetYear, targetMonth, 0).getDate();
+          const adjustedInvDay = Math.min(origInvDay, daysInTargetMonthInv);
+          virtualInvoiceDueDate = `${targetYear}-${String(targetMonth).padStart(
+            2,
+            "0"
+          )}-${String(adjustedInvDay).padStart(2, "0")}`;
+        }
         virtualTransactions.push({
           ...t,
           id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
@@ -424,6 +435,7 @@ const AppContent: React.FC<{
             "0"
           )}`,
           date: virtualDate,
+          invoiceDueDate: virtualInvoiceDueDate,
           isVirtual: true,
           originalTransactionId: t.id,
           isPaid: false, // Transações virtuais sempre começam como não pagas
@@ -548,12 +560,21 @@ const AppContent: React.FC<{
           );
 
           if (!alreadyAdded && !isExcluded && !hasRealInTargetMonth) {
+            // Avança o invoiceDueDate para o mesmo dia do mês virtual
+            let virtualInvoiceDateRange: string | undefined = undefined;
+            if (t.invoiceDueDate) {
+              const origInvDayRange = Number(t.invoiceDueDate.split("-")[2]);
+              const daysInMonthRange = new Date(currentYear, currentMonth, 0).getDate();
+              const adjustedInvDayRange = Math.min(origInvDayRange, daysInMonthRange);
+              virtualInvoiceDateRange = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(adjustedInvDayRange).padStart(2, "0")}`;
+            }
             virtualTransactions.push({
               ...t,
               id: `${t.id}_recurring_${currentYear}-${String(
                 currentMonth
               ).padStart(2, "0")}`,
               date: virtualDate,
+              invoiceDueDate: virtualInvoiceDateRange,
               isVirtual: true,
               originalTransactionId: t.id,
               isPaid: false,
@@ -2103,6 +2124,9 @@ const AppContent: React.FC<{
     setOptionsPanelTransaction(null);
   };
 
+  // Ref para evitar dupla submissão no formulário de edição de recorrência
+  const isRecurringEditSavingRef = useRef(false);
+
   // Handler para salvar do formulário de edição de recorrência
   const handleRecurringEditSave = async (
     newTx: Omit<Transaction, "id" | "createdAt">,
@@ -2110,6 +2134,8 @@ const AppContent: React.FC<{
     editMode?: EditOption
   ) => {
     if (!session || !recurringEditTransaction) return;
+    if (isRecurringEditSavingRef.current) return;
+    isRecurringEditSavingRef.current = true;
 
     try {
       const originalTx = recurringEditTransaction.isVirtual
@@ -2697,6 +2723,8 @@ const AppContent: React.FC<{
     } catch (err) {
       console.error("Error saving recurring transaction:", err);
       showError("Error saving transaction. Please try again.", "Save Error");
+    } finally {
+      isRecurringEditSavingRef.current = false;
     }
   };
 

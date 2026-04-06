@@ -87,6 +87,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
   const [paymentMethod, setPaymentMethod] = useState("");
   const [date, setDate] = useState<Dayjs | null>(dayjs());
   const [frequency, setFrequency] = useState<"monthly" | "yearly">("monthly");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Populate form when transaction changes
   useEffect(() => {
@@ -110,36 +111,41 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
   }, [transaction, isOpen, editMode, virtualDate]);
 
   const handleSave = async () => {
-    if (!transaction) return;
+    if (!transaction || isSaving) return;
 
     const parsedAmount = parseFloat(amount.replace(",", "."));
     if (isNaN(parsedAmount) || parsedAmount <= 0) return;
 
-    const newTx: Omit<Transaction, "id" | "createdAt"> = {
-      description,
-      amount: parsedAmount,
-      type,
-      category,
-      paymentMethod,
-      date: date?.format("YYYY-MM-DD") || transaction.date,
-      // Para "single", não é mais recorrente
-      isRecurring: editMode === "single" ? false : transaction.isRecurring,
-      frequency: editMode === "single" ? undefined : frequency,
-      // Mantém outros campos
-      isShared: transaction.isShared,
-      sharedWith: transaction.sharedWith,
-      iOwe: transaction.iOwe,
-      ...(transaction.invoiceDueDate && { invoiceDueDate: transaction.invoiceDueDate }),
-    };
+    setIsSaving(true);
+    try {
+      const newTx: Omit<Transaction, "id" | "createdAt"> = {
+        description,
+        amount: parsedAmount,
+        type,
+        category,
+        paymentMethod,
+        date: date?.format("YYYY-MM-DD") || transaction.date,
+        // Para "single", não é mais recorrente
+        isRecurring: editMode === "single" ? false : transaction.isRecurring,
+        frequency: editMode === "single" ? undefined : frequency,
+        // Mantém outros campos
+        isShared: transaction.isShared,
+        sharedWith: transaction.sharedWith,
+        iOwe: transaction.iOwe,
+        ...(transaction.invoiceDueDate && { invoiceDueDate: transaction.invoiceDueDate }),
+      };
 
-    // Para "single" de virtual, passa undefined como editId para criar nova transação
-    const editId = editMode === "single" && transaction.isVirtual 
-      ? undefined 
-      : transaction.id;
+      // Para "single" de virtual, passa undefined como editId para criar nova transação
+      const editId = editMode === "single" && transaction.isVirtual
+        ? undefined
+        : transaction.id;
 
-    // Aguarda onSave completar antes de fechar (onSave é assíncrono)
-    await onSave(newTx, editId, editMode);
-    onClose();
+      // Aguarda onSave completar antes de fechar (onSave é assíncrono)
+      await onSave(newTx, editId, editMode);
+      onClose();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getEditModeInfo = () => {
@@ -604,9 +610,10 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
           variant="solid"
           color="purple"
           onClick={handleSave}
-          style={{ flex: 1 }}
+          disabled={isSaving}
+          style={{ flex: 1, opacity: isSaving ? 0.7 : 1 }}
         >
-          <SaveIcon /> {transaction ? "Atualizar" : "Salvar Alterações"}
+          <SaveIcon /> {isSaving ? "Salvando..." : transaction ? "Atualizar" : "Salvar Alterações"}
         </NixButton>
       </Box>
     </Drawer>

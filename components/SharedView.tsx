@@ -269,12 +269,27 @@ const SharedView: React.FC<SharedViewProps> = ({
                   tx.type === t.type))
           );
           if (!excludedDates.includes(virtualDate) && !hasRealInTargetMonth) {
+            // Avança o invoiceDueDate para o mesmo dia do mês virtual (evita herdar o mês original)
+            let virtualInvoiceDueDate: string | undefined = undefined;
+            if (t.invoiceDueDate) {
+              const origInvDay = Number(t.invoiceDueDate.split("-")[2]);
+              const daysInVirtualMonth = new Date(
+                currentYear,
+                currentMonth,
+                0
+              ).getDate();
+              const adjustedInvDay = Math.min(origInvDay, daysInVirtualMonth);
+              virtualInvoiceDueDate = `${currentYear}-${String(
+                currentMonth
+              ).padStart(2, "0")}-${String(adjustedInvDay).padStart(2, "0")}`;
+            }
             virtuals.push({
               ...t,
               id: `${t.id}_recurring_${currentYear}-${String(
                 currentMonth
               ).padStart(2, "0")}`,
               date: virtualDate,
+              invoiceDueDate: virtualInvoiceDueDate,
               isVirtual: true,
               originalTransactionId: t.id,
               isPaid: false,
