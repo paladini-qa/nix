@@ -19,7 +19,6 @@ import {
   Logout as LogOutIcon,
   Person as UserIcon,
   ChevronRight as ChevronRightIcon,
-  AutoAwesome as SparklesIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
   People as PeopleIcon,
@@ -102,9 +101,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const isDarkMode = theme.palette.mode === "dark";
   const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
 
-  // Itens de menu principais (Nix AI logo acima do Painel)
+  // Itens de menu principais
   const mainNavItems: NavItem[] = [
-    { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" },
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
     { icon: BatchRegistrationIcon, label: t("nav.batchRegistration"), id: "batchRegistration" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
@@ -115,18 +113,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
   ];
 
-
-  // Renderiza um item de navegação
-  // Estilos especiais para o item NixAI conforme Brand Book
-  const isNixAI = (itemId: string) => itemId === "nixai";
-
   const renderNavItem = (
     item: NavItem,
     isSubItem: boolean = false,
     index: number = 0
   ) => {
     const isActive = currentView === item.id;
-    const isAIItem = isNixAI(item.id);
 
     return (
       <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
@@ -135,8 +127,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           whileHover={{ x: 4 }}
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
-          // NixAI item sempre visível com estilo especial (Brand Book)
-          className={isAIItem ? "nix-ai-indicator" : undefined}
           sx={{
             borderRadius: "20px",
             py: isSubItem ? 1 : 1.5,
@@ -144,35 +134,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             ml: isSubItem ? 2 : 0,
             position: "relative",
             overflow: "hidden",
-            // Estilo especial para NixAI: gradiente roxo suave
-            ...(isAIItem &&
-              !isActive && {
-                background: isDarkMode
-                  ? "linear-gradient(135deg, rgba(138, 43, 226, 0.12) 0%, rgba(106, 13, 173, 0.08) 100%)"
-                  : "linear-gradient(135deg, rgba(138, 43, 226, 0.06) 0%, rgba(106, 13, 173, 0.04) 100%)",
-                border: `1px solid ${alpha("#8A2BE2", isDarkMode ? 0.2 : 0.1)}`,
-              }),
             ...(isActive && {
               bgcolor: isDarkMode
                 ? alpha(theme.palette.primary.main, 0.15)
                 : alpha(theme.palette.primary.main, 0.08),
-              // Se for NixAI ativo, usar gradiente mais forte
-              ...(isAIItem && {
-                background: isDarkMode
-                  ? "linear-gradient(135deg, rgba(138, 43, 226, 0.25) 0%, rgba(106, 13, 173, 0.15) 100%)"
-                  : "linear-gradient(135deg, rgba(138, 43, 226, 0.12) 0%, rgba(106, 13, 173, 0.08) 100%)",
-              }),
             }),
             "&:hover": {
               bgcolor: isDarkMode
                 ? alpha(theme.palette.primary.main, 0.1)
                 : alpha(theme.palette.primary.main, 0.05),
-              // NixAI hover com gradiente
-              ...(isAIItem && {
-                background: isDarkMode
-                  ? "linear-gradient(135deg, rgba(138, 43, 226, 0.2) 0%, rgba(106, 13, 173, 0.12) 100%)"
-                  : "linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(106, 13, 173, 0.06) 100%)",
-              }),
             },
           }}
         >
@@ -207,8 +177,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <ListItemIcon
             sx={{
               minWidth: isSubItem ? 36 : 44,
-              // NixAI sempre usa a cor primária roxa
-              color: isActive || isAIItem ? "primary.main" : "text.secondary",
+              color: isActive ? "primary.main" : "text.secondary",
               transition: "color 0.2s ease",
             }}
           >
@@ -222,27 +191,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                // NixAI tem gradiente roxo no ícone (Brand Book)
-                ...(isAIItem && {
-                  background:
-                    "linear-gradient(135deg, #8A2BE2 0%, #6A0DAD 100%)",
-                  color: "#FFFFFF",
-                  boxShadow: "0 4px 12px rgba(138, 43, 226, 0.3)",
-                }),
-                ...(!isAIItem && {
-                  bgcolor: isActive
-                    ? isDarkMode
-                      ? alpha(theme.palette.primary.main, 0.2)
-                      : alpha(theme.palette.primary.main, 0.12)
-                    : "transparent",
-                }),
+                bgcolor: isActive
+                  ? isDarkMode
+                    ? alpha(theme.palette.primary.main, 0.2)
+                    : alpha(theme.palette.primary.main, 0.12)
+                  : "transparent",
                 transition: "all 0.2s ease",
               }}
             >
-              <item.icon
-                fontSize={isSubItem ? "small" : "small"}
-                sx={isAIItem ? { color: "#FFFFFF" } : undefined}
-              />
+              <item.icon fontSize="small" />
             </MotionBox>
           </ListItemIcon>
           <ListItemText
@@ -297,77 +254,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         overflow: "hidden",
       }}
     >
-      {/* Logo Area */}
-      <MotionBox
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        sx={{
-          height: 88,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          px: 3,
-        }}
-      >
-        <MotionBox
-          whileHover={{ scale: 1.05, rotate: 5 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400 }}
-          sx={{
-            width: 52,
-            height: 52,
-            borderRadius: "20px",
-            bgcolor: isDarkMode
-              ? alpha("#FFFFFF", 0.1)
-              : alpha(theme.palette.primary.main, 0.08),
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            boxShadow: isDarkMode
-              ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
-              : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 2px 8px -2px ${alpha(
-                  theme.palette.primary.main,
-                  0.15
-                )}`,
-          }}
-        >
-          <Box
-            component="img"
-            src={`${import.meta.env.BASE_URL}logo.png`}
-            alt="Nix Logo"
-            sx={{
-              width: 40,
-              height: 40,
-              objectFit: "contain",
-            }}
-          />
-        </MotionBox>
-        <Box sx={{ color: "text.primary" }}>
-          <Text
-            size="5"
-            weight="bold"
-            style={{ letterSpacing: "-0.02em", color: "inherit" }}
-            as="span"
-          >
-            Nix
-          </Text>
-          <Text
-            size="1"
-            style={{
-              letterSpacing: "0.02em",
-              display: "block",
-              color: "inherit",
-              opacity: 0.8,
-            }}
-            as="span"
-          >
-            Finance Manager
-          </Text>
-        </Box>
-      </MotionBox>
-
       {/* Navigation */}
       <MotionBox
         variants={sidebarVariants}
@@ -375,24 +261,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         animate="visible"
         sx={{ flex: 1, px: 2, py: 2, overflowY: "auto" }}
       >
-        {/* Main Menu Label */}
-        <motion.div variants={itemVariants}>
-          <Text
-            size="1"
-            color="gray"
-            weight="medium"
-            style={{
-              paddingLeft: 16,
-              paddingRight: 16,
-              letterSpacing: "0.1em",
-              fontSize: 12,
-            }}
-            as="p"
-          >
-            Menu Principal
-          </Text>
-        </motion.div>
-
         {/* Main Navigation Items */}
         <List sx={{ mt: 1 }}>
           {mainNavItems.map((item, idx) => (

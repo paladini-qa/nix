@@ -20,9 +20,8 @@ import {
   useTheme,
   IconButton,
   Tooltip,
-  Fab,
 } from "@mui/material";
-import { Add as AddIcon, Refresh as RefreshIcon } from "@mui/icons-material";
+import { Refresh as RefreshIcon } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
@@ -80,6 +79,7 @@ import type { AdvancedFiltersState } from "./components/AdvancedFilters";
 import { getInitialMonthYear } from "./hooks/useFilters";
 import { usePullToRefresh } from "./hooks";
 import PullToRefreshIndicator from "./components/PullToRefreshIndicator";
+import NixAIChatBubble from "./components/NixAIChatBubble";
 import DashboardSkeleton from "./components/skeletons/DashboardSkeleton";
 import TransactionsSkeleton from "./components/skeletons/TransactionsSkeleton";
 import ListCardsSkeleton from "./components/skeletons/ListCardsSkeleton";
@@ -4446,23 +4446,14 @@ const AppContent: React.FC<{
             </Box>
           </Box>
 
-          {/* Botão global "Nova Transação" visível em todas as telas (desktop) */}
-          <Tooltip title="Nova Transação">
-            <Fab
-              color="primary"
-              aria-label="nova transação"
-              onClick={handleNewTransaction}
-              sx={{
-                position: "fixed",
-                bottom: 24,
-                right: 24,
-                display: { xs: "none", md: "flex" },
-                zIndex: (theme) => theme.zIndex.speedDial,
-              }}
-            >
-              <AddIcon />
-            </Fab>
-          </Tooltip>
+          {/* Nix AI chat bubble — desktop only */}
+          <NixAIChatBubble
+            transactions={transactions}
+            categories={categories}
+            paymentMethods={paymentMethods}
+            onTransactionCreate={handleSmartInputTransaction}
+            getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+          />
 
           <TransactionForm
             isOpen={isFormOpen}
