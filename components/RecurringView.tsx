@@ -1710,9 +1710,13 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           </Box>
         </Box>
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {recurringTransactions.map((t) => renderRecurringCard(t))}
-        </Box>
+        <Grid container spacing={2}>
+          {recurringTransactions.map((t) => (
+            <Grid key={t.id} size={{ xs: 12, md: 6 }}>
+              {renderRecurringCard(t)}
+            </Grid>
+          ))}
+        </Grid>
       )}
 
       {/* Mobile FAB - padronizado 64px, border-radius 20px */}

@@ -1880,9 +1880,13 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             </Box>
           </Box>
         ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {filteredGroups.map((group) => renderInstallmentCard(group))}
-        </Box>
+        <Grid container spacing={2}>
+          {filteredGroups.map((group) => (
+            <Grid key={group.key} size={{ xs: 12, md: 6 }}>
+              {renderInstallmentCard(group)}
+            </Grid>
+          ))}
+        </Grid>
         )
       ) : (
         <EmptyState
