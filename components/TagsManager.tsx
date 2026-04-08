@@ -3,7 +3,6 @@ import {
   Box,
   Typography,
   Paper,
-  Button,
   IconButton,
   Dialog,
   DialogTitle,
@@ -15,7 +14,9 @@ import {
   useTheme,
   Tooltip,
   Grid,
+  alpha,
 } from "@mui/material";
+import NixButton from "./radix/Button";
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -209,10 +210,33 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
         onClose={handleCloseForm}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: "20px" } }}
+        PaperProps={{
+          sx: {
+            borderRadius: "20px",
+            bgcolor: theme.palette.mode === "dark"
+              ? alpha(theme.palette.background.paper, 0.95)
+              : alpha("#FFFFFF", 0.98),
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            boxShadow: theme.palette.mode === "dark"
+              ? `0 24px 60px -12px ${alpha("#000000", 0.6)}`
+              : `0 24px 60px -12px ${alpha(theme.palette.primary.main, 0.18)}`,
+          },
+        }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: theme.palette.mode === "dark" ? alpha("#0F172A", 0.7) : alpha("#64748B", 0.35),
+              backdropFilter: "blur(6px)",
+            },
+          },
+        }}
       >
-        <DialogTitle>{editingTag ? "Edit Tag" : "New Tag"}</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ pt: 2.5, px: 2.5, pb: 1, fontWeight: 700, fontSize: "1rem" }}>
+          {editingTag ? "Editar tag" : "Nova tag"}
+        </DialogTitle>
+        <DialogContent sx={{ px: 2.5 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
             <TextField
               label="Tag Name"
@@ -267,13 +291,19 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1 }}>
-          <Button onClick={handleCloseForm} color="inherit">
-            Cancel
-          </Button>
-          <Button onClick={handleSave} variant="contained" disabled={!formName.trim()}>
-            {editingTag ? "Update" : "Create"}
-          </Button>
+        <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
+          <NixButton size="medium" variant="soft" color="gray" onClick={handleCloseForm}>
+            Cancelar
+          </NixButton>
+          <NixButton
+            size="medium"
+            variant="solid"
+            color="purple"
+            onClick={handleSave}
+            disabled={!formName.trim()}
+          >
+            {editingTag ? "Salvar" : "Criar"}
+          </NixButton>
         </DialogActions>
       </Dialog>
     </Paper>

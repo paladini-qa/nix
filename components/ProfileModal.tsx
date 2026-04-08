@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useConfirmDialog } from "../contexts";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const { confirm } = useConfirmDialog();
 
   const [localDisplayName, setLocalDisplayName] = useState(displayName);
   const [newEmail, setNewEmail] = useState("");
@@ -136,6 +138,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   };
 
   const handleResetPassword = async () => {
+    const confirmed = await confirm({
+      title: "Redefinir senha",
+      message: `Um email de redefinição de senha será enviado para ${userEmail}. Deseja continuar?`,
+      confirmText: "Enviar email",
+      cancelText: "Cancelar",
+      variant: "warning",
+    });
+    if (!confirmed) return;
+
     setPasswordStatus("sending");
     setErrorMessage("");
 

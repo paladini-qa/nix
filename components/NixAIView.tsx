@@ -59,6 +59,7 @@ import {
   isGeminiConfigured,
   GEMINI_NOT_CONFIGURED_MESSAGE,
 } from "../services/geminiService";
+import { useConfirmDialog } from "../contexts";
 
 // Motion components
 const MotionBox = motion.create(Box);
@@ -679,6 +680,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDarkMode = theme.palette.mode === "dark";
+  const { confirm } = useConfirmDialog();
 
   // Mensagem de boas-vindas
   const [messages, setMessages] = useState<Message[]>([
@@ -1019,7 +1021,17 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     setPendingBatch(null);
   };
 
-  const handleCancelBatch = () => {
+  const handleCancelBatch = async () => {
+    const count = pendingBatch?.length ?? 0;
+    const confirmed = await confirm({
+      title: "Descartar lote",
+      message: `Tem certeza que deseja descartar ${count} transaç${count === 1 ? "ão" : "ões"} pendentes? Elas não serão salvas.`,
+      confirmText: "Descartar",
+      cancelText: "Continuar editando",
+      variant: "warning",
+    });
+    if (!confirmed) return;
+
     const cancelMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",

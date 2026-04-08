@@ -30,6 +30,7 @@ import {
   parseBatchFromAudio,
   parseBatchFromImage,
 } from "../services/geminiService";
+import { useConfirmDialog } from "../contexts";
 
 const MotionPaper = motion.create(Paper);
 
@@ -63,6 +64,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDarkMode = theme.palette.mode === "dark";
+  const { confirm } = useConfirmDialog();
 
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -249,7 +251,17 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
     onDone?.();
   };
 
-  const handleCancelBatch = () => {
+  const handleCancelBatch = async () => {
+    const count = pendingBatch?.length ?? 0;
+    const confirmed = await confirm({
+      title: "Descartar lote",
+      message: `Tem certeza que deseja descartar ${count} transaç${count === 1 ? "ão" : "ões"} pendentes? Elas não serão salvas.`,
+      confirmText: "Descartar",
+      cancelText: "Continuar editando",
+      variant: "warning",
+    });
+    if (!confirmed) return;
+
     setPendingBatch(null);
     setSuccessMessage(null);
   };

@@ -85,7 +85,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { gridSpacing } = useLayoutSpacing();
   const { showSuccess, showError } = useNotification();
-  const { confirmDelete } = useConfirmDialog();
+  const { confirmDelete, confirm } = useConfirmDialog();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -220,18 +220,30 @@ const AccountsView: React.FC<AccountsViewProps> = ({
   };
 
   const handleToggleArchive = async (account: Account) => {
+    const isArchiving = account.isActive;
+    const confirmed = await confirm({
+      title: isArchiving ? "Arquivar conta" : "Restaurar conta",
+      message: isArchiving
+        ? `A conta "${account.name}" será arquivada e ficará oculta nas transações. Você pode restaurá-la a qualquer momento.`
+        : `A conta "${account.name}" será restaurada e voltará a aparecer nas transações.`,
+      confirmText: isArchiving ? "Arquivar" : "Restaurar",
+      cancelText: "Cancelar",
+      variant: isArchiving ? "warning" : "info",
+    });
+    if (!confirmed) return;
+
     try {
-      if (account.isActive) {
+      if (isArchiving) {
         await accountService.archive(account.id);
-        showSuccess(`${account.name} archived`);
+        showSuccess(`${account.name} arquivada`);
       } else {
         await accountService.unarchive(account.id);
-        showSuccess(`${account.name} restored`);
+        showSuccess(`${account.name} restaurada`);
       }
       fetchAccounts();
     } catch (err) {
       console.error("Error toggling archive:", err);
-      showError("Failed to update account");
+      showError("Falha ao atualizar conta");
     }
   };
 
@@ -720,12 +732,33 @@ const AccountsView: React.FC<AccountsViewProps> = ({
         onClose={handleCloseForm}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: "20px" } }}
+        PaperProps={{
+          sx: {
+            borderRadius: "20px",
+            bgcolor: theme.palette.mode === "dark"
+              ? alpha(theme.palette.background.paper, 0.95)
+              : alpha("#FFFFFF", 0.98),
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            boxShadow: theme.palette.mode === "dark"
+              ? `0 24px 60px -12px ${alpha("#000000", 0.6)}`
+              : `0 24px 60px -12px ${alpha(theme.palette.primary.main, 0.18)}`,
+          },
+        }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: theme.palette.mode === "dark" ? alpha("#0F172A", 0.7) : alpha("#64748B", 0.35),
+              backdropFilter: "blur(6px)",
+            },
+          },
+        }}
       >
-        <DialogTitle>
-          {editingAccount ? "Edit Account" : "New Account"}
+        <DialogTitle sx={{ pt: 2.5, px: 2.5, pb: 1, fontWeight: 700, fontSize: "1rem" }}>
+          {editingAccount ? "Editar conta" : "Nova conta"}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ px: 2.5 }}>
           <Box
             sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}
           >
@@ -804,13 +837,19 @@ const AccountsView: React.FC<AccountsViewProps> = ({
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1 }}>
-          <Button onClick={handleCloseForm} color="inherit">
-            Cancel
-          </Button>
-          <Button onClick={handleSave} variant="contained" disabled={!formName}>
-            {editingAccount ? "Update" : "Create"}
-          </Button>
+        <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
+          <NixButton size="medium" variant="soft" color="gray" onClick={handleCloseForm}>
+            Cancelar
+          </NixButton>
+          <NixButton
+            size="medium"
+            variant="solid"
+            color="purple"
+            onClick={handleSave}
+            disabled={!formName}
+          >
+            {editingAccount ? "Salvar" : "Criar"}
+          </NixButton>
         </DialogActions>
       </Dialog>
     </Box>

@@ -892,6 +892,15 @@ const AppContent: React.FC<{
 
   // Handlers
   const handleLogout = async () => {
+    const confirmed = await confirm({
+      title: "Sair da conta",
+      message: "Tem certeza que deseja sair? Você precisará fazer login novamente para acessar seus dados.",
+      confirmText: "Sair",
+      cancelText: "Cancelar",
+      variant: "warning",
+    });
+    if (!confirmed) return;
+
     // #region agent log
     fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
       method: "POST",
@@ -2920,18 +2929,18 @@ const AppContent: React.FC<{
       const relatedDesc = relatedTransaction.description;
 
       const result = await choice({
-        title: "Delete Linked Transaction",
-        message: `This transaction has a related ${relatedType}:\n"${relatedDesc}"\n\nWhat would you like to do?`,
+        title: "Excluir transação vinculada",
+        message: `Esta transação possui uma vinculada:\n"${relatedDesc}"\n\nO que deseja fazer?`,
         variant: "warning",
         choices: [
           {
-            label: "Delete Both",
+            label: "Excluir as duas",
             value: "both",
             variant: "contained",
             color: "error",
           },
           {
-            label: "Delete Only This One",
+            label: "Excluir só esta",
             value: "this",
             variant: "outlined",
             color: "warning",
@@ -2943,11 +2952,10 @@ const AppContent: React.FC<{
       deleteRelated = result === "both";
     } else {
       const confirmed = await confirm({
-        title: "Delete Transaction",
-        message:
-          "Are you sure you want to delete this transaction? This action cannot be undone.",
-        confirmText: "Delete",
-        cancelText: "Cancel",
+        title: "Excluir transação",
+        message: "Tem certeza que deseja excluir esta transação? Essa ação não pode ser desfeita.",
+        confirmText: "Excluir",
+        cancelText: "Cancelar",
         variant: "danger",
       });
 
@@ -2994,10 +3002,7 @@ const AppContent: React.FC<{
       );
     } catch (err) {
       console.error("Error deleting transaction:", err);
-      showError(
-        "Error deleting transaction. Please try again.",
-        "Delete Error"
-      );
+      showError("Não foi possível excluir a transação. Tente novamente.");
     }
   };
 
@@ -3079,6 +3084,14 @@ const AppContent: React.FC<{
           );
 
           if (originalTransaction && virtualDatePart) {
+            const confirmedSingle = await confirm({
+              title: "Remover esta ocorrência",
+              message: `A ocorrência de "${originalTransaction.description}" referente a ${virtualDatePart} será removida. As demais continuarão normais.`,
+              confirmText: "Remover",
+              cancelText: "Cancelar",
+              variant: "danger",
+            });
+            if (!confirmedSingle) return;
             const [origYear, origMonth, origDay] = originalTransaction.date
               .split("-")
               .map(Number);
@@ -3273,12 +3286,10 @@ const AppContent: React.FC<{
         } else if (isInstallment) {
           // Para parcela específica, deleta apenas esta parcela
           const confirmed = await confirm({
-            title: "Delete This Installment",
-            message: `Delete only installment ${
-              pendingDeleteTransaction.currentInstallment || 1
-            }/${pendingDeleteTransaction.installments}?`,
-            confirmText: "Delete",
-            cancelText: "Cancel",
+            title: "Excluir esta parcela",
+            message: `Excluir apenas a parcela ${pendingDeleteTransaction.currentInstallment || 1}/${pendingDeleteTransaction.installments} de "${pendingDeleteTransaction.description}"?`,
+            confirmText: "Excluir",
+            cancelText: "Cancelar",
             variant: "danger",
           });
 
@@ -3309,6 +3320,15 @@ const AppContent: React.FC<{
         } else if (isRecurring) {
           // Para transação recorrente original (não virtual), adiciona a data ao excluded_dates
           // Isso preserva a recorrência mas pula essa ocorrência específica
+          const confirmedRecurringSingle = await confirm({
+            title: "Remover esta ocorrência",
+            message: `A ocorrência de "${pendingDeleteTransaction.description}" em ${pendingDeleteTransaction.date} será removida. As demais continuarão normais.`,
+            confirmText: "Remover",
+            cancelText: "Cancelar",
+            variant: "danger",
+          });
+          if (!confirmedRecurringSingle) return;
+
           const skipDate = pendingDeleteTransaction.date;
           const currentExcludedDates =
             pendingDeleteTransaction.excludedDates || [];
@@ -3482,6 +3502,15 @@ const AppContent: React.FC<{
           );
         } else {
           // Para transação normal não recorrente (incluindo materializadas de recorrência)
+          const confirmedNormalSingle = await confirm({
+            title: "Excluir transação",
+            message: `Tem certeza que deseja excluir "${pendingDeleteTransaction.description}"? Essa ação não pode ser desfeita.`,
+            confirmText: "Excluir",
+            cancelText: "Cancelar",
+            variant: "danger",
+          });
+          if (!confirmedNormalSingle) return;
+
           let idsToRemove = [pendingDeleteTransaction.id];
 
           // Se a transação tem recurringGroupId, é uma materializada de recorrência
@@ -3612,14 +3641,10 @@ const AppContent: React.FC<{
           if (idsToDelete.length === 0) return;
 
           const confirmed = await confirm({
-            title: "Delete Future Installments",
-            message: `Delete installments ${currentInstallment} to ${
-              pendingDeleteTransaction.installments
-            }? (${idsToDelete.length} installment${
-              idsToDelete.length > 1 ? "s" : ""
-            })`,
-            confirmText: "Delete",
-            cancelText: "Cancel",
+            title: "Excluir parcelas futuras",
+            message: `Excluir as parcelas ${currentInstallment} a ${pendingDeleteTransaction.installments} de "${pendingDeleteTransaction.description}"? (${idsToDelete.length} parcela${idsToDelete.length > 1 ? "s" : ""})`,
+            confirmText: "Excluir",
+            cancelText: "Cancelar",
             variant: "danger",
           });
 
@@ -3656,11 +3681,10 @@ const AppContent: React.FC<{
         } else {
           // Para recorrentes, deleta a transação original (que para as virtuais futuras)
           const confirmed = await confirm({
-            title: "Delete Future Occurrences",
-            message:
-              "This will delete the recurring transaction and stop all future occurrences. Are you sure?",
-            confirmText: "Delete",
-            cancelText: "Cancel",
+            title: "Excluir ocorrências futuras",
+            message: `A recorrência "${pendingDeleteTransaction.description}" será encerrada e todas as ocorrências futuras serão removidas. Isso não pode ser desfeito.`,
+            confirmText: "Excluir",
+            cancelText: "Cancelar",
             variant: "danger",
           });
 
@@ -3720,10 +3744,10 @@ const AppContent: React.FC<{
           if (idsToDelete.length === 0) return;
 
           const confirmed = await confirm({
-            title: "Delete All Installments",
-            message: `Delete all ${idsToDelete.length} installments of "${pendingDeleteTransaction.description}"?`,
-            confirmText: "Delete All",
-            cancelText: "Cancel",
+            title: "Excluir todas as parcelas",
+            message: `Todas as ${idsToDelete.length} parcelas de "${pendingDeleteTransaction.description}" serão excluídas. Isso não pode ser desfeito.`,
+            confirmText: "Excluir tudo",
+            cancelText: "Cancelar",
             variant: "danger",
           });
 
@@ -3760,11 +3784,10 @@ const AppContent: React.FC<{
         } else {
           // Para recorrentes, deleta a transação original
           const confirmed = await confirm({
-            title: "Delete All Occurrences",
-            message:
-              "This will delete the recurring transaction and all its occurrences. Are you sure?",
-            confirmText: "Delete All",
-            cancelText: "Cancel",
+            title: "Excluir todas as ocorrências",
+            message: `A recorrência "${pendingDeleteTransaction.description}" e todas as suas ocorrências serão excluídas permanentemente. Isso não pode ser desfeito.`,
+            confirmText: "Excluir tudo",
+            cancelText: "Cancelar",
             variant: "danger",
           });
 
@@ -3788,10 +3811,7 @@ const AppContent: React.FC<{
       }
     } catch (err) {
       console.error("Error deleting transaction:", err);
-      showError(
-        "Error deleting transaction. Please try again.",
-        "Delete Error"
-      );
+      showError("Não foi possível excluir a transação. Tente novamente.");
     }
 
     // Limpa o estado de opções de transação compartilhada

@@ -941,7 +941,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, pt: 0, gap: 1.5 }}>
+      <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
         {!parsedResult ? (
           <>
             <Button
