@@ -26,6 +26,15 @@ export const CONTENT_PADDING = {
   xl: 4,
 } as const;
 
+// Padding horizontal do conteúdo — reduzido em relação ao CONTENT_PADDING para evitar excessos laterais
+export const CONTENT_PADDING_X = {
+  xs: 1.25,
+  sm: 2,
+  md: 2.5,
+  lg: 3,
+  xl: 3.5,
+} as const;
+
 // Gap entre blocos na página
 export const SECTION_GAP = {
   xs: 2,

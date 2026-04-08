@@ -27,7 +27,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
 import { Theme } from "@radix-ui/themes";
 import { lightTheme, darkTheme } from "./theme";
-import { CONTENT_PADDING, SECTION_GAP, CONTENT_MAX_WIDTH } from "./layoutConstants";
+import { CONTENT_PADDING, CONTENT_PADDING_X, SECTION_GAP, CONTENT_MAX_WIDTH } from "./layoutConstants";
 import {
   Transaction,
   FilterState,
@@ -4364,13 +4364,13 @@ const AppContent: React.FC<{
             sx={{
               flexGrow: 1,
               minHeight: 0,
-              p: currentView === "nixai" ? 0 : CONTENT_PADDING,
+              pt: currentView === "nixai" ? 0 : CONTENT_PADDING,
+              px: currentView === "nixai" ? 0 : CONTENT_PADDING_X,
               mt: { xs: "64px", lg: 0 },
               pb: currentView === "nixai"
                 ? { xs: `calc(80px + env(safe-area-inset-bottom, 0px))`, lg: 0 }
                 : { xs: "140px", lg: 4 },
-              maxWidth: { xs: "100%", lg: CONTENT_MAX_WIDTH },
-              mx: { xs: 0, lg: "auto" },
+              maxWidth: "100%",
               minWidth: 0,
               overflowX: "hidden",
               overflowY: currentView === "nixai" ? "hidden" : "auto",
