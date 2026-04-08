@@ -556,7 +556,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                   const hasUnpaid = summary.unpaidCount > 0;
 
                   return (
-                    <Grid key={summary.name} size={{ xs: 12, sm: 6, lg: 4 }}>
+                    <Grid key={summary.name} size={{ xs: 12, sm: 6, lg: 4 }} sx={{ display: "flex" }}>
                       <Paper
                         elevation={0}
                         onClick={() => onSelectPaymentMethod(summary.name)}
@@ -565,6 +565,9 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                           cursor: "pointer",
                           position: "relative",
                           overflow: "hidden",
+                          display: "flex",
+                          flexDirection: "column",
+                          width: "100%",
                           transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                           background: isDarkMode
                             ? `linear-gradient(135deg, ${alpha(
@@ -738,6 +741,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                             alignItems: "center",
                             flexWrap: "wrap",
                             gap: 1,
+                            mt: "auto",
                           }}
                         >
                           {hasUnpaid ? (
