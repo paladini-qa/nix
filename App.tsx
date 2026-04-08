@@ -4369,8 +4369,9 @@ const AppContent: React.FC<{
               pb: currentView === "nixai"
                 ? { xs: `calc(80px + env(safe-area-inset-bottom, 0px))`, lg: 0 }
                 : { xs: "140px", lg: 4 },
-              maxWidth: { xs: "100vw", lg: CONTENT_MAX_WIDTH },
+              maxWidth: { xs: "100%", lg: CONTENT_MAX_WIDTH },
               mx: { xs: 0, lg: "auto" },
+              minWidth: 0,
               overflowX: "hidden",
               overflowY: currentView === "nixai" ? "hidden" : "auto",
               boxSizing: "border-box",
