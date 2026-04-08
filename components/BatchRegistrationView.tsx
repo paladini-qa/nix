@@ -13,6 +13,7 @@ import {
   InputAdornment,
   Tooltip,
   Paper,
+  Stack,
   keyframes,
 } from "@mui/material";
 import {
@@ -20,6 +21,10 @@ import {
   Mic as MicIcon,
   PhotoCamera as CameraIcon,
   Stop as StopIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  TextFields as TextFieldsIcon,
+  KeyboardVoice as VoiceIcon,
+  CameraAlt as PhotoIcon,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import NixAISkeleton from "./skeletons/NixAISkeleton";
@@ -33,8 +38,9 @@ import {
 import { useConfirmDialog } from "../contexts";
 
 const MotionPaper = motion.create(Paper);
+const MotionBox = motion.create(Box);
 
-const NIX_BRAND = { purple: "#8A2BE2" };
+const NIX_PURPLE = "#6366F1";
 
 const pulseAnimation = keyframes`
   0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
@@ -53,6 +59,30 @@ interface BatchRegistrationViewProps {
   onDone?: () => void;
   getPaymentMethodPaymentDay?: (method: string) => number | undefined;
 }
+
+const INPUT_MODES = [
+  {
+    key: "text",
+    Icon: TextFieldsIcon,
+    label: "Texto",
+    description: "Descreva em suas palavras: \"Uber 30, mercado 50 com Pix\"",
+    colorKey: "primary" as const,
+  },
+  {
+    key: "audio",
+    Icon: VoiceIcon,
+    label: "Áudio",
+    description: "Fale seus gastos e a IA transcreve e categoriza automaticamente",
+    colorKey: "error" as const,
+  },
+  {
+    key: "image",
+    Icon: PhotoIcon,
+    label: "Foto",
+    description: "Tire foto de recibo, nota fiscal ou extrato bancário",
+    colorKey: "success" as const,
+  },
+];
 
 const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
   categories = { income: ["Salary", "Other"], expense: ["Food", "Transportation", "Other"] },
@@ -97,13 +127,10 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
     };
   }, []);
 
-  const processBatch = useCallback(
-    async (batch: ParsedTransaction[]) => {
-      setPendingBatch(batch);
-      setSuccessMessage(null);
-    },
-    []
-  );
+  const processBatch = useCallback(async (batch: ParsedTransaction[]) => {
+    setPendingBatch(batch);
+    setSuccessMessage(null);
+  }, []);
 
   const processTextInput = useCallback(
     async (text: string) => {
@@ -129,9 +156,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : "audio/mp4",
+        mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4",
       });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -139,9 +164,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
       mediaRecorder.onstop = async () => {
-        const blob = new Blob(audioChunksRef.current, {
-          type: mediaRecorder.mimeType,
-        });
+        const blob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType });
         stream.getTracks().forEach((track) => track.stop());
         setIsLoading(true);
         setSmartInputError(null);
@@ -164,9 +187,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
       }, 1000);
     } catch (err) {
       console.error(err);
-      setSmartInputError(
-        "Não foi possível acessar o microfone. Verifique as permissões."
-      );
+      setSmartInputError("Não foi possível acessar o microfone. Verifique as permissões.");
     }
   };
 
@@ -194,18 +215,11 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
       reader.onload = async (e) => {
         const imageBase64 = e.target?.result as string;
         try {
-          const batch = await parseBatchFromImage(
-            imageBase64,
-            file.type,
-            categories,
-            paymentMethods
-          );
+          const batch = await parseBatchFromImage(imageBase64, file.type, categories, paymentMethods);
           await processBatch(batch);
         } catch (err) {
           console.error(err);
-          setSmartInputError(
-            "Não foi possível ler a imagem. Tente outra foto com boa iluminação."
-          );
+          setSmartInputError("Não foi possível ler a imagem. Tente outra foto com boa iluminação.");
         } finally {
           setIsLoading(false);
         }
@@ -261,7 +275,6 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
       variant: "warning",
     });
     if (!confirmed) return;
-
     setPendingBatch(null);
     setSuccessMessage(null);
   };
@@ -271,7 +284,6 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
       sx={{
         display: "flex",
         flexDirection: "column",
-        // No mobile: ocupa tela inteira menos header (64px) e nav bottom (80px) + safe area
         height: isMobile
           ? "calc(100dvh - 64px - 80px - env(safe-area-inset-bottom, 0px))"
           : "calc(100vh - 100px)",
@@ -285,11 +297,32 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
       }}
     >
       {/* Cabeçalho */}
-      <Box sx={{ px: isMobile ? 0.5 : 0, mb: isMobile ? 1 : 1.5 }}>
-        <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={700} sx={{ mb: 0.25 }}>
-          Cadastro em lote
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: isMobile ? 12 : 14 }}>
+      <Box sx={{ px: isMobile ? 0.5 : 0, mb: isMobile ? 1.5 : 2 }}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: "10px",
+              background: `linear-gradient(135deg, ${NIX_PURPLE} 0%, #8B5CF6 100%)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              boxShadow: `0 4px 12px ${alpha(NIX_PURPLE, 0.35)}`,
+            }}
+          >
+            <AutoAwesomeIcon sx={{ fontSize: 15, color: "#FFF" }} />
+          </Box>
+          <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={700}>
+            Cadastro em lote
+          </Typography>
+        </Stack>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ fontSize: isMobile ? 12 : 13, pl: 0.5 }}
+        >
           Envie texto, foto ou áudio — a IA extrai as transações para você revisar antes de salvar.
         </Typography>
       </Box>
@@ -314,7 +347,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
         </Alert>
       </Collapse>
 
-      {/* Área de conteúdo scrollável */}
+      {/* Área scrollável */}
       <Box
         sx={{
           flex: 1,
@@ -343,29 +376,118 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
           </Box>
         )}
 
+        {/* Empty state */}
         {!pendingBatch && !isLoading && (
-          <Box
+          <MotionBox
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
             sx={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              py: 6,
-              gap: 1,
-              color: "text.disabled",
+              py: isMobile ? 3 : 5,
+              gap: 2.5,
             }}
           >
-            <Typography variant="body2" textAlign="center">
-              Nenhum lote carregado.
-            </Typography>
-            <Typography variant="caption" textAlign="center">
-              Use o campo abaixo para enviar texto, imagem ou áudio.
-            </Typography>
-          </Box>
+            {/* Ícone central */}
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: "20px",
+                background: `linear-gradient(135deg, ${alpha(NIX_PURPLE, 0.15)} 0%, ${alpha("#8B5CF6", 0.08)} 100%)`,
+                border: `1px solid ${alpha(NIX_PURPLE, 0.2)}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <AutoAwesomeIcon sx={{ fontSize: 28, color: NIX_PURPLE }} />
+            </Box>
+
+            <Box sx={{ textAlign: "center", maxWidth: 360 }}>
+              <Typography
+                variant={isMobile ? "subtitle1" : "h6"}
+                fontWeight={700}
+                sx={{ mb: 0.75 }}
+              >
+                Descreva seus gastos como preferir
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+                A IA identifica e categoriza tudo automaticamente. Você só revisa e confirma.
+              </Typography>
+            </Box>
+
+            {/* Cards de modo de entrada */}
+            <Stack
+              direction={isMobile ? "column" : "row"}
+              spacing={1.5}
+              sx={{ width: "100%", maxWidth: 600 }}
+            >
+              {INPUT_MODES.map(({ key, Icon, label, description, colorKey }) => {
+                const color = theme.palette[colorKey].main;
+                return (
+                  <Box
+                    key={key}
+                    sx={{
+                      flex: 1,
+                      p: 1.75,
+                      borderRadius: "16px",
+                      bgcolor: isDarkMode ? alpha("#FFFFFF", 0.03) : "#FFFFFF",
+                      border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.07) : alpha("#000000", 0.06)}`,
+                      display: "flex",
+                      flexDirection: isMobile ? "row" : "column",
+                      alignItems: isMobile ? "center" : "flex-start",
+                      gap: 1.25,
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        borderColor: alpha(color, 0.3),
+                        boxShadow: `0 4px 16px ${alpha(color, 0.08)}`,
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        flexShrink: 0,
+                        borderRadius: "10px",
+                        bgcolor: alpha(color, 0.1),
+                        border: `1px solid ${alpha(color, 0.2)}`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Icon sx={{ fontSize: 18, color }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="caption"
+                        fontWeight={700}
+                        display="block"
+                        sx={{ mb: 0.25, fontSize: 12 }}
+                      >
+                        {label}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontSize: isMobile ? 11 : 10, lineHeight: 1.4 }}
+                      >
+                        {description}
+                      </Typography>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Stack>
+          </MotionBox>
         )}
       </Box>
 
-      {/* Input bar — fixo no fundo, não scrollável */}
+      {/* Barra de input — fixa no fundo */}
       <Box
         sx={{
           pt: 1,
@@ -419,11 +541,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
                 size="small"
                 startIcon={<StopIcon />}
                 onClick={stopRecording}
-                sx={{
-                  borderRadius: "10px",
-                  fontWeight: 600,
-                  textTransform: "none",
-                }}
+                sx={{ borderRadius: "10px", fontWeight: 600, textTransform: "none" }}
               >
                 Parar
               </Button>
@@ -437,9 +555,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
           multiline
           maxRows={4}
           placeholder={
-            isRecording
-              ? "Gravando áudio..."
-              : "Ex.: Gastei 30 no Uber, 50 no mercado com Pix..."
+            isRecording ? "Gravando áudio..." : "Ex.: Gastei 30 no Uber, 50 no mercado com Pix..."
           }
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
@@ -450,16 +566,13 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
               <InputAdornment position="start" sx={{ mr: 0.5, gap: 0.5 }}>
                 <Tooltip title="Gravar áudio">
                   <IconButton
-                    onClick={() =>
-                      isRecording ? stopRecording() : startRecording()
-                    }
+                    onClick={() => (isRecording ? stopRecording() : startRecording())}
                     disabled={isLoading}
                     size="small"
                     sx={{
-                      bgcolor: isRecording
-                        ? alpha(theme.palette.error.main, 0.1)
-                        : "transparent",
+                      bgcolor: isRecording ? alpha(theme.palette.error.main, 0.1) : "transparent",
                       color: isRecording ? "error.main" : "text.secondary",
+                      transition: "all 0.2s ease",
                     }}
                   >
                     {isRecording ? (
@@ -474,7 +587,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isLoading || isRecording}
                     size="small"
-                    sx={{ color: "text.secondary" }}
+                    sx={{ color: "text.secondary", transition: "all 0.2s ease" }}
                   >
                     <CameraIcon fontSize="small" />
                   </IconButton>
@@ -489,10 +602,13 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
                   sx={{
                     width: 36,
                     height: 36,
-                    bgcolor: inputValue.trim()
-                      ? NIX_BRAND.purple
-                      : "transparent",
+                    bgcolor: inputValue.trim() ? NIX_PURPLE : "transparent",
                     color: inputValue.trim() ? "#FFFFFF" : "text.disabled",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      bgcolor: inputValue.trim() ? alpha(NIX_PURPLE, 0.85) : undefined,
+                      transform: inputValue.trim() ? "scale(1.05)" : "none",
+                    },
                   }}
                 >
                   <SendIcon sx={{ fontSize: 18 }} />
