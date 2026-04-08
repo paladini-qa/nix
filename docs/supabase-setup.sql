@@ -61,12 +61,18 @@ CREATE TABLE IF NOT EXISTS public.transactions (
 -- Para bancos existentes, adicione a coluna invoice_due_date (vencimento da fatura quando método tem dia cadastrado):
 -- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS invoice_due_date DATE;
 
+-- Para bancos existentes, crie o índice para lookups bidirecionais de transações compartilhadas:
+-- CREATE INDEX IF NOT EXISTS idx_transactions_related ON public.transactions(related_transaction_id) WHERE related_transaction_id IS NOT NULL;
+
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.transactions(date DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_type ON public.transactions(type);
 CREATE INDEX IF NOT EXISTS idx_transactions_installment_group ON public.transactions(installment_group_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_recurring_group ON public.transactions(recurring_group_id);
+-- Índice parcial para lookups bidirecionais de transações compartilhadas (related_transaction_id)
+CREATE INDEX IF NOT EXISTS idx_transactions_related ON public.transactions(related_transaction_id)
+  WHERE related_transaction_id IS NOT NULL;
 
 -- Comentários na tabela
 COMMENT ON TABLE public.transactions IS 'Transações financeiras dos usuários';

@@ -9,6 +9,41 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Fixed - Abril 2026
+
+#### Integridade de Transações — 5 Correções de Dados
+
+- **Bug 1 — Sync isPaid em transações compartilhadas** — Ao marcar uma transação compartilhada como paga, o par relacionado (`relatedTransactionId`) agora também é atualizado atomicamente. Antes, apenas a transação clicada era marcada; o par permanecia inalterado.
+  - **Arquivos modificados**: `App.tsx` (`handleTogglePaid`, bloco não-virtual)
+  - **Impacto**: Testes C3 e C4 agora passam corretamente; saldo na tela Shared fica consistente
+
+- **Bug 2 — Materialização completa de virtual+shared ao marcar como pago** — `handleTogglePaid` em ocorrências virtuais compartilhadas agora cria a income materializada correspondente, vincula os dois novos registros entre si e exclui a data de ambas as sequências originais (`excluded_dates`). Antes, criava apenas a despesa materializada, deixando a income original gerando duplicata virtual e com `isPaid` dessincronizado.
+  - **Arquivos modificados**: `App.tsx` (`handleTogglePaid`, bloco virtual)
+  - **Impacto**: Teste E3 e E10 cobertos; sem duplicatas na UI após marcar pago
+
+- **Bug 3 — `relatedTransactionId` ausente nas despesas de parcelas compartilhadas** — Ao criar parcelas compartilhadas, cada income recebia `related_transaction_id` apontando para a despesa par, mas as despesas não recebiam o link inverso. Isso impedia o `SharedOptionsDialog` de abrir ao editar/deletar parcelas compartilhadas e impedia o sync de `isPaid`. Fix: após inserir as incomes, cada despesa é atualizada com `related_transaction_id = income.id` correspondente.
+  - **Arquivos modificados**: `App.tsx` (`handleAddTransaction`, bloco installments + shared)
+  - **Impacto**: Testes D1–D10 agora funcionam; SharedOptionsDialog abre para parcelas compartilhadas
+
+- **Bug 4 — Edit all/all_future de parcelas shared não atualizava incomes** — Nos modos de edição "Esta e futuras" e "Todas" para parcelamentos compartilhados, apenas as despesas eram atualizadas no banco. As incomes correspondentes mantinham dados antigos. Fix: coleta os `relatedTransactionId` das despesas afetadas e faz UPDATE em batch nas incomes quando `pendingSharedEditOption === "both"`.
+  - **Arquivos modificados**: `App.tsx` (`handleRecurringEditSave`, modos `all_future` e `all` com `isInstallment`)
+  - **Impacto**: Testes D7 e D8 agora passam; valores na SharedView ficam consistentes
+
+- **Bug 5 — Delete de parcelas shared não removia as incomes** — Ao deletar parcelas compartilhadas (single, all_future ou all) com a opção "Nós dois", somente as despesas eram removidas. As incomes correspondentes permaneciam órfãs. Fix: coleta os `relatedTransactionId` das despesas e deleta as incomes em batch quando `pendingSharedEditOption === "both"`.
+  - **Arquivos modificados**: `App.tsx` (`handleDeleteOptionSelect`, os 3 escopos de delete para `isInstallment`)
+  - **Impacto**: Testes D3–D6 agora passam; sem incomes órfãs após delete de parcelas shared
+
+#### DB — Índice de Performance
+- **Índice `idx_transactions_related`** — Índice parcial em `related_transaction_id` (apenas linhas não-nulas) para otimizar lookups bidirecionais de transações compartilhadas.
+  - **Arquivos modificados**: `docs/supabase-setup.sql`
+  - **SQL de migração**: `CREATE INDEX IF NOT EXISTS idx_transactions_related ON public.transactions(related_transaction_id) WHERE related_transaction_id IS NOT NULL;`
+
+#### Documentação
+- **TESTE-DE-SISTEMA.md** — Adicionada Seção 6 com matriz completa de testes: Grupos A (Installment), B (Recurring), C (Shared), D (Shared+Installment), E (Shared+Recurring) e F (Corner Cases), totalizando 40 casos de teste.
+  - **Arquivos modificados**: `docs/TESTE-DE-SISTEMA.md`
+
+---
+
 ### Added - Abril 2026
 
 #### UI/UX Overhaul — 4 Fases de Modernização

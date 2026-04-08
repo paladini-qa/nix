@@ -1739,6 +1739,34 @@ const AppContent: React.FC<{
                 })
               );
               setTransactions((prev) => [...incomeTransactions, ...prev]);
+
+              // Bug 3 fix: atualiza cada despesa com o related_transaction_id apontando para a income par
+              // incomeData[i].related_transaction_id === data[i].id, então invertemos o mapeamento
+              const expenseUpdates = incomeData.map((inc: any) => ({
+                id: inc.related_transaction_id as string,
+                related_transaction_id: inc.id,
+              }));
+
+              await Promise.all(
+                expenseUpdates.map(({ id: expId, related_transaction_id: incId }) =>
+                  supabase
+                    .from("transactions")
+                    .update({ related_transaction_id: incId })
+                    .eq("id", expId)
+                )
+              );
+
+              // Atualiza estado local das despesas com relatedTransactionId
+              const expenseRelatedMap = new Map<string, string>(
+                expenseUpdates.map(({ id: expId, related_transaction_id: incId }: { id: string; related_transaction_id: string }) => [expId, incId])
+              );
+              setTransactions((prev) =>
+                prev.map((t) =>
+                  expenseRelatedMap.has(t.id)
+                    ? { ...t, relatedTransactionId: expenseRelatedMap.get(t.id) }
+                    : t
+                )
+              );
             }
           }
         }
@@ -2460,6 +2488,43 @@ const AppContent: React.FC<{
               return t;
             })
           );
+
+          // Bug 4 fix: também atualiza as incomes relacionadas (quando a opção shared for "both")
+          if (newTx.isShared && pendingSharedEditOption === "both") {
+            const incomeIdsToUpdate = relatedInstallments
+              .map((t) => t.relatedTransactionId)
+              .filter((rid): rid is string => !!rid);
+
+            if (incomeIdsToUpdate.length > 0) {
+              const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+              const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+
+              await supabase
+                .from("transactions")
+                .update({
+                  description: incomeDescription,
+                  amount: incomeAmount,
+                  payment_method: newTx.paymentMethod,
+                  shared_with: newTx.sharedWith,
+                })
+                .in("id", incomeIdsToUpdate);
+
+              setTransactions((prev) =>
+                prev.map((t) => {
+                  if (incomeIdsToUpdate.includes(t.id)) {
+                    return {
+                      ...t,
+                      description: incomeDescription,
+                      amount: incomeAmount,
+                      paymentMethod: newTx.paymentMethod,
+                      sharedWith: newTx.sharedWith,
+                    };
+                  }
+                  return t;
+                })
+              );
+            }
+          }
         } else {
           // Para recorrentes, materializa as ocorrências passadas VINCULADAS ao grupo e atualiza a original
           const targetDate = new Date(newTx.date);
@@ -2670,6 +2735,43 @@ const AppContent: React.FC<{
               return t;
             })
           );
+
+          // Bug 4 fix: também atualiza as incomes relacionadas (quando a opção shared for "both")
+          if (newTx.isShared && pendingSharedEditOption === "both") {
+            const incomeIdsToUpdate = relatedInstallments
+              .map((t) => t.relatedTransactionId)
+              .filter((rid): rid is string => !!rid);
+
+            if (incomeIdsToUpdate.length > 0) {
+              const incomeAmount = Math.round((newTx.amount / 2) * 100) / 100;
+              const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
+
+              await supabase
+                .from("transactions")
+                .update({
+                  description: incomeDescription,
+                  amount: incomeAmount,
+                  payment_method: newTx.paymentMethod,
+                  shared_with: newTx.sharedWith,
+                })
+                .in("id", incomeIdsToUpdate);
+
+              setTransactions((prev) =>
+                prev.map((t) => {
+                  if (incomeIdsToUpdate.includes(t.id)) {
+                    return {
+                      ...t,
+                      description: incomeDescription,
+                      amount: incomeAmount,
+                      paymentMethod: newTx.paymentMethod,
+                      sharedWith: newTx.sharedWith,
+                    };
+                  }
+                  return t;
+                })
+              );
+            }
+          }
         } else {
           // Para recorrentes, simplesmente atualiza a transação original
           const updatedPayload = {
@@ -3188,8 +3290,21 @@ const AppContent: React.FC<{
             .eq("id", pendingDeleteTransaction.id);
           if (error) throw error;
 
+          let singleInstallmentIdsToRemove = [pendingDeleteTransaction.id];
+
+          // Bug 5 fix: deleta a income relacionada quando "both" for selecionado
+          if (shouldDeleteRelated && pendingDeleteTransaction.relatedTransactionId) {
+            const { error: incomeError } = await supabase
+              .from("transactions")
+              .delete()
+              .eq("id", pendingDeleteTransaction.relatedTransactionId);
+            if (!incomeError) {
+              singleInstallmentIdsToRemove.push(pendingDeleteTransaction.relatedTransactionId);
+            }
+          }
+
           setTransactions((prev) =>
-            prev.filter((t) => t.id !== pendingDeleteTransaction.id)
+            prev.filter((t) => !singleInstallmentIdsToRemove.includes(t.id))
           );
         } else if (isRecurring) {
           // Para transação recorrente original (não virtual), adiciona a data ao excluded_dates
@@ -3516,8 +3631,27 @@ const AppContent: React.FC<{
             .in("id", idsToDelete);
           if (error) throw error;
 
+          let allFutureIdsToRemove = [...idsToDelete];
+
+          // Bug 5 fix: deleta as incomes relacionadas quando "both" for selecionado
+          if (shouldDeleteRelated) {
+            const incomeIdsToDelete = relatedInstallments
+              .map((t) => t.relatedTransactionId)
+              .filter((rid): rid is string => !!rid);
+
+            if (incomeIdsToDelete.length > 0) {
+              const { error: incomeError } = await supabase
+                .from("transactions")
+                .delete()
+                .in("id", incomeIdsToDelete);
+              if (!incomeError) {
+                allFutureIdsToRemove = [...allFutureIdsToRemove, ...incomeIdsToDelete];
+              }
+            }
+          }
+
           setTransactions((prev) =>
-            prev.filter((t) => !idsToDelete.includes(t.id))
+            prev.filter((t) => !allFutureIdsToRemove.includes(t.id))
           );
         } else {
           // Para recorrentes, deleta a transação original (que para as virtuais futuras)
@@ -3601,8 +3735,27 @@ const AppContent: React.FC<{
             .in("id", idsToDelete);
           if (error) throw error;
 
+          let allInstallmentIdsToRemove = [...idsToDelete];
+
+          // Bug 5 fix: deleta as incomes relacionadas quando "both" for selecionado
+          if (shouldDeleteRelated) {
+            const incomeIdsToDelete = relatedInstallments
+              .map((t) => t.relatedTransactionId)
+              .filter((rid): rid is string => !!rid);
+
+            if (incomeIdsToDelete.length > 0) {
+              const { error: incomeError } = await supabase
+                .from("transactions")
+                .delete()
+                .in("id", incomeIdsToDelete);
+              if (!incomeError) {
+                allInstallmentIdsToRemove = [...allInstallmentIdsToRemove, ...incomeIdsToDelete];
+              }
+            }
+          }
+
           setTransactions((prev) =>
-            prev.filter((t) => !idsToDelete.includes(t.id))
+            prev.filter((t) => !allInstallmentIdsToRemove.includes(t.id))
           );
         } else {
           // Para recorrentes, deleta a transação original
@@ -3679,7 +3832,7 @@ const AppContent: React.FC<{
           "0"
         )}-${String(adjustedDay).padStart(2, "0")}`;
 
-        // Cria uma nova transação materializada (cópia da original com a data da ocorrência)
+        // Cria a despesa materializada SEM related_transaction_id ainda (será atualizado abaixo se shared)
         const newTransaction: Record<string, unknown> = {
           description: originalTransaction.description,
           amount: originalTransaction.amount,
@@ -3687,14 +3840,14 @@ const AppContent: React.FC<{
           category: originalTransaction.category,
           payment_method: originalTransaction.paymentMethod,
           date: virtualDate,
-          is_recurring: false, // Não é mais recorrente, é uma ocorrência única
+          is_recurring: false,
           frequency: null,
           installments: null,
           current_installment: null,
           is_paid: isPaid,
           is_shared: originalTransaction.isShared,
           shared_with: originalTransaction.sharedWith,
-          related_transaction_id: originalTransaction.relatedTransactionId,
+          recurring_group_id: originalTransaction.id,
           user_id: session?.user?.id,
         };
         if (originalTransaction.invoiceDueDate) newTransaction.invoice_due_date = originalTransaction.invoiceDueDate;
@@ -3708,6 +3861,102 @@ const AppContent: React.FC<{
         if (error) throw error;
 
         if (data) {
+          let materializedRelatedId: string | undefined;
+
+          // Bug 2 fix: se é compartilhada, cria também a income materializada e exclui data de ambas as origens
+          if (
+            originalTransaction.isShared &&
+            originalTransaction.relatedTransactionId &&
+            originalTransaction.type === "expense"
+          ) {
+            const originalIncome = transactions.find(
+              (t) => t.id === originalTransaction.relatedTransactionId
+            );
+
+            if (originalIncome) {
+              const incomeAmount = Math.round((originalTransaction.amount / 2) * 100) / 100;
+              const incomePayload: Record<string, unknown> = {
+                user_id: session?.user?.id,
+                description: `${originalTransaction.description} - ${originalTransaction.sharedWith}`,
+                amount: incomeAmount,
+                type: "income",
+                category: originalIncome.category || "Other",
+                payment_method: originalTransaction.paymentMethod,
+                date: virtualDate,
+                is_recurring: false,
+                is_paid: isPaid,
+                is_shared: true,
+                shared_with: originalTransaction.sharedWith,
+                related_transaction_id: data.id,
+                recurring_group_id: originalIncome.id,
+              };
+
+              const { data: incomeData, error: incomeError } = await supabase
+                .from("transactions")
+                .insert(incomePayload)
+                .select()
+                .single();
+
+              if (!incomeError && incomeData) {
+                materializedRelatedId = incomeData.id;
+
+                // Vincula a despesa à income materializada
+                await supabase
+                  .from("transactions")
+                  .update({ related_transaction_id: incomeData.id })
+                  .eq("id", data.id);
+
+                // Exclui a data da income original para evitar duplicata virtual
+                const incomeExcluded = [...(originalIncome.excludedDates || []), virtualDate];
+                await supabase
+                  .from("transactions")
+                  .update({ excluded_dates: incomeExcluded })
+                  .eq("id", originalIncome.id);
+
+                setTransactions((prev) =>
+                  prev.map((t) =>
+                    t.id === originalIncome.id
+                      ? { ...t, excludedDates: incomeExcluded }
+                      : t
+                  )
+                );
+
+                const mappedIncome: Transaction = {
+                  id: incomeData.id,
+                  description: incomeData.description,
+                  amount: incomeData.amount,
+                  type: "income",
+                  category: incomeData.category,
+                  paymentMethod: incomeData.payment_method,
+                  date: incomeData.date,
+                  createdAt: new Date(incomeData.created_at).getTime(),
+                  isRecurring: false,
+                  isPaid: incomeData.is_paid ?? isPaid,
+                  isShared: true,
+                  sharedWith: incomeData.shared_with,
+                  relatedTransactionId: data.id,
+                  recurringGroupId: incomeData.recurring_group_id,
+                };
+                setTransactions((prev) => [...prev, mappedIncome]);
+              }
+            }
+          }
+
+          // Exclui a data da despesa original para não gerar ocorrência virtual duplicada
+          const expenseExcluded = [...(originalTransaction.excludedDates || []), virtualDate];
+          await supabase
+            .from("transactions")
+            .update({ excluded_dates: expenseExcluded })
+            .eq("id", originalTransaction.id);
+
+          setTransactions((prev) =>
+            prev.map((t) =>
+              t.id === originalTransaction.id
+                ? { ...t, excludedDates: expenseExcluded }
+                : t
+            )
+          );
+
           const mappedTransaction: Transaction = {
             id: data.id,
             description: data.description,
@@ -3725,7 +3974,8 @@ const AppContent: React.FC<{
             isPaid: data.is_paid ?? true,
             isShared: data.is_shared,
             sharedWith: data.shared_with,
-            relatedTransactionId: data.related_transaction_id,
+            relatedTransactionId: materializedRelatedId,
+            recurringGroupId: data.recurring_group_id,
             installmentGroupId: data.installment_group_id,
             excludedDates: data.excluded_dates ?? [],
           };
@@ -3733,7 +3983,7 @@ const AppContent: React.FC<{
           setTransactions((prev) => [...prev, mappedTransaction]);
         }
       } else {
-        // Para transações normais, apenas atualiza o status
+        // Para transações normais, atualiza o status
         const { error } = await supabase
           .from("transactions")
           .update({ is_paid: isPaid })
@@ -3742,6 +3992,24 @@ const AppContent: React.FC<{
         setTransactions((prev) =>
           prev.map((t) => (t.id === id ? { ...t, isPaid } : t))
         );
+
+        // Bug 1 fix: sincroniza isPaid com a transação compartilhada relacionada
+        const currentTransaction = transactions.find((t) => t.id === id);
+        if (currentTransaction?.relatedTransactionId) {
+          const { error: relatedError } = await supabase
+            .from("transactions")
+            .update({ is_paid: isPaid })
+            .eq("id", currentTransaction.relatedTransactionId);
+          if (!relatedError) {
+            setTransactions((prev) =>
+              prev.map((t) =>
+                t.id === currentTransaction.relatedTransactionId
+                  ? { ...t, isPaid }
+                  : t
+              )
+            );
+          }
+        }
       }
     } catch (err) {
       console.error("Error updating transaction:", err);
