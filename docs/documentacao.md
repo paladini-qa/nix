@@ -1,7 +1,7 @@
 # Documentação - Nix Finance
 
 **Última atualização**: Abril 2026  
-**Versão**: 2.2
+**Versão**: 2.3
 
 ---
 
@@ -19,12 +19,17 @@ Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais co
 - Visualização de receitas, despesas e saldo mensal
 - Gráficos interativos de evolução financeira
 - Cards de resumo com animações CountUp
+- **RecentTransactionsWidget**: Últimas 5 transações com botão "Ver todos"
+- **NetWorthWidget**: Balanço total acumulado e tendência vs. mês anterior
+- **BalanceForecastWidget**: Previsão de saldo no fim do mês considerando recorrentes pendentes
+- **SubscriptionDetector**: Detecção automática de possíveis assinaturas com opção de marcar como recorrente
 - Filtros por mês/ano
 - Filtros avançados (data, tipo, categoria, método de pagamento)
 
 #### Transações
 - **CRUD Completo**: Adicionar, editar, excluir e visualizar transações
 - **Status de Pagamento**: Controle se a transação foi paga (`isPaid`)
+- **Observações**: Campo `notes` opcional (até 500 chars) para anotações livres; exibido com tooltip `NotesIcon` na listagem
 - **Filtros Avançados**: Por data, tipo, categoria, método de pagamento
 - **Busca Global**: Busca rápida com atalho Ctrl+K / Cmd+K
 - **Visualizações**: Tabela e cards swipeable
@@ -82,6 +87,8 @@ Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais co
 - **Orçamentos Mensais**: Defina limites por categoria
 - **Orçamentos Recorrentes**: Repetição automática nos próximos meses
 - **Acompanhamento Visual**: Barras de progresso e alertas de estouro
+- **Alertas Toast**: Notificação automática quando orçamento ultrapassa 80% ou estoura (uma vez por sessão)
+- **Streak de Meses**: Badge "🔥 Xm" para categorias com X meses consecutivos no verde
 - **View Dedicada**: Gerenciamento completo de orçamentos
 
 #### Metas Financeiras
@@ -89,11 +96,46 @@ Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais co
 - **Acompanhamento Visual**: Progresso visual com barras e porcentagens
 - **Cores e Ícones**: Personalização de cada meta
 - **Status de Conclusão**: Marque metas como concluídas
+- **Reativar Meta**: Botão "Reativar" para metas concluídas
+- **Contribuição Automática**: Campo opcional para criar transação recorrente de poupança ao criar meta
 
 #### Analytics
 - **Relatórios Detalhados**: Análise completa de hábitos financeiros
 - **Gráficos Interativos**: Visualizações com Recharts
+- **Drill-down por categoria**: Clique em fatia do PieChart para filtrar transações da categoria
+- **Comparação YoY**: BarChart de despesas do ano atual vs. ano anterior
 - **Filtros Avançados**: Análise por período, categoria, etc.
+
+#### Categorias
+- **Categorias Customizáveis**: Crie suas próprias categorias de receita e despesa
+- **Cores Personalizadas**: Sistema de cores com gradientes
+- **Regras de Auto-categorização**: Defina padrões (substring da descrição) que aplicam categoria automaticamente ao cadastrar transações; persistido via `localStorage`
+
+### 🛠️ Ferramentas Financeiras
+
+#### Importação de Transações
+- **Formatos suportados**: CSV (detecção automática de separador e cabeçalhos) e OFX/QFX (SGML subset)
+- **Drag-and-drop**: Arraste o arquivo ou clique para selecionar
+- **Preview tabular**: Veja e selecione quais transações importar antes de confirmar
+- **Confirmação em lote**: Importação sequencial de todas as transações selecionadas
+
+#### Relatório Fiscal Anual
+- **Filtro por ano**: Selecione o ano para gerar o relatório
+- **Cards de resumo**: Total de receitas, despesas e saldo anual
+- **Tabela mensal**: Breakdown mês a mês com totais anuais
+- **Por categoria**: Tabelas separadas de despesas e receitas por categoria com percentual
+- **Exportação CSV**: Download com BOM UTF-8 para compatibilidade com Excel
+- **Exportação PDF**: Via `window.print()` com print CSS isolado
+
+#### Calculadora de Dívidas
+- **Amortização Price**: Parcelas fixas; maior custo total de juros
+- **Amortização SAC**: Amortização constante; parcelas decrescentes; menor custo total
+- **Gráfico de saldo devedor**: Comparativo Price vs SAC ao longo das parcelas (`LineChart`)
+- **Composição da parcela**: BarChart stacked de juros e amortização (primeiros 24 meses)
+- **Tabela de amortização**: Linha a linha com toggle "ver todas as parcelas"
+- **Card de economia SAC**: Diferença de juros totais entre os métodos
+
+---
 
 ### 🤖 Inteligência Artificial
 

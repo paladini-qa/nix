@@ -11,4 +11,12 @@ export type AppCurrentView =
   | "recurring"
   | "nixai"
   | "paymentMethods"
-  | "categories";
+  | "categories"
+  | "goals"
+  | "budgets"
+  | "analytics"
+  | "planning"
+  | "accounts"
+  | "import"
+  | "fiscal-report"
+  | "debt-calculator";

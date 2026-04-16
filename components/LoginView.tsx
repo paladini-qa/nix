@@ -167,10 +167,10 @@ const LoginView: React.FC = () => {
         top: 0,
         left: 0,
         overflow: "hidden",
-        // Gradiente de fundo premium
+        // Gradiente de fundo aconchegante — Cozy Coffee
         background: isDarkMode
-          ? `linear-gradient(135deg, ${theme.palette.background.default} 0%, #1a1a2e 50%, ${alpha(theme.palette.primary.dark, 0.2)} 100%)`
-          : `linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E0E7FF 100%)`,
+          ? `linear-gradient(135deg, ${theme.palette.background.default} 0%, #2C1A10 60%, ${alpha(theme.palette.primary.dark, 0.25)} 100%)`
+          : `linear-gradient(135deg, #FDF8F0 0%, #FEF3E2 55%, #F5E6D0 100%)`,
       }}
     >
       {/* Mesh Gradient Blobs */}
@@ -181,10 +181,10 @@ const LoginView: React.FC = () => {
           left: "-15%",
           width: "60%",
           height: "60%",
-          background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.2)} 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, isDarkMode ? 0.18 : 0.22)} 0%, transparent 70%)`,
           filter: "blur(80px)",
           pointerEvents: "none",
-          animation: "float 8s ease-in-out infinite",
+          animation: "float 10s ease-in-out infinite",
           "@keyframes float": {
             "0%, 100%": { transform: "translate(0, 0) scale(1)" },
             "50%": { transform: "translate(30px, 20px) scale(1.05)" },
@@ -198,7 +198,7 @@ const LoginView: React.FC = () => {
           right: "-10%",
           width: "50%",
           height: "50%",
-          background: `radial-gradient(circle, ${alpha(theme.palette.secondary.main, isDarkMode ? 0.12 : 0.15)} 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${alpha(theme.palette.secondary.main, isDarkMode ? 0.14 : 0.18)} 0%, transparent 70%)`,
           filter: "blur(80px)",
           pointerEvents: "none",
           animation: "float2 10s ease-in-out infinite",
@@ -234,21 +234,21 @@ const LoginView: React.FC = () => {
           sx={{
             borderRadius: "20px",
             overflow: "hidden",
-            // Glassmorphism Premium
+            // Glassmorphism Cozy — creme quente
             bgcolor: isDarkMode
-              ? alpha(theme.palette.background.paper, 0.7)
-              : alpha("#FFFFFF", 0.75),
+              ? alpha(theme.palette.background.paper, 0.85)
+              : alpha("#FEF8F0", 0.90),
             backdropFilter: "blur(24px)",
             WebkitBackdropFilter: "blur(24px)",
-            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#FFFFFF", 0.5)}`,
+            border: `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.15) : alpha("#C4885F", 0.2)}`,
             boxShadow: isDarkMode
-              ? `0 24px 80px -20px ${alpha("#000000", 0.6)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.05)}`
-              : `0 24px 80px -20px ${alpha(theme.palette.primary.main, 0.2)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
+              ? `0 24px 80px -20px rgba(28, 16, 8, 0.7), inset 0 1px 0 ${alpha("#F0D9C0", 0.05)}`
+              : `0 24px 80px -20px ${alpha("#7B4226", 0.18)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
             transition: "all 0.3s ease-in-out",
-            "&:hover": {
+              "&:hover": {
               boxShadow: isDarkMode
-                ? `0 32px 100px -24px ${alpha("#000000", 0.7)}`
-                : `0 32px 100px -24px ${alpha(theme.palette.primary.main, 0.25)}`,
+                ? `0 32px 100px -24px rgba(28, 16, 8, 0.8)`
+                : `0 32px 100px -24px ${alpha("#7B4226", 0.25)}`,
             },
           }}
         >
@@ -262,7 +262,7 @@ const LoginView: React.FC = () => {
               position: "relative",
             }}
           >
-            {/* Logo Container Premium */}
+            {/* Logo Container — Cozy Coffee */}
             <Box
               sx={{
                 display: "inline-flex",
@@ -271,13 +271,13 @@ const LoginView: React.FC = () => {
                 width: 56,
                 height: 56,
                 borderRadius: "20px",
-                mb: 2,
+                mb: 1.5,
                 bgcolor: isDarkMode
-                  ? alpha("#FFFFFF", 0.08)
+                  ? alpha(theme.palette.primary.main, 0.15)
                   : alpha(theme.palette.primary.main, 0.08),
                 boxShadow: isDarkMode
-                  ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}, 0 6px 24px -6px ${alpha("#000000", 0.3)}`
-                  : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 6px 24px -6px ${alpha(theme.palette.primary.main, 0.2)}`,
+                  ? `inset 0 1px 0 ${alpha("#F0D9C0", 0.1)}, 0 6px 24px -6px rgba(28, 16, 8, 0.4)`
+                  : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 6px 24px -6px ${alpha("#7B4226", 0.2)}`,
                 transition: "all 0.3s ease-in-out",
                 "&:hover": {
                   transform: "scale(1.05) rotate(-2deg)",
@@ -288,10 +288,7 @@ const LoginView: React.FC = () => {
                 component="img"
                 src={`${import.meta.env.BASE_URL}logo.png`}
                 alt="Nix Logo"
-                sx={{
-                  width: 36,
-                  height: 36,
-                }}
+                sx={{ width: 36, height: 36 }}
               />
             </Box>
 
@@ -299,17 +296,17 @@ const LoginView: React.FC = () => {
               variant="h5"
               fontWeight={700}
               sx={{
-                letterSpacing: "-0.03em",
+                letterSpacing: "-0.02em",
                 mb: 0.5,
                 background: isDarkMode
-                  ? `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${alpha(theme.palette.primary.light, 0.9)} 100%)`
-                  : `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.primary.main} 100%)`,
+                  ? `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${alpha(theme.palette.primary.main, 0.9)} 100%)`
+                  : `linear-gradient(135deg, #2C1A11 0%, #7B4226 100%)`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
               }}
             >
-              {isSignUp ? "Criar Conta" : "Bem-vindo de Volta"}
+              {isSignUp ? "Criar Conta ☕" : "Bem-vindo de Volta ☕"}
             </Typography>
             <Typography
               variant="body2"
@@ -317,8 +314,8 @@ const LoginView: React.FC = () => {
               sx={{ fontWeight: 500 }}
             >
               {isSignUp
-                ? "Comece a gerenciar suas finanças hoje"
-                : "Acesse seu dashboard financeiro"}
+                ? "Comece a cuidar das suas finanças com carinho"
+                : "Seu café financeiro está prontinho"}
             </Typography>
           </Box>
 
@@ -564,16 +561,16 @@ const LoginView: React.FC = () => {
             </Box>
           </Box>
 
-          {/* Footer - AI Badge */}
+          {/* Footer — Cozy AI Badge */}
           <Box
             sx={{
               px: 3.5,
               py: 1.5,
               textAlign: "center",
-              borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+              borderTop: `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.12) : alpha("#C4885F", 0.15)}`,
               bgcolor: isDarkMode
                 ? alpha(theme.palette.background.default, 0.3)
-                : alpha(theme.palette.grey[50], 0.5),
+                : alpha("#FEF3E2", 0.6),
             }}
           >
             <Box
@@ -585,16 +582,16 @@ const LoginView: React.FC = () => {
                 py: 0.75,
                 borderRadius: "20px",
                 bgcolor: isDarkMode
-                  ? alpha(theme.palette.primary.main, 0.1)
-                  : alpha(theme.palette.primary.main, 0.06),
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+                  ? alpha(theme.palette.primary.main, 0.12)
+                  : alpha(theme.palette.primary.main, 0.07),
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
               }}
             >
               <SparklesIcon
                 sx={{
                   fontSize: 14,
                   color: "primary.main",
-                  animation: "sparkle 2s ease-in-out infinite",
+                  animation: "sparkle 2.5s ease-in-out infinite",
                   "@keyframes sparkle": {
                     "0%, 100%": { opacity: 1, transform: "scale(1)" },
                     "50%": { opacity: 0.7, transform: "scale(1.1)" },
@@ -604,13 +601,13 @@ const LoginView: React.FC = () => {
               <Typography
                 variant="caption"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: "primary.main",
                   letterSpacing: "0.02em",
                   fontSize: "0.7rem",
                 }}
               >
-                Análises com Gemini AI
+                Análises com Gemini AI ✨
               </Typography>
             </Box>
           </Box>

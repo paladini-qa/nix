@@ -100,6 +100,7 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
           installmentGroupId: t.installment_group_id,
           excludedDates: t.excluded_dates ?? [],
           recurringGroupId: t.recurring_group_id,
+          notes: t.notes ?? undefined,
         }));
         setTransactions(mappedTxs);
       }

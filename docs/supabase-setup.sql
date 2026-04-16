@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     excluded_dates JSONB DEFAULT '[]'::jsonb,
     recurring_group_id UUID, -- ID da recorrência original (para manter vínculo após edição "single")
     invoice_due_date DATE, -- Data de vencimento da fatura (quando forma de pagamento tem dia cadastrado)
+    notes TEXT, -- Observações livres adicionadas pelo usuário
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -57,6 +58,9 @@ CREATE TABLE IF NOT EXISTS public.transactions (
 
 -- Para bancos existentes, adicione a coluna recurring_group_id (vincula transações modificadas à recorrência original):
 -- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS recurring_group_id UUID;
+
+-- Para bancos existentes, adicione a coluna notes (observações livres):
+-- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS notes TEXT;
 
 -- Para bancos existentes, adicione a coluna invoice_due_date (vencimento da fatura quando método tem dia cadastrado):
 -- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS invoice_due_date DATE;

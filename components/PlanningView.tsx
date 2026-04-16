@@ -790,7 +790,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
         </Grid>
       ) : (
         <EmptyState
-          type="transactions"
+          type="planning"
           title="Nenhum planejamento criado"
           description="Crie um planejamento para organizar seus gastos futuros"
         />

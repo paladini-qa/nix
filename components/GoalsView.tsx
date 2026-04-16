@@ -34,15 +34,29 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   Close as CloseIcon,
+  Replay as ReplayIcon,
 } from "@mui/icons-material";
 import { Goal, GoalProgress } from "../types";
 import { goalService } from "../services/api";
 import { useNotification, useConfirmDialog } from "../contexts";
 import { useLayoutSpacing } from "../hooks";
 import EmptyState from "./EmptyState";
+import { motion, AnimatePresence } from "framer-motion";
+
+const MotionGrid = motion.create(Grid as React.ComponentType<React.ComponentPropsWithRef<typeof Grid>>);
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.97 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0, scale: 1,
+    transition: { type: "spring", stiffness: 380, damping: 28, delay: i * 0.07 },
+  }),
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.15 } },
+};
 
 interface GoalsViewProps {
   userId: string;
+  onCreateTransaction?: (data: { description: string; amount: number; category: string; isRecurring: boolean; frequency: "monthly" | "yearly" }) => void;
 }
 
 const GOAL_ICONS: Record<string, React.ReactNode> = {
@@ -63,7 +77,7 @@ const GOAL_COLORS = [
   "#84cc16", // lime
 ];
 
-const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
+const GoalsView: React.FC<GoalsViewProps> = ({ userId, onCreateTransaction }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { gridSpacing } = useLayoutSpacing();
@@ -85,6 +99,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
   const [formDeadline, setFormDeadline] = useState<Dayjs | null>(null);
   const [formColor, setFormColor] = useState(GOAL_COLORS[0]);
   const [formIcon, setFormIcon] = useState("savings");
+  const [formMonthlyContribution, setFormMonthlyContribution] = useState("");
 
   // Fetch goals
   useEffect(() => {
@@ -143,6 +158,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
       setFormColor(GOAL_COLORS[Math.floor(Math.random() * GOAL_COLORS.length)]);
       setFormIcon("savings");
     }
+    setFormMonthlyContribution("");
     setIsFormOpen(true);
   };
 
@@ -164,7 +180,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
           color: formColor,
           icon: formIcon,
         });
-        showSuccess("Goal updated successfully");
+        showSuccess("Meta atualizada com sucesso!");
       } else {
         await goalService.create(userId, {
           name: formName,
@@ -174,7 +190,20 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
           color: formColor,
           icon: formIcon,
         });
-        showSuccess("Goal created successfully");
+        // Criar transação recorrente de contribuição se configurada
+        const contribution = parseFloat(formMonthlyContribution || "0");
+        if (contribution > 0 && onCreateTransaction) {
+          onCreateTransaction({
+            description: `Poupança — ${formName}`,
+            amount: contribution,
+            category: "Poupança",
+            isRecurring: true,
+            frequency: "monthly",
+          });
+          showSuccess(`Meta "${formName}" criada com contribuição mensal de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(contribution)}!`);
+        } else {
+          showSuccess("Meta criada com sucesso!");
+        }
       }
       handleCloseForm();
       fetchGoals();
@@ -184,8 +213,18 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
     }
   };
 
-  const handleDelete = async (goal: Goal) => {
-    const confirmed = await confirmDelete(goal.name);
+  const handleReopen = async (goal: Goal) => {
+    try {
+      await goalService.update(goal.id, { isCompleted: false });
+      showSuccess(`Meta "${goal.name}" reativada!`);
+      fetchGoals();
+    } catch (err) {
+      console.error("Error reopening goal:", err);
+      showError("Não foi possível reativar a meta");
+    }
+  };
+
+  const handleDelete = async (goal: Goal) => {    const confirmed = await confirmDelete(goal.name);
     if (!confirmed) return;
 
     try {
@@ -431,8 +470,22 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                 Active Goals ({activeGoals.length})
               </Typography>
               <Grid container spacing={gridSpacing}>
-                {activeGoals.map((goal) => (
-                  <Grid key={goal.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+                {activeGoals.map((goal, i) => (
+                  <Grid key={goal.id} size={{ xs: 12, sm: 6, lg: 4 }}
+                    component={motion.div}
+                    custom={i}
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    layout
+                  >
+                    <motion.div
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      style={{ height: "100%" }}
+                    >
                     <Card
                       elevation={0}
                       sx={{
@@ -606,6 +659,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                         </Box>
                       </CardContent>
                     </Card>
+                    </motion.div>
                   </Grid>
                 ))}
               </Grid>
@@ -619,8 +673,16 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                 Completed Goals ({completedGoals.length})
               </Typography>
               <Grid container spacing={gridSpacing}>
-                {completedGoals.map((goal) => (
-                  <Grid key={goal.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+                {completedGoals.map((goal, i) => (
+                  <Grid key={goal.id} size={{ xs: 12, sm: 6, lg: 4 }}
+                    component={motion.div}
+                    custom={i}
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    layout
+                  >
                     <Card
                       elevation={0}
                       sx={{
@@ -675,7 +737,21 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                               </Typography>
                             </Box>
                           </Box>
-                          <IconButton
+                          <Box sx={{ display: "flex", gap: 0.5 }}>
+                            <Tooltip title="Reativar meta">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleReopen(goal)}
+                                sx={{
+                                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                                  "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.15) },
+                                  color: "primary.main",
+                                }}
+                              >
+                                <ReplayIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <IconButton
                             size="small"
                             color="error"
                             onClick={() => handleDelete(goal)}
@@ -686,6 +762,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
+                          </Box>
                         </Box>
                       </CardContent>
                     </Card>
@@ -758,7 +835,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
           }}
         >
           <Typography variant="h6" fontWeight={600}>
-            {editingGoal ? "Edit Goal" : "New Goal"}
+            {editingGoal ? "Editar Meta" : "Nova Meta"}
           </Typography>
           <IconButton onClick={handleCloseForm} size="small">
             <CloseIcon />
@@ -768,16 +845,16 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
         {/* Content */}
         <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 2.5, flex: 1, overflow: "auto" }}>
           <TextField
-            label="Goal Name"
+            label="Nome da Meta"
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
-            placeholder="e.g., Emergency Fund"
+            placeholder="ex: Reserva de Emergência"
             fullWidth
             required
           />
 
           <TextField
-            label="Target Amount"
+            label="Valor Alvo"
             type="number"
             value={formTarget}
             onChange={(e) => setFormTarget(e.target.value)}
@@ -790,7 +867,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
           />
 
           <TextField
-            label="Current Amount"
+            label="Valor Atual"
             type="number"
             value={formCurrent}
             onChange={(e) => setFormCurrent(e.target.value)}
@@ -802,7 +879,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
           />
 
           <DatePicker
-            label="Deadline (optional)"
+            label="Prazo (opcional)"
             value={formDeadline}
             onChange={(newValue) => setFormDeadline(newValue)}
             slotProps={{
@@ -811,10 +888,25 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
             minDate={dayjs()}
           />
 
+          {!editingGoal && (
+            <TextField
+              label="Contribuição mensal (opcional)"
+              type="number"
+              value={formMonthlyContribution}
+              onChange={(e) => setFormMonthlyContribution(e.target.value)}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+              }}
+              inputProps={{ min: 0.01, step: 0.01 }}
+              helperText="Cria uma transação recorrente automática de poupança para esta meta"
+              fullWidth
+            />
+          )}
+
           {/* Color Picker */}
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block", fontWeight: 500 }}>
-              Color
+              Cor
             </Typography>
             <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
               {GOAL_COLORS.map((color) => (
@@ -842,7 +934,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
           {/* Icon Picker */}
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block", fontWeight: 500 }}>
-              Icon
+              Ícone
             </Typography>
             <Box sx={{ display: "flex", gap: 1.5 }}>
               {Object.entries(GOAL_ICONS).map(([key, icon]) => (
@@ -881,7 +973,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
           }}
         >
           <Button onClick={handleCloseForm} color="inherit" fullWidth variant="outlined">
-            Cancel
+            Cancelar
           </Button>
           <Button
             onClick={handleSave}
@@ -889,7 +981,7 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId }) => {
             fullWidth
             disabled={!formName || !formTarget}
           >
-            {editingGoal ? "Update" : "Create"}
+            {editingGoal ? "Atualizar" : "Criar"}
           </Button>
         </Box>
       </Drawer>

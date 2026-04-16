@@ -53,6 +53,7 @@ interface AnalyticsViewProps {
   transactions: Transaction[];
   hasAdvancedFilters?: boolean;
   advancedFilters?: AdvancedFiltersInfo;
+  onCategoryClick?: (category: string, type: "income" | "expense") => void;
 }
 
 const COLORS = [
@@ -69,7 +70,8 @@ const COLORS = [
 const AnalyticsView: React.FC<AnalyticsViewProps> = ({ 
   transactions, 
   hasAdvancedFilters = false,
-  advancedFilters 
+  advancedFilters,
+  onCategoryClick,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -433,6 +435,36 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       .sort((a, b) => b.value - a.value);
 
     return data;
+  }, [transactions]);
+
+  // Comparação ano a ano (últimos 12 meses vs. 12 meses anteriores)
+  const yoyData = useMemo(() => {
+    const now = new Date();
+    const months: { month: string; thisYear: number; lastYear: number }[] = [];
+
+    for (let i = 11; i >= 0; i--) {
+      const target = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const prevYear = new Date(target.getFullYear() - 1, target.getMonth(), 1);
+
+      const targetKey = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, "0")}`;
+      const prevKey = `${prevYear.getFullYear()}-${String(prevYear.getMonth() + 1).padStart(2, "0")}`;
+
+      let thisYearExpense = 0;
+      let lastYearExpense = 0;
+
+      transactions.forEach((tx) => {
+        if (tx.type !== "expense") return;
+        const [year, month] = getReportDate(tx).split("-");
+        const key = `${year}-${month}`;
+        if (key === targetKey) thisYearExpense += tx.amount || 0;
+        if (key === prevKey) lastYearExpense += tx.amount || 0;
+      });
+
+      const monthLabel = target.toLocaleDateString("pt-BR", { month: "short" });
+      months.push({ month: monthLabel, thisYear: thisYearExpense, lastYear: lastYearExpense });
+    }
+
+    return months;
   }, [transactions]);
 
   // Estatísticas gerais
@@ -1019,6 +1051,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                     paddingAngle={3}
                     dataKey="value"
                     stroke="none"
+                    style={onCategoryClick ? { cursor: "pointer" } : undefined}
+                    onClick={onCategoryClick ? (data) => onCategoryClick(data.name, "expense") : undefined}
                   >
                     {categoryData.map((entry, index) => (
                       <Cell
@@ -1103,6 +1137,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                     paddingAngle={3}
                     dataKey="value"
                     stroke="none"
+                    style={onCategoryClick ? { cursor: "pointer" } : undefined}
+                    onClick={onCategoryClick ? (data) => onCategoryClick(data.name, "income") : undefined}
                   >
                     {incomeByCategory.map((entry, index) => (
                       <Cell
@@ -1218,6 +1254,59 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           )}
         </Box>
       </Paper>
+
+      {/* Year-over-Year Comparison */}
+      {yoyData.some((d) => d.thisYear > 0 || d.lastYear > 0) && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: isMobile ? 2 : 3,
+            borderRadius: "20px",
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+            backdropFilter: "blur(16px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.1)}`,
+          }}
+        >
+          <SectionHeader
+            icon={<BarChartIcon />}
+            title="Despesas: Ano Atual vs. Ano Anterior"
+          />
+          <Box sx={{ width: "100%", overflowX: "auto" }}>
+            <BarChart
+              width={Math.max(chartWidth, 300)}
+              height={260}
+              data={yoyData}
+              margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.5)} vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} />
+              <YAxis
+                tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
+                tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+                axisLine={false}
+                tickLine={false}
+                width={48}
+              />
+              <Tooltip
+                formatter={(value: number) => [formatCurrency(value), ""]}
+                contentStyle={{
+                  borderRadius: "12px",
+                  border: "none",
+                  backgroundColor: isDarkMode ? alpha("#1e1e2e", 0.95) : alpha("#ffffff", 0.95),
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                  fontSize: 13,
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="thisYear" name="Ano atual" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={32} />
+              <Bar dataKey="lastYear" name="Ano anterior" fill={alpha("#6366f1", 0.35)} radius={[4, 4, 0, 0]} maxBarSize={32} />
+            </BarChart>
+          </Box>
+        </Paper>
+      )}
     </Box>
   );
 };

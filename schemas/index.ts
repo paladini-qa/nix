@@ -37,6 +37,7 @@ export const transactionSchema = z.object({
     .optional(),
   currentInstallment: z.number().int().min(1).optional(),
   isPaid: z.boolean().optional(),
+  notes: z.string().max(500, "Observação deve ter no máximo 500 caracteres").optional(),
 });
 
 export type TransactionInput = z.infer<typeof transactionSchema>;

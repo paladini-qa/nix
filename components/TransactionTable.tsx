@@ -14,6 +14,7 @@ import {
   useMediaQuery,
   useTheme,
   alpha,
+  Tooltip,
 } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -29,6 +30,7 @@ import {
   School as EducationIcon,
   SportsEsports as EntertainmentIcon,
   MoreHoriz as OtherIcon,
+  Notes as NotesIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
 import { motion, AnimatePresence } from "framer-motion";
@@ -356,6 +358,11 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         fontSize: 10,
                       }}
                     />
+                    {transaction.notes && (
+                      <Tooltip title={transaction.notes} arrow placement="top">
+                        <NotesIcon sx={{ fontSize: 13, color: "text.disabled", cursor: "help" }} />
+                      </Tooltip>
+                    )}
                   </Box>
                   {/* Tags - Componente padronizado em formato pílula */}
                   <TransactionTags transaction={transaction} />
@@ -614,9 +621,16 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         )}
                       </MotionBox>
                       <Box>
-                        <Typography variant="body2" fontWeight={500}>
-                          {transaction.description}
-                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                          <Typography variant="body2" fontWeight={500}>
+                            {transaction.description}
+                          </Typography>
+                          {transaction.notes && (
+                            <Tooltip title={transaction.notes} arrow placement="top">
+                              <NotesIcon sx={{ fontSize: 13, color: "text.disabled", cursor: "help", flexShrink: 0 }} />
+                            </Tooltip>
+                          )}
+                        </Box>
                         {/* Tags - Componente padronizado em formato pílula */}
                         <TransactionTags transaction={transaction} />
                       </Box>

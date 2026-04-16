@@ -8,6 +8,7 @@ import {
   useTheme,
   alpha,
   Button,
+  Divider,
 } from "@mui/material";
 import {
   Close as CloseIcon,
@@ -17,6 +18,13 @@ import {
   Category as CategoryIcon,
   AutoAwesome as SparklesIcon,
   PlaylistAdd as BatchIcon,
+  EmojiEvents as GoalsIcon,
+  AccountBalance as BudgetsIcon,
+  BarChart as AnalyticsIcon,
+  CalendarMonth as PlanningIcon,
+  Upload as ImportIcon,
+  Description as FiscalIcon,
+  Calculate as DebtCalcIcon,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -28,7 +36,14 @@ type ViewType =
   | "recurring"
   | "categories"
   | "nixai"
-  | "batchRegistration";
+  | "batchRegistration"
+  | "goals"
+  | "budgets"
+  | "analytics"
+  | "planning"
+  | "import"
+  | "fiscal-report"
+  | "debt-calculator";
 
 interface OthersGridModalProps {
   open: boolean;
@@ -42,12 +57,25 @@ interface GridItem {
   icon: React.ElementType;
 }
 
-const gridItems: GridItem[] = [
+const mainGridItems: GridItem[] = [
   { id: "splits", label: "Splits", icon: CreditCardIcon },
   { id: "shared", label: "Divididos", icon: PeopleIcon },
   { id: "recurring", label: "Recorrentes", icon: RepeatIcon },
   { id: "categories", label: "Categorias", icon: CategoryIcon },
   { id: "batchRegistration", label: "Cadastro em Lote", icon: BatchIcon },
+];
+
+const planningGridItems: GridItem[] = [
+  { id: "goals", label: "Metas", icon: GoalsIcon },
+  { id: "budgets", label: "Orçamentos", icon: BudgetsIcon },
+  { id: "analytics", label: "Analytics", icon: AnalyticsIcon },
+  { id: "planning", label: "Planejamento", icon: PlanningIcon },
+];
+
+const toolsGridItems: GridItem[] = [
+  { id: "import", label: "Importar", icon: ImportIcon },
+  { id: "fiscal-report", label: "Rel. Fiscal", icon: FiscalIcon },
+  { id: "debt-calculator", label: "Calc. Dívidas", icon: DebtCalcIcon },
 ];
 
 /**
@@ -64,6 +92,79 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
   const handleItemClick = (view: ViewType) => {
     onNavigate(view);
     onClose();
+  };
+
+  const renderGrid = (items: GridItem[], startIndex: number = 0) => (
+    <Grid container spacing={1.5}>
+      {items.map((item, index) => {
+        const IconComponent = item.icon;
+        return (
+          <Grid size={{ xs: 4 }} key={item.id}>
+            <MotionBox
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                delay: (startIndex + index) * 0.04,
+                type: "spring",
+                stiffness: 400,
+              }}
+              onClick={() => handleItemClick(item.id)}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 0.75,
+                p: 1.5,
+                borderRadius: "14px",
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.primary.main, 0.12)
+                  : alpha(theme.palette.primary.main, 0.07),
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.12)}`,
+                cursor: "pointer",
+                transition: "all 0.2s ease-in-out",
+                minHeight: 76,
+                "&:hover": {
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.primary.main, 0.22)
+                    : alpha(theme.palette.primary.main, 0.13),
+                  transform: "translateY(-3px)",
+                  boxShadow: `0 6px 20px -4px ${alpha(theme.palette.primary.main, 0.22)}`,
+                },
+                "&:active": {
+                  transform: "translateY(-1px) scale(0.97)",
+                },
+              }}
+            >
+              <IconComponent sx={{ fontSize: 24, color: theme.palette.primary.main }} />
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  textAlign: "center",
+                  color: theme.palette.primary.main,
+                  fontSize: "0.65rem",
+                  lineHeight: 1.2,
+                }}
+              >
+                {item.label}
+              </Typography>
+            </MotionBox>
+          </Grid>
+        );
+      })}
+    </Grid>
+  );
+
+  const sectionLabelSx = {
+    fontWeight: 700,
+    color: "text.disabled",
+    letterSpacing: "0.08em",
+    fontSize: "0.6rem",
+    textTransform: "uppercase" as const,
+    mb: 1,
+    display: "block",
   };
 
   return (
@@ -148,75 +249,22 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
               </IconButton>
             </Box>
 
-            {/* Grid */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              {gridItems.map((item, index) => {
-                const IconComponent = item.icon;
-                return (
-                  <Grid size={{ xs: 6, sm: 4 }} key={item.id}>
-                    <MotionBox
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{
-                        delay: index * 0.05,
-                        type: "spring",
-                        stiffness: 400,
-                      }}
-                      onClick={() => handleItemClick(item.id)}
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 1,
-                        p: 2,
-                        borderRadius: "16px",
-                        bgcolor: isDarkMode
-                          ? alpha(theme.palette.primary.main, 0.15)
-                          : alpha(theme.palette.primary.main, 0.08),
-                        color: theme.palette.primary.main,
-                        border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.15)}`,
-                        cursor: "pointer",
-                        transition: "all 0.2s ease-in-out",
-                        minHeight: 90,
-                        "&:hover": {
-                          bgcolor: isDarkMode
-                            ? alpha(theme.palette.primary.main, 0.25)
-                            : alpha(theme.palette.primary.main, 0.14),
-                          transform: "translateY(-3px)",
-                          boxShadow: `0 8px 24px -4px ${alpha(
-                            theme.palette.primary.main,
-                            0.25
-                          )}`,
-                        },
-                        "&:active": {
-                          transform: "translateY(-1px) scale(0.97)",
-                        },
-                      }}
-                    >
-                      <IconComponent
-                        sx={{
-                          fontSize: 28,
-                          color: theme.palette.primary.main,
-                        }}
-                      />
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontWeight: 600,
-                          textAlign: "center",
-                          color: theme.palette.primary.main,
-                          fontSize: "0.7rem",
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {item.label}
-                      </Typography>
-                    </MotionBox>
-                  </Grid>
-                );
-              })}
-            </Grid>
+            {/* Grid — Geral */}
+            {renderGrid(mainGridItems, 0)}
+
+            {/* Planejamento */}
+            <Box sx={{ mt: 2.5 }}>
+              <Divider sx={{ mb: 1.5, opacity: 0.4 }} />
+              <Typography variant="caption" sx={sectionLabelSx}>Planejamento</Typography>
+              {renderGrid(planningGridItems, mainGridItems.length)}
+            </Box>
+
+            {/* Ferramentas */}
+            <Box sx={{ mt: 2, mb: 2 }}>
+              <Divider sx={{ mb: 1.5, opacity: 0.4 }} />
+              <Typography variant="caption" sx={sectionLabelSx}>Ferramentas</Typography>
+              {renderGrid(toolsGridItems, mainGridItems.length + planningGridItems.length)}
+            </Box>
 
             {/* NixAI Button */}
             <MotionBox

@@ -1116,47 +1116,6 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     }
   };
 
-  const handleSuggestionClick = async (text: string) => {
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: text,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-
-    try {
-      const response = await chatWithNixAI(
-        text,
-        transactions,
-        messages.filter((m) => m.id !== "welcome").map((m) => ({ role: m.role, content: m.content }))
-      );
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: response,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Error:", error);
-      const isNotConfigured =
-        error instanceof Error && error.message === "GEMINI_NOT_CONFIGURED";
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: isNotConfigured
-          ? GEMINI_NOT_CONFIGURED_MESSAGE
-          : "Ops, algo deu errado. 😅 Tenta de novo?",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <Box
       sx={{

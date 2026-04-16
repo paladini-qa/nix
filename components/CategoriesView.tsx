@@ -68,6 +68,7 @@ import { ColorsContext } from "../App";
 import ColorPicker from "./ColorPicker";
 import DateFilter from "./DateFilter";
 import EmptyState from "./EmptyState";
+import AutoCategorizationRules from "./AutoCategorizationRules";
 
 const DEFAULT_INCOME_COLORS: ColorConfig = {
   primary: "#10b981",
@@ -1930,6 +1931,22 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           </Grid>
         </Grid>
       </Collapse>
+    
+
+      {/* Auto-Categorização */}
+      <Box
+        sx={{
+          p: isMobile ? 2 : 3,
+          borderRadius: "20px",
+          border: `1px solid ${theme.palette.divider}`,
+          background: theme.palette.mode === "dark"
+            ? `rgba(255,255,255,0.02)`
+            : `rgba(255,255,255,0.8)`,
+          backdropFilter: "blur(12px)",
+        }}
+      >
+        <AutoCategorizationRules categories={categories} />
+      </Box>
     </Box>
   );
 };

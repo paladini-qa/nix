@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Box,
   Typography,
@@ -39,9 +39,17 @@ import { getReportDate } from "../utils/transactionUtils";
 import { budgetService } from "../services/api";
 import { useNotification } from "../contexts";
 import { useConfirmDialog } from "../contexts";
-import { useLayoutSpacing } from "../hooks";
-import DateFilter from "./DateFilter";
+import { useLayoutSpacing } from "../hooks";import DateFilter from "./DateFilter";
 import EmptyState from "./EmptyState";
+import { motion } from "framer-motion";
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 18, scale: 0.97 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0, scale: 1,
+    transition: { type: "spring", stiffness: 380, damping: 28, delay: i * 0.06 },
+  }),
+};
 
 interface BudgetsViewProps {
   transactions: Transaction[];
@@ -63,13 +71,16 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { gridSpacing } = useLayoutSpacing();
-  const { showSuccess, showError } = useNotification();
+  const { showSuccess, showError, showWarning } = useNotification();
   const { confirmDelete } = useConfirmDialog();
 
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+
+  // Controle de alerta de orçamento (dispara apenas uma vez por sessão)
+  const alertShownRef = useRef(false);
 
   // Form state
   const [formCategory, setFormCategory] = useState("");
@@ -116,6 +127,59 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
   const budgetsWithSpending = useMemo((): BudgetWithSpending[] => {
     return budgetService.calculateWithSpending(budgets, monthTransactions);
   }, [budgets, monthTransactions]);
+
+  // Alerta de orçamentos próximos ou estourados (uma vez por sessão)
+  useEffect(() => {
+    if (alertShownRef.current || loading || budgetsWithSpending.length === 0) return;
+    const overBudget = budgetsWithSpending.filter((b) => b.isOverBudget);
+    const nearLimit = budgetsWithSpending.filter((b) => b.percentage >= 80 && !b.isOverBudget);
+    if (overBudget.length > 0) {
+      showWarning(
+        `${overBudget.length} orçamento${overBudget.length > 1 ? "s" : ""} estourado${overBudget.length > 1 ? "s" : ""}! Revise seus gastos.`,
+        "⚠️ Orçamento estourado"
+      );
+      alertShownRef.current = true;
+    } else if (nearLimit.length > 0) {
+      showWarning(
+        `${nearLimit.length} orçamento${nearLimit.length > 1 ? "s" : ""} acima de 80% do limite.`,
+        "📊 Atenção ao orçamento"
+      );
+      alertShownRef.current = true;
+    }
+  }, [budgetsWithSpending, loading, showWarning]);
+
+  // Calcula streak de meses consecutivos dentro do orçamento por categoria
+  const streakByCategory = useMemo((): Record<string, number> => {
+    const result: Record<string, number> = {};
+    const now = new Date();
+
+    budgets.forEach((budget) => {
+      let streak = 0;
+      for (let offset = 1; offset <= 12; offset++) {
+        let targetMonth = (selectedMonth + 1) - offset;
+        let targetYear = selectedYear;
+        while (targetMonth <= 0) {
+          targetMonth += 12;
+          targetYear -= 1;
+        }
+
+        const monthTxs = transactions.filter((t) => {
+          const [y, m] = getReportDate(t).split("-");
+          return parseInt(y) === targetYear && parseInt(m) === targetMonth && t.category === budget.category && t.type === budget.type;
+        });
+        const spent = monthTxs.reduce((sum, t) => sum + (t.amount || 0), 0);
+
+        if (spent <= budget.limitAmount) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+      result[budget.category] = streak;
+    });
+
+    return result;
+  }, [budgets, transactions, selectedMonth, selectedYear]);
 
   // Get available categories (not yet budgeted)
   const availableCategories = useMemo(() => {
@@ -265,10 +329,10 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
       >
         <Box>
           <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-            Budgets
+            Orçamentos
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Set spending limits for each category
+            Defina limites de gastos por categoria
           </Typography>
         </Box>
 
@@ -279,7 +343,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
             color="purple"
             onClick={handleCopyFromPreviousMonth}
           >
-            <CopyIcon /> Copy Previous
+            <CopyIcon /> Copiar Anterior
           </NixButton>
         )}
 
@@ -291,13 +355,13 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
             compact={isMobile}
           />
           {!isMobile && (
-            <NixButton
+              <NixButton
               size="medium"
               variant="solid"
               color="purple"
               onClick={() => handleOpenForm()}
             >
-              <AddIcon /> New Budget
+              <AddIcon /> Novo Orçamento
             </NixButton>
           )}
         </Box>
@@ -308,7 +372,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         <Grid size={{ xs: 6, md: 3 }}>
           <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
             <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
-              Total Budgeted
+              Total Orçado
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em" }}>
               {formatCurrency(summary.totalBudgeted)}
@@ -318,7 +382,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         <Grid size={{ xs: 6, md: 3 }}>
           <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
             <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
-              Total Spent
+              Total Gasto
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em" }}>
               {formatCurrency(summary.totalSpent)}
@@ -328,7 +392,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         <Grid size={{ xs: 6, md: 3 }}>
           <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
             <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
-              Over Budget
+              Estourado
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.overBudgetCount > 0 ? "#DC2626" : "#059669", letterSpacing: "-0.02em" }}>
               {summary.overBudgetCount}
@@ -338,7 +402,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         <Grid size={{ xs: 6, md: 3 }}>
           <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
             <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
-              Near Limit
+              Próx. Limite
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.warningCount > 0 ? "#F59E0B" : "text.primary", letterSpacing: "-0.02em" }}>
               {summary.warningCount}
@@ -362,10 +426,23 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         />
       ) : (
         <Grid container spacing={gridSpacing}>
-          {budgetsWithSpending.map((budget) => {
+          {budgetsWithSpending.map((budget, i) => {
             const budgetColor = budget.isOverBudget ? "#DC2626" : budget.percentage >= 80 ? "#F59E0B" : "#6366f1";
             return (
-              <Grid key={budget.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+              <Grid key={budget.id} size={{ xs: 12, sm: 6, lg: 4 }}
+                component={motion.div}
+                custom={i}
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+                layout
+              >
+                <motion.div
+                  whileHover={{ y: -4, scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  style={{ height: "100%" }}
+                >
                 <NixCard
                   padding="medium"
                   glass
@@ -389,21 +466,20 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
                             {budget.category}
                           </Typography>
                           <Chip
-                            label={budget.type === "income" ? "Income" : "Expense"}
+                            label={budget.type === "income" ? "Receita" : "Despesa"}
                             size="small"
                             sx={{
                               height: 20,
                               fontSize: 10,
                               bgcolor: alpha(budget.type === "income" ? "#059669" : "#DC2626", 0.1),
                               color: budget.type === "income" ? "#059669" : "#DC2626",
-                              border: `1px solid ${alpha(budget.type === "income" ? "#059669" : "#DC2626", 0.2)}`,
-                            }}
+                              border: `1px solid ${alpha(budget.type === "income" ? "#059669" : "#DC2626", 0.2)}`,                            }}
                           />
                           {budget.isRecurring && (
-                            <Tooltip title="Repeats every month">
+                            <Tooltip title="Repete todo mês">
                               <Chip
                                 icon={<RepeatIcon sx={{ fontSize: 12 }} />}
-                                label="Monthly"
+                                label="Mensal"
                                 size="small"
                                 sx={{
                                   height: 20,
@@ -419,9 +495,25 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
                               />
                             </Tooltip>
                           )}
+                          {(streakByCategory[budget.category] ?? 0) >= 2 && !budget.isOverBudget && (
+                            <Tooltip title={`${streakByCategory[budget.category]} meses consecutivos dentro do orçamento`}>
+                              <Chip
+                                label={`🔥 ${streakByCategory[budget.category]}m`}
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: 10,
+                                  bgcolor: alpha("#059669", 0.1),
+                                  color: "#059669",
+                                  border: `1px solid ${alpha("#059669", 0.2)}`,
+                                  cursor: "default",
+                                }}
+                              />
+                            </Tooltip>
+                          )}
                         </Box>
                         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                          Limit: {formatCurrency(budget.limitAmount)}
+                          Limite: {formatCurrency(budget.limitAmount)}
                         </Typography>
                       </Box>
                       <Box>
@@ -481,15 +573,15 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
                     >
                       <Box>
                         <Typography variant="body2" fontWeight={500}>
-                          {formatCurrency(budget.spent)} spent
+                          {formatCurrency(budget.spent)} gasto
                         </Typography>
                         <Typography
                           variant="caption"
                           sx={{ color: budget.isOverBudget ? "#DC2626" : "text.secondary", fontWeight: 500 }}
                         >
                           {budget.isOverBudget
-                            ? `${formatCurrency(Math.abs(budget.remaining))} over budget`
-                            : `${formatCurrency(budget.remaining)} remaining`}
+                            ? `${formatCurrency(Math.abs(budget.remaining))} acima do limite`
+                            : `${formatCurrency(budget.remaining)} disponível`}
                         </Typography>
                       </Box>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -511,6 +603,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
                       </Box>
                     </Box>
                 </NixCard>
+                </motion.div>
               </Grid>
             );
           })}
@@ -578,7 +671,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
           }}
         >
           <Typography variant="h6" fontWeight={600}>
-            {editingBudget ? "Edit Budget" : "New Budget"}
+            {editingBudget ? "Editar Orçamento" : "Novo Orçamento"}
           </Typography>
           <IconButton onClick={handleCloseForm} size="small">
             <CloseIcon />
@@ -590,25 +683,25 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
           {!editingBudget && (
             <>
               <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
+                <InputLabel>Tipo</InputLabel>
                 <Select
                   value={formType}
-                  label="Type"
+                  label="Tipo"
                   onChange={(e) => {
                     setFormType(e.target.value as TransactionType);
                     setFormCategory("");
                   }}
                 >
-                  <MenuItem value="expense">Expense</MenuItem>
-                  <MenuItem value="income">Income</MenuItem>
+                  <MenuItem value="expense">Despesa</MenuItem>
+                  <MenuItem value="income">Receita</MenuItem>
                 </Select>
               </FormControl>
 
               <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
+                <InputLabel>Categoria</InputLabel>
                 <Select
                   value={formCategory}
-                  label="Category"
+                  label="Categoria"
                   onChange={(e) => setFormCategory(e.target.value)}
                 >
                   {availableCategories.map((cat) => (
@@ -621,7 +714,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
 
               {availableCategories.length === 0 && (
                 <Alert severity="info" sx={{ mt: -1 }}>
-                  All categories have budgets set for this month
+                  Todas as categorias já têm orçamento neste mês
                 </Alert>
               )}
             </>
@@ -637,7 +730,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
               }}
             >
               <Typography variant="caption" color="text.secondary">
-                Category
+                Categoria
               </Typography>
               <Typography variant="body1" fontWeight={600}>
                 {editingBudget.category}
@@ -646,7 +739,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
           )}
 
           <TextField
-            label="Monthly Limit"
+            label="Limite Mensal"
             type="number"
             value={formLimit}
             onChange={(e) => setFormLimit(e.target.value)}
@@ -685,12 +778,12 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
               />
               <Box>
                 <Typography variant="body2" fontWeight={500}>
-                  Repeat every month
+                  Repetir todo mês
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {formIsRecurring
-                    ? "This budget will be created automatically in future months"
-                    : "This budget is only for the selected month"}
+                    ? "Este orçamento será criado automaticamente nos próximos meses"
+                    : "Este orçamento é apenas para o mês selecionado"}
                 </Typography>
               </Box>
             </Box>
@@ -713,7 +806,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
           }}
         >
           <NixButton size="medium" variant="soft" color="gray" onClick={handleCloseForm} style={{ flex: 1 }}>
-            Cancel
+            Cancelar
           </NixButton>
           <NixButton
             size="medium"
@@ -723,7 +816,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
             disabled={!formLimit || (!editingBudget && !formCategory)}
             style={{ flex: 1 }}
           >
-            {editingBudget ? "Update" : "Create"}
+            {editingBudget ? "Atualizar" : "Criar"}
           </NixButton>
         </Box>
       </Drawer>

@@ -33,59 +33,61 @@ interface SummaryCardsProps {
 }
 
 // ============================================
-// PALETA NIX - Design System Black & Purple
+// PALETA COFFEE — Cozy Design System
 // ============================================
-const NIX_COLORS = {
-  // Primary Purple
-  purple: "#9D4EDD",
-  purpleLight: "#B47AEA",
-  purpleDark: "#7B2CBF",
-  // Secondary Teal
-  teal: "#00D4FF",
-  // Success - Dark Mode values (used for cards)
-  success: "#00C853",
-  successLight: "#69F0AE",
-  successDark: "#2D6A4F",
-  // Error - Dark Mode values (used for cards)
-  error: "#FF1744",
-  errorLight: "#FF616F",
-  errorDark: "#C9184A",
+const COFFEE = {
+  // Sage green — receitas / saldo positivo
+  sage: "#5B8A5A",
+  sageDark: "#7AB87A",
+  sageLight: "#8FBC8F",
+  // Dusty rose — despesas / saldo negativo
+  dustyRose: "#B85450",
+  dustyRoseDark: "#E07870",
+  dustyRoseLight: "#D4817D",
+  // Caramel — saldo / balanço (neutro positivo)
+  caramel: "#C4883A",
+  caramelLight: "#DDB899",
 };
 
-// Configuração de cores para os cards - Paleta Nix
-// Card styles using the new Design System colors
+// Configuração de cores dos cards — Paleta Coffee
 const cardStyles = {
   balance: {
     positive: {
-      iconBg: NIX_COLORS.success,
-      iconBgLight: NIX_COLORS.successLight,
-      accentColor: NIX_COLORS.success,
-      // #00C853 - New success green
-      gradientLight: "linear-gradient(135deg, rgba(0, 200, 83, 0.08) 0%, rgba(0, 200, 83, 0.04) 100%)",
-      gradientDark: "linear-gradient(135deg, rgba(0, 200, 83, 0.15) 0%, rgba(0, 200, 83, 0.08) 100%)",
+      iconBg: COFFEE.sage,
+      iconBgLight: COFFEE.sageLight,
+      accentColor: COFFEE.sage,
+      accentDark: COFFEE.sageDark,
+      gradientLight: "linear-gradient(135deg, rgba(91, 138, 90, 0.08) 0%, rgba(91, 138, 90, 0.03) 100%)",
+      gradientDark: "linear-gradient(135deg, rgba(122, 184, 122, 0.14) 0%, rgba(122, 184, 122, 0.06) 100%)",
+      emoji: "🌿",
     },
     negative: {
-      iconBg: NIX_COLORS.error,
-      iconBgLight: NIX_COLORS.errorLight,
-      accentColor: NIX_COLORS.error,
-      // #FF1744 - New error red
-      gradientLight: "linear-gradient(135deg, rgba(255, 23, 68, 0.08) 0%, rgba(255, 23, 68, 0.04) 100%)",
-      gradientDark: "linear-gradient(135deg, rgba(255, 23, 68, 0.15) 0%, rgba(255, 23, 68, 0.08) 100%)",
+      iconBg: COFFEE.dustyRose,
+      iconBgLight: COFFEE.dustyRoseLight,
+      accentColor: COFFEE.dustyRose,
+      accentDark: COFFEE.dustyRoseDark,
+      gradientLight: "linear-gradient(135deg, rgba(184, 84, 80, 0.08) 0%, rgba(184, 84, 80, 0.03) 100%)",
+      gradientDark: "linear-gradient(135deg, rgba(224, 120, 112, 0.14) 0%, rgba(224, 120, 112, 0.06) 100%)",
+      emoji: "📋",
     },
   },
   income: {
-    iconBg: NIX_COLORS.success,
-    iconBgLight: NIX_COLORS.successLight,
-    accentColor: NIX_COLORS.success,
-    gradientLight: "linear-gradient(135deg, rgba(0, 200, 83, 0.06) 0%, rgba(0, 200, 83, 0.02) 100%)",
-    gradientDark: "linear-gradient(135deg, rgba(0, 200, 83, 0.12) 0%, rgba(0, 200, 83, 0.06) 100%)",
+    iconBg: COFFEE.sage,
+    iconBgLight: COFFEE.sageLight,
+    accentColor: COFFEE.sage,
+    accentDark: COFFEE.sageDark,
+    gradientLight: "linear-gradient(135deg, rgba(91, 138, 90, 0.06) 0%, rgba(91, 138, 90, 0.02) 100%)",
+    gradientDark: "linear-gradient(135deg, rgba(122, 184, 122, 0.12) 0%, rgba(122, 184, 122, 0.05) 100%)",
+    emoji: "☕",
   },
   expense: {
-    iconBg: NIX_COLORS.error,
-    iconBgLight: NIX_COLORS.errorLight,
-    accentColor: NIX_COLORS.error,
-    gradientLight: "linear-gradient(135deg, rgba(255, 23, 68, 0.06) 0%, rgba(255, 23, 68, 0.02) 100%)",
-    gradientDark: "linear-gradient(135deg, rgba(255, 23, 68, 0.12) 0%, rgba(255, 23, 68, 0.06) 100%)",
+    iconBg: COFFEE.dustyRose,
+    iconBgLight: COFFEE.dustyRoseLight,
+    accentColor: COFFEE.dustyRose,
+    accentDark: COFFEE.dustyRoseDark,
+    gradientLight: "linear-gradient(135deg, rgba(184, 84, 80, 0.06) 0%, rgba(184, 84, 80, 0.02) 100%)",
+    gradientDark: "linear-gradient(135deg, rgba(224, 120, 112, 0.12) 0%, rgba(224, 120, 112, 0.05) 100%)",
+    emoji: "📋",
   },
 };
 
@@ -95,7 +97,7 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
+      staggerChildren: 0.08,
       delayChildren: 0.05,
     },
   },
@@ -104,8 +106,8 @@ const containerVariants = {
 const cardVariants = {
   hidden: { 
     opacity: 0, 
-    y: 20,
-    scale: 0.98,
+    y: 24,
+    scale: 0.95,
   },
   visible: { 
     opacity: 1, 
@@ -113,8 +115,8 @@ const cardVariants = {
     scale: 1,
     transition: {
       type: "spring",
-      stiffness: 400,
-      damping: 30,
+      stiffness: 360,
+      damping: 26,
     },
   },
 };
@@ -191,22 +193,20 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
   const monthlyFlow = summary.totalIncome - summary.totalExpense;
   const isPositiveFlow = monthlyFlow >= 0;
 
-  // Estilos base do card - Simplificado (sem glassmorphism)
-  const getGlassCardStyles = (accentColor: string) => ({
+  // Estilos base do card — Cozy Coffee
+  const getGlassCardStyles = (accentColor: string, gradient?: string) => ({
     height: "100%",
     minHeight: cardMinHeight,
     position: "relative",
     overflow: "hidden",
     cursor: "pointer",
-    // Background sólido (removido glassmorphism)
     background: isDarkMode
-      ? theme.palette.background.paper
-      : "#FFFFFF",
-    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.08)}`,
-    // Sombra com tonalidade
+      ? `${gradient ?? theme.palette.background.paper}`
+      : `${gradient ?? theme.palette.background.paper}`,
+    border: `1px solid ${isDarkMode ? alpha(accentColor, 0.18) : alpha(accentColor, 0.12)}`,
     boxShadow: isDarkMode
-      ? `0 8px 32px -8px ${alpha(accentColor, 0.2)}, 0 4px 16px -4px ${alpha("#000000", 0.3)}`
-      : `0 8px 32px -8px ${alpha(accentColor, 0.15)}, 0 4px 16px -4px ${alpha("#64748B", 0.08)}`,
+      ? `0 8px 32px -8px ${alpha(accentColor, 0.22)}, 0 4px 16px -4px rgba(28, 16, 8, 0.35)`
+      : `0 8px 32px -8px ${alpha(accentColor, 0.16)}, 0 4px 16px -4px rgba(44, 26, 17, 0.07)}`,
   });
 
   // Estilo do container do ícone - visual premium 3D-ish
@@ -236,6 +236,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
     ? cardStyles.balance.positive
     : cardStyles.balance.negative;
 
+  const flowAccent = isDarkMode ? flowStyles.accentDark : flowStyles.accentColor;
+
   return (
     <MotionBox
       variants={containerVariants}
@@ -256,12 +258,15 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
               y: -4,
               scale: 1.01,
               boxShadow: isDarkMode
-                ? `0 16px 48px -8px ${alpha(flowStyles.accentColor, 0.3)}, 0 8px 24px -4px ${alpha("#000000", 0.4)}`
-                : `0 16px 48px -8px ${alpha(flowStyles.accentColor, 0.25)}, 0 8px 24px -4px ${alpha("#64748B", 0.12)}`,
+                ? `0 16px 48px -8px ${alpha(flowAccent, 0.32)}, 0 8px 24px -4px rgba(28, 16, 8, 0.45)`
+                : `0 16px 48px -8px ${alpha(flowStyles.accentColor, 0.25)}, 0 8px 24px -4px rgba(44, 26, 17, 0.10)`,
             }}
             whileTap={{ scale: 0.99 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            sx={getGlassCardStyles(flowStyles.accentColor)}
+            sx={getGlassCardStyles(
+              isDarkMode ? flowStyles.accentDark : flowStyles.accentColor,
+              isDarkMode ? flowStyles.gradientDark : flowStyles.gradientLight
+            )}
             elevation={0}
           >
             <CardContent
@@ -272,14 +277,18 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 "&:last-child": { pb: isMobile ? 1.25 : 3 },
               }}
             >
-              {/* Título dinâmico baseado no fluxo mensal */}
+              {/* Emoji decorativo — canto superior direito */}
+              <Box sx={{ position: "absolute", top: 10, right: 14, fontSize: isMobile ? 18 : 22, opacity: 0.35, userSelect: "none" }}>
+                {flowStyles.emoji}
+              </Box>
+
               <Typography
                 variant="overline"
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.08em",
                   fontSize: isMobile ? 9 : 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   display: "block",
                   mb: 0.5,
                 }}
@@ -296,7 +305,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 }}
               >
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  {/* Animated Monthly Flow Counter */}
                   <CountUp
                     value={Math.abs(monthlyFlow)}
                     formatter={isMobile ? formatBRL : formatBRLFull}
@@ -305,7 +313,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     variant={isMobile ? "h5" : "h4"}
                     sx={{
                       fontWeight: 700,
-                      color: flowStyles.accentColor,
+                      color: flowAccent,
                       letterSpacing: "-0.02em",
                       fontVariantNumeric: "tabular-nums",
                       minHeight: isMobile ? 28 : 36,
@@ -314,7 +322,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     }}
                   />
                   
-                  {/* Indicador visual do estado - Simplificado (sem pulso) */}
                   <MotionBox
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -328,21 +335,17 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   >
                     <Box
                       sx={{
-                        width: 8,
-                        height: 8,
+                        width: 7,
+                        height: 7,
                         borderRadius: "50%",
-                        bgcolor: flowStyles.accentColor,
-                        boxShadow: `0 0 8px ${alpha(flowStyles.accentColor, 0.5)}`,
+                        bgcolor: flowAccent,
+                        boxShadow: `0 0 8px ${alpha(flowAccent, 0.5)}`,
                       }}
                     />
                     <Typography
                       variant="caption"
-                      sx={{
-                        color: flowStyles.accentColor,
-                        fontWeight: 600,
-                      }}
+                      sx={{ color: flowAccent, fontWeight: 700 }}
                     >
-                      {/* UX Writing amigável - Tom Nix */}
                       {isPositiveFlow ? "Mandou bem! Sobrando ✨" : "Gastando mais que ganha"}
                     </Typography>
                   </MotionBox>
@@ -352,17 +355,9 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
-                  sx={getIconContainerStyles(
-                    flowStyles.iconBg,
-                    flowStyles.iconBgLight
-                  )}
+                  sx={getIconContainerStyles(flowStyles.iconBg, flowStyles.iconBgLight)}
                 >
-                  <WalletIcon
-                    sx={{
-                      fontSize: isMobile ? 18 : 26,
-                      color: flowStyles.accentColor,
-                    }}
-                  />
+                  <WalletIcon sx={{ fontSize: isMobile ? 18 : 26, color: flowAccent }} />
                 </MotionBox>
               </Box>
             </CardContent>
@@ -377,12 +372,15 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
               y: -4,
               scale: 1.01,
               boxShadow: isDarkMode
-                ? `0 16px 48px -8px ${alpha(cardStyles.income.accentColor, 0.3)}, 0 8px 24px -4px ${alpha("#000000", 0.4)}`
-                : `0 16px 48px -8px ${alpha(cardStyles.income.accentColor, 0.25)}, 0 8px 24px -4px ${alpha("#64748B", 0.12)}`,
+                ? `0 16px 48px -8px ${alpha(cardStyles.income.accentDark, 0.30)}, 0 8px 24px -4px rgba(28, 16, 8, 0.45)`
+                : `0 16px 48px -8px ${alpha(cardStyles.income.accentColor, 0.22)}, 0 8px 24px -4px rgba(44, 26, 17, 0.10)`,
             }}
             whileTap={{ scale: 0.99 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            sx={getGlassCardStyles(cardStyles.income.accentColor)}
+            sx={getGlassCardStyles(
+              isDarkMode ? cardStyles.income.accentDark : cardStyles.income.accentColor,
+              isDarkMode ? cardStyles.income.gradientDark : cardStyles.income.gradientLight
+            )}
             elevation={0}
           >
             <CardContent
@@ -393,14 +391,18 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 "&:last-child": { pb: isMobile ? 1.25 : 3 },
               }}
             >
-              {/* Título acima de tudo */}
+              {/* Emoji decorativo */}
+              <Box sx={{ position: "absolute", top: 10, right: 14, fontSize: isMobile ? 16 : 20, opacity: 0.35, userSelect: "none" }}>
+                {cardStyles.income.emoji}
+              </Box>
+
               <Typography
                 variant="overline"
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.08em",
                   fontSize: isMobile ? 9 : 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   display: "block",
                   mb: 0.5,
                 }}
@@ -408,16 +410,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 Receitas
               </Typography>
               
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 1,
-                }}
-              >
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  {/* Animated Income Counter */}
                   <CountUp
                     value={summary.totalIncome}
                     formatter={isMobile ? formatBRL : formatBRLFull}
@@ -438,7 +432,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     }}
                   />
                   
-                  {/* Barra de progresso comparativa */}
                   <Tooltip 
                     title={comparison.prevIncome > 0 
                       ? `${comparison.incomeChange >= 0 ? '+' : ''}${comparison.incomeChange}% vs mês anterior` 
@@ -451,7 +444,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                         height: 4,
                         borderRadius: "20px",
                         bgcolor: isDarkMode
-                          ? alpha(cardStyles.income.accentColor, 0.1)
+                          ? alpha(cardStyles.income.accentDark, 0.12)
                           : alpha(cardStyles.income.accentColor, 0.15),
                         mt: 1.5,
                         overflow: "hidden",
@@ -464,14 +457,13 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                         sx={{
                           height: "100%",
                           borderRadius: "20px",
-                          bgcolor: cardStyles.income.accentColor,
+                          bgcolor: isDarkMode ? cardStyles.income.accentDark : cardStyles.income.accentColor,
                           boxShadow: `0 0 8px ${alpha(cardStyles.income.accentColor, 0.4)}`,
                         }}
                       />
                     </Box>
                   </Tooltip>
                   
-                  {/* Indicador de mudança - espaço reservado para manter altura consistente */}
                   <Box sx={{ minHeight: 18, mt: 0.5 }}>
                     {comparison.prevIncome > 0 && (
                       <Typography
@@ -479,7 +471,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                         sx={{
                           display: "block",
                           color: comparison.incomeChange >= 0 ? "success.main" : "error.main",
-                          fontWeight: 600,
+                          fontWeight: 700,
                         }}
                       >
                         {comparison.incomeChange >= 0 ? "+" : ""}{comparison.incomeChange}% vs mês anterior
@@ -492,15 +484,12 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.3, type: "spring", stiffness: 400 }}
-                  sx={getIconContainerStyles(
-                    cardStyles.income.iconBg,
-                    cardStyles.income.iconBgLight
-                  )}
+                  sx={getIconContainerStyles(cardStyles.income.iconBg, cardStyles.income.iconBgLight)}
                 >
                   <TrendingUpIcon
                     sx={{
                       fontSize: isMobile ? 18 : 26,
-                      color: cardStyles.income.accentColor,
+                      color: isDarkMode ? cardStyles.income.accentDark : cardStyles.income.accentColor,
                     }}
                   />
                 </MotionBox>
@@ -517,12 +506,15 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
               y: -4,
               scale: 1.01,
               boxShadow: isDarkMode
-                ? `0 16px 48px -8px ${alpha(cardStyles.expense.accentColor, 0.3)}, 0 8px 24px -4px ${alpha("#000000", 0.4)}`
-                : `0 16px 48px -8px ${alpha(cardStyles.expense.accentColor, 0.25)}, 0 8px 24px -4px ${alpha("#64748B", 0.12)}`,
+                ? `0 16px 48px -8px ${alpha(cardStyles.expense.accentDark, 0.30)}, 0 8px 24px -4px rgba(28, 16, 8, 0.45)`
+                : `0 16px 48px -8px ${alpha(cardStyles.expense.accentColor, 0.22)}, 0 8px 24px -4px rgba(44, 26, 17, 0.10)`,
             }}
             whileTap={{ scale: 0.99 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            sx={getGlassCardStyles(cardStyles.expense.accentColor)}
+            sx={getGlassCardStyles(
+              isDarkMode ? cardStyles.expense.accentDark : cardStyles.expense.accentColor,
+              isDarkMode ? cardStyles.expense.gradientDark : cardStyles.expense.gradientLight
+            )}
             elevation={0}
           >
             <CardContent
@@ -533,14 +525,18 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 "&:last-child": { pb: isMobile ? 1.25 : 3 },
               }}
             >
-              {/* Título acima de tudo */}
+              {/* Emoji decorativo */}
+              <Box sx={{ position: "absolute", top: 10, right: 14, fontSize: isMobile ? 16 : 20, opacity: 0.35, userSelect: "none" }}>
+                {cardStyles.expense.emoji}
+              </Box>
+
               <Typography
                 variant="overline"
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.08em",
                   fontSize: isMobile ? 9 : 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   display: "block",
                   mb: 0.5,
                 }}
@@ -548,16 +544,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 Despesas
               </Typography>
               
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 1,
-                }}
-              >
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  {/* Animated Expense Counter */}
                   <CountUp
                     value={summary.totalExpense}
                     formatter={isMobile ? formatBRL : formatBRLFull}
@@ -578,7 +566,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     }}
                   />
                   
-                  {/* Barra de progresso comparativa */}
                   <Tooltip 
                     title={comparison.prevExpense > 0 
                       ? `${comparison.expenseChange >= 0 ? '+' : ''}${comparison.expenseChange}% vs mês anterior` 
@@ -591,7 +578,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                         height: 4,
                         borderRadius: "20px",
                         bgcolor: isDarkMode
-                          ? alpha(cardStyles.expense.accentColor, 0.1)
+                          ? alpha(cardStyles.expense.accentDark, 0.12)
                           : alpha(cardStyles.expense.accentColor, 0.15),
                         mt: 1.5,
                         overflow: "hidden",
@@ -604,14 +591,13 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                         sx={{
                           height: "100%",
                           borderRadius: "20px",
-                          bgcolor: cardStyles.expense.accentColor,
+                          bgcolor: isDarkMode ? cardStyles.expense.accentDark : cardStyles.expense.accentColor,
                           boxShadow: `0 0 8px ${alpha(cardStyles.expense.accentColor, 0.4)}`,
                         }}
                       />
                     </Box>
                   </Tooltip>
                   
-                  {/* Indicador de mudança - espaço reservado para manter altura consistente */}
                   <Box sx={{ minHeight: 18, mt: 0.5 }}>
                     {comparison.prevExpense > 0 && (
                       <Typography
@@ -619,7 +605,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                         sx={{
                           display: "block",
                           color: comparison.expenseChange <= 0 ? "success.main" : "error.main",
-                          fontWeight: 600,
+                          fontWeight: 700,
                         }}
                       >
                         {comparison.expenseChange >= 0 ? "+" : ""}{comparison.expenseChange}% vs mês anterior
@@ -632,15 +618,12 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.4, type: "spring", stiffness: 400 }}
-                  sx={getIconContainerStyles(
-                    cardStyles.expense.iconBg,
-                    cardStyles.expense.iconBgLight
-                  )}
+                  sx={getIconContainerStyles(cardStyles.expense.iconBg, cardStyles.expense.iconBgLight)}
                 >
                   <TrendingDownIcon
                     sx={{
                       fontSize: isMobile ? 18 : 26,
-                      color: cardStyles.expense.accentColor,
+                      color: isDarkMode ? cardStyles.expense.accentDark : cardStyles.expense.accentColor,
                     }}
                   />
                 </MotionBox>

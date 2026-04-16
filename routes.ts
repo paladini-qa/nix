@@ -14,6 +14,14 @@ export const VIEW_ROUTES: Record<AppCurrentView, string> = {
   batchRegistration: "/batch",
   paymentMethods: "/payment-methods",
   categories: "/categories",
+  goals: "/goals",
+  budgets: "/budgets",
+  analytics: "/analytics",
+  planning: "/planning",
+  accounts: "/accounts",
+  import: "/import",
+  "fiscal-report": "/fiscal-report",
+  "debt-calculator": "/debt-calculator",
 };
 
 /**

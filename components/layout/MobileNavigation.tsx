@@ -27,7 +27,13 @@ type ViewType =
   | "analytics"
   | "settings"
   | "paymentMethods"
-  | "categories";
+  | "categories"
+  | "goals"
+  | "budgets"
+  | "planning"
+  | "import"
+  | "fiscal-report"
+  | "debt-calculator";
 
 interface MobileNavigationProps {
   currentView: ViewType;
@@ -56,7 +62,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       currentView === "recurring" ||
       currentView === "categories" ||
       currentView === "nixai" ||
-      currentView === "batchRegistration"
+      currentView === "batchRegistration" ||
+      currentView === "goals" ||
+      currentView === "budgets" ||
+      currentView === "analytics" ||
+      currentView === "planning" ||
+      currentView === "import" ||
+      currentView === "fiscal-report" ||
+      currentView === "debt-calculator"
     ) {
       return "others";
     }
@@ -102,14 +115,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           right: 0,
           zIndex: 1200,
           bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.9)
-            : alpha("#FFFFFF", 0.95),
-          backdropFilter: "blur(20px) saturate(180%)",
-          WebkitBackdropFilter: "blur(20px) saturate(180%)",
-          borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            ? alpha(theme.palette.background.paper, 0.92)
+            : alpha("#FEF8F2", 0.96),
+          backdropFilter: "blur(20px) saturate(160%)",
+          WebkitBackdropFilter: "blur(20px) saturate(160%)",
+          borderTop: `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.12) : alpha("#C4885F", 0.18)}`,
           boxShadow: isDarkMode
-            ? `0 -4px 20px -4px ${alpha("#000000", 0.4)}`
-            : `0 -4px 20px -4px ${alpha(theme.palette.primary.main, 0.08)}`,
+            ? `0 -4px 20px -4px rgba(28, 16, 8, 0.5)`
+            : `0 -4px 20px -4px rgba(124, 66, 38, 0.10)`,
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
           borderRadius: 0,
         }}
@@ -257,15 +270,15 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               alignItems: "center",
               justifyContent: "center",
               bgcolor: theme.palette.primary.main,
-              color: "#fff",
+              color: theme.palette.mode === "dark" ? "#2C1A11" : "#fff",
               boxShadow: theme.palette.mode === "dark"
-                ? `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`
-                : `0 4px 14px ${alpha(theme.palette.primary.main, 0.35)}`,
+                ? `0 4px 14px rgba(212, 168, 117, 0.45)`
+                : `0 4px 14px rgba(124, 66, 38, 0.38)`,
               transition: "all 0.2s ease",
               "&:hover": {
-                bgcolor: theme.palette.primary.dark,
+                bgcolor: theme.palette.primary.light,
                 transform: "scale(1.05)",
-                boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.45)}`,
+                boxShadow: `0 6px 20px rgba(124, 66, 38, 0.45)`,
               },
               "&:active": {
                 transform: "scale(0.98)",

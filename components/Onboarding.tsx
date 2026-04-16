@@ -130,15 +130,15 @@ const Onboarding: React.FC<OnboardingProps> = ({
     },
     {
       id: "goals",
-      title: "Set a financial goal",
-      description: "Define savings goals to stay motivated and track progress.",
+      title: "Defina uma meta financeira",
+      description: "Crie metas de poupança para manter o foco e acompanhar o progresso.",
       icon: <TrendingUpIcon />,
       action: () => {
-        // Navigate to goals when implemented
+        onNavigate("goals");
         markStepCompleted("goals");
-        setActiveStep(activeStep + 1);
+        handleComplete();
       },
-      actionLabel: "Learn More",
+      actionLabel: "Ver Metas",
       isCompleted: completedSteps.includes("goals"),
     },
     {

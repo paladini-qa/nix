@@ -21,11 +21,21 @@ const NixAIView = lazy(() => import("./NixAIView"));
 const BatchRegistrationView = lazy(() => import("./BatchRegistrationView"));
 const PaymentMethodsView = lazy(() => import("./PaymentMethodsView"));
 const CategoriesView = lazy(() => import("./CategoriesView"));
+const GoalsView = lazy(() => import("./GoalsView"));
+const BudgetsView = lazy(() => import("./BudgetsView"));
+const AnalyticsView = lazy(() => import("./AnalyticsView"));
+const PlanningView = lazy(() => import("./PlanningView"));
+const ImportView = lazy(() => import("./ImportView"));
+const FiscalReportView = lazy(() => import("./FiscalReportView"));
+const DebtCalculatorView = lazy(() => import("./DebtCalculatorView"));
 
 import TransactionsSkeleton from "./skeletons/TransactionsSkeleton";
 import ListCardsSkeleton from "./skeletons/ListCardsSkeleton";
 import PaymentMethodsSkeleton from "./skeletons/PaymentMethodsSkeleton";
 import CategoriesSkeleton from "./skeletons/CategoriesSkeleton";
+import BudgetsSkeleton from "./skeletons/BudgetsSkeleton";
+import GoalsSkeleton from "./skeletons/GoalsSkeleton";
+import PlanningSkeleton from "./skeletons/PlanningSkeleton";
 import { Box, CircularProgress } from "@mui/material";
 
 const ViewLoadingMui: React.FC = () => (
@@ -84,6 +94,8 @@ export interface AppViewSwitcherProps {
   ) => void;
   categoryColors: CategoryColors;
   handleUpdateInstallmentDates: (groupId: string, dates: string[]) => void;
+  userId: string;
+  handleCreateTransaction: (data: Omit<import("../types").Transaction, "id" | "createdAt">) => Promise<void>;
 }
 
 /**
@@ -137,6 +149,8 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
     handleUpdateCategoryColor,
     categoryColors,
     handleUpdateInstallmentDates,
+    userId,
+    handleCreateTransaction,
   } = props;
 
   // Chave composta: inclui selectedPaymentMethod para animar a transição dentro de paymentMethods/dashboard
@@ -188,6 +202,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
             setSelectedCategoryNav({ name: category, type });
             setCurrentView("categories");
           }}
+          onViewTransactions={() => setCurrentView("transactions")}
         />
       );
     }
@@ -345,6 +360,96 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
             initialSelectedCategory={selectedCategoryNav}
             onClearInitialCategory={() => setSelectedCategoryNav(null)}
           />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "goals") {
+      return (
+        <Suspense key={currentView} fallback={<GoalsSkeleton />}>
+          <GoalsView
+            userId={userId}
+            onCreateTransaction={(data) =>
+              handleCreateTransaction({
+                ...data,
+                paymentMethod: "",
+                date: new Date().toISOString().split("T")[0],
+                isPaid: true,
+              })
+            }
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "budgets") {
+      return (
+        <Suspense key={currentView} fallback={<BudgetsSkeleton />}>
+          <BudgetsView
+            transactions={transactions}
+            categories={categories}
+            userId={userId}
+            selectedMonth={filters.month}
+            selectedYear={filters.year}
+            onDateChange={(month, year) => setFilters({ ...filters, month, year })}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "analytics") {
+      return (
+        <Suspense key={currentView} fallback={<ViewLoadingMui />}>
+          <AnalyticsView
+            transactions={analyticsTransactions}
+            onCategoryClick={(category, type) => {
+              setCurrentView("categories");
+            }}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "planning") {
+      return (
+        <Suspense key={currentView} fallback={<PlanningSkeleton />}>
+          <PlanningView
+            categories={categories}
+            paymentMethods={paymentMethods}
+            userId={userId}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "import") {
+      return (
+        <Suspense key={currentView} fallback={<ViewLoadingMui />}>
+          <ImportView
+            categories={categories}
+            paymentMethods={paymentMethods}
+            onImport={async (rows) => {
+              for (const row of rows) {
+                await handleCreateTransaction(row);
+              }
+            }}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "fiscal-report") {
+      return (
+        <Suspense key={currentView} fallback={<ViewLoadingMui />}>
+          <FiscalReportView transactions={transactions} />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "debt-calculator") {
+      return (
+        <Suspense key={currentView} fallback={<ViewLoadingMui />}>
+          <DebtCalculatorView />
         </Suspense>
       );
     }

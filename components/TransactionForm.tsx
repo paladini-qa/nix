@@ -61,6 +61,7 @@ import {
   suggestCategoryWithAI,
   CategorySuggestion,
 } from "../services/geminiService";
+import { applyRules } from "../services/autoCategorizationService";
 
 // Animação de entrada suave
 const slideInRight = keyframes`
@@ -350,6 +351,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   // Estado para controlar opções avançadas colapsáveis
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Notas opcionais
+  const [notes, setNotes] = useState("");
+
   // Aba do drawer: formulário manual ou Nix AI (só para nova transação)
   const [formTab, setFormTab] = useState<"manual" | "nixai">("manual");
 
@@ -402,9 +406,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       : currentBalance + parsedAmount;
   }, [currentBalance, parsedAmount, type]);
 
-  // Efeito para sugerir categoria quando descrição muda (local primeiro)
+  // Efeito para sugerir categoria quando descrição muda (local primeiro, depois regras de auto-categorização)
   useEffect(() => {
     if (description && !category) {
+      // Verificar regras de auto-categorização primeiro
+      const ruleCategory = applyRules(description, type);
+      if (ruleCategory && categories[type].includes(ruleCategory)) {
+        setCategory(ruleCategory);
+        return;
+      }
       const suggested = suggestCategory(description, type, categories[type]);
       setSuggestedCategory(suggested);
     } else {
@@ -540,6 +550,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setIsShared(editTransaction.isShared || false);
       setSharedWith(editTransaction.sharedWith || "");
       setIOwe(editTransaction.iOwe || false);
+      setNotes(editTransaction.notes || "");
       // Vencimento da fatura: usar valor salvo ou sugerir a partir da data da transação
       const dueDay = getPaymentMethodPaymentDay?.(editTransaction.paymentMethod);
       if (dueDay != null && dueDay >= 1 && dueDay <= 31) {
@@ -583,6 +594,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setIsShared(false);
       setSharedWith("");
       setIOwe(false);
+      setNotes("");
       const now = dayjs();
       setInvoiceDueMonth(now.month() + 1);
       setInvoiceDueYear(now.year());
@@ -766,6 +778,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         isShared,
         sharedWith: isShared ? sharedWith : undefined,
         iOwe: isShared ? iOwe : undefined,
+        notes: notes.trim() || undefined,
       },
       editTransaction?.id || undefined
     );
@@ -2619,6 +2632,22 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Paper>
             )}
           </Box>
+        </Box>
+
+        {/* ====== NOTES FIELD ====== */}
+        <Box sx={{ px: 2.5, pb: 2 }}>
+          <TextField
+            label="Observações (opcional)"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            multiline
+            rows={2}
+            fullWidth
+            placeholder="Adicione uma nota sobre esta transação..."
+            inputProps={{ maxLength: 500 }}
+            helperText={notes.length > 0 ? `${notes.length}/500` : undefined}
+            sx={inputSx}
+          />
         </Box>
 
         {/* ====== BOTTOM ACTION BAR ====== */}

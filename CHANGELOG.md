@@ -9,6 +9,67 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added - Abril 2026
+
+#### Nix Full Feature Sprint — 7 Fases de Melhorias
+
+##### Fase 1: Correção de Bugs Críticos
+- **Rotas faltando** — Adicionados tipos `"goals" | "budgets" | "analytics" | "planning" | "accounts" | "import" | "fiscal-report" | "debt-calculator"` em `AppCurrentView` e mapeados em `VIEW_ROUTES`/`ROUTE_VIEWS`
+  - **Arquivos modificados**: `types/appView.ts`, `routes.ts`
+- **Onboarding goals nav** — Passo "Definir meta financeira" agora navega para a view `goals` corretamente
+  - **Arquivos modificados**: `components/Onboarding.tsx`
+- **Dead code em NixAIView** — Removida função `handleSuggestionClick` e bloco de código morto
+  - **Arquivos modificados**: `components/NixAIView.tsx`
+- **PlanningView EmptyState** — Corrigido `type` para `"planning"` e adicionado SVG ilustrativo no `EmptyState`
+  - **Arquivos modificados**: `components/PlanningView.tsx`, `components/EmptyState.tsx`
+- **BudgetsView labels PT-BR** — Traduzidas todas as strings de inglês para português
+  - **Arquivos modificados**: `components/BudgetsView.tsx`
+- **Goals reopen button** — Adicionado botão "Reativar" para metas concluídas com `handleReopen`
+  - **Arquivos modificados**: `components/GoalsView.tsx`
+
+##### Fase 2: Campo `notes` em Transações
+- **Campo observações** — Adicionado campo opcional `notes: string` na interface `Transaction`; validado com Zod (max 500 chars); persistido no Supabase via `notes TEXT`
+- **Formulário** — `TransactionForm` exibe `TextField` multi-linha "Observações (opcional)" ao criar/editar
+- **Listagem** — `TransactionTable` mostra ícone `NotesIcon` com tooltip do conteúdo em cards mobile e linhas desktop
+- **Migration SQL** — `ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS notes TEXT;`
+  - **Arquivos modificados**: `types.ts`, `schemas/index.ts`, `docs/supabase-setup.sql`, `components/TransactionForm.tsx`, `components/TransactionTable.tsx`, `contexts/TransactionsContext.tsx`, `App.tsx`
+
+##### Fase 3: Novos Widgets no Dashboard
+- **RecentTransactionsWidget** — Exibe as 5 transações mais recentes com botão "Ver todos"; navega para a view transactions
+- **NetWorthWidget** — Exibe "Balanço Total" (receitas − despesas acumuladas) e tendência do mês atual vs. anterior
+  - **Arquivos criados**: `components/RecentTransactionsWidget.tsx`, `components/NetWorthWidget.tsx`
+  - **Arquivos modificados**: `components/DashboardMainSection.tsx`, `components/AppViewSwitcher.tsx`
+
+##### Fase 4: Melhorias em Analytics
+- **Drill-down por categoria** — Clique em fatia do PieChart navega para a view de categorias filtrada
+- **Comparação YoY** — Novo `BarChart` "Despesas: Ano Atual vs. Ano Anterior" com `useMemo` `yoyData`
+  - **Arquivos modificados**: `components/AnalyticsView.tsx`
+
+##### Fase 5: Melhorias em Budgets e Goals
+- **Alertas toast de orçamento** — `BudgetsView` emite `showWarning` uma vez por sessão quando budget > 80% ou estourado; usa `alertShownRef` para evitar duplicatas
+- **Streak de meses no verde** — Badge "🔥 Xm" em `BudgetCard` para categorias com streak ≥ 2 meses consecutivos dentro do orçamento
+- **Contribuição automática para metas** — Campo "Contribuição mensal (opcional)" no formulário de nova meta; ao salvar cria transação recorrente de poupança via `onCreateTransaction`
+  - **Arquivos modificados**: `components/BudgetsView.tsx`, `components/GoalsView.tsx`
+
+##### Fase 6: Features Inteligentes
+- **Detector de assinaturas** — `subscriptionService.detectSubscriptions` analisa padrões mensais de despesas; `SubscriptionDetector` exibe painel colapsável com botões "Marcar como recorrente" e "Ignorar"
+- **Previsão de saldo fim do mês** — `BalanceForecastWidget` calcula saldo previsto considerando saldo atual + recorrentes pendentes no mês
+- **Regras de auto-categorização** — `autoCategorizationService` com CRUD via `localStorage`; `AutoCategorizationRules` UI integrada em `CategoriesView`; `TransactionForm` aplica regras antes de sugerir via AI
+  - **Arquivos criados**: `services/subscriptionService.ts`, `components/SubscriptionDetector.tsx`, `components/BalanceForecastWidget.tsx`, `services/autoCategorizationService.ts`, `components/AutoCategorizationRules.tsx`
+  - **Arquivos modificados**: `components/DashboardMainSection.tsx`, `components/CategoriesView.tsx`, `components/TransactionForm.tsx`
+
+##### Fase 7: Features de Alto Esforço
+- **Importação CSV/OFX** — `importService.parseImportFile` detecta formato por extensão; parser CSV genérico (detecta separador, mapeia colunas por nome) e parser OFX (SGML subset); `ImportView` com drag-and-drop, preview tabular com checkboxes, seleção de forma de pagamento e confirmação em lote
+  - **Arquivos criados**: `services/importService.ts`, `components/ImportView.tsx`
+- **Relatório Fiscal Anual** — `FiscalReportView` com filtro por ano, cards de resumo (receitas/despesas/saldo), tabela de resumo mensal com totais, tabelas de breakdown por categoria; exportação CSV (com BOM UTF-8) e PDF via `window.print()` com print CSS
+  - **Arquivos criados**: `components/FiscalReportView.tsx`
+- **Calculadora de Dívidas** — `DebtCalculatorView` com inputs (principal, taxa anual, parcelas, método); cálculo Price (parcelas fixas) e SAC (amortização constante); gráfico de evolução de saldo devedor comparativo Price vs SAC (`LineChart`); gráfico de composição de parcela juros/amortização (`BarChart` stacked); tabela de amortização completa com toggle "ver mais"
+  - **Arquivos criados**: `components/DebtCalculatorView.tsx`
+- **AppViewSwitcher ampliado** — Adicionados lazy imports e rendering para todas as novas views: `GoalsView`, `BudgetsView`, `AnalyticsView`, `PlanningView`, `ImportView`, `FiscalReportView`, `DebtCalculatorView`; novos props `userId` e `handleCreateTransaction` passados de `App.tsx`
+  - **Arquivos modificados**: `components/AppViewSwitcher.tsx`, `App.tsx`
+
+---
+
 ### Fixed - Abril 2026
 
 #### Integridade de Transações — 5 Correções de Dados

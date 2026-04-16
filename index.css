@@ -1,63 +1,62 @@
 /* ============================================
-   NIX - Brand Book Design System
-   Finanças inteligentes. Seu dinheiro, potencializado por IA.
+   NIX — Cozy Coffee Design System
+   Finanças inteligentes, com o aconchego de uma boa xícara.
    ============================================ */
 
 /* ============================================
-   TYPOGRAPHY - Poppins (Títulos) + Inter (Corpo)
+   TYPOGRAPHY — Playfair Display (Títulos) + Nunito (Corpo)
    ============================================ */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Nunito:wght@400;500;600;700;800&display=swap');
 
 /* ============================================
    CSS CUSTOM PROPERTIES (Design Tokens)
-   Design System: Finance App (Black & Purple)
+   Design System: Cozy Coffee
    ============================================ */
 :root {
-  /* Cor Primária: Nix Purple - Light Mode */
-  --nix-purple-start: #7B2CBF;
-  --nix-purple-end: #5A189A;
-  --nix-purple-light: #9D4EDD;
-  --nix-purple-glow: rgba(123, 44, 191, 0.5);
-  --nix-purple-gradient: linear-gradient(135deg, #9D4EDD 0%, #7B2CBF 100%);
-  
-  /* Cor Secundária: Cyber Teal (Ciano) */
-  --nix-teal: #00D4FF;
-  --nix-teal-light: #5CE1E6;
-  --nix-teal-dark: #00A3CC;
-  --nix-teal-glow: rgba(0, 212, 255, 0.5);
-  
-  /* Cores Semânticas - Light Mode */
-  --nix-success: #2D6A4F;
-  --nix-success-glow: rgba(45, 106, 79, 0.5);
-  --nix-error: #C9184A;
-  --nix-error-glow: rgba(201, 24, 74, 0.5);
-  --nix-warning: #F59E0B;
-  
-  /* Cores Neutras - Light Mode */
-  --nix-dark: #121212;
-  --nix-bg-base: #FFFFFF;
-  --nix-bg-subtle: #F4F4F9;
-  --nix-bg-paper: #F4F4F9;
-  --nix-text-primary: #121212;
-  --nix-text-secondary: #666666;
-  
-  /* Aurora mesh gradient colors - Light mode (sutil) */
-  --nix-aurora-1: rgba(123, 44, 191, 0.06);
-  --nix-aurora-2: rgba(0, 212, 255, 0.04);
-  --nix-aurora-3: rgba(45, 106, 79, 0.03);
-  --nix-aurora-4: rgba(157, 78, 221, 0.04);
-  
-  /* Glassmorphism - Light Mode */
-  --nix-glass-bg: rgba(244, 244, 249, 0.85);
-  --nix-glass-border: rgba(18, 18, 18, 0.06);
-  --nix-glass-blur: 20px;
-  
-  /* Noise texture opacity */
-  --nix-noise-opacity: 0.02;
+  /* Cor Primária: Mocha Brown — Light Mode */
+  --coffee-mocha: #7B4226;
+  --coffee-mocha-light: #A0622A;
+  --coffee-espresso: #5A2D0C;
+  --coffee-glow: rgba(124, 66, 38, 0.45);
+  --coffee-gradient: linear-gradient(135deg, #A0622A 0%, #7B4226 100%);
+
+  /* Cor Secundária: Caramel */
+  --coffee-caramel: #C4883A;
+  --coffee-caramel-light: #DDA855;
+  --coffee-cappuccino: #C4885F;
+  --coffee-latte: #DDB899;
+
+  /* Cores Semânticas — Light Mode */
+  --coffee-success: #5B8A5A;
+  --coffee-success-glow: rgba(91, 138, 90, 0.45);
+  --coffee-error: #B85450;
+  --coffee-error-glow: rgba(184, 84, 80, 0.45);
+  --coffee-warning: #C4883A;
+
+  /* Cores Neutras — Light Mode */
+  --coffee-text-dark: #2C1A11;
+  --coffee-bg-base: #FDF8F0;       /* Leite vaporizado */
+  --coffee-bg-subtle: #FEF3E2;     /* Espuma de latte */
+  --coffee-bg-paper: #FEF3E2;
+  --coffee-text-primary: #2C1A11;
+  --coffee-text-secondary: #7B5A3C;
+
+  /* Warm steam gradient blobs — Light mode (suave) */
+  --coffee-steam-1: rgba(196, 136, 95, 0.09);
+  --coffee-steam-2: rgba(196, 168, 100, 0.06);
+  --coffee-steam-3: rgba(91, 138, 90, 0.04);
+  --coffee-steam-4: rgba(124, 66, 38, 0.05);
+
+  /* Glassmorphism — Light Mode */
+  --coffee-glass-bg: rgba(253, 248, 240, 0.88);
+  --coffee-glass-border: rgba(44, 26, 17, 0.07);
+  --coffee-glass-blur: 20px;
+
+  /* Grain texture opacity */
+  --coffee-grain-opacity: 0.025;
 
   /* ============================================
      DESIGN TOKENS — Radius, Shadow, Spacing
-     Usados em MUI (sx) e Radix via CSS vars
      ============================================ */
   --radius-card: 20px;
   --radius-input: 20px;
@@ -65,47 +64,103 @@
   --radius-button-md: 12px;
   --radius-button-lg: 14px;
 
-  --shadow-soft: 0 10px 40px -10px rgba(157, 78, 221, 0.12);
-  --shadow-card: 0 8px 32px -8px rgba(157, 78, 221, 0.10);
-  --shadow-elevated: 0 20px 60px -15px rgba(157, 78, 221, 0.20);
-  --shadow-teal-soft: 0 10px 40px -10px rgba(0, 212, 255, 0.12);
+  --shadow-soft: 0 10px 40px -10px rgba(124, 66, 38, 0.12);
+  --shadow-card: 0 8px 32px -8px rgba(124, 66, 38, 0.10);
+  --shadow-elevated: 0 20px 60px -15px rgba(124, 66, 38, 0.20);
+  --shadow-caramel-soft: 0 10px 40px -10px rgba(196, 136, 95, 0.12);
+
+  /* Aliases para compatibilidade */
+  --nix-purple-start: #7B4226;
+  --nix-purple-end: #5A2D0C;
+  --nix-purple-light: #A0622A;
+  --nix-purple-glow: rgba(124, 66, 38, 0.45);
+  --nix-purple-gradient: linear-gradient(135deg, #A0622A 0%, #7B4226 100%);
+  --nix-teal: #C4883A;
+  --nix-teal-light: #DDA855;
+  --nix-teal-dark: #9A6820;
+  --nix-teal-glow: rgba(196, 136, 60, 0.45);
+  --nix-success: #5B8A5A;
+  --nix-success-glow: rgba(91, 138, 90, 0.45);
+  --nix-error: #B85450;
+  --nix-error-glow: rgba(184, 84, 80, 0.45);
+  --nix-warning: #C4883A;
+  --nix-dark: #2C1A11;
+  --nix-bg-base: #FDF8F0;
+  --nix-bg-subtle: #FEF3E2;
+  --nix-bg-paper: #FEF3E2;
+  --nix-text-primary: #2C1A11;
+  --nix-text-secondary: #7B5A3C;
+  --nix-aurora-1: rgba(196, 136, 95, 0.09);
+  --nix-aurora-2: rgba(196, 168, 100, 0.06);
+  --nix-aurora-3: rgba(91, 138, 90, 0.04);
+  --nix-aurora-4: rgba(124, 66, 38, 0.05);
+  --nix-glass-bg: rgba(253, 248, 240, 0.88);
+  --nix-glass-border: rgba(44, 26, 17, 0.07);
+  --nix-glass-blur: 20px;
+  --nix-noise-opacity: 0.025;
 }
 
-/* Dark mode variables - Design System Black & Purple */
+/* Dark mode variables — Cozy Espresso */
 [data-theme="dark"],
 .dark,
 .MuiCssBaseline-root[class*="dark"] {
-  /* Cor Primária: Nix Purple - Dark Mode */
-  --nix-purple-start: #9D4EDD;
-  --nix-purple-end: #7B2CBF;
-  --nix-purple-glow: rgba(157, 78, 221, 0.5);
-  
-  /* Cores Semânticas - Dark Mode */
-  --nix-success: #00C853;
-  --nix-success-glow: rgba(0, 200, 83, 0.5);
-  --nix-error: #FF1744;
-  --nix-error-glow: rgba(255, 23, 68, 0.5);
-  
-  /* Cores Neutras - Dark Mode */
-  --nix-dark: #EDEDED;
-  --nix-bg-base: #0A0A0A;
-  --nix-bg-subtle: #1A1A1A;
-  --nix-bg-paper: #1A1A1A;
-  --nix-text-primary: #EDEDED;
-  --nix-text-secondary: #A0A0A0;
-  
-  /* Aurora mesh gradient colors - Dark mode (vibrante) */
-  --nix-aurora-1: rgba(157, 78, 221, 0.25);
-  --nix-aurora-2: rgba(0, 212, 255, 0.15);
-  --nix-aurora-3: rgba(0, 200, 83, 0.08);
-  --nix-aurora-4: rgba(123, 44, 191, 0.12);
-  --nix-aurora-5: rgba(0, 212, 255, 0.06);
-  
-  /* Glassmorphism - Dark */
-  --nix-glass-bg: rgba(26, 26, 26, 0.85);
-  --nix-glass-border: rgba(237, 237, 237, 0.08);
-  
-  /* Noise texture opacity */
+  /* Cor Primária: Crème Brûlée — Dark Mode */
+  --coffee-mocha: #D4A875;
+  --coffee-mocha-light: #DDB899;
+  --coffee-espresso: #C4885F;
+  --coffee-glow: rgba(212, 168, 117, 0.45);
+  --coffee-gradient: linear-gradient(135deg, #D4A875 0%, #C4885F 100%);
+
+  /* Cores Semânticas — Dark Mode */
+  --coffee-success: #7AB87A;
+  --coffee-success-glow: rgba(122, 184, 122, 0.45);
+  --coffee-error: #E07870;
+  --coffee-error-glow: rgba(224, 120, 112, 0.45);
+
+  /* Cores Neutras — Dark Mode */
+  --coffee-text-dark: #F0D9C0;
+  --coffee-bg-base: #1C1008;
+  --coffee-bg-subtle: #2C1A10;
+  --coffee-bg-paper: #2C1A10;
+  --coffee-text-primary: #F0D9C0;
+  --coffee-text-secondary: #C4A882;
+
+  /* Steam gradient blobs — Dark mode (mais vibrante) */
+  --coffee-steam-1: rgba(212, 168, 117, 0.18);
+  --coffee-steam-2: rgba(196, 136, 95, 0.12);
+  --coffee-steam-3: rgba(122, 184, 122, 0.07);
+  --coffee-steam-4: rgba(196, 136, 95, 0.09);
+
+  /* Glassmorphism — Dark */
+  --coffee-glass-bg: rgba(44, 26, 16, 0.88);
+  --coffee-glass-border: rgba(240, 217, 192, 0.08);
+
+  /* Grain texture opacity */
+  --coffee-grain-opacity: 0.03;
+
+  /* Aliases */
+  --nix-purple-start: #D4A875;
+  --nix-purple-end: #C4885F;
+  --nix-purple-glow: rgba(212, 168, 117, 0.45);
+  --nix-teal: #DDA855;
+  --nix-teal-glow: rgba(212, 168, 117, 0.45);
+  --nix-success: #7AB87A;
+  --nix-success-glow: rgba(122, 184, 122, 0.45);
+  --nix-error: #E07870;
+  --nix-error-glow: rgba(224, 120, 112, 0.45);
+  --nix-dark: #F0D9C0;
+  --nix-bg-base: #1C1008;
+  --nix-bg-subtle: #2C1A10;
+  --nix-bg-paper: #2C1A10;
+  --nix-text-primary: #F0D9C0;
+  --nix-text-secondary: #C4A882;
+  --nix-aurora-1: rgba(212, 168, 117, 0.18);
+  --nix-aurora-2: rgba(196, 136, 95, 0.12);
+  --nix-aurora-3: rgba(122, 184, 122, 0.07);
+  --nix-aurora-4: rgba(196, 136, 95, 0.09);
+  --nix-aurora-5: rgba(212, 168, 117, 0.06);
+  --nix-glass-bg: rgba(44, 26, 16, 0.88);
+  --nix-glass-border: rgba(240, 217, 192, 0.08);
   --nix-noise-opacity: 0.03;
 }
 
@@ -121,15 +176,15 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
-  background-color: var(--nix-bg-base);
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  background-color: var(--coffee-bg-base);
   min-height: 100vh;
   position: relative;
   transition: background-color 0.3s ease, color 0.3s ease;
   overflow-x: hidden;
 }
 
-/* Títulos usam Poppins */
+/* Títulos usam Playfair Display */
 h1, h2, h3, h4, h5, h6,
 .MuiTypography-h1,
 .MuiTypography-h2,
@@ -137,12 +192,12 @@ h1, h2, h3, h4, h5, h6,
 .MuiTypography-h4,
 .MuiTypography-h5,
 .MuiTypography-h6 {
-  font-family: 'Poppins', 'Inter', sans-serif !important;
+  font-family: 'Playfair Display', 'Georgia', serif !important;
 }
 
 /* ============================================
-   AURORA MESH GRADIENT BACKGROUND
-   Fundo orgânico com efeito aurora usando Nix Purple + Cyber Teal
+   WARM STEAM GRADIENT BACKGROUND
+   Fundo aconchegante com blobs de café e caramelo
    ============================================ */
 body::before {
   content: '';
@@ -153,47 +208,41 @@ body::before {
   bottom: 0;
   z-index: -2;
   pointer-events: none;
-  background: 
-    /* Primary aurora blob - top left - Nix Purple */
+  background:
     radial-gradient(
-      ellipse 100% 80% at 5% 10%,
-      var(--nix-aurora-1) 0%,
+      ellipse 110% 85% at 5% 8%,
+      var(--coffee-steam-1) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse 80% 70% at 88% 6%,
+      var(--coffee-steam-2) 0%,
+      transparent 46%
+    ),
+    radial-gradient(
+      ellipse 55% 75% at 95% 55%,
+      var(--coffee-steam-3) 0%,
       transparent 50%
     ),
-    /* Secondary aurora blob - top right - Cyber Teal */
     radial-gradient(
-      ellipse 80% 70% at 90% 5%,
-      var(--nix-aurora-2) 0%,
-      transparent 45%
-    ),
-    /* Tertiary blob - center right - Success Green */
-    radial-gradient(
-      ellipse 60% 80% at 95% 50%,
-      var(--nix-aurora-3) 0%,
+      ellipse 65% 55% at 12% 88%,
+      var(--coffee-steam-4) 0%,
       transparent 50%
     ),
-    /* Quaternary blob - bottom left - Deep Purple */
     radial-gradient(
-      ellipse 70% 60% at 10% 85%,
-      var(--nix-aurora-4) 0%,
-      transparent 50%
-    ),
-    /* Center subtle glow - Nix Purple */
-    radial-gradient(
-      ellipse 50% 50% at 50% 50%,
-      rgba(138, 43, 226, 0.03) 0%,
+      ellipse 40% 45% at 52% 52%,
+      rgba(196, 136, 95, 0.03) 0%,
       transparent 70%
     ),
-    /* Base gradient */
     linear-gradient(
       180deg,
-      var(--nix-bg-base) 0%,
-      var(--nix-bg-subtle) 100%
+      var(--coffee-bg-base) 0%,
+      var(--coffee-bg-subtle) 100%
     );
-  animation: aurora-shift 20s ease-in-out infinite alternate;
+  animation: steam-drift 24s ease-in-out infinite alternate;
 }
 
-/* Noise texture overlay para visual orgânico */
+/* Grain texture — visual orgânico e artesanal */
 body::after {
   content: '';
   position: fixed;
@@ -203,84 +252,81 @@ body::after {
   bottom: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: var(--nix-noise-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: var(--coffee-grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
-  mix-blend-mode: overlay;
+  mix-blend-mode: multiply;
 }
 
-/* Aurora animation - movimento sutil */
-@keyframes aurora-shift {
+/* Steam drift animation — movimento suave como vapor de café */
+@keyframes steam-drift {
   0% {
     filter: hue-rotate(0deg);
     transform: scale(1);
   }
-  50% {
-    filter: hue-rotate(5deg);
-    transform: scale(1.02);
+  40% {
+    filter: hue-rotate(3deg);
+    transform: scale(1.015);
   }
   100% {
-    filter: hue-rotate(-5deg);
+    filter: hue-rotate(-3deg);
     transform: scale(1);
   }
 }
 
 /* ============================================
-   NEON GLOW EFFECTS - Design System Black & Purple
+   COFFEE GLOW EFFECTS
    Para estados ativos e foco
    ============================================ */
-.neon-glow-primary {
-  box-shadow: 
-    0 0 5px var(--nix-purple-start),
-    0 0 20px var(--nix-purple-glow),
-    0 0 40px rgba(157, 78, 221, 0.2);
+.coffee-glow-primary {
+  box-shadow:
+    0 0 5px var(--coffee-mocha),
+    0 0 20px var(--coffee-glow),
+    0 0 40px rgba(124, 66, 38, 0.15);
 }
 
-.neon-glow-teal {
-  box-shadow: 
-    0 0 5px var(--nix-teal),
-    0 0 20px var(--nix-teal-glow),
-    0 0 40px rgba(0, 212, 255, 0.2);
+.coffee-glow-caramel {
+  box-shadow:
+    0 0 5px var(--coffee-caramel),
+    0 0 20px rgba(196, 136, 60, 0.4),
+    0 0 40px rgba(196, 136, 60, 0.15);
 }
 
-.neon-glow-success {
-  box-shadow: 
-    0 0 5px var(--nix-success),
-    0 0 20px var(--nix-success-glow),
-    0 0 40px rgba(0, 200, 83, 0.2);
+.coffee-glow-sage {
+  box-shadow:
+    0 0 5px var(--coffee-success),
+    0 0 20px var(--coffee-success-glow),
+    0 0 40px rgba(91, 138, 90, 0.15);
 }
 
-.neon-glow-error {
-  box-shadow: 
-    0 0 5px var(--nix-error),
-    0 0 20px var(--nix-error-glow),
-    0 0 40px rgba(255, 23, 68, 0.2);
-}
+/* Aliases para compatibilidade */
+.neon-glow-primary { box-shadow: 0 0 5px var(--coffee-mocha), 0 0 20px var(--coffee-glow), 0 0 40px rgba(124, 66, 38, 0.15); }
+.neon-glow-teal    { box-shadow: 0 0 5px var(--coffee-caramel), 0 0 20px rgba(196, 136, 60, 0.4), 0 0 40px rgba(196, 136, 60, 0.15); }
+.neon-glow-success { box-shadow: 0 0 5px var(--coffee-success), 0 0 20px var(--coffee-success-glow); }
+.neon-glow-error   { box-shadow: 0 0 5px var(--coffee-error), 0 0 20px var(--coffee-error-glow); }
 
-/* Focus state com neon glow roxo */
 .neon-focus:focus-visible {
   outline: none;
-  box-shadow: 
-    0 0 0 2px var(--nix-bg-base),
-    0 0 0 4px var(--nix-purple-start),
-    0 0 20px var(--nix-purple-glow);
+  box-shadow:
+    0 0 0 2px var(--coffee-bg-base),
+    0 0 0 4px var(--coffee-mocha),
+    0 0 20px var(--coffee-glow);
 }
 
 /* ============================================
-   NIX AI INDICATOR - Pulso suave
-   O "Assistente Nix" deve estar sempre visível
+   NIX AI INDICATOR — Pulso aconchegante
    ============================================ */
 @keyframes nix-ai-pulse {
   0%, 100% {
-    box-shadow: 
-      0 0 0 0 rgba(157, 78, 221, 0.4),
-      0 0 20px rgba(157, 78, 221, 0.2);
+    box-shadow:
+      0 0 0 0 rgba(196, 136, 95, 0.4),
+      0 0 20px rgba(196, 136, 95, 0.2);
     transform: scale(1);
   }
   50% {
-    box-shadow: 
-      0 0 0 8px rgba(157, 78, 221, 0),
-      0 0 30px rgba(157, 78, 221, 0.3);
+    box-shadow:
+      0 0 0 8px rgba(196, 136, 95, 0),
+      0 0 30px rgba(196, 136, 95, 0.3);
     transform: scale(1.02);
   }
 }
@@ -290,11 +336,11 @@ body::after {
 }
 
 /* ============================================
-   SCROLLBAR - Estilo moderno e suave
+   SCROLLBAR — Caramelo e suave
    ============================================ */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -302,15 +348,15 @@ body::after {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #CBD5E1 0%, #94A3B8 100%);
-  border-radius: 5px;
+  background: linear-gradient(180deg, #DDB899 0%, #C4885F 100%);
+  border-radius: 6px;
   border: 2px solid transparent;
   background-clip: padding-box;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #9D4EDD 0%, #8A2BE2 100%);
+  background: linear-gradient(180deg, #C4885F 0%, #A0622A 100%);
   border: 2px solid transparent;
   background-clip: padding-box;
 }
@@ -318,155 +364,192 @@ body::after {
 /* Dark mode scrollbar */
 .dark ::-webkit-scrollbar-thumb,
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #475569 0%, #334155 100%);
+  background: linear-gradient(180deg, #5A3C28 0%, #3E2A1A 100%);
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover,
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #9D4EDD 0%, #8A2BE2 100%);
+  background: linear-gradient(180deg, #C4885F 0%, #A0622A 100%);
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
-/* Firefox scrollbar */
+/* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #94A3B8 transparent;
+  scrollbar-color: #C4885F transparent;
 }
 
 .dark *,
 [data-theme="dark"] * {
-  scrollbar-color: #475569 transparent;
+  scrollbar-color: #5A3C28 transparent;
 }
 
 /* ============================================
-   ANIMATIONS - Suaves e orgânicas
+   ANIMATIONS — Suaves e orgânicas
    ============================================ */
 @keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(157, 78, 221, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 35px rgba(157, 78, 221, 0.35);
-  }
+  0%, 100% { box-shadow: 0 0 20px rgba(124, 66, 38, 0.12); }
+  50%       { box-shadow: 0 0 35px rgba(124, 66, 38, 0.28); }
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 @keyframes gradient-shift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
 }
 
 @keyframes breathe {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 1;
-  }
+  0%, 100% { transform: scale(1);    opacity: 0.8; }
+  50%       { transform: scale(1.05); opacity: 1; }
 }
 
-/* Gradient animation for primary elements */
+@keyframes steam-rise {
+  0%   { opacity: 0; transform: translateY(0) scaleX(1); }
+  40%  { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-30px) scaleX(0.7); }
+}
+
+/* Gradient animation */
 @keyframes nix-gradient-flow {
-  0% {
-    background-position: 0% 50%;
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ─── Cozy Animations ─────────────────────────── */
+
+/* Entrada suave com pequeno bounce — para cards e elementos */
+@keyframes cozy-pop {
+  0%   { opacity: 0; transform: scale(0.92) translateY(10px); }
+  60%  { opacity: 1; transform: scale(1.02) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Shake gentil para erros / validação */
+@keyframes wobble-shake {
+  0%, 100% { transform: translateX(0); }
+  20%  { transform: translateX(-6px) rotate(-1deg); }
+  40%  { transform: translateX(6px) rotate(1deg); }
+  60%  { transform: translateX(-4px) rotate(-0.5deg); }
+  80%  { transform: translateX(4px) rotate(0.5deg); }
+}
+
+/* Pulso quentinho — para badges, notificações, streaks */
+@keyframes warm-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--coffee-glow);
+    transform: scale(1);
   }
   50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
+    box-shadow: 0 0 0 6px transparent;
+    transform: scale(1.05);
   }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+/* Float suave para ícones e avatares */
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33%       { transform: translateY(-4px) rotate(1deg); }
+  66%       { transform: translateY(-2px) rotate(-0.5deg); }
 }
 
-.animate-fade-in-up {
-  animation: fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+/* Celebração de conclusão — escala + fade */
+@keyframes success-burst {
+  0%   { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+  50%  { transform: scale(1.15) rotate(3deg); opacity: 1; }
+  75%  { transform: scale(0.95) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+/* Entrada de lista item com slide + fade */
+@keyframes cozy-slide-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+/* Progresso animado da barra */
+@keyframes bar-fill {
+  from { width: 0%; }
+  to   { width: var(--bar-target, 100%); }
 }
+
+.animate-cozy-pop       { animation: cozy-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.animate-wobble         { animation: wobble-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.animate-warm-pulse     { animation: warm-pulse 2s ease-in-out infinite; }
+.animate-gentle-float   { animation: gentle-float 4s ease-in-out infinite; }
+.animate-success-burst  { animation: success-burst 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.animate-cozy-slide-in  { animation: cozy-slide-in 0.35s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+/* Stagger helpers — nth-child delays */
+.stagger > *:nth-child(1)  { animation-delay: 0s;     }
+.stagger > *:nth-child(2)  { animation-delay: 0.07s;  }
+.stagger > *:nth-child(3)  { animation-delay: 0.14s;  }
+.stagger > *:nth-child(4)  { animation-delay: 0.21s;  }
+.stagger > *:nth-child(5)  { animation-delay: 0.28s;  }
+.stagger > *:nth-child(6)  { animation-delay: 0.35s;  }
+.stagger > *:nth-child(7)  { animation-delay: 0.42s;  }
+.stagger > *:nth-child(8)  { animation-delay: 0.49s;  }
+
+/* Hover lift semântico */
+.hover-cozy {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.2s ease-in-out;
+}
+.hover-cozy:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: var(--shadow-elevated);
+}
+
+.animate-fade-in    { animation: fade-in 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+.animate-float      { animation: float 3.5s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
+.animate-breathe    { animation: breathe 4s ease-in-out infinite; }
+.animate-steam-rise { animation: steam-rise 2s ease-out infinite; }
 
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient-shift 8s ease-in-out infinite;
 }
 
-.animate-breathe {
-  animation: breathe 4s ease-in-out infinite;
-}
-
 .animate-nix-gradient {
-  background: var(--nix-purple-gradient);
+  background: var(--coffee-gradient);
   background-size: 200% 200%;
   animation: nix-gradient-flow 3s ease-in-out infinite;
 }
 
-/* Skeleton loading effect - com Nix Purple */
+/* Skeleton loading effect */
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(148, 163, 184, 0.08) 25%,
-    rgba(148, 163, 184, 0.18) 50%,
-    rgba(148, 163, 184, 0.08) 75%
+    rgba(196, 136, 95, 0.06) 25%,
+    rgba(196, 136, 95, 0.14) 50%,
+    rgba(196, 136, 95, 0.06) 75%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: shimmer 1.6s ease-in-out infinite;
   border-radius: 8px;
 }
 
@@ -474,9 +557,9 @@ body::after {
 [data-theme="dark"] .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(157, 78, 221, 0.05) 25%,
-    rgba(157, 78, 221, 0.12) 50%,
-    rgba(157, 78, 221, 0.05) 75%
+    rgba(212, 168, 117, 0.05) 25%,
+    rgba(212, 168, 117, 0.13) 50%,
+    rgba(212, 168, 117, 0.05) 75%
   );
   background-size: 200% 100%;
 }
@@ -485,25 +568,25 @@ body::after {
    GLASSMORPHISM UTILITIES
    ============================================ */
 .glass {
-  background: var(--nix-glass-bg);
-  backdrop-filter: blur(var(--nix-glass-blur));
-  -webkit-backdrop-filter: blur(var(--nix-glass-blur));
-  border: 1px solid var(--nix-glass-border);
+  background: var(--coffee-glass-bg);
+  backdrop-filter: blur(var(--coffee-glass-blur));
+  -webkit-backdrop-filter: blur(var(--coffee-glass-blur));
+  border: 1px solid var(--coffee-glass-border);
 }
 
 .glass-strong {
-  background: var(--nix-glass-bg);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border: 1px solid var(--nix-glass-border);
+  background: var(--coffee-glass-bg);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border: 1px solid var(--coffee-glass-border);
 }
 
-/* Glass com borda gradiente Nix */
+/* Glass com borda gradiente caramel */
 .glass-gradient-border {
   position: relative;
-  background: var(--nix-glass-bg);
-  backdrop-filter: blur(var(--nix-glass-blur));
-  -webkit-backdrop-filter: blur(var(--nix-glass-blur));
+  background: var(--coffee-glass-bg);
+  backdrop-filter: blur(var(--coffee-glass-blur));
+  -webkit-backdrop-filter: blur(var(--coffee-glass-blur));
 }
 
 .glass-gradient-border::before {
@@ -514,15 +597,15 @@ body::after {
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(157, 78, 221, 0.3) 0%,
-    rgba(0, 212, 255, 0.2) 50%,
-    rgba(157, 78, 221, 0.3) 100%
+    rgba(196, 136, 95, 0.35) 0%,
+    rgba(196, 168, 100, 0.25) 50%,
+    rgba(196, 136, 95, 0.35) 100%
   );
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
-  mask: 
-    linear-gradient(#fff 0 0) content-box, 
+  mask:
+    linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -532,7 +615,6 @@ body::after {
 /* ============================================
    FORM ELEMENTS
    ============================================ */
-/* Number input - hide spinners */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -543,25 +625,22 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Focus styles com Nix Purple */
 *:focus-visible:not(.MuiInputBase-input):not(.MuiOutlinedInput-input):not(.MuiSelect-select) {
-  outline: 2px solid var(--nix-purple-start);
+  outline: 2px solid var(--coffee-mocha);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Input focus glow */
 input:focus-visible:not(.MuiInputBase-input),
 textarea:focus-visible:not(.MuiInputBase-input),
 select:focus-visible:not(.MuiSelect-select) {
   outline: none;
-  box-shadow: 
-    0 0 0 2px var(--nix-bg-paper),
-    0 0 0 4px var(--nix-purple-start),
-    0 0 15px var(--nix-purple-glow);
+  box-shadow:
+    0 0 0 2px var(--coffee-bg-paper),
+    0 0 0 4px var(--coffee-mocha),
+    0 0 15px var(--coffee-glow);
 }
 
-/* Remove focus styles dos inputs MUI */
 .MuiInputBase-input:focus,
 .MuiInputBase-input:focus-visible,
 .MuiOutlinedInput-input:focus,
@@ -570,58 +649,53 @@ select:focus-visible:not(.MuiSelect-select) {
   box-shadow: none !important;
 }
 
-/* Selection color - Design System Purple */
 ::selection {
-  background-color: rgba(157, 78, 221, 0.25);
+  background-color: rgba(196, 136, 95, 0.28);
   color: inherit;
 }
 
 /* ============================================
    INTERACTIVE ELEMENTS
    ============================================ */
-button,
-[role="button"],
-select {
+button, [role="button"], select {
   user-select: none;
 }
 
-button,
-a,
-input,
-select,
-textarea {
+button, a, input, select, textarea {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-button,
-a,
-[role="button"] {
-  -webkit-tap-highlight-color: rgba(157, 78, 221, 0.1);
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: rgba(196, 136, 95, 0.1);
 }
 
 /* ============================================
-   TINTED SHADOW UTILITIES - Design System Black & Purple
+   SHADOW UTILITIES — Cozy Coffee
    ============================================ */
 .shadow-primary {
-  box-shadow: 0 10px 40px -10px rgba(157, 78, 221, 0.25);
+  box-shadow: 0 10px 40px -10px rgba(124, 66, 38, 0.25);
 }
 
-.shadow-teal {
-  box-shadow: 0 10px 40px -10px rgba(0, 212, 255, 0.25);
+.shadow-caramel {
+  box-shadow: 0 10px 40px -10px rgba(196, 136, 60, 0.25);
 }
 
-.shadow-success {
-  box-shadow: 0 10px 40px -10px rgba(0, 200, 83, 0.25);
+.shadow-sage {
+  box-shadow: 0 10px 40px -10px rgba(91, 138, 90, 0.25);
 }
 
-.shadow-error {
-  box-shadow: 0 10px 40px -10px rgba(255, 23, 68, 0.25);
+.shadow-dusty-rose {
+  box-shadow: 0 10px 40px -10px rgba(184, 84, 80, 0.25);
 }
 
-/* Hover lift effect */
+/* Aliases */
+.shadow-teal    { box-shadow: 0 10px 40px -10px rgba(196, 136, 60, 0.25); }
+.shadow-success { box-shadow: 0 10px 40px -10px rgba(91, 138, 90, 0.25); }
+.shadow-error   { box-shadow: 0 10px 40px -10px rgba(184, 84, 80, 0.25); }
+
+/* Hover lift */
 .hover-lift {
-  transition: transform 0.1s linear, 
-              box-shadow 0.1s linear;
+  transition: transform 0.1s linear, box-shadow 0.1s linear;
 }
 
 .hover-lift:hover {
@@ -638,14 +712,8 @@ a,
 /* ============================================
    CAPACITOR / NATIVE APP SAFE AREAS
    ============================================ */
-.safe-area-inset-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.safe-area-inset-top {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-
+.safe-area-inset-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-area-inset-top    { padding-top: env(safe-area-inset-top, 0px); }
 .safe-area-inset-all {
   padding-top: env(safe-area-inset-top, 0px);
   padding-right: env(safe-area-inset-right, 0px);
@@ -653,47 +721,38 @@ a,
   padding-left: env(safe-area-inset-left, 0px);
 }
 
-/* Native app - ensure content respects status bar */
-html.native-app {
-  --status-bar-height: env(safe-area-inset-top, 20px);
-}
+html.native-app { --status-bar-height: env(safe-area-inset-top, 20px); }
+html.native-app body { padding-top: var(--status-bar-height); }
+html.platform-android body { padding-top: 0; }
 
-html.native-app body {
-  padding-top: var(--status-bar-height);
-}
-
-/* Fix for Android status bar transparency */
-html.platform-android body {
-  padding-top: 0;
-}
-
-/* iOS specific adjustments for home indicator area */
 html.platform-ios .mobile-nav,
 html.platform-ios .bottom-navigation {
   padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
 }
 
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
 
 /* ============================================
-   NIX GRADIENT TEXT
+   GRADIENT TEXT — Cozy Coffee
    ============================================ */
 .nix-gradient-text {
-  background: var(--nix-purple-gradient);
+  background: var(--coffee-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .nix-teal-gradient-text {
-  background: linear-gradient(135deg, var(--nix-teal) 0%, var(--nix-teal-dark) 100%);
+  background: linear-gradient(135deg, var(--coffee-caramel) 0%, var(--coffee-caramel-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Alias: coffee gradient text */
+.coffee-gradient-text {
+  background: var(--coffee-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -702,8 +761,6 @@ html.platform-ios .bottom-navigation {
 /* ============================================
    RESPONSIVE UTILITIES
    ============================================ */
-
-/* Global mobile overflow prevention */
 html, body {
   max-width: 100vw;
   overflow-x: hidden;
@@ -715,20 +772,17 @@ html, body {
   overflow-x: hidden;
 }
 
-/* Ensure all elements respect viewport width */
 *, *::before, *::after {
   max-width: 100%;
 }
 
-/* Mobile viewport fix - prevent zoom on input focus */
 @media (max-width: 768px) {
   html {
-    font-size: 16px; /* Prevent auto-zoom on iOS */
+    font-size: 16px;
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
   }
-  
-  /* Ensure main containers don't overflow */
+
   .MuiBox-root,
   .MuiPaper-root,
   .MuiCard-root,
@@ -736,15 +790,12 @@ html, body {
   .MuiContainer-root {
     max-width: 100%;
   }
-  
-  /* Tables scroll horizontally if needed */
+
   .MuiTableContainer-root {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  
-  /* Touch-friendly tap targets (minimum 48px) - Design System Accessibility */
-  /* Exclui botões Radix (.rt-Button) para não sobrescrever estilos do Radix UI */
+
   button:not(.rt-Button):not([class*="rt-"]),
   select,
   input[type="checkbox"],
@@ -755,32 +806,14 @@ html, body {
     min-height: 48px;
     min-width: 48px;
   }
-  
-  select {
-    min-height: 48px;
-    font-size: 16px; /* Prevent zoom on focus */
-  }
-  
-  input,
-  textarea {
-    font-size: 16px !important; /* Prevent zoom on focus in iOS */
-  }
-  
-  /* Better spacing for mobile */
-  .MuiTypography-h5 {
-    font-size: 1.25rem;
-  }
-  
-  .MuiTypography-h6 {
-    font-size: 1.1rem;
-  }
-  
-  /* Icon sizing for touch */
-  .MuiSvgIcon-root {
-    font-size: 1.5rem;
-  }
-  
-  /* Cards with more breathing room */
+
+  select   { min-height: 48px; font-size: 16px; }
+  input, textarea { font-size: 16px !important; }
+
+  .MuiTypography-h5 { font-size: 1.25rem; }
+  .MuiTypography-h6 { font-size: 1.1rem; }
+  .MuiSvgIcon-root  { font-size: 1.5rem; }
+
   .MuiCard-root,
   .MuiPaper-root {
     border-radius: 16px;
@@ -788,81 +821,46 @@ html, body {
 }
 
 @media (max-width: 640px) {
-  .text-responsive-lg {
-    font-size: 1.5rem;
-  }
+  .text-responsive-lg { font-size: 1.5rem; }
+  .text-responsive-xl { font-size: 1.75rem; }
 
-  .text-responsive-xl {
-    font-size: 1.75rem;
-  }
-  
-  /* Even tighter mobile spacing */
-  .MuiTypography-h5 {
-    font-size: 1.15rem;
-  }
-  
-  .MuiTypography-h6 {
-    font-size: 1rem;
-  }
-  
-  /* Prevent overflow on small screens */
+  .MuiTypography-h5 { font-size: 1.15rem; }
+  .MuiTypography-h6 { font-size: 1rem; }
+
   .MuiFormControl-root,
   .MuiTextField-root,
   .MuiSelect-root {
     max-width: 100%;
   }
-  
-  /* Chip adjustments for small screens */
+
   .MuiChip-root {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  
-  /* Grid adjustments - force full width on very small screens */
+
   .MuiGrid-item {
     max-width: 100% !important;
   }
 }
 
-/* Extra small screens (under 360px) */
 @media (max-width: 360px) {
-  /* Reduce padding for very small screens */
   .MuiCard-root,
-  .MuiPaper-root {
-    padding: 0.75rem;
-  }
-  
-  .MuiTypography-h5 {
-    font-size: 1rem;
-  }
-  
-  .MuiTypography-h6 {
-    font-size: 0.9rem;
-  }
-  
-  .MuiTypography-body1 {
-    font-size: 0.875rem;
-  }
-  
-  .MuiTypography-body2 {
-    font-size: 0.8125rem;
-  }
+  .MuiPaper-root    { padding: 0.75rem; }
+  .MuiTypography-h5 { font-size: 1rem; }
+  .MuiTypography-h6 { font-size: 0.9rem; }
+  .MuiTypography-body1 { font-size: 0.875rem; }
+  .MuiTypography-body2 { font-size: 0.8125rem; }
 }
 
-/* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
-  body::before {
-    animation: none !important;
-  }
+
+  body::before { animation: none !important; }
 }
 
 /* ============================================
@@ -879,7 +877,7 @@ body.sheet-open {
 .sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(10, 10, 10, 0.7);
+  background: rgba(28, 16, 8, 0.65);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   z-index: 1299;
@@ -895,30 +893,29 @@ body.sheet-open {
 }
 
 .bento-card {
-  background: var(--nix-glass-bg);
-  backdrop-filter: blur(var(--nix-glass-blur));
-  -webkit-backdrop-filter: blur(var(--nix-glass-blur));
-  border: 1px solid var(--nix-glass-border);
+  background: var(--coffee-glass-bg);
+  backdrop-filter: blur(var(--coffee-glass-blur));
+  -webkit-backdrop-filter: blur(var(--coffee-glass-blur));
+  border: 1px solid var(--coffee-glass-border);
   border-radius: 24px;
   padding: 24px;
-  transition: transform 0.1s linear,
-              box-shadow 0.1s linear;
+  transition: transform 0.1s linear, box-shadow 0.1s linear;
 }
 
 .bento-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px -15px rgba(157, 78, 221, 0.2);
+  box-shadow: 0 20px 40px -15px rgba(124, 66, 38, 0.2);
 }
 
-.bento-full { grid-column: span 12; }
-.bento-half { grid-column: span 6; }
-.bento-third { grid-column: span 4; }
-.bento-quarter { grid-column: span 3; }
+.bento-full       { grid-column: span 12; }
+.bento-half       { grid-column: span 6; }
+.bento-third      { grid-column: span 4; }
+.bento-quarter    { grid-column: span 3; }
 .bento-two-thirds { grid-column: span 8; }
 
 @media (max-width: 1024px) {
   .bento-third,
-  .bento-quarter { grid-column: span 6; }
+  .bento-quarter    { grid-column: span 6; }
   .bento-two-thirds { grid-column: span 12; }
 }
 
@@ -933,19 +930,12 @@ body.sheet-open {
    PRINT STYLES
    ============================================ */
 @media print {
-  body::before,
-  body::after {
-    display: none;
-  }
-  
-  * {
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-  }
+  body::before, body::after { display: none; }
+  * { box-shadow: none !important; backdrop-filter: none !important; }
 }
 
 /* ============================================
-   NIX UI STANDARDIZATION
+   NIX UI STANDARDIZATION — Cozy
    ============================================ */
 .nix-control {
   border-radius: 20px;
@@ -954,37 +944,19 @@ body.sheet-open {
 
 .nix-control:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--nix-bg-base), 0 0 0 4px var(--nix-purple-glow);
+  box-shadow: 0 0 0 2px var(--coffee-bg-base), 0 0 0 4px var(--coffee-glow);
 }
 
-/* Botões — alturas canônicas: sm=32px, md=40px, lg=48px */
-.nix-button {
-  min-height: 40px;
-  font-weight: 600;
-}
-
+.nix-button        { min-height: 40px; font-weight: 700; }
 .nix-button--sm,
-.nix-button--small {
-  min-height: 32px;
-}
-
+.nix-button--small { min-height: 32px; }
 .nix-button--lg,
 .nix-button--large,
-.nix-button--fab {
-  min-height: 48px;
-}
+.nix-button--fab   { min-height: 48px; }
 
-/* Estado hover: leve elevação */
-.nix-button:not(:disabled):hover {
-  transform: translateY(-1px);
-}
+.nix-button:not(:disabled):hover  { transform: translateY(-1px); }
+.nix-button:not(:disabled):active { transform: translateY(0px) scale(0.98); }
 
-/* Estado active: leve sink */
-.nix-button:not(:disabled):active {
-  transform: translateY(0px) scale(0.98);
-}
-
-/* Estado disabled: opacidade e cursor */
 .nix-button:disabled,
 .rt-Button:disabled,
 [class*="rt-Button"]:disabled {
@@ -995,31 +967,27 @@ body.sheet-open {
 }
 
 .nix-elevated-surface {
-  border: 1px solid var(--nix-glass-border);
+  border: 1px solid var(--coffee-glass-border);
   box-shadow: var(--shadow-soft);
 }
 
 .nix-card--hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 36px -20px var(--nix-purple-glow);
+  box-shadow: 0 14px 36px -20px var(--coffee-glow);
 }
 
-/* Input padrão */
 .nix-input,
 .nix-select-content {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Input em estado de erro */
 .nix-input--error .rt-TextFieldRoot,
 .nix-input--error {
   --accent-9: var(--red-9) !important;
-  box-shadow: inset 0 0 0 1.5px var(--nix-error) !important;
+  box-shadow: inset 0 0 0 1.5px var(--coffee-error) !important;
 }
 
 @media (max-width: 768px) {
-  .nix-button {
-    min-height: 44px;
-  }
+  .nix-button { min-height: 44px; }
 }

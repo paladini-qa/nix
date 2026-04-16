@@ -32,6 +32,7 @@ export interface Transaction {
   excludedDates?: string[]; // Array de datas (YYYY-MM-DD) excluídas de recorrências
   // Campo para vincular transações modificadas à recorrência original
   recurringGroupId?: string; // ID da transação recorrente original (para manter o vínculo após edição "single")
+  notes?: string; // Observações livres adicionadas pelo usuário
 }
 
 export interface FinancialSummary {

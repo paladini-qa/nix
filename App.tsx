@@ -935,6 +935,7 @@ const AppContent: React.FC<{
       if (error) {
         console.error("Error signing out:", error);
       }
+      navigate("/");
     } catch (error) {
       console.error("Error during logout:", error);
       // Mesmo com erro, tenta limpar a sessão local
@@ -985,6 +986,7 @@ const AppContent: React.FC<{
           frequency: newTx.frequency,
           is_shared: newTx.isShared,
           shared_with: newTx.sharedWith,
+          notes: newTx.notes ?? null,
         };
         if (newTx.invoiceDueDate !== undefined) dbPayload.invoice_due_date = newTx.invoiceDueDate;
 
@@ -1796,6 +1798,7 @@ const AppContent: React.FC<{
           is_shared: newTx.isShared,
           shared_with: newTx.sharedWith,
           i_owe: newTx.iOwe,
+          notes: newTx.notes ?? null,
         };
         if (newTx.invoiceDueDate) dbPayload.invoice_due_date = newTx.invoiceDueDate;
 
@@ -1828,6 +1831,7 @@ const AppContent: React.FC<{
             iOwe: data.i_owe,
             installmentGroupId: data.installment_group_id,
             excludedDates: data.excluded_dates ?? [],
+            notes: data.notes ?? undefined,
           };
           setTransactions((prev) => [transaction, ...prev]);
 
@@ -4443,6 +4447,8 @@ const AppContent: React.FC<{
                 handleUpdateCategoryColor={handleUpdateCategoryColor}
                 categoryColors={categoryColors}
                 handleUpdateInstallmentDates={handleUpdateInstallmentDates}
+                userId={session.user.id}
+                handleCreateTransaction={(data) => handleAddTransaction(data)}
               />
             </Box>
           </Box>

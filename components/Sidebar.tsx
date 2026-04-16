@@ -11,6 +11,7 @@ import {
   alpha,
   Tooltip,
   IconButton,
+  Divider,
 } from "@mui/material";
 import { Avatar, Text } from "@radix-ui/themes";
 import {
@@ -27,6 +28,13 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   PlaylistAdd as BatchRegistrationIcon,
+  EmojiEvents as GoalsIcon,
+  AccountBalance as BudgetsIcon,
+  BarChart as AnalyticsIcon,
+  CalendarMonth as PlanningIcon,
+  Upload as ImportIcon,
+  Description as FiscalIcon,
+  Calculate as DebtCalcIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -109,8 +117,21 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
     { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
-    { icon: PaymentIcon, label: "Payment Methods", id: "paymentMethods" },
+    { icon: PaymentIcon, label: "Pagamentos", id: "paymentMethods" },
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
+  ];
+
+  const planningNavItems: NavItem[] = [
+    { icon: GoalsIcon, label: "Metas", id: "goals" },
+    { icon: BudgetsIcon, label: "Orçamentos", id: "budgets" },
+    { icon: AnalyticsIcon, label: "Analytics", id: "analytics" },
+    { icon: PlanningIcon, label: "Planejamento", id: "planning" },
+  ];
+
+  const toolsNavItems: NavItem[] = [
+    { icon: ImportIcon, label: "Importar", id: "import" },
+    { icon: FiscalIcon, label: "Rel. Fiscal", id: "fiscal-report" },
+    { icon: DebtCalcIcon, label: "Calc. Dívidas", id: "debt-calculator" },
   ];
 
   const renderNavItem = (
@@ -246,9 +267,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         boxSizing: "border-box",
         border: "none",
         boxShadow: isDarkMode
-          ? `1px 0 24px -8px ${alpha("#000000", 0.4)}`
-          : `1px 0 24px -8px ${alpha(theme.palette.primary.main, 0.08)}`,
-        bgcolor: isDarkMode ? theme.palette.background.paper : "#FFFFFF",
+          ? `1px 0 24px -8px rgba(28, 16, 8, 0.5)`
+          : `1px 0 24px -8px rgba(124, 66, 38, 0.10)`,
+        bgcolor: isDarkMode
+          ? theme.palette.background.paper
+          : "#FEF8F2",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -261,9 +284,76 @@ const Sidebar: React.FC<SidebarProps> = ({
         animate="visible"
         sx={{ flex: 1, px: 2, py: 2, overflowY: "auto" }}
       >
+        {/* Brand Accent Header */}
+        <Box sx={{ mb: 2, px: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.75,
+              fontWeight: 700,
+              color: "text.secondary",
+              letterSpacing: "0.08em",
+              fontSize: "0.65rem",
+              textTransform: "uppercase",
+            }}
+          >
+            ☕ <span>Nix Finanças</span>
+          </Typography>
+        </Box>
+
         {/* Main Navigation Items */}
-        <List sx={{ mt: 1 }}>
+        <List sx={{ mt: 0 }}>
           {mainNavItems.map((item, idx) => (
+            <motion.div key={item.id} variants={itemVariants}>
+              {renderNavItem(item, false, idx)}
+            </motion.div>
+          ))}
+        </List>
+
+        {/* Planning Section */}
+        <Box sx={{ mt: 1, mb: 0.5, px: 1 }}>
+          <Divider sx={{ mb: 1.5, opacity: 0.4 }} />
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 700,
+              color: "text.disabled",
+              letterSpacing: "0.08em",
+              fontSize: "0.6rem",
+              textTransform: "uppercase",
+            }}
+          >
+            Planejamento
+          </Typography>
+        </Box>
+        <List sx={{ mt: 0 }}>
+          {planningNavItems.map((item, idx) => (
+            <motion.div key={item.id} variants={itemVariants}>
+              {renderNavItem(item, false, idx)}
+            </motion.div>
+          ))}
+        </List>
+
+        {/* Tools Section */}
+        <Box sx={{ mt: 1, mb: 0.5, px: 1 }}>
+          <Divider sx={{ mb: 1.5, opacity: 0.4 }} />
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 700,
+              color: "text.disabled",
+              letterSpacing: "0.08em",
+              fontSize: "0.6rem",
+              textTransform: "uppercase",
+            }}
+          >
+            Ferramentas
+          </Typography>
+        </Box>
+        <List sx={{ mt: 0 }}>
+          {toolsNavItems.map((item, idx) => (
             <motion.div key={item.id} variants={itemVariants}>
               {renderNavItem(item, false, idx)}
             </motion.div>
@@ -290,7 +380,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             borderRadius: "20px",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.default, 0.5)
-              : alpha(theme.palette.grey[100], 0.8),
+              : alpha("#F5E8D5", 0.6),
+            border: `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.08) : alpha("#C4885F", 0.12)}`,
           }}
         >
           {/* Privacy Toggle */}
@@ -302,7 +393,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               mb: 1.5,
               pb: 1.5,
               borderBottom: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+                isDarkMode ? alpha(theme.palette.primary.main, 0.1) : alpha("#C4885F", 0.15)
               }`,
             }}
           >
@@ -370,15 +461,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             cursor: "pointer",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.default, 0.6)
-              : alpha("#FFFFFF", 0.8),
+              : alpha("#FEF3E2", 0.85),
             border: `1px solid ${
               isDarkMode
-                ? alpha("#FFFFFF", 0.08)
-                : alpha(theme.palette.primary.main, 0.08)
+                ? alpha(theme.palette.primary.main, 0.12)
+                : alpha("#C4885F", 0.15)
             }`,
             boxShadow: isDarkMode
-              ? `0 4px 16px -4px ${alpha("#000000", 0.3)}`
-              : `0 4px 16px -4px ${alpha(theme.palette.primary.main, 0.1)}`,
+              ? `0 4px 16px -4px rgba(28, 16, 8, 0.35)`
+              : `0 4px 16px -4px rgba(124, 66, 38, 0.10)`,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
