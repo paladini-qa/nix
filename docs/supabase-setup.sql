@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     category_colors JSONB DEFAULT '{}'::jsonb,
     payment_method_colors JSONB DEFAULT '{}'::jsonb,
     payment_method_payment_days JSONB DEFAULT '{}'::jsonb,
+    payment_method_configs JSONB DEFAULT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -123,6 +124,9 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
 -- Para usuários existentes, adicione a coluna friends (lista de amigos para shared expenses):
 -- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS friends TEXT[] DEFAULT ARRAY[]::TEXT[];
 
+-- Para usuários existentes, adicione a coluna payment_method_configs (configurações estruturadas de métodos de pagamento):
+ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS payment_method_configs JSONB DEFAULT NULL;
+
 -- Comentários na tabela
 COMMENT ON TABLE public.user_settings IS 'Configurações personalizadas do usuário';
 COMMENT ON COLUMN public.user_settings.display_name IS 'Nome de exibição do usuário';
@@ -134,6 +138,7 @@ COMMENT ON COLUMN public.user_settings.category_colors IS 'Cores personalizadas 
 COMMENT ON COLUMN public.user_settings.payment_method_colors IS 'Cores personalizadas para métodos de pagamento (JSONB com primary e secondary)';
 COMMENT ON COLUMN public.user_settings.payment_method_payment_days IS 'Dia opcional (1-31) por método de pagamento, ex: {"Credit Card": 15}';
 COMMENT ON COLUMN public.user_settings.friends IS 'Lista de amigos para shared expenses';
+COMMENT ON COLUMN public.user_settings.payment_method_configs IS 'Configurações estruturadas de métodos de pagamento: [{id, name, type, closingDay?, paymentDay?}]';
 
 -- =============================================
 -- 3. ROW LEVEL SECURITY (RLS)

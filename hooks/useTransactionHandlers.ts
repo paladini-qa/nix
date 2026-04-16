@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "../services/supabaseClient";
-import { Transaction } from "../types";
-import { getReportDate } from "../utils/transactionUtils";
+import { Transaction, PaymentMethodConfig } from "../types";
+import { getReportDate, calculateInvoiceDueDate } from "../utils/transactionUtils";
 import { useNotification, useConfirmDialog } from "../contexts";
 
 // ============================================
@@ -15,6 +15,7 @@ interface TransactionHandlersOptions {
   session: Session;
   transactions: Transaction[];
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
+  paymentMethodConfigs?: PaymentMethodConfig[];
 }
 
 interface TransactionHandlers {
@@ -47,6 +48,7 @@ export const useTransactionHandlers = ({
   session,
   transactions,
   setTransactions,
+  paymentMethodConfigs = [],
 }: TransactionHandlersOptions): TransactionHandlers => {
   const { showError } = useNotification();
   const { confirm, choice } = useConfirmDialog();
@@ -644,13 +646,19 @@ export const useTransactionHandlers = ({
           // Gera um UUID único para agrupar todas as parcelas deste parcelamento
           const installmentGroupId = crypto.randomUUID();
 
-          // Data base das parcelas: se tem data da fatura, a primeira parcela começa nesse mês (ex.: fatura em abril → parcelas em abr, mai, jun...)
-          const baseDateForInstallments = newTx.invoiceDueDate ?? newTx.date;
+          // Configuração do método de pagamento para cálculo de fatura
+          const pmConfig = paymentMethodConfigs.find((c) => c.name === newTx.paymentMethod);
+          const isCardMethod = pmConfig?.type === "card" && !!pmConfig.closingDay && !!pmConfig.paymentDay;
+
+          // Data base das parcelas: para cartões, usa sempre a data da transação; legado usa invoiceDueDate se disponível
+          const baseDateForInstallments = isCardMethod ? newTx.date : (newTx.invoiceDueDate ?? newTx.date);
 
           const installmentPayloads = [];
           for (let i = 0; i < totalInstallments; i++) {
             const amount =
               i === 0 ? installmentAmount + remainder : installmentAmount;
+
+            const installmentDate = addMonths(baseDateForInstallments, i);
 
             const payload: Record<string, unknown> = {
               user_id: session.user.id,
@@ -659,7 +667,7 @@ export const useTransactionHandlers = ({
               type: newTx.type,
               category: newTx.category,
               payment_method: newTx.paymentMethod,
-              date: addMonths(baseDateForInstallments, i),
+              date: installmentDate,
               is_recurring: newTx.isRecurring,
               frequency: newTx.frequency,
               installments: totalInstallments,
@@ -669,7 +677,16 @@ export const useTransactionHandlers = ({
               shared_with: newTx.sharedWith,
               installment_group_id: installmentGroupId,
             };
-            if (newTx.invoiceDueDate) payload.invoice_due_date = addMonths(baseDateForInstallments, i);
+
+            if (isCardMethod && pmConfig) {
+              // Calcula invoice_due_date automaticamente para cada parcela
+              const invoiceDue = calculateInvoiceDueDate(installmentDate, pmConfig);
+              if (invoiceDue) payload.invoice_due_date = invoiceDue;
+            } else if (newTx.invoiceDueDate) {
+              // Legado: incrementa mês a mês a partir da invoiceDueDate original
+              payload.invoice_due_date = addMonths(baseDateForInstallments, i);
+            }
+
             installmentPayloads.push(payload);
           }
 

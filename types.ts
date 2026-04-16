@@ -1,5 +1,16 @@
 export type TransactionType = "income" | "expense";
 export type ThemePreference = "light" | "dark" | "system";
+export type PaymentMethodType = "card" | "cash";
+
+export interface PaymentMethodConfig {
+  id: string;
+  name: string;
+  type: PaymentMethodType;
+  /** Dia do mês em que a fatura fecha (1–28). Apenas para type = 'card'. */
+  closingDay?: number;
+  /** Dia do mês em que a fatura vence/é paga (1–28). Apenas para type = 'card'. */
+  paymentDay?: number;
+}
 
 // Opções para edição/deleção de transações compartilhadas
 export type SharedEditOption = "both" | "this_only" | "related_only";

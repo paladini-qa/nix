@@ -54,7 +54,8 @@ import {
 } from "@mui/icons-material";
 import NixButton from "./radix/Button";
 import NixAIView from "./NixAIView";
-import { Transaction, TransactionType, FinancialSummary, ParsedTransaction } from "../types";
+import { Transaction, TransactionType, FinancialSummary, ParsedTransaction, PaymentMethodConfig } from "../types";
+import { calculateInvoiceDueDate, formatInvoiceMonth } from "../utils/transactionUtils";
 import { CATEGORY_KEYWORDS, QUICK_AMOUNTS, MONTHS } from "../constants";
 import { SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH_MOBILE, TOUCH_TARGET_MIN } from "../layoutConstants";
 import {
@@ -101,6 +102,8 @@ interface TransactionFormProps {
   } | null;
   /** Quando informado, ao selecionar um método com dia configurado, preenche a data com esse dia no mês atual */
   getPaymentMethodPaymentDay?: (method: string) => number | undefined;
+  /** Retorna a configuração estruturada do método (tipo, dias de fechamento/pagamento) */
+  getPaymentMethodConfig?: (method: string) => PaymentMethodConfig | undefined;
 }
 
 // Estilos do input customizado - soft e orgânico
@@ -305,6 +308,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   currentBalance = 0,
   initialContext = null,
   getPaymentMethodPaymentDay,
+  getPaymentMethodConfig,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -368,8 +372,27 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
   // Retorna dia de vencimento do método (1-31) ou undefined
   const paymentMethodDueDay = getPaymentMethodPaymentDay?.(paymentMethod);
-  const hasInvoiceDueDate = paymentMethodDueDay != null && paymentMethodDueDay >= 1 && paymentMethodDueDay <= 31;
-  const hasOptionalInvoiceReport = !hasInvoiceDueDate && paymentMethod !== "";
+
+  // Configuração estruturada do método selecionado
+  const currentMethodConfig = getPaymentMethodConfig?.(paymentMethod);
+  const isCardMethod =
+    currentMethodConfig?.type === "card" &&
+    !!currentMethodConfig.closingDay &&
+    !!currentMethodConfig.paymentDay;
+  const isCardIncomplete =
+    currentMethodConfig?.type === "card" &&
+    (!currentMethodConfig.closingDay || !currentMethodConfig.paymentDay);
+  const isCashMethod = currentMethodConfig?.type === "cash";
+
+  // Auto-calcula data de vencimento da fatura para cartões
+  const autoInvoiceDueDate = useMemo(() => {
+    if (!isCardMethod || !currentMethodConfig || !date) return undefined;
+    return calculateInvoiceDueDate(date.format("YYYY-MM-DD"), currentMethodConfig);
+  }, [isCardMethod, currentMethodConfig, date]);
+
+  // Fallback: lógica legada (sem config estruturada)
+  const hasInvoiceDueDate = !currentMethodConfig && paymentMethodDueDay != null && paymentMethodDueDay >= 1 && paymentMethodDueDay <= 31;
+  const hasOptionalInvoiceReport = !currentMethodConfig && !hasInvoiceDueDate && paymentMethod !== "";
 
   /**
    * Sugere mês/ano do vencimento da fatura a partir da data da transação.
@@ -747,9 +770,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
     const finalAmount = parsedAmount || 0;
 
-    // Data de vencimento da fatura: (1) método com dia cadastrado → dia fixo + mês/ano do form; (2) método sem dia (ex. Revolut) → opcional mês/ano, salvo como dia 1; (3) opcional vazio → enviar null para limpar
+    // Data de vencimento da fatura:
+    // (1) Cartão com config completa → auto-calculado pela função calculateInvoiceDueDate
+    // (2) À vista (cash) → sem invoiceDueDate
+    // (3) Legado: método com dia cadastrado → dia fixo + mês/ano do form
+    // (4) Legado: método sem dia (ex. Revolut) → opcional mês/ano, salvo como dia 1
     let invoiceDueDate: string | null | undefined;
-    if (hasInvoiceDueDate && paymentMethodDueDay != null) {
+    if (isCardMethod && autoInvoiceDueDate) {
+      invoiceDueDate = autoInvoiceDueDate;
+    } else if (isCashMethod) {
+      invoiceDueDate = null; // Explicitamente remove fatura para métodos à vista
+    } else if (hasInvoiceDueDate && paymentMethodDueDay != null) {
       const daysInMonth = dayjs().year(invoiceDueYear).month(invoiceDueMonth - 1).daysInMonth();
       const d = Math.min(paymentMethodDueDay, daysInMonth);
       invoiceDueDate = `${invoiceDueYear}-${String(invoiceDueMonth).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -1507,7 +1538,58 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               />
             </Box>
 
-            {/* Vencimento da fatura (só quando forma de pagamento tem dia cadastrado); usuário edita apenas mês/ano */}
+            {/* Fatura auto-calculada para cartão */}
+            {isCardMethod && autoInvoiceDueDate && (
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 1.5,
+                  borderRadius: "14px",
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.primary.main, 0.1)
+                    : alpha(theme.palette.primary.main, 0.06),
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <ReceiptIcon sx={{ fontSize: 18, color: "primary.main" }} />
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                    Fatura calculada automaticamente
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700} color="primary.main">
+                    {formatInvoiceMonth(autoInvoiceDueDate)}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
+            {/* Aviso quando cartão sem configuração de dias */}
+            {isCardIncomplete && paymentMethod && (
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 1.5,
+                  borderRadius: "14px",
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.warning.main, 0.1)
+                    : alpha(theme.palette.warning.main, 0.08),
+                  border: `1px solid ${alpha(theme.palette.warning.main, 0.25)}`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <ReceiptIcon sx={{ fontSize: 18, color: "warning.main" }} />
+                <Typography variant="caption" color="warning.main">
+                  Configure os dias de fechamento e pagamento deste cartão em Configurações → Métodos de Pagamento.
+                </Typography>
+              </Box>
+            )}
+
+            {/* Vencimento da fatura legado (só quando forma de pagamento tem dia cadastrado); usuário edita apenas mês/ano */}
             {hasInvoiceDueDate && paymentMethodDueDay != null && (
               <Box sx={{ mt: 2 }}>
                 <Typography

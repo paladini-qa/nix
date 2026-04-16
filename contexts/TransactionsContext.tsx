@@ -9,9 +9,9 @@ import React, {
 } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "../services/supabaseClient";
-import { Transaction, FilterState, FinancialSummary } from "../types";
+import { Transaction, FilterState, FinancialSummary, PaymentMethodConfig } from "../types";
 import { getInitialMonthYear } from "../hooks/useFilters";
-import { getReportDate } from "../utils/transactionUtils";
+import { getReportDate, calculateInvoiceDueDate } from "../utils/transactionUtils";
 
 // ============================================
 // Context Types
@@ -50,11 +50,13 @@ const TransactionsContext = createContext<TransactionsContextValue | undefined>(
 interface TransactionsProviderProps {
   children: ReactNode;
   session: Session;
+  paymentMethodConfigs?: PaymentMethodConfig[];
 }
 
 export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
   children,
   session,
+  paymentMethodConfigs = [],
 }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -180,6 +182,18 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
           return;
         }
 
+        // Calcula invoiceDueDate para a ocorrência virtual
+        let virtualInvoiceDueDate: string | undefined = undefined;
+        const pmCfg = paymentMethodConfigs.find((c) => c.name === t.paymentMethod);
+        if (pmCfg?.type === "card" && pmCfg.closingDay && pmCfg.paymentDay) {
+          virtualInvoiceDueDate = calculateInvoiceDueDate(virtualDate, pmCfg) ?? undefined;
+        } else if (t.invoiceDueDate) {
+          const origInvDay = Number(t.invoiceDueDate.split("-")[2]);
+          const daysInTargetMonthInv = new Date(targetYear, targetMonth, 0).getDate();
+          const adjustedInvDay = Math.min(origInvDay, daysInTargetMonthInv);
+          virtualInvoiceDueDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(adjustedInvDay).padStart(2, "0")}`;
+        }
+
         virtualTransactions.push({
           ...t,
           id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
@@ -187,6 +201,7 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
             "0"
           )}`,
           date: virtualDate,
+          invoiceDueDate: virtualInvoiceDueDate,
           isVirtual: true,
           originalTransactionId: t.id,
         });
@@ -194,7 +209,7 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
     });
 
     return virtualTransactions;
-  }, [transactions, filters]);
+  }, [transactions, filters, paymentMethodConfigs]);
 
   // Filtered transactions for current month/year
   const filteredTransactions = useMemo(() => {

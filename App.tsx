@@ -39,12 +39,14 @@ import {
   PaymentMethodColors,
   ParsedTransaction,
   SharedEditOption,
+  PaymentMethodConfig,
 } from "./types";
-import { getReportDate } from "./utils/transactionUtils";
+import { getReportDate, calculateInvoiceDueDate } from "./utils/transactionUtils";
 import SharedOptionsDialog from "./components/SharedOptionsDialog";
 import {
   CATEGORIES as DEFAULT_CATEGORIES,
   PAYMENT_METHODS as DEFAULT_PAYMENT_METHODS,
+  DEFAULT_PAYMENT_METHOD_CONFIGS,
   CREATE_TRANSACTION_BUTTON,
 } from "./constants";
 // Core components (loaded immediately)
@@ -176,6 +178,8 @@ const AppContent: React.FC<{
     method: string,
     day: number | null
   ) => Promise<void>;
+  paymentMethodConfigs: PaymentMethodConfig[];
+  setPaymentMethodConfigs: React.Dispatch<React.SetStateAction<PaymentMethodConfig[]>>;
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   updateSettingsInDb: (
@@ -203,6 +207,8 @@ const AppContent: React.FC<{
   setPaymentMethodColors,
   getPaymentMethodPaymentDay,
   updatePaymentMethodPaymentDay,
+  paymentMethodConfigs,
+  setPaymentMethodConfigs,
   filters,
   setFilters,
   updateSettingsInDb,
@@ -417,9 +423,14 @@ const AppContent: React.FC<{
           return;
         }
 
-        // Avança o invoiceDueDate para o mesmo dia do mês virtual (evita herdar o mês original)
+        // Calcula invoiceDueDate para a ocorrência virtual
         let virtualInvoiceDueDate: string | undefined = undefined;
-        if (t.invoiceDueDate) {
+        const pmConfig = paymentMethodConfigs.find((c) => c.name === t.paymentMethod);
+        if (pmConfig?.type === "card" && pmConfig.closingDay && pmConfig.paymentDay) {
+          // Cartão com config completa: auto-calcular pela data virtual
+          virtualInvoiceDueDate = calculateInvoiceDueDate(virtualDate, pmConfig) ?? undefined;
+        } else if (t.invoiceDueDate) {
+          // Legado: avança o dia fixo para o mês virtual
           const origInvDay = Number(t.invoiceDueDate.split("-")[2]);
           const daysInTargetMonthInv = new Date(targetYear, targetMonth, 0).getDate();
           const adjustedInvDay = Math.min(origInvDay, daysInTargetMonthInv);
@@ -560,9 +571,12 @@ const AppContent: React.FC<{
           );
 
           if (!alreadyAdded && !isExcluded && !hasRealInTargetMonth) {
-            // Avança o invoiceDueDate para o mesmo dia do mês virtual
+            // Calcula invoiceDueDate para a ocorrência virtual (range)
             let virtualInvoiceDateRange: string | undefined = undefined;
-            if (t.invoiceDueDate) {
+            const pmCfgRange = paymentMethodConfigs.find((c) => c.name === t.paymentMethod);
+            if (pmCfgRange?.type === "card" && pmCfgRange.closingDay && pmCfgRange.paymentDay) {
+              virtualInvoiceDateRange = calculateInvoiceDueDate(virtualDate, pmCfgRange) ?? undefined;
+            } else if (t.invoiceDueDate) {
               const origInvDayRange = Number(t.invoiceDueDate.split("-")[2]);
               const daysInMonthRange = new Date(currentYear, currentMonth, 0).getDate();
               const adjustedInvDayRange = Math.min(origInvDayRange, daysInMonthRange);
@@ -1646,13 +1660,19 @@ const AppContent: React.FC<{
         // Gera um UUID único para agrupar todas as parcelas deste parcelamento
         const installmentGroupId = crypto.randomUUID();
 
-        // Data base das parcelas: se tem data da fatura, a primeira parcela começa nesse mês (ex.: fatura em abril → parcelas em abr, mai, jun...)
-        const baseDateForInstallments = newTx.invoiceDueDate ?? newTx.date;
+        // Configuração do método para cálculo automático de fatura (cartão)
+        const pmConfigForInstallment = paymentMethodConfigs.find((c) => c.name === newTx.paymentMethod);
+        const isCardInstallment = pmConfigForInstallment?.type === "card" && !!pmConfigForInstallment.closingDay && !!pmConfigForInstallment.paymentDay;
+
+        // Data base: cartões usam data real; legado usa invoiceDueDate
+        const baseDateForInstallments = isCardInstallment ? newTx.date : (newTx.invoiceDueDate ?? newTx.date);
 
         const installmentPayloads = [];
         for (let i = 0; i < totalInstallments; i++) {
           const amount =
             i === 0 ? installmentAmount + remainder : installmentAmount;
+
+          const installmentDate = addMonths(baseDateForInstallments, i);
 
           const payload: Record<string, unknown> = {
             user_id: session.user.id,
@@ -1661,7 +1681,7 @@ const AppContent: React.FC<{
             type: newTx.type,
             category: newTx.category,
             payment_method: newTx.paymentMethod,
-            date: addMonths(baseDateForInstallments, i),
+            date: installmentDate,
             is_recurring: newTx.isRecurring,
             frequency: newTx.frequency,
             installments: totalInstallments,
@@ -1671,7 +1691,14 @@ const AppContent: React.FC<{
             shared_with: newTx.sharedWith,
             installment_group_id: installmentGroupId,
           };
-          if (newTx.invoiceDueDate) payload.invoice_due_date = addMonths(baseDateForInstallments, i);
+
+          if (isCardInstallment && pmConfigForInstallment) {
+            const invoiceDue = calculateInvoiceDueDate(installmentDate, pmConfigForInstallment);
+            if (invoiceDue) payload.invoice_due_date = invoiceDue;
+          } else if (newTx.invoiceDueDate) {
+            payload.invoice_due_date = addMonths(baseDateForInstallments, i);
+          }
+
           installmentPayloads.push(payload);
         }
 
@@ -4114,6 +4141,10 @@ const AppContent: React.FC<{
     }
   };
 
+  const getPaymentMethodConfig = (method: string): PaymentMethodConfig | undefined => {
+    return paymentMethodConfigs.find((c) => c.name === method);
+  };
+
   const handleAddPaymentMethod = (method: string) => {
     if (!paymentMethods.includes(method)) {
       const updatedMethods = [...paymentMethods, method].sort();
@@ -4135,6 +4166,58 @@ const AppContent: React.FC<{
       const updatedMethods = paymentMethods.filter((m) => m !== method);
       setPaymentMethods(updatedMethods);
       updateSettingsInDb(categories, updatedMethods);
+    }
+  };
+
+  const savePaymentMethodConfigs = async (configs: PaymentMethodConfig[]) => {
+    if (!session) return;
+    const names = configs.map((c) => c.name);
+    try {
+      await supabase.from("user_settings").upsert({
+        user_id: session.user.id,
+        payment_method_configs: configs,
+        payment_methods: names,
+      });
+    } catch (err) {
+      console.error("Error saving payment method configs:", err);
+    }
+  };
+
+  const handleAddPaymentMethodConfig = async (
+    config: Omit<PaymentMethodConfig, "id">
+  ) => {
+    const newConfig: PaymentMethodConfig = {
+      ...config,
+      id: `${config.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
+    };
+    const updatedConfigs = [...paymentMethodConfigs, newConfig];
+    setPaymentMethodConfigs(updatedConfigs);
+    setPaymentMethods(updatedConfigs.map((c) => c.name));
+    await savePaymentMethodConfigs(updatedConfigs);
+  };
+
+  const handleUpdatePaymentMethodConfig = async (config: PaymentMethodConfig) => {
+    const updatedConfigs = paymentMethodConfigs.map((c) =>
+      c.id === config.id ? config : c
+    );
+    setPaymentMethodConfigs(updatedConfigs);
+    setPaymentMethods(updatedConfigs.map((c) => c.name));
+    await savePaymentMethodConfigs(updatedConfigs);
+  };
+
+  const handleRemovePaymentMethodConfig = async (id: string) => {
+    const confirmed = await confirm({
+      title: "Remover método de pagamento",
+      message: "Tem certeza que deseja remover este método de pagamento?",
+      confirmText: "Remover",
+      cancelText: "Cancelar",
+      variant: "warning",
+    });
+    if (confirmed) {
+      const updatedConfigs = paymentMethodConfigs.filter((c) => c.id !== id);
+      setPaymentMethodConfigs(updatedConfigs);
+      setPaymentMethods(updatedConfigs.map((c) => c.name));
+      await savePaymentMethodConfigs(updatedConfigs);
     }
   };
 
@@ -4442,6 +4525,10 @@ const AppContent: React.FC<{
                 handleRemovePaymentMethod={handleRemovePaymentMethod}
                 handleUpdatePaymentMethodColor={handleUpdatePaymentMethodColor}
                 updatePaymentMethodPaymentDay={updatePaymentMethodPaymentDay}
+                paymentMethodConfigs={paymentMethodConfigs}
+                handleAddPaymentMethodConfig={handleAddPaymentMethodConfig}
+                handleUpdatePaymentMethodConfig={handleUpdatePaymentMethodConfig}
+                handleRemovePaymentMethodConfig={handleRemovePaymentMethodConfig}
                 handleAddCategory={handleAddCategory}
                 handleRemoveCategory={handleRemoveCategory}
                 handleUpdateCategoryColor={handleUpdateCategoryColor}
@@ -4481,6 +4568,7 @@ const AppContent: React.FC<{
             currentBalance={summary.balance}
             initialContext={formInitialContext}
             getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+            getPaymentMethodConfig={getPaymentMethodConfig}
           />
 
           <ProfileModal
@@ -4608,6 +4696,9 @@ const App: React.FC = () => {
   const [paymentMethodPaymentDays, setPaymentMethodPaymentDays] = useState<
     Record<string, number>
   >({});
+  const [paymentMethodConfigs, setPaymentMethodConfigs] = useState<PaymentMethodConfig[]>(
+    DEFAULT_PAYMENT_METHOD_CONFIGS
+  );
 
   // State for user profile
   const [displayName, setDisplayName] = useState<string>("");
@@ -4932,14 +5023,40 @@ const App: React.FC = () => {
         if (settings.friends) {
           setFriends(settings.friends);
         }
+        // Load payment method configs (com migração automática)
+        if (settings.payment_method_configs && Array.isArray(settings.payment_method_configs)) {
+          const configs = settings.payment_method_configs as PaymentMethodConfig[];
+          setPaymentMethodConfigs(configs);
+          setPaymentMethods(configs.map((c) => c.name));
+        } else {
+          const legacyMethods: string[] = settings.payment_methods || DEFAULT_PAYMENT_METHODS;
+          const paymentDays: Record<string, number> = settings.payment_method_payment_days || {};
+          const migratedConfigs: PaymentMethodConfig[] = legacyMethods.map((name) => {
+            const isCard = name.toLowerCase().includes("credit");
+            const payDay = paymentDays[name];
+            return {
+              id: name.toLowerCase().replace(/\s+/g, "-"),
+              name,
+              type: isCard ? "card" : "cash",
+              ...(isCard && payDay ? { paymentDay: payDay } : {}),
+            } as PaymentMethodConfig;
+          });
+          setPaymentMethodConfigs(migratedConfigs);
+          await supabase.from("user_settings").upsert({
+            user_id: userId,
+            payment_method_configs: migratedConfigs,
+          });
+        }
       } else {
         await supabase.from("user_settings").insert({
           user_id: userId,
           categories_income: DEFAULT_CATEGORIES.income,
           categories_expense: DEFAULT_CATEGORIES.expense,
           payment_methods: DEFAULT_PAYMENT_METHODS,
+          payment_method_configs: DEFAULT_PAYMENT_METHOD_CONFIGS,
           theme_preference: "system",
         });
+        setPaymentMethodConfigs(DEFAULT_PAYMENT_METHOD_CONFIGS);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -5097,6 +5214,8 @@ const App: React.FC = () => {
                   setPaymentMethodColors={setPaymentMethodColors}
                   getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
                   updatePaymentMethodPaymentDay={updatePaymentMethodPaymentDay}
+                  paymentMethodConfigs={paymentMethodConfigs}
+                  setPaymentMethodConfigs={setPaymentMethodConfigs}
                   filters={filters}
                   setFilters={setFilters}
                   updateSettingsInDb={updateSettingsInDb}

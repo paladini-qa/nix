@@ -58,6 +58,7 @@ interface BatchRegistrationViewProps {
   ) => void;
   onDone?: () => void;
   getPaymentMethodPaymentDay?: (method: string) => number | undefined;
+  getPaymentMethodConfig?: (method: string) => import("../types").PaymentMethodConfig | undefined;
 }
 
 const INPUT_MODES = [
@@ -90,6 +91,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
   onTransactionCreate,
   onDone,
   getPaymentMethodPaymentDay,
+  getPaymentMethodConfig,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -366,6 +368,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
               onConfirmAll={handleConfirmBatch}
               onCancel={handleCancelBatch}
               getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+              getPaymentMethodConfig={getPaymentMethodConfig}
             />
           )}
         </AnimatePresence>

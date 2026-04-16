@@ -40,7 +40,8 @@ import {
   Receipt as ReceiptIcon,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
-import { ParsedTransaction, TransactionType } from "../types";
+import { ParsedTransaction, TransactionType, PaymentMethodConfig } from "../types";
+import { calculateInvoiceDueDate } from "../utils/transactionUtils";
 
 const MotionPaper = motion.create(Paper);
 
@@ -77,6 +78,8 @@ export interface BatchTransactionTableProps {
    * quando o usuário escolhe mês/ano da fatura.
    */
   getPaymentMethodPaymentDay?: (method: string) => number | undefined;
+  /** Configurações estruturadas dos métodos (tipo, dias de fechamento/pagamento). */
+  getPaymentMethodConfig?: (method: string) => PaymentMethodConfig | undefined;
 }
 
 /** Monta invoiceDueDate: método com dia → esse dia no mês/ano; senão dia 1. */
@@ -416,6 +419,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
   onCancel,
   requireAmount = true,
   getPaymentMethodPaymentDay,
+  getPaymentMethodConfig,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -488,7 +492,12 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
     if (validRows.length === 0 || hasInvalidAmount) return;
     const payload = validRows.map(({ confidence: _c, ...rest }) => {
       const row = { ...rest } as EditableBatchRow;
-      if (useBatchInvoice && batchInvoiceMonth >= 1 && batchInvoiceMonth <= 12) {
+
+      // Verifica se o método é cartão com config completa → auto-calcula
+      const pmConfig = getPaymentMethodConfig?.(row.paymentMethod);
+      if (pmConfig?.type === "card" && pmConfig.closingDay && pmConfig.paymentDay && row.date) {
+        row.invoiceDueDate = calculateInvoiceDueDate(row.date, pmConfig) ?? undefined;
+      } else if (useBatchInvoice && batchInvoiceMonth >= 1 && batchInvoiceMonth <= 12) {
         row.invoiceDueDate = buildInvoiceDueDate(
           row.paymentMethod,
           batchInvoiceMonth,
@@ -496,6 +505,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
           getPaymentMethodPaymentDay
         );
       }
+
       return row;
     });
     onConfirmAll(payload);

@@ -15,10 +15,12 @@ import {
   ColorConfig,
   CategoryColors,
   PaymentMethodColors,
+  PaymentMethodConfig,
 } from "../types";
 import {
   CATEGORIES as DEFAULT_CATEGORIES,
   PAYMENT_METHODS as DEFAULT_PAYMENT_METHODS,
+  DEFAULT_PAYMENT_METHOD_CONFIGS,
 } from "../constants";
 
 // ============================================
@@ -50,12 +52,19 @@ interface SettingsContextValue {
   addCategory: (type: TransactionType, category: string) => void;
   removeCategory: (type: TransactionType, category: string) => Promise<boolean>;
   
-  // Payment Methods
+  // Payment Methods (nomes para backward compat)
   paymentMethods: string[];
   addPaymentMethod: (method: string) => void;
   removePaymentMethod: (method: string) => Promise<boolean>;
   getPaymentMethodPaymentDay: (method: string) => number | undefined;
   updatePaymentMethodPaymentDay: (method: string, day: number | null) => Promise<void>;
+
+  // Payment Method Configs (estruturado: tipo + dias de fechamento/pagamento)
+  paymentMethodConfigs: PaymentMethodConfig[];
+  getPaymentMethodConfig: (name: string) => PaymentMethodConfig | undefined;
+  addPaymentMethodConfig: (config: Omit<PaymentMethodConfig, "id">) => Promise<void>;
+  updatePaymentMethodConfig: (config: PaymentMethodConfig) => Promise<void>;
+  removePaymentMethodConfig: (id: string) => Promise<void>;
 
   // Friends
   friends: string[];
@@ -113,9 +122,14 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
     DEFAULT_CATEGORIES
   );
   
-  // Payment Methods
+  // Payment Methods (legado — derivado de paymentMethodConfigs)
   const [paymentMethods, setPaymentMethods] = useState<string[]>(
     DEFAULT_PAYMENT_METHODS
+  );
+
+  // Payment Method Configs (estruturado)
+  const [paymentMethodConfigs, setPaymentMethodConfigs] = useState<PaymentMethodConfig[]>(
+    DEFAULT_PAYMENT_METHOD_CONFIGS
   );
   
   // Friends
@@ -166,8 +180,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
           income: settings.categories_income || DEFAULT_CATEGORIES.income,
           expense: settings.categories_expense || DEFAULT_CATEGORIES.expense,
         });
-        setPaymentMethods(settings.payment_methods || DEFAULT_PAYMENT_METHODS);
-        
+
         if (settings.theme_preference) {
           setThemePreferenceState(settings.theme_preference as ThemePreference);
         }
@@ -186,6 +199,34 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
         if (settings.friends) {
           setFriends(settings.friends);
         }
+
+        // Migração automática: se payment_method_configs não existe, deriva dos métodos antigos
+        if (settings.payment_method_configs && Array.isArray(settings.payment_method_configs)) {
+          const configs = settings.payment_method_configs as PaymentMethodConfig[];
+          setPaymentMethodConfigs(configs);
+          setPaymentMethods(configs.map((c) => c.name));
+        } else {
+          // Auto-migra: string[] → PaymentMethodConfig[]
+          const legacyMethods: string[] = settings.payment_methods || DEFAULT_PAYMENT_METHODS;
+          const paymentDays: Record<string, number> = settings.payment_method_payment_days || {};
+          const migratedConfigs: PaymentMethodConfig[] = legacyMethods.map((name) => {
+            const isCard = name.toLowerCase().includes("credit");
+            const payDay = paymentDays[name];
+            return {
+              id: name.toLowerCase().replace(/\s+/g, "-"),
+              name,
+              type: isCard ? "card" : "cash",
+              ...(isCard && payDay ? { paymentDay: payDay } : {}),
+            } as PaymentMethodConfig;
+          });
+          setPaymentMethodConfigs(migratedConfigs);
+          setPaymentMethods(legacyMethods);
+          // Persiste os configs migrados para não re-migrar toda vez
+          await supabase.from("user_settings").upsert({
+            user_id: session.user.id,
+            payment_method_configs: migratedConfigs,
+          });
+        }
       } else {
         // Create default settings
         await supabase.from("user_settings").insert({
@@ -193,8 +234,11 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
           categories_income: DEFAULT_CATEGORIES.income,
           categories_expense: DEFAULT_CATEGORIES.expense,
           payment_methods: DEFAULT_PAYMENT_METHODS,
+          payment_method_configs: DEFAULT_PAYMENT_METHOD_CONFIGS,
           theme_preference: "system",
         });
+        setPaymentMethodConfigs(DEFAULT_PAYMENT_METHOD_CONFIGS);
+        setPaymentMethods(DEFAULT_PAYMENT_METHODS);
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -294,6 +338,70 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
   );
 
   // ============================================
+  // Payment Method Config Functions
+  // ============================================
+
+  const getPaymentMethodConfig = useCallback(
+    (name: string): PaymentMethodConfig | undefined => {
+      return paymentMethodConfigs.find((c) => c.name === name);
+    },
+    [paymentMethodConfigs]
+  );
+
+  const savePaymentMethodConfigs = useCallback(
+    async (configs: PaymentMethodConfig[]) => {
+      if (!session?.user?.id) return;
+      const names = configs.map((c) => c.name);
+      try {
+        await supabase.from("user_settings").upsert({
+          user_id: session.user.id,
+          payment_method_configs: configs,
+          payment_methods: names,
+        });
+      } catch (err) {
+        console.error("Error saving payment method configs:", err);
+      }
+    },
+    [session?.user?.id]
+  );
+
+  const addPaymentMethodConfig = useCallback(
+    async (config: Omit<PaymentMethodConfig, "id">) => {
+      const newConfig: PaymentMethodConfig = {
+        ...config,
+        id: `${config.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
+      };
+      const updatedConfigs = [...paymentMethodConfigs, newConfig];
+      setPaymentMethodConfigs(updatedConfigs);
+      setPaymentMethods(updatedConfigs.map((c) => c.name));
+      await savePaymentMethodConfigs(updatedConfigs);
+    },
+    [paymentMethodConfigs, savePaymentMethodConfigs]
+  );
+
+  const updatePaymentMethodConfig = useCallback(
+    async (config: PaymentMethodConfig) => {
+      const updatedConfigs = paymentMethodConfigs.map((c) =>
+        c.id === config.id ? config : c
+      );
+      setPaymentMethodConfigs(updatedConfigs);
+      setPaymentMethods(updatedConfigs.map((c) => c.name));
+      await savePaymentMethodConfigs(updatedConfigs);
+    },
+    [paymentMethodConfigs, savePaymentMethodConfigs]
+  );
+
+  const removePaymentMethodConfig = useCallback(
+    async (id: string) => {
+      const updatedConfigs = paymentMethodConfigs.filter((c) => c.id !== id);
+      setPaymentMethodConfigs(updatedConfigs);
+      setPaymentMethods(updatedConfigs.map((c) => c.name));
+      await savePaymentMethodConfigs(updatedConfigs);
+    },
+    [paymentMethodConfigs, savePaymentMethodConfigs]
+  );
+
+  // ============================================
   // Friends Functions
   // ============================================
   
@@ -386,10 +494,16 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
 
   const getPaymentMethodPaymentDay = useCallback(
     (method: string): number | undefined => {
+      // Prioriza paymentDay do config estruturado
+      const config = paymentMethodConfigs.find((c) => c.name === method);
+      if (config?.type === "card" && config.paymentDay) {
+        return config.paymentDay;
+      }
+      // Fallback para legado
       const day = paymentMethodPaymentDays[method];
       return day >= 1 && day <= 31 ? day : undefined;
     },
-    [paymentMethodPaymentDays]
+    [paymentMethodConfigs, paymentMethodPaymentDays]
   );
 
   const updatePaymentMethodPaymentDay = useCallback(
@@ -471,6 +585,11 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       removePaymentMethod,
       getPaymentMethodPaymentDay,
       updatePaymentMethodPaymentDay,
+      paymentMethodConfigs,
+      getPaymentMethodConfig,
+      addPaymentMethodConfig,
+      updatePaymentMethodConfig,
+      removePaymentMethodConfig,
       friends,
       addFriend,
       categoryColors,
@@ -494,6 +613,11 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       removePaymentMethod,
       getPaymentMethodPaymentDay,
       updatePaymentMethodPaymentDay,
+      paymentMethodConfigs,
+      getPaymentMethodConfig,
+      addPaymentMethodConfig,
+      updatePaymentMethodConfig,
+      removePaymentMethodConfig,
       friends,
       addFriend,
       categoryColors,

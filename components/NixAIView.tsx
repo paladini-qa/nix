@@ -118,6 +118,7 @@ interface NixAIViewProps {
     }
   ) => void;
   getPaymentMethodPaymentDay?: (method: string) => number | undefined;
+  getPaymentMethodConfig?: (method: string) => import("../types").PaymentMethodConfig | undefined;
 }
 
 // ============================================
@@ -676,6 +677,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
   paymentMethods = ["Pix", "Credit Card", "Debit Card", "Cash"],
   onTransactionCreate,
   getPaymentMethodPaymentDay,
+  getPaymentMethodConfig,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -1231,6 +1233,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
               onConfirmAll={handleConfirmBatch}
               onCancel={handleCancelBatch}
               getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+              getPaymentMethodConfig={getPaymentMethodConfig}
             />
           )}
         </AnimatePresence>

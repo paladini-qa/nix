@@ -84,6 +84,10 @@ export interface AppViewSwitcherProps {
   handleRemovePaymentMethod: (method: string) => void;
   handleUpdatePaymentMethodColor: (method: string, primary: string, secondary: string) => void;
   updatePaymentMethodPaymentDay: (method: string, day: number | null) => Promise<void>;
+  paymentMethodConfigs?: import("../types").PaymentMethodConfig[];
+  handleAddPaymentMethodConfig?: (config: Omit<import("../types").PaymentMethodConfig, "id">) => Promise<void>;
+  handleUpdatePaymentMethodConfig?: (config: import("../types").PaymentMethodConfig) => Promise<void>;
+  handleRemovePaymentMethodConfig?: (id: string) => Promise<void>;
   handleAddCategory: (type: "income" | "expense", name: string) => void;
   handleRemoveCategory: (type: "income" | "expense", name: string) => void;
   handleUpdateCategoryColor: (
@@ -144,6 +148,10 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
     handleRemovePaymentMethod,
     handleUpdatePaymentMethodColor,
     updatePaymentMethodPaymentDay,
+    paymentMethodConfigs,
+    handleAddPaymentMethodConfig,
+    handleUpdatePaymentMethodConfig,
+    handleRemovePaymentMethodConfig,
     handleAddCategory,
     handleRemoveCategory,
     handleUpdateCategoryColor,
@@ -282,6 +290,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
             paymentMethods={paymentMethods}
             onTransactionCreate={handleSmartInputTransaction}
             getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+            getPaymentMethodConfig={paymentMethodConfigs ? (name) => paymentMethodConfigs.find(c => c.name === name) : undefined}
           />
         </Suspense>
       );
@@ -295,6 +304,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
             paymentMethods={paymentMethods}
             onTransactionCreate={handleSmartInputTransaction}
             getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+            getPaymentMethodConfig={paymentMethodConfigs ? (name) => paymentMethodConfigs.find(c => c.name === name) : undefined}
           />
         </Suspense>
       );
@@ -326,6 +336,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
             transactions={transactions}
             paymentMethods={paymentMethods}
             paymentMethodColors={paymentMethodColors}
+            paymentMethodConfigs={paymentMethodConfigs}
             selectedMonth={filters.month}
             selectedYear={filters.year}
             onDateChange={(month, year) => setFilters({ ...filters, month, year })}
@@ -336,6 +347,9 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
             onUpdatePaymentMethodColor={handleUpdatePaymentMethodColor}
             getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
             onUpdatePaymentMethodPaymentDay={updatePaymentMethodPaymentDay}
+            onAddPaymentMethodConfig={handleAddPaymentMethodConfig}
+            onUpdatePaymentMethodConfig={handleUpdatePaymentMethodConfig}
+            onRemovePaymentMethodConfig={handleRemovePaymentMethodConfig}
           />
         </Suspense>
       );

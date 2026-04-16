@@ -22,6 +22,17 @@ export const PAYMENT_METHODS = [
   "Boleto",
 ];
 
+import type { PaymentMethodConfig } from "./types";
+
+export const DEFAULT_PAYMENT_METHOD_CONFIGS: PaymentMethodConfig[] = [
+  { id: "credit-card", name: "Credit Card", type: "card" },
+  { id: "debit-card", name: "Debit Card", type: "cash" },
+  { id: "pix", name: "Pix", type: "cash" },
+  { id: "cash", name: "Cash", type: "cash" },
+  { id: "bank-transfer", name: "Bank Transfer", type: "cash" },
+  { id: "boleto", name: "Boleto", type: "cash" },
+];
+
 export const MONTHS = [
   "January",
   "February",

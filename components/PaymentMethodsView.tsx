@@ -19,6 +19,13 @@ import {
   FormControl,
   Select,
   MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  ToggleButtonGroup,
+  ToggleButton,
+  InputLabel,
 } from "@mui/material";
 import {
   CreditCard as CreditCardIcon,
@@ -31,11 +38,13 @@ import {
   Warning as WarningIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
+  Edit as EditIcon,
   Settings as SettingsIcon,
   Assessment as AssessmentIcon,
   AccountBalanceWallet as WalletIcon,
+  CalendarToday as CalendarIcon,
 } from "@mui/icons-material";
-import { Transaction, ColorConfig, PaymentMethodColors } from "../types";
+import { Transaction, ColorConfig, PaymentMethodColors, PaymentMethodConfig } from "../types";
 import { useLayoutSpacing } from "../hooks";
 import { getReportDate } from "../utils/transactionUtils";
 import { ColorsContext } from "../App";
@@ -52,6 +61,7 @@ interface PaymentMethodsViewProps {
   transactions: Transaction[];
   paymentMethods: string[];
   paymentMethodColors: PaymentMethodColors;
+  paymentMethodConfigs?: PaymentMethodConfig[];
   selectedMonth: number;
   selectedYear: number;
   onDateChange: (month: number, year: number) => void;
@@ -62,6 +72,9 @@ interface PaymentMethodsViewProps {
   onUpdatePaymentMethodColor: (method: string, colors: ColorConfig) => void;
   getPaymentMethodPaymentDay?: (method: string) => number | undefined;
   onUpdatePaymentMethodPaymentDay?: (method: string, day: number | null) => void;
+  onAddPaymentMethodConfig?: (config: Omit<PaymentMethodConfig, "id">) => Promise<void>;
+  onUpdatePaymentMethodConfig?: (config: PaymentMethodConfig) => Promise<void>;
+  onRemovePaymentMethodConfig?: (id: string) => Promise<void>;
 }
 
 interface PaymentMethodSummary {
@@ -73,10 +86,18 @@ interface PaymentMethodSummary {
   unpaidAmount: number;
 }
 
+const EMPTY_CONFIG: Omit<PaymentMethodConfig, "id"> = {
+  name: "",
+  type: "cash",
+  closingDay: undefined,
+  paymentDay: undefined,
+};
+
 const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   transactions,
   paymentMethods,
   paymentMethodColors,
+  paymentMethodConfigs = [],
   selectedMonth,
   selectedYear,
   onDateChange,
@@ -87,6 +108,9 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   onUpdatePaymentMethodColor,
   getPaymentMethodPaymentDay,
   onUpdatePaymentMethodPaymentDay,
+  onAddPaymentMethodConfig,
+  onUpdatePaymentMethodConfig,
+  onRemovePaymentMethodConfig,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -97,12 +121,68 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   const [tabValue, setTabValue] = useState(0);
   const [newPaymentMethod, setNewPaymentMethod] = useState("");
 
-  const handleAddMethod = () => {
-    if (newPaymentMethod.trim()) {
-      onAddPaymentMethod(newPaymentMethod.trim());
-      setNewPaymentMethod("");
+  // Estado do formulário de adição/edição de métodos
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [formConfig, setFormConfig] = useState<Omit<PaymentMethodConfig, "id">>(EMPTY_CONFIG);
+  const [editingConfig, setEditingConfig] = useState<PaymentMethodConfig | null>(null);
+
+  const useConfigSystem = onAddPaymentMethodConfig !== undefined;
+
+  const handleOpenAddDialog = () => {
+    setFormConfig(EMPTY_CONFIG);
+    setAddDialogOpen(true);
+  };
+
+  const handleOpenEditDialog = (config: PaymentMethodConfig) => {
+    setEditingConfig(config);
+    setEditingConfig({ ...config });
+    setEditDialogOpen(true);
+  };
+
+  const handleAddMethod = async () => {
+    if (useConfigSystem) {
+      if (!formConfig.name.trim()) return;
+      await onAddPaymentMethodConfig!({
+        ...formConfig,
+        name: formConfig.name.trim(),
+        closingDay: formConfig.type === "card" ? formConfig.closingDay : undefined,
+        paymentDay: formConfig.type === "card" ? formConfig.paymentDay : undefined,
+      });
+      setAddDialogOpen(false);
+      setFormConfig(EMPTY_CONFIG);
+    } else {
+      if (newPaymentMethod.trim()) {
+        onAddPaymentMethod(newPaymentMethod.trim());
+        setNewPaymentMethod("");
+      }
     }
   };
+
+  const handleUpdateMethod = async () => {
+    if (!editingConfig || !onUpdatePaymentMethodConfig) return;
+    await onUpdatePaymentMethodConfig({
+      ...editingConfig,
+      closingDay: editingConfig.type === "card" ? editingConfig.closingDay : undefined,
+      paymentDay: editingConfig.type === "card" ? editingConfig.paymentDay : undefined,
+    });
+    setEditDialogOpen(false);
+    setEditingConfig(null);
+  };
+
+  const handleRemoveMethod = async (method: string) => {
+    if (useConfigSystem) {
+      const config = paymentMethodConfigs.find((c) => c.name === method);
+      if (config) {
+        await onRemovePaymentMethodConfig!(config.id);
+      }
+    } else {
+      onRemovePaymentMethod(method);
+    }
+  };
+
+  const getConfigForMethod = (name: string): PaymentMethodConfig | undefined =>
+    paymentMethodConfigs.find((c) => c.name === name);
 
   // Gera transações recorrentes virtuais para o mês
   const generateRecurringTransactions = useMemo(() => {
@@ -887,34 +967,42 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
             >
               Adicionar Novo Método de Pagamento
             </Typography>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Nome do método de pagamento..."
-                value={newPaymentMethod}
-                onChange={(e) => setNewPaymentMethod(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddMethod()}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "10px",
-                    bgcolor: isDarkMode
-                      ? alpha("#000", 0.2)
-                      : alpha("#fff", 0.8),
-                  },
-                }}
-              />
+            {useConfigSystem ? (
               <Button
-                onClick={handleAddMethod}
                 variant="contained"
-                sx={{
-                  minWidth: 48,
-                  borderRadius: "10px",
-                }}
+                startIcon={<AddIcon />}
+                onClick={handleOpenAddDialog}
+                sx={{ borderRadius: "10px", textTransform: "none" }}
               >
-                <AddIcon />
+                Novo método
               </Button>
-            </Box>
+            ) : (
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Nome do método de pagamento..."
+                  value={newPaymentMethod}
+                  onChange={(e) => setNewPaymentMethod(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddMethod()}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "10px",
+                      bgcolor: isDarkMode
+                        ? alpha("#000", 0.2)
+                        : alpha("#fff", 0.8),
+                    },
+                  }}
+                />
+                <Button
+                  onClick={handleAddMethod}
+                  variant="contained"
+                  sx={{ minWidth: 48, borderRadius: "10px" }}
+                >
+                  <AddIcon />
+                </Button>
+              </Box>
+            )}
           </Paper>
 
           {/* Payment Methods List */}
@@ -926,6 +1014,9 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 const summary = paymentMethodsSummary.find(
                   (s) => s.name === method
                 );
+
+                const config = getConfigForMethod(method);
+                const isCard = config?.type === "card";
 
                 return (
                   <Grid key={method} size={{ xs: 12, sm: 6, md: 4 }}>
@@ -941,20 +1032,11 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                         border: `1px solid ${alpha(colors.primary, 0.2)}`,
                         borderLeft: `3px solid ${colors.primary}`,
                         background: isDarkMode
-                          ? `linear-gradient(135deg, ${alpha(
-                              colors.primary,
-                              0.1
-                            )} 0%, ${alpha(colors.secondary, 0.05)} 100%)`
-                          : `linear-gradient(135deg, ${alpha(
-                              colors.primary,
-                              0.06
-                            )} 0%, ${alpha(colors.secondary, 0.02)} 100%)`,
+                          ? `linear-gradient(135deg, ${alpha(colors.primary, 0.1)} 0%, ${alpha(colors.secondary, 0.05)} 100%)`
+                          : `linear-gradient(135deg, ${alpha(colors.primary, 0.06)} 0%, ${alpha(colors.secondary, 0.02)} 100%)`,
                         "&:hover": {
                           transform: "translateY(-2px)",
-                          boxShadow: `0 8px 16px -4px ${alpha(
-                            colors.primary,
-                            0.2
-                          )}`,
+                          boxShadow: `0 8px 16px -4px ${alpha(colors.primary, 0.2)}`,
                         },
                       }}
                     >
@@ -965,83 +1047,119 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                         }
                         size="small"
                       />
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          flex: 1,
-                          minWidth: 0,
-                        }}
-                      >
-                        <CreditCardIcon
-                          fontSize="small"
-                          sx={{ color: colors.primary }}
-                        />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
+                        {isCard ? (
+                          <CreditCardIcon fontSize="small" sx={{ color: colors.primary }} />
+                        ) : (
+                          <WalletIcon fontSize="small" sx={{ color: colors.primary }} />
+                        )}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="body1"
-                            fontWeight={600}
-                            sx={{
-                              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                              WebkitBackgroundClip: "text",
-                              WebkitTextFillColor: "transparent",
-                              backgroundClip: "text",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {method}
-                          </Typography>
-                          {summary && summary.transactionCount > 0 && (
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                             <Typography
-                              variant="caption"
-                              color="text.secondary"
+                              variant="body1"
+                              fontWeight={600}
+                              sx={{
+                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                WebkitBackgroundClip: "text",
+                                WebkitTextFillColor: "transparent",
+                                backgroundClip: "text",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
                             >
-                              {summary.transactionCount} transações este mês
+                              {method}
                             </Typography>
+                            <Chip
+                              label={isCard ? "Cartão" : "À vista"}
+                              size="small"
+                              sx={{
+                                height: 18,
+                                fontSize: 10,
+                                fontWeight: 600,
+                                bgcolor: isCard
+                                  ? alpha(theme.palette.primary.main, 0.12)
+                                  : alpha(theme.palette.success.main, 0.12),
+                                color: isCard ? "primary.main" : "success.main",
+                                border: "none",
+                                "& .MuiChip-label": { px: 0.75 },
+                              }}
+                            />
+                          </Box>
+                          {isCard && config?.closingDay && config?.paymentDay ? (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                              <CalendarIcon sx={{ fontSize: 11, color: "text.disabled" }} />
+                              <Typography variant="caption" color="text.secondary">
+                                Fecha dia {config.closingDay} · Paga dia {config.paymentDay}
+                              </Typography>
+                            </Box>
+                          ) : isCard ? (
+                            <Typography variant="caption" color="warning.main">
+                              Configure os dias de fechamento e pagamento
+                            </Typography>
+                          ) : (
+                            summary && summary.transactionCount > 0 && (
+                              <Typography variant="caption" color="text.secondary">
+                                {summary.transactionCount} transações este mês
+                              </Typography>
+                            )
                           )}
                         </Box>
                       </Box>
-                      {getPaymentMethodPaymentDay && onUpdatePaymentMethodPaymentDay && (
-                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.25 }}>
-                          <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
-                            Dia
-                          </Typography>
-                          <FormControl size="small" sx={{ minWidth: 56 }}>
-                            <Select
-                              value={getPaymentMethodPaymentDay(method) ?? ""}
-                              displayEmpty
-                              onChange={(e) => {
-                                const v = e.target.value;
-                                const day = v === "" ? null : Number(v);
-                                if (day === null || (day >= 1 && day <= 31)) {
-                                  onUpdatePaymentMethodPaymentDay(method, day);
-                                }
-                              }}
-                              sx={{
-                                fontSize: "0.8rem",
-                                height: 32,
-                                "& .MuiSelect-select": { py: 0.5 },
-                              }}
-                            >
-                              <MenuItem value="">
-                                <em>—</em>
-                              </MenuItem>
-                              {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                                <MenuItem key={d} value={d}>
-                                  {d}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </Box>
+
+                      {useConfigSystem && config ? (
+                        <Tooltip title="Editar método">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenEditDialog(config)}
+                            sx={{
+                              color: "text.secondary",
+                              "&:hover": {
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: "primary.main",
+                              },
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        getPaymentMethodPaymentDay && onUpdatePaymentMethodPaymentDay && (
+                          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.25 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+                              Dia
+                            </Typography>
+                            <FormControl size="small" sx={{ minWidth: 56 }}>
+                              <Select
+                                value={getPaymentMethodPaymentDay(method) ?? ""}
+                                displayEmpty
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  const day = v === "" ? null : Number(v);
+                                  if (day === null || (day >= 1 && day <= 31)) {
+                                    onUpdatePaymentMethodPaymentDay(method, day);
+                                  }
+                                }}
+                                sx={{
+                                  fontSize: "0.8rem",
+                                  height: 32,
+                                  "& .MuiSelect-select": { py: 0.5 },
+                                }}
+                              >
+                                <MenuItem value=""><em>—</em></MenuItem>
+                                {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                                  <MenuItem key={d} value={d}>{d}</MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </Box>
+                        )
                       )}
+
                       <Tooltip title="Remover método">
                         <IconButton
                           size="small"
-                          onClick={() => onRemovePaymentMethod(method)}
+                          onClick={() => handleRemoveMethod(method)}
                           sx={{
                             color: "text.secondary",
                             "&:hover": {
@@ -1082,6 +1200,198 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
           )}
         </Box>
       </Collapse>
+
+      {/* Dialog: Adicionar método */}
+      <Dialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: "20px" } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Novo método de pagamento</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: "12px !important" }}>
+          <TextField
+            label="Nome"
+            fullWidth
+            size="small"
+            value={formConfig.name}
+            onChange={(e) => setFormConfig((p) => ({ ...p, name: e.target.value }))}
+            placeholder="Ex: Nubank, Bradesco..."
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+          />
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+              Tipo
+            </Typography>
+            <ToggleButtonGroup
+              value={formConfig.type}
+              exclusive
+              onChange={(_, v) => v && setFormConfig((p) => ({ ...p, type: v }))}
+              size="small"
+              sx={{ width: "100%" }}
+            >
+              <ToggleButton value="cash" sx={{ flex: 1, borderRadius: "10px 0 0 10px", textTransform: "none" }}>
+                <WalletIcon fontSize="small" sx={{ mr: 0.75 }} />
+                À vista
+              </ToggleButton>
+              <ToggleButton value="card" sx={{ flex: 1, borderRadius: "0 10px 10px 0", textTransform: "none" }}>
+                <CreditCardIcon fontSize="small" sx={{ mr: 0.75 }} />
+                Cartão
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+          {formConfig.type === "card" && (
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Dia de fechamento</InputLabel>
+                <Select
+                  value={formConfig.closingDay ?? ""}
+                  label="Dia de fechamento"
+                  onChange={(e) =>
+                    setFormConfig((p) => ({ ...p, closingDay: e.target.value ? Number(e.target.value) : undefined }))
+                  }
+                  sx={{ borderRadius: "10px" }}
+                >
+                  <MenuItem value=""><em>Selecionar</em></MenuItem>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <MenuItem key={d} value={d}>Dia {d}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth size="small">
+                <InputLabel>Dia de pagamento</InputLabel>
+                <Select
+                  value={formConfig.paymentDay ?? ""}
+                  label="Dia de pagamento"
+                  onChange={(e) =>
+                    setFormConfig((p) => ({ ...p, paymentDay: e.target.value ? Number(e.target.value) : undefined }))
+                  }
+                  sx={{ borderRadius: "10px" }}
+                >
+                  <MenuItem value=""><em>Selecionar</em></MenuItem>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <MenuItem key={d} value={d}>Dia {d}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+          {formConfig.type === "card" && (
+            <Typography variant="caption" color="text.secondary">
+              A fatura de cada transação será calculada automaticamente com base nesses dias.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setAddDialogOpen(false)} sx={{ borderRadius: "10px", textTransform: "none" }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleAddMethod}
+            disabled={!formConfig.name.trim() || (formConfig.type === "card" && (!formConfig.closingDay || !formConfig.paymentDay))}
+            sx={{ borderRadius: "10px", textTransform: "none" }}
+          >
+            Adicionar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog: Editar método */}
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: "20px" } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Editar método de pagamento</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: "12px !important" }}>
+          {editingConfig && (
+            <>
+              <TextField
+                label="Nome"
+                fullWidth
+                size="small"
+                value={editingConfig.name}
+                onChange={(e) => setEditingConfig((p) => p ? { ...p, name: e.target.value } : p)}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+              />
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                  Tipo
+                </Typography>
+                <ToggleButtonGroup
+                  value={editingConfig.type}
+                  exclusive
+                  onChange={(_, v) => v && setEditingConfig((p) => p ? { ...p, type: v } : p)}
+                  size="small"
+                  sx={{ width: "100%" }}
+                >
+                  <ToggleButton value="cash" sx={{ flex: 1, borderRadius: "10px 0 0 10px", textTransform: "none" }}>
+                    <WalletIcon fontSize="small" sx={{ mr: 0.75 }} />
+                    À vista
+                  </ToggleButton>
+                  <ToggleButton value="card" sx={{ flex: 1, borderRadius: "0 10px 10px 0", textTransform: "none" }}>
+                    <CreditCardIcon fontSize="small" sx={{ mr: 0.75 }} />
+                    Cartão
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+              {editingConfig.type === "card" && (
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Dia de fechamento</InputLabel>
+                    <Select
+                      value={editingConfig.closingDay ?? ""}
+                      label="Dia de fechamento"
+                      onChange={(e) =>
+                        setEditingConfig((p) => p ? { ...p, closingDay: e.target.value ? Number(e.target.value) : undefined } : p)
+                      }
+                      sx={{ borderRadius: "10px" }}
+                    >
+                      <MenuItem value=""><em>Selecionar</em></MenuItem>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                        <MenuItem key={d} value={d}>Dia {d}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Dia de pagamento</InputLabel>
+                    <Select
+                      value={editingConfig.paymentDay ?? ""}
+                      label="Dia de pagamento"
+                      onChange={(e) =>
+                        setEditingConfig((p) => p ? { ...p, paymentDay: e.target.value ? Number(e.target.value) : undefined } : p)
+                      }
+                      sx={{ borderRadius: "10px" }}
+                    >
+                      <MenuItem value=""><em>Selecionar</em></MenuItem>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                        <MenuItem key={d} value={d}>Dia {d}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setEditDialogOpen(false)} sx={{ borderRadius: "10px", textTransform: "none" }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleUpdateMethod}
+            disabled={!editingConfig?.name.trim() || (editingConfig?.type === "card" && (!editingConfig?.closingDay || !editingConfig?.paymentDay))}
+            sx={{ borderRadius: "10px", textTransform: "none" }}
+          >
+            Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
