@@ -298,7 +298,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                   },
                 }}
               >
-                NixAI — Análise Inteligente
+                Finance Control AI — Análise Inteligente
               </Button>
             </MotionBox>
           </MotionBox>

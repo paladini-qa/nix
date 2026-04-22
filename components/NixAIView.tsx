@@ -28,6 +28,7 @@ import {
   Divider,
 } from "@mui/material";
 import {
+  Today as DateIcon,
   Send as SendIcon,
   AutoAwesome as SparklesIcon,
   Person as PersonIcon,
@@ -41,7 +42,10 @@ import {
   AttachMoney as MoneyIcon,
   Category as CategoryIcon,
   CreditCard as PaymentIcon,
-  Today as DateIcon,
+  Star as StarIcon,
+  TextFields as TextFieldsIcon,
+  Add as AddIcon,
+  AttachFile as AttachFileIcon,
 } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
@@ -58,8 +62,10 @@ import {
   detectTransactionIntent,
   isGeminiConfigured,
   GEMINI_NOT_CONFIGURED_MESSAGE,
+  generateChatTitle,
 } from "../services/geminiService";
 import { useConfirmDialog } from "../contexts";
+import { useTranslation } from "react-i18next";
 
 // Motion components
 const MotionBox = motion.create(Box);
@@ -117,8 +123,8 @@ interface NixAIViewProps {
       invoiceDueDate?: string;
     }
   ) => void;
-  getPaymentMethodPaymentDay?: (method: string) => number | undefined;
   getPaymentMethodConfig?: (method: string) => import("../types").PaymentMethodConfig | undefined;
+  displayName?: string;
 }
 
 // ============================================
@@ -317,7 +323,7 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
             },
           }}
         >
-          💸 Despesa
+           Despesa
         </ToggleButton>
         <ToggleButton
           value="income"
@@ -328,7 +334,7 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
             },
           }}
         >
-          💰 Receita
+           Receita
         </ToggleButton>
       </ToggleButtonGroup>
 
@@ -494,7 +500,7 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
         color="text.disabled"
         sx={{ display: "block", textAlign: "center", mt: 1.5 }}
       >
-        💡 Clique nos campos para ajustar antes de confirmar
+         Clique nos campos para ajustar antes de confirmar
       </Typography>
     </MotionPaper>
   );
@@ -510,6 +516,7 @@ interface ChatMessageProps {
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, isMobile }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isUser = message.role === "user";
@@ -554,7 +561,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isMobile }) => {
             </Box>
             <Box>
               <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.2 }}>
-                Nix AI
+                {t("nixai.title")}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
                 <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#10b981", boxShadow: "0 0 4px #10b981" }} />
@@ -678,22 +685,23 @@ const NixAIView: React.FC<NixAIViewProps> = ({
   onTransactionCreate,
   getPaymentMethodPaymentDay,
   getPaymentMethodConfig,
+  displayName,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDarkMode = theme.palette.mode === "dark";
   const { confirm } = useConfirmDialog();
+  const { t } = useTranslation();
+  const firstName = displayName ? displayName.split(' ')[0] : '';
 
-  // Mensagem de boas-vindas
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content:
-        "E aí! Sou o **Nix**, seu copiloto financeiro. 🧠💰\n\nEstou aqui pra traduzir o \"financês\" pro português claro. Sem letras miúdas, sem jargões complicados.\n\nPosso te ajudar com:\n\n- 📊 **Analisar seus gastos** e mostrar onde seu dinheiro está indo\n- 💡 **Dar dicas personalizadas** baseadas nos seus hábitos\n- 🔮 **Prever gastos futuros** e evitar surpresas no fim do mês\n- ⚡ **Cadastrar transações** rapidinho por texto, áudio ou foto\n\nO que você quer saber sobre suas finanças?",
-      timestamp: new Date(),
-    },
-  ]);
+  const SUGGESTIONS = [
+    { icon: <ReceiptIcon fontSize="small" />, label: "Ler recibo ou nota", action: () => fileInputRef.current?.click() },
+    { icon: <MicIcon fontSize="small" />, label: "Descrever por áudio", action: () => startRecording() },
+    { icon: <AttachFileIcon fontSize="small" />, label: "Importar arquivo", action: () => fileInputRef.current?.click() },
+    { icon: <TextFieldsIcon fontSize="small" />, label: "Digitar gastos", action: () => inputRef.current?.focus() },
+  ];
+
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -713,6 +721,20 @@ const NixAIView: React.FC<NixAIViewProps> = ({
   const [pendingTransaction, setPendingTransaction] = useState<ParsedTransaction | null>(null);
   const [pendingBatch, setPendingBatch] = useState<ParsedTransaction[] | null>(null);
   const [smartInputError, setSmartInputError] = useState<string | null>(null);
+  const [chatTitle, setChatTitle] = useState<string | null>(null);
+
+  // Efeito para gerar título quando a primeira mensagem é enviada
+  useEffect(() => {
+    const handleTitleGeneration = async () => {
+      if (messages.length > 0 && !chatTitle && !isLoading) {
+        // Usa a primeira mensagem do usuário ou assistente para gerar o título
+        const firstMessage = messages[0].content;
+        const title = await generateChatTitle(firstMessage);
+        setChatTitle(title);
+      }
+    };
+    handleTitleGeneration();
+  }, [messages.length, chatTitle, isLoading]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -788,7 +810,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           id: (Date.now() + 1).toString(),
           role: "assistant",
           content:
-            "Ops, não consegui entender os detalhes. 🤔\n\nTenta algo como: \"Gastei 50 reais no mercado com Pix\"",
+            "Ops, não consegui entender os detalhes. \n\nTenta algo como: \"Gastei 50 reais no mercado com Pix\"",
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -845,6 +867,156 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     }
   };
 
+  const handleFileProcessing = async (file: File) => {
+    // CSV/OFX/QFX logic
+    if (file.name.endsWith(".csv") || file.name.endsWith(".ofx") || file.name.endsWith(".qfx")) {
+      setIsLoading(true);
+      setSmartInputError(null);
+      
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: "user",
+        content: `Arquivo importado: ${file.name}`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+
+      try {
+        const text = await file.text();
+        const rows = import("../services/importService").then(m => m.parseImportFile(text, file.name));
+        const resolvedRows = await rows;
+        
+        if (resolvedRows.length === 0) {
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: "Nenhuma transação encontrada no arquivo. Verifique o formato.",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+        } else {
+          const batch: ParsedTransaction[] = resolvedRows.map((row) => ({
+            description: row.description,
+            amount: row.amount,
+            type: row.type,
+            category: row.type === "income" ? (categories.income[0] || "Outros") : (categories.expense[0] || "Outros"),
+            paymentMethod: paymentMethods[0] || "",
+            date: row.date || new Date().toISOString().split("T")[0],
+            confidence: 1,
+            rawInput: "Imported from file",
+          }));
+          
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: `Identifiquei **${batch.length} transações** no arquivo. Confira a tabela e confirme:`,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+          setPendingBatch(batch);
+          setPendingTransaction(null);
+        }
+      } catch (err) {
+        console.error(err);
+        setSmartInputError("Erro ao processar o arquivo. Verifique o formato.");
+      } finally {
+        setIsLoading(false);
+      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    // Image logic
+    if (file.size > 4 * 1024 * 1024) {
+      setSmartInputError("Imagem muito grande. Máximo 4MB.");
+      return;
+    }
+    setIsLoading(true);
+    setSmartInputError(null);
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: `Foto enviada: ${file.name}`,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const imageBase64 = e.target?.result as string;
+        try {
+          const batch = await parseBatchFromImage(imageBase64, file.type, categories, paymentMethods);
+          
+          if (batch.length === 1) {
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              role: "assistant",
+              content: "Li o recibo! Confere os dados:",
+              timestamp: new Date(),
+              parsedTransaction: batch[0],
+            };
+            setMessages((prev) => [...prev, assistantMessage]);
+            setPendingTransaction(batch[0]);
+            setPendingBatch(null);
+          } else {
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              role: "assistant",
+              content: `Li **${batch.length} transações** na foto. Confira e confirme:`,
+              timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, assistantMessage]);
+            setPendingBatch(batch);
+            setPendingTransaction(null);
+          }
+        } catch (err) {
+          console.error(err);
+          setSmartInputError("Não foi possível ler a imagem. Tente outra foto com boa iluminação.");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error(error);
+      setIsLoading(false);
+      setSmartInputError("Erro ao processar a imagem.");
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) handleFileProcessing(file);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image") !== -1 || items[i].kind === "file") {
+        const file = items[i].getAsFile();
+        if (file) handleFileProcessing(file);
+        if (items[i].type.indexOf("image") !== -1) e.preventDefault();
+        break;
+      }
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFileProcessing(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
   const processAudioInput = async (audioBlob: Blob) => {
     setIsLoading(true);
     setSmartInputError(null);
@@ -852,7 +1024,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: `🎤 Mensagem de voz (${formatTime(recordingTime)})`,
+      content: ` Mensagem de voz (${formatTime(recordingTime)})`,
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMessage]);
@@ -891,7 +1063,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         role: "assistant",
         content: notConfigured
           ? GEMINI_NOT_CONFIGURED_MESSAGE
-          : "Não consegui entender o áudio. 🎤\n\nTenta falar mais devagar: \"Gastei cinquenta reais no Uber\"",
+          : "Não consegui entender o áudio. \n\nTenta falar mais devagar: \"Gastei cinquenta reais no Uber\"",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -901,78 +1073,6 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 4 * 1024 * 1024) {
-      setSmartInputError("Imagem muito grande. Máximo 4MB.");
-      return;
-    }
-
-    setIsLoading(true);
-    setSmartInputError(null);
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: "📷 Foto de recibo enviada",
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const imageBase64 = e.target?.result as string;
-
-        const batch = await parseBatchFromImage(imageBase64, file.type, categories, paymentMethods);
-
-        if (batch.length === 1) {
-          const assistantMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            role: "assistant",
-            content: "Li o recibo! Confere os dados:",
-            timestamp: new Date(),
-            parsedTransaction: batch[0],
-          };
-          setMessages((prev) => [...prev, assistantMessage]);
-          setPendingTransaction(batch[0]);
-          setPendingBatch(null);
-        } else {
-          const assistantMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            role: "assistant",
-            content: `Identifiquei **${batch.length} transações** na imagem. Confira a tabela, edite se precisar e confirme:`,
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, assistantMessage]);
-          setPendingBatch(batch);
-          setPendingTransaction(null);
-        }
-        setIsLoading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error("Error parsing image:", error);
-      const notConfigured =
-        error instanceof Error && error.message === "GEMINI_NOT_CONFIGURED";
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: notConfigured
-          ? GEMINI_NOT_CONFIGURED_MESSAGE
-          : "Não consegui ler a imagem. 📷\n\nTenta tirar uma foto com mais luz e o recibo bem reto.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-      setIsLoading(false);
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
 
   const handleConfirmTransaction = (transaction: Omit<ParsedTransaction, "confidence" | "rawInput">) => {
     if (!onTransactionCreate) return;
@@ -982,7 +1082,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const confirmMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
-      content: "✅ **Pronto!** Transação salva. Posso ajudar com mais alguma coisa?",
+      content: " **Pronto!** Transação salva. Posso ajudar com mais alguma coisa?",
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, confirmMessage]);
@@ -993,7 +1093,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const cancelMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
-      content: "Sem problemas! Cancelei essa. Me avisa se precisar de algo. 👍",
+      content: "Sem problemas! Cancelei essa. Me avisa se precisar de algo. ",
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, cancelMessage]);
@@ -1016,7 +1116,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const confirmMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
-      content: `✅ **Pronto!** ${rows.length} transação(ões) salva(s). Posso ajudar com mais alguma coisa?`,
+      content: ` **Pronto!** ${rows.length} transação(ões) salva(s). Posso ajudar com mais alguma coisa?`,
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, confirmMessage]);
@@ -1037,7 +1137,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const cancelMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
-      content: "Sem problemas! Cancelei o lote. Me avisa se precisar de algo. 👍",
+      content: "Sem problemas! Cancelei o lote. Me avisa se precisar de algo. ",
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, cancelMessage]);
@@ -1102,7 +1202,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Ops, tive um probleminha. 😅 Tenta de novo?",
+        content: "Ops, tive um probleminha.  Tenta de novo?",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -1118,317 +1218,449 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     }
   };
 
+  const isCentered = messages.length === 0 && !pendingTransaction && !pendingBatch;
+
+  const renderInputBar = (centered: boolean) => (
+    <motion.div
+      layoutId="input-bar"
+      initial={false}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      style={{
+        width: "100%",
+        maxWidth: centered ? 830 : 830,
+        margin: "0 auto",
+      }}
+    >
+      <AnimatePresence>
+        {isRecording && (
+          <MotionPaper
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            elevation={0}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2,
+              p: 1.5,
+              mb: 2,
+              borderRadius: "16px",
+              bgcolor: alpha(theme.palette.error.main, 0.1),
+              border: `1px solid ${alpha(theme.palette.error.main, 0.25)}`,
+            }}
+          >
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                bgcolor: "error.main",
+                animation: `${pulseAnimation} 1.5s infinite`,
+              }}
+            />
+            <Typography variant="body1" fontWeight={600} color="error.main">
+              Gravando {formatTime(recordingTime)}
+            </Typography>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              startIcon={<StopIcon />}
+              onClick={stopRecording}
+              sx={{ borderRadius: "12px", fontWeight: 600, textTransform: "none", px: 2 }}
+            >
+              Parar
+            </Button>
+          </MotionPaper>
+        )}
+      </AnimatePresence>
+
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          bgcolor: isDarkMode ? "#1E1F20" : "#F0F4F9",
+          borderRadius: "28px",
+          border: isDarkMode ? `1px solid ${alpha("#FFFFFF", 0.05)}` : `1px solid ${alpha("#000000", 0.05)}`,
+          boxShadow: isDarkMode ? "0 4px 20px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.05)",
+          py: 1.25,
+          px: 2.5,
+          transition: "all 0.3s ease",
+          "&:focus-within": {
+            boxShadow: isDarkMode 
+              ? `0 8px 32px ${alpha(NIX_BRAND.purple, 0.2)}` 
+              : `0 8px 32px ${alpha(NIX_BRAND.purple, 0.1)}`,
+            bgcolor: isDarkMode ? "#1E1F20" : "#F0F4F9",
+          }
+        }}
+      >
+        <Tooltip title="Anexar arquivo ou foto">
+          <IconButton
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading || isRecording}
+            sx={{ color: "text.secondary", mr: 1 }}
+          >
+            <AddIcon />
+          </IconButton>
+        </Tooltip>
+
+        <TextField
+          inputRef={inputRef}
+          fullWidth
+          multiline
+          maxRows={8}
+          placeholder={
+            isRecording ? "Gravando áudio..." : "Pergunte à IA ou descreva seus gastos..."
+          }
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyPress={handleKeyPress}
+          disabled={isLoading || isRecording}
+          variant="standard"
+          InputProps={{
+            disableUnderline: true,
+            sx: {
+              fontSize: "1.05rem",
+              lineHeight: 1.5,
+              color: isDarkMode ? "#E3E3E3" : "#1F1F1F",
+            }
+          }}
+        />
+
+        <Stack direction="row" spacing={0.5} sx={{ ml: 1, alignItems: 'center' }}>
+          {!inputValue.trim() && (
+            <Tooltip title="Gravar áudio">
+              <IconButton
+                onClick={() => (isRecording ? stopRecording() : startRecording())}
+                disabled={isLoading}
+                sx={{
+                  bgcolor: isRecording ? alpha(theme.palette.error.main, 0.1) : "transparent",
+                  color: isRecording ? "error.main" : "text.secondary",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                {isRecording ? <StopIcon /> : <MicIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
+
+          <AnimatePresence>
+            {inputValue.trim() && (
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+              >
+                <IconButton
+                  onClick={handleSendMessage}
+                  disabled={isLoading || isRecording}
+                  sx={{
+                    bgcolor: isDarkMode ? "#E3E3E3" : "#1F1F1F",
+                    color: isDarkMode ? "#1F1F1F" : "#FFFFFF",
+                    "&:hover": {
+                      bgcolor: isDarkMode ? alpha("#E3E3E3", 0.8) : alpha("#1F1F1F", 0.8),
+                    },
+                    width: 42,
+                    height: 42,
+                    ml: 1,
+                  }}
+                >
+                  <SendIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Stack>
+      </Box>
+    </motion.div>
+  );
+
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
         height: "100%",
+        flex: 1,
+        minHeight: 0,
+        maxWidth: "100%",
+        mx: "auto",
+        width: "100%",
         overflow: "hidden",
+        position: 'relative',
       }}
+      onPaste={handlePaste}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
     >
-      {/* ── Header ── */}
-      <Box
-        sx={{
-          px: isMobile ? 2 : 3,
-          pt: 1.5,
-          pb: 1.25,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          flexShrink: 0,
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
-        }}
-      >
-        <Box
-          sx={{
-            width: 38,
-            height: 38,
-            borderRadius: "12px",
-            background: NIX_BRAND.gradient,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: `0 4px 14px ${alpha(NIX_BRAND.purple, 0.4)}`,
-            flexShrink: 0,
-          }}
-        >
-          <SparklesIcon sx={{ fontSize: 19, color: "#fff" }} />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.25 }}>
-            Nix AI
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11, lineHeight: 1 }}>
-            Seu copiloto financeiro
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <Box
-            sx={{
-              width: 7,
-              height: 7,
-              borderRadius: "50%",
-              bgcolor: isGeminiConfigured() ? "#10b981" : "#f59e0b",
-              boxShadow: isGeminiConfigured() ? "0 0 5px #10b981" : "0 0 5px #f59e0b",
-            }}
-          />
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
-            {isGeminiConfigured() ? "Online" : "Sem API Key"}
-          </Typography>
-        </Box>
-      </Box>
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp,.csv,.ofx,.qfx"
+        ref={fileInputRef}
+        onChange={handleImageUpload}
+        style={{ display: "none" }}
+      />
 
-      {/* ── Messages Area ── */}
+      {/* Header removido conforme solicitado */}
+
+      {/* Área principal */}
       <Box
         sx={{
           flex: 1,
-          overflow: "auto",
-          px: isMobile ? 2 : 3,
-          py: 2,
+          overflowY: "auto",
+          overflowX: "hidden",
           display: "flex",
           flexDirection: "column",
-          gap: 1.5,
-          /* Scroll suave */
+          position: 'relative',
           scrollBehavior: "smooth",
-          "&::-webkit-scrollbar": { width: 4 },
-          "&::-webkit-scrollbar-track": { background: "transparent" },
+          "&::-webkit-scrollbar": { width: 6 },
           "&::-webkit-scrollbar-thumb": {
-            background: alpha(theme.palette.text.primary, 0.12),
-            borderRadius: 2,
+            background: alpha(NIX_BRAND.purple, 0.2),
+            borderRadius: 3,
           },
         }}
       >
-        {!isGeminiConfigured() && (
-          <Alert severity="warning" sx={{ borderRadius: "14px" }}>
-            {GEMINI_NOT_CONFIGURED_MESSAGE}
-          </Alert>
-        )}
-        <AnimatePresence mode="popLayout">
-          {messages.map((message) => (
-            <ChatMessage key={message.id} message={message} isMobile={isMobile} />
-          ))}
-        </AnimatePresence>
-
-        {/* Preview de transação pendente */}
-        <AnimatePresence>
-          {pendingTransaction && onTransactionCreate && (
-            <TransactionPreviewCard
-              transaction={pendingTransaction}
-              categories={categories}
-              paymentMethods={paymentMethods}
-              onConfirm={handleConfirmTransaction}
-              onCancel={handleCancelTransaction}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Tabela de lote */}
-        <AnimatePresence>
-          {pendingBatch && pendingBatch.length > 0 && onTransactionCreate && (
-            <BatchTransactionTable
-              transactions={pendingBatch}
-              categories={categories}
-              paymentMethods={paymentMethods}
-              onConfirmAll={handleConfirmBatch}
-              onCancel={handleCancelBatch}
-              getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
-              getPaymentMethodConfig={getPaymentMethodConfig}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Erro */}
-        <Collapse in={!!smartInputError}>
-          <Alert severity="error" onClose={() => setSmartInputError(null)} sx={{ borderRadius: "14px" }}>
-            {smartInputError}
-          </Alert>
-        </Collapse>
-
-        {/* Loading */}
-        <AnimatePresence>
-          {isLoading && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+        <AnimatePresence mode="wait">
+          {isCentered ? (
+            <MotionBox
+              key="centered-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: 1,
+                width: "100%",
+                minHeight: '100%',
+              }}
             >
-              <NixAISkeleton />
-            </motion.div>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  width: "100%",
+                  maxWidth: 830,
+                  px: isMobile ? 2 : 2,
+                }}
+              >
+                <Box sx={{ textAlign: 'center', width: '100%', mb: 5 }}>
+                  <Typography 
+                    variant={isMobile ? "h4" : "h3"}
+                    component={motion.h1}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    sx={{ 
+                      fontWeight: 600, 
+                      background: 'linear-gradient(90deg, #4A90E2, #A855F7, #EC4899)', 
+                      WebkitBackgroundClip: 'text', 
+                      WebkitTextFillColor: 'transparent',
+                      mb: 1,
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    Olá{firstName ? `, ${firstName}` : ','}
+                  </Typography>
+                  <Typography 
+                    variant={isMobile ? "h4" : "h3"}
+                    component={motion.h2}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    sx={{ 
+                      fontWeight: 600, 
+                      color: isDarkMode ? '#FFFFFF' : '#1F1F1F',
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    Como posso ajudar hoje?
+                  </Typography>
+                </Box>
+
+                {renderInputBar(true)}
+
+                <MotionBox 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  sx={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: 1.5, 
+                    justifyContent: 'center', 
+                    mt: 4,
+                    width: "100%",
+                  }}
+                >
+                  {SUGGESTIONS.map((s, i) => (
+                    <Chip
+                      key={i}
+                      icon={s.icon}
+                      label={s.label}
+                      onClick={s.action}
+                      sx={{
+                        borderRadius: '24px',
+                        px: 1,
+                        py: 2.5,
+                        bgcolor: isDarkMode ? "#1E1F20" : "#F0F4F9",
+                        color: isDarkMode ? "#E3E3E3" : "#1F1F1F",
+                        border: 'none',
+                        fontSize: isMobile ? '0.85rem' : '0.95rem',
+                        fontWeight: 500,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          bgcolor: isDarkMode ? "#333537" : "#E2E7ED",
+                          transform: 'translateY(-2px)',
+                        },
+                        '& .MuiChip-icon': {
+                          color: isDarkMode ? '#E3E3E3' : '#1F1F1F',
+                        }
+                      }}
+                    />
+                  ))}
+                </MotionBox>
+              </Box>
+            </MotionBox>
+          ) : (
+            <MotionBox
+              key="chat-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, px: isMobile ? 2 : 4, pt: 3, pb: 4, maxWidth: 900, mx: 'auto', width: '100%' }}>
+                {/* Título gerado pela IA */}
+                {chatTitle && (
+                  <MotionBox
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    sx={{ 
+                      textAlign: 'center', 
+                      mb: 4, 
+                      mt: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 1
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "12px",
+                        background: NIX_BRAND.gradient,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: `0 8px 16px ${alpha(NIX_BRAND.purple, 0.25)}`,
+                        mb: 2
+                      }}
+                    >
+                      <SparklesIcon sx={{ fontSize: 20, color: "#fff" }} />
+                    </Box>
+                    <Typography 
+                      variant="h5" 
+                      fontWeight={700} 
+                      sx={{ 
+                        color: isDarkMode ? "#fff" : "#1F1F1F",
+                        letterSpacing: '-0.01em'
+                      }}
+                    >
+                      {chatTitle}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 500 }}>
+                      Sessão de Inteligência Artificial
+                    </Typography>
+                  </MotionBox>
+                )}
+
+                {messages.map((message) => (
+                  <ChatMessage key={message.id} message={message} isMobile={isMobile} />
+                ))}
+
+                {/* Preview de transação pendente */}
+                <AnimatePresence>
+                  {pendingTransaction && onTransactionCreate && (
+                    <Box sx={{ mt: 2 }}>
+                      <TransactionPreviewCard
+                        transaction={pendingTransaction}
+                        categories={categories}
+                        paymentMethods={paymentMethods}
+                        onConfirm={handleConfirmTransaction}
+                        onCancel={handleCancelTransaction}
+                      />
+                    </Box>
+                  )}
+                </AnimatePresence>
+
+                {/* Tabela de lote */}
+                <AnimatePresence>
+                  {pendingBatch && pendingBatch.length > 0 && onTransactionCreate && (
+                    <Box sx={{ mt: 2 }}>
+                      <BatchTransactionTable
+                        transactions={pendingBatch}
+                        categories={categories}
+                        paymentMethods={paymentMethods}
+                        onConfirmAll={handleConfirmBatch}
+                        onCancel={handleCancelBatch}
+                        getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+                        getPaymentMethodConfig={getPaymentMethodConfig}
+                      />
+                    </Box>
+                  )}
+                </AnimatePresence>
+
+                {/* Loading */}
+                <AnimatePresence>
+                  {isLoading && (
+                    <Box sx={{ mt: 2 }}>
+                      <NixAISkeleton />
+                    </Box>
+                  )}
+                </AnimatePresence>
+              </Box>
+            </MotionBox>
           )}
         </AnimatePresence>
-
         <div ref={messagesEndRef} />
       </Box>
 
-      {/* ── Input Area ── */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          px: isMobile ? 2 : 3,
-          pt: 1,
-          pb: isMobile ? 1.5 : 2,
-          borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-          bgcolor: "background.default",
-        }}
-      >
-        <Box sx={{ maxWidth: 720, mx: "auto" }}>
-          {/* Hidden file input */}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            style={{ display: "none" }}
-          />
-
-          {/* Recording indicator */}
-          <AnimatePresence>
-            {isRecording && (
-              <MotionPaper
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                elevation={0}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 2,
-                  p: 1.25,
-                  mb: 1,
-                  borderRadius: "12px",
-                  bgcolor: alpha(theme.palette.error.main, 0.08),
-                  border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    bgcolor: "error.main",
-                    animation: `${pulseAnimation} 1.5s infinite`,
-                  }}
-                />
-                <Typography variant="body2" fontWeight={600} color="error.main" sx={{ fontSize: 13 }}>
-                  Gravando {formatTime(recordingTime)}
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="error"
-                  size="small"
-                  startIcon={<StopIcon sx={{ fontSize: 14 }} />}
-                  onClick={stopRecording}
-                  sx={{ borderRadius: "8px", fontWeight: 600, textTransform: "none", fontSize: 12, py: 0.5 }}
-                >
-                  Parar
-                </Button>
-              </MotionPaper>
-            )}
-          </AnimatePresence>
-
-          {/* Input bar */}
-          <Box
+      {/* Barra de input na parte inferior quando não centralizado */}
+      <AnimatePresence>
+        {!isCentered && (
+          <MotionBox
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
             sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-              px: 1.25,
-              py: 0.75,
-              borderRadius: "16px",
-              bgcolor: isDarkMode ? alpha("#FFFFFF", 0.05) : "#FFFFFF",
-              boxShadow: isDarkMode
-                ? `0 2px 20px ${alpha("#000000", 0.35)}, 0 0 0 1px ${alpha("#FFFFFF", 0.07)}`
-                : `0 2px 16px ${alpha("#000000", 0.08)}, 0 0 0 1px ${alpha("#000000", 0.06)}`,
+              pt: 2,
+              pb: isMobile ? 2 : 3,
+              px: isMobile ? 2 : 4,
+              borderTop: "none",
+              flexShrink: 0,
+              width: '100%',
+              maxWidth: 900,
+              mx: 'auto',
+              bgcolor: 'background.default',
+              zIndex: 5,
             }}
           >
-            <Box sx={{ display: "flex", gap: 0.25, flexShrink: 0 }}>
-              <Tooltip title={isRecording ? "Parar gravação" : "Gravar áudio"}>
-                <IconButton
-                  onClick={() => isRecording ? stopRecording() : startRecording()}
-                  disabled={isLoading}
-                  size="small"
-                  sx={{
-                    width: 34, height: 34, borderRadius: "10px",
-                    bgcolor: isRecording ? alpha(theme.palette.error.main, 0.12) : "transparent",
-                    color: isRecording ? "error.main" : "text.secondary",
-                    transition: "all 0.15s",
-                    "&:hover": { bgcolor: alpha(NIX_BRAND.purple, 0.1), color: NIX_BRAND.purple },
-                  }}
-                >
-                  {isRecording ? <StopIcon sx={{ fontSize: 17 }} /> : <MicIcon sx={{ fontSize: 17 }} />}
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Enviar foto de recibo">
-                <IconButton
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading || isRecording}
-                  size="small"
-                  sx={{
-                    width: 34, height: 34, borderRadius: "10px",
-                    color: "text.secondary",
-                    transition: "all 0.15s",
-                    "&:hover": { bgcolor: alpha(NIX_BRAND.purple, 0.1), color: NIX_BRAND.purple },
-                  }}
-                >
-                  <CameraIcon sx={{ fontSize: 17 }} />
-                </IconButton>
-              </Tooltip>
-            </Box>
-
-            <Box sx={{ width: "1px", height: 20, bgcolor: "divider", flexShrink: 0 }} />
-
-            <TextField
-              inputRef={inputRef}
-              fullWidth
-              multiline
-              maxRows={4}
-              placeholder={isRecording ? "Gravando áudio..." : "Digite sua mensagem..."}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isLoading || isRecording}
-              variant="standard"
-              InputProps={{
-                disableUnderline: true,
-                sx: { fontSize: 14, lineHeight: 1.5, px: 0.5, "& textarea": { py: 0.5 } },
-              }}
-            />
-
-            <IconButton
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading || isRecording}
-              size="small"
-              sx={{
-                width: 36, height: 36, flexShrink: 0, borderRadius: "11px",
-                background: inputValue.trim() ? NIX_BRAND.gradient : "transparent",
-                color: inputValue.trim() ? "#FFFFFF" : alpha(theme.palette.text.primary, 0.25),
-                boxShadow: inputValue.trim() ? `0 3px 10px ${alpha(NIX_BRAND.purple, 0.35)}` : "none",
-                transition: "all 0.2s ease",
-                "&:hover": {
-                  background: inputValue.trim()
-                    ? `linear-gradient(135deg, ${NIX_BRAND.purpleDark} 0%, ${NIX_BRAND.purple} 100%)`
-                    : "transparent",
-                  transform: inputValue.trim() ? "translateY(-1px)" : "none",
-                },
-                "&.Mui-disabled": { background: "transparent", color: alpha(theme.palette.text.primary, 0.2) },
-              }}
+            {renderInputBar(false)}
+            <Typography
+              variant="caption"
+              color="text.disabled"
+              sx={{ display: "block", textAlign: "center", mt: 1.5, fontSize: 11 }}
             >
-              <SendIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Box>
-
-          <Typography
-            variant="caption"
-            color="text.disabled"
-            sx={{ display: "block", textAlign: "center", mt: 0.75, fontSize: 10.5 }}
-          >
-            Diga algo como "gastei 50 no Uber" e o Nix entende automaticamente
-          </Typography>
-        </Box>
-      </Box>
+              O Finance Control pode cometer erros. Considere verificar informações importantes.
+            </Typography>
+          </MotionBox>
+        )}
+      </AnimatePresence>
     </Box>
   );
 };

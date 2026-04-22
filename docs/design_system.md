@@ -13,7 +13,7 @@ O Design System do Nix Finance segue a filosofia **"Human & Organic"** - interfa
 
 ---
 
-## 🎨 Radix UI Components
+##  Radix UI Components
 
 ### Importações
 
@@ -90,7 +90,7 @@ import NixButton from "@/components/radix/Button";
 
 ---
 
-## 🎨 Tokens CSS (index.css)
+##  Tokens CSS (index.css)
 
 Todos os tokens ficam em `:root` no `index.css` e estão disponíveis via `var()` em qualquer contexto (MUI `sx`, Radix, CSS puro):
 
@@ -123,27 +123,27 @@ Todos os tokens ficam em `:root` no `index.css` e estão disponíveis via `var()
 
 ---
 
-## 🎨 Filosofia de Design
+##  Filosofia de Design
 
 ### Princípio Central: "Human & Organic"
 
 Construir interfaces que parecem artesanais, acolhedoras e sofisticadas. Combater ativamente a estética genérica de templates.
 
-### 🚫 Anti-Patterns (NUNCA FAZER)
+###  Anti-Patterns (NUNCA FAZER)
 
-- ❌ **NUNCA** usar sombras pretas. Use sombras coloridas (roxa Nix) definidas em `radix-theme.css` ou `theme.ts`.
-- ❌ **NUNCA** usar cores de alta saturação (como `#0000FF` ou `#FF0000` puros).
-- ❌ **NUNCA** usar animações rígidas ou transições instantâneas.
-- ❌ **NUNCA** deixar empty states apenas com texto. Use ícones, ilustrações ou copy amigável.
-- ❌ **NUNCA** usar "Lorem Ipsum" padrão. Use dados financeiros realistas para placeholders.
+-  **NUNCA** usar sombras pretas. Use sombras coloridas (roxa Nix) definidas em `radix-theme.css` ou `theme.ts`.
+-  **NUNCA** usar cores de alta saturação (como `#0000FF` ou `#FF0000` puros).
+-  **NUNCA** usar animações rígidas ou transições instantâneas.
+-  **NUNCA** deixar empty states apenas com texto. Use ícones, ilustrações ou copy amigável.
+-  **NUNCA** usar "Lorem Ipsum" padrão. Use dados financeiros realistas para placeholders.
 
-### ✅ Regras de Design (SEMPRE FAZER)
+###  Regras de Design (SEMPRE FAZER)
 
 #### 1. Hierarquia Visual & Profundidade (Glassmorphism & Sombras Suaves)
 
 - Em vez de sombras pretas, use **sombras coloridas** derivadas do conteúdo do elemento.
-  - ❌ **Ruim**: `box-shadow: 0 4px 6px rgba(0,0,0,0.5)`
-  - ✅ **Bom**: `box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.15)` (tintado de Indigo)
+  -  **Ruim**: `box-shadow: 0 4px 6px rgba(0,0,0,0.5)`
+  -  **Bom**: `box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.15)` (tintado de Indigo)
 
 - Use **Glassmorphism** para cards e overlays:
   ```typescript
@@ -156,8 +156,8 @@ Construir interfaces que parecem artesanais, acolhedoras e sofisticadas. Combate
 
 - Use uma sans-serif geométrica moderna (assuma "Plus Jakarta Sans" ou "Inter").
 - **UX Writing**: Seja amigável e conversacional.
-  - ❌ **Em vez de**: "Transaction Error"
-  - ✅ **Diga**: "Oops, we couldn't save that transaction."
+  -  **Em vez de**: "Transaction Error"
+  -  **Diga**: "Oops, we couldn't save that transaction."
 - Use pesos de fonte distintos: 600/700 para títulos, 400/500 para corpo. Evite genérico `fontWeight="bold"`.
 
 #### 3. Espaçamento & Raio (Sensação Orgânica)
@@ -190,7 +190,7 @@ Construir interfaces que parecem artesanais, acolhedoras e sofisticadas. Combate
 
 ---
 
-## 📏 Sistema de Espaçamento
+##  Sistema de Espaçamento
 
 ### Visão Geral
 
@@ -277,13 +277,13 @@ gap: 2.5  // 20px
 
 ### Regras Importantes
 
-#### ✅ FAZER
+####  FAZER
 
 1. **Usar múltiplos de 0.5** (4px)
    {% raw %}
    ```typescript
-   sx={{ p: 2.5 }}    // ✅ 20px
-   sx={{ gap: 1.5 }}  // ✅ 12px
+   sx={{ p: 2.5 }}    //  20px
+   sx={{ gap: 1.5 }}  //  12px
    ```
    {% endraw %}
 
@@ -295,17 +295,17 @@ gap: 2.5  // 20px
 3. **Responsive com breakpoints**
    {% raw %}
    ```typescript
-   sx={{ p: isMobile ? 2 : 3 }}  // ✅
+   sx={{ p: isMobile ? 2 : 3 }}  // 
    ```
    {% endraw %}
 
-#### ❌ EVITAR
+####  EVITAR
 
 1. **Valores hardcoded fora do sistema**
    {% raw %}
    ```typescript
-   sx={{ padding: "18px" }}     // ❌ Não é múltiplo de 8
-   sx={{ marginTop: "25px" }}   // ❌ Use theme.spacing()
+   sx={{ padding: "18px" }}     //  Não é múltiplo de 8
+   sx={{ marginTop: "25px" }}   //  Use theme.spacing()
    ```
    {% endraw %}
 
@@ -313,10 +313,10 @@ gap: 2.5  // 20px
    {% raw %}
    ```typescript
    // Card A
-   <Card sx={{ p: 2 }}>         // ❌ Deveria ser p: 3
+   <Card sx={{ p: 2 }}>         //  Deveria ser p: 3
 
    // Card B (mesmo contexto)
-   <Card sx={{ p: 3 }}>         // ✅
+   <Card sx={{ p: 3 }}>         // 
    ```
    {% endraw %}
 
@@ -324,10 +324,10 @@ gap: 2.5  // 20px
    {% raw %}
    ```typescript
    // Dialog 1
-   <DialogContent sx={{ p: 2 }}>    // ❌
+   <DialogContent sx={{ p: 2 }}>    // 
 
    // Dialog 2
-   <DialogContent sx={{ p: 3 }}>    // ✅
+   <DialogContent sx={{ p: 3 }}>    // 
    ```
    {% endraw %}
 
@@ -406,7 +406,7 @@ gap: 2.5  // 20px
 
 ---
 
-## 🎨 Componentes e Padrões
+##  Componentes e Padrões
 
 ### Cards
 
@@ -538,7 +538,7 @@ gap: 2.5  // 20px
 
 ---
 
-## 🎭 Animações e Transições
+##  Animações e Transições
 
 ### Princípios
 
@@ -569,7 +569,7 @@ gap: 2.5  // 20px
 
 ---
 
-## 🌓 Dark Mode
+##  Dark Mode
 
 ### Backgrounds
 
@@ -592,7 +592,7 @@ border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)
 
 ---
 
-## 📱 Responsividade
+##  Responsividade
 
 ### Breakpoints
 
@@ -620,24 +620,24 @@ fullScreen={isMobile}
 
 ---
 
-## ✅ Checklist de Verificação
+##  Checklist de Verificação
 
 Antes de commit, verifique:
 
-1. ✅ Todos os `p`, `px`, `py`, `m`, `mx`, `my` são múltiplos de 0.5
-2. ✅ Cards similares têm o mesmo padding
-3. ✅ Gaps são consistentes por tipo de agrupamento
-4. ✅ Mobile/Desktop seguem a mesma proporção (geralmente 2 vs 3)
-5. ✅ Border radius é 20px (2.5) para elementos grandes, 12px (1.5) para pequenos
-6. ✅ Sombras são coloridas, não pretas
-7. ✅ Transições são suaves (0.2s ease-in-out)
-8. ✅ Hover states estão implementados
-9. ✅ Dark mode está testado
-10. ✅ Empty states têm ícones/ilustrações
+1.  Todos os `p`, `px`, `py`, `m`, `mx`, `my` são múltiplos de 0.5
+2.  Cards similares têm o mesmo padding
+3.  Gaps são consistentes por tipo de agrupamento
+4.  Mobile/Desktop seguem a mesma proporção (geralmente 2 vs 3)
+5.  Border radius é 20px (2.5) para elementos grandes, 12px (1.5) para pequenos
+6.  Sombras são coloridas, não pretas
+7.  Transições são suaves (0.2s ease-in-out)
+8.  Hover states estão implementados
+9.  Dark mode está testado
+10.  Empty states têm ícones/ilustrações
 
 ---
 
-## 📚 Referências
+##  Referências
 
 - **MUI Theme**: Configurado em `theme.ts`
 - **Cores**: Acesse via `theme.palette.primary.main`, etc.

@@ -12,7 +12,7 @@ export const isGeminiConfigured = (): boolean => GEMINI_API_KEY.length > 0;
 
 /** User-facing copy when Smart Input / Nix AI is used without API key */
 export const GEMINI_NOT_CONFIGURED_MESSAGE =
-  "Configure GEMINI_API_KEY in your .env file to use Nix AI and Smart Input.";
+  "Configure GEMINI_API_KEY in your .env file to use Finance Control AI and Smart Input.";
 
 const ai = new GoogleGenAI({
   apiKey: GEMINI_API_KEY || "placeholder-key-not-used",
@@ -152,7 +152,7 @@ Exemplos que NÃO são intenção de cadastro:
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
     const responseText = (response.text || "")
@@ -265,7 +265,7 @@ export const parseTransactionFromText = async (
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `${systemPrompt}\n\nINPUT DO USUÁRIO:\n"${text}"`,
+      contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nINPUT DO USUÁRIO:\n"${text}"` }] }],
     });
 
     const responseText = response.text || "";
@@ -684,7 +684,7 @@ export const parseBatchFromText = async (
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `${prompt}\n\nINPUT DO USUÁRIO:\n"${text}"`,
+      contents: [{ role: "user", parts: [{ text: `${prompt}\n\nINPUT DO USUÁRIO:\n"${text}"` }] }],
     });
 
     const responseText = response.text || "";
@@ -846,7 +846,7 @@ export const chatWithNixAI = async (
     .map((m) => `${m.role === "user" ? "User" : "NixAI"}: ${m.content}`)
     .join("\n");
 
-  const systemPrompt = `You are NixAI, an intelligent and friendly personal finance assistant for the Nix app.
+  const systemPrompt = `You are Finance Control AI, an intelligent and friendly personal finance assistant for the Finance Control app.
 You have access to the user's financial data and can help them understand their finances, provide insights, and give recommendations.
 
 IMPORTANT GUIDELINES:
@@ -885,7 +885,7 @@ Now respond to the user's message:`;
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `${systemPrompt}\n\nUser: ${userMessage}`,
+      contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nUser: ${userMessage}` }] }],
     });
     return response.text || "I'm sorry, I couldn't process that request.";
   } catch (error) {
@@ -946,7 +946,7 @@ Responda APENAS com JSON:
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
     const responseText = (response.text || "")
@@ -1093,11 +1093,31 @@ export const getFinancialInsights = async (
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
     return response.text || "Unable to generate insights at this time.";
   } catch (error) {
     console.error("Error fetching Gemini insights:", error);
     return "An error occurred while connecting to the AI. Please try again later.";
+  }
+};
+/**
+ * Gera um título curto e criativo para a conversa baseado na primeira mensagem
+ */
+export const generateChatTitle = async (firstMessage: string): Promise<string> => {
+  if (!isGeminiConfigured()) return "Nova Conversa";
+  
+  try {
+    const prompt = `Gere um título curto e criativo (máximo 4 palavras) em português para uma conversa que começa com o seguinte input: "${firstMessage}". Responda apenas o título, sem aspas ou pontuação final. Se for um áudio ou imagem, gere algo genérico relacionado a finanças.`;
+    
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
+
+    return (response.text || "Nova Conversa").trim();
+  } catch (error) {
+    console.error("Error generating chat title:", error);
+    return "Nova Conversa";
   }
 };

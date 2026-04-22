@@ -1084,13 +1084,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             },
             "&::-webkit-scrollbar-thumb": {
               bgcolor: isDarkMode
-                ? alpha("#FFFFFF", 0.1)
-                : alpha("#000000", 0.1),
+                ? alpha(theme.palette.primary.main, 0.2)
+                : alpha(theme.palette.primary.main, 0.1),
               borderRadius: 3,
               "&:hover": {
                 bgcolor: isDarkMode
-                  ? alpha("#FFFFFF", 0.2)
-                  : alpha("#000000", 0.2),
+                  ? alpha(theme.palette.primary.main, 0.4)
+                  : alpha(theme.palette.primary.main, 0.3),
               },
             },
           }}
@@ -1153,7 +1153,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   },
                 }}
               >
-                💰 Receita
+                 Receita
               </ToggleButton>
               <ToggleButton
                 value="expense"
@@ -1177,7 +1177,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   },
                 }}
               >
-                💸 Despesa
+                 Despesa
               </ToggleButton>
             </ToggleButtonGroup>
 
@@ -1243,7 +1243,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               {/* Sugestão de Categoria (Local) */}
               <Collapse in={!!suggestedCategory}>
                 <Chip
-                  label={`💡 Sugestão: ${suggestedCategory}`}
+                  label={` Sugestão: ${suggestedCategory}`}
                   onClick={applySuggestedCategory}
                   onDelete={applySuggestedCategory}
                   deleteIcon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
@@ -1280,8 +1280,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   }
                   label={
                     isLoadingAiSuggestion
-                      ? "🤖 Analisando..."
-                      : `🤖 IA sugere: ${aiSuggestion?.category}`
+                      ? " Analisando..."
+                      : ` IA sugere: ${aiSuggestion?.category}`
                   }
                   onClick={() => {
                     if (aiSuggestion) {
@@ -2126,7 +2126,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                               },
                             }}
                           >
-                            ✂️ Conta Dividida (50%)
+                            ️ Conta Dividida (50%)
                           </ToggleButton>
                           <ToggleButton
                             value="single"
@@ -2150,7 +2150,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                               },
                             }}
                           >
-                            💯 Conta Única (100%)
+                             Conta Única (100%)
                           </ToggleButton>
                         </ToggleButtonGroup>
                       </Box>
@@ -2299,7 +2299,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                                 color="success.main"
                                 fontWeight={600}
                               >
-                                💰 {sharedWith} está te pagando:
+                                 {sharedWith} está te pagando:
                               </Typography>
                               <Typography
                                 variant="body2"
@@ -2337,7 +2337,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                                 color="error.main"
                                 fontWeight={600}
                               >
-                                💸 Você está pagando para {sharedWith}:
+                                 Você está pagando para {sharedWith}:
                               </Typography>
                               <Typography
                                 variant="body2"
@@ -2371,7 +2371,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                                 color="success.main"
                                 fontWeight={600}
                               >
-                                ✨ {sharedWith} te deve (metade):
+                                 {sharedWith} te deve (metade):
                               </Typography>
                               <Typography
                                 variant="body2"
@@ -2441,13 +2441,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   }}
                 >
                   {hasInstallmentsPreview && (
-                    <Tab label="💳 Parcelas" value="installments" />
+                    <Tab label=" Parcelas" value="installments" />
                   )}
                   {hasSharedPreview && (
-                    <Tab label="👥 Compartilhado" value="shared" />
+                    <Tab label=" Compartilhado" value="shared" />
                   )}
                   {hasBalancePreview && (
-                    <Tab label="💰 Saldo" value="balance" />
+                    <Tab label=" Saldo" value="balance" />
                   )}
                 </Tabs>
 
@@ -2497,7 +2497,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             color="success.main"
                             fontWeight={600}
                           >
-                            💰 {sharedWith} está te pagando:
+                             {sharedWith} está te pagando:
                           </Typography>
                           <Typography
                             variant="body2"
@@ -2534,7 +2534,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             color="error.main"
                             fontWeight={600}
                           >
-                            💸 Você está pagando para {sharedWith}:
+                             Você está pagando para {sharedWith}:
                           </Typography>
                           <Typography
                             variant="body2"
@@ -2567,7 +2567,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             color="success.main"
                             fontWeight={600}
                           >
-                            ✨ {sharedWith} te deve (metade):
+                             {sharedWith} te deve (metade):
                           </Typography>
                           <Typography
                             variant="body2"
@@ -2703,7 +2703,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             }}
                           >
                             <Typography variant="caption">
-                              ⚠️ Saldo ficará negativo
+                              ️ Saldo ficará negativo
                             </Typography>
                           </Alert>
                         )}

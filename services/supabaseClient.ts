@@ -9,7 +9,7 @@ export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
 if (!isSupabaseConfigured) {
   console.warn(
-    "⚠️ Supabase não configurado!\n" +
+    "️ Supabase não configurado!\n" +
       "Crie um arquivo .env na raiz do projeto com:\n" +
       "SUPABASE_URL=sua_url_do_supabase\n" +
       "SUPABASE_ANON_KEY=sua_anon_key"

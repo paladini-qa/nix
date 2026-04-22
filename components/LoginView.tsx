@@ -286,8 +286,8 @@ const LoginView: React.FC = () => {
             >
               <Box
                 component="img"
-                src={`${import.meta.env.BASE_URL}logo.png`}
-                alt="Nix Logo"
+                src={`${import.meta.env.BASE_URL}logo.svg`}
+                alt="Finance Control Logo"
                 sx={{ width: 36, height: 36 }}
               />
             </Box>
@@ -306,7 +306,7 @@ const LoginView: React.FC = () => {
                 backgroundClip: "text",
               }}
             >
-              {isSignUp ? "Criar Conta ☕" : "Bem-vindo de Volta ☕"}
+              {isSignUp ? "Criar Conta " : "Bem-vindo de Volta "}
             </Typography>
             <Typography
               variant="body2"
@@ -607,7 +607,7 @@ const LoginView: React.FC = () => {
                   fontSize: "0.7rem",
                 }}
               >
-                Análises com Gemini AI ✨
+                Análises com Gemini AI 
               </Typography>
             </Box>
           </Box>

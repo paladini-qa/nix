@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { useConfirmDialog } from "../contexts";
+import { useConfirmDialog, usePrivacy } from "../contexts";
+import { ThemePreference } from "../types";
+import ThemeSwitch from "./ThemeSwitch";
 import {
   Dialog,
   DialogContent,
@@ -22,11 +24,15 @@ import {
   Check as CheckIcon,
   ErrorOutline as AlertCircleIcon,
   Edit as EditIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from "@mui/icons-material";
 
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  themePreference: ThemePreference;
+  onThemeChange: (theme: ThemePreference) => void;
   displayName: string;
   userEmail: string;
   onUpdateDisplayName: (name: string) => void;
@@ -37,6 +43,8 @@ interface ProfileModalProps {
 const ProfileModal: React.FC<ProfileModalProps> = ({
   isOpen,
   onClose,
+  themePreference,
+  onThemeChange,
   displayName,
   userEmail,
   onUpdateDisplayName,
@@ -46,6 +54,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const { confirm } = useConfirmDialog();
+  const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
 
   const [localDisplayName, setLocalDisplayName] = useState(displayName);
   const [newEmail, setNewEmail] = useState("");
@@ -280,6 +289,72 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
               {errorMessage}
             </Alert>
           )}
+
+          {/* Privacy Mode & Theme Switch Row */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: "20px",
+              bgcolor: isDarkMode
+                ? alpha(theme.palette.background.default, 0.4)
+                : alpha(theme.palette.primary.main, 0.04),
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha(theme.palette.primary.main, 0.1)}`,
+            }}
+          >
+            {/* Privacy Toggle */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+                pb: 2,
+                borderBottom: `1px solid ${
+                  isDarkMode ? alpha("#FFFFFF", 0.06) : alpha(theme.palette.primary.main, 0.1)
+                }`,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                {isPrivacyMode ? (
+                  <VisibilityOffIcon
+                    sx={{ fontSize: 20, color: "primary.main" }}
+                  />
+                ) : (
+                  <VisibilityIcon
+                    sx={{ fontSize: 20, color: "text.secondary" }}
+                  />
+                )}
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 600,
+                    color: isPrivacyMode ? "primary.main" : "text.secondary",
+                  }}
+                >
+                  Modo Privado
+                </Typography>
+              </Box>
+              <Button
+                variant={isPrivacyMode ? "contained" : "outlined"}
+                color={isPrivacyMode ? "primary" : "inherit"}
+                onClick={togglePrivacyMode}
+                size="small"
+                sx={{
+                  borderRadius: "16px",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  ...( !isPrivacyMode && {
+                    borderColor: isDarkMode ? alpha("#FFFFFF", 0.2) : alpha("#000000", 0.2),
+                  }),
+                }}
+              >
+                {isPrivacyMode ? "Ativado" : "Desativado"}
+              </Button>
+            </Box>
+
+            {/* Theme Switch */}
+            <ThemeSwitch value={themePreference} onChange={onThemeChange} />
+          </Box>
 
           {/* Display Name Section */}
           <Box sx={sectionSx}>

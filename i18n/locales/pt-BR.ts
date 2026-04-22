@@ -43,8 +43,8 @@ export default {
     splits: "Parcelas",
     shared: "Compartilhado",
     settings: "Configurações",
-    nixai: "NixAI",
-    batchRegistration: "Cadastro em lote",
+    nixai: "Inteligência Artificial",
+    batchRegistration: "Cadastro em Lote",
     logout: "Sair",
   },
 
@@ -190,12 +190,12 @@ export default {
 
   // NixAI
   nixai: {
-    title: "NixAI",
+    title: "Inteligência Artificial",
     subtitle: "Seu assistente financeiro pessoal",
     placeholder: "Pergunte sobre suas finanças...",
     thinking: "Pensando...",
     welcome:
-      "Olá! Sou a NixAI, sua assistente financeira pessoal. Posso ajudá-lo a analisar padrões de gastos, fornecer recomendações de orçamento e responder perguntas sobre suas finanças.",
+      "Olá! Sou o Finance Control AI, seu assistente financeiro pessoal. Posso ajudá-lo a analisar padrões de gastos, fornecer recomendações de orçamento e responder perguntas sobre suas finanças.",
   },
 
   // Gastos Compartilhados

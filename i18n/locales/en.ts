@@ -43,8 +43,8 @@ export default {
     splits: "Splits",
     shared: "Shared",
     settings: "Settings",
-    nixai: "NixAI",
-    batchRegistration: "Batch registration",
+    nixai: "Artificial Intelligence",
+    batchRegistration: "Batch Import",
     logout: "Logout",
   },
 
@@ -190,12 +190,12 @@ export default {
 
   // NixAI
   nixai: {
-    title: "NixAI",
+    title: "Artificial Intelligence",
     subtitle: "Your personal financial assistant",
     placeholder: "Ask about your finances...",
     thinking: "Thinking...",
     welcome:
-      "Hello! I'm NixAI, your personal financial assistant. I can help you analyze spending patterns, provide budget recommendations, and answer questions about your finances.",
+      "Hello! I'm Finance Control AI, your personal financial assistant. I can help you analyze spending patterns, provide budget recommendations, and answer questions about your finances.",
   },
 
   // Shared Expenses

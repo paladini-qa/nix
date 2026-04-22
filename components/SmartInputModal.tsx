@@ -464,7 +464,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         }}
       />
       <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-        💡 Dica: Inclua valor, local, data e forma de pagamento para melhor precisão
+         Dica: Inclua valor, local, data e forma de pagamento para melhor precisão
       </Typography>
     </Box>
   );
@@ -547,7 +547,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
       )}
 
       <Typography variant="caption" color="text.secondary" textAlign="center">
-        🎤 Fale claramente o valor, descrição e forma de pagamento
+         Fale claramente o valor, descrição e forma de pagamento
       </Typography>
     </Box>
   );
@@ -637,7 +637,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
       )}
 
       <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-        📸 Envie foto de cupom fiscal, comprovante de Pix ou extrato
+         Envie foto de cupom fiscal, comprovante de Pix ou extrato
       </Typography>
     </Box>
   );
@@ -711,7 +711,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 },
               }}
             >
-              💰 Receita
+               Receita
             </ToggleButton>
             <ToggleButton
               value="expense"
@@ -722,7 +722,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 },
               }}
             >
-              💸 Despesa
+               Despesa
             </ToggleButton>
           </ToggleButtonGroup>
 

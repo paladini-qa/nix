@@ -59,7 +59,7 @@ const cardStyles = {
       accentDark: COFFEE.sageDark,
       gradientLight: "linear-gradient(135deg, rgba(91, 138, 90, 0.08) 0%, rgba(91, 138, 90, 0.03) 100%)",
       gradientDark: "linear-gradient(135deg, rgba(122, 184, 122, 0.14) 0%, rgba(122, 184, 122, 0.06) 100%)",
-      emoji: "🌿",
+      emoji: "",
     },
     negative: {
       iconBg: COFFEE.dustyRose,
@@ -68,7 +68,7 @@ const cardStyles = {
       accentDark: COFFEE.dustyRoseDark,
       gradientLight: "linear-gradient(135deg, rgba(184, 84, 80, 0.08) 0%, rgba(184, 84, 80, 0.03) 100%)",
       gradientDark: "linear-gradient(135deg, rgba(224, 120, 112, 0.14) 0%, rgba(224, 120, 112, 0.06) 100%)",
-      emoji: "📋",
+      emoji: "",
     },
   },
   income: {
@@ -78,7 +78,7 @@ const cardStyles = {
     accentDark: COFFEE.sageDark,
     gradientLight: "linear-gradient(135deg, rgba(91, 138, 90, 0.06) 0%, rgba(91, 138, 90, 0.02) 100%)",
     gradientDark: "linear-gradient(135deg, rgba(122, 184, 122, 0.12) 0%, rgba(122, 184, 122, 0.05) 100%)",
-    emoji: "☕",
+    emoji: "",
   },
   expense: {
     iconBg: COFFEE.dustyRose,
@@ -87,7 +87,7 @@ const cardStyles = {
     accentDark: COFFEE.dustyRoseDark,
     gradientLight: "linear-gradient(135deg, rgba(184, 84, 80, 0.06) 0%, rgba(184, 84, 80, 0.02) 100%)",
     gradientDark: "linear-gradient(135deg, rgba(224, 120, 112, 0.12) 0%, rgba(224, 120, 112, 0.05) 100%)",
-    emoji: "📋",
+    emoji: "",
   },
 };
 
@@ -346,7 +346,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                       variant="caption"
                       sx={{ color: flowAccent, fontWeight: 700 }}
                     >
-                      {isPositiveFlow ? "Mandou bem! Sobrando ✨" : "Gastando mais que ganha"}
+                      {isPositiveFlow ? "Mandou bem! Sobrando " : "Gastando mais que ganha"}
                     </Typography>
                   </MotionBox>
                 </Box>

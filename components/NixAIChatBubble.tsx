@@ -135,7 +135,7 @@ const NixAIChatBubble: React.FC<NixAIChatBubbleProps> = ({
         whileTap={{ scale: 0.94 }}
         sx={{ pointerEvents: "all" }}
       >
-        <Tooltip title={open ? "Fechar Nix AI" : "Abrir Nix AI"} placement="left">
+        <Tooltip title={open ? "Fechar Finance Control AI" : "Abrir Finance Control AI"} placement="left">
           <Box
             component="button"
             onClick={toggle}

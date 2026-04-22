@@ -5,15 +5,15 @@
 
 ---
 
-## 📱 Visão Geral
+##  Visão Geral
 
 Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais com análise inteligente usando Gemini AI. Construída com React 19, TypeScript e Material UI, oferece uma experiência completa e intuitiva para controle financeiro.
 
 ---
 
-## ✨ Funcionalidades Principais
+##  Funcionalidades Principais
 
-### 💰 Gestão Financeira
+###  Gestão Financeira
 
 #### Dashboard Financeiro
 - Visualização de receitas, despesas e saldo mensal
@@ -55,7 +55,7 @@ Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais co
 - **View Dedicada**: Visualização de todos os gastos compartilhados
 - **Gerenciamento de Amigos**: Lista de amigos para compartilhamento
 
-### 📊 Organização
+###  Organização
 
 #### Categorias Personalizadas
 - **Categorias Customizáveis**: Crie suas próprias categorias de receita e despesa
@@ -81,14 +81,14 @@ Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais co
 - **Aplicação em Transações**: Múltiplas tags por transação
 - **Filtros por Tag**: Filtre transações por tags
 
-### 🎯 Planejamento
+###  Planejamento
 
 #### Orçamentos
 - **Orçamentos Mensais**: Defina limites por categoria
 - **Orçamentos Recorrentes**: Repetição automática nos próximos meses
 - **Acompanhamento Visual**: Barras de progresso e alertas de estouro
 - **Alertas Toast**: Notificação automática quando orçamento ultrapassa 80% ou estoura (uma vez por sessão)
-- **Streak de Meses**: Badge "🔥 Xm" para categorias com X meses consecutivos no verde
+- **Streak de Meses**: Badge " Xm" para categorias com X meses consecutivos no verde
 - **View Dedicada**: Gerenciamento completo de orçamentos
 
 #### Metas Financeiras
@@ -111,7 +111,7 @@ Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais co
 - **Cores Personalizadas**: Sistema de cores com gradientes
 - **Regras de Auto-categorização**: Defina padrões (substring da descrição) que aplicam categoria automaticamente ao cadastrar transações; persistido via `localStorage`
 
-### 🛠️ Ferramentas Financeiras
+### ️ Ferramentas Financeiras
 
 #### Importação de Transações
 - **Formatos suportados**: CSV (detecção automática de separador e cabeçalhos) e OFX/QFX (SGML subset)
@@ -137,7 +137,7 @@ Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais co
 
 ---
 
-### 🤖 Inteligência Artificial
+###  Inteligência Artificial
 
 #### Nix AI
 - **Chat com IA**: Conversas inteligentes sobre finanças
@@ -151,7 +151,7 @@ Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais co
 - **Sugestão de Categoria**: Categorização inteligente
 - **Edição Pré-Salvamento**: Revise e edite antes de confirmar
 
-### 🎨 Interface e Experiência
+###  Interface e Experiência
 
 #### Design System
 - **Filosofia "Human & Organic"**: Interfaces artesanais e acolhedoras
@@ -178,7 +178,7 @@ Nix Finance é uma aplicação moderna de gerenciamento de finanças pessoais co
 
 ---
 
-## 🗄️ Estrutura de Dados
+## ️ Estrutura de Dados
 
 ### Tabelas do Banco de Dados
 
@@ -225,7 +225,7 @@ Tags personalizadas:
 
 ---
 
-## 🔧 Tecnologias e Stack
+##  Tecnologias e Stack
 
 ### Frontend
 - **React 19** - Framework principal
@@ -255,7 +255,7 @@ Tags personalizadas:
 
 ---
 
-## 📁 Estrutura do Projeto
+##  Estrutura do Projeto
 
 ```
 nix/
@@ -293,7 +293,7 @@ nix/
 
 ---
 
-## 🚀 Como Usar
+##  Como Usar
 
 ### Instalação
 
@@ -333,7 +333,7 @@ PLUGGY_CLIENT_SECRET=xxx
 
 ---
 
-## 🛡️ Modo Privacidade
+## ️ Modo Privacidade
 
 O modo de privacidade oculta valores monetários em ambientes públicos usando blur animado.
 
@@ -351,7 +351,7 @@ const { privacyStyles, privacyStylesStrong } = usePrivacyMode();
 
 ---
 
-## 📊 DataTable Mobile
+##  DataTable Mobile
 
 O `DataTable` detecta automaticamente telas mobile (`md` breakpoint = 1024px) e alterna para o modo de cards:
 
@@ -368,7 +368,7 @@ O `DataTable` detecta automaticamente telas mobile (`md` breakpoint = 1024px) e 
 
 ---
 
-## 📚 Documentação Adicional
+##  Documentação Adicional
 
 - **Design System**: `docs/design_system.md` - Guia completo de design
 - **Changelog**: `CHANGELOG.md` - Histórico de mudanças

@@ -180,7 +180,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
       >
         <Box>
           <Typography variant="h5" fontWeight="bold">
-            Welcome{displayName ? `, ${displayName}` : ""}! 👋
+            Welcome{displayName ? `, ${displayName}` : ""}! 
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Let's get you started with Nix

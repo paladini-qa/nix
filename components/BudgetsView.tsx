@@ -136,13 +136,13 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
     if (overBudget.length > 0) {
       showWarning(
         `${overBudget.length} orçamento${overBudget.length > 1 ? "s" : ""} estourado${overBudget.length > 1 ? "s" : ""}! Revise seus gastos.`,
-        "⚠️ Orçamento estourado"
+        "️ Orçamento estourado"
       );
       alertShownRef.current = true;
     } else if (nearLimit.length > 0) {
       showWarning(
         `${nearLimit.length} orçamento${nearLimit.length > 1 ? "s" : ""} acima de 80% do limite.`,
-        "📊 Atenção ao orçamento"
+        " Atenção ao orçamento"
       );
       alertShownRef.current = true;
     }
@@ -498,7 +498,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
                           {(streakByCategory[budget.category] ?? 0) >= 2 && !budget.isOverBudget && (
                             <Tooltip title={`${streakByCategory[budget.category]} meses consecutivos dentro do orçamento`}>
                               <Chip
-                                label={`🔥 ${streakByCategory[budget.category]}m`}
+                                label={` ${streakByCategory[budget.category]}m`}
                                 size="small"
                                 sx={{
                                   height: 20,

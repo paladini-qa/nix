@@ -63,8 +63,8 @@ export const syncWithBrowserLanguage = async () => {
 
 // Idiomas disponíveis (para referência/UI)
 export const availableLanguages = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "pt-BR", name: "Português (Brasil)", flag: "🇧🇷" },
+  { code: "en", name: "English", flag: "" },
+  { code: "pt-BR", name: "Português (Brasil)", flag: "" },
 ];
 
 // Tipo para idiomas

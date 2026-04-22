@@ -81,7 +81,7 @@ import type { AdvancedFiltersState } from "./components/AdvancedFilters";
 import { getInitialMonthYear } from "./hooks/useFilters";
 import { usePullToRefresh } from "./hooks";
 import PullToRefreshIndicator from "./components/PullToRefreshIndicator";
-import NixAIChatBubble from "./components/NixAIChatBubble";
+
 import DashboardSkeleton from "./components/skeletons/DashboardSkeleton";
 import TransactionsSkeleton from "./components/skeletons/TransactionsSkeleton";
 import ListCardsSkeleton from "./components/skeletons/ListCardsSkeleton";
@@ -4398,8 +4398,6 @@ const AppContent: React.FC<{
           {/* Sidebar - Desktop Only */}
           {!isMobile && (
             <Sidebar
-              themePreference={themePreference}
-              onThemeChange={updateThemePreference}
               currentView={currentView}
               onNavigate={navigateTo}
               onLogout={handleLogout}
@@ -4419,8 +4417,6 @@ const AppContent: React.FC<{
               <MobileDrawer
                 open={isMobileDrawerOpen}
                 onClose={() => setIsMobileDrawerOpen(false)}
-                themePreference={themePreference}
-                onThemeChange={updateThemePreference}
                 currentView={currentView}
                 onNavigate={navigateTo}
                 onLogout={handleLogout}
@@ -4451,19 +4447,19 @@ const AppContent: React.FC<{
             sx={{
               flexGrow: 1,
               minHeight: 0,
-              pt: currentView === "nixai" ? 0 : CONTENT_PADDING,
-              px: currentView === "nixai" ? 0 : CONTENT_PADDING_X,
+              pt: (currentView === "nixai" || currentView === "batchRegistration") ? 0 : CONTENT_PADDING,
+              px: (currentView === "nixai" || currentView === "batchRegistration") ? 0 : CONTENT_PADDING_X,
               mt: { xs: "64px", lg: 0 },
-              pb: currentView === "nixai"
+              pb: (currentView === "nixai" || currentView === "batchRegistration")
                 ? { xs: `calc(80px + env(safe-area-inset-bottom, 0px))`, lg: 0 }
                 : { xs: "140px", lg: 4 },
               maxWidth: "100%",
               minWidth: 0,
               overflowX: "hidden",
-              overflowY: currentView === "nixai" ? "hidden" : "auto",
+              overflowY: (currentView === "nixai" || currentView === "batchRegistration") ? "hidden" : "auto",
               boxSizing: "border-box",
-              display: currentView === "nixai" ? "flex" : undefined,
-              flexDirection: currentView === "nixai" ? "column" : undefined,
+              display: (currentView === "nixai" || currentView === "batchRegistration") ? "flex" : undefined,
+              flexDirection: (currentView === "nixai" || currentView === "batchRegistration") ? "column" : undefined,
               ...(isMobile && { position: "relative" }),
             }}
           >
@@ -4481,10 +4477,10 @@ const AppContent: React.FC<{
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: currentView === "nixai" ? 0 : SECTION_GAP,
+                gap: (currentView === "nixai" || currentView === "batchRegistration") ? 0 : SECTION_GAP,
                 pt: isMobile && (isPullPulling || isPullRefreshing) ? 2 : 0,
                 transition: "padding-top 0.2s ease",
-                ...(currentView === "nixai" && { flex: 1, minHeight: 0 }),
+                ...((currentView === "nixai" || currentView === "batchRegistration") && { flex: 1, minHeight: 0 }),
               }}
             >
               <AppViewSwitcher
@@ -4540,14 +4536,6 @@ const AppContent: React.FC<{
             </Box>
           </Box>
 
-          {/* Nix AI chat bubble — desktop only */}
-          <NixAIChatBubble
-            transactions={transactions}
-            categories={categories}
-            paymentMethods={paymentMethods}
-            onTransactionCreate={handleSmartInputTransaction}
-            getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
-          />
 
           <TransactionForm
             isOpen={isFormOpen}
@@ -4574,6 +4562,8 @@ const AppContent: React.FC<{
           <ProfileModal
             isOpen={isProfileModalOpen}
             onClose={() => setIsProfileModalOpen(false)}
+            themePreference={themePreference}
+            onThemeChange={updateThemePreference}
             displayName={displayName}
             userEmail={session.user.email || ""}
             onUpdateDisplayName={handleUpdateDisplayName}

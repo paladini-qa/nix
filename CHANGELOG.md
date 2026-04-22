@@ -47,7 +47,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ##### Fase 5: Melhorias em Budgets e Goals
 - **Alertas toast de orçamento** — `BudgetsView` emite `showWarning` uma vez por sessão quando budget > 80% ou estourado; usa `alertShownRef` para evitar duplicatas
-- **Streak de meses no verde** — Badge "🔥 Xm" em `BudgetCard` para categorias com streak ≥ 2 meses consecutivos dentro do orçamento
+- **Streak de meses no verde** — Badge " Xm" em `BudgetCard` para categorias com streak ≥ 2 meses consecutivos dentro do orçamento
 - **Contribuição automática para metas** — Campo "Contribuição mensal (opcional)" no formulário de nova meta; ao salvar cria transação recorrente de poupança via `onCreateTransaction`
   - **Arquivos modificados**: `components/BudgetsView.tsx`, `components/GoalsView.tsx`
 

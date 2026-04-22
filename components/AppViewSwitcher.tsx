@@ -291,6 +291,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
             onTransactionCreate={handleSmartInputTransaction}
             getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
             getPaymentMethodConfig={paymentMethodConfigs ? (name) => paymentMethodConfigs.find(c => c.name === name) : undefined}
+            displayName={displayName}
           />
         </Suspense>
       );
@@ -305,6 +306,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
             onTransactionCreate={handleSmartInputTransaction}
             getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
             getPaymentMethodConfig={paymentMethodConfigs ? (name) => paymentMethodConfigs.find(c => c.name === name) : undefined}
+            displayName={displayName}
           />
         </Suspense>
       );
@@ -477,7 +479,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
       type="slideLeft"
       duration={0.2}
       mode="sync"
-      sx={currentView === "nixai" ? { height: "100%", display: "flex", flexDirection: "column" } : undefined}
+      sx={(currentView === "nixai" || currentView === "batchRegistration") ? { height: "100%", display: "flex", flexDirection: "column" } : undefined}
     >
       {renderView()}
     </PageTransition>

@@ -14,31 +14,31 @@ Aplicação moderna de gerenciamento de finanças pessoais com análise intelige
 
 </div>
 
-## ✨ Funcionalidades
+##  Funcionalidades
 
-### 💰 Gestão Financeira
+###  Gestão Financeira
 - **Dashboard Financeiro** - Visualize receitas, despesas e saldo mensal com gráficos interativos
 - **Transações** - Adicione, edite e gerencie suas transações com filtros avançados
 - **Transações Recorrentes** - Suporte para lançamentos mensais/anuais automáticos
 - **Parcelamentos** - Controle de compras parceladas com acompanhamento de parcelas
 - **Gastos Compartilhados** - Divida despesas 50/50 com amigos e acompanhe quem deve o quê
 
-### 📊 Organização
+###  Organização
 - **Categorias Personalizadas** - Configure suas próprias categorias com cores e ícones
 - **Métodos de Pagamento** - Gerencie cartões, contas e formas de pagamento
 - **Contas/Carteiras** - Múltiplas contas (corrente, poupança, cartão de crédito, investimentos)
 - **Tags** - Etiquetas personalizadas para classificação extra das transações
 
-### 🎯 Planejamento
+###  Planejamento
 - **Orçamentos** - Defina limites por categoria e acompanhe seus gastos
 - **Metas Financeiras** - Crie objetivos de economia com prazo e acompanhamento visual
 - **Analytics** - Relatórios detalhados e insights sobre seus hábitos financeiros
 
-### 🤖 Inteligência Artificial
+###  Inteligência Artificial
 - **Nix AI** - Chat com IA para insights financeiros personalizados (Gemini AI)
 - **Smart Input** - Cadastro inteligente de transações via texto natural
 
-### 📱 Experiência
+###  Experiência
 - **App Mobile** - Suporte nativo para Android e iOS via Capacitor
 - **Tema Escuro/Claro** - Interface adaptável com design glassmorphism
 - **Internacionalização** - Suporte para Português (BR) e Inglês
@@ -46,13 +46,13 @@ Aplicação moderna de gerenciamento de finanças pessoais com análise intelige
 - **Busca Global** - Encontre qualquer transação rapidamente
 - **Autenticação** - Login seguro com Supabase Auth
 
-## 📋 Pré-requisitos
+##  Pré-requisitos
 
 - [Node.js](https://nodejs.org/) 18 ou superior
 - Conta no [Supabase](https://supabase.com/)
 - (Opcional) Chave de API do [Google AI Studio](https://aistudio.google.com/) para funcionalidades de IA
 
-## 🚀 Como Rodar o Projeto
+##  Como Rodar o Projeto
 
 ### 1. Clone o repositório e instale as dependências
 
@@ -98,9 +98,9 @@ GEMINI_API_KEY=sua_gemini_api_key_aqui
 npm run dev
 ```
 
-Acesse [http://localhost:5173](http://localhost:5173) 🎉
+Acesse [http://localhost:5173](http://localhost:5173) 
 
-## 📱 Build Mobile (Android/iOS)
+##  Build Mobile (Android/iOS)
 
 O projeto usa [Capacitor](https://capacitorjs.com/) para builds nativos:
 
@@ -115,7 +115,7 @@ npm run cap:ios
 npm run cap:sync
 ```
 
-## 📁 Estrutura do Projeto
+##  Estrutura do Projeto
 
 ```
 nix/
@@ -167,7 +167,7 @@ nix/
 └── vite.config.ts            # Configuração do Vite
 ```
 
-## 🗄️ Banco de Dados (Supabase)
+## ️ Banco de Dados (Supabase)
 
 ### Tabelas
 
@@ -182,7 +182,7 @@ nix/
 
 O banco está configurado com RLS para garantir que cada usuário acesse apenas seus próprios dados.
 
-## 📜 Scripts Disponíveis
+##  Scripts Disponíveis
 
 | Comando             | Descrição                                 |
 | ------------------- | ----------------------------------------- |
@@ -195,7 +195,7 @@ O banco está configurado com RLS para garantir que cada usuário acesse apenas 
 | `npm run cap:ios`   | Build e abre projeto iOS                  |
 | `npm run cap:sync`  | Sincroniza build com projetos nativos     |
 
-## 🛠️ Tecnologias
+## ️ Tecnologias
 
 ### Frontend
 - **React 19** - Biblioteca UI
@@ -224,6 +224,6 @@ O banco está configurado com RLS para garantir que cada usuário acesse apenas 
 - **Day.js** - Manipulação de datas
 - **jsPDF / xlsx** - Exportação de relatórios
 
-## 📄 Licença
+##  Licença
 
 MIT

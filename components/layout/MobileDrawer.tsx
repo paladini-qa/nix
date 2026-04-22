@@ -30,8 +30,6 @@ import {
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { ThemePreference } from "../../types";
-import ThemeSwitch from "../ThemeSwitch";
 import { MOBILE_DRAWER_WIDTH, TOUCH_TARGET_MIN } from "../../layoutConstants";
 
 // Motion-enabled components
@@ -55,8 +53,6 @@ type ViewType =
 interface MobileDrawerProps {
   open: boolean;
   onClose: () => void;
-  themePreference: ThemePreference;
-  onThemeChange: (theme: ThemePreference) => void;
   currentView: ViewType;
   onNavigate: (view: ViewType) => void;
   onLogout: () => void;
@@ -98,8 +94,6 @@ const itemVariants = {
 const MobileDrawer: React.FC<MobileDrawerProps> = ({
   open,
   onClose,
-  themePreference,
-  onThemeChange,
   currentView,
   onNavigate,
   onLogout,
@@ -390,8 +384,8 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         >
           <Box
             component="img"
-            src={`${import.meta.env.BASE_URL}logo.png`}
-            alt="Nix Logo"
+            src={`${import.meta.env.BASE_URL}logo.svg`}
+            alt="Finance Control Logo"
             sx={{
               width: 36,
               height: 36,
@@ -408,7 +402,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
               letterSpacing: "-0.02em",
             }}
           >
-            Nix
+            Finance Control
           </Typography>
           <Typography
             variant="caption"
@@ -469,20 +463,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           },
         }}
       >
-        {/* Theme Switch */}
-        <Box
-          sx={{
-            mb: 2,
-            p: 1.5,
-            borderRadius: "16px",
-            bgcolor: isDarkMode
-              ? alpha(theme.palette.background.default, 0.5)
-              : alpha(theme.palette.grey[100], 0.8),
-          }}
-        >
-          <ThemeSwitch value={themePreference} onChange={onThemeChange} />
-        </Box>
-
         {/* Profile Card */}
         <MotionBox
           onClick={handleOpenProfile}

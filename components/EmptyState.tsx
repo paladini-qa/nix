@@ -124,8 +124,8 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
       <circle cx="80" cy="50" r="8" fill={COFFEE_CARAMEL} opacity="0.3" />
       <circle cx="80" cy="50" r="4" fill={COFFEE_CARAMEL} opacity="0.5" />
       {/* Estrelinhas */}
-      <text x="110" y="50" fontSize="14" opacity="0.4">✨</text>
-      <text x="30" y="60" fontSize="12" opacity="0.3">🌿</text>
+      <text x="110" y="50" fontSize="14" opacity="0.4"></text>
+      <text x="30" y="60" fontSize="12" opacity="0.3"></text>
     </svg>
   ),
   accounts: (
@@ -157,7 +157,7 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
       {/* Prato compartilhado */}
       <ellipse cx="80" cy="87" rx="55" ry="7" fill={COFFEE_LATTE} opacity="0.15" />
       {/* Coraçãozinho */}
-      <text x="72" y="48" fontSize="18" opacity="0.4">🤝</text>
+      <text x="72" y="48" fontSize="18" opacity="0.4"></text>
     </svg>
   ),
   recurring: (
@@ -189,7 +189,7 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
       {/* Cabinho */}
       <line x1="92" y1="79" x2="118" y2="105" stroke={COFFEE_CAPPUCCINO} strokeWidth="8" strokeLinecap="round" opacity="0.22" />
       {/* Xícara dentro da lupa */}
-      <text x="56" y="62" fontSize="20" opacity="0.35">☕</text>
+      <text x="56" y="62" fontSize="20" opacity="0.35"></text>
       {/* Interrogação */}
       <text x="104" y="42" fontSize="16" opacity="0.3">?</text>
     </svg>
@@ -207,8 +207,8 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
       <circle cx="80" cy="88" r="5" fill={COFFEE_MOCHA} opacity="0.10" />
       <circle cx="100" cy="85" r="5" fill={COFFEE_MOCHA} opacity="0.12" />
       {/* Sparkle */}
-      <text x="118" y="42" fontSize="16" opacity="0.3">✨</text>
-      <text x="22" y="42" fontSize="14" opacity="0.25">☕</text>
+      <text x="118" y="42" fontSize="16" opacity="0.3"></text>
+      <text x="22" y="42" fontSize="14" opacity="0.25"></text>
     </svg>
   ),
   planning: (
@@ -231,7 +231,7 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
       <path d="M44.5 65.5 L46 67 L49 63.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
       <rect x="43" y="76" width="7" height="7" rx="2" fill={COFFEE_CARAMEL} opacity="0.2" />
       {/* Lápis decorativo */}
-      <text x="110" y="105" fontSize="18" opacity="0.3">📝</text>
+      <text x="110" y="105" fontSize="18" opacity="0.3"></text>
     </svg>
   ),
 };

@@ -12,69 +12,69 @@ const BORDER_RADIUS_SMALL = 10;
 // PALETA DE CORES COFFEE - Design System Cozy
 // ============================================
 const coffeeColors = {
-  // Cor Primária: Mocha Brown
+  // Cor Primária: Purple
   primary: {
-    main: "#7B4226",       // Mocha — light mode principal
-    light: "#A0622A",      // Cappuccino
-    dark: "#5A2D0C",       // Espresso escuro
-    darkMode: "#D4A875",   // Crème brûlée — dark mode principal
-    gradient: "linear-gradient(135deg, #A0622A 0%, #7B4226 100%)",
-    gradientDark: "linear-gradient(135deg, #D4A875 0%, #C4885F 100%)",
+    main: "#7C3AED",       // Purple
+    light: "#8B5CF6",      // Lighter purple
+    dark: "#5B21B6",       // Dark purple
+    darkMode: "#A78BFA",   // Lighter purple for dark mode
+    gradient: "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
+    gradientDark: "linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)",
     contrastText: "#FFFFFF",
   },
-  // Cor Secundária: Caramel
+  // Cor Secundária: Secondary Purple/White
   secondary: {
-    main: "#C4885F",       // Cappuccino
-    light: "#DDB899",      // Latte suave
-    dark: "#A06040",       // Medium roast
-    contrastText: "#2C1A11",
+    main: "#A78BFA",       // Muted purple
+    light: "#DDD6FE",      // Soft purple
+    dark: "#7C3AED",       // Strong purple
+    contrastText: "#FFFFFF",
   },
   // Cores Semânticas
   success: {
-    main: "#5B8A5A",       // Sage green (light)
-    light: "#8FBC8F",
-    dark: "#3D6B3C",
-    darkMode: "#7AB87A",   // Sage vibrante (dark)
+    main: "#10B981",       // Emerald
+    light: "#34D399",
+    dark: "#059669",
+    darkMode: "#34D399",
     contrastText: "#FFFFFF",
   },
   error: {
-    main: "#B85450",       // Dusty rose (light)
-    light: "#D4817D",
-    dark: "#8A3A37",
-    darkMode: "#E07870",   // Soft coral (dark)
+    main: "#EF4444",       // Red
+    light: "#F87171",
+    dark: "#DC2626",
+    darkMode: "#F87171",
     contrastText: "#FFFFFF",
   },
   warning: {
-    main: "#C4883A",       // Caramel
-    light: "#DDA855",
-    dark: "#9A6820",
-    contrastText: "#2C1A11",
-  },
-  info: {
-    main: "#7DA3C4",       // Muted steel blue
-    light: "#9FC0D8",
-    dark: "#5A7A9A",
+    main: "#F59E0B",       // Amber
+    light: "#FBBF24",
+    dark: "#D97706",
     contrastText: "#FFFFFF",
   },
-  // Cores Neutras — Cozy Coffee
+  info: {
+    main: "#3B82F6",       // Blue
+    light: "#60A5FA",
+    dark: "#2563EB",
+    contrastText: "#FFFFFF",
+  },
+  // Cores Neutras — Modern Purple Theme
   neutral: {
     // Light Mode
-    backgroundLight: "#FDF8F0",    // Leite vaporizado
-    surfaceLight: "#FEF3E2",       // Espuma de latte
-    textPrimaryLight: "#2C1A11",   // Espresso — texto principal
-    textSecondaryLight: "#7B5A3C", // Caramelo médio — texto secundário
+    backgroundLight: "#FFFFFF",    // White
+    surfaceLight: "#F8F5FE",       // Very light purple tint
+    textPrimaryLight: "#1E1B4B",   // Very dark purple
+    textSecondaryLight: "#4C1D95", // Dark purple
     // Dark Mode
-    backgroundDark: "#1C1008",     // Dose de espresso
-    surfaceDark: "#2C1A10",        // Torra escura
-    textPrimaryDark: "#F0D9C0",    // Creme — texto principal
-    textSecondaryDark: "#C4A882",  // Caramelo quente — texto secundário
+    backgroundDark: "#0F0B1E",     // Very dark purple
+    surfaceDark: "#1A1530",        // Dark purple surface
+    textPrimaryDark: "#F8F5FE",    // White with purple tint
+    textSecondaryDark: "#A78BFA",  // Muted purple
     // Aliases utilitários
-    espresso: "#2C1A11",
-    latte: "#C4885F",
-    cream: "#F0D9C0",
-    steam: "#FDF8F0",
-    mocha: "#7B4226",
-    caramel: "#C4883A",
+    espresso: "#1E1B4B",
+    latte: "#A78BFA",
+    cream: "#F8F5FE",
+    steam: "#FFFFFF",
+    mocha: "#7C3AED",
+    caramel: "#8B5CF6",
   },
 };
 
@@ -125,64 +125,64 @@ const createTintedShadows = (mode: "light" | "dark"): string[] => {
 // TIPOGRAFIA COZY — Playfair Display + Nunito
 // ============================================
 const typography: ThemeOptions["typography"] = {
-  fontFamily: '"Nunito", "Segoe UI", sans-serif',
+  fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
   h1: {
-    fontFamily: '"Playfair Display", "Georgia", serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 700,
     letterSpacing: "-0.02em",
   },
   h2: {
-    fontFamily: '"Playfair Display", "Georgia", serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 700,
     letterSpacing: "-0.01em",
   },
   h3: {
-    fontFamily: '"Playfair Display", "Georgia", serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 600,
     letterSpacing: "-0.01em",
   },
   h4: {
-    fontFamily: '"Playfair Display", "Georgia", serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 600,
   },
   h5: {
-    fontFamily: '"Playfair Display", "Georgia", serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 600,
   },
   h6: {
-    fontFamily: '"Playfair Display", "Georgia", serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 600,
   },
   subtitle1: {
-    fontFamily: '"Nunito", "Segoe UI", sans-serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 600,
   },
   subtitle2: {
-    fontFamily: '"Nunito", "Segoe UI", sans-serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 600,
   },
   body1: {
-    fontFamily: '"Nunito", "Segoe UI", sans-serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 400,
     lineHeight: 1.65,
   },
   body2: {
-    fontFamily: '"Nunito", "Segoe UI", sans-serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 400,
     lineHeight: 1.55,
   },
   button: {
-    fontFamily: '"Nunito", "Segoe UI", sans-serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 700,
     letterSpacing: "0.01em",
   },
   overline: {
-    fontFamily: '"Nunito", "Segoe UI", sans-serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 700,
     letterSpacing: "0.1em",
   },
   caption: {
-    fontFamily: '"Nunito", "Segoe UI", sans-serif',
+    fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif',
     fontWeight: 400,
   },
 };

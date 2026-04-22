@@ -418,13 +418,13 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
           },
           "&::-webkit-scrollbar-thumb": {
             bgcolor: isDarkMode
-              ? alpha("#FFFFFF", 0.1)
-              : alpha("#000000", 0.1),
+              ? alpha(theme.palette.primary.main, 0.2)
+              : alpha(theme.palette.primary.main, 0.1),
             borderRadius: 3,
             "&:hover": {
               bgcolor: isDarkMode
-                ? alpha("#FFFFFF", 0.2)
-                : alpha("#000000", 0.2),
+                ? alpha(theme.palette.primary.main, 0.4)
+                : alpha(theme.palette.primary.main, 0.3),
             },
           },
         }}

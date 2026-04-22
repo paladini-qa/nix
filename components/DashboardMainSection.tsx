@@ -20,9 +20,7 @@ import { CREATE_TRANSACTION_BUTTON } from "../constants";
 import type { FilterState, FinancialSummary, Transaction } from "../types";
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import RecentTransactionsWidget from "./RecentTransactionsWidget";
-import NetWorthWidget from "./NetWorthWidget";
-import SubscriptionDetector from "./SubscriptionDetector";
-import BalanceForecastWidget from "./BalanceForecastWidget";
+
 
 const AdvancedFilters = lazy(() => import("./AdvancedFilters"));
 const AnalyticsView = lazy(() => import("./AnalyticsView"));
@@ -211,37 +209,13 @@ const DashboardMainSection: React.FC<DashboardMainSectionProps> = ({
         selectedYear={filters.year}
       />
 
-      {/* Net Worth & Recent Transactions row */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-          gap: { xs: 2, md: 2.5 },
-        }}
-      >
-        <NetWorthWidget transactions={transactions} />
-        <RecentTransactionsWidget
-          transactions={transactions}
-          onViewAll={onViewTransactions}
-        />
-      </Box>
+      {/* Recent Transactions */}
+      <RecentTransactionsWidget
+        transactions={transactions}
+        onViewAll={onViewTransactions}
+      />
 
-      {/* Balance Forecast + Subscription Detector */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "auto 1fr" },
-          gap: { xs: 2, md: 2.5 },
-          alignItems: "start",
-        }}
-      >
-        <BalanceForecastWidget
-          transactions={transactions}
-          selectedMonth={filters.month}
-          selectedYear={filters.year}
-        />
-        <SubscriptionDetector transactions={transactions} />
-      </Box>
+
 
       <CategoryBreakdown
         transactions={dashboardFilteredTransactions}

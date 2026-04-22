@@ -89,12 +89,12 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
       >
         <Box
           component="img"
-          src={`${import.meta.env.BASE_URL}logo.png`}
-          alt="Nix Logo"
+          src={`${import.meta.env.BASE_URL}logo.svg`}
+          alt="Finance Control Logo"
           sx={{ width: 32, height: 32, objectFit: "contain" }}
         />
         <Text size="5" weight="bold" style={{ letterSpacing: "-0.02em", fontSize: 20 }}>
-          Nix
+          Finance Control
         </Text>
       </MotionBox>
 

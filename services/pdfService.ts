@@ -99,7 +99,7 @@ export const generateFriendReport = (data: FriendReportData): void => {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(28);
   doc.setFont("helvetica", "bold");
-  doc.text("NIX", margin, 25);
+  doc.text("Finance Control", margin, 25);
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -473,7 +473,7 @@ export const generateFriendReport = (data: FriendReportData): void => {
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text("Gerado por Nix - Finanças Inteligentes", margin, pageHeight - 12);
+    doc.text("Gerado por Finance Control - Finanças Inteligentes", margin, pageHeight - 12);
     doc.text(
       `Página ${i} de ${pageCount}`,
       pageWidth - margin,

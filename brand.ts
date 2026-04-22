@@ -20,13 +20,13 @@
  * Uso: Logotipo, botões principais (CTAs), destaques, headers.
  */
 export const COFFEE_BROWN = {
-  mocha: "#7B4226",        // Mocha — light mode principal
-  cappuccino: "#A0622A",   // Cappuccino — tom mais claro
-  espresso: "#5A2D0C",     // Espresso — tom mais escuro
-  cremeBrulee: "#D4A875",  // Crème brûlée — dark mode principal
-  gradient: "linear-gradient(135deg, #A0622A 0%, #7B4226 100%)",
-  gradientDark: "linear-gradient(135deg, #D4A875 0%, #C4885F 100%)",
-  glow: "rgba(124, 66, 38, 0.45)",
+  mocha: "#7C3AED",        // Purple — light mode principal
+  cappuccino: "#8B5CF6",   // Lighter Purple
+  espresso: "#5B21B6",     // Dark Purple
+  cremeBrulee: "#A78BFA",  // Lighter Purple — dark mode principal
+  gradient: "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
+  gradientDark: "linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)",
+  glow: "rgba(124, 58, 237, 0.45)",
 } as const;
 
 /**
@@ -35,13 +35,13 @@ export const COFFEE_BROWN = {
  * Uso: Acentos, ícones secundários, detalhes de interação.
  */
 export const CREAM_ACCENT = {
-  latte: "#DDB899",        // Latte suave
-  cappuccino: "#C4885F",   // Cappuccino
-  caramel: "#C4883A",      // Caramelo
-  steam: "#FDF8F0",        // Leite vaporizado — fundo light
-  foam: "#FEF3E2",         // Espuma de latte — superfície light
-  gradient: "linear-gradient(135deg, #DDA855 0%, #C4883A 100%)",
-  glow: "rgba(196, 136, 60, 0.45)",
+  latte: "#DDD6FE",        // Soft purple
+  cappuccino: "#8B5CF6",   // Lighter Purple
+  caramel: "#A78BFA",      // Muted Purple
+  steam: "#FFFFFF",        // White — fundo light
+  foam: "#F8F5FE",         // White with purple tint — superfície light
+  gradient: "linear-gradient(135deg, #DDD6FE 0%, #A78BFA 100%)",
+  glow: "rgba(139, 92, 246, 0.45)",
 } as const;
 
 /**
@@ -49,15 +49,15 @@ export const CREAM_ACCENT = {
  */
 export const COFFEE_NEUTRAL = {
   // Light Mode
-  espressoText: "#2C1A11",   // Texto principal no light mode
-  mochaText: "#7B5A3C",      // Texto secundário no light mode
-  steamBg: "#FDF8F0",        // Fundo principal light
-  foamBg: "#FEF3E2",         // Fundo de superfície light
+  espressoText: "#1E1B4B",   // Texto principal no light mode
+  mochaText: "#4C1D95",      // Texto secundário no light mode
+  steamBg: "#FFFFFF",        // Fundo principal light
+  foamBg: "#F8F5FE",         // Fundo de superfície light
   // Dark Mode
-  creamText: "#F0D9C0",      // Texto principal no dark mode
-  tanText: "#C4A882",        // Texto secundário no dark mode
-  espressoBg: "#1C1008",     // Fundo principal dark
-  darkRoastBg: "#2C1A10",    // Fundo de superfície dark
+  creamText: "#F8F5FE",      // Texto principal no dark mode
+  tanText: "#A78BFA",        // Texto secundário no dark mode
+  espressoBg: "#0F0B1E",     // Fundo principal dark
+  darkRoastBg: "#1A1530",    // Fundo de superfície dark
 } as const;
 
 /**
@@ -101,9 +101,9 @@ export const NIX_AURORA = COFFEE_STEAM;
 
 export const COFFEE_TYPOGRAPHY = {
   /** Fonte para títulos — elegante, artesanal, cozy */
-  headingFont: '"Playfair Display", "Georgia", serif',
+  headingFont: '"Inter", "Roboto", "Segoe UI", sans-serif',
   /** Fonte para corpo — arredondada, amigável, aconchegante */
-  bodyFont: '"Nunito", "Segoe UI", sans-serif',
+  bodyFont: '"Inter", "Roboto", "Segoe UI", sans-serif',
   weights: {
     heading: { bold: 700, semibold: 600 },
     body: { regular: 400, medium: 500, semibold: 600 },
@@ -161,28 +161,28 @@ export const NIX_DESIGN = COFFEE_DESIGN;
 export const COFFEE_VOICE = {
   positive: {
     examples: [
-      "Que tal! ☕ Você gastou menos esse mês. O cofrinho está feliz!",
-      "Parabéns! 🌿 Sua meta foi atingida. Você merece um café especial.",
-      "Tudo certo por aqui! 💚 Suas finanças estão aquecidas e no ponto.",
+      "Que tal!  Você gastou menos esse mês. O cofrinho está feliz!",
+      "Parabéns!  Sua meta foi atingida. Você merece um café especial.",
+      "Tudo certo por aqui!  Suas finanças estão aquecidas e no ponto.",
     ],
   },
   alert: {
     examples: [
-      "Ei, notei algo aqui ☕ — um gasto incomum de R$500. Se foi você, tudo certo!",
+      "Ei, notei algo aqui  — um gasto incomum de R$500. Se foi você, tudo certo!",
       "Hmm, os gastos com delivery subiram este mês. Quer dar uma olhada juntos?",
       "Você está chegando perto do limite de Lazer. Posso te ajudar a ajustar?",
     ],
   },
   educational: {
     examples: [
-      "Analisei seus últimos 3 meses ☕ Parece que as sextas são mais agitadas. Que tal separar um valor para o fim de semana?",
+      "Analisei seus últimos 3 meses  Parece que as sextas são mais agitadas. Que tal separar um valor para o fim de semana?",
       "CDB é como uma poupança caprichada — seu dinheiro descansa e rende mais.",
       "Inflação é quando tudo fica mais caro. Seu dinheiro parado perde força com o tempo.",
     ],
   },
   error: {
     examples: [
-      "Ops, tive um probleminha aqui ☕ Pode tentar de novo?",
+      "Ops, tive um probleminha aqui  Pode tentar de novo?",
       "Não consegui processar isso. Me conta de outro jeito!",
       "Algo deu errado, mas não se preocupe — geralmente funciona na próxima.",
     ],

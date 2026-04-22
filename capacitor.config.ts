@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.nix.finance",
-  appName: "Nix",
+  appName: "Finance Control",
   webDir: "dist",
   server: {
     // Para desenvolvimento: descomente a linha abaixo e use seu IP local

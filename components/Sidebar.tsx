@@ -27,7 +27,7 @@ import {
   Payment as PaymentIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-  PlaylistAdd as BatchRegistrationIcon,
+  Star as BatchRegistrationIcon,
   EmojiEvents as GoalsIcon,
   AccountBalance as BudgetsIcon,
   BarChart as AnalyticsIcon,
@@ -38,9 +38,7 @@ import {
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { ThemePreference } from "../types";
-import ThemeSwitch from "./ThemeSwitch";
-import { usePrivacy } from "../contexts";
+
 import { SIDEBAR_WIDTH } from "../layoutConstants";
 import type { AppCurrentView } from "../types/appView";
 
@@ -49,8 +47,6 @@ const MotionBox = motion.create(Box);
 const MotionListItemButton = motion.create(ListItemButton);
 
 interface SidebarProps {
-  themePreference: ThemePreference;
-  onThemeChange: (theme: ThemePreference) => void;
   currentView: AppCurrentView;
   onNavigate: (view: AppCurrentView) => void;
   onLogout: () => void;
@@ -95,8 +91,6 @@ const itemVariants = {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({
-  themePreference,
-  onThemeChange,
   currentView,
   onNavigate,
   onLogout,
@@ -107,12 +101,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
-  const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
 
   // Itens de menu principais
   const mainNavItems: NavItem[] = [
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
-    { icon: BatchRegistrationIcon, label: t("nav.batchRegistration"), id: "batchRegistration" },
+    { icon: BatchRegistrationIcon, label: t("nav.nixai"), id: "nixai" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
     { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
     { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
@@ -121,15 +114,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
   ];
 
-  const planningNavItems: NavItem[] = [
-    { icon: GoalsIcon, label: "Metas", id: "goals" },
-    { icon: BudgetsIcon, label: "Orçamentos", id: "budgets" },
-    { icon: AnalyticsIcon, label: "Analytics", id: "analytics" },
-    { icon: PlanningIcon, label: "Planejamento", id: "planning" },
-  ];
-
   const toolsNavItems: NavItem[] = [
-    { icon: ImportIcon, label: "Importar", id: "import" },
+    { icon: BatchRegistrationIcon, label: t("nav.batchRegistration"), id: "batchRegistration" },
     { icon: FiscalIcon, label: "Rel. Fiscal", id: "fiscal-report" },
     { icon: DebtCalcIcon, label: "Calc. Dívidas", id: "debt-calculator" },
   ];
@@ -142,16 +128,16 @@ const Sidebar: React.FC<SidebarProps> = ({
     const isActive = currentView === item.id;
 
     return (
-      <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
+      <ListItem key={item.id} disablePadding sx={{ mb: 0 }}>
         <MotionListItemButton
           onClick={() => onNavigate(item.id)}
           whileHover={{ x: 4 }}
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           sx={{
-            borderRadius: "20px",
-            py: isSubItem ? 1 : 1.5,
-            px: 2,
+            borderRadius: "16px",
+            py: isSubItem ? 0.5 : 0.75,
+            px: 1.5,
             ml: isSubItem ? 2 : 0,
             position: "relative",
             overflow: "hidden",
@@ -197,7 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           <ListItemIcon
             sx={{
-              minWidth: isSubItem ? 36 : 44,
+              minWidth: isSubItem ? 32 : 40,
               color: isActive ? "primary.main" : "text.secondary",
               transition: "color 0.2s ease",
             }}
@@ -206,8 +192,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               animate={isActive ? { scale: 1.1 } : { scale: 1 }}
               transition={{ type: "spring", stiffness: 400 }}
               sx={{
-                width: isSubItem ? 28 : 36,
-                height: isSubItem ? 28 : 36,
+                width: isSubItem ? 26 : 32,
+                height: isSubItem ? 26 : 32,
                 borderRadius: "20px",
                 display: "flex",
                 alignItems: "center",
@@ -299,7 +285,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               textTransform: "uppercase",
             }}
           >
-            ☕ <span>Nix Finanças</span>
+             <span>Finance Control</span>
           </Typography>
         </Box>
 
@@ -312,33 +298,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </List>
 
-        {/* Planning Section */}
-        <Box sx={{ mt: 1, mb: 0.5, px: 1 }}>
-          <Divider sx={{ mb: 1.5, opacity: 0.4 }} />
-          <Typography
-            variant="caption"
-            sx={{
-              fontWeight: 700,
-              color: "text.disabled",
-              letterSpacing: "0.08em",
-              fontSize: "0.6rem",
-              textTransform: "uppercase",
-            }}
-          >
-            Planejamento
-          </Typography>
-        </Box>
-        <List sx={{ mt: 0 }}>
-          {planningNavItems.map((item, idx) => (
-            <motion.div key={item.id} variants={itemVariants}>
-              {renderNavItem(item, false, idx)}
-            </motion.div>
-          ))}
-        </List>
+
 
         {/* Tools Section */}
-        <Box sx={{ mt: 1, mb: 0.5, px: 1 }}>
-          <Divider sx={{ mb: 1.5, opacity: 0.4 }} />
+        <Box sx={{ mt: 0.5, mb: 0.25, px: 1 }}>
+          <Divider sx={{ mb: 1, opacity: 0.4 }} />
           <Typography
             variant="caption"
             sx={{
@@ -367,97 +331,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       <MotionBox
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, type: "spring", stiffness: 400 }}
-        sx={{
-          p: 2,
-        }}
+        sx={{ px: 2, pb: 2, pt: 1 }}
       >
-        {/* Privacy Mode & Theme Switch Row */}
-        <Box
-          sx={{
-            mb: 2,
-            p: 1.5,
-            borderRadius: "20px",
-            bgcolor: isDarkMode
-              ? alpha(theme.palette.background.default, 0.5)
-              : alpha("#F5E8D5", 0.6),
-            border: `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.08) : alpha("#C4885F", 0.12)}`,
-          }}
-        >
-          {/* Privacy Toggle */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              mb: 1.5,
-              pb: 1.5,
-              borderBottom: `1px solid ${
-                isDarkMode ? alpha(theme.palette.primary.main, 0.1) : alpha("#C4885F", 0.15)
-              }`,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {isPrivacyMode ? (
-                <VisibilityOffIcon
-                  sx={{ fontSize: 18, color: "primary.main" }}
-                />
-              ) : (
-                <VisibilityIcon
-                  sx={{ fontSize: 18, color: "text.secondary" }}
-                />
-              )}
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 500,
-                  color: isPrivacyMode ? "primary.main" : "text.secondary",
-                }}
-              >
-                Modo Privado
-              </Typography>
-            </Box>
-            <Tooltip
-              title={`${isPrivacyMode ? "Mostrar" : "Ocultar"} valores (Alt+P)`}
-            >
-              <IconButton
-                onClick={togglePrivacyMode}
-                size="small"
-                sx={{
-                  bgcolor: isPrivacyMode
-                    ? alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.1)
-                    : "transparent",
-                  color: isPrivacyMode ? "primary.main" : "text.secondary",
-                  "&:hover": {
-                    bgcolor: alpha(
-                      theme.palette.primary.main,
-                      isDarkMode ? 0.25 : 0.15
-                    ),
-                  },
-                }}
-              >
-                {isPrivacyMode ? (
-                  <VisibilityOffIcon sx={{ fontSize: 18 }} />
-                ) : (
-                  <VisibilityIcon sx={{ fontSize: 18 }} />
-                )}
-              </IconButton>
-            </Tooltip>
-          </Box>
-
-          {/* Theme Switch */}
-          <ThemeSwitch value={themePreference} onChange={onThemeChange} />
-        </Box>
-
-        {/* Profile Mini Card */}
         <MotionBox
           onClick={onOpenProfile}
           whileHover={{ y: -2, scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           sx={{
-            p: 2,
-            borderRadius: "20px",
+            p: 1.5,
+            borderRadius: "16px",
             cursor: "pointer",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.default, 0.6)
@@ -525,9 +408,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           sx={{
-            mt: 2,
-            borderRadius: "20px",
-            py: 1.5,
+            mt: 1.5,
+            borderRadius: "16px",
+            py: 1,
             color: "text.secondary",
             bgcolor: isDarkMode
               ? alpha(theme.palette.error.main, 0.08)
