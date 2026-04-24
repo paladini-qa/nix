@@ -47,6 +47,7 @@ export default {
     batchRegistration: "Cadastro em Lote",
     logout: "Sair",
     investments: "Investimentos",
+    subscriptions: "Assinaturas",
   },
 
   // Dashboard

@@ -20,4 +20,5 @@ export type AppCurrentView =
   | "import"
   | "fiscal-report"
   | "debt-calculator"
-  | "investments";
+  | "investments"
+  | "subscriptions";

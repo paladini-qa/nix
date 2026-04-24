@@ -29,6 +29,7 @@ const ImportView = lazy(() => import("./ImportView"));
 const FiscalReportView = lazy(() => import("./FiscalReportView"));
 const DebtCalculatorView = lazy(() => import("./DebtCalculatorView"));
 const InvestmentsView = lazy(() => import("./InvestmentsView"));
+const SubscriptionsView = lazy(() => import("./SubscriptionsView"));
 
 import TransactionsSkeleton from "./skeletons/TransactionsSkeleton";
 import ListCardsSkeleton from "./skeletons/ListCardsSkeleton";
@@ -479,6 +480,20 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
             isMobile={isMobile}
             onEdit={handleEditTransaction}
             onDelete={handleDeleteTransaction}
+          />
+        </Suspense>
+      );
+    }
+
+    if (currentView === "subscriptions") {
+      return (
+        <Suspense key={currentView} fallback={<ViewLoadingMui />}>
+          <SubscriptionsView
+            transactions={transactions}
+            onNewTransaction={handleNewTransaction}
+            onEdit={handleEditTransaction}
+            onDelete={handleDeleteTransaction}
+            userId={userId}
           />
         </Suspense>
       );

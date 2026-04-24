@@ -36,6 +36,7 @@ import {
   Description as FiscalIcon,
   Calculate as DebtCalcIcon,
   TrendingUp as InvestmentsIcon,
+  Subscriptions as SubscriptionsIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -114,6 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: PaymentIcon, label: "Pagamentos", id: "paymentMethods" },
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
     { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },
+    { icon: SubscriptionsIcon, label: t("nav.subscriptions"), id: "subscriptions" },
   ];
 
   const toolsNavItems: NavItem[] = [

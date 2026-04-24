@@ -25,6 +25,7 @@ import {
   Upload as ImportIcon,
   Description as FiscalIcon,
   Calculate as DebtCalcIcon,
+  Subscriptions as SubscriptionsIcon,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -43,7 +44,8 @@ type ViewType =
   | "planning"
   | "import"
   | "fiscal-report"
-  | "debt-calculator";
+  | "debt-calculator"
+  | "subscriptions";
 
 interface OthersGridModalProps {
   open: boolean;
@@ -62,6 +64,7 @@ const mainGridItems: GridItem[] = [
   { id: "shared", label: "Divididos", icon: PeopleIcon },
   { id: "recurring", label: "Recorrentes", icon: RepeatIcon },
   { id: "categories", label: "Categorias", icon: CategoryIcon },
+  { id: "subscriptions", label: "Assinaturas", icon: SubscriptionsIcon },
   { id: "batchRegistration", label: "Cadastro em Lote", icon: BatchIcon },
 ];
 

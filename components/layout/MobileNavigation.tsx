@@ -33,7 +33,8 @@ type ViewType =
   | "planning"
   | "import"
   | "fiscal-report"
-  | "debt-calculator";
+  | "debt-calculator"
+  | "subscriptions";
 
 interface MobileNavigationProps {
   currentView: ViewType;
@@ -69,7 +70,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       currentView === "planning" ||
       currentView === "import" ||
       currentView === "fiscal-report" ||
-      currentView === "debt-calculator"
+      currentView === "debt-calculator" ||
+      currentView === "subscriptions"
     ) {
       return "others";
     }

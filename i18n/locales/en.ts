@@ -47,6 +47,7 @@ export default {
     batchRegistration: "Batch Import",
     logout: "Logout",
     investments: "Investments",
+    subscriptions: "Subscriptions",
   },
 
   // Dashboard
