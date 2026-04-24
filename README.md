@@ -66,7 +66,7 @@ npm install
 
 1. Crie um novo projeto no [Supabase Dashboard](https://supabase.com/dashboard)
 
-2. Execute o script SQL para criar as tabelas. No SQL Editor do Supabase, execute o conteúdo de [`docs/supabase-setup.sql`](docs/supabase-setup.sql)
+2. Execute o script SQL para criar as tabelas. No SQL Editor do Supabase, execute o conteúdo de [`database/setup.sql`](database/setup.sql)
 
 3. Copie suas credenciais em **Project Settings > API**:
    - `Project URL` → `SUPABASE_URL`
@@ -98,7 +98,7 @@ GEMINI_API_KEY=sua_gemini_api_key_aqui
 npm run dev
 ```
 
-Acesse [http://localhost:5173](http://localhost:5173) 
+Acesse [http://localhost:3000](http://localhost:3000)
 
 ##  Build Mobile (Android/iOS)
 
@@ -119,52 +119,54 @@ npm run cap:sync
 
 ```
 nix/
-├── components/               # Componentes React
-│   ├── layout/               # Componentes de layout (Mobile Header, Drawer, etc)
-│   ├── modals/               # Modais (BottomSheet, etc)
-│   ├── motion/               # Componentes de animação (Framer Motion)
-│   ├── AccountsView.tsx      # Gestão de contas/carteiras
-│   ├── AnalyticsView.tsx     # Relatórios e analytics
-│   ├── BudgetsView.tsx       # Orçamentos por categoria
-│   ├── CategoriesView.tsx    # Gestão de categorias
-│   ├── Charts.tsx            # Gráficos de receitas/despesas
-│   ├── GoalsView.tsx         # Metas financeiras
-│   ├── LoginView.tsx         # Tela de login/cadastro
-│   ├── NixAIView.tsx         # Chat com IA
-│   ├── PaymentMethodsView.tsx # Métodos de pagamento
-│   ├── RecurringView.tsx     # Transações recorrentes
-│   ├── SharedView.tsx        # Gastos compartilhados
-│   ├── Sidebar.tsx           # Menu lateral
-│   ├── SmartInputModal.tsx   # Input inteligente com IA
-│   ├── SummaryCards.tsx      # Cards de resumo financeiro
-│   ├── TransactionForm.tsx   # Formulário de transação
-│   ├── TransactionsView.tsx  # Lista de transações
-│   └── ...
-├── contexts/                 # React Contexts
-│   ├── NotificationContext   # Sistema de notificações (toast)
-│   ├── SettingsContext       # Configurações do usuário
-│   └── TransactionsContext   # Estado global de transações
-├── hooks/                    # Custom React Hooks
-│   ├── useCurrency.ts        # Formatação de moeda
-│   ├── useFilters.ts         # Filtros de transações
-│   ├── useSettings.ts        # Configurações do usuário
-│   └── useTransactions.ts    # CRUD de transações
-├── i18n/                     # Internacionalização
-│   └── locales/              # Traduções (pt-BR, en)
-├── schemas/                  # Validação com Zod
-├── services/
-│   ├── api/                  # Serviços de API (accounts, budgets, goals, tags)
-│   ├── capacitorService.ts   # Integrações nativas (mobile)
-│   ├── geminiService.ts      # Integração com Gemini AI
-│   └── supabaseClient.ts     # Cliente Supabase
+├── src/                      # Todo o código-fonte
+│   ├── main.tsx              # Entry point
+│   ├── App.tsx               # Componente principal
+│   ├── theme.ts              # Configuração do tema MUI
+│   ├── brand.ts              # Tokens de design (cores, tipografia)
+│   ├── constants.ts          # Categorias e constantes padrão
+│   ├── layoutConstants.ts    # Constantes de layout e responsividade
+│   ├── routes.ts             # Mapa de rotas e views
+│   ├── styles/               # Estilos globais
+│   │   ├── index.css
+│   │   └── radix-theme.css
+│   ├── types/                # Tipos TypeScript
+│   │   ├── index.ts          # Tipos de domínio principais
+│   │   └── appView.ts        # Union de views da aplicação
+│   ├── components/           # Componentes React
+│   │   ├── layout/           # Layout mobile (Header, Drawer, Nav)
+│   │   ├── modals/           # Modais (BottomSheet, etc)
+│   │   ├── motion/           # Animações (Framer Motion)
+│   │   ├── radix/            # Wrappers Radix UI
+│   │   ├── skeletons/        # Skeletons de carregamento
+│   │   └── ...               # Views e componentes de feature
+│   ├── contexts/             # React Contexts
+│   │   ├── NotificationContext.tsx
+│   │   ├── SettingsContext.tsx
+│   │   └── TransactionsContext.tsx
+│   ├── hooks/                # Custom React Hooks
+│   │   ├── useCurrency.ts
+│   │   ├── useFilters.ts
+│   │   ├── useSettings.ts
+│   │   └── useTransactions.ts
+│   ├── i18n/                 # Internacionalização
+│   │   └── locales/          # Traduções (pt-BR, en)
+│   ├── schemas/              # Validação com Zod
+│   ├── services/             # Integrações externas
+│   │   ├── api/              # Serviços de API (accounts, budgets, goals, tags)
+│   │   ├── geminiService.ts  # Integração com Gemini AI
+│   │   └── supabaseClient.ts # Cliente Supabase
+│   └── utils/                # Utilitários
+├── database/                 # Scripts SQL do Supabase
+│   └── setup.sql
+├── docs/                     # Documentação do projeto
 ├── tests/                    # Testes unitários (Vitest)
+├── public/                   # Assets estáticos
 ├── android/                  # Projeto Android (Capacitor)
-├── docs/                     # Documentação e scripts SQL
-├── App.tsx                   # Componente principal
-├── constants.ts              # Categorias e constantes padrão
-├── theme.ts                  # Configuração do tema MUI
-├── types.ts                  # Tipos TypeScript
-└── vite.config.ts            # Configuração do Vite
+├── index.html                # HTML de entrada (Vite)
+├── vite.config.ts            # Configuração do Vite
+├── tsconfig.json             # Configuração TypeScript
+└── package.json
 ```
 
 ## ️ Banco de Dados (Supabase)

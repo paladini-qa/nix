@@ -73,14 +73,33 @@ Este é um app de gestão financeira pessoal usando:
 ## Estrutura de Pastas
 
 /
-├── components/      # Componentes React
-├── services/        # Supabase, Gemini
-├── docs/            # Documentação & SQL scripts
-├── theme.ts         # Tema MUI customizado
-├── App.tsx          # Raiz do app
-├── types.ts         # Tipos TypeScript globais
-├── constants.ts     # Constantes da aplicação
-└── index.tsx        # Entry point
+├── src/                     # Todo o código-fonte
+│   ├── main.tsx             # Entry point
+│   ├── App.tsx              # Raiz do app
+│   ├── theme.ts             # Tema MUI customizado
+│   ├── brand.ts             # Tokens de design (cores, tipografia)
+│   ├── constants.ts         # Constantes da aplicação
+│   ├── layoutConstants.ts   # Constantes de layout e responsividade
+│   ├── routes.ts            # Mapa de rotas e views
+│   ├── styles/              # Estilos globais
+│   │   ├── index.css
+│   │   └── radix-theme.css
+│   ├── types/               # Tipos TypeScript globais
+│   │   ├── index.ts         # Tipos de domínio principais
+│   │   └── appView.ts       # Union de views da aplicação
+│   ├── components/          # Componentes React
+│   ├── contexts/            # Contextos e providers
+│   ├── hooks/               # Custom hooks
+│   ├── services/            # Supabase, Gemini, Pluggy, etc.
+│   ├── i18n/                # Internacionalização
+│   ├── schemas/             # Schemas de validação
+│   └── utils/               # Utilitários
+├── database/                # Scripts SQL do Supabase
+│   └── setup.sql
+├── docs/                    # Documentação do projeto
+├── tests/                   # Testes (Vitest)
+├── public/                  # Assets estáticos
+└── android/                 # Projeto Capacitor Android
 
 ---
 
@@ -221,7 +240,7 @@ Grid (MUI v6):
 
 ## Supabase
 
-- Cliente em `/services/supabaseClient.ts`
+- Cliente em `/src/services/supabaseClient.ts`
 - Use env: SUPABASE_URL, SUPABASE_ANON_KEY
 - Faça mapping de snake_case (DB) para camelCase (TS)
 - Sempre checar session antes de queries
@@ -240,7 +259,7 @@ if (error) throw error;
 
 ## Gemini AI
 
-- Serviço em `/services/geminiService.ts`
+- Serviço em `/src/services/geminiService.ts`
 - USE var de ambiente: GEMINI_API_KEY
 - API key opcional, trate ausência (falha) com elegância
 
@@ -406,6 +425,7 @@ dist-ssr/
 
 Sempre que mudar algo relevante:
 1. Atualize `docs/design_system.md` para novos padrões e exemplos visuais.
+   (SQL do banco em `database/setup.sql`)
 2. Adicione entrada no `CHANGELOG.md` ([Unreleased]) — descritivo, categorizado, arquivos envolvidos, impacto/metas.
 3. Atualize `docs/documentacao.md` — novas features/componentes/fluxos.
 4. Documente campos e tipos TypeScript, se necessário.
