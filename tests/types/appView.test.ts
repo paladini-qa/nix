@@ -12,12 +12,11 @@ describe("AppCurrentView", () => {
       "planning",
       "paymentMethods",
       "categories",
-      "batchRegistration",
       "splits",
       "shared",
       "recurring",
     ];
     expectTypeOf(views).toEqualTypeOf<AppCurrentView[]>();
-    expect(views).toHaveLength(12);
+    expect(views).toHaveLength(11);
   });
 });

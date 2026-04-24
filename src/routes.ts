@@ -11,7 +11,6 @@ export const VIEW_ROUTES: Record<AppCurrentView, string> = {
   shared: "/shared",
   recurring: "/recurring",
   nixai: "/nixai",
-  batchRegistration: "/batch",
   paymentMethods: "/payment-methods",
   categories: "/categories",
   goals: "/goals",

@@ -17,7 +17,6 @@ import {
   Repeat as RepeatIcon,
   Category as CategoryIcon,
   AutoAwesome as SparklesIcon,
-  PlaylistAdd as BatchIcon,
   EmojiEvents as GoalsIcon,
   AccountBalance as BudgetsIcon,
   BarChart as AnalyticsIcon,
@@ -37,7 +36,6 @@ type ViewType =
   | "recurring"
   | "categories"
   | "nixai"
-  | "batchRegistration"
   | "goals"
   | "budgets"
   | "analytics"
@@ -65,7 +63,6 @@ const mainGridItems: GridItem[] = [
   { id: "recurring", label: "Recorrentes", icon: RepeatIcon },
   { id: "categories", label: "Categorias", icon: CategoryIcon },
   { id: "subscriptions", label: "Assinaturas", icon: SubscriptionsIcon },
-  { id: "batchRegistration", label: "Cadastro em Lote", icon: BatchIcon },
 ];
 
 const planningGridItems: GridItem[] = [

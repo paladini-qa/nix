@@ -18,7 +18,6 @@ const NAV_HEIGHT = 80;
 // View type matching App.tsx
 type ViewType =
   | "dashboard"
-  | "batchRegistration"
   | "transactions"
   | "splits"
   | "shared"
@@ -63,7 +62,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       currentView === "recurring" ||
       currentView === "categories" ||
       currentView === "nixai" ||
-      currentView === "batchRegistration" ||
       currentView === "goals" ||
       currentView === "budgets" ||
       currentView === "analytics" ||

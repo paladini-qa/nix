@@ -44,7 +44,6 @@ export default {
     shared: "Shared",
     settings: "Settings",
     nixai: "Artificial Intelligence",
-    batchRegistration: "Batch Import",
     logout: "Logout",
     investments: "Investments",
     subscriptions: "Subscriptions",

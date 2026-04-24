@@ -4447,19 +4447,19 @@ const AppContent: React.FC<{
             sx={{
               flexGrow: 1,
               minHeight: 0,
-              pt: (currentView === "nixai" || currentView === "batchRegistration") ? 0 : CONTENT_PADDING,
-              px: (currentView === "nixai" || currentView === "batchRegistration") ? 0 : CONTENT_PADDING_X,
+              pt: currentView === "nixai" ? 0 : CONTENT_PADDING,
+              px: currentView === "nixai" ? 0 : CONTENT_PADDING_X,
               mt: { xs: "64px", lg: 0 },
-              pb: (currentView === "nixai" || currentView === "batchRegistration")
+              pb: currentView === "nixai"
                 ? { xs: `calc(80px + env(safe-area-inset-bottom, 0px))`, lg: 0 }
                 : { xs: "140px", lg: 4 },
               maxWidth: "100%",
               minWidth: 0,
               overflowX: "hidden",
-              overflowY: (currentView === "nixai" || currentView === "batchRegistration") ? "hidden" : "auto",
+              overflowY: currentView === "nixai" ? "hidden" : "auto",
               boxSizing: "border-box",
-              display: (currentView === "nixai" || currentView === "batchRegistration") ? "flex" : undefined,
-              flexDirection: (currentView === "nixai" || currentView === "batchRegistration") ? "column" : undefined,
+              display: currentView === "nixai" ? "flex" : undefined,
+              flexDirection: currentView === "nixai" ? "column" : undefined,
               ...(isMobile && { position: "relative" }),
             }}
           >
@@ -4477,10 +4477,10 @@ const AppContent: React.FC<{
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: (currentView === "nixai" || currentView === "batchRegistration") ? 0 : SECTION_GAP,
+                gap: currentView === "nixai" ? 0 : SECTION_GAP,
                 pt: isMobile && (isPullPulling || isPullRefreshing) ? 2 : 0,
                 transition: "padding-top 0.2s ease",
-                ...((currentView === "nixai" || currentView === "batchRegistration") && { flex: 1, minHeight: 0 }),
+                ...(currentView === "nixai" && { flex: 1, minHeight: 0 }),
               }}
             >
               <AppViewSwitcher

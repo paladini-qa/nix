@@ -119,7 +119,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const toolsNavItems: NavItem[] = [
-    { icon: BatchRegistrationIcon, label: t("nav.batchRegistration"), id: "batchRegistration" },
     { icon: FiscalIcon, label: "Rel. Fiscal", id: "fiscal-report" },
     { icon: DebtCalcIcon, label: "Calc. Dívidas", id: "debt-calculator" },
   ];

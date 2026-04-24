@@ -44,7 +44,6 @@ export default {
     shared: "Compartilhado",
     settings: "Configurações",
     nixai: "Inteligência Artificial",
-    batchRegistration: "Cadastro em Lote",
     logout: "Sair",
     investments: "Investimentos",
     subscriptions: "Assinaturas",

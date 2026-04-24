@@ -4,7 +4,6 @@
  */
 export type AppCurrentView =
   | "dashboard"
-  | "batchRegistration"
   | "transactions"
   | "splits"
   | "shared"

@@ -18,7 +18,6 @@ const SplitsView = lazy(() => import("./SplitsView"));
 const SharedView = lazy(() => import("./SharedView"));
 const RecurringView = lazy(() => import("./RecurringView"));
 const NixAIView = lazy(() => import("./NixAIView"));
-const BatchRegistrationView = lazy(() => import("./BatchRegistrationView"));
 const PaymentMethodsView = lazy(() => import("./PaymentMethodsView"));
 const CategoriesView = lazy(() => import("./CategoriesView"));
 const GoalsView = lazy(() => import("./GoalsView"));
@@ -299,21 +298,6 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
       );
     }
 
-    if (currentView === "batchRegistration") {
-      return (
-        <Suspense key={currentView} fallback={<ViewLoadingMui />}>
-          <BatchRegistrationView
-            categories={categories}
-            paymentMethods={paymentMethods}
-            onTransactionCreate={handleSmartInputTransaction}
-            getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
-            getPaymentMethodConfig={paymentMethodConfigs ? (name) => paymentMethodConfigs.find(c => c.name === name) : undefined}
-            displayName={displayName}
-          />
-        </Suspense>
-      );
-    }
-
     if (currentView === "paymentMethods") {
       if (selectedPaymentMethod) {
         return (
@@ -508,7 +492,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = (props) => {
       type="slideLeft"
       duration={0.2}
       mode="sync"
-      sx={(currentView === "nixai" || currentView === "batchRegistration") ? { height: "100%", display: "flex", flexDirection: "column" } : undefined}
+      sx={currentView === "nixai" ? { height: "100%", display: "flex", flexDirection: "column" } : undefined}
     >
       {renderView()}
     </PageTransition>
