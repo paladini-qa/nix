@@ -27,6 +27,7 @@ import {
   Category as CategoryIcon,
   Payment as PaymentIcon,
   PlaylistAdd as BatchRegistrationIcon,
+  TrendingUp as InvestmentsIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,7 +49,8 @@ type ViewType =
   | "analytics"
   | "settings"
   | "paymentMethods"
-  | "categories";
+  | "categories"
+  | "investments";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -113,6 +115,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
     { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
     { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
+    { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },
   ];
 
   // Itens de cadastro

@@ -46,6 +46,7 @@ export default {
     nixai: "Artificial Intelligence",
     batchRegistration: "Batch Import",
     logout: "Logout",
+    investments: "Investments",
   },
 
   // Dashboard

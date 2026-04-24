@@ -35,6 +35,7 @@ import {
   Upload as ImportIcon,
   Description as FiscalIcon,
   Calculate as DebtCalcIcon,
+  TrendingUp as InvestmentsIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -112,6 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
     { icon: PaymentIcon, label: "Pagamentos", id: "paymentMethods" },
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
+    { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },
   ];
 
   const toolsNavItems: NavItem[] = [
