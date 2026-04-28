@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
+import androidx.core.app.NotificationManagerCompat;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
