@@ -444,6 +444,21 @@ const Sidebar: React.FC<SidebarProps> = ({
             }}
           />
         </MotionListItemButton>
+
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            textAlign: "center",
+            mt: 2,
+            color: "text.disabled",
+            fontSize: "10px",
+            fontWeight: 500,
+            opacity: 0.5,
+          }}
+        >
+          v{process.env.APP_VERSION}
+        </Typography>
       </MotionBox>
     </Box>
   );
