@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useConfirmDialog, usePrivacy } from "../contexts";
 import { ThemePreference } from "../types";
+import { Capacitor } from "@capacitor/core";
 import ThemeSwitch from "./ThemeSwitch";
 import {
   Dialog,
@@ -38,6 +39,8 @@ interface ProfileModalProps {
   onUpdateDisplayName: (name: string) => void;
   onChangeEmail: (newEmail: string) => Promise<void>;
   onResetPassword: () => Promise<void>;
+  walletSyncEnabled?: boolean;
+  onRequestWalletSync?: () => void;
 }
 
 const ProfileModal: React.FC<ProfileModalProps> = ({
@@ -50,6 +53,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   onUpdateDisplayName,
   onChangeEmail,
   onResetPassword,
+  walletSyncEnabled,
+  onRequestWalletSync,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -569,6 +574,64 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
               {passwordStatus === "sent" ? "Email Enviado!" : "Enviar Link de Recuperação"}
             </Button>
           </Box>
+
+          {/* Google Wallet Sync Section (Android Only) */}
+          {Capacitor.getPlatform() === "android" && (
+            <Box sx={sectionSx}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}
+              >
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.secondary.main, 0.15)
+                      : alpha(theme.palette.secondary.main, 0.1),
+                  }}
+                >
+                  <Avatar 
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Wallet_Icon_2022.svg/1024px-Google_Wallet_Icon_2022.svg.png"
+                    sx={{ width: 20, height: 20, borderRadius: 0 }}
+                  />
+                </Box>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Google Wallet Sync
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 2, ml: 6.5 }}
+              >
+                Rastreia notificações para registro automático de transações.
+              </Typography>
+              <Button
+                fullWidth
+                variant={walletSyncEnabled ? "contained" : "outlined"}
+                color={walletSyncEnabled ? "success" : "secondary"}
+                onClick={onRequestWalletSync}
+                startIcon={walletSyncEnabled ? <CheckIcon /> : null}
+                sx={{
+                  borderRadius: "20px",
+                  py: 1.5,
+                  fontWeight: 600,
+                  textTransform: "none",
+                  ...( !walletSyncEnabled && {
+                    borderColor: isDarkMode ? alpha("#FFFFFF", 0.2) : alpha("#000000", 0.2),
+                  }),
+                }}
+              >
+                {walletSyncEnabled ? "Ativado (Acesso Concedido)" : "Ativar Sincronização"}
+              </Button>
+            </Box>
+          )}
         </Box>
       </DialogContent>
     </Dialog>

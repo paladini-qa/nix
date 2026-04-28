@@ -25,6 +25,7 @@ import { Refresh as RefreshIcon } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
+import dayjs from "dayjs";
 import { Theme } from "@radix-ui/themes";
 import { lightTheme, darkTheme } from "./theme";
 import { CONTENT_PADDING, CONTENT_PADDING_X, SECTION_GAP, CONTENT_MAX_WIDTH } from "./layoutConstants";
@@ -113,6 +114,7 @@ import {
   useConfirmDialog,
 } from "./contexts";
 import { Session } from "@supabase/supabase-js";
+import { useWalletSync, WalletTransaction } from "./hooks/useWalletSync";
 
 // Context para o tema
 export const ThemeContext = createContext<{
@@ -225,6 +227,28 @@ const AppContent: React.FC<{
   const navigateTo = useCallback((view: AppCurrentView) => {
     navigate(VIEW_ROUTES[view]);
   }, [navigate]);
+
+  // Google Wallet Sync Integration
+  const handleWalletTransaction = useCallback((data: WalletTransaction) => {
+    // Pre-fill form with detected data
+    setFormInitialContext({
+      paymentMethod: "", // Maybe we can guess or leave empty for user
+    });
+    setEditingTransaction({
+      id: "new_wallet_" + Date.now(), // Unique ID to indicate new transaction from wallet
+      description: data.merchant,
+      amount: data.amount,
+      type: "expense",
+      category: "", // Will be suggested by AI/rules
+      paymentMethod: "", 
+      date: dayjs().format("YYYY-MM-DD"),
+      isPaid: false,
+    } as any);
+    setIsFormOpen(true);
+    showSuccess(`Transação detectada: ${data.merchant} - ${data.amount}`);
+  }, [showSuccess]);
+
+  const { isEnabled: walletSyncEnabled, requestAccess: onRequestWalletSync } = useWalletSync(handleWalletTransaction);
 
   // Redireciona para /dashboard se o path não corresponder a nenhuma view
   useEffect(() => {
@@ -4569,6 +4593,8 @@ const AppContent: React.FC<{
             onUpdateDisplayName={handleUpdateDisplayName}
             onChangeEmail={handleChangeEmail}
             onResetPassword={handleResetPassword}
+            walletSyncEnabled={walletSyncEnabled}
+            onRequestWalletSync={onRequestWalletSync}
           />
 
           {/* Shared Transaction Options Dialog */}
