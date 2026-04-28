@@ -115,6 +115,30 @@ npm run cap:ios
 npm run cap:sync
 ```
 
+## 🤖 Automação de Build (APK)
+
+O projeto possui automação para geração de APK tanto localmente quanto via GitHub Actions.
+
+### Build Local
+Para gerar o APK na sua máquina sem precisar abrir o Android Studio (requer Android SDK configurado):
+
+```bash
+# Gera o APK de Debug
+# Local: android/app/build/outputs/apk/debug/app-debug.apk
+npm run android:build
+
+# Gera o APK de Release (não assinado)
+# Local: android/app/build/outputs/apk/release/app-release-unsigned.apk
+npm run android:release
+```
+
+### GitHub Actions
+Sempre que um push é feito para a branch `main`, o GitHub Actions gera automaticamente um novo APK:
+
+1. Vá para a aba **Actions** no seu repositório GitHub.
+2. Selecione o workflow **Build Android APK**.
+3. Após a conclusão, o APK estará disponível para download na seção **Artifacts**.
+
 ##  Estrutura do Projeto
 
 ```
@@ -196,6 +220,8 @@ O banco está configurado com RLS para garantir que cada usuário acesse apenas 
 | `npm run cap:android` | Build e abre projeto Android            |
 | `npm run cap:ios`   | Build e abre projeto iOS                  |
 | `npm run cap:sync`  | Sincroniza build com projetos nativos     |
+| `npm run android:build` | Gera o APK de Debug localmente        |
+| `npm run android:release` | Gera o APK de Release localmente    |
 
 ## ️ Tecnologias
 
