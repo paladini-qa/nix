@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -10,70 +10,39 @@ import {
   useTheme,
 } from "@mui/material";
 import { Add as AddIcon, Refresh as RefreshIcon } from "@mui/icons-material";
-import { Session } from "@supabase/supabase-js";
 import SummaryCards from "./SummaryCards";
 import CategoryBreakdown from "./CategoryBreakdown";
 import DateFilter from "./DateFilter";
 import { AdvancedFiltersButton } from "./AdvancedFilters";
 import type { AdvancedFiltersState } from "./AdvancedFilters";
 import { CREATE_TRANSACTION_BUTTON } from "../constants";
-import type { FilterState, FinancialSummary, Transaction } from "../types";
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import RecentTransactionsWidget from "./RecentTransactionsWidget";
-
+import { useAppStore } from "../hooks/useAppStore";
+import { useTransactionsQuery } from "../hooks/useTransactionsQuery";
+import { useFilteredTransactions } from "../hooks/useFilteredTransactions";
+import { supabase } from "../services/supabaseClient";
 
 const AdvancedFilters = lazy(() => import("./AdvancedFilters"));
 const AnalyticsView = lazy(() => import("./AnalyticsView"));
 
-export interface DashboardMainSectionProps {
-  isMobile: boolean;
-  displayName: string;
-  session: Session;
-  filters: FilterState;
-  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
-  advancedFilters: AdvancedFiltersState;
-  setAdvancedFilters: React.Dispatch<React.SetStateAction<AdvancedFiltersState>>;
-  showAdvancedFilters: boolean;
-  setShowAdvancedFilters: React.Dispatch<React.SetStateAction<boolean>>;
-  isRefreshing: boolean;
-  onRefresh: () => void;
-  onNewTransaction: () => void;
-  transactions: Transaction[];
-  dashboardFilteredTransactions: Transaction[];
-  summary: FinancialSummary;
-  analyticsTransactions: Transaction[];
-  onPaymentMethodClick: (method: string) => void;
-  onCategoryClick: (category: string, type: "income" | "expense") => void;
-  onViewTransactions?: () => void;
-}
-
-/**
- * Dashboard header, advanced filters, summary cards, category breakdown, and analytics.
- * Extracted from App.tsx to reduce monolith size and isolate dashboard layout.
- */
-const DashboardMainSection: React.FC<DashboardMainSectionProps> = ({
-  isMobile,
-  displayName,
-  session,
-  filters,
-  setFilters,
-  advancedFilters,
-  setAdvancedFilters,
-  showAdvancedFilters,
-  setShowAdvancedFilters,
-  isRefreshing,
-  onRefresh,
-  onNewTransaction,
-  transactions,
-  dashboardFilteredTransactions,
-  summary,
-  analyticsTransactions,
-  onPaymentMethodClick,
-  onCategoryClick,
-  onViewTransactions,
-}) => {
+const DashboardMainSection: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
+  const isMobile = theme.breakpoints.down("md"); // Simplified for now
+  
+  const { filters, setFilters, setIsFormOpen, setEditingTransaction } = useAppStore();
+  const { data: transactions = [], isRefetching, refetch } = useTransactionsQuery();
+  const { filteredTransactions, summary } = useFilteredTransactions();
+  
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFiltersState>({
+    startDate: null,
+    endDate: null,
+    type: "all",
+    categories: [],
+    paymentMethods: [],
+  });
 
   const hasAdvancedFiltersActive =
     advancedFilters.startDate !== null ||
@@ -88,6 +57,11 @@ const DashboardMainSection: React.FC<DashboardMainSectionProps> = ({
     advancedFilters.categories.length +
     advancedFilters.paymentMethods.length;
 
+  const onNewTransaction = () => {
+    setEditingTransaction(null);
+    setIsFormOpen(true);
+  };
+
   return (
     <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
       <Box
@@ -101,17 +75,13 @@ const DashboardMainSection: React.FC<DashboardMainSectionProps> = ({
       >
         <Box>
           <Typography
-            variant={isMobile ? "h6" : "h5"}
+            variant="h5"
             sx={{ fontWeight: "bold", color: "text.primary" }}
           >
             {t("dashboard.title")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {isMobile
-              ? displayName || session.user.email?.split("@")[0]
-              : t("dashboard.welcomeWithName", {
-                  name: displayName || session.user.email || "",
-                })}
+            {t("dashboard.welcome")}
           </Typography>
         </Box>
 
@@ -121,8 +91,6 @@ const DashboardMainSection: React.FC<DashboardMainSectionProps> = ({
             alignItems: "center",
             gap: { xs: 0.5, sm: 1.5 },
             width: { xs: "100%", sm: "auto" },
-            minWidth: 0,
-            flexWrap: "nowrap",
           }}
         >
           <AdvancedFiltersButton
@@ -130,65 +98,48 @@ const DashboardMainSection: React.FC<DashboardMainSectionProps> = ({
             activeFiltersCount={activeFiltersCount}
             showFilters={showAdvancedFilters}
             onToggleFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            compact={isMobile}
           />
-          <Box sx={{ minWidth: 0, flex: isMobile ? 1 : "0 0 auto" }}>
-            <DateFilter
-              month={filters.month}
-              year={filters.year}
-              onDateChange={(month, year) => setFilters({ ...filters, month, year })}
-              showIcon
-              compact={isMobile}
-              disabled={hasAdvancedFiltersActive}
-              disabledMessage={t("dashboard.removeAdvancedFiltersForMonth")}
-            />
-          </Box>
+          <DateFilter
+            month={filters.month}
+            year={filters.year}
+            onDateChange={(month, year) => setFilters({ month, year })}
+            showIcon
+            disabled={hasAdvancedFiltersActive}
+          />
 
-          {!isMobile && (
-            <Tooltip title={t("common.refresh")}>
-              <IconButton
-                onClick={onRefresh}
-                disabled={isRefreshing}
-                aria-label={t("common.refresh")}
+          <Tooltip title={t("common.refresh")}>
+            <IconButton
+              onClick={() => refetch()}
+              disabled={isRefetching}
+              sx={{
+                width: 40,
+                height: 40,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: "20px",
+              }}
+            >
+              <RefreshIcon
                 sx={{
-                  width: 40,
-                  height: 40,
-                  minWidth: 40,
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: "20px",
-                  transition: "all 0.2s ease-in-out",
-                  "&:hover": {
-                    borderColor: theme.palette.primary.main,
-                    color: theme.palette.primary.main,
-                    transform: "translateY(-1px)",
+                  fontSize: 24,
+                  animation: isRefetching ? "spin 1s linear infinite" : "none",
+                  "@keyframes spin": {
+                    "0%": { transform: "rotate(0deg)" },
+                    "100%": { transform: "rotate(360deg)" },
                   },
                 }}
-              >
-                <RefreshIcon
-                  sx={{
-                    fontSize: 24,
-                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
-                    "@keyframes spin": {
-                      "0%": { transform: "rotate(0deg)" },
-                      "100%": { transform: "rotate(360deg)" },
-                    },
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-          )}
+              />
+            </IconButton>
+          </Tooltip>
 
-          {!isMobile && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onNewTransaction}
-              sx={CREATE_TRANSACTION_BUTTON.sx}
-            >
-              {CREATE_TRANSACTION_BUTTON.label}
-            </Button>
-          )}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={onNewTransaction}
+            sx={CREATE_TRANSACTION_BUTTON.sx}
+          >
+            {CREATE_TRANSACTION_BUTTON.label}
+          </Button>
         </Box>
       </Box>
 
@@ -204,31 +155,27 @@ const DashboardMainSection: React.FC<DashboardMainSectionProps> = ({
 
       <SummaryCards
         summary={summary}
-        transactions={transactions}
+        transactions={filteredTransactions}
         selectedMonth={filters.month}
         selectedYear={filters.year}
       />
 
-      {/* Recent Transactions */}
       <RecentTransactionsWidget
-        transactions={transactions}
-        onViewAll={onViewTransactions}
+        transactions={filteredTransactions}
       />
 
-
-
       <CategoryBreakdown
-        transactions={dashboardFilteredTransactions}
-        onPaymentMethodClick={onPaymentMethodClick}
-        onCategoryClick={onCategoryClick}
+        transactions={filteredTransactions}
+        onPaymentMethodClick={() => {}}
+        onCategoryClick={() => {}}
       />
 
       <Suspense fallback={<DashboardSkeleton />}>
         <AnalyticsView
-          transactions={analyticsTransactions}
+          transactions={filteredTransactions}
           hasAdvancedFilters={hasAdvancedFiltersActive}
           advancedFilters={advancedFilters}
-          onCategoryClick={onCategoryClick}
+          onCategoryClick={() => {}}
         />
       </Suspense>
     </Stack>
