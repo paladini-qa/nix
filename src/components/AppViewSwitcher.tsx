@@ -78,7 +78,9 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     updatePaymentMethodPaymentDay,
     addPaymentMethodConfig,
     updatePaymentMethodConfig,
-    removePaymentMethodConfig
+    removePaymentMethodConfig,
+    friends,
+    displayName
   } = useSettings();
   const { showSuccess, showError } = useNotification();
   const location = useLocation();
@@ -266,6 +268,24 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               onEdit={setEditingTransaction}
               onDelete={(t) => deleteTransaction(t.id)}
               userId={session.user.id}
+            />
+          </Suspense>
+        );
+      case "shared":
+        return (
+          <Suspense fallback={<ListCardsSkeleton />}>
+            <SharedView 
+              transactions={transactions}
+              friends={friends}
+              userName={displayName}
+              selectedMonth={filters.month}
+              selectedYear={filters.year}
+              onDateChange={(month, year) => setFilters({ month, year })}
+              onNewTransaction={handleNewTransaction}
+              onEdit={setEditingTransaction}
+              onDelete={deleteTransaction}
+              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onRefreshData={async () => { await refetchTransactions(); }}
             />
           </Suspense>
         );

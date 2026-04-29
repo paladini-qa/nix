@@ -47,10 +47,15 @@ export const useAppStore = create<UIState>((set) => ({
   setEditingTransaction: (transaction) => set({ editingTransaction: transaction }),
   
   // Filters
-  filters: {
-    month: dayjs().month(),
-    year: dayjs().year(),
-  },
+  filters: (() => {
+    const now = dayjs();
+    // Se hoje for após dia 10, apresenta dados do mês seguinte
+    const initialDate = now.date() > 10 ? now.add(1, "month") : now;
+    return {
+      month: initialDate.month(),
+      year: initialDate.year(),
+    };
+  })(),
   setFilters: (filters) => set((state) => ({
     filters: typeof filters === "function" ? filters(state.filters) : filters,
   })),

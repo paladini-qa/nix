@@ -172,11 +172,11 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
       >
         <CardContent
           sx={{
-            p: 1.5,
-            "&:last-child": { pb: 1.5 },
+            p: 1.75,
+            "&:last-child": { pb: 1.75 },
             display: "flex",
-            alignItems: "flex-start",
-            gap: 1,
+            alignItems: "center",
+            gap: 1.5,
           }}
         >
           {/* Checkbox */}
@@ -248,6 +248,8 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
+                  fontSize: "0.925rem",
+                  color: "text.primary",
                 }}
               >
                 {t.description}
@@ -256,7 +258,12 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
                 variant="body2"
                 fontWeight={700}
                 color={isIncome ? "success.main" : "error.main"}
-                sx={{ flexShrink: 0, ...privacyStyles, ...noWrapStyle }}
+                sx={{ 
+                  flexShrink: 0, 
+                  fontSize: "0.95rem",
+                  ...privacyStyles, 
+                  ...noWrapStyle 
+                }}
               >
                 {isIncome ? "+" : "-"} {format(t.amount || 0)}
               </Typography>

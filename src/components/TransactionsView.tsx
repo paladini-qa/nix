@@ -70,6 +70,7 @@ import { usePullToRefresh, useLayoutSpacing } from "../hooks";
 import EmptyState from "./EmptyState";
 import NixButton from "./radix/Button";
 import { motion, AnimatePresence } from "framer-motion";
+import { getReportDate } from "../utils/transactionUtils";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -240,7 +241,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   // Combina transações reais + virtuais (filtro por mês usa data da transação)
   const allTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
-      const [y, m] = t.date.split("-");
+      const [y, m] = getReportDate(t).split("-");
       const isCurrentMonth =
         parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
 
@@ -844,6 +845,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       color: "text.primary",
                       letterSpacing: "-0.02em",
                       lineHeight: 1.2,
+                      wordBreak: "break-all",
                     }}
                   >
                     {formatCurrency(balance)}
@@ -977,9 +979,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       color: "text.primary",
                       letterSpacing: "-0.02em",
                       lineHeight: 1.2,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      wordBreak: "break-all",
                     }}
                   >
                     {formatCurrency(totalIncome)}
@@ -1208,10 +1208,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 sx={{
                   display: "inline-flex",
                   alignItems: "stretch",
-                  height: 32,
+                  height: 38,
                   border: "1px solid",
                   borderColor: activeFiltersCount > 0 ? "primary.main" : "divider",
-                  borderRadius: "10px",
+                  borderRadius: "12px",
                   overflow: "hidden",
                   flexShrink: 0,
                   transition: "border-color 0.2s",
@@ -1228,13 +1228,13 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    width: 40,
+                    width: 48,
                     cursor: "pointer",
                     transition: "background 0.15s",
                     "&:active": { bgcolor: alpha(theme.palette.primary.main, 0.1) },
                   }}
                 >
-                  <FilterIcon sx={{ fontSize: 15, color: activeFiltersCount > 0 ? "primary.main" : "text.secondary" }} />
+                  <FilterIcon sx={{ fontSize: 16, color: activeFiltersCount > 0 ? "primary.main" : "text.secondary" }} />
                   {activeFiltersCount > 0 && (
                     <Box
                       sx={{
@@ -1269,7 +1269,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    width: 40,
+                    width: 48,
                     cursor: isExporting || filteredData.length === 0 ? "default" : "pointer",
                     opacity: filteredData.length === 0 ? 0.35 : 1,
                     transition: "background 0.15s",
@@ -1279,7 +1279,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   {isExporting ? (
                     <CircularProgress size={12} />
                   ) : (
-                    <DownloadIcon sx={{ fontSize: 15, color: "text.secondary" }} />
+                    <DownloadIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                   )}
                 </Box>
               </Box>
