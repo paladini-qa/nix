@@ -52,8 +52,8 @@ import {
   getRowSx,
   getMobileCardSx,
 } from "../utils/tableStyles";
-import { Transaction } from "../types";
-import { getReportDate } from "../utils/transactionUtils";
+import { Transaction, PaymentMethodConfig } from "../types";
+import { getEffectiveReportDate } from "../utils/transactionUtils";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../constants";
 import { useSettings } from "../contexts";
 import DateFilter from "./DateFilter";
@@ -61,6 +61,7 @@ import DateFilter from "./DateFilter";
 interface PaymentMethodDetailViewProps {
   paymentMethod: string;
   transactions: Transaction[];
+  paymentMethodConfigs?: PaymentMethodConfig[];
   selectedMonth: number;
   selectedYear: number;
   onDateChange: (month: number, year: number) => void;
@@ -75,6 +76,7 @@ interface PaymentMethodDetailViewProps {
 const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   paymentMethod,
   transactions,
+  paymentMethodConfigs = [],
   selectedMonth,
   selectedYear,
   onDateChange,
@@ -161,7 +163,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           (tx) =>
             !tx.isVirtual &&
             tx.paymentMethod === paymentMethod &&
-            getReportDate(tx).startsWith(
+            getEffectiveReportDate(tx, paymentMethodConfigs).startsWith(
               `${targetYear}-${String(targetMonth).padStart(2, "0")}`
             ) &&
             (tx.recurringGroupId === t.id ||
@@ -200,7 +202,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   const filteredTransactions = useMemo(() => {
     const baseTransactions = [
       ...expenseOnlyTransactions.filter((t) => {
-        const [y, m] = getReportDate(t).split("-");
+        const [y, m] = getEffectiveReportDate(t, paymentMethodConfigs).split("-");
         const matchesDate =
           parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
 
@@ -250,7 +252,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   const invoiceTotal = useMemo(() => {
     const allPeriodExpenses = [
       ...expenseOnlyTransactions.filter((t) => {
-        const [y, m] = getReportDate(t).split("-");
+        const [y, m] = getEffectiveReportDate(t, paymentMethodConfigs).split("-");
         const matchesDate =
           parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
         if (!matchesDate || t.paymentMethod !== paymentMethod) return false;

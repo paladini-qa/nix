@@ -207,6 +207,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               <PaymentMethodDetailView
                 paymentMethod={selectedPaymentMethod}
                 transactions={transactions}
+                paymentMethodConfigs={paymentMethodConfigs}
                 selectedMonth={filters.month}
                 selectedYear={filters.year}
                 onDateChange={(month, year) => setFilters({ month, year })}
