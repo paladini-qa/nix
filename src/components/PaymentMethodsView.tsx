@@ -190,7 +190,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
     const targetMonth = selectedMonth + 1;
     const targetYear = selectedYear;
 
-    transactions.forEach((t) => {
+    transactions?.forEach((t) => {
       if (!t.isRecurring || !t.frequency) return;
       if (t.installments && t.installments > 1) return;
 
@@ -258,7 +258,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
 
   // Filtra transações do mês selecionado (usa data de relatório)
   const monthTransactions = useMemo(() => {
-    const baseTransactions = transactions.filter((t) => {
+    const baseTransactions = (transactions || []).filter((t) => {
       const [y, m] = getReportDate(t).split("-");
       const isCurrentMonth =
         parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
@@ -282,7 +282,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   const paymentMethodsSummary = useMemo<PaymentMethodSummary[]>(() => {
     const summaryMap = new Map<string, PaymentMethodSummary>();
 
-    paymentMethods.forEach((method) => {
+    (paymentMethods || []).forEach((method) => {
       summaryMap.set(method, {
         name: method,
         totalExpense: 0,
@@ -293,7 +293,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       });
     });
 
-    monthTransactions.forEach((tx) => {
+    (monthTransactions || []).forEach((tx) => {
       const summary = summaryMap.get(tx.paymentMethod);
       if (summary) {
         summary.transactionCount++;

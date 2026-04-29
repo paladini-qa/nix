@@ -158,7 +158,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     const targetMonth = selectedMonth + 1;
     const targetYear = selectedYear;
 
-    transactions.forEach((t) => {
+    transactions?.forEach((t) => {
       if (!t.isRecurring || !t.frequency) return;
       if (t.installments && t.installments > 1) return;
 
@@ -226,7 +226,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
 
   // Filtra transações do mês (usa data de relatório)
   const monthTransactions = useMemo(() => {
-    const baseTransactions = transactions.filter((t) => {
+    const baseTransactions = (transactions || []).filter((t) => {
       const [y, m] = getReportDate(t).split("-");
       const isCurrentMonth =
         parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
@@ -252,7 +252,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     const expenseMap = new Map<string, CategorySummary>();
 
     // Inicializa com categorias cadastradas
-    categories.income.forEach((cat) => {
+    (categories?.income || []).forEach((cat) => {
       const colors = categoryColors.income?.[cat] || DEFAULT_INCOME_COLORS;
       incomeMap.set(cat, {
         name: cat,
@@ -264,7 +264,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         unpaidAmount: 0,
       });
     });
-    categories.expense.forEach((cat) => {
+    (categories?.expense || []).forEach((cat) => {
       const colors = categoryColors.expense?.[cat] || DEFAULT_EXPENSE_COLORS;
       expenseMap.set(cat, {
         name: cat,
@@ -278,7 +278,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     });
 
     // Processa todas as transações, criando categorias dinamicamente se necessário
-    monthTransactions.forEach((tx) => {
+    (monthTransactions || []).forEach((tx) => {
       const map = tx.type === "income" ? incomeMap : expenseMap;
       const defaultColors =
         tx.type === "income" ? DEFAULT_INCOME_COLORS : DEFAULT_EXPENSE_COLORS;

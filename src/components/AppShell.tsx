@@ -167,7 +167,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
         {isMobile && <PullToRefreshIndicator isRefreshing={isRefreshing} pullOffset={pullOffset} />}
         
         <Suspense fallback={null}>
-          <AppViewSwitcher currentView={currentView} />
+          <AppViewSwitcher currentView={currentView} session={session} />
         </Suspense>
       </Box>
 

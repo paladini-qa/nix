@@ -5,7 +5,9 @@ import PageTransition from "./motion/PageTransition";
 import { useAppStore } from "../hooks/useAppStore";
 import { useTransactionsQuery } from "../hooks/useTransactionsQuery";
 import { useSettingsQuery } from "../hooks/useSettingsQuery";
+import { useSettings, useNotification } from "../contexts";
 import { Box, CircularProgress, useMediaQuery, useTheme } from "@mui/material";
+import { Session } from "@supabase/supabase-js";
 
 // Skeletons
 import TransactionsSkeleton from "./skeletons/TransactionsSkeleton";
@@ -46,14 +48,39 @@ import { AppCurrentView } from "../types/appView";
 
 interface AppViewSwitcherProps {
   currentView?: AppCurrentView;
+  session: Session;
 }
 
-const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView }) => {
+const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView, session }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { filters, setFilters, setIsFormOpen, setEditingTransaction } = useAppStore();
-  const { data: transactions = [] } = useTransactionsQuery();
-  const { data: settings } = useSettingsQuery();
+  const { 
+    data: transactions = [], 
+    updateTransaction, 
+    deleteTransaction,
+    refetch: refetchTransactions,
+    updateInstallmentDates
+  } = useTransactionsQuery();
+  const { 
+    paymentMethods, 
+    paymentMethodColors, 
+    paymentMethodConfigs,
+    categories,
+    categoryColors,
+    addCategory,
+    removeCategory,
+    updateCategoryColor,
+    addPaymentMethod,
+    removePaymentMethod,
+    updatePaymentMethodColor,
+    getPaymentMethodPaymentDay,
+    updatePaymentMethodPaymentDay,
+    addPaymentMethodConfig,
+    updatePaymentMethodConfig,
+    removePaymentMethodConfig
+  } = useSettings();
+  const { showSuccess, showError } = useNotification();
   const location = useLocation();
   
   const normalizedPath = location.pathname.replace(/\/$/, "") || "/";
@@ -67,6 +94,24 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     setIsFormOpen(true);
   };
 
+  const handlePayAll = async (paymentMethod: string, month: number, year: number) => {
+    try {
+      const unpaid = transactions.filter(t => 
+        !t.isPaid && 
+        t.paymentMethod === paymentMethod && 
+        new Date(t.date).getMonth() === month && 
+        new Date(t.date).getFullYear() === year
+      );
+
+      if (unpaid.length === 0) return;
+
+      await Promise.all(unpaid.map(t => updateTransaction({ id: t.id, isPaid: true })));
+      showSuccess(`Todas as transações de ${paymentMethod} marcadas como pagas!`);
+    } catch (error) {
+      showError("Erro ao pagar transações");
+    }
+  };
+
   const renderView = () => {
     switch (currentView) {
       case "dashboard":
@@ -77,6 +122,9 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
             <TransactionsView 
               transactions={transactions} 
               onNewTransaction={handleNewTransaction}
+              onEdit={setEditingTransaction}
+              onDelete={deleteTransaction}
+              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
               selectedMonth={filters.month}
               selectedYear={filters.year}
               onDateChange={(month, year) => setFilters({ month, year })}
@@ -86,13 +134,28 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "splits":
         return (
           <Suspense fallback={<ListCardsSkeleton />}>
-            <SplitsView transactions={transactions} onNewTransaction={handleNewTransaction} />
+            <SplitsView 
+              transactions={transactions} 
+              onNewTransaction={handleNewTransaction}
+              onEdit={setEditingTransaction}
+              onDelete={deleteTransaction}
+              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onRefreshData={async () => { await refetchTransactions(); }}
+              onUpdateInstallmentDates={updateInstallmentDates}
+            />
           </Suspense>
         );
       case "recurring":
         return (
           <Suspense fallback={<ListCardsSkeleton />}>
-            <RecurringView transactions={transactions} onNewTransaction={handleNewTransaction} />
+            <RecurringView 
+              transactions={transactions} 
+              onEdit={setEditingTransaction}
+              onDelete={deleteTransaction}
+              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onNewTransaction={handleNewTransaction}
+              onRefreshData={async () => { await refetchTransactions(); }}
+            />
           </Suspense>
         );
       case "nixai":
@@ -104,13 +167,46 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "paymentMethods":
         return (
           <Suspense fallback={<PaymentMethodsSkeleton />}>
-            <PaymentMethodsView transactions={transactions} />
+            <PaymentMethodsView 
+              transactions={transactions}
+              paymentMethods={paymentMethods}
+              paymentMethodColors={paymentMethodColors}
+              paymentMethodConfigs={paymentMethodConfigs}
+              selectedMonth={filters.month}
+              selectedYear={filters.year}
+              onDateChange={(month, year) => setFilters({ month, year })}
+              onSelectPaymentMethod={setSelectedPaymentMethod}
+              onPayAll={handlePayAll}
+              onAddPaymentMethod={addPaymentMethod}
+              onRemovePaymentMethod={removePaymentMethod}
+              onUpdatePaymentMethodColor={updatePaymentMethodColor}
+              getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+              onUpdatePaymentMethodPaymentDay={updatePaymentMethodPaymentDay}
+              onAddPaymentMethodConfig={addPaymentMethodConfig}
+              onUpdatePaymentMethodConfig={updatePaymentMethodConfig}
+              onRemovePaymentMethodConfig={removePaymentMethodConfig}
+            />
           </Suspense>
         );
       case "categories":
         return (
           <Suspense fallback={<CategoriesSkeleton />}>
-            <CategoriesView transactions={transactions} />
+            <CategoriesView 
+              transactions={transactions}
+              categories={categories}
+              categoryColors={categoryColors}
+              selectedMonth={filters.month}
+              selectedYear={filters.year}
+              onDateChange={(month, year) => setFilters({ month, year })}
+              onAddCategory={addCategory}
+              onRemoveCategory={removeCategory}
+              onUpdateCategoryColor={updateCategoryColor}
+              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onEditTransaction={setEditingTransaction}
+              onDeleteTransaction={deleteTransaction}
+              initialSelectedCategory={selectedCategoryNav}
+              onClearInitialCategory={() => setSelectedCategoryNav(null)}
+            />
           </Suspense>
         );
       case "goals":
@@ -164,7 +260,13 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "subscriptions":
         return (
           <Suspense fallback={<ViewLoadingMui />}>
-            <SubscriptionsView transactions={transactions} onNewTransaction={handleNewTransaction} />
+            <SubscriptionsView 
+              transactions={transactions} 
+              onNewTransaction={handleNewTransaction}
+              onEdit={setEditingTransaction}
+              onDelete={(t) => deleteTransaction(t.id)}
+              userId={session.user.id}
+            />
           </Suspense>
         );
       default:
