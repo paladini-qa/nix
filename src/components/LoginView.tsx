@@ -362,6 +362,10 @@ const LoginView: React.FC = () => {
               <TextField
                 fullWidth
                 label="Seu Nome"
+                id="name"
+                name="name"
+                autoComplete="name"
+                inputMode="text"
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -381,6 +385,10 @@ const LoginView: React.FC = () => {
             <TextField
               fullWidth
               label="Email"
+              id="email"
+              name="email"
+              autoComplete="username"
+              inputMode="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -399,6 +407,9 @@ const LoginView: React.FC = () => {
             <TextField
               fullWidth
               label="Senha"
+              id="password"
+              name="password"
+              autoComplete={isSignUp ? "new-password" : "current-password"}
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}

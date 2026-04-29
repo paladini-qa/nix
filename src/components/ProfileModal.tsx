@@ -394,6 +394,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
               <TextField
                 fullWidth
                 size="small"
+                name="name"
+                autoComplete="name"
                 value={localDisplayName}
                 onChange={(e) => setLocalDisplayName(e.target.value)}
                 placeholder="Digite seu nome..."
@@ -465,6 +467,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
               <TextField
                 fullWidth
                 size="small"
+                name="email"
+                autoComplete="username"
                 type="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
