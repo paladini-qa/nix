@@ -47,6 +47,12 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
     setIsProfileModalOpen,
   } = useAppStore();
 
+  const {
+    categories,
+    paymentMethods,
+    friends,
+    addFriend,
+    getPaymentMethodPaymentDay,
     getPaymentMethodConfig,
     displayName,
   } = useSettings();
