@@ -62,7 +62,7 @@ import TransactionTags from "./TransactionTags";
 import SearchBar from "./SearchBar";
 import SwipeableTransactionCard from "./SwipeableTransactionCard";
 import PullToRefreshIndicator from "./PullToRefreshIndicator";
-import { Transaction } from "../types";
+import { Transaction, PaymentMethodConfig } from "../types";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../constants";
 import DateFilter from "./DateFilter";
 import { useNotification } from "../contexts";
@@ -70,7 +70,8 @@ import { usePullToRefresh, useLayoutSpacing } from "../hooks";
 import EmptyState from "./EmptyState";
 import NixButton from "./radix/Button";
 import { motion, AnimatePresence } from "framer-motion";
-import { getReportDate } from "../utils/transactionUtils";
+import { getEffectiveReportDate } from "../utils/transactionUtils";
+import { generateRecurringTransactions } from "../utils/recurringUtils";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -82,6 +83,7 @@ interface TransactionsViewProps {
   selectedYear: number;
   onDateChange: (month: number, year: number) => void;
   onRefreshData?: () => Promise<void>;
+  paymentMethodConfigs?: PaymentMethodConfig[];
 }
 
 type SortDirection = "asc" | "desc";
@@ -108,6 +110,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   selectedYear,
   onDateChange,
   onRefreshData,
+  paymentMethodConfigs = [],
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -148,121 +151,31 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
 
-  // Gera transações recorrentes virtuais para o mês/ano selecionado
-  // Apenas para transações recorrentes SEM parcelas (parceladas já existem no banco)
-  const generateRecurringTransactions = useMemo(() => {
-    const virtualTransactions: Transaction[] = [];
-    const targetMonth = selectedMonth + 1;
-    const targetYear = selectedYear;
-
-    transactions.forEach((t) => {
-      // Ignora se não é recorrente, não tem frequência, ou é parcelada
-      if (!t.isRecurring || !t.frequency) return;
-      if (t.installments && t.installments > 1) return; // Parceladas não geram virtuais
-
-      const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
-      const targetDate = new Date(targetYear, targetMonth - 1, 1);
-
-      // Não gera virtuais para datas anteriores à original
-      if (targetDate < new Date(origYear, origMonth - 1, 1)) return;
-
-      // Não duplica no mês original
-      const isOriginalMonth =
-        origYear === targetYear && origMonth === targetMonth;
-      if (isOriginalMonth) return;
-
-      let shouldAppear = false;
-
-      if (t.frequency === "monthly") {
-        shouldAppear = true;
-      } else if (t.frequency === "yearly") {
-        shouldAppear = origMonth === targetMonth && targetYear > origYear;
-      }
-
-      if (shouldAppear) {
-        const daysInTargetMonth = new Date(
-          targetYear,
-          targetMonth,
-          0
-        ).getDate();
-        const adjustedDay = Math.min(origDay, daysInTargetMonth);
-        const virtualDate = `${targetYear}-${String(targetMonth).padStart(
-          2,
-          "0"
-        )}-${String(adjustedDay).padStart(2, "0")}`;
-
-        // Verifica se já existe uma transação materializada para esta data
-        // (transação com mesma descrição, categoria, valor e data, mas não recorrente)
-        const hasMaterialized = transactions.some((mt) => {
-          if (mt.isRecurring || mt.isVirtual) return false;
-          if (mt.id === t.id) return false;
-
-          const sameDescription = mt.description === t.description;
-          const sameCategory = mt.category === t.category;
-          const sameAmount = mt.amount === t.amount;
-          const sameDate = mt.date === virtualDate;
-          const sameType = mt.type === t.type;
-
-          return (
-            sameDescription &&
-            sameCategory &&
-            sameAmount &&
-            sameDate &&
-            sameType
-          );
-        });
-
-        // Se já existe materializada, não gera a virtual
-        if (hasMaterialized) return;
-
-        // Verifica se esta data está no excluded_dates da transação original
-        const excludedDates = t.excludedDates || [];
-        if (excludedDates.includes(virtualDate)) {
-          return; // Não gera a transação virtual para esta data
-        }
-
-        virtualTransactions.push({
-          ...t,
-          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
-            2,
-            "0"
-          )}`,
-          date: virtualDate,
-          isVirtual: true,
-          originalTransactionId: t.id,
-          isPaid: false, // Transações virtuais sempre começam como não pagas
-        });
-      }
-    });
-
-    return virtualTransactions;
-  }, [transactions, selectedMonth, selectedYear]);
-
-  // Combina transações reais + virtuais (filtro por mês usa data da transação)
+  // Combina transações reais + virtuais, usando invoiceDueDate (ou data calculada
+  // pelo config do método de pagamento) para determinar o mês de cada transação.
   const allTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
-      const [y, m] = getReportDate(t).split("-");
+      const [y, m] = getEffectiveReportDate(t, paymentMethodConfigs).split("-");
       const isCurrentMonth =
         parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
 
       if (!isCurrentMonth) return false;
 
-      // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
-      // Isso acontece quando o usuário exclui a primeira ocorrência com "apenas esta"
       if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
-        return false; // Não exibe a transação recorrente se sua própria data foi excluída
+        return false;
       }
 
       return true;
     });
 
-    return [...currentMonthTransactions, ...generateRecurringTransactions];
-  }, [
-    transactions,
-    selectedMonth,
-    selectedYear,
-    generateRecurringTransactions,
-  ]);
+    const virtualTransactions = generateRecurringTransactions(
+      transactions,
+      { month: selectedMonth, year: selectedYear },
+      paymentMethodConfigs
+    );
+
+    return [...currentMonthTransactions, ...virtualTransactions];
+  }, [transactions, selectedMonth, selectedYear, paymentMethodConfigs]);
 
   // Extrai categorias únicas das transações
   const availableCategories = useMemo(() => {

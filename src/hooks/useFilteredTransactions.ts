@@ -3,7 +3,7 @@ import { useAppStore } from "./useAppStore";
 import { useTransactionsQuery } from "./useTransactionsQuery";
 import { useSettingsQuery } from "./useSettingsQuery";
 import { generateRecurringTransactions } from "../utils/recurringUtils";
-import { getReportDate } from "../utils/transactionUtils";
+import { getEffectiveReportDate } from "../utils/transactionUtils";
 
 export function useFilteredTransactions() {
   const { filters } = useAppStore();
@@ -14,7 +14,7 @@ export function useFilteredTransactions() {
 
   const filteredTransactions = useMemo(() => {
     const currentMonthTransactions = transactions.filter((t) => {
-      const [y, m] = getReportDate(t).split("-");
+      const [y, m] = getEffectiveReportDate(t, paymentMethodConfigs).split("-");
       const isCurrentMonth =
         parseInt(y) === filters.year && parseInt(m) === filters.month + 1;
 

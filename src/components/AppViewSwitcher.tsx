@@ -121,8 +121,8 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "transactions":
         return (
           <Suspense fallback={<TransactionsSkeleton />}>
-            <TransactionsView 
-              transactions={transactions} 
+            <TransactionsView
+              transactions={transactions}
               onNewTransaction={handleNewTransaction}
               onEdit={setEditingTransaction}
               onDelete={deleteTransaction}
@@ -130,6 +130,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               selectedMonth={filters.month}
               selectedYear={filters.year}
               onDateChange={(month, year) => setFilters({ month, year })}
+              paymentMethodConfigs={paymentMethodConfigs}
             />
           </Suspense>
         );

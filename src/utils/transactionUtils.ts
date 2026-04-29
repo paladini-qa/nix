@@ -11,6 +11,26 @@ export function getReportDate(t: Transaction): string {
 }
 
 /**
+ * Como getReportDate, mas calcula o invoiceDueDate dinamicamente quando não está
+ * armazenado na transação, usando a configuração do método de pagamento.
+ * Isso corrige casos em que a configuração de fechamento foi adicionada depois da transação.
+ */
+export function getEffectiveReportDate(
+  t: Transaction,
+  paymentMethodConfigs?: PaymentMethodConfig[]
+): string {
+  if (t.invoiceDueDate) return t.invoiceDueDate;
+  if (paymentMethodConfigs?.length) {
+    const pmConfig = paymentMethodConfigs.find((c) => c.name === t.paymentMethod);
+    if (pmConfig) {
+      const calculated = calculateInvoiceDueDate(t.date, pmConfig);
+      if (calculated) return calculated;
+    }
+  }
+  return t.date;
+}
+
+/**
  * Calcula a data de vencimento da fatura para uma transação de cartão.
  *
  * Regras:
