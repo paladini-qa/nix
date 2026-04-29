@@ -122,7 +122,16 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
-      {!isMobile && <Sidebar currentView={currentView} />}
+      {!isMobile && (
+        <Sidebar 
+          currentView={currentView} 
+          onNavigate={handleNavigate}
+          onLogout={handleLogout}
+          displayName={displayName}
+          userEmail={session.user.email || ""}
+          onOpenProfile={() => setIsProfileModalOpen(true)}
+        />
+      )}
       
       {isMobile && (
         <>
