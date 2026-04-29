@@ -1060,7 +1060,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       {formTab === "manual" && (
       <form
         id="transaction-form"
+        name="transaction-form"
         onSubmit={handleSubmit}
+        method="POST"
+        action="javascript:void(0);"
         style={{
           flex: 1,
           display: "flex",
@@ -1197,6 +1200,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   <TextField
                     {...params}
                     label="Descrição"
+                    name="transaction-description"
+                    id="transaction-description"
                     required
                     placeholder="Ex: Mercado, Aluguel, Salário..."
                     sx={inputSx}
@@ -1329,6 +1334,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             <Box>
               <TextField
                 label="Valor (R$)"
+                name="transaction-amount"
+                id="transaction-amount"
                 fullWidth
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -1398,8 +1405,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             <Grid container spacing={2.5}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth required sx={inputSx}>
-                  <InputLabel>Categoria</InputLabel>
+                  <InputLabel id="category-label">Categoria</InputLabel>
                   <Select
+                    labelId="category-label"
+                    id="transaction-category-select"
+                    name="transaction-category"
                     value={category}
                     label="Categoria"
                     onChange={(e) => {
@@ -1417,8 +1427,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth required sx={inputSx}>
-                  <InputLabel>Forma de Pagamento</InputLabel>
+                  <InputLabel id="payment-method-label">Forma de Pagamento</InputLabel>
                   <Select
+                    labelId="payment-method-label"
+                    id="transaction-payment-method-select"
+                    name="transaction-payment-method"
                     value={paymentMethod}
                     label="Forma de Pagamento"
                     onChange={(e) => {

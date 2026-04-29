@@ -451,6 +451,8 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         rows={3}
         fullWidth
         placeholder="Ex: Gastei 150 reais no mercado ontem com pix"
+        id="smart-input-text"
+        name="smart-input-text"
         value={textInput}
         onChange={(e) => setTextInput(e.target.value)}
         disabled={isProcessing}
@@ -728,6 +730,8 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
 
           <TextField
             label="Descrição"
+            id="edit-description"
+            name="description"
             fullWidth
             size="small"
             value={editDescription}
@@ -737,6 +741,8 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
 
           <TextField
             label="Valor (R$)"
+            id="edit-amount"
+            name="amount"
             type="number"
             fullWidth
             size="small"

@@ -320,15 +320,18 @@ const LoginView: React.FC = () => {
           </Box>
 
           {/* Form */}
-          <Box
-            component="form"
+          <form
+            id={isSignUp ? "signup-form" : "login-form"}
+            name={isSignUp ? "signup-form" : "login-form"}
+            key={isSignUp ? "signup" : "login"}
             onSubmit={handleSubmit}
-            sx={{
-              px: 3.5,
-              pb: 3,
+            action="javascript:void(0);"
+            method="POST"
+            style={{
+              padding: "0 28px 24px 28px",
               display: "flex",
               flexDirection: "column",
-              gap: 2,
+              gap: "16px",
             }}
           >
             {error && (
@@ -379,6 +382,11 @@ const LoginView: React.FC = () => {
                   ),
                 }}
                 sx={inputSx}
+                inputProps={{
+                  name: "name",
+                  id: "name",
+                  "aria-label": "Seu Nome",
+                }}
               />
             )}
 
@@ -402,6 +410,11 @@ const LoginView: React.FC = () => {
                 ),
               }}
               sx={inputSx}
+              inputProps={{
+                name: "email",
+                id: "email",
+                "aria-label": "Email",
+              }}
             />
 
             <TextField
@@ -415,7 +428,6 @@ const LoginView: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              inputProps={{ minLength: 6 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -448,6 +460,12 @@ const LoginView: React.FC = () => {
                 ),
               }}
               sx={inputSx}
+              inputProps={{
+                name: "password",
+                id: "password",
+                minLength: 6,
+                "aria-label": "Senha",
+              }}
             />
 
             {/* Remember Me Checkbox - apenas no login */}
@@ -570,7 +588,7 @@ const LoginView: React.FC = () => {
                   : "Não tem conta? Cadastre-se"}
               </Link>
             </Box>
-          </Box>
+          </form>
 
           {/* Footer — Cozy AI Badge */}
           <Box
