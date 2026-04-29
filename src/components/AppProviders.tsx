@@ -5,14 +5,18 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/pt-br";
 import { Theme as MuiTheme } from "@mui/material/styles";
+import { Session } from "@supabase/supabase-js";
 import {
   NotificationProvider,
   ConfirmDialogProvider,
   PrivacyProvider,
+  SettingsProvider,
 } from "../contexts";
 
 interface AppProvidersProps {
   children: ReactNode;
+  /** Supabase session */
+  session: Session;
   /** Radix appearance */
   darkMode: boolean;
   /** MUI theme instance */
@@ -25,6 +29,7 @@ interface AppProvidersProps {
  */
 const AppProviders: React.FC<AppProvidersProps> = ({
   children,
+  session,
   darkMode,
   muiTheme,
 }) => (
@@ -32,11 +37,13 @@ const AppProviders: React.FC<AppProvidersProps> = ({
     <ThemeProvider theme={muiTheme}>
       <CssBaseline />
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
-        <NotificationProvider>
-          <ConfirmDialogProvider>
-            <PrivacyProvider>{children}</PrivacyProvider>
-          </ConfirmDialogProvider>
-        </NotificationProvider>
+        <SettingsProvider session={session}>
+          <NotificationProvider>
+            <ConfirmDialogProvider>
+              <PrivacyProvider>{children}</PrivacyProvider>
+            </ConfirmDialogProvider>
+          </NotificationProvider>
+        </SettingsProvider>
       </LocalizationProvider>
     </ThemeProvider>
   </Theme>
