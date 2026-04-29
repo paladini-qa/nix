@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -43,18 +45,22 @@ jobs:
         run: npx cap sync android
 
       - name: Build Android APK
+        id: get_version
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-          # Extrai a versão do build.gradle
-          VERSION_NAME=$(grep "versionName" app/build.gradle | head -n 1 | awk -F'"' '{print $2}')
+          # Extrai a versão real do build.gradle rodando uma pequena task
+          ./gradlew -q help # Apenas para garantir que o gradle esteja pronto
+          VERSION_NAME=$(./gradlew -q printVersionName | tail -n 1)
+          if [ -z "$VERSION_NAME" ]; then VERSION_NAME="1.0.unknown"; fi
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
           cp app/build/outputs/apk/debug/app-debug.apk ../nix-$VERSION_NAME-debug.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nix-android-apk
+          name: nix-v${{ steps.get_version.outputs.VERSION_NAME }}-apk
           path: nix-*.apk
           if-no-files-found: error
           retention-days: 7

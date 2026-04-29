@@ -49,3 +49,4 @@ ios/DerivedData/
 # Capacitor web assets (regenerated on sync)
 android/app/src/main/assets/public/
 ios/App/App/public/
+*.zip

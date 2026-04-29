@@ -1,7 +1,7 @@
 {
   "name": "nix",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,7 +15,8 @@
     "cap:android": "npm run build:mobile && npx cap sync android && npx cap open android",
     "cap:ios": "npm run build:mobile && npx cap sync ios && npx cap open ios",
     "android:build": "npm run cap:sync && cd android && ./gradlew assembleDebug",
-    "android:release": "npm run cap:sync && cd android && ./gradlew assembleRelease"
+    "android:release": "npm run cap:sync && cd android && ./gradlew assembleRelease",
+    "zip": "node scripts/zip-build.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
@@ -69,6 +70,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "archiver": "^7.0.1",
     "jsdom": "^27.3.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
