@@ -73,6 +73,9 @@ interface SharedViewProps {
   transactions: Transaction[];
   friends: string[];
   userName?: string; // Nome do usuário para o relatório PDF
+  selectedMonth?: number;
+  selectedYear?: number;
+  onDateChange?: (month: number, year: number) => void;
   onNewTransaction: () => void;
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
@@ -100,6 +103,9 @@ const SharedView: React.FC<SharedViewProps> = ({
   transactions,
   friends,
   userName = "Usuário",
+  selectedMonth: controlledSelectedMonth,
+  selectedYear: controlledSelectedYear,
+  onDateChange,
   onNewTransaction,
   onEdit,
   onDelete,
@@ -113,12 +119,14 @@ const SharedView: React.FC<SharedViewProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFriend, setSelectedFriend] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<PaymentStatus>("all");
-  const [selectedMonth, setSelectedMonth] = useState<number>(
+  const [internalSelectedMonth, setInternalSelectedMonth] = useState<number>(
     new Date().getMonth()
   );
-  const [selectedYear, setSelectedYear] = useState<number>(
+  const [internalSelectedYear, setInternalSelectedYear] = useState<number>(
     new Date().getFullYear()
   );
+  const selectedMonth = controlledSelectedMonth ?? internalSelectedMonth;
+  const selectedYear = controlledSelectedYear ?? internalSelectedYear;
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Handler de refresh
@@ -139,8 +147,13 @@ const SharedView: React.FC<SharedViewProps> = ({
 
   // Handler para mudança de data
   const handleDateChange = (month: number, year: number) => {
-    setSelectedMonth(month);
-    setSelectedYear(year);
+    if (controlledSelectedMonth === undefined) {
+      setInternalSelectedMonth(month);
+    }
+    if (controlledSelectedYear === undefined) {
+      setInternalSelectedYear(year);
+    }
+    onDateChange?.(month, year);
   };
 
   // Gera o relatório PDF para um amigo específico (usando o mês filtrado)
@@ -180,36 +193,6 @@ const SharedView: React.FC<SharedViewProps> = ({
   const sharedRecurringVirtuals = useMemo(() => {
     const virtuals: Transaction[] = [];
     const targetMonth1Based = selectedMonth + 1; // 1-12 para comparação
-
-    // #region agent log
-    const sharedRecurringCandidates = transactions.filter(
-      (t) => t.isShared && t.sharedWith && t.isRecurring
-    );
-    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "SharedView.tsx:sharedRecurringVirtuals",
-        message: "Shared recurring candidates and date range",
-        data: {
-          totalTransactions: transactions.length,
-          sharedRecurringCount: sharedRecurringCandidates.length,
-          candidates: sharedRecurringCandidates.map((t) => ({
-            id: t.id,
-            date: t.date,
-            frequency: t.frequency,
-            hasFrequency: !!t.frequency,
-            installments: t.installments,
-          })),
-          selectedMonth,
-          selectedYear,
-          targetMonth1Based,
-        },
-        timestamp: Date.now(),
-        hypothesisId: "H1-H2",
-      }),
-    }).catch(() => {});
-    // #endregion
 
     transactions.forEach((t) => {
       if (!t.isShared || !t.sharedWith || !t.isRecurring || !t.frequency)
@@ -305,23 +288,6 @@ const SharedView: React.FC<SharedViewProps> = ({
       }
     });
 
-    // #region agent log
-    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "SharedView.tsx:sharedRecurringVirtuals-end",
-        message: "Virtuals generated",
-        data: {
-          virtualsCount: virtuals.length,
-          sampleVirtualDates: virtuals.slice(0, 5).map((v) => v.date),
-        },
-        timestamp: Date.now(),
-        hypothesisId: "H2-H3",
-      }),
-    }).catch(() => {});
-    // #endregion
-
     return virtuals;
   }, [transactions, selectedMonth, selectedYear]);
 
@@ -339,24 +305,6 @@ const SharedView: React.FC<SharedViewProps> = ({
         return false;
       return true;
     });
-    // #region agent log
-    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "SharedView.tsx:allSharedTransactions",
-        message: "All shared transactions count",
-        data: {
-          total: out.length,
-          virtualCount: out.filter((t) => t.isVirtual).length,
-          expenseCount: out.filter((t) => t.type === "expense").length,
-          incomeCount: out.filter((t) => t.type === "income").length,
-        },
-        timestamp: Date.now(),
-        hypothesisId: "H3",
-      }),
-    }).catch(() => {});
-    // #endregion
     return out;
   }, [effectiveTransactions]);
 
@@ -377,24 +325,6 @@ const SharedView: React.FC<SharedViewProps> = ({
         transactionMonth === selectedMonth && transactionYear === selectedYear
       );
     });
-    // #region agent log
-    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "SharedView.tsx:sharedTransactions",
-        message: "Shared transactions for selected month (list shown)",
-        data: {
-          count: out.length,
-          virtualInList: out.filter((t) => t.isVirtual).length,
-          selectedMonth,
-          selectedYear,
-        },
-        timestamp: Date.now(),
-        hypothesisId: "H3-H4",
-      }),
-    }).catch(() => {});
-    // #endregion
     return out;
   }, [allSharedTransactions, selectedMonth, selectedYear]);
 
@@ -463,34 +393,6 @@ const SharedView: React.FC<SharedViewProps> = ({
                 (inc) => inc.id === t.relatedTransactionId
               ) ?? undefined;
           }
-          // #region agent log
-          if (t.isVirtual && balance.expenses.length <= 3) {
-            fetch(
-              "http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  location: "SharedView.tsx:friendBalances-expense",
-                  message: "Virtual expense balance contribution",
-                  data: {
-                    friendName,
-                    expenseId: t.id,
-                    relatedTransactionId: t.relatedTransactionId,
-                    foundRelatedIncome: !!relatedIncome,
-                    relatedIncomePaid: relatedIncome?.isPaid,
-                    halfAmount,
-                    addedTo: relatedIncome?.isPaid
-                      ? "totalPaid"
-                      : "pendingAmount",
-                  },
-                  timestamp: Date.now(),
-                  hypothesisId: "H5-H7",
-                }),
-              }
-            ).catch(() => {});
-          }
-          // #endregion
           // Só considera "já acertado" quando a receita relacionada está explicitamente marcada como paga
           if (relatedIncome?.isPaid === true) {
             balance.totalPaid += halfAmount;
@@ -523,28 +425,7 @@ const SharedView: React.FC<SharedViewProps> = ({
       balance.netBalance = balance.pendingAmount - balance.pendingIOwe;
     });
 
-    // #region agent log
     const balanceList = Array.from(balances.values());
-    fetch("http://127.0.0.1:7244/ingest/dd2b7fd6-4632-4540-9fb1-253058dcf6c5", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "SharedView.tsx:friendBalances-summary",
-        message: "Friend balances summary",
-        data: balanceList.map((f) => ({
-          name: f.name,
-          totalOwed: f.totalOwed,
-          pendingAmount: f.pendingAmount,
-          totalPaid: f.totalPaid,
-          expenseCount: f.expenses.length,
-          virtualExpenseCount: f.expenses.filter((e) => e.isVirtual).length,
-        })),
-        timestamp: Date.now(),
-        hypothesisId: "H5-H7",
-      }),
-    }).catch(() => {});
-    // #endregion
-
     return balanceList.sort((a, b) => a.name.localeCompare(b.name));
   }, [allSharedTransactionsForBalance, transactions]);
 
