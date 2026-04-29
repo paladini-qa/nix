@@ -64,3 +64,19 @@ jobs:
           path: nix-*.apk
           if-no-files-found: error
           retention-days: 7
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.event_name != 'pull_request'
+        with:
+          tag_name: v${{ steps.get_version.outputs.VERSION_NAME }}
+          name: Nix v${{ steps.get_version.outputs.VERSION_NAME }}
+          files: nix-*.apk
+          body: |
+            Nova versão de teste gerada automaticamente.
+            Versão: ${{ steps.get_version.outputs.VERSION_NAME }}
+            Commit: ${{ github.sha }}
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
