@@ -55,9 +55,10 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { filters, setFilters, setIsFormOpen, setEditingTransaction } = useAppStore();
-  const { 
-    data: transactions = [], 
-    updateTransaction, 
+  const {
+    data: transactions = [],
+    addTransaction,
+    updateTransaction,
     deleteTransaction,
     refetch: refetchTransactions,
     updateInstallmentDates
@@ -231,13 +232,20 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "goals":
         return (
           <Suspense fallback={<GoalsSkeleton />}>
-            <GoalsView />
+            <GoalsView userId={session.user.id} />
           </Suspense>
         );
       case "budgets":
         return (
           <Suspense fallback={<BudgetsSkeleton />}>
-            <BudgetsView transactions={transactions} />
+            <BudgetsView
+              transactions={transactions}
+              categories={categories}
+              userId={session.user.id}
+              selectedMonth={filters.month}
+              selectedYear={filters.year}
+              onDateChange={(month, year) => setFilters({ month, year })}
+            />
           </Suspense>
         );
       case "analytics":
@@ -249,13 +257,23 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "planning":
         return (
           <Suspense fallback={<PlanningSkeleton />}>
-            <PlanningView />
+            <PlanningView
+              categories={categories}
+              paymentMethods={paymentMethods}
+              userId={session.user.id}
+            />
           </Suspense>
         );
       case "import":
         return (
           <Suspense fallback={<ViewLoadingMui />}>
-            <ImportView />
+            <ImportView
+              categories={categories}
+              paymentMethods={paymentMethods}
+              onImport={async (txs) => {
+                await Promise.all(txs.map((tx) => addTransaction(tx)));
+              }}
+            />
           </Suspense>
         );
       case "fiscal-report":

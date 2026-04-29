@@ -80,9 +80,15 @@ const PieChartCard: React.FC<PieChartCardProps> = ({
   useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const w = el.getBoundingClientRect().width || el.offsetWidth;
-    if (w > 0) setChartWidth(w);
-  }, [data.length]);
+    const measure = () => {
+      const w = el.getBoundingClientRect().width || el.offsetWidth;
+      if (w > 0) setChartWidth(w);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const tooltipStyle = {
     borderRadius: "12px",

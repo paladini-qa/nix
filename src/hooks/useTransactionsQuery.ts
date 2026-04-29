@@ -19,7 +19,7 @@ function mapTransactionFromDb(t: any): Transaction {
     frequency: t.frequency,
     installments: t.installments,
     currentInstallment: t.current_installment,
-    isPaid: t.is_paid ?? true,
+    isPaid: t.is_paid ?? false,
     isShared: t.is_shared,
     sharedWith: t.shared_with,
     iOwe: t.i_owe,
@@ -143,8 +143,12 @@ export function useTransactionsQuery() {
         )
       );
 
-      const firstError = results.find((result) => result.error)?.error;
-      if (firstError) throw firstError;
+      const errors = results.filter((r) => r.error).map((r) => r.error!);
+      if (errors.length > 0) {
+        throw new Error(
+          `Failed to update ${errors.length} of ${newDates.length} installment dates`
+        );
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });

@@ -59,18 +59,22 @@ export const budgetService = {
         return [];
       }
 
-      // Busca o mês anterior mais recente que tem orçamentos recorrentes
-      const { data: recurringBudgets, error: recurringError } = await supabase
+      // Busca orçamentos recorrentes de meses anteriores
+      const { data: allRecurring, error: recurringError } = await supabase
         .from("budgets")
         .select("*")
         .eq("is_recurring", true)
-        .or(`year.lt.${year},and(year.eq.${year},month.lt.${month})`)
+        .lt("year", year + 1)
         .order("year", { ascending: false })
         .order("month", { ascending: false });
 
       if (recurringError) throw recurringError;
 
-      if (!recurringBudgets || recurringBudgets.length === 0) {
+      const recurringBudgets = (allRecurring ?? []).filter(
+        (b) => b.year < year || (b.year === year && b.month < month)
+      );
+
+      if (recurringBudgets.length === 0) {
         return [];
       }
 

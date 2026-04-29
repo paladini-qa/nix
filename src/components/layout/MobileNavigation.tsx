@@ -162,7 +162,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             <Box
               component="span"
               sx={{
-                fontSize: "0.6rem",
+                fontSize: "0.72rem",
                 fontWeight: currentView === "dashboard" ? 600 : 500,
                 lineHeight: 1.2,
                 textAlign: "center",
@@ -217,7 +217,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             <Box
               component="span"
               sx={{
-                fontSize: "0.6rem",
+                fontSize: "0.72rem",
                 fontWeight: currentView === "transactions" ? 600 : 500,
                 lineHeight: 1.2,
                 textAlign: "center",
@@ -314,7 +314,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             <Box
               component="span"
               sx={{
-                fontSize: "0.6rem",
+                fontSize: "0.72rem",
                 fontWeight: currentView === "paymentMethods" ? 600 : 500,
                 lineHeight: 1.2,
                 textAlign: "center",
@@ -369,7 +369,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             <Box
               component="span"
               sx={{
-                fontSize: "0.6rem",
+                fontSize: "0.72rem",
                 fontWeight: getActiveValue() === "others" ? 600 : 500,
                 lineHeight: 1.2,
                 textAlign: "center",

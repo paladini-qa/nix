@@ -210,8 +210,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         (filterShared === "not_shared" && !t.isShared);
       const matchesPaymentStatus =
         filterPaymentStatus === "all" ||
-        (filterPaymentStatus === "paid" && t.isPaid !== false) ||
-        (filterPaymentStatus === "pending" && t.isPaid === false);
+        (filterPaymentStatus === "paid" && t.isPaid === true) ||
+        (filterPaymentStatus === "pending" && t.isPaid !== true);
       return (
         matchesSearch &&
         matchesType &&

@@ -1,15 +1,16 @@
 import React from "react";
 import { Box, useTheme, alpha } from "@mui/material";
 import { motion } from "framer-motion";
-import { Menu, LogOut, Eye, EyeOff } from "lucide-react";
+import { Menu, Eye, EyeOff } from "lucide-react";
 import { IconButton, Text } from "@radix-ui/themes";
 import { usePrivacy } from "../../contexts";
 
 const MotionBox = motion.create(Box);
 
 interface MobileHeaderProps {
-  onMenuOpen: () => void;
-  onLogout: () => void;
+  onOpenDrawer: () => void;
+  onOpenSearch?: () => void;
+  onOpenProfile?: () => void;
 }
 
 /**
@@ -23,8 +24,9 @@ interface MobileHeaderProps {
  * - Touch-friendly tap targets (min 44px)
  */
 const MobileHeader: React.FC<MobileHeaderProps> = ({
-  onMenuOpen,
-  onLogout,
+  onOpenDrawer,
+  onOpenSearch,
+  onOpenProfile,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -67,7 +69,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         <IconButton
           size="3"
           variant="ghost"
-          onClick={onMenuOpen}
+          onClick={onOpenDrawer}
           aria-label="Open navigation menu"
           style={{ width: 48, height: 48 }}
         >
@@ -116,22 +118,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         </IconButton>
       </MotionBox>
 
-      <MotionBox
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
-      >
-        <IconButton
-          size="3"
-          variant="ghost"
-          color="red"
-          onClick={onLogout}
-          aria-label="Logout"
-          style={{ width: 48, height: 48 }}
-        >
-          <LogOut size={24} />
-        </IconButton>
-      </MotionBox>
+
     </MotionBox>
   );
 };
