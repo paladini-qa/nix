@@ -55,7 +55,7 @@ import {
 import { Transaction } from "../types";
 import { getReportDate } from "../utils/transactionUtils";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../constants";
-import { ColorsContext } from "../App";
+import { useSettings } from "../contexts";
 import DateFilter from "./DateFilter";
 
 interface PaymentMethodDetailViewProps {
@@ -88,7 +88,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { getPaymentMethodColor } = useContext(ColorsContext);
+  const { getPaymentMethodColor } = useSettings();
   const colors = getPaymentMethodColor(paymentMethod);
 
   const [searchTerm, setSearchTerm] = useState("");

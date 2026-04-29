@@ -18,8 +18,8 @@ import {
   PaymentMethodConfig,
 } from "../types";
 import {
-  CATEGORIES as DEFAULT_CATEGORIES,
-  PAYMENT_METHODS as DEFAULT_PAYMENT_METHODS,
+  DEFAULT_CATEGORIES,
+  DEFAULT_PAYMENT_METHODS,
   DEFAULT_PAYMENT_METHOD_CONFIGS,
 } from "../constants";
 

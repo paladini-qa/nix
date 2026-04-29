@@ -1,4 +1,4 @@
-export const CATEGORIES = {
+export const DEFAULT_CATEGORIES = {
   income: ["Salary", "Investments", "Freelance", "Gifts", "Other"],
   expense: [
     "Food",
@@ -13,7 +13,7 @@ export const CATEGORIES = {
   ],
 };
 
-export const PAYMENT_METHODS = [
+export const DEFAULT_PAYMENT_METHODS = [
   "Credit Card",
   "Debit Card",
   "Pix",

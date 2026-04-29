@@ -47,7 +47,7 @@ import {
 import { Transaction, ColorConfig, PaymentMethodColors, PaymentMethodConfig } from "../types";
 import { useLayoutSpacing } from "../hooks";
 import { getReportDate } from "../utils/transactionUtils";
-import { ColorsContext } from "../App";
+import { useSettings } from "../contexts";
 import DateFilter from "./DateFilter";
 import ColorPicker from "./ColorPicker";
 
@@ -116,7 +116,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { gridSpacing } = useLayoutSpacing();
   const isDarkMode = theme.palette.mode === "dark";
-  const { getPaymentMethodColor } = useContext(ColorsContext);
+  const { getPaymentMethodColor } = useSettings();
 
   const [tabValue, setTabValue] = useState(0);
   const [newPaymentMethod, setNewPaymentMethod] = useState("");

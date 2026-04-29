@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:mobile": "BUILD_TARGET=mobile vite build",
+    "build:mobile": "cross-env BUILD_TARGET=mobile vite build",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
@@ -76,6 +76,7 @@
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "archiver": "^7.0.1",
+    "cross-env": "^10.1.0",
     "jsdom": "^27.3.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",

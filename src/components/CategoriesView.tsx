@@ -64,7 +64,7 @@ import {
 } from "../types";
 import { useLayoutSpacing } from "../hooks";
 import { getReportDate } from "../utils/transactionUtils";
-import { ColorsContext } from "../App";
+import { useSettings } from "../contexts";
 import ColorPicker from "./ColorPicker";
 import DateFilter from "./DateFilter";
 import EmptyState from "./EmptyState";
@@ -130,7 +130,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { gridSpacing } = useLayoutSpacing();
   const isDarkMode = theme.palette.mode === "dark";
-  const { getCategoryColor } = useContext(ColorsContext);
+  const { getCategoryColor } = useSettings();
 
   const [tabValue, setTabValue] = useState(0);
   const [newIncomeCat, setNewIncomeCat] = useState("");

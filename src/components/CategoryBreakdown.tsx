@@ -20,7 +20,7 @@ import {
   Tooltip,
 } from "recharts";
 import { Transaction, TransactionType } from "../types";
-import { ColorsContext } from "../App";
+import { useSettings } from "../contexts";
 import { useLayoutSpacing } from "../hooks";
 
 interface PieDataItem {
@@ -329,7 +329,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   onPaymentMethodClick,
   onCategoryClick,
 }) => {
-  const { getCategoryColor, getPaymentMethodColor } = useContext(ColorsContext);
+  const { getCategoryColor, getPaymentMethodColor } = useSettings();
   const { gridSpacing } = useLayoutSpacing();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
