@@ -9,6 +9,9 @@ import "@radix-ui/themes/styles.css";
 import "./styles/index.css";
 import "./styles/radix-theme.css";
 
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./services/queryClient";
+
 // Inicializa o Capacitor (só executa em plataformas nativas)
 initializeCapacitor();
 
@@ -23,11 +26,13 @@ const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <BrowserRouter basename={basename}>
-        <App />
-      </BrowserRouter>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <BrowserRouter basename={basename}>
+          <App />
+        </BrowserRouter>
+      </ErrorBoundary>
+    </QueryClientProvider>
   </React.StrictMode>
 );
 

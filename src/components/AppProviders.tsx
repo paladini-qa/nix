@@ -11,9 +11,6 @@ import {
   PrivacyProvider,
 } from "../contexts";
 
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "../services/queryClient";
-
 interface AppProvidersProps {
   children: ReactNode;
   /** Radix appearance */
@@ -31,20 +28,18 @@ const AppProviders: React.FC<AppProvidersProps> = ({
   darkMode,
   muiTheme,
 }) => (
-  <QueryClientProvider client={queryClient}>
-    <Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large">
-      <ThemeProvider theme={muiTheme}>
-        <CssBaseline />
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
-          <NotificationProvider>
-            <ConfirmDialogProvider>
-              <PrivacyProvider>{children}</PrivacyProvider>
-            </ConfirmDialogProvider>
-          </NotificationProvider>
-        </LocalizationProvider>
-      </ThemeProvider>
-    </Theme>
-  </QueryClientProvider>
+  <Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large">
+    <ThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+        <NotificationProvider>
+          <ConfirmDialogProvider>
+            <PrivacyProvider>{children}</PrivacyProvider>
+          </ConfirmDialogProvider>
+        </NotificationProvider>
+      </LocalizationProvider>
+    </ThemeProvider>
+  </Theme>
 );
 
 export default AppProviders;
