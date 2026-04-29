@@ -4,7 +4,7 @@ import { Box, useMediaQuery, useTheme } from "@mui/material";
 import { useAppStore } from "../hooks/useAppStore";
 import { useTransactionsQuery } from "../hooks/useTransactionsQuery";
 import { useWalletSync } from "../hooks/useWalletSync";
-import { useNotification } from "../contexts";
+import { useSettings, useNotification } from "../contexts";
 import { ROUTE_VIEWS, VIEW_ROUTES } from "../routes";
 import { AppCurrentView } from "../types/appView";
 import Sidebar from "./Sidebar";
@@ -23,7 +23,7 @@ import dayjs from "dayjs";
 const AppShell: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { showSuccess } = useNotification();
+  const { showSuccess, showError } = useNotification();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -40,7 +40,43 @@ const AppShell: React.FC = () => {
     setIsProfileModalOpen,
   } = useAppStore();
 
-  const { data: transactions = [], isLoading, refetch } = useTransactionsQuery();
+  const { 
+    categories, 
+    paymentMethods, 
+    friends, 
+    addFriend, 
+    getPaymentMethodPaymentDay,
+    getPaymentMethodConfig 
+  } = useSettings();
+
+  const { 
+    data: transactions = [], 
+    isLoading, 
+    refetch,
+    addTransaction,
+    updateTransaction 
+  } = useTransactionsQuery();
+
+  const currentBalance = transactions.reduce((acc, t) => {
+    return t.type === "income" ? acc + t.amount : acc - t.amount;
+  }, 0);
+
+  const handleSave = async (txData: any, editId?: string) => {
+    try {
+      if (editId) {
+        await updateTransaction({ id: editId, ...txData });
+        showSuccess("Transação atualizada com sucesso!");
+      } else {
+        await addTransaction(txData);
+        showSuccess("Transação salva com sucesso!");
+      }
+      setIsFormOpen(false);
+      setEditingTransaction(null);
+    } catch (error) {
+      console.error("Error saving transaction:", error);
+      showError("Erro ao salvar transação. Tente novamente.");
+    }
+  };
 
   const currentView: AppCurrentView = (ROUTE_VIEWS[location.pathname] as AppCurrentView) ?? "dashboard";
 
@@ -108,12 +144,21 @@ const AppShell: React.FC = () => {
 
       {/* Modals & Dialogs */}
       <TransactionForm 
-        open={isFormOpen} 
+        isOpen={isFormOpen} 
         onClose={() => {
           setIsFormOpen(false);
           setEditingTransaction(null);
         }}
-        editingTransaction={editingTransaction}
+        onSave={handleSave}
+        categories={categories}
+        paymentMethods={paymentMethods}
+        editTransaction={editingTransaction}
+        friends={friends}
+        onAddFriend={addFriend}
+        transactions={transactions}
+        currentBalance={currentBalance}
+        getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+        getPaymentMethodConfig={getPaymentMethodConfig}
       />
       
       <ProfileModal 

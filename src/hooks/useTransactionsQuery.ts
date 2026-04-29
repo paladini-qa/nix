@@ -53,6 +53,22 @@ export function useTransactionsQuery() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, ...tx }: Partial<Transaction> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .update(tx)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("transactions").delete().eq("id", id);
@@ -66,6 +82,7 @@ export function useTransactionsQuery() {
   return {
     ...query,
     addTransaction: addMutation.mutateAsync,
+    updateTransaction: updateMutation.mutateAsync,
     deleteTransaction: deleteMutation.mutateAsync,
   };
 }
