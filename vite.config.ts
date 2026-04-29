@@ -1,6 +1,7 @@
 import path from "path";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import { execSync } from "child_process";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
@@ -27,16 +28,10 @@ const APP_VERSION = getVersion();
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
 
-  // Detecta o ambiente de build
-  // - BUILD_TARGET=mobile -> Capacitor (base: "/")
-  // - VERCEL=1 -> Vercel (base: "/")
-  // - Development -> "/" (para evitar problemas com lazy loading)
-  // - Production -> GitHub Pages (base: "/nix/")
   const isMobile = process.env.BUILD_TARGET === "mobile";
   const isVercel = process.env.VERCEL === "1";
   const isDev = mode === "development";
 
-  // Determina o base path baseado no ambiente
   const getBasePath = () => {
     if (isMobile || isVercel || isDev) return "/";
     return "/nix/";
@@ -60,9 +55,35 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    plugins: [react()],
+    plugins: [
+      react(),
+      VitePWA({
+        registerType: "autoUpdate",
+        includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
+        manifest: {
+          name: "Nix Finance",
+          short_name: "Nix",
+          description: "Smart Personal Finance Manager",
+          theme_color: "#7C3AED",
+          background_color: "#ffffff",
+          display: "standalone",
+          icons: [
+            {
+              src: "pwa-192x192.png",
+              sizes: "192x192",
+              type: "image/png",
+            },
+            {
+              src: "pwa-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "any maskable",
+            },
+          ],
+        },
+      }),
+    ],
     define: {
-      // Legacy alias — prefer GEMINI_API_KEY in code (see geminiService.ts)
       "process.env.API_KEY": JSON.stringify(env.GEMINI_API_KEY),
       "process.env.GEMINI_API_KEY": JSON.stringify(env.GEMINI_API_KEY),
       "process.env.SUPABASE_URL": JSON.stringify(env.SUPABASE_URL),
