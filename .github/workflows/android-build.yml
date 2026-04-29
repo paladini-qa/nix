@@ -33,6 +33,10 @@ jobs:
           cache: 'gradle'
 
       - name: Build Web Assets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: npm run build:mobile
 
       - name: Sync Capacitor
