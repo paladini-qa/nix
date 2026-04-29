@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import DashboardMainSection from "./DashboardMainSection";
 import PageTransition from "./motion/PageTransition";
 import { useAppStore } from "../hooks/useAppStore";
+import { calculateInvoiceDueDate } from "../utils/transactionUtils";
 import { useTransactionsQuery } from "../hooks/useTransactionsQuery";
 import { useSettingsQuery } from "../hooks/useSettingsQuery";
 import { useSettings, useNotification } from "../contexts";
@@ -165,7 +166,38 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "nixai":
         return (
           <Suspense fallback={<ViewLoadingMui />}>
-            <NixAIView transactions={transactions} />
+            <NixAIView
+              transactions={transactions}
+              categories={categories}
+              paymentMethods={paymentMethods}
+              displayName={displayName}
+              getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+              getPaymentMethodConfig={(method) =>
+                paymentMethodConfigs.find((c) => c.name === method)
+              }
+              onTransactionCreate={async (tx) => {
+                let invoiceDueDate = tx.invoiceDueDate;
+                if (!invoiceDueDate) {
+                  const config = paymentMethodConfigs.find(
+                    (c) => c.name === tx.paymentMethod
+                  );
+                  if (config) {
+                    invoiceDueDate =
+                      calculateInvoiceDueDate(tx.date, config) ?? undefined;
+                  }
+                }
+                await addTransaction({
+                  description: tx.description,
+                  amount: tx.amount ?? 0,
+                  type: tx.type,
+                  category: tx.category,
+                  paymentMethod: tx.paymentMethod,
+                  date: tx.date,
+                  ...(invoiceDueDate && { invoiceDueDate }),
+                });
+                showSuccess("Transação salva com sucesso!");
+              }}
+            />
           </Suspense>
         );
       case "paymentMethods":

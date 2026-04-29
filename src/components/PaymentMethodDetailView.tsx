@@ -246,6 +246,23 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
     filterPaid,
   ]);
 
+  // Total da fatura: sempre soma TODAS as despesas do período, sem filtros de status
+  const invoiceTotal = useMemo(() => {
+    const allPeriodExpenses = [
+      ...expenseOnlyTransactions.filter((t) => {
+        const [y, m] = getReportDate(t).split("-");
+        const matchesDate =
+          parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+        if (!matchesDate || t.paymentMethod !== paymentMethod) return false;
+        if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date))
+          return false;
+        return true;
+      }),
+      ...generateRecurringForMethod(),
+    ].filter((t) => t.type === "expense");
+    return allPeriodExpenses.reduce((sum, t) => sum + (t.amount || 0), 0);
+  }, [expenseOnlyTransactions, selectedMonth, selectedYear, paymentMethod]);
+
   // Calcula transações não pagas (todas, incluindo receitas e virtuais)
   const unpaidTransactions = useMemo(() => {
     return filteredTransactions.filter((t) => !t.isPaid);
@@ -412,15 +429,17 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             </Box>
             <Box>
               <Typography variant="subtitle1" fontWeight={600}>
-                {unpaidCount === 1
-                  ? "1 transação não paga"
-                  : `${unpaidCount} transações não pagas`}
+                Fatura: {formatCurrency(invoiceTotal)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Total a pagar:{" "}
+                {unpaidCount === 1
+                  ? "1 transação pendente"
+                  : `${unpaidCount} transações pendentes`}{" "}
+                ·{" "}
                 <strong style={{ color: "#f59e0b" }}>
                   {formatCurrency(unpaidExpenseAmount)}
-                </strong>
+                </strong>{" "}
+                a pagar
               </Typography>
             </Box>
           </Box>
@@ -444,12 +463,14 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
       )}
 
       {/* All Paid Banner */}
-      {unpaidCount === 0 && filteredTransactions.length > 0 && (
+      {unpaidCount === 0 && invoiceTotal > 0 && (
         <Paper
           sx={{
             p: 2,
             display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
             gap: 2,
             background: isDarkMode
               ? `linear-gradient(135deg, ${alpha("#10b981", 0.15)} 0%, ${alpha(
@@ -463,18 +484,25 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             border: `1px solid ${alpha("#10b981", 0.3)}`,
           }}
         >
-          <Box
-            sx={{
-              p: 1,
-              borderRadius: "20px",
-              bgcolor: alpha("#10b981", 0.15),
-            }}
-          >
-            <CheckCircleIcon sx={{ color: "#10b981" }} />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: "20px",
+                bgcolor: alpha("#10b981", 0.15),
+              }}
+            >
+              <CheckCircleIcon sx={{ color: "#10b981" }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={600} color="#10b981">
+                Fatura paga · {formatCurrency(invoiceTotal)}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Todas as transações deste mês estão pagas!
+              </Typography>
+            </Box>
           </Box>
-          <Typography variant="subtitle1" fontWeight={600} color="#10b981">
-            Todas as transações deste mês estão pagas!
-          </Typography>
         </Paper>
       )}
 

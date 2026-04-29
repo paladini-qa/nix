@@ -123,6 +123,7 @@ interface NixAIViewProps {
       invoiceDueDate?: string;
     }
   ) => void;
+  getPaymentMethodPaymentDay?: (method: string) => number | undefined;
   getPaymentMethodConfig?: (method: string) => import("../types").PaymentMethodConfig | undefined;
   displayName?: string;
 }
