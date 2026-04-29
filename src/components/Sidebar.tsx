@@ -133,7 +133,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     return (
       <ListItem key={item.id} disablePadding sx={{ mb: 0 }}>
         <MotionListItemButton
-          onClick={() => onNavigate(item.id)}
+          onClick={(e) => {
+            e.preventDefault();
+            onNavigate(item.id);
+          }}
           whileHover={{ x: 4 }}
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}

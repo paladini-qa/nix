@@ -41,14 +41,23 @@ const ViewLoadingMui: React.FC = () => (
   </Box>
 );
 
-const AppViewSwitcher: React.FC = () => {
+import { ROUTE_VIEWS } from "../routes";
+import { AppCurrentView } from "../types/appView";
+
+interface AppViewSwitcherProps {
+  currentView?: AppCurrentView;
+}
+
+const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { filters, setFilters, setIsFormOpen, setEditingTransaction } = useAppStore();
   const { data: transactions = [] } = useTransactionsQuery();
   const { data: settings } = useSettingsQuery();
   const location = useLocation();
-  const currentView = location.pathname.substring(1) || "dashboard";
+  
+  const normalizedPath = location.pathname.replace(/\/$/, "") || "/";
+  const currentView: AppCurrentView = propView || (ROUTE_VIEWS[normalizedPath] as AppCurrentView) || "dashboard";
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [selectedCategoryNav, setSelectedCategoryNav] = useState<{ name: string; type: "income" | "expense" } | null>(null);

@@ -94,7 +94,8 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
     }
   };
 
-  const currentView: AppCurrentView = (ROUTE_VIEWS[location.pathname] as AppCurrentView) ?? "dashboard";
+  const normalizedPath = location.pathname.replace(/\/$/, "") || "/";
+  const currentView: AppCurrentView = (ROUTE_VIEWS[normalizedPath] as AppCurrentView) ?? "dashboard";
 
   // Google Wallet Sync
   const handleWalletTransaction = useCallback((data: any) => {
