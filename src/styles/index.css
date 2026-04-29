@@ -13,44 +13,29 @@
    Design System: Cozy Coffee
    ============================================ */
 :root {
-  /* Cor Primária: Mocha Brown — Light Mode */
-  --coffee-mocha: #7C3AED;
-  --coffee-mocha-light: #8B5CF6;
-  --coffee-espresso: #5B21B6;
-  --coffee-glow: rgba(124, 58, 237, 0.45);
-  --coffee-gradient: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  /* Cor Primária: Cozy Purple & Coffee — Light Mode */
+  --coffee-mocha: #6D28D9;
+  --coffee-mocha-light: #7C3AED;
+  --coffee-espresso: #4C1D95;
+  --coffee-glow: rgba(109, 40, 217, 0.35);
+  --coffee-gradient: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
 
-  /* Cor Secundária: Caramel */
-  --coffee-caramel: #A78BFA;
-  --coffee-caramel-light: #DDD6FE;
-  --coffee-cappuccino: #8B5CF6;
-  --coffee-latte: #C4B5FD;
-
-  /* Cores Semânticas — Light Mode */
-  --coffee-success: #10B981;
-  --coffee-success-glow: rgba(16, 185, 129, 0.45);
-  --coffee-error: #EF4444;
-  --coffee-error-glow: rgba(239, 68, 68, 0.45);
-  --coffee-warning: #F59E0B;
+  /* Warm Accent: Caramel Latte */
+  --coffee-caramel: #F59E0B;
+  --coffee-caramel-light: #FBBF24;
+  --coffee-latte: #FFFBEB;
 
   /* Cores Neutras — Light Mode */
-  --coffee-text-dark: #1E1B4B;
-  --coffee-bg-base: #FFFFFF;       /* Leite vaporizado */
-  --coffee-bg-subtle: #F8F5FE;     /* Espuma de latte */
-  --coffee-bg-paper: #F8F5FE;
-  --coffee-text-primary: #1E1B4B;
-  --coffee-text-secondary: #4C1D95;
+  --coffee-bg-base: #FFFFFF;
+  --coffee-bg-subtle: #FDFCFE;
+  --coffee-bg-paper: #FFFFFF;
+  --coffee-text-primary: #1F2937;
+  --coffee-text-secondary: #6B7280;
 
-  /* Warm steam gradient blobs — Light mode (suave) */
-  --coffee-steam-1: rgba(124, 58, 237, 0.09);
-  --coffee-steam-2: rgba(139, 92, 246, 0.06);
-  --coffee-steam-3: rgba(167, 139, 250, 0.04);
-  --coffee-steam-4: rgba(91, 33, 182, 0.05);
-
-  /* Glassmorphism — Light Mode */
-  --coffee-glass-bg: rgba(255, 255, 255, 0.88);
-  --coffee-glass-border: rgba(124, 58, 237, 0.07);
-  --coffee-glass-blur: 20px;
+  /* Premium Glassmorphism */
+  --coffee-glass-bg: rgba(255, 255, 255, 0.7);
+  --coffee-glass-border: rgba(255, 255, 255, 0.4);
+  --coffee-glass-blur: 16px;
 
   /* Grain texture opacity */
   --coffee-grain-opacity: 0.025;
