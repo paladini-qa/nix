@@ -30,29 +30,16 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const MotionBox = motion.create(Box);
 
-type ViewType =
-  | "splits"
-  | "shared"
-  | "recurring"
-  | "categories"
-  | "nixai"
-  | "goals"
-  | "budgets"
-  | "analytics"
-  | "planning"
-  | "import"
-  | "fiscal-report"
-  | "debt-calculator"
-  | "subscriptions";
+import { AppCurrentView } from "../../types/appView";
 
 interface OthersGridModalProps {
   open: boolean;
   onClose: () => void;
-  onNavigate: (view: ViewType) => void;
+  onNavigate: (view: AppCurrentView) => void;
 }
 
 interface GridItem {
-  id: ViewType;
+  id: AppCurrentView;
   label: string;
   icon: React.ElementType;
 }
@@ -89,7 +76,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
-  const handleItemClick = (view: ViewType) => {
+  const handleItemClick = (view: AppCurrentView) => {
     onNavigate(view);
     onClose();
   };

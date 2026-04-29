@@ -62,7 +62,7 @@ const App: React.FC = () => {
 
   return (
     <AppProviders session={session} darkMode={darkMode} muiTheme={theme}>
-      <AppShell />
+      <AppShell session={session} />
     </AppProviders>
   );
 };

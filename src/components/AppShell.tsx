@@ -20,7 +20,14 @@ import PullToRefreshIndicator from "./PullToRefreshIndicator";
 import { usePullToRefresh } from "../hooks";
 import dayjs from "dayjs";
 
-const AppShell: React.FC = () => {
+import { Session } from "@supabase/supabase-js";
+import { supabase } from "../services/supabaseClient";
+
+interface AppShellProps {
+  session: Session;
+}
+
+const AppShell: React.FC<AppShellProps> = ({ session }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { showSuccess, showError } = useNotification();
@@ -40,14 +47,17 @@ const AppShell: React.FC = () => {
     setIsProfileModalOpen,
   } = useAppStore();
 
-  const { 
-    categories, 
-    paymentMethods, 
-    friends, 
-    addFriend, 
-    getPaymentMethodPaymentDay,
-    getPaymentMethodConfig 
+    getPaymentMethodConfig,
+    displayName,
   } = useSettings();
+
+  const handleNavigate = useCallback((view: AppCurrentView) => {
+    navigate(VIEW_ROUTES[view] || "/dashboard");
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const { 
     data: transactions = [], 
@@ -119,6 +129,11 @@ const AppShell: React.FC = () => {
             open={isMobileDrawerOpen} 
             onClose={() => setIsMobileDrawerOpen(false)}
             currentView={currentView}
+            onNavigate={handleNavigate}
+            onLogout={handleLogout}
+            displayName={displayName}
+            userEmail={session.user.email || ""}
+            onOpenProfile={() => setIsProfileModalOpen(true)}
           />
         </>
       )}
@@ -140,7 +155,13 @@ const AppShell: React.FC = () => {
         </Suspense>
       </Box>
 
-      {isMobile && <MobileNavigation currentView={currentView} />}
+      {isMobile && (
+        <MobileNavigation 
+          currentView={currentView} 
+          onNavigate={handleNavigate}
+          onCreateTransaction={() => setIsFormOpen(true)}
+        />
+      )}
 
       {/* Modals & Dialogs */}
       <TransactionForm 

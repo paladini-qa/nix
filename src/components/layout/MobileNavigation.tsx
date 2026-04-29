@@ -16,28 +16,11 @@ const MotionBox = motion.create(Box);
 const NAV_HEIGHT = 80;
 
 // View type matching App.tsx
-type ViewType =
-  | "dashboard"
-  | "transactions"
-  | "splits"
-  | "shared"
-  | "recurring"
-  | "nixai"
-  | "analytics"
-  | "settings"
-  | "paymentMethods"
-  | "categories"
-  | "goals"
-  | "budgets"
-  | "planning"
-  | "import"
-  | "fiscal-report"
-  | "debt-calculator"
-  | "subscriptions";
+import { AppCurrentView } from "../../types/appView";
 
 interface MobileNavigationProps {
-  currentView: ViewType;
-  onNavigate: (view: ViewType) => void;
+  currentView: AppCurrentView;
+  onNavigate: (view: AppCurrentView) => void;
   onCreateTransaction?: () => void;
 }
 
@@ -82,7 +65,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     } else if (value === "create") {
       onCreateTransaction?.();
     } else {
-      onNavigate(value as ViewType);
+      onNavigate(value as AppCurrentView);
     }
   };
 

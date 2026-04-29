@@ -37,24 +37,13 @@ const MotionBox = motion.create(Box);
 const MotionListItemButton = motion.create(ListItemButton);
 
 // Tipo para todas as views disponíveis
-type ViewType =
-  | "dashboard"
-  | "transactions"
-  | "splits"
-  | "shared"
-  | "recurring"
-  | "nixai"
-  | "analytics"
-  | "settings"
-  | "paymentMethods"
-  | "categories"
-  | "investments";
+import { AppCurrentView } from "../../types/appView";
 
 interface MobileDrawerProps {
   open: boolean;
   onClose: () => void;
-  currentView: ViewType;
-  onNavigate: (view: ViewType) => void;
+  currentView: AppCurrentView;
+  onNavigate: (view: AppCurrentView) => void;
   onLogout: () => void;
   displayName: string;
   userEmail: string;
@@ -64,7 +53,7 @@ interface MobileDrawerProps {
 interface NavItem {
   icon: React.ElementType;
   label: string;
-  id: ViewType;
+  id: AppCurrentView;
 }
 
 // Animation variants
@@ -131,7 +120,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
   const isNixAI = (itemId: string) => itemId === "nixai";
 
   // Handler para navegação (fecha o drawer após navegar)
-  const handleNavigate = (view: ViewType) => {
+  const handleNavigate = (view: AppCurrentView) => {
     onNavigate(view);
     onClose();
   };
