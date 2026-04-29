@@ -255,6 +255,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       sx={{
         width: SIDEBAR_WIDTH,
         flexShrink: 0,
+        position: "sticky",
+        top: 0,
         height: "100vh",
         boxSizing: "border-box",
         border: "none",
