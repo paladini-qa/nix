@@ -46,7 +46,8 @@ import {
 } from "@mui/icons-material";
 import { Transaction, ColorConfig, PaymentMethodColors, PaymentMethodConfig } from "../types";
 import { useLayoutSpacing } from "../hooks";
-import { getReportDate } from "../utils/transactionUtils";
+import { getEffectiveReportDate } from "../utils/transactionUtils";
+import { generateRecurringTransactions } from "../utils/recurringUtils";
 import { useSettings } from "../contexts";
 import DateFilter from "./DateFilter";
 import ColorPicker from "./ColorPicker";
@@ -184,82 +185,10 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   const getConfigForMethod = (name: string): PaymentMethodConfig | undefined =>
     paymentMethodConfigs.find((c) => c.name === name);
 
-  // Gera transações recorrentes virtuais para o mês
-  const generateRecurringTransactions = useMemo(() => {
-    const virtualTransactions: Transaction[] = [];
-    const targetMonth = selectedMonth + 1;
-    const targetYear = selectedYear;
-
-    transactions?.forEach((t) => {
-      if (!t.isRecurring || !t.frequency) return;
-      if (t.installments && t.installments > 1) return;
-
-      const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
-      const targetDate = new Date(targetYear, targetMonth - 1, 1);
-
-      if (targetDate < new Date(origYear, origMonth - 1, 1)) return;
-
-      const isOriginalMonth =
-        origYear === targetYear && origMonth === targetMonth;
-      if (isOriginalMonth) return;
-
-      let shouldAppear = false;
-
-      if (t.frequency === "monthly") {
-        shouldAppear = true;
-      } else if (t.frequency === "yearly") {
-        shouldAppear = origMonth === targetMonth && targetYear > origYear;
-      }
-
-      if (shouldAppear) {
-        const daysInTargetMonth = new Date(
-          targetYear,
-          targetMonth,
-          0
-        ).getDate();
-        const adjustedDay = Math.min(origDay, daysInTargetMonth);
-        const virtualDate = `${targetYear}-${String(targetMonth).padStart(
-          2,
-          "0"
-        )}-${String(adjustedDay).padStart(2, "0")}`;
-
-        const excludedDates = t.excludedDates || [];
-        if (excludedDates.includes(virtualDate)) return;
-
-        const hasRealInTargetMonth = transactions.some(
-          (tx) =>
-            !tx.isVirtual &&
-            getReportDate(tx).startsWith(
-              `${targetYear}-${String(targetMonth).padStart(2, "0")}`
-            ) &&
-            (tx.recurringGroupId === t.id ||
-              (tx.description === t.description &&
-                tx.category === t.category &&
-                Number(tx.amount) === Number(t.amount) &&
-                tx.type === t.type))
-        );
-        if (hasRealInTargetMonth) return;
-
-        virtualTransactions.push({
-          ...t,
-          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
-            2,
-            "0"
-          )}`,
-          date: virtualDate,
-          isVirtual: true,
-          originalTransactionId: t.id,
-        });
-      }
-    });
-
-    return virtualTransactions;
-  }, [transactions, selectedMonth, selectedYear]);
-
-  // Filtra transações do mês selecionado (usa data de relatório)
+  // Filtra transações do mês selecionado usando invoiceDueDate calculado pelo config do método
   const monthTransactions = useMemo(() => {
     const baseTransactions = (transactions || []).filter((t) => {
-      const [y, m] = getReportDate(t).split("-");
+      const [y, m] = getEffectiveReportDate(t, paymentMethodConfigs).split("-");
       const isCurrentMonth =
         parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
 
@@ -270,13 +199,14 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       return true;
     });
 
-    return [...baseTransactions, ...generateRecurringTransactions];
-  }, [
-    transactions,
-    selectedMonth,
-    selectedYear,
-    generateRecurringTransactions,
-  ]);
+    const virtualTransactions = generateRecurringTransactions(
+      transactions || [],
+      { month: selectedMonth, year: selectedYear },
+      paymentMethodConfigs
+    );
+
+    return [...baseTransactions, ...virtualTransactions];
+  }, [transactions, selectedMonth, selectedYear, paymentMethodConfigs]);
 
   // Calcula resumo por método de pagamento
   const paymentMethodsSummary = useMemo<PaymentMethodSummary[]>(() => {

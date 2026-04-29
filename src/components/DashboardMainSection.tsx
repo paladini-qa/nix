@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -22,6 +23,7 @@ import { useAppStore } from "../hooks/useAppStore";
 import { useTransactionsQuery } from "../hooks/useTransactionsQuery";
 import { useFilteredTransactions } from "../hooks/useFilteredTransactions";
 import { supabase } from "../services/supabaseClient";
+import { VIEW_ROUTES } from "../routes";
 
 const AdvancedFilters = lazy(() => import("./AdvancedFilters"));
 const AnalyticsView = lazy(() => import("./AnalyticsView"));
@@ -30,7 +32,8 @@ const DashboardMainSection: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
   const isMobile = theme.breakpoints.down("md"); // Simplified for now
-  
+  const navigate = useNavigate();
+
   const { filters, setFilters, setIsFormOpen, setEditingTransaction } = useAppStore();
   const { data: transactions = [], isRefetching, refetch } = useTransactionsQuery();
   const { filteredTransactions, summary } = useFilteredTransactions();
@@ -166,7 +169,7 @@ const DashboardMainSection: React.FC = () => {
 
       <CategoryBreakdown
         transactions={filteredTransactions}
-        onPaymentMethodClick={() => {}}
+        onPaymentMethodClick={() => navigate(VIEW_ROUTES.paymentMethods)}
         onCategoryClick={() => {}}
       />
 
