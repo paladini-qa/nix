@@ -170,25 +170,41 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "paymentMethods":
         return (
           <Suspense fallback={<PaymentMethodsSkeleton />}>
-            <PaymentMethodsView 
-              transactions={transactions}
-              paymentMethods={paymentMethods}
-              paymentMethodColors={paymentMethodColors}
-              paymentMethodConfigs={paymentMethodConfigs}
-              selectedMonth={filters.month}
-              selectedYear={filters.year}
-              onDateChange={(month, year) => setFilters({ month, year })}
-              onSelectPaymentMethod={setSelectedPaymentMethod}
-              onPayAll={handlePayAll}
-              onAddPaymentMethod={addPaymentMethod}
-              onRemovePaymentMethod={removePaymentMethod}
-              onUpdatePaymentMethodColor={updatePaymentMethodColor}
-              getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
-              onUpdatePaymentMethodPaymentDay={updatePaymentMethodPaymentDay}
-              onAddPaymentMethodConfig={addPaymentMethodConfig}
-              onUpdatePaymentMethodConfig={updatePaymentMethodConfig}
-              onRemovePaymentMethodConfig={removePaymentMethodConfig}
-            />
+            {selectedPaymentMethod ? (
+              <PaymentMethodDetailView
+                paymentMethod={selectedPaymentMethod}
+                transactions={transactions}
+                selectedMonth={filters.month}
+                selectedYear={filters.year}
+                onDateChange={(month, year) => setFilters({ month, year })}
+                onBack={() => setSelectedPaymentMethod(null)}
+                onNewTransaction={handleNewTransaction}
+                onPayAll={handlePayAll}
+                onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+                onEdit={setEditingTransaction}
+                onDelete={deleteTransaction}
+              />
+            ) : (
+              <PaymentMethodsView
+                transactions={transactions}
+                paymentMethods={paymentMethods}
+                paymentMethodColors={paymentMethodColors}
+                paymentMethodConfigs={paymentMethodConfigs}
+                selectedMonth={filters.month}
+                selectedYear={filters.year}
+                onDateChange={(month, year) => setFilters({ month, year })}
+                onSelectPaymentMethod={setSelectedPaymentMethod}
+                onPayAll={handlePayAll}
+                onAddPaymentMethod={addPaymentMethod}
+                onRemovePaymentMethod={removePaymentMethod}
+                onUpdatePaymentMethodColor={updatePaymentMethodColor}
+                getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
+                onUpdatePaymentMethodPaymentDay={updatePaymentMethodPaymentDay}
+                onAddPaymentMethodConfig={addPaymentMethodConfig}
+                onUpdatePaymentMethodConfig={updatePaymentMethodConfig}
+                onRemovePaymentMethodConfig={removePaymentMethodConfig}
+              />
+            )}
           </Suspense>
         );
       case "categories":
