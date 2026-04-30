@@ -242,6 +242,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
     selectedMonth,
     selectedYear,
     paymentMethod,
+    paymentMethodConfigs,
     searchTerm,
     filterType,
     filterCategory,
@@ -263,7 +264,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
       ...generateRecurringForMethod(),
     ].filter((t) => t.type === "expense");
     return allPeriodExpenses.reduce((sum, t) => sum + (t.amount || 0), 0);
-  }, [expenseOnlyTransactions, selectedMonth, selectedYear, paymentMethod]);
+  }, [expenseOnlyTransactions, selectedMonth, selectedYear, paymentMethod, paymentMethodConfigs]);
 
   // Calcula transações não pagas (todas, incluindo receitas e virtuais)
   const unpaidTransactions = useMemo(() => {
