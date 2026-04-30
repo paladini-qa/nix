@@ -98,19 +98,11 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     setIsFormOpen(true);
   };
 
-  const handlePayAll = async (paymentMethod: string, month: number, year: number) => {
+  const handlePayAll = async (ids: string[]) => {
+    if (ids.length === 0) return;
     try {
-      const unpaid = transactions.filter(t => 
-        !t.isPaid && 
-        t.paymentMethod === paymentMethod && 
-        new Date(t.date).getMonth() === month && 
-        new Date(t.date).getFullYear() === year
-      );
-
-      if (unpaid.length === 0) return;
-
-      await Promise.all(unpaid.map(t => updateTransaction({ id: t.id, isPaid: true })));
-      showSuccess(`Todas as transações de ${paymentMethod} marcadas como pagas!`);
+      await Promise.all(ids.map((id) => updateTransaction({ id, isPaid: true })));
+      showSuccess("Todas as transações marcadas como pagas!");
     } catch (error) {
       showError("Erro ao pagar transações");
     }

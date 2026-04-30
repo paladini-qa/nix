@@ -67,7 +67,7 @@ interface PaymentMethodsViewProps {
   selectedYear: number;
   onDateChange: (month: number, year: number) => void;
   onSelectPaymentMethod: (method: string) => void;
-  onPayAll: (paymentMethod: string, month: number, year: number) => void;
+  onPayAll: (ids: string[]) => void;
   onAddPaymentMethod: (method: string) => void;
   onRemovePaymentMethod: (method: string) => void;
   onUpdatePaymentMethodColor: (method: string, colors: ColorConfig) => void;
@@ -287,7 +287,10 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
 
   const handlePayAll = (method: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onPayAll(method, selectedMonth, selectedYear);
+    const ids = monthTransactions
+      .filter((t) => !t.isPaid && t.paymentMethod === method)
+      .map((t) => (t.isVirtual && t.originalTransactionId ? t.originalTransactionId : t.id));
+    onPayAll(ids);
   };
 
   return (

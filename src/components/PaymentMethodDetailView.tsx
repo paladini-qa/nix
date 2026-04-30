@@ -68,7 +68,7 @@ interface PaymentMethodDetailViewProps {
   onDateChange: (month: number, year: number) => void;
   onBack: () => void;
   onNewTransaction?: () => void;
-  onPayAll?: (paymentMethod: string, month: number, year: number) => void;
+  onPayAll?: (ids: string[]) => void;
   onTogglePaid?: (id: string, isPaid: boolean) => void;
   onEdit?: (transaction: Transaction) => void;
   onDelete?: (id: string) => void;
@@ -248,14 +248,17 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   });
 
   const handlePayAll = () => {
-    if (onPayAll) {
-      onPayAll(paymentMethod, selectedMonth, selectedYear);
-    }
+    if (!onPayAll) return;
+    const ids = filteredTransactions
+      .filter((t) => !t.isPaid)
+      .map((t) => (t.isVirtual && t.originalTransactionId ? t.originalTransactionId : t.id));
+    onPayAll(ids);
   };
 
   const handleTogglePaid = (tx: Transaction) => {
     if (onTogglePaid) {
-      onTogglePaid(tx.id, !tx.isPaid);
+      const id = tx.isVirtual && tx.originalTransactionId ? tx.originalTransactionId : tx.id;
+      onTogglePaid(id, !tx.isPaid);
     }
   };
 
