@@ -54,6 +54,7 @@ import {
 } from "../utils/tableStyles";
 import { Transaction, PaymentMethodConfig } from "../types";
 import { getEffectiveReportDate } from "../utils/transactionUtils";
+import { generateRecurringTransactions } from "../utils/recurringUtils";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../constants";
 import { useSettings } from "../contexts";
 import DateFilter from "./DateFilter";
@@ -112,83 +113,15 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
 
-  // Gera transações recorrentes virtuais para este método de pagamento (apenas não-parceladas)
-  const generateRecurringForMethod = (): Transaction[] => {
-    const virtualTransactions: Transaction[] = [];
-    const targetMonth = selectedMonth + 1; // 1-12
-    const targetYear = selectedYear;
-
-    expenseOnlyTransactions.forEach((t) => {
-      if (!t.isRecurring || !t.frequency || t.paymentMethod !== paymentMethod)
-        return;
-      if (t.installments && t.installments > 1) return;
-
-      const [origYear, origMonth, origDay] = t.date.split("-").map(Number);
-      const targetDate = new Date(targetYear, targetMonth - 1, 1);
-
-      if (targetDate < new Date(origYear, origMonth - 1, 1)) return;
-
-      const isOriginalMonth =
-        origYear === targetYear && origMonth === targetMonth;
-      if (isOriginalMonth) return;
-
-      let shouldAppear = false;
-
-      if (t.frequency === "monthly") {
-        shouldAppear = true;
-      } else if (t.frequency === "yearly") {
-        shouldAppear = origMonth === targetMonth && targetYear > origYear;
-      }
-
-      if (shouldAppear) {
-        const daysInTargetMonth = new Date(
-          targetYear,
-          targetMonth,
-          0
-        ).getDate();
-        const adjustedDay = Math.min(origDay, daysInTargetMonth);
-        const virtualDate = `${targetYear}-${String(targetMonth).padStart(
-          2,
-          "0"
-        )}-${String(adjustedDay).padStart(2, "0")}`;
-
-        // Verifica se esta data está no excluded_dates da transação original
-        const excludedDates = t.excludedDates || [];
-        if (excludedDates.includes(virtualDate)) {
-          return; // Não gera a transação virtual para esta data
-        }
-
-        // Não gerar virtual se já existe transação real neste mês para esta recorrência (evita duplicata após materialização)
-        const hasRealInTargetMonth = expenseOnlyTransactions.some(
-          (tx) =>
-            !tx.isVirtual &&
-            tx.paymentMethod === paymentMethod &&
-            getEffectiveReportDate(tx, paymentMethodConfigs).startsWith(
-              `${targetYear}-${String(targetMonth).padStart(2, "0")}`
-            ) &&
-            (tx.recurringGroupId === t.id ||
-              (tx.description === t.description &&
-                tx.category === t.category &&
-                Number(tx.amount) === Number(t.amount) &&
-                tx.type === t.type))
-        );
-        if (hasRealInTargetMonth) return;
-
-        virtualTransactions.push({
-          ...t,
-          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
-            2,
-            "0"
-          )}`,
-          date: virtualDate,
-          isVirtual: true,
-          originalTransactionId: t.id,
-        });
-      }
-    });
-
-    return virtualTransactions;
-  };
+  const recurringForMethod = useMemo(
+    () =>
+      generateRecurringTransactions(
+        transactions,
+        { month: selectedMonth, year: selectedYear },
+        paymentMethodConfigs
+      ).filter((t) => t.paymentMethod === paymentMethod && t.type === "expense"),
+    [transactions, selectedMonth, selectedYear, paymentMethodConfigs, paymentMethod]
+  );
 
   // Extrai categorias únicas das transações deste método de pagamento
   const availableCategories = useMemo(() => {
@@ -208,7 +141,6 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
 
         if (!matchesDate || t.paymentMethod !== paymentMethod) return false;
 
-        // Para transações recorrentes originais (não virtuais), verifica se a data está excluída
         if (
           t.isRecurring &&
           !t.isVirtual &&
@@ -219,7 +151,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
 
         return true;
       }),
-      ...generateRecurringForMethod(),
+      ...recurringForMethod,
     ];
 
     return baseTransactions
@@ -239,6 +171,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [
     expenseOnlyTransactions,
+    recurringForMethod,
     selectedMonth,
     selectedYear,
     paymentMethod,
@@ -261,10 +194,10 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           return false;
         return true;
       }),
-      ...generateRecurringForMethod(),
-    ].filter((t) => t.type === "expense");
+      ...recurringForMethod,
+    ];
     return allPeriodExpenses.reduce((sum, t) => sum + (t.amount || 0), 0);
-  }, [expenseOnlyTransactions, selectedMonth, selectedYear, paymentMethod, paymentMethodConfigs]);
+  }, [expenseOnlyTransactions, recurringForMethod, selectedMonth, selectedYear, paymentMethod, paymentMethodConfigs]);
 
   // Calcula transações não pagas (todas, incluindo receitas e virtuais)
   const unpaidTransactions = useMemo(() => {
