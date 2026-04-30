@@ -590,12 +590,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     {/* Checkbox */}
                     <Checkbox
                       checked={t.isPaid !== false}
-                      onChange={(e) =>
-                        handleTogglePaid({
-                          ...t,
-                          isPaid: e.target.checked,
-                        } as Transaction)
-                      }
+                      onChange={() => handleTogglePaid(t)}
                       size="small"
                       color={isIncome ? "success" : "error"}
                       sx={{ mt: -0.5, ml: -1 }}
