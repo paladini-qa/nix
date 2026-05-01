@@ -37,7 +37,7 @@ jobs:
         run: npm ci
 
       - name: Build web
-        run: npm run build
+        run: BUILD_TARGET=mobile npm run build
 
       - name: Sync Capacitor
         run: npx cap sync android
