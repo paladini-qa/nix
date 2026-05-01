@@ -23,7 +23,6 @@ skills
 # Tool-specific folders — not part of the project
 .cursor/
 .claude/
-.github/
 .playwright-mcp/
 *.suo
 *.ntvs*
