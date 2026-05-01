@@ -50,7 +50,7 @@ Aplicação moderna de gerenciamento de finanças pessoais com análise intelige
 
 - [Node.js](https://nodejs.org/) 18 ou superior
 - Conta no [Supabase](https://supabase.com/)
-- (Opcional) Chave de API do [Google AI Studio](https://aistudio.google.com/) para funcionalidades de IA
+- (Opcional) Chave de API do [Google Gemini](https://ai.google.dev/) para funcionalidades de IA
 
 ##  Como Rodar o Projeto
 
@@ -115,11 +115,8 @@ npm run cap:ios
 npm run cap:sync
 ```
 
-## 🤖 Automação de Build (APK)
+## 🤖 Build APK Local
 
-O projeto possui automação para geração de APK tanto localmente quanto via GitHub Actions.
-
-### Build Local
 Para gerar o APK na sua máquina sem precisar abrir o Android Studio (requer Android SDK configurado):
 
 ```bash
@@ -131,13 +128,6 @@ npm run android:build
 # Local: android/app/build/outputs/apk/release/app-release-unsigned.apk
 npm run android:release
 ```
-
-### GitHub Actions
-Sempre que um push é feito para a branch `main`, o GitHub Actions gera automaticamente um novo APK:
-
-1. Vá para a aba **Actions** no seu repositório GitHub.
-2. Selecione o workflow **Build Android APK**.
-3. Após a conclusão, o APK estará disponível para download na seção **Artifacts**.
 
 ##  Estrutura do Projeto
 
@@ -157,13 +147,19 @@ nix/
 │   ├── types/                # Tipos TypeScript
 │   │   ├── index.ts          # Tipos de domínio principais
 │   │   └── appView.ts        # Union de views da aplicação
-│   ├── components/           # Componentes React
-│   │   ├── layout/           # Layout mobile (Header, Drawer, Nav)
+│   ├── components/           # Componentes React (clean architecture)
+│   │   ├── shell/            # AppShell, AppViewSwitcher, Sidebar, Providers
+│   │   ├── views/            # Views de página completa (Dashboard, Transações, etc)
+│   │   ├── widgets/          # Widgets reutilizáveis (SummaryCards, Charts, etc)
+│   │   ├── forms/            # Formulários (TransactionForm, RecurringEditForm, etc)
+│   │   ├── panels/           # Painéis e overlays (AdvancedFilters, GlobalSearch, etc)
+│   │   ├── ui/               # Componentes UI compartilhados (EmptyState, DateFilter, etc)
+│   │   ├── banners/          # Banners e indicadores (OfflineBanner, WalletDraftBanner)
+│   │   ├── layout/           # Layout mobile (MobileHeader, MobileDrawer, MobileNavigation)
 │   │   ├── modals/           # Modais (BottomSheet, etc)
-│   │   ├── motion/           # Animações (Framer Motion)
-│   │   ├── radix/            # Wrappers Radix UI
-│   │   ├── skeletons/        # Skeletons de carregamento
-│   │   └── ...               # Views e componentes de feature
+│   │   ├── motion/           # Animações Framer Motion (AnimatedCard, PageTransition)
+│   │   ├── radix/            # Wrappers Radix UI (Button, Card, Dialog)
+│   │   └── skeletons/        # Skeletons de carregamento
 │   ├── contexts/             # React Contexts
 │   │   ├── NotificationContext.tsx
 │   │   ├── SettingsContext.tsx

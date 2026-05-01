@@ -1,0 +1,2173 @@
+import React, { useState, useMemo, useCallback, useRef } from "react";
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableFooter,
+  TableSortLabel,
+  TablePagination,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Chip,
+  Grid,
+  CircularProgress,
+  useMediaQuery,
+  useTheme,
+  FormControl,
+  InputLabel,
+  Select,
+  SelectChangeEvent,
+  Checkbox,
+  Tooltip,
+  alpha,
+  Card,
+  CardContent,
+  SwipeableDrawer,
+  Divider,
+  Stack,
+} from "@mui/material";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import {
+  Add as AddIcon,
+  Download as DownloadIcon,
+  ArrowUpward as ArrowUpIcon,
+  ArrowDownward as ArrowDownIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Description as FileTextIcon,
+  TableChart as FileSpreadsheetIcon,
+  MoreVert as MoreVertIcon,
+  UnfoldMore as UnsortedIcon,
+  FilterList as FilterIcon,
+  AccountBalanceWallet as WalletIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  Group as GroupIcon,
+  CheckCircleOutline as PaidIcon,
+  AccessTime as PendingIcon,
+  Refresh as RefreshIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
+import TransactionTags from "../ui/TransactionTags";
+import SearchBar from "../ui/SearchBar";
+import SwipeableTransactionCard from "../ui/SwipeableTransactionCard";
+import PullToRefreshIndicator from "../banners/PullToRefreshIndicator";
+import { Transaction, PaymentMethodConfig } from "../../types";
+import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../../constants";
+import DateFilter from "../ui/DateFilter";
+import { useNotification } from "../../contexts";
+import { usePullToRefresh, useLayoutSpacing } from "../../hooks";
+import EmptyState from "../ui/EmptyState";
+import NixButton from "../radix/Button";
+import { motion, AnimatePresence } from "framer-motion";
+import { getEffectiveReportDate } from "../../utils/transactionUtils";
+import { generateRecurringTransactions } from "../../utils/recurringUtils";
+
+interface TransactionsViewProps {
+  transactions: Transaction[];
+  onNewTransaction: () => void;
+  onEdit: (transaction: Transaction) => void;
+  onDelete: (id: string) => void;
+  onTogglePaid: (id: string, isPaid: boolean) => void;
+  selectedMonth: number;
+  selectedYear: number;
+  onDateChange: (month: number, year: number) => void;
+  onRefreshData?: () => Promise<void>;
+  paymentMethodConfigs?: PaymentMethodConfig[];
+}
+
+type SortDirection = "asc" | "desc";
+type SortColumn =
+  | "date"
+  | "description"
+  | "category"
+  | "paymentMethod"
+  | "type"
+  | "amount";
+
+interface SortConfig {
+  column: SortColumn;
+  direction: SortDirection;
+}
+
+const TransactionsView: React.FC<TransactionsViewProps> = ({
+  transactions,
+  onNewTransaction,
+  onEdit,
+  onDelete,
+  onTogglePaid,
+  selectedMonth,
+  selectedYear,
+  onDateChange,
+  onRefreshData,
+  paymentMethodConfigs = [],
+}) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isDarkMode = theme.palette.mode === "dark";
+  const { gridSpacing } = useLayoutSpacing();
+  const { showWarning, showError } = useNotification();
+
+  // Estados de busca e filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
+    "all"
+  );
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterShared, setFilterShared] = useState<
+    "all" | "shared" | "not_shared"
+  >("all");
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState<
+    "all" | "paid" | "pending"
+  >("all");
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Estado de ordenação
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    column: "date",
+    direction: "desc",
+  });
+
+  // Estado de paginação
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+
+  // Menus
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [mobileActionAnchor, setMobileActionAnchor] = useState<{
+    element: HTMLElement | null;
+    transaction: Transaction | null;
+  }>({ element: null, transaction: null });
+
+  // Combina transações reais + virtuais, usando invoiceDueDate (ou data calculada
+  // pelo config do método de pagamento) para determinar o mês de cada transação.
+  const allTransactions = useMemo(() => {
+    const currentMonthTransactions = transactions.filter((t) => {
+      const [y, m] = getEffectiveReportDate(t, paymentMethodConfigs).split("-");
+      const isCurrentMonth =
+        parseInt(y) === selectedYear && parseInt(m) === selectedMonth + 1;
+
+      if (!isCurrentMonth) return false;
+
+      if (t.isRecurring && !t.isVirtual && t.excludedDates?.includes(t.date)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const virtualTransactions = generateRecurringTransactions(
+      transactions,
+      { month: selectedMonth, year: selectedYear },
+      paymentMethodConfigs
+    );
+
+    return [...currentMonthTransactions, ...virtualTransactions];
+  }, [transactions, selectedMonth, selectedYear, paymentMethodConfigs]);
+
+  // Extrai categorias únicas das transações
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+    allTransactions.forEach((t) => categories.add(t.category));
+    return Array.from(categories).sort();
+  }, [allTransactions]);
+
+  // Conta filtros ativos
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filterType !== "all") count++;
+    if (filterCategory !== "all") count++;
+    if (filterShared !== "all") count++;
+    if (filterPaymentStatus !== "all") count++;
+    return count;
+  }, [filterType, filterCategory, filterShared, filterPaymentStatus]);
+
+  // Filtra e ordena dados
+  const filteredData = useMemo(() => {
+    let result = allTransactions.filter((t) => {
+      const matchesSearch =
+        t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = filterType === "all" || t.type === filterType;
+      const matchesCategory =
+        filterCategory === "all" || t.category === filterCategory;
+      const matchesShared =
+        filterShared === "all" ||
+        (filterShared === "shared" && t.isShared) ||
+        (filterShared === "not_shared" && !t.isShared);
+      const matchesPaymentStatus =
+        filterPaymentStatus === "all" ||
+        (filterPaymentStatus === "paid" && t.isPaid === true) ||
+        (filterPaymentStatus === "pending" && t.isPaid !== true);
+      return (
+        matchesSearch &&
+        matchesType &&
+        matchesCategory &&
+        matchesShared &&
+        matchesPaymentStatus
+      );
+    });
+
+    // Ordenação
+    result = [...result].sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+
+      switch (sortConfig.column) {
+        case "date":
+          aValue = new Date(a.date).getTime();
+          bValue = new Date(b.date).getTime();
+          break;
+        case "description":
+          aValue = a.description.toLowerCase();
+          bValue = b.description.toLowerCase();
+          break;
+        case "category":
+          aValue = a.category.toLowerCase();
+          bValue = b.category.toLowerCase();
+          break;
+        case "paymentMethod":
+          aValue = a.paymentMethod.toLowerCase();
+          bValue = b.paymentMethod.toLowerCase();
+          break;
+        case "type":
+          aValue = a.type;
+          bValue = b.type;
+          break;
+        case "amount":
+          aValue = a.type === "expense" ? -a.amount : a.amount;
+          bValue = b.type === "expense" ? -b.amount : b.amount;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [
+    allTransactions,
+    searchTerm,
+    filterType,
+    filterCategory,
+    filterShared,
+    filterPaymentStatus,
+    sortConfig,
+  ]);
+
+  // Dados paginados
+  const paginatedData = useMemo(() => {
+    if (isMobile) return filteredData;
+    const start = page * rowsPerPage;
+    return filteredData.slice(start, start + rowsPerPage);
+  }, [filteredData, page, rowsPerPage, isMobile]);
+
+  const DESKTOP_ROW_HEIGHT = 56;
+  const VIRTUALIZE_THRESHOLD = 40;
+  const desktopTableParentRef = useRef<HTMLDivElement>(null);
+  const desktopRowVirtualizer = useVirtualizer({
+    count: paginatedData.length,
+    getScrollElement: () => desktopTableParentRef.current,
+    estimateSize: () => DESKTOP_ROW_HEIGHT,
+    overscan: 5,
+    enabled: !isMobile && paginatedData.length > VIRTUALIZE_THRESHOLD,
+  });
+
+  const mobileListParentRef = useRef<HTMLDivElement>(null);
+  const CARD_ESTIMATE_HEIGHT = 100;
+  const mobileListVirtualizer = useVirtualizer({
+    count: paginatedData.length,
+    getScrollElement: () => mobileListParentRef.current,
+    estimateSize: () => CARD_ESTIMATE_HEIGHT,
+    overscan: 3,
+    enabled: isMobile && paginatedData.length > 30,
+  });
+
+  // Handler de ordenação
+  const handleSort = useCallback((column: SortColumn) => {
+    setSortConfig((prev) => ({
+      column,
+      direction:
+        prev.column === column && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  }, []);
+
+  // Handler de refresh
+  const handleRefresh = useCallback(async () => {
+    if (!onRefreshData || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await onRefreshData();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [onRefreshData, isRefreshing]);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
+
+  const formatDate = (dateString: string) => {
+    const [year, month, day] = dateString.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
+  const totalIncome = filteredData
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const totalExpense = filteredData
+    .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const balance = totalIncome - totalExpense;
+
+  const getFileName = () => {
+    return `nix-transactions-${MONTHS[selectedMonth]}-${selectedYear}`;
+  };
+
+  const escapeCSVField = (field: string | number): string => {
+    const str = String(field);
+    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const exportToCSV = () => {
+    if (filteredData.length === 0) {
+      showWarning("No transactions to export.", "Export Failed");
+      return;
+    }
+
+    const headers = [
+      "Date",
+      "Description",
+      "Category",
+      "Payment Method",
+      "Type",
+      "Amount",
+    ];
+    const rows = filteredData.map((t) => [
+      escapeCSVField(t.date),
+      escapeCSVField(t.description),
+      escapeCSVField(t.category),
+      escapeCSVField(t.paymentMethod),
+      escapeCSVField(t.type === "income" ? "Income" : "Expense"),
+      escapeCSVField(t.type === "expense" ? -t.amount : t.amount),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((r) => r.join(",")),
+    ].join("\n");
+    const blob = new Blob(["\ufeff" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${getFileName()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setAnchorEl(null);
+  };
+
+  const exportToXLSX = async () => {
+    if (filteredData.length === 0) {
+      showWarning("No transactions to export.", "Export Failed");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const XLSX = await import("xlsx");
+
+      const data = filteredData.map((t) => ({
+        Date: t.date,
+        Description: t.description,
+        Category: t.category,
+        "Payment Method": t.paymentMethod,
+        Type: t.type === "income" ? "Income" : "Expense",
+        Amount: t.type === "expense" ? -t.amount : t.amount,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+      worksheet["!cols"] = [
+        { wch: 12 },
+        { wch: 40 },
+        { wch: 15 },
+        { wch: 18 },
+        { wch: 10 },
+        { wch: 15 },
+      ];
+
+      XLSX.writeFile(workbook, `${getFileName()}.xlsx`);
+    } catch (error) {
+      console.error("Error exporting to XLSX:", error);
+      showError("Error exporting to XLSX. Please try again.", "Export Error");
+    } finally {
+      setIsExporting(false);
+      setAnchorEl(null);
+    }
+  };
+
+  const exportToPDF = async () => {
+    if (filteredData.length === 0) {
+      showWarning("No transactions to export.", "Export Failed");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      await import("jspdf-autotable");
+
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.setTextColor(79, 70, 229);
+      doc.text("Nix - Financial Report", 14, 22);
+
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Period: ${MONTHS[selectedMonth]} ${selectedYear}`, 14, 32);
+
+      doc.setFontSize(10);
+      doc.setTextColor(16, 185, 129);
+      doc.text(`Income: ${formatCurrency(totalIncome)}`, 14, 42);
+      doc.setTextColor(236, 72, 153);
+      doc.text(`Expenses: ${formatCurrency(totalExpense)}`, 70, 42);
+      doc.setTextColor(
+        balance >= 0 ? 16 : 239,
+        balance >= 0 ? 185 : 68,
+        balance >= 0 ? 129 : 68
+      );
+      doc.text(`Balance: ${formatCurrency(balance)}`, 140, 42);
+
+      const tableData = filteredData.map((t) => [
+        formatDate(t.date),
+        t.description.substring(0, 35) +
+          (t.description.length > 35 ? "..." : ""),
+        t.category,
+        t.paymentMethod,
+        t.type === "income" ? "Income" : "Expense",
+        (t.type === "expense" ? "- " : "+ ") + formatCurrency(t.amount || 0),
+      ]);
+
+      (doc as any).autoTable({
+        startY: 50,
+        head: [["Date", "Description", "Category", "Method", "Type", "Amount"]],
+        body: tableData,
+        theme: "striped",
+        headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 9 },
+        bodyStyles: { fontSize: 8 },
+        columnStyles: {
+          0: { cellWidth: 22 },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 28 },
+          3: { cellWidth: 30 },
+          4: { cellWidth: 18 },
+          5: { cellWidth: 28, halign: "right" },
+        },
+        alternateRowStyles: { fillColor: [249, 250, 251] },
+      });
+
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(
+          `Generated by Finance Control - Page ${i} of ${pageCount}`,
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 10,
+          { align: "center" }
+        );
+      }
+
+      doc.save(`${getFileName()}.pdf`);
+    } catch (error) {
+      console.error("Error exporting to PDF:", error);
+      showError("Error exporting to PDF. Please try again.", "Export Error");
+    } finally {
+      setIsExporting(false);
+      setAnchorEl(null);
+    }
+  };
+
+  const formatDateShort = (dateString: string) => {
+    const [, month, day] = dateString.split("-");
+    return `${day}/${month}`;
+  };
+
+  // Pull-to-refresh para mobile
+  const {
+    y: pullY,
+    onPanStart,
+    onPan,
+    onPanEnd,
+    isPulling,
+    isRefreshing: isPullRefreshing,
+    indicatorOpacity,
+    indicatorScale,
+    indicatorRotation,
+  } = usePullToRefresh({
+    threshold: 80,
+    onRefresh: handleRefresh,
+    enabled: isMobile && !!onRefreshData,
+  });
+
+  // Header com estilo de ordenação
+  const headerCellSx = {
+    fontWeight: 600,
+    fontSize: 11,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase" as const,
+    color: "text.secondary",
+    py: 2,
+    bgcolor: isDarkMode
+      ? alpha(theme.palette.background.default, 0.5)
+      : alpha(theme.palette.grey[50], 0.95),
+    borderBottom: `1px solid ${
+      isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.08)
+    }`,
+    whiteSpace: "nowrap" as const,
+  };
+
+  const renderSortableHeader = (
+    column: SortColumn,
+    label: string,
+    width?: number | string
+  ) => (
+    <TableCell sx={{ ...headerCellSx, width }}>
+      <TableSortLabel
+        active={sortConfig.column === column}
+        direction={sortConfig.column === column ? sortConfig.direction : "asc"}
+        onClick={() => handleSort(column)}
+        IconComponent={sortConfig.column === column ? undefined : UnsortedIcon}
+        sx={{
+          "& .MuiTableSortLabel-icon": {
+            opacity: sortConfig.column === column ? 1 : 0.4,
+            color:
+              sortConfig.column === column ? "primary.main" : "text.disabled",
+          },
+          "&:hover": {
+            color: "primary.main",
+            "& .MuiTableSortLabel-icon": { opacity: 1 },
+          },
+        }}
+      >
+        {label}
+      </TableSortLabel>
+    </TableCell>
+  );
+
+  // Estilos de linha - transações recorrentes/auto usam apenas tags para identificação
+  const getRowSx = (_t: Transaction, index: number) => ({
+    transition: "all 0.15s ease",
+    bgcolor:
+      index % 2 === 0
+        ? "transparent"
+        : isDarkMode
+        ? alpha(theme.palette.action.hover, 0.08)
+        : alpha(theme.palette.action.hover, 0.06),
+    "&:hover": {
+      bgcolor: isDarkMode
+        ? alpha(theme.palette.primary.main, 0.08)
+        : alpha(theme.palette.primary.main, 0.04),
+    },
+    "& td": {
+      borderBottom: `1px solid ${
+        isDarkMode ? alpha("#FFFFFF", 0.04) : alpha("#000000", 0.04)
+      }`,
+      py: 1.5,
+    },
+  });
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: isMobile ? 2 : 3,
+        // Extra padding para FABs + bottom navigation (64px + safe area + FAB height + margem)
+        pb: { xs: "180px", md: 0 },
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
+        >
+          <Box>
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
+              All Transactions
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {MONTHS[selectedMonth]} {selectedYear} • {filteredData.length}{" "}
+              transactions
+            </Typography>
+          </Box>
+
+          {/* Desktop New Transaction Button */}
+          {!isMobile && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onNewTransaction}
+              sx={CREATE_TRANSACTION_BUTTON.sx}
+            >
+              {CREATE_TRANSACTION_BUTTON.label}
+            </Button>
+          )}
+        </Box>
+      </Box>
+
+      {/* Summary Cards - Modern Compact Style */}
+      <Grid container spacing={gridSpacing}>
+        {/* Balance Card */}
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(
+                    theme.palette.background.paper,
+                    0.7
+                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
+                    "#FFFFFF",
+                    0.6
+                  )} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+              }`,
+              boxShadow: isDarkMode
+                ? `0 6px 24px -6px ${alpha(
+                    balance >= 0 ? "#059669" : "#DC2626",
+                    0.2
+                  )}`
+                : `0 6px 24px -6px ${alpha(
+                    balance >= 0 ? "#059669" : "#DC2626",
+                    0.15
+                  )}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: isDarkMode
+                  ? `0 10px 32px -6px ${alpha(
+                      balance >= 0 ? "#059669" : "#DC2626",
+                      0.3
+                    )}`
+                  : `0 10px 32px -6px ${alpha(
+                      balance >= 0 ? "#059669" : "#DC2626",
+                      0.25
+                    )}`,
+              },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background:
+                  balance >= 0
+                    ? isDarkMode
+                      ? "linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%)"
+                      : "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
+                    : isDarkMode
+                    ? "linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(239, 68, 68, 0.06) 100%)"
+                    : "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                pointerEvents: "none",
+                zIndex: 0,
+              },
+            }}
+          >
+            <CardContent
+              sx={{
+                position: "relative",
+                zIndex: 1,
+                p: isMobile ? 1.5 : 2,
+                "&:last-child": { pb: isMobile ? 1.5 : 2 },
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 1.5,
+                }}
+              >
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      color: "text.secondary",
+                      letterSpacing: "0.08em",
+                      fontSize: isMobile ? 9 : 10,
+                      fontWeight: 600,
+                      display: "block",
+                      mb: 0.25,
+                    }}
+                  >
+                    Current Balance
+                  </Typography>
+                  <Typography
+                    variant={isMobile ? "h6" : "h5"}
+                    sx={{
+                      fontWeight: 700,
+                      color: "text.primary",
+                      letterSpacing: "-0.02em",
+                      lineHeight: 1.2,
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    {formatCurrency(balance)}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: isMobile ? 36 : 42,
+                    height: isMobile ? 36 : 42,
+                    borderRadius: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    background: isDarkMode
+                      ? `linear-gradient(135deg, ${alpha(
+                          balance >= 0 ? "#059669" : "#DC2626",
+                          0.2
+                        )} 0%, ${alpha(
+                          balance >= 0 ? "#059669" : "#DC2626",
+                          0.1
+                        )} 100%)`
+                      : `linear-gradient(135deg, ${
+                          balance >= 0 ? "#D1FAE5" : "#FEE2E2"
+                        } 0%, ${alpha(
+                          balance >= 0 ? "#D1FAE5" : "#FEE2E2",
+                          0.6
+                        )} 100%)`,
+                    border: `1px solid ${
+                      isDarkMode
+                        ? alpha(balance >= 0 ? "#059669" : "#DC2626", 0.2)
+                        : alpha(balance >= 0 ? "#059669" : "#DC2626", 0.15)
+                    }`,
+                    boxShadow: isDarkMode
+                      ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
+                      : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
+                  }}
+                >
+                  <WalletIcon
+                    sx={{
+                      fontSize: isMobile ? 18 : 22,
+                      color: balance >= 0 ? "#059669" : "#DC2626",
+                    }}
+                  />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Income Card */}
+        <Grid size={{ xs: 6, sm: 4 }}>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(
+                    theme.palette.background.paper,
+                    0.7
+                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
+                    "#FFFFFF",
+                    0.6
+                  )} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+              }`,
+              boxShadow: isDarkMode
+                ? `0 6px 24px -6px ${alpha("#059669", 0.2)}`
+                : `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: isDarkMode
+                  ? `0 10px 32px -6px ${alpha("#059669", 0.3)}`
+                  : `0 10px 32px -6px ${alpha("#059669", 0.25)}`,
+              },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: isDarkMode
+                  ? "linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(16, 185, 129, 0.04) 100%)"
+                  : "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                pointerEvents: "none",
+                zIndex: 0,
+              },
+            }}
+          >
+            <CardContent
+              sx={{
+                position: "relative",
+                zIndex: 1,
+                p: isMobile ? 1.5 : 2,
+                "&:last-child": { pb: isMobile ? 1.5 : 2 },
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      color: "text.secondary",
+                      letterSpacing: "0.08em",
+                      fontSize: isMobile ? 9 : 10,
+                      fontWeight: 600,
+                      display: "block",
+                      mb: 0.25,
+                    }}
+                  >
+                    Income
+                  </Typography>
+                  <Typography
+                    variant={isMobile ? "body1" : "h6"}
+                    sx={{
+                      fontWeight: 700,
+                      color: "text.primary",
+                      letterSpacing: "-0.02em",
+                      lineHeight: 1.2,
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    {formatCurrency(totalIncome)}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: isMobile ? 32 : 38,
+                    height: isMobile ? 32 : 38,
+                    borderRadius: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    background: isDarkMode
+                      ? `linear-gradient(135deg, ${alpha(
+                          "#059669",
+                          0.2
+                        )} 0%, ${alpha("#059669", 0.1)} 100%)`
+                      : `linear-gradient(135deg, #D1FAE5 0%, ${alpha(
+                          "#D1FAE5",
+                          0.6
+                        )} 100%)`,
+                    border: `1px solid ${
+                      isDarkMode
+                        ? alpha("#059669", 0.2)
+                        : alpha("#059669", 0.15)
+                    }`,
+                    boxShadow: isDarkMode
+                      ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
+                      : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
+                  }}
+                >
+                  <TrendingUpIcon
+                    sx={{
+                      fontSize: isMobile ? 16 : 20,
+                      color: "#059669",
+                    }}
+                  />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Expense Card */}
+        <Grid size={{ xs: 6, sm: 4 }}>
+          <Card
+            elevation={0}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              background: isDarkMode
+                ? `linear-gradient(135deg, ${alpha(
+                    theme.palette.background.paper,
+                    0.7
+                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
+                    "#FFFFFF",
+                    0.6
+                  )} 100%)`,
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${
+                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+              }`,
+              boxShadow: isDarkMode
+                ? `0 6px 24px -6px ${alpha("#DC2626", 0.2)}`
+                : `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
+              borderRadius: "16px",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: isDarkMode
+                  ? `0 10px 32px -6px ${alpha("#DC2626", 0.3)}`
+                  : `0 10px 32px -6px ${alpha("#DC2626", 0.25)}`,
+              },
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: isDarkMode
+                  ? "linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(239, 68, 68, 0.04) 100%)"
+                  : "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                pointerEvents: "none",
+                zIndex: 0,
+              },
+            }}
+          >
+            <CardContent
+              sx={{
+                position: "relative",
+                zIndex: 1,
+                p: isMobile ? 1.5 : 2,
+                "&:last-child": { pb: isMobile ? 1.5 : 2 },
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      color: "text.secondary",
+                      letterSpacing: "0.08em",
+                      fontSize: isMobile ? 9 : 10,
+                      fontWeight: 600,
+                      display: "block",
+                      mb: 0.25,
+                    }}
+                  >
+                    Expenses
+                  </Typography>
+                  <Typography
+                    variant={isMobile ? "body1" : "h6"}
+                    sx={{
+                      fontWeight: 700,
+                      color: "text.primary",
+                      letterSpacing: "-0.02em",
+                      lineHeight: 1.2,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {formatCurrency(totalExpense)}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: isMobile ? 32 : 38,
+                    height: isMobile ? 32 : 38,
+                    borderRadius: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    background: isDarkMode
+                      ? `linear-gradient(135deg, ${alpha(
+                          "#DC2626",
+                          0.2
+                        )} 0%, ${alpha("#DC2626", 0.1)} 100%)`
+                      : `linear-gradient(135deg, #FEE2E2 0%, ${alpha(
+                          "#FEE2E2",
+                          0.6
+                        )} 100%)`,
+                    border: `1px solid ${
+                      isDarkMode
+                        ? alpha("#DC2626", 0.2)
+                        : alpha("#DC2626", 0.15)
+                    }`,
+                    boxShadow: isDarkMode
+                      ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
+                      : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
+                  }}
+                >
+                  <TrendingDownIcon
+                    sx={{
+                      fontSize: isMobile ? 16 : 20,
+                      color: "#DC2626",
+                    }}
+                  />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Search & Filters Toolbar */}
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: isMobile ? "16px" : "20px",
+          overflow: "hidden",
+          bgcolor: isDarkMode
+            ? alpha(theme.palette.background.paper, 0.7)
+            : alpha("#FFFFFF", 0.9),
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${
+            isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+          }`,
+        }}
+      >
+        {/* Toolbar principal */}
+        <Box
+          sx={{
+            p: isMobile ? 1.25 : 2,
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: isMobile ? 1 : 2,
+          }}
+        >
+          {/* Campo de busca - full width no mobile */}
+          <SearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Search transactions..."
+            minWidth={isMobile ? 0 : 200}
+            maxWidth={isMobile ? undefined : 320}
+            fullWidth={isMobile}
+          />
+
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: isMobile ? 0.75 : 1,
+              minWidth: 0,
+              flex: isMobile ? 1 : "0 0 auto",
+              justifyContent: isMobile ? "flex-end" : undefined,
+            }}
+          >
+            {isMobile ? (
+              /* ── Mobile: pílula única filtro + download ── */
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "stretch",
+                  height: 38,
+                  border: "1px solid",
+                  borderColor: activeFiltersCount > 0 ? "primary.main" : "divider",
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  flexShrink: 0,
+                  transition: "border-color 0.2s",
+                  ...(activeFiltersCount > 0 && {
+                    background: `linear-gradient(135deg, ${alpha("#6366f1", 0.08)} 0%, ${alpha("#8b5cf6", 0.06)} 100%)`,
+                  }),
+                }}
+              >
+                {/* Botão de filtros */}
+                <Box
+                  onClick={() => setShowFilters(!showFilters)}
+                  sx={{
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 48,
+                    cursor: "pointer",
+                    transition: "background 0.15s",
+                    "&:active": { bgcolor: alpha(theme.palette.primary.main, 0.1) },
+                  }}
+                >
+                  <FilterIcon sx={{ fontSize: 16, color: activeFiltersCount > 0 ? "primary.main" : "text.secondary" }} />
+                  {activeFiltersCount > 0 && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        bgcolor: "primary.main",
+                        color: "#fff",
+                        fontSize: 8,
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {activeFiltersCount}
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Divisor */}
+                <Box sx={{ width: "1px", bgcolor: "divider", flexShrink: 0 }} />
+
+                {/* Botão de download */}
+                <Box
+                  onClick={isExporting || filteredData.length === 0 ? undefined : (e) => setAnchorEl(e.currentTarget as HTMLElement)}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 48,
+                    cursor: isExporting || filteredData.length === 0 ? "default" : "pointer",
+                    opacity: filteredData.length === 0 ? 0.35 : 1,
+                    transition: "background 0.15s",
+                    "&:active": filteredData.length === 0 ? undefined : { bgcolor: alpha(theme.palette.primary.main, 0.1) },
+                  }}
+                >
+                  {isExporting ? (
+                    <CircularProgress size={12} />
+                  ) : (
+                    <DownloadIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+                  )}
+                </Box>
+              </Box>
+            ) : (
+              /* ── Desktop: botões separados ── */
+              <>
+                {/* Botão de filtros */}
+                <Box sx={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+                  <Button
+                    variant={activeFiltersCount > 0 ? "contained" : "outlined"}
+                    size="small"
+                    onClick={() => setShowFilters(!showFilters)}
+                    startIcon={<FilterIcon sx={{ fontSize: 18 }} />}
+                    sx={{
+                      borderRadius: "20px",
+                      minWidth: 100,
+                      height: 40,
+                      px: 2,
+                      "& .MuiButton-startIcon": { mr: 1 },
+                      ...(activeFiltersCount > 0 && {
+                        background: `linear-gradient(135deg, ${alpha("#6366f1", 0.9)} 0%, ${alpha("#8b5cf6", 0.9)} 100%)`,
+                      }),
+                    }}
+                  >
+                    Filters
+                    {activeFiltersCount > 0 && (
+                      <Chip
+                        label={activeFiltersCount}
+                        size="small"
+                        sx={{ ml: 1, height: 18, minWidth: 18, fontSize: 10, bgcolor: "rgba(255,255,255,0.2)", color: "inherit", "& .MuiChip-label": { px: 0.5 } }}
+                      />
+                    )}
+                  </Button>
+                </Box>
+
+                {/* Export Button */}
+                <IconButton
+                  size="small"
+                  onClick={(e) => setAnchorEl(e.currentTarget)}
+                  disabled={isExporting || filteredData.length === 0}
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    flexShrink: 0,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: "20px",
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": {
+                      borderColor: theme.palette.primary.main,
+                      color: theme.palette.primary.main,
+                      transform: "translateY(-1px)",
+                    },
+                  }}
+                >
+                  {isExporting ? (
+                    <CircularProgress size={14} />
+                  ) : (
+                    <DownloadIcon sx={{ fontSize: 20 }} />
+                  )}
+                </IconButton>
+              </>
+            )}
+
+            {/* Date Filter */}
+            <DateFilter
+              month={selectedMonth}
+              year={selectedYear}
+              onDateChange={onDateChange}
+              compact={isMobile}
+            />
+
+            {/* Refresh Button — apenas desktop */}
+            {onRefreshData && !isMobile && (
+              <Tooltip title="Atualizar dados">
+                <IconButton
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  size="small"
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    flexShrink: 0,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: "20px",
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": {
+                      borderColor: theme.palette.primary.main,
+                      color: theme.palette.primary.main,
+                      transform: "translateY(-1px)",
+                    },
+                  }}
+                >
+                  <RefreshIcon
+                    sx={{
+                      fontSize: 20,
+                      animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                      "@keyframes spin": {
+                        "0%": { transform: "rotate(0deg)" },
+                        "100%": { transform: "rotate(360deg)" },
+                      },
+                    }}
+                  />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={() => setAnchorEl(null)}
+          >
+            <MenuItem onClick={exportToCSV}>
+              <ListItemIcon>
+                <FileTextIcon fontSize="small" color="success" />
+              </ListItemIcon>
+              <ListItemText>Export as CSV</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={exportToXLSX}>
+              <ListItemIcon>
+                <FileSpreadsheetIcon fontSize="small" color="success" />
+              </ListItemIcon>
+              <ListItemText>Export as XLSX</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={exportToPDF}>
+              <ListItemIcon>
+                <FileTextIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>Export as PDF</ListItemText>
+            </MenuItem>
+          </Menu>
+        </Box>
+
+        {/* ── Filtros: bottom sheet no mobile, inline no desktop ── */}
+        {isMobile ? (
+          <SwipeableDrawer
+            anchor="bottom"
+            open={showFilters}
+            onClose={() => setShowFilters(false)}
+            onOpen={() => setShowFilters(true)}
+            disableSwipeToOpen
+            PaperProps={{
+              sx: {
+                borderRadius: "20px 20px 0 0",
+                maxHeight: "80vh",
+                overflowY: "auto",
+                background: isDarkMode
+                  ? `linear-gradient(160deg, ${alpha("#1e293b", 0.98)} 0%, ${alpha("#0f172a", 1)} 100%)`
+                  : "linear-gradient(160deg, #ffffff 0%, #f8fafc 100%)",
+              },
+            }}
+          >
+            {/* Alça */}
+            <Box sx={{ display: "flex", justifyContent: "center", pt: 1.5, pb: 0.5 }}>
+              <Box sx={{ width: 36, height: 4, borderRadius: 2, bgcolor: alpha(theme.palette.text.primary, 0.15) }} />
+            </Box>
+
+            {/* Header do drawer */}
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <FilterIcon fontSize="small" color="primary" />
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Filtros
+                </Typography>
+                {activeFiltersCount > 0 && (
+                  <Chip
+                    label={activeFiltersCount}
+                    size="small"
+                    color="primary"
+                    sx={{ height: 20, minWidth: 20, fontSize: 11, "& .MuiChip-label": { px: 0.75 } }}
+                  />
+                )}
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                {activeFiltersCount > 0 && (
+                  <Button
+                    size="small"
+                    onClick={() => { setFilterType("all"); setFilterCategory("all"); setFilterShared("all"); setFilterPaymentStatus("all"); }}
+                    sx={{ textTransform: "none", fontSize: 12, color: "error.main", minWidth: "auto" }}
+                  >
+                    Limpar
+                  </Button>
+                )}
+                <IconButton size="small" onClick={() => setShowFilters(false)} sx={{ color: "text.secondary" }}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+
+            <Divider />
+
+            {/* Conteúdo dos filtros */}
+            <Stack spacing={2} sx={{ p: 2.5, pb: 4 }}>
+              {/* Chips de filtros ativos */}
+              {activeFiltersCount > 0 && (
+                <Stack direction="row" flexWrap="wrap" gap={1}>
+                  {filterType !== "all" && (
+                    <Chip
+                      label={filterType === "income" ? "Receita" : "Despesa"}
+                      onDelete={() => setFilterType("all")}
+                      size="small"
+                      sx={{ bgcolor: alpha(filterType === "income" ? "#10b981" : "#ef4444", 0.1), color: filterType === "income" ? "#10b981" : "#ef4444" }}
+                    />
+                  )}
+                  {filterCategory !== "all" && (
+                    <Chip label={filterCategory} onDelete={() => setFilterCategory("all")} size="small" sx={{ bgcolor: alpha("#8b5cf6", 0.1) }} />
+                  )}
+                  {filterShared !== "all" && (
+                    <Chip label={filterShared === "shared" ? "Compartilhado" : "Não compartilhado"} onDelete={() => setFilterShared("all")} size="small" sx={{ bgcolor: alpha("#06b6d4", 0.1) }} />
+                  )}
+                  {filterPaymentStatus !== "all" && (
+                    <Chip label={filterPaymentStatus === "paid" ? "Pago" : "Pendente"} onDelete={() => setFilterPaymentStatus("all")} size="small" sx={{ bgcolor: alpha("#f59e0b", 0.1), color: "#f59e0b" }} />
+                  )}
+                </Stack>
+              )}
+
+              {/* Tipo */}
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 }}>
+                  Tipo
+                </Typography>
+                <Stack direction="row" gap={1}>
+                  {(["all", "income", "expense"] as const).map((val) => (
+                    <Chip
+                      key={val}
+                      label={val === "all" ? "Todos" : val === "income" ? "Receitas" : "Despesas"}
+                      onClick={() => setFilterType(val)}
+                      variant={filterType === val ? "filled" : "outlined"}
+                      size="medium"
+                      sx={{
+                        borderRadius: "10px",
+                        flex: 1,
+                        cursor: "pointer",
+                        fontWeight: filterType === val ? 600 : 400,
+                        ...(filterType === val && val === "income" && { bgcolor: alpha("#10b981", 0.15), color: "#10b981", border: "none" }),
+                        ...(filterType === val && val === "expense" && { bgcolor: alpha("#ef4444", 0.15), color: "#ef4444", border: "none" }),
+                        ...(filterType === val && val === "all" && { bgcolor: "primary.main", color: "#fff", border: "none" }),
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+
+              {/* Status */}
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 }}>
+                  Status
+                </Typography>
+                <Stack direction="row" gap={1}>
+                  {(["all", "paid", "pending"] as const).map((val) => (
+                    <Chip
+                      key={val}
+                      label={val === "all" ? "Todos" : val === "paid" ? "Pago" : "Pendente"}
+                      onClick={() => setFilterPaymentStatus(val)}
+                      variant={filterPaymentStatus === val ? "filled" : "outlined"}
+                      size="medium"
+                      sx={{
+                        borderRadius: "10px",
+                        flex: 1,
+                        cursor: "pointer",
+                        fontWeight: filterPaymentStatus === val ? 600 : 400,
+                        ...(filterPaymentStatus === val && val === "paid" && { bgcolor: alpha("#10b981", 0.15), color: "#10b981", border: "none" }),
+                        ...(filterPaymentStatus === val && val === "pending" && { bgcolor: alpha("#f59e0b", 0.15), color: "#f59e0b", border: "none" }),
+                        ...(filterPaymentStatus === val && val === "all" && { bgcolor: "primary.main", color: "#fff", border: "none" }),
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+
+              {/* Categoria */}
+              <FormControl fullWidth size="small">
+                <InputLabel>Categoria</InputLabel>
+                <Select
+                  value={filterCategory}
+                  label="Categoria"
+                  onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}
+                  sx={{ borderRadius: "12px" }}
+                >
+                  <MenuItem value="all">Todas as categorias</MenuItem>
+                  {availableCategories.map((cat) => (
+                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* Compartilhado */}
+              <FormControl fullWidth size="small">
+                <InputLabel>Compartilhado</InputLabel>
+                <Select
+                  value={filterShared}
+                  label="Compartilhado"
+                  onChange={(e: SelectChangeEvent) => setFilterShared(e.target.value as "all" | "shared" | "not_shared")}
+                  sx={{ borderRadius: "12px" }}
+                >
+                  <MenuItem value="all">Todos</MenuItem>
+                  <MenuItem value="shared">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <GroupIcon fontSize="small" color="info" />
+                      Compartilhado
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="not_shared">Não compartilhado</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+          </SwipeableDrawer>
+        ) : (
+          /* ── Desktop: filtros inline ── */
+          showFilters && (
+            <Box
+              sx={{
+                p: 2,
+                pt: 0,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 2,
+                borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+                bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.3) : alpha(theme.palette.grey[50], 0.5),
+              }}
+            >
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Type</InputLabel>
+                <Select
+                  value={filterType}
+                  label="Type"
+                  onChange={(e: SelectChangeEvent) => setFilterType(e.target.value as "all" | "income" | "expense")}
+                >
+                  <MenuItem value="all">All Types</MenuItem>
+                  <MenuItem value="income">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <ArrowUpIcon fontSize="small" color="success" />
+                      Income
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="expense">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <ArrowDownIcon fontSize="small" color="error" />
+                      Expense
+                    </Box>
+                  </MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>Category</InputLabel>
+                <Select value={filterCategory} label="Category" onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}>
+                  <MenuItem value="all">All Categories</MenuItem>
+                  {availableCategories.map((cat) => (
+                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: 130 }}>
+                <InputLabel>Shared</InputLabel>
+                <Select value={filterShared} label="Shared" onChange={(e: SelectChangeEvent) => setFilterShared(e.target.value as "all" | "shared" | "not_shared")}>
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="shared">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <GroupIcon fontSize="small" color="info" />
+                      Shared
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="not_shared">Not Shared</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: 130 }}>
+                <InputLabel>Status</InputLabel>
+                <Select value={filterPaymentStatus} label="Status" onChange={(e: SelectChangeEvent) => setFilterPaymentStatus(e.target.value as "all" | "paid" | "pending")}>
+                  <MenuItem value="all">All Status</MenuItem>
+                  <MenuItem value="paid">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <PaidIcon fontSize="small" color="success" />
+                      Paid
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="pending">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <PendingIcon fontSize="small" color="warning" />
+                      Pending
+                    </Box>
+                  </MenuItem>
+                </Select>
+              </FormControl>
+
+              {activeFiltersCount > 0 && (
+                <Button
+                  size="small"
+                  onClick={() => { setFilterType("all"); setFilterCategory("all"); setFilterShared("all"); setFilterPaymentStatus("all"); }}
+                  sx={{ textTransform: "none" }}
+                >
+                  Clear filters
+                </Button>
+              )}
+            </Box>
+          )
+        )}
+      </Paper>
+
+      {/* Mobile Card View with Pull-to-Refresh */}
+      {isMobile ? (
+        <Box
+          data-pull-to-refresh-container
+          onTouchStart={onPanStart}
+          onTouchMove={(e) => {
+            const touch = e.touches[0];
+            const target = e.currentTarget;
+            const rect = target.getBoundingClientRect();
+            const offsetY = touch.clientY - rect.top;
+            onPan(e, { offset: { y: offsetY }, velocity: { y: 0 } });
+          }}
+          onTouchEnd={onPanEnd}
+          sx={{
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5,
+            pt: isPulling || isPullRefreshing ? 8 : 0,
+            transition: "padding-top 0.2s ease",
+          }}
+        >
+          {/* Pull-to-Refresh Indicator */}
+          <PullToRefreshIndicator
+            opacity={indicatorOpacity}
+            scale={indicatorScale}
+            rotation={indicatorRotation}
+            isRefreshing={isPullRefreshing}
+            isPulling={isPulling}
+            y={pullY}
+          />
+
+          {paginatedData.length > 0 ? (
+            <>
+              {isMobile && paginatedData.length > 30 ? (
+                <Box
+                  ref={mobileListParentRef}
+                  sx={{ maxHeight: "70vh", overflow: "auto" }}
+                >
+                  <Box
+                    sx={{
+                      height: `${mobileListVirtualizer.getTotalSize()}px`,
+                      width: "100%",
+                      position: "relative",
+                    }}
+                  >
+                    {mobileListVirtualizer.getVirtualItems().map((virtualRow) => {
+                      const t = paginatedData[virtualRow.index];
+                      return (
+                        <Box
+                          key={t.id}
+                          sx={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            transform: `translateY(${virtualRow.start}px)`,
+                            py: 0.75,
+                          }}
+                        >
+                          <SwipeableTransactionCard
+                            transaction={t}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                            onTogglePaid={onTogglePaid}
+                            onOpenMenu={(element, transaction) =>
+                              setMobileActionAnchor({ element, transaction })
+                            }
+                            formatDateShort={formatDateShort}
+                          />
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              ) : (
+              <AnimatePresence mode="popLayout">
+                {paginatedData.map((t, index) => (
+                  <motion.div
+                    key={t.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 30,
+                      delay: index * 0.05,
+                    }}
+                  >
+                    <SwipeableTransactionCard
+                      transaction={t}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onTogglePaid={onTogglePaid}
+                      onOpenMenu={(element, transaction) =>
+                        setMobileActionAnchor({ element, transaction })
+                      }
+                      formatDateShort={formatDateShort}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              )}
+
+              {/* Summary Footer */}
+              <Card
+                elevation={0}
+                sx={{
+                  position: "relative",
+                  overflow: "hidden",
+                  background: isDarkMode
+                    ? `linear-gradient(135deg, ${alpha(
+                        theme.palette.background.paper,
+                        0.7
+                      )} 0%, ${alpha(
+                        theme.palette.background.paper,
+                        0.5
+                      )} 100%)`
+                    : `linear-gradient(135deg, ${alpha(
+                        "#FFFFFF",
+                        0.85
+                      )} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
+                  backdropFilter: "blur(12px)",
+                  border: `1px solid ${
+                    isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+                  }`,
+                  borderRadius: "14px",
+                  boxShadow: isDarkMode
+                    ? `0 4px 16px -4px ${alpha(
+                        balance >= 0 ? "#059669" : "#DC2626",
+                        0.2
+                      )}`
+                    : `0 4px 16px -4px ${alpha(
+                        balance >= 0 ? "#059669" : "#DC2626",
+                        0.15
+                      )}`,
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background:
+                      balance >= 0
+                        ? isDarkMode
+                          ? "linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(16, 185, 129, 0.04) 100%)"
+                          : "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)"
+                        : isDarkMode
+                        ? "linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(239, 68, 68, 0.04) 100%)"
+                        : "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                  },
+                }}
+              >
+                <CardContent
+                  sx={{
+                    position: "relative",
+                    zIndex: 1,
+                    p: 1.5,
+                    "&:last-child": { pb: 1.5 },
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{ color: "text.secondary" }}
+                  >
+                    Balance
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    fontWeight={700}
+                    sx={{
+                      color: balance >= 0 ? "#059669" : "#DC2626",
+                      letterSpacing: "-0.02em",
+                    }}
+                  >
+                    {formatCurrency(balance)}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <EmptyState
+              type="transactions"
+              title="Nenhuma transação encontrada"
+              description="Nenhuma transação encontrada com os filtros atuais."
+              compact
+            />
+          )}
+
+          {/* Mobile Action Menu */}
+          <Menu
+            anchorEl={mobileActionAnchor.element}
+            open={Boolean(mobileActionAnchor.element)}
+            onClose={() =>
+              setMobileActionAnchor({ element: null, transaction: null })
+            }
+          >
+            <MenuItem
+              onClick={() => {
+                if (mobileActionAnchor.transaction) {
+                  onEdit(mobileActionAnchor.transaction);
+                }
+                setMobileActionAnchor({ element: null, transaction: null });
+              }}
+            >
+              <ListItemIcon>
+                <EditIcon fontSize="small" color="primary" />
+              </ListItemIcon>
+              <ListItemText>
+                {mobileActionAnchor.transaction?.isVirtual
+                  ? "Edit Recurring"
+                  : "Edit"}
+              </ListItemText>
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                if (mobileActionAnchor.transaction) {
+                  onDelete(mobileActionAnchor.transaction.id);
+                }
+                setMobileActionAnchor({ element: null, transaction: null });
+              }}
+            >
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>
+                {mobileActionAnchor.transaction?.isVirtual
+                  ? "Delete Recurring"
+                  : "Delete"}
+              </ListItemText>
+            </MenuItem>
+          </Menu>
+
+          {/* FAB apenas no desktop; no mobile o botão central da bottom nav já cria transação */}
+          {!isMobile && (
+            <NixButton
+              size="fab"
+              variant="solid"
+              color="purple"
+              onClick={onNewTransaction}
+              className="nix-fab-create"
+              style={{
+                position: "fixed",
+                bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
+                right: 16,
+                zIndex: 1100,
+              }}
+            >
+              <AddIcon />
+            </NixButton>
+          )}
+        </Box>
+      ) : (
+        /* Desktop Table View */
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: "20px",
+            overflow: "hidden",
+            bgcolor: isDarkMode
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha("#FFFFFF", 0.9),
+            backdropFilter: "blur(20px)",
+            border: `1px solid ${
+              isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+            }`,
+          }}
+        >
+          {!isMobile && paginatedData.length > VIRTUALIZE_THRESHOLD ? (
+            <>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ ...headerCellSx, width: 50, textAlign: "center" }}>Paid</TableCell>
+                    {renderSortableHeader("date", "Date", 100)}
+                    {renderSortableHeader("description", "Description")}
+                    {renderSortableHeader("category", "Category", 140)}
+                    {renderSortableHeader("paymentMethod", "Method", 140)}
+                    {renderSortableHeader("type", "Type", 80)}
+                    {renderSortableHeader("amount", "Amount", 130)}
+                    <TableCell sx={{ ...headerCellSx, width: 100, textAlign: "center" }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+              </Table>
+              <Box
+                ref={desktopTableParentRef}
+                sx={{ maxHeight: 520, overflow: "auto" }}
+              >
+                <Box sx={{ height: desktopRowVirtualizer.getTotalSize(), position: "relative" }}>
+                  {desktopRowVirtualizer.getVirtualItems().map((virtualRow) => {
+                    const t = paginatedData[virtualRow.index];
+                    return (
+                      <Box
+                        key={t.id}
+                        component="div"
+                        sx={{
+                          ...getRowSx(t, virtualRow.index),
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: `${virtualRow.size}px`,
+                          transform: `translateY(${virtualRow.start}px)`,
+                          display: "flex",
+                          alignItems: "stretch",
+                          boxSizing: "border-box",
+                          borderBottom: `1px solid ${isDarkMode ? alpha("#FFF", 0.06) : alpha("#000", 0.06)}`,
+                        }}
+                      >
+                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 50px" }}>
+                          <Tooltip title={t.isVirtual ? "Mark recurring occurrence" : t.isPaid !== false ? "Paid" : "Not paid"}>
+                            <Checkbox checked={t.isPaid !== false} onChange={(e) => onTogglePaid(t.id, e.target.checked)} size="small" color={t.isVirtual ? "info" : "success"} />
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell component="div" sx={{ fontFamily: "monospace", fontSize: 12, flex: "0 0 100px" }}>{formatDate(t.date)}</TableCell>
+                        <TableCell component="div" sx={{ flex: 1, minWidth: 0 }}>
+                          <Box sx={{ display: "flex", flexDirection: "column" }}>
+                            <Typography variant="body2" fontWeight={500}>{t.description}</Typography>
+                            <TransactionTags transaction={t} />
+                          </Box>
+                        </TableCell>
+                        <TableCell component="div" sx={{ flex: "0 0 140px" }}><Chip label={t.category} size="small" variant="outlined" /></TableCell>
+                        <TableCell component="div" sx={{ flex: "0 0 140px" }}><Typography variant="caption" color="text.secondary">{t.paymentMethod}</Typography></TableCell>
+                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 80px" }}>
+                          {t.type === "income" ? <ArrowUpIcon fontSize="small" color="success" /> : <ArrowDownIcon fontSize="small" color="error" />}
+                        </TableCell>
+                        <TableCell component="div" sx={{ textAlign: "right", fontFamily: "monospace", fontWeight: 600, color: t.type === "income" ? "success.main" : "error.main", flex: "0 0 130px" }}>
+                          {t.type === "expense" && "- "}{formatCurrency(t.amount || 0)}
+                        </TableCell>
+                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 100px" }}>
+                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
+                            <Tooltip title={t.isVirtual ? "Edit recurring transaction" : "Edit"}>
+                              <IconButton size="small" onClick={() => onEdit(t)} color="primary"><EditIcon fontSize="small" /></IconButton>
+                            </Tooltip>
+                            <Tooltip title={t.isVirtual ? "Delete recurring transaction" : "Delete"}>
+                              <IconButton size="small" onClick={() => onDelete(t.id)} color="error"><DeleteIcon fontSize="small" /></IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+            </>
+          ) : (
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ ...headerCellSx, width: 50, textAlign: "center" }}>Paid</TableCell>
+                  {renderSortableHeader("date", "Date", 100)}
+                  {renderSortableHeader("description", "Description")}
+                  {renderSortableHeader("category", "Category", 140)}
+                  {renderSortableHeader("paymentMethod", "Method", 140)}
+                  {renderSortableHeader("type", "Type", 80)}
+                  {renderSortableHeader("amount", "Amount", 130)}
+                  <TableCell sx={{ ...headerCellSx, width: 100, textAlign: "center" }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((t, index) => (
+                    <TableRow
+                      key={t.id}
+                      sx={{
+                        ...getRowSx(t, index),
+                        animation: `fadeInUp 0.4s ease-out ${
+                          index * 0.03
+                        }s both`,
+                        "@keyframes fadeInUp": {
+                          from: {
+                            opacity: 0,
+                            transform: "translateY(10px)",
+                          },
+                          to: {
+                            opacity: 1,
+                            transform: "translateY(0)",
+                          },
+                        },
+                      }}
+                    >
+                      <TableCell sx={{ textAlign: "center" }}>
+                        <Tooltip
+                          title={
+                            t.isVirtual
+                              ? "Mark recurring occurrence"
+                              : t.isPaid !== false
+                              ? "Paid"
+                              : "Not paid"
+                          }
+                        >
+                          <Checkbox
+                            checked={t.isPaid !== false}
+                            onChange={(e) =>
+                              onTogglePaid(t.id, e.target.checked)
+                            }
+                            size="small"
+                            color={t.isVirtual ? "info" : "success"}
+                          />
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
+                        {formatDate(t.date)}
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: "flex", flexDirection: "column" }}>
+                          <Typography variant="body2" fontWeight={500}>
+                            {t.description}
+                          </Typography>
+                          {/* Tags - Componente padronizado em formato pílula */}
+                          <TransactionTags transaction={t} />
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={t.category}
+                          size="small"
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption" color="text.secondary">
+                          {t.paymentMethod}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ textAlign: "center" }}>
+                        {t.type === "income" ? (
+                          <ArrowUpIcon fontSize="small" color="success" />
+                        ) : (
+                          <ArrowDownIcon fontSize="small" color="error" />
+                        )}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          textAlign: "right",
+                          fontFamily: "monospace",
+                          fontWeight: 600,
+                          color:
+                            t.type === "income" ? "success.main" : "error.main",
+                        }}
+                      >
+                        {t.type === "expense" && "- "}
+                        {formatCurrency(t.amount || 0)}
+                      </TableCell>
+                      <TableCell sx={{ textAlign: "center" }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <Tooltip
+                            title={
+                              t.isVirtual
+                                ? "Edit recurring transaction"
+                                : "Edit"
+                            }
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() => onEdit(t)}
+                              color="primary"
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip
+                            title={
+                              t.isVirtual
+                                ? "Delete recurring transaction"
+                                : "Delete"
+                            }
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() => onDelete(t.id)}
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} sx={{ textAlign: "center", py: 6 }}>
+                      <WalletIcon
+                        sx={{
+                          fontSize: 48,
+                          color: "text.disabled",
+                          mb: 2,
+                          display: "block",
+                          mx: "auto",
+                        }}
+                      />
+                      <Typography color="text.secondary" fontStyle="italic">
+                        No transactions found with the current filters.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+              {filteredData.length > 0 && (
+                <TableFooter>
+                  <TableRow
+                    sx={{
+                      bgcolor: isDarkMode
+                        ? alpha(theme.palette.background.default, 0.3)
+                        : alpha(theme.palette.grey[50], 0.5),
+                    }}
+                  >
+                    <TableCell
+                      colSpan={6}
+                      sx={{ textAlign: "right", fontWeight: 600 }}
+                    >
+                      Filtered Total:
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        textAlign: "right",
+                        fontFamily: "monospace",
+                        fontWeight: 600,
+                        color: balance >= 0 ? "success.main" : "error.main",
+                      }}
+                    >
+                      {formatCurrency(balance)}
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
+                </TableFooter>
+              )}
+            </Table>
+          </TableContainer>
+          )}
+
+          {/* Paginação */}
+          {filteredData.length > 0 && (
+            <TablePagination
+              component="div"
+              count={filteredData.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[10, 25, 50, 100]}
+              sx={{
+                borderTop: `1px solid ${
+                  isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)
+                }`,
+              }}
+            />
+          )}
+        </Paper>
+      )}
+    </Box>
+  );
+};
+
+export default TransactionsView;
