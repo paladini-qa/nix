@@ -884,7 +884,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
 
       try {
         const text = await file.text();
-        const rows = import("../services/importService").then(m => m.parseImportFile(text, file.name));
+        const rows = import("../../services/importService").then(m => m.parseImportFile(text, file.name));
         const resolvedRows = await rows;
         
         if (resolvedRows.length === 0) {
