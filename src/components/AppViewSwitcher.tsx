@@ -1,7 +1,7 @@
-import React, { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import DashboardMainSection from "./DashboardMainSection";
-import PageTransition from "./motion/PageTransition";
+import PageTransition, { TransitionType } from "./motion/PageTransition";
 import { useAppStore } from "../hooks/useAppStore";
 import { calculateInvoiceDueDate } from "../utils/transactionUtils";
 import { useTransactionsQuery } from "../hooks/useTransactionsQuery";
@@ -92,6 +92,32 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [selectedCategoryNav, setSelectedCategoryNav] = useState<{ name: string; type: "income" | "expense" } | null>(null);
+
+  // Ordem das views na barra de navegação primária — usada para detectar direção
+  const PRIMARY_VIEW_ORDER: Partial<Record<AppCurrentView, number>> = {
+    dashboard: 0,
+    transactions: 1,
+    paymentMethods: 2,
+  };
+  const SECONDARY_VIEWS = new Set<AppCurrentView>([
+    "splits", "shared", "recurring", "categories", "nixai",
+    "goals", "budgets", "analytics", "planning", "import",
+    "fiscal-report", "debt-calculator", "subscriptions", "investments",
+  ]);
+
+  const prevViewRef = useRef<AppCurrentView>(currentView);
+  const getTransitionType = (from: AppCurrentView, to: AppCurrentView): TransitionType => {
+    const fromOrder = PRIMARY_VIEW_ORDER[from];
+    const toOrder = PRIMARY_VIEW_ORDER[to];
+    if (fromOrder !== undefined && toOrder !== undefined) {
+      return toOrder > fromOrder ? "slideLeft" : "slideRight";
+    }
+    if (SECONDARY_VIEWS.has(to)) return "slideUp";
+    if (SECONDARY_VIEWS.has(from) && toOrder !== undefined) return "slideDown";
+    return "slideLeft";
+  };
+  const transitionType = getTransitionType(prevViewRef.current, currentView);
+  prevViewRef.current = currentView;
 
   const handleNewTransaction = () => {
     setEditingTransaction(null);
@@ -355,7 +381,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
   };
 
   return (
-    <PageTransition transitionKey={currentView} type="slideLeft">
+    <PageTransition transitionKey={currentView} type={isMobile ? transitionType : "slideLeft"}>
       {renderView()}
     </PageTransition>
   );

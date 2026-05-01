@@ -1,6 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, onlineManager } from "@tanstack/react-query";
 import { supabase } from "../services/supabaseClient";
 import { Transaction } from "../types";
+import { enqueueSyncOp } from "./useNetworkStatus";
+import dayjs from "dayjs";
 
 export const TRANSACTIONS_KEY = ["transactions"];
 
@@ -62,6 +64,12 @@ function mapTransactionToDb(tx: Partial<Transaction>) {
   return payload;
 }
 
+function isNetworkError(error: unknown): boolean {
+  if (!navigator.onLine) return true;
+  if (error instanceof TypeError && error.message.toLowerCase().includes("fetch")) return true;
+  return false;
+}
+
 export function useTransactionsQuery() {
   const queryClient = useQueryClient();
 
@@ -79,6 +87,8 @@ export function useTransactionsQuery() {
     },
   });
 
+  // ─── ADD ──────────────────────────────────────────────────────────────────
+
   const addMutation = useMutation({
     mutationFn: async (tx: Partial<Transaction>) => {
       const {
@@ -89,10 +99,7 @@ export function useTransactionsQuery() {
       if (userError) throw userError;
       if (!user) throw new Error("User not authenticated");
 
-      const payload = {
-        ...mapTransactionToDb(tx),
-        user_id: user.id,
-      };
+      const payload = { ...mapTransactionToDb(tx), user_id: user.id };
 
       const { data, error } = await supabase
         .from("transactions")
@@ -102,10 +109,55 @@ export function useTransactionsQuery() {
       if (error) throw error;
       return mapTransactionFromDb(data);
     },
-    onSuccess: () => {
+
+    onMutate: async (newTx) => {
+      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
+      const previous = queryClient.getQueryData<Transaction[]>(TRANSACTIONS_KEY);
+
+      const optimistic: Transaction = {
+        id: `optimistic_${crypto.randomUUID()}`,
+        description: newTx.description ?? "",
+        amount: newTx.amount ?? 0,
+        type: newTx.type ?? "expense",
+        category: newTx.category ?? "",
+        paymentMethod: newTx.paymentMethod ?? "",
+        date: newTx.date ?? dayjs().format("YYYY-MM-DD"),
+        createdAt: Date.now(),
+        isPaid: newTx.isPaid ?? false,
+        isRecurring: newTx.isRecurring,
+        frequency: newTx.frequency,
+        installments: newTx.installments,
+        currentInstallment: newTx.currentInstallment,
+        isShared: newTx.isShared,
+        sharedWith: newTx.sharedWith,
+        iOwe: newTx.iOwe,
+        excludedDates: newTx.excludedDates ?? [],
+        notes: newTx.notes,
+      };
+
+      queryClient.setQueryData<Transaction[]>(
+        TRANSACTIONS_KEY,
+        (old) => [optimistic, ...(old ?? [])]
+      );
+
+      return { previous };
+    },
+
+    onError: (error, tx, context: any) => {
+      if (context?.previous) {
+        queryClient.setQueryData(TRANSACTIONS_KEY, context.previous);
+      }
+      if (isNetworkError(error)) {
+        enqueueSyncOp({ type: "add", payload: mapTransactionToDb(tx) as Record<string, unknown> });
+      }
+    },
+
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
     },
   });
+
+  // ─── UPDATE ───────────────────────────────────────────────────────────────
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...tx }: Partial<Transaction> & { id: string }) => {
@@ -120,20 +172,69 @@ export function useTransactionsQuery() {
       if (error) throw error;
       return mapTransactionFromDb(data);
     },
-    onSuccess: () => {
+
+    onMutate: async ({ id, ...tx }) => {
+      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
+      const previous = queryClient.getQueryData<Transaction[]>(TRANSACTIONS_KEY);
+
+      queryClient.setQueryData<Transaction[]>(TRANSACTIONS_KEY, (old) =>
+        (old ?? []).map((t) => (t.id === id ? { ...t, ...tx } : t))
+      );
+
+      return { previous };
+    },
+
+    onError: (error, { id, ...tx }, context: any) => {
+      if (context?.previous) {
+        queryClient.setQueryData(TRANSACTIONS_KEY, context.previous);
+      }
+      if (isNetworkError(error)) {
+        enqueueSyncOp({
+          type: "update",
+          payload: { id, ...mapTransactionToDb(tx) } as Record<string, unknown>,
+        });
+      }
+    },
+
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
     },
   });
+
+  // ─── DELETE ───────────────────────────────────────────────────────────────
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("transactions").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
+      const previous = queryClient.getQueryData<Transaction[]>(TRANSACTIONS_KEY);
+
+      queryClient.setQueryData<Transaction[]>(TRANSACTIONS_KEY, (old) =>
+        (old ?? []).filter((t) => t.id !== id)
+      );
+
+      return { previous };
+    },
+
+    onError: (error, id, context: any) => {
+      if (context?.previous) {
+        queryClient.setQueryData(TRANSACTIONS_KEY, context.previous);
+      }
+      if (isNetworkError(error)) {
+        enqueueSyncOp({ type: "delete", payload: { id } });
+      }
+    },
+
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
     },
   });
+
+  // ─── UPDATE INSTALLMENT DATES ─────────────────────────────────────────────
 
   const updateInstallmentDatesMutation = useMutation({
     mutationFn: async (newDates: { id: string; date: string }[]) => {
@@ -161,5 +262,6 @@ export function useTransactionsQuery() {
     updateTransaction: updateMutation.mutateAsync,
     deleteTransaction: deleteMutation.mutateAsync,
     updateInstallmentDates: updateInstallmentDatesMutation.mutateAsync,
+    isOnline: onlineManager.isOnline(),
   };
 }

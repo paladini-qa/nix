@@ -64,7 +64,6 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
-        sx={{ display: { xs: "none", md: "block" } }}
       >
         <IconButton
           size="3"

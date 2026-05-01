@@ -70,6 +70,7 @@ const NixButton = React.forwardRef<HTMLButtonElement, NixButtonProps>(
         className={`nix-control nix-button nix-button--${sizeClass} ${className}`.trim()}
         style={{
           transition: "all 0.2s ease-in-out",
+          touchAction: "manipulation",
           cursor: loading ? "wait" : undefined,
           ...style,
         }}

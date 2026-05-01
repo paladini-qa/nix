@@ -129,6 +129,140 @@ const mobileCardVariants = {
   },
 };
 
+// ─── Funções puras hoistadas — não recriadas em cada render ───────────────────
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+
+const formatDate = (dateString: string) => {
+  const [, month, day] = dateString.split("-");
+  return `${day}/${month}`;
+};
+
+const formatDateFull = (dateString: string) => {
+  const [year, month, day] = dateString.split("-");
+  return `${day}/${month}/${year}`;
+};
+
+const getModernChipSx = (color: string, isDarkMode: boolean) => ({
+  height: 22,
+  fontSize: 10,
+  fontWeight: 600,
+  borderRadius: "11px",
+  bgcolor: isDarkMode ? alpha(color, 0.15) : alpha(color, 0.1),
+  color: isDarkMode ? alpha(color, 0.9) : color,
+  border: "none",
+  "& .MuiChip-icon": { ml: 0.5, fontSize: 12, color: "inherit" },
+  "& .MuiChip-label": { px: 1 },
+});
+
+// ─── Card de transação para mobile — memoizado para evitar re-renders ─────────
+
+interface MobileCardProps {
+  transaction: Transaction;
+  isDarkMode: boolean;
+  privacyStyles: React.CSSProperties;
+}
+
+const MobileTransactionCard = React.memo<MobileCardProps>(({
+  transaction,
+  isDarkMode,
+  privacyStyles,
+}) => {
+  const theme = useTheme();
+  const isIncome = transaction.type === "income";
+  const catConfig = getCategoryConfig(transaction.category);
+  const CategoryIcon = catConfig.icon;
+
+  return (
+    <MotionPaper
+      variants={mobileCardVariants}
+      whileTap={{ scale: 0.98 }}
+      elevation={0}
+      sx={{
+        p: 2,
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+        borderRadius: "20px",
+        cursor: "pointer",
+        bgcolor: isDarkMode
+          ? alpha(theme.palette.background.paper, 0.6)
+          : alpha("#FFFFFF", 0.8),
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+        boxShadow: isDarkMode
+          ? `0 4px 16px -4px ${alpha("#000000", 0.3)}`
+          : `0 4px 16px -4px ${alpha(catConfig.color, 0.1)}`,
+      }}
+    >
+      {/* Category Icon */}
+      <Box
+        sx={{
+          width: 44,
+          height: 44,
+          borderRadius: "20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          bgcolor: isDarkMode ? alpha(catConfig.color, 0.15) : catConfig.bgLight,
+          boxShadow: `inset 0 1px 0 ${alpha("#FFFFFF", isDarkMode ? 0.1 : 0.6)}`,
+        }}
+      >
+        <CategoryIcon sx={{ fontSize: 22, color: catConfig.color }} />
+      </Box>
+
+      {/* Content */}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+          <Typography
+            variant="body2"
+            fontWeight={600}
+            sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          >
+            {transaction.description}
+          </Typography>
+          <Typography
+            variant="body2"
+            fontWeight={700}
+            sx={{
+              flexShrink: 0,
+              color: isIncome ? theme.palette.success.main : theme.palette.error.main,
+              ...privacyStyles,
+            }}
+          >
+            {isIncome ? "+" : "-"} {formatCurrency(transaction.amount || 0)}
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.75, flexWrap: "wrap" }}>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+            {formatDate(transaction.date)}
+          </Typography>
+          <Box sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "text.disabled" }} />
+          <Chip
+            label={transaction.category}
+            size="small"
+            sx={{ ...getModernChipSx(catConfig.color, isDarkMode), height: 20, fontSize: 10 }}
+          />
+          {transaction.notes && (
+            <Tooltip title={transaction.notes} arrow placement="top">
+              <NotesIcon sx={{ fontSize: 13, color: "text.disabled", cursor: "help" }} />
+            </Tooltip>
+          )}
+        </Box>
+        <TransactionTags transaction={transaction} />
+      </Box>
+    </MotionPaper>
+  );
+});
+
+MobileTransactionCard.displayName = "MobileTransactionCard";
+
+// ─── Componente principal ──────────────────────────────────────────────────────
+
 const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
 }) => {
@@ -137,43 +271,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const isDarkMode = theme.palette.mode === "dark";
   const { privacyStyles } = usePrivacyMode();
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
-
-  const formatDate = (dateString: string) => {
-    const [, month, day] = dateString.split("-");
-    return `${day}/${month}`;
-  };
-
-  const formatDateFull = (dateString: string) => {
-    const [year, month, day] = dateString.split("-");
-    return `${day}/${month}/${year}`;
-  };
-
   const maxAmount = Math.max(...transactions.map((t) => t.amount || 0), 0.01);
-
-  // Estilo base do Chip modernizado - cores mais suaves
-  const getModernChipSx = (color: string) => ({
-    height: 22,
-    fontSize: 10,
-    fontWeight: 600,
-    borderRadius: "11px",
-    bgcolor: isDarkMode ? alpha(color, 0.15) : alpha(color, 0.1),
-    color: isDarkMode ? alpha(color, 0.9) : color,
-    border: "none",
-    "& .MuiChip-icon": {
-      ml: 0.5,
-      fontSize: 12,
-      color: "inherit",
-    },
-    "& .MuiChip-label": {
-      px: 1,
-    },
-  });
 
   if (transactions.length === 0) {
     return (
@@ -215,7 +313,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     [transactions.length]
   );
 
-  // Mobile Card View - Glassmorphism Style with Animations
+  // Mobile Card View — memoized cards, sem layout animation, sem whileHover
   if (isMobile) {
     return (
       <MotionBox
@@ -224,152 +322,15 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         animate="visible"
         sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
       >
-        <AnimatePresence mode="popLayout">
-          {transactions.map((transaction, index) => {
-            const isIncome = transaction.type === "income";
-            const catConfig = getCategoryConfig(transaction.category);
-            const CategoryIcon = catConfig.icon;
-
-            return (
-              <MotionPaper
-                key={transaction.id}
-                variants={mobileCardVariants}
-                layout
-                whileHover={{ 
-                  y: -2,
-                  boxShadow: isDarkMode
-                    ? `0 8px 24px -4px ${alpha("#000000", 0.4)}`
-                    : `0 8px 24px -4px ${alpha(catConfig.color, 0.2)}`,
-                }}
-                whileTap={{ scale: 0.99 }}
-                elevation={0}
-                sx={{
-                  p: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  borderRadius: "20px",
-                  cursor: "pointer",
-                  // Glassmorphism
-                  bgcolor: isDarkMode
-                    ? alpha(theme.palette.background.paper, 0.6)
-                    : alpha("#FFFFFF", 0.8),
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                  boxShadow: isDarkMode
-                    ? `0 4px 16px -4px ${alpha("#000000", 0.3)}`
-                    : `0 4px 16px -4px ${alpha(catConfig.color, 0.1)}`,
-                }}
-              >
-                {/* Category Icon Avatar */}
-                <MotionBox
-                  initial={{ scale: 0, rotate: -90 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: index * 0.02 + 0.1, type: "spring" }}
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: "20px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    bgcolor: isDarkMode
-                      ? alpha(catConfig.color, 0.15)
-                      : catConfig.bgLight,
-                    boxShadow: `inset 0 1px 0 ${alpha("#FFFFFF", isDarkMode ? 0.1 : 0.6)}`,
-                  }}
-                >
-                  <CategoryIcon
-                    sx={{
-                      fontSize: 22,
-                      color: catConfig.color,
-                    }}
-                  />
-                </MotionBox>
-
-                {/* Content */}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      gap: 1,
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      sx={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {transaction.description}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={700}
-                      sx={{
-                        flexShrink: 0,
-                        color: isIncome
-                          ? theme.palette.success.main
-                          : theme.palette.error.main,
-                        ...privacyStyles,
-                      }}
-                    >
-                      {isIncome ? "+" : "-"} {formatCurrency(transaction.amount || 0)}
-                    </Typography>
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mt: 0.75,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {formatDate(transaction.date)}
-                    </Typography>
-                    <Box
-                      sx={{
-                        width: 3,
-                        height: 3,
-                        borderRadius: "50%",
-                        bgcolor: "text.disabled",
-                      }}
-                    />
-                    <Chip
-                      label={transaction.category}
-                      size="small"
-                      sx={{
-                        ...getModernChipSx(catConfig.color),
-                        height: 20,
-                        fontSize: 10,
-                      }}
-                    />
-                    {transaction.notes && (
-                      <Tooltip title={transaction.notes} arrow placement="top">
-                        <NotesIcon sx={{ fontSize: 13, color: "text.disabled", cursor: "help" }} />
-                      </Tooltip>
-                    )}
-                  </Box>
-                  {/* Tags - Componente padronizado em formato pílula */}
-                  <TransactionTags transaction={transaction} />
-                </Box>
-              </MotionPaper>
-            );
-          })}
+        <AnimatePresence mode="sync">
+          {transactions.map((transaction) => (
+            <MobileTransactionCard
+              key={transaction.id}
+              transaction={transaction}
+              isDarkMode={isDarkMode}
+              privacyStyles={privacyStyles}
+            />
+          ))}
         </AnimatePresence>
       </MotionBox>
     );

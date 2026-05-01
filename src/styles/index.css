@@ -83,6 +83,14 @@
   --nix-glass-border: rgba(124, 58, 237, 0.07);
   --nix-glass-blur: 20px;
   --nix-noise-opacity: 0.025;
+
+  /* ============================================
+     SPACING TOKENS — Margens de página responsivas
+     ============================================ */
+  --spacing-page-h: 16px;
+  --spacing-page-v: 16px;
+  --spacing-section: 24px;
+  --spacing-card-inner: 16px;
 }
 
 /* Dark mode variables — Cozy Espresso */
@@ -156,6 +164,13 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Elimina o delay de 300ms em todos os elementos interativos */
+a, button, [role="button"], [role="tab"], [role="menuitem"], [role="option"],
+input[type="checkbox"], input[type="radio"], select,
+.rt-Button, .rt-IconButton, .MuiButtonBase-root {
+  touch-action: manipulation;
 }
 
 body {
@@ -973,6 +988,28 @@ body.sheet-open {
   box-shadow: inset 0 0 0 1.5px var(--coffee-error) !important;
 }
 
+@media (min-width: 768px) {
+  :root {
+    --spacing-page-h: 24px;
+    --spacing-page-v: 24px;
+    --spacing-section: 32px;
+    --spacing-card-inner: 20px;
+  }
+}
+
 @media (max-width: 768px) {
-  .nix-button { min-height: 44px; }
+  /* Todos os botões Nix atingem mínimo de 44px no mobile */
+  .nix-button,
+  .nix-button--sm,
+  .nix-button--small { min-height: 44px; }
+
+  /* Botões Radix (rt-Button / rt-IconButton) — mínimo de 44×44px */
+  .rt-Button,
+  .rt-IconButton {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  /* Ícones standalone como alvos de toque */
+  .MuiIconButton-root { min-height: 44px; min-width: 44px; }
 }

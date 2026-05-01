@@ -7,10 +7,101 @@ import {
   Add as AddIcon,
   GridView as GridViewIcon,
 } from "@mui/icons-material";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import OthersGridModal from "./OthersGridModal";
 
 const MotionBox = motion.create(Box);
+
+// Item de navegação reutilizável com indicador animado e touch target correto
+const NavItem: React.FC<{
+  label: string;
+  icon: React.ReactNode;
+  isActive: boolean;
+  onClick: () => void;
+  primaryColor: string;
+}> = ({ label, icon, isActive, onClick, primaryColor }) => (
+  <Box
+    component="button"
+    type="button"
+    aria-label={label}
+    onClick={onClick}
+    sx={{
+      border: 0,
+      background: "none",
+      padding: 0,
+      font: "inherit",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 0.25,
+      // Touch target mínimo 44×44px (Apple HIG / Material)
+      minWidth: 44,
+      minHeight: 44,
+      flex: "1 1 0",
+      cursor: "pointer",
+      color: isActive ? primaryColor : "text.secondary",
+      transition: "color 0.2s ease",
+      touchAction: "manipulation",
+      WebkitTapHighlightColor: "transparent",
+      position: "relative",
+      "&:active": { transform: "scale(0.92)" },
+    }}
+  >
+    {/* Pill indicadora animada atrás do ícone */}
+    <AnimatePresence>
+      {isActive && (
+        <motion.span
+          layoutId="nav-active-pill"
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.6 }}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -58%)",
+            width: 36,
+            height: 20,
+            borderRadius: 10,
+            background: `${primaryColor}22`,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+    </AnimatePresence>
+
+    <Box
+      sx={{
+        fontSize: 22,
+        lineHeight: 1,
+        transition: "transform 0.2s ease",
+        transform: isActive ? "scale(1.15)" : "scale(1)",
+        position: "relative",
+        zIndex: 1,
+      }}
+    >
+      {icon}
+    </Box>
+
+    <Box
+      component="span"
+      sx={{
+        fontSize: "0.7rem",
+        fontWeight: isActive ? 700 : 500,
+        lineHeight: 1.2,
+        textAlign: "center",
+        whiteSpace: "nowrap",
+        letterSpacing: isActive ? "0.01em" : 0,
+        position: "relative",
+        zIndex: 1,
+      }}
+    >
+      {label}
+    </Box>
+  </Box>
+);
 
 // Altura da barra de navegação (para calcular fade gradient)
 const NAV_HEIGHT = 80;
@@ -121,267 +212,70 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             maxWidth: "100%",
           }}
         >
-          {/* Dashboard */}
-          <Box
-            component="button"
-            type="button"
-            role="button"
-            aria-label="Dashboard"
+          <NavItem
+            label="Dashboard"
+            icon={<GridViewIcon fontSize="inherit" />}
+            isActive={currentView === "dashboard"}
             onClick={() => handleNavigation("dashboard")}
-            sx={{
-              border: 0,
-              background: "none",
-              padding: 0,
-              font: "inherit",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 0.25,
-              minWidth: 0,
-              flex: "0 0 auto",
-              cursor: "pointer",
-              color:
-                currentView === "dashboard"
-                  ? theme.palette.primary.main
-                  : "text.secondary",
-              transition: "all 0.2s ease",
-              "&:active": {
-                transform: "scale(0.95)",
-              },
-            }}
-          >
-            <GridViewIcon
-              sx={{
-                fontSize: 22,
-                transition: "transform 0.2s ease",
-                transform:
-                  currentView === "dashboard" ? "scale(1.15)" : "scale(1)",
-              }}
-            />
-            <Box
-              component="span"
-              sx={{
-                fontSize: "0.72rem",
-                fontWeight: currentView === "dashboard" ? 600 : 500,
-                lineHeight: 1.2,
-                textAlign: "center",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: "100%",
-              }}
-            >
-              Dashboard
-            </Box>
-          </Box>
+            primaryColor={theme.palette.primary.main}
+          />
 
-          {/* Transactions */}
-          <Box
-            component="button"
-            type="button"
-            role="button"
-            aria-label="Transactions"
+          <NavItem
+            label="Transactions"
+            icon={<TransactionsIcon fontSize="inherit" />}
+            isActive={currentView === "transactions"}
             onClick={() => handleNavigation("transactions")}
-            sx={{
-              border: 0,
-              background: "none",
-              padding: 0,
-              font: "inherit",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 0.25,
-              minWidth: 0,
-              flex: "0 0 auto",
-              cursor: "pointer",
-              color:
-                currentView === "transactions"
-                  ? theme.palette.primary.main
-                  : "text.secondary",
-              transition: "all 0.2s ease",
-              "&:active": {
-                transform: "scale(0.95)",
-              },
-            }}
-          >
-            <TransactionsIcon
-              sx={{
-                fontSize: 22,
-                transition: "transform 0.2s ease",
-                transform:
-                  currentView === "transactions" ? "scale(1.15)" : "scale(1)",
-              }}
-            />
-            <Box
-              component="span"
-              sx={{
-                fontSize: "0.72rem",
-                fontWeight: currentView === "transactions" ? 600 : 500,
-                lineHeight: 1.2,
-                textAlign: "center",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: "100%",
-              }}
-            >
-              Transactions
-            </Box>
-          </Box>
+            primaryColor={theme.palette.primary.main}
+          />
 
-          {/* Create Button - Central FAB, 48px - botão MUI para o + aparecer */}
+          {/* Create Button - FAB central */}
           <Box
             component="button"
             type="button"
-            role="button"
             aria-label="Create transaction"
             onClick={() => handleNavigation("create")}
             className="nix-fab-create"
             sx={{
               flex: "0 0 auto",
-              width: 48,
-              height: 48,
-              minWidth: 48,
-              minHeight: 48,
+              width: 52,
+              height: 52,
+              minWidth: 52,
+              minHeight: 52,
               borderRadius: "16px",
               border: "none",
               padding: 0,
               cursor: "pointer",
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               bgcolor: theme.palette.primary.main,
-              color: theme.palette.mode === "dark" ? "#2C1A11" : "#fff",
-              boxShadow: theme.palette.mode === "dark"
-                ? `0 4px 14px rgba(212, 168, 117, 0.45)`
-                : `0 4px 14px rgba(124, 66, 38, 0.38)`,
+              boxShadow: isDarkMode
+                ? `0 4px 16px rgba(167, 139, 250, 0.45)`
+                : `0 4px 16px rgba(124, 58, 237, 0.38)`,
               transition: "all 0.2s ease",
-              "&:hover": {
-                bgcolor: theme.palette.primary.light,
-                transform: "scale(1.05)",
-                boxShadow: `0 6px 20px rgba(124, 66, 38, 0.45)`,
-              },
-              "&:active": {
-                transform: "scale(0.98)",
-              },
+              "&:active": { transform: "scale(0.94)" },
             }}
           >
-            <AddIcon sx={{ fontSize: 26, color: "#fff" }} />
+            <AddIcon sx={{ fontSize: 28, color: "#fff" }} />
           </Box>
 
-          {/* Payment Methods */}
-          <Box
-            component="button"
-            type="button"
-            role="button"
-            aria-label="Payment Methods"
+          <NavItem
+            label="Payments"
+            icon={<PaymentMethodsIcon fontSize="inherit" />}
+            isActive={currentView === "paymentMethods"}
             onClick={() => handleNavigation("paymentMethods")}
-            sx={{
-              border: 0,
-              background: "none",
-              padding: 0,
-              font: "inherit",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 0.25,
-              minWidth: 0,
-              flex: "0 0 auto",
-              cursor: "pointer",
-              color:
-                currentView === "paymentMethods"
-                  ? theme.palette.primary.main
-                  : "text.secondary",
-              transition: "all 0.2s ease",
-              "&:active": {
-                transform: "scale(0.95)",
-              },
-            }}
-          >
-            <PaymentMethodsIcon
-              sx={{
-                fontSize: 22,
-                transition: "transform 0.2s ease",
-                transform:
-                  currentView === "paymentMethods"
-                    ? "scale(1.15)"
-                    : "scale(1)",
-              }}
-            />
-            <Box
-              component="span"
-              sx={{
-                fontSize: "0.72rem",
-                fontWeight: currentView === "paymentMethods" ? 600 : 500,
-                lineHeight: 1.2,
-                textAlign: "center",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: "100%",
-              }}
-            >
-              Payment Methods
-            </Box>
-          </Box>
+            primaryColor={theme.palette.primary.main}
+          />
 
-          {/* Others */}
-          <Box
-            component="button"
-            type="button"
-            role="button"
-            aria-label="Others"
+          <NavItem
+            label="Others"
+            icon={<OthersIcon fontSize="inherit" />}
+            isActive={getActiveValue() === "others"}
             onClick={() => handleNavigation("others")}
-            sx={{
-              border: 0,
-              background: "none",
-              padding: 0,
-              font: "inherit",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 0.25,
-              minWidth: 0,
-              flex: "0 0 auto",
-              cursor: "pointer",
-              color:
-                getActiveValue() === "others"
-                  ? theme.palette.primary.main
-                  : "text.secondary",
-              transition: "all 0.2s ease",
-              "&:active": {
-                transform: "scale(0.95)",
-              },
-            }}
-          >
-            <OthersIcon
-              sx={{
-                fontSize: 22,
-                transition: "transform 0.2s ease",
-                transform:
-                  getActiveValue() === "others" ? "scale(1.15)" : "scale(1)",
-              }}
-            />
-            <Box
-              component="span"
-              sx={{
-                fontSize: "0.72rem",
-                fontWeight: getActiveValue() === "others" ? 600 : 500,
-                lineHeight: 1.2,
-                textAlign: "center",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: "100%",
-              }}
-            >
-              Others
-            </Box>
-          </Box>
+            primaryColor={theme.palette.primary.main}
+          />
         </Box>
       </MotionBox>
 

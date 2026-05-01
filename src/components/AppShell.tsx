@@ -17,7 +17,11 @@ import TransactionOptionsPanel from "./TransactionOptionsPanel";
 import SharedOptionsDialog from "./components/SharedOptionsDialog";
 import RecurringEditForm from "./components/RecurringEditForm";
 import PullToRefreshIndicator from "./PullToRefreshIndicator";
+import OfflineBanner from "./OfflineBanner";
+import WalletDraftBanner from "./WalletDraftBanner";
 import { usePullToRefresh } from "../hooks";
+import { useNetworkStatus } from "../hooks/useNetworkStatus";
+import { WalletTransaction } from "../hooks/useWalletSync";
 import dayjs from "dayjs";
 
 import { Session } from "@supabase/supabase-js";
@@ -46,6 +50,15 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
     isProfileModalOpen,
     setIsProfileModalOpen,
   } = useAppStore();
+
+  // Rascunho capturado do Google Wallet — exibido no WalletDraftBanner
+  const [walletDraft, setWalletDraft] = React.useState<WalletTransaction | null>(null);
+  // initialContext que pré-preenche o TransactionForm quando aberto via wallet
+  const [walletInitialContext, setWalletInitialContext] = React.useState<{
+    description?: string;
+    amount?: string;
+    type?: "expense";
+  } | null>(null);
 
   const {
     categories,
@@ -97,23 +110,30 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
   const normalizedPath = location.pathname.replace(/\/$/, "") || "/";
   const currentView: AppCurrentView = (ROUTE_VIEWS[normalizedPath] as AppCurrentView) ?? "dashboard";
 
-  // Google Wallet Sync
-  const handleWalletTransaction = useCallback((data: any) => {
-    setEditingTransaction({
-      id: "new_wallet_" + Date.now(),
-      description: data.merchant,
-      amount: data.amount,
+  // Google Wallet Sync — mostra o WalletDraftBanner em vez de abrir o form diretamente
+  const handleWalletTransaction = useCallback((data: WalletTransaction) => {
+    setWalletDraft(data);
+  }, []);
+
+  const handleWalletConfirm = useCallback((draft: WalletTransaction) => {
+    setWalletDraft(null);
+    setWalletInitialContext({
+      description: draft.merchant,
+      amount: draft.amount.toString(),
       type: "expense",
-      category: "",
-      paymentMethod: "",
-      date: dayjs().format("YYYY-MM-DD"),
-      isPaid: false,
-    } as any);
+    });
+    setEditingTransaction(null);
     setIsFormOpen(true);
-    showSuccess(`Transação detectada: ${data.merchant} - ${data.amount}`);
-  }, [setEditingTransaction, setIsFormOpen, showSuccess]);
+  }, [setEditingTransaction, setIsFormOpen]);
+
+  const handleWalletDismiss = useCallback(() => {
+    setWalletDraft(null);
+    setWalletInitialContext(null);
+  }, []);
 
   useWalletSync(handleWalletTransaction);
+
+  const { isOnline, pendingCount } = useNetworkStatus();
 
   const { isRefreshing, pullOffset } = usePullToRefresh({
     onRefresh: async () => {
@@ -136,13 +156,14 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
       
       {isMobile && (
         <>
-          <MobileHeader 
-            onOpenDrawer={() => setIsMobileDrawerOpen(true)} 
+          <MobileHeader
+            onOpenDrawer={() => setIsMobileDrawerOpen(true)}
             onOpenSearch={() => setIsSearchOpen(true)}
             onOpenProfile={() => setIsProfileModalOpen(true)}
           />
-          <MobileDrawer 
-            open={isMobileDrawerOpen} 
+          <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
+          <MobileDrawer
+            open={isMobileDrawerOpen}
             onClose={() => setIsMobileDrawerOpen(false)}
             currentView={currentView}
             onNavigate={handleNavigate}
@@ -172,24 +193,38 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
       </Box>
 
       {isMobile && (
-        <MobileNavigation 
-          currentView={currentView} 
+        <MobileNavigation
+          currentView={currentView}
           onNavigate={handleNavigate}
-          onCreateTransaction={() => setIsFormOpen(true)}
+          onCreateTransaction={() => {
+            setWalletInitialContext(null);
+            setIsFormOpen(true);
+          }}
+        />
+      )}
+
+      {/* Banner de captura do Google Wallet */}
+      {isMobile && (
+        <WalletDraftBanner
+          draft={walletDraft}
+          onConfirm={handleWalletConfirm}
+          onDismiss={handleWalletDismiss}
         />
       )}
 
       {/* Modals & Dialogs */}
-      <TransactionForm 
-        isOpen={isFormOpen} 
+      <TransactionForm
+        isOpen={isFormOpen}
         onClose={() => {
           setIsFormOpen(false);
           setEditingTransaction(null);
+          setWalletInitialContext(null);
         }}
         onSave={handleSave}
         categories={categories}
         paymentMethods={paymentMethods}
         editTransaction={editingTransaction}
+        initialContext={walletInitialContext}
         friends={friends}
         onAddFriend={addFriend}
         transactions={transactions}

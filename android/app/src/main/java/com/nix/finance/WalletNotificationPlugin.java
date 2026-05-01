@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.provider.Settings;
 import android.text.TextUtils;
 import androidx.core.app.NotificationManagerCompat;
@@ -35,7 +36,12 @@ public class WalletNotificationPlugin extends Plugin {
         };
 
         IntentFilter filter = new IntentFilter("com.nix.finance.WALLET_TRANSACTION");
-        getContext().registerReceiver(receiver, filter);
+        // RECEIVER_NOT_EXPORTED obrigatório no Android 14+ (API 34) para broadcasts internos
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            getContext().registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            getContext().registerReceiver(receiver, filter);
+        }
 
         // Check if app was opened from a notification
         Intent intent = getActivity().getIntent();

@@ -99,6 +99,10 @@ interface TransactionFormProps {
     isShared?: boolean;
     isRecurring?: boolean;
     hasInstallments?: boolean;
+    /** Pré-preenche descrição (ex.: merchant do Google Wallet) */
+    description?: string;
+    /** Pré-preenche valor (ex.: montante capturado do Google Wallet) */
+    amount?: string;
   } | null;
   /** Quando informado, ao selecionar um método com dia configurado, preenche a data com esse dia no mês atual */
   getPaymentMethodPaymentDay?: (method: string) => number | undefined;
@@ -652,6 +656,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             setInvoiceDueYear(year);
           }
         }
+        if (initialContext.description) setDescription(initialContext.description);
+        if (initialContext.amount) setAmount(initialContext.amount);
         if (initialContext.category) setCategory(initialContext.category);
         if (initialContext.type) setType(initialContext.type);
         if (initialContext.isShared !== undefined)

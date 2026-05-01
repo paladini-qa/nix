@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
@@ -60,10 +60,30 @@ const DashboardMainSection: React.FC = () => {
     advancedFilters.categories.length +
     advancedFilters.paymentMethods.length;
 
-  const onNewTransaction = () => {
+  const onNewTransaction = useCallback(() => {
     setEditingTransaction(null);
     setIsFormOpen(true);
-  };
+  }, [setEditingTransaction, setIsFormOpen]);
+
+  const handleToggleFilters = useCallback(
+    () => setShowAdvancedFilters((v) => !v),
+    []
+  );
+
+  const handleDateChange = useCallback(
+    (month: number, year: number) => setFilters({ month, year }),
+    [setFilters]
+  );
+
+  const handleRefetch = useCallback(() => refetch(), [refetch]);
+
+  const handlePaymentMethodClick = useCallback(
+    () => navigate(VIEW_ROUTES.paymentMethods),
+    [navigate]
+  );
+
+  // Callback estável para evitar re-renders em children que recebem onCategoryClick
+  const NOOP = useCallback(() => {}, []);
 
   return (
     <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
@@ -100,19 +120,19 @@ const DashboardMainSection: React.FC = () => {
             hasActiveFilters={hasAdvancedFiltersActive}
             activeFiltersCount={activeFiltersCount}
             showFilters={showAdvancedFilters}
-            onToggleFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            onToggleFilters={handleToggleFilters}
           />
           <DateFilter
             month={filters.month}
             year={filters.year}
-            onDateChange={(month, year) => setFilters({ month, year })}
+            onDateChange={handleDateChange}
             showIcon
             disabled={hasAdvancedFiltersActive}
           />
 
           <Tooltip title={t("common.refresh")}>
             <IconButton
-              onClick={() => refetch()}
+              onClick={handleRefetch}
               disabled={isRefetching}
               sx={{
                 width: 40,
@@ -152,7 +172,7 @@ const DashboardMainSection: React.FC = () => {
           filters={advancedFilters}
           onFiltersChange={setAdvancedFilters}
           showFilters={showAdvancedFilters}
-          onToggleFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+          onToggleFilters={handleToggleFilters}
         />
       </Suspense>
 
@@ -169,8 +189,8 @@ const DashboardMainSection: React.FC = () => {
 
       <CategoryBreakdown
         transactions={filteredTransactions}
-        onPaymentMethodClick={() => navigate(VIEW_ROUTES.paymentMethods)}
-        onCategoryClick={() => {}}
+        onPaymentMethodClick={handlePaymentMethodClick}
+        onCategoryClick={NOOP}
       />
 
       <Suspense fallback={<DashboardSkeleton />}>
@@ -178,7 +198,7 @@ const DashboardMainSection: React.FC = () => {
           transactions={filteredTransactions}
           hasAdvancedFilters={hasAdvancedFiltersActive}
           advancedFilters={advancedFilters}
-          onCategoryClick={() => {}}
+          onCategoryClick={NOOP}
         />
       </Suspense>
     </Stack>
