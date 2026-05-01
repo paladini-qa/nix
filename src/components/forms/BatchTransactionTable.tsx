@@ -42,11 +42,12 @@ import {
 import { motion } from "framer-motion";
 import { ParsedTransaction, TransactionType, PaymentMethodConfig } from "../../types";
 import { calculateInvoiceDueDate } from "../../utils/transactionUtils";
+import { colors } from "../../theme/colors";
 
 const MotionPaper = motion.create(Paper);
 
-const NIX_PURPLE = "#6366F1";
-const NIX_GRADIENT = "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)";
+const NIX_PURPLE   = colors.primary;
+const NIX_GRADIENT = `linear-gradient(135deg, ${colors.primary} 0%, #7c3aed 100%)`;
 
 /** Linha editável para o lote; confidence mantida para avisos de UI */
 export type EditableBatchRow = {

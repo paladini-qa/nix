@@ -1,288 +1,152 @@
 /**
- * NIX BRAND BOOK — Cozy Coffee Edition
- * =====================================
- *
- * Nix - Finanças inteligentes, com o aconchego de uma boa xícara.
- * Seu dinheiro, cuidado com carinho e clareza.
- *
- * Arquétipo: O Cuidador (The Caregiver) + O Criador (The Creator)
- * O Nix cuida das suas finanças como um barista cuida do café perfeito —
- * com atenção, carinho e o resultado sempre reconfortante nas suas mãos.
+ * NIX BRAND BOOK
+ * Tokens de design centralizados — use src/theme/colors.ts para acesso direto.
  */
 
-// ============================================
-// PALETA DE CORES COFFEE
-// ============================================
+import { colors } from "./theme/colors";
+import { radius, spacing } from "./theme/spacing";
+import { typography } from "./theme/typography";
+import { alpha } from "@mui/material/styles";
 
-/**
- * Cor Primária: Mocha Brown
- * O coração da marca. Um marrom aconchegante que remete ao café artesanal.
- * Uso: Logotipo, botões principais (CTAs), destaques, headers.
- */
-export const COFFEE_BROWN = {
-  mocha: "#7C3AED",        // Purple — light mode principal
-  cappuccino: "#8B5CF6",   // Lighter Purple
-  espresso: "#5B21B6",     // Dark Purple
-  cremeBrulee: "#A78BFA",  // Lighter Purple — dark mode principal
-  gradient: "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
-  gradientDark: "linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)",
-  glow: "rgba(124, 58, 237, 0.45)",
-} as const;
+// ─── Re-exports principais ────────────────────────────────────────────────────
+export { colors, radius, spacing, typography };
 
-/**
- * Cor Secundária: Caramel & Latte
- * Representa leveza, suavidade e o calor do cotidiano.
- * Uso: Acentos, ícones secundários, detalhes de interação.
- */
-export const CREAM_ACCENT = {
-  latte: "#DDD6FE",        // Soft purple
-  cappuccino: "#8B5CF6",   // Lighter Purple
-  caramel: "#A78BFA",      // Muted Purple
-  steam: "#FFFFFF",        // White — fundo light
-  foam: "#F8F5FE",         // White with purple tint — superfície light
-  gradient: "linear-gradient(135deg, #DDD6FE 0%, #A78BFA 100%)",
-  glow: "rgba(139, 92, 246, 0.45)",
-} as const;
-
-/**
- * Cores Neutras (Fundos e Textos)
- */
-export const COFFEE_NEUTRAL = {
-  // Light Mode
-  espressoText: "#1E1B4B",   // Texto principal no light mode
-  mochaText: "#4C1D95",      // Texto secundário no light mode
-  steamBg: "#FFFFFF",        // Fundo principal light
-  foamBg: "#F8F5FE",         // Fundo de superfície light
-  // Dark Mode
-  creamText: "#F8F5FE",      // Texto principal no dark mode
-  tanText: "#A78BFA",        // Texto secundário no dark mode
-  espressoBg: "#0F0B1E",     // Fundo principal dark
-  darkRoastBg: "#1A1530",    // Fundo de superfície dark
-} as const;
-
-/**
- * Cores Semânticas (UI)
- */
-export const COFFEE_SEMANTIC = {
-  success: "#5B8A5A",        // Sage green — metas atingidas, receitas
-  successLight: "#8FBC8F",
-  successDark: "#7AB87A",    // Sage mais vibrante para dark mode
-  error: "#B85450",          // Dusty rose — gastos excessivos ou erros
-  errorLight: "#D4817D",
-  errorDark: "#E07870",      // Soft coral para dark mode
-  warning: "#C4883A",        // Caramel — alertas
-} as const;
-
-// ============================================
-// GRADIENTES STEAM (BACKGROUNDS)
-// ============================================
-
-export const COFFEE_STEAM = {
-  light: `
-    radial-gradient(ellipse 110% 85% at 5% 8%, rgba(196, 136, 95, 0.09) 0%, transparent 52%),
-    radial-gradient(ellipse 80% 70% at 88% 6%, rgba(196, 168, 100, 0.06) 0%, transparent 46%),
-    radial-gradient(ellipse 55% 75% at 95% 55%, rgba(91, 138, 90, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse 65% 55% at 12% 88%, rgba(124, 66, 38, 0.05) 0%, transparent 50%)
+// ─── Gradientes ───────────────────────────────────────────────────────────────
+export const NIX_GRADIENTS = {
+  primary:     `linear-gradient(135deg, ${colors.primary} 0%, #7c3aed 100%)`,
+  primaryHover:`linear-gradient(135deg, #c084fc 0%, ${colors.primary} 100%)`,
+  income:      `linear-gradient(135deg, ${colors.income} 0%, #22c55e 100%)`,
+  expense:     `linear-gradient(135deg, ${colors.expense} 0%, #ef4444 100%)`,
+  auroraLight: `
+    radial-gradient(ellipse 110% 85% at 5% 8%,  ${alpha(colors.primary, 0.08)} 0%, transparent 52%),
+    radial-gradient(ellipse 80% 70%  at 88% 6%, ${alpha(colors.income,  0.05)} 0%, transparent 46%),
+    radial-gradient(ellipse 65% 55%  at 12% 88%,${alpha(colors.expense, 0.04)} 0%, transparent 50%)
   `,
-  dark: `
-    radial-gradient(ellipse 110% 85% at 5% 8%, rgba(212, 168, 117, 0.18) 0%, transparent 52%),
-    radial-gradient(ellipse 80% 70% at 88% 6%, rgba(196, 136, 95, 0.12) 0%, transparent 46%),
-    radial-gradient(ellipse 55% 75% at 95% 55%, rgba(122, 184, 122, 0.07) 0%, transparent 50%),
-    radial-gradient(ellipse 65% 55% at 12% 88%, rgba(196, 136, 95, 0.09) 0%, transparent 50%)
+  auroraDark: `
+    radial-gradient(ellipse 110% 85% at 5% 8%,  ${alpha(colors.primary, 0.18)} 0%, transparent 52%),
+    radial-gradient(ellipse 80% 70%  at 88% 6%, ${alpha(colors.income,  0.10)} 0%, transparent 46%),
+    radial-gradient(ellipse 65% 55%  at 12% 88%,${alpha(colors.expense, 0.08)} 0%, transparent 50%)
   `,
 } as const;
 
 // Aliases para compatibilidade com código existente
-export const NIX_AURORA = COFFEE_STEAM;
+export const NIX_AURORA    = { light: NIX_GRADIENTS.auroraLight, dark: NIX_GRADIENTS.auroraDark };
+export const COFFEE_STEAM  = NIX_AURORA;
 
-// ============================================
-// TIPOGRAFIA — Playfair Display + Nunito
-// ============================================
-
-export const COFFEE_TYPOGRAPHY = {
-  /** Fonte para títulos — elegante, artesanal, cozy */
-  headingFont: '"Inter", "Roboto", "Segoe UI", sans-serif',
-  /** Fonte para corpo — arredondada, amigável, aconchegante */
-  bodyFont: '"Inter", "Roboto", "Segoe UI", sans-serif',
-  weights: {
-    heading: { bold: 700, semibold: 600 },
-    body: { regular: 400, medium: 500, semibold: 600 },
-  },
-} as const;
-
-// Alias de compatibilidade
-export const NIX_TYPOGRAPHY = COFFEE_TYPOGRAPHY;
-
-// ============================================
-// DESIGN TOKENS
-// ============================================
-
-export const COFFEE_DESIGN = {
-  borderRadius: {
-    small: 10,
-    large: 20,
-    round: 24,
-  },
+// ─── Design tokens ────────────────────────────────────────────────────────────
+export const NIX_DESIGN = {
+  borderRadius: { small: radius.sm, large: radius.xl, round: radius.full },
   glass: {
-    blur: "20px",
-    bgLight: "rgba(253, 248, 240, 0.88)",
-    bgDark: "rgba(44, 26, 16, 0.88)",
-    borderLight: "rgba(44, 26, 17, 0.07)",
-    borderDark: "rgba(240, 217, 192, 0.08)",
+    blur:        "20px",
+    bgDark:      `${alpha(colors.bg.card, 0.88)}`,
+    bgLight:     "rgba(255,255,255,0.88)",
+    borderDark:  colors.border.subtle,
+    borderLight: alpha(colors.primary, 0.1),
   },
   shadows: {
-    subtle: "0 4px 12px -2px rgba(124, 66, 38, 0.10)",
-    medium: "0 8px 24px -4px rgba(124, 66, 38, 0.15)",
-    strong: "0 16px 48px -8px rgba(124, 66, 38, 0.20)",
+    subtle: `0 4px 12px -2px ${alpha(colors.primary, 0.1)}`,
+    medium: `0 8px 24px -4px ${alpha(colors.primary, 0.2)}`,
+    strong: `0 16px 48px -8px ${alpha(colors.primary, 0.3)}`,
   },
   transitions: {
-    fast: "all 0.1s ease-in-out",
+    fast:   "all 0.1s ease-in-out",
     normal: "all 0.2s ease-in-out",
-    slow: "all 0.3s ease-in-out",
+    slow:   "all 0.3s ease-in-out",
   },
 } as const;
 
-// Alias de compatibilidade
-export const NIX_DESIGN = COFFEE_DESIGN;
+export const COFFEE_DESIGN = NIX_DESIGN;
 
-// ============================================
-// VOZ E TOM DA MARCA — Cozy & Caring
-// ============================================
-
-/**
- * A Voz do Nix
- *
- * O Nix é Acolhedor, Claro e Encorajador.
- * É aquele amigo que entende de finanças, mas te conta as coisas
- * tomando um café quentinho — sem pressa, sem julgamento.
- * Ele é gentil na análise, honesto nos alertas e sempre te faz sentir bem.
- */
-
-export const COFFEE_VOICE = {
-  positive: {
-    examples: [
-      "Que tal!  Você gastou menos esse mês. O cofrinho está feliz!",
-      "Parabéns!  Sua meta foi atingida. Você merece um café especial.",
-      "Tudo certo por aqui!  Suas finanças estão aquecidas e no ponto.",
-    ],
-  },
-  alert: {
-    examples: [
-      "Ei, notei algo aqui  — um gasto incomum de R$500. Se foi você, tudo certo!",
-      "Hmm, os gastos com delivery subiram este mês. Quer dar uma olhada juntos?",
-      "Você está chegando perto do limite de Lazer. Posso te ajudar a ajustar?",
-    ],
-  },
-  educational: {
-    examples: [
-      "Analisei seus últimos 3 meses  Parece que as sextas são mais agitadas. Que tal separar um valor para o fim de semana?",
-      "CDB é como uma poupança caprichada — seu dinheiro descansa e rende mais.",
-      "Inflação é quando tudo fica mais caro. Seu dinheiro parado perde força com o tempo.",
-    ],
-  },
-  error: {
-    examples: [
-      "Ops, tive um probleminha aqui  Pode tentar de novo?",
-      "Não consegui processar isso. Me conta de outro jeito!",
-      "Algo deu errado, mas não se preocupe — geralmente funciona na próxima.",
-    ],
-  },
+// ─── Tipografia ───────────────────────────────────────────────────────────────
+export const NIX_TYPOGRAPHY = {
+  headingFont: '"Inter", "Roboto", "Segoe UI", sans-serif',
+  bodyFont:    '"Inter", "Roboto", "Segoe UI", sans-serif',
+  weights:     typography.weights,
 } as const;
 
-// Alias de compatibilidade
-export const NIX_VOICE = COFFEE_VOICE;
+export const COFFEE_TYPOGRAPHY = NIX_TYPOGRAPHY;
 
-// ============================================
-// O QUE NÃO FAZER
-// ============================================
-
-export const COFFEE_DONT = [
-  "Evitar jargões bancários sem explicação imediata",
-  "Nunca usar tom de julgamento ('Você gastou demais de novo!')",
-  "Evitar linguagem muito técnica ou fria — seja sempre acolhedor",
-  "Não usar paleta azul fria ou preta intensa no light mode",
-] as const;
-
-export const NIX_DONT = COFFEE_DONT;
-
-// ============================================
-// SLOGANS E TAGLINES — Cozy Coffee Edition
-// ============================================
-
-export const COFFEE_SLOGANS = {
-  principal: "Nix. Finanças com aconchego.",
-  focoIA: "Seu dinheiro, cuidado com carinho e IA.",
-  focoBeneficio: "Clareza financeira, do jeitinho que você merece.",
-  appStore: "Gestão financeira aconchegante com IA.",
-} as const;
-
-export const NIX_SLOGANS = COFFEE_SLOGANS;
-
-// ============================================
-// CORES LEGADAS (para compatibilidade)
-// ============================================
-
+// ─── Aliases de compatibilidade (legado) ──────────────────────────────────────
 export const NIX_PURPLE = {
-  start: COFFEE_BROWN.mocha,
-  end: COFFEE_BROWN.espresso,
-  light: COFFEE_BROWN.cappuccino,
-  gradient: COFFEE_BROWN.gradient,
-  glow: COFFEE_BROWN.glow,
+  start:    colors.primary,
+  end:      "#7c3aed",
+  light:    "#c084fc",
+  gradient: NIX_GRADIENTS.primary,
+  glow:     alpha(colors.primary, 0.45),
 } as const;
 
 export const NIX_TEAL = {
-  main: CREAM_ACCENT.caramel,
-  light: CREAM_ACCENT.caramel,
-  dark: "#9A6820",
-  gradient: CREAM_ACCENT.gradient,
-  glow: CREAM_ACCENT.glow,
+  main:     colors.income,
+  light:    alpha(colors.income, 0.7),
+  dark:     "#22c55e",
+  gradient: NIX_GRADIENTS.income,
+  glow:     alpha(colors.income, 0.45),
 } as const;
 
 export const NIX_NEUTRAL = {
-  nixDark: COFFEE_NEUTRAL.espressoText,
-  pureWhite: COFFEE_NEUTRAL.steamBg,
-  softGray: COFFEE_NEUTRAL.foamBg,
+  nixDark:   "#1e1b4b",
+  pureWhite: "#ffffff",
+  softGray:  "#f8fafc",
 } as const;
 
 export const NIX_SEMANTIC = {
-  success: COFFEE_SEMANTIC.success,
-  successLight: COFFEE_SEMANTIC.successLight,
-  error: COFFEE_SEMANTIC.error,
-  errorLight: COFFEE_SEMANTIC.errorLight,
-  warning: COFFEE_SEMANTIC.warning,
+  success:      colors.income,
+  successLight: alpha(colors.income, 0.7),
+  error:        colors.expense,
+  errorLight:   alpha(colors.expense, 0.7),
+  warning:      colors.warning,
 } as const;
 
-// ============================================
-// EXPORTAÇÃO CONSOLIDADA
-// ============================================
-
-export const COFFEE_BRAND = {
-  colors: {
-    brown: COFFEE_BROWN,
-    cream: CREAM_ACCENT,
-    neutral: COFFEE_NEUTRAL,
-    semantic: COFFEE_SEMANTIC,
-  },
-  steam: COFFEE_STEAM,
-  typography: COFFEE_TYPOGRAPHY,
-  design: COFFEE_DESIGN,
-  voice: COFFEE_VOICE,
-  slogans: COFFEE_SLOGANS,
+export const COFFEE_BROWN = {
+  mocha:       colors.primary,
+  cappuccino:  "#c084fc",
+  espresso:    "#7c3aed",
+  cremeBrulee: "#d8b4fe",
+  gradient:    NIX_GRADIENTS.primary,
+  gradientDark:NIX_GRADIENTS.primaryHover,
+  glow:        alpha(colors.primary, 0.45),
 } as const;
 
-// Alias principal
+export const CREAM_ACCENT = {
+  latte:      "#d8b4fe",
+  cappuccino: "#c084fc",
+  caramel:    "#a855f7",
+  steam:      "#ffffff",
+  foam:       "#f8fafc",
+  gradient:   NIX_GRADIENTS.primaryHover,
+  glow:       alpha(colors.primary, 0.45),
+} as const;
+
+export const COFFEE_NEUTRAL = {
+  espressoText: "#1e1b4b",
+  mochaText:    "#4c1d95",
+  steamBg:      "#ffffff",
+  foamBg:       "#f8fafc",
+  creamText:    colors.text.primary,
+  tanText:      colors.text.secondary,
+  espressoBg:   colors.bg.app,
+  darkRoastBg:  colors.bg.card,
+} as const;
+
+export const COFFEE_SEMANTIC = {
+  success:     colors.income,
+  successLight:alpha(colors.income, 0.7),
+  successDark: "#22c55e",
+  error:       colors.expense,
+  errorLight:  alpha(colors.expense, 0.7),
+  errorDark:   "#ef4444",
+  warning:     colors.warning,
+} as const;
+
+export const NIX_COLORS = colors;
+
 export const NIX_BRAND = {
-  colors: {
-    purple: NIX_PURPLE,
-    teal: NIX_TEAL,
-    neutral: NIX_NEUTRAL,
-    semantic: NIX_SEMANTIC,
-  },
+  colors: { purple: NIX_PURPLE, teal: NIX_TEAL, neutral: NIX_NEUTRAL, semantic: NIX_SEMANTIC },
   aurora: NIX_AURORA,
   typography: NIX_TYPOGRAPHY,
   design: NIX_DESIGN,
-  voice: NIX_VOICE,
-  slogans: NIX_SLOGANS,
 } as const;
+
+export const COFFEE_BRAND = NIX_BRAND;
 
 export default COFFEE_BRAND;

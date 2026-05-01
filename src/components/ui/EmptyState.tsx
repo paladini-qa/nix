@@ -65,12 +65,12 @@ const floatVariants = {
 };
 
 // Cores da paleta Coffee para ilustrações
-const COFFEE_MOCHA = "#7B4226";
-const COFFEE_CAPPUCCINO = "#A0622A";
-const COFFEE_CARAMEL = "#C4883A";
-const COFFEE_LATTE = "#DDB899";
-const COFFEE_SAGE = "#5B8A5A";
-const COFFEE_ROSE = "#B85450";
+const COFFEE_MOCHA      = "#a855f7";
+const COFFEE_CAPPUCCINO = "#c084fc";
+const COFFEE_CARAMEL    = "#7c3aed";
+const COFFEE_LATTE      = "#d8b4fe";
+const COFFEE_SAGE       = "#4ade80";
+const COFFEE_ROSE       = "#f87171";
 
 // Ilustrações SVG inline — Cozy Coffee Edition
 const illustrations: Record<EmptyStateType, React.ReactNode> = {

@@ -1,88 +1,94 @@
 /* ============================================
-   NIX — Cozy Coffee Design System
-   Finanças inteligentes, com o aconchego de uma boa xícara.
+   NIX — Design System
    ============================================ */
 
-/* ============================================
-   TYPOGRAPHY — Playfair Display (Títulos) + Nunito (Corpo)
-   ============================================ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
 
 /* ============================================
    CSS CUSTOM PROPERTIES (Design Tokens)
-   Design System: Cozy Coffee
    ============================================ */
 :root {
-  /* Cor Primária: Cozy Purple & Coffee — Light Mode */
-  --coffee-mocha: #6D28D9;
-  --coffee-mocha-light: #7C3AED;
-  --coffee-espresso: #4C1D95;
-  --coffee-glow: rgba(109, 40, 217, 0.35);
-  --coffee-gradient: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  /* Backgrounds */
+  --nix-bg-app:      #12141c;
+  --nix-bg-card:     #1a1d2e;
+  --nix-bg-elevated: #252840;
+  --nix-bg-input:    #1e2035;
 
-  /* Warm Accent: Caramel Latte */
-  --coffee-caramel: #F59E0B;
-  --coffee-caramel-light: #FBBF24;
-  --coffee-latte: #FFFBEB;
+  /* Borders */
+  --nix-border-default: #2a2d45;
+  --nix-border-subtle:  #1e2030;
 
-  /* Cores Neutras — Light Mode */
-  --coffee-bg-base: #FFFFFF;
-  --coffee-bg-subtle: #FDFCFE;
-  --coffee-bg-paper: #FFFFFF;
-  --coffee-text-primary: #1F2937;
-  --coffee-text-secondary: #6B7280;
+  /* Brand */
+  --nix-primary: #a855f7;
+  --nix-primary-glow: rgba(168, 85, 247, 0.45);
+  --nix-primary-gradient: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
 
-  /* Premium Glassmorphism */
-  --coffee-glass-bg: rgba(255, 255, 255, 0.7);
-  --coffee-glass-border: rgba(255, 255, 255, 0.4);
-  --coffee-glass-blur: 16px;
+  /* Semânticas */
+  --nix-income:  #4ade80;
+  --nix-expense: #f87171;
+  --nix-warning: #fcd34d;
 
-  /* Grain texture opacity */
-  --coffee-grain-opacity: 0.025;
+  /* Texto */
+  --nix-text-primary:   #e8eaf0;
+  --nix-text-secondary: #c4c8e0;
+  --nix-text-muted:     #7c80a8;
+  --nix-text-disabled:  #4b5280;
+
+  /* Glassmorphism */
+  --nix-glass-bg:     rgba(26, 29, 46, 0.88);
+  --nix-glass-border: #1e2030;
+  --nix-glass-blur:   20px;
 
   /* ============================================
      DESIGN TOKENS — Radius, Shadow, Spacing
      ============================================ */
-  --radius-card: 20px;
-  --radius-input: 20px;
-  --radius-button-sm: 10px;
-  --radius-button-md: 12px;
+  --radius-card:      16px;
+  --radius-input:     16px;
+  --radius-button-sm: 8px;
+  --radius-button-md: 10px;
   --radius-button-lg: 14px;
 
-  --shadow-soft: 0 10px 40px -10px rgba(124, 58, 237, 0.12);
-  --shadow-card: 0 8px 32px -8px rgba(124, 58, 237, 0.10);
-  --shadow-elevated: 0 20px 60px -15px rgba(124, 58, 237, 0.20);
-  --shadow-caramel-soft: 0 10px 40px -10px rgba(139, 92, 246, 0.12);
+  --shadow-soft:     0 10px 40px -10px rgba(168, 85, 247, 0.12);
+  --shadow-card:     0 8px 32px -8px  rgba(168, 85, 247, 0.10);
+  --shadow-elevated: 0 20px 60px -15px rgba(168, 85, 247, 0.20);
 
-  /* Aliases para compatibilidade */
-  --nix-purple-start: #7C3AED;
-  --nix-purple-end: #5B21B6;
-  --nix-purple-light: #8B5CF6;
-  --nix-purple-glow: rgba(124, 58, 237, 0.45);
-  --nix-purple-gradient: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
-  --nix-teal: #A78BFA;
-  --nix-teal-light: #DDD6FE;
-  --nix-teal-dark: #7C3AED;
-  --nix-teal-glow: rgba(139, 92, 246, 0.45);
-  --nix-success: #10B981;
-  --nix-success-glow: rgba(16, 185, 129, 0.45);
-  --nix-error: #EF4444;
-  --nix-error-glow: rgba(239, 68, 68, 0.45);
-  --nix-warning: #F59E0B;
-  --nix-dark: #1E1B4B;
-  --nix-bg-base: #FFFFFF;
-  --nix-bg-subtle: #F8F5FE;
-  --nix-bg-paper: #F8F5FE;
-  --nix-text-primary: #1E1B4B;
-  --nix-text-secondary: #4C1D95;
-  --nix-aurora-1: rgba(124, 58, 237, 0.09);
-  --nix-aurora-2: rgba(139, 92, 246, 0.06);
-  --nix-aurora-3: rgba(167, 139, 250, 0.04);
-  --nix-aurora-4: rgba(91, 33, 182, 0.05);
-  --nix-glass-bg: rgba(255, 255, 255, 0.88);
-  --nix-glass-border: rgba(124, 58, 237, 0.07);
-  --nix-glass-blur: 20px;
-  --nix-noise-opacity: 0.025;
+  /* Aliases de compatibilidade */
+  --coffee-mocha:          #a855f7;
+  --coffee-mocha-light:    #c084fc;
+  --coffee-espresso:       #7c3aed;
+  --coffee-glow:           rgba(168, 85, 247, 0.35);
+  --coffee-gradient:       linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+  --coffee-caramel:        #fcd34d;
+  --coffee-caramel-light:  #fde68a;
+  --coffee-bg-base:        #12141c;
+  --coffee-bg-subtle:      #1a1d2e;
+  --coffee-bg-paper:       #1a1d2e;
+  --coffee-text-primary:   #e8eaf0;
+  --coffee-text-secondary: #c4c8e0;
+  --coffee-glass-bg:       rgba(26, 29, 46, 0.88);
+  --coffee-glass-border:   #1e2030;
+  --coffee-glass-blur:     20px;
+  --coffee-grain-opacity:  0.02;
+  --nix-purple-start:      #a855f7;
+  --nix-purple-end:        #7c3aed;
+  --nix-purple-light:      #c084fc;
+  --nix-purple-gradient:   linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+  --nix-teal:              #4ade80;
+  --nix-teal-light:        rgba(74, 222, 128, 0.7);
+  --nix-success:           #4ade80;
+  --nix-success-glow:      rgba(74, 222, 128, 0.45);
+  --nix-error:             #f87171;
+  --nix-error-glow:        rgba(248, 113, 113, 0.45);
+  --nix-warning:           #fcd34d;
+  --nix-dark:              #1e1b4b;
+  --nix-bg-base:           #12141c;
+  --nix-bg-subtle:         #1a1d2e;
+  --nix-bg-paper:          #1a1d2e;
+  --nix-aurora-1: rgba(168, 85, 247, 0.18);
+  --nix-aurora-2: rgba(168, 85, 247, 0.12);
+  --nix-aurora-3: rgba(168, 85, 247, 0.07);
+  --nix-aurora-4: rgba(124, 58, 237, 0.09);
+  --nix-noise-opacity: 0.02;
 
   /* ============================================
      SPACING TOKENS — Margens de página responsivas
@@ -93,68 +99,12 @@
   --spacing-card-inner: 16px;
 }
 
-/* Dark mode variables — Cozy Espresso */
+/* Dark mode — mesmos valores (tema é dark-first) */
 [data-theme="dark"],
 .dark,
 .MuiCssBaseline-root[class*="dark"] {
-  /* Cor Primária: Crème Brûlée — Dark Mode */
-  --coffee-mocha: #A78BFA;
-  --coffee-mocha-light: #C4B5FD;
-  --coffee-espresso: #8B5CF6;
-  --coffee-glow: rgba(167, 139, 250, 0.45);
-  --coffee-gradient: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%);
-
-  /* Cores Semânticas — Dark Mode */
-  --coffee-success: #34D399;
-  --coffee-success-glow: rgba(52, 211, 153, 0.45);
-  --coffee-error: #F87171;
-  --coffee-error-glow: rgba(248, 113, 113, 0.45);
-
-  /* Cores Neutras — Dark Mode */
-  --coffee-text-dark: #F8F5FE;
-  --coffee-bg-base: #0F0B1E;
-  --coffee-bg-subtle: #1A1530;
-  --coffee-bg-paper: #1A1530;
-  --coffee-text-primary: #F8F5FE;
-  --coffee-text-secondary: #A78BFA;
-
-  /* Steam gradient blobs — Dark mode (mais vibrante) */
-  --coffee-steam-1: rgba(167, 139, 250, 0.18);
-  --coffee-steam-2: rgba(139, 92, 246, 0.12);
-  --coffee-steam-3: rgba(196, 181, 253, 0.07);
-  --coffee-steam-4: rgba(124, 58, 237, 0.09);
-
-  /* Glassmorphism — Dark */
-  --coffee-glass-bg: rgba(15, 11, 30, 0.88);
-  --coffee-glass-border: rgba(167, 139, 250, 0.08);
-
-  /* Grain texture opacity */
-  --coffee-grain-opacity: 0.03;
-
-  /* Aliases */
-  --nix-purple-start: #A78BFA;
-  --nix-purple-end: #8B5CF6;
-  --nix-purple-glow: rgba(167, 139, 250, 0.45);
-  --nix-teal: #C4B5FD;
-  --nix-teal-glow: rgba(167, 139, 250, 0.45);
-  --nix-success: #34D399;
-  --nix-success-glow: rgba(52, 211, 153, 0.45);
-  --nix-error: #F87171;
-  --nix-error-glow: rgba(248, 113, 113, 0.45);
-  --nix-dark: #F8F5FE;
-  --nix-bg-base: #0F0B1E;
-  --nix-bg-subtle: #1A1530;
-  --nix-bg-paper: #1A1530;
-  --nix-text-primary: #F8F5FE;
-  --nix-text-secondary: #A78BFA;
-  --nix-aurora-1: rgba(167, 139, 250, 0.18);
-  --nix-aurora-2: rgba(139, 92, 246, 0.12);
-  --nix-aurora-3: rgba(196, 181, 253, 0.07);
-  --nix-aurora-4: rgba(124, 58, 237, 0.09);
-  --nix-aurora-5: rgba(167, 139, 250, 0.06);
-  --nix-glass-bg: rgba(15, 11, 30, 0.88);
-  --nix-glass-border: rgba(167, 139, 250, 0.08);
-  --nix-noise-opacity: 0.03;
+  --nix-text-primary: #e8eaf0;
+  --nix-text-secondary: #c4c8e0;
 }
 
 /* ============================================

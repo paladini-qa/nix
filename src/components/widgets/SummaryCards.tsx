@@ -20,6 +20,7 @@ import { FinancialSummary, Transaction } from "../../types";
 import { getReportDate } from "../../utils/transactionUtils";
 import { CountUp, formatBRL, formatBRLFull } from "../motion";
 import { usePrivacyMode, useLayoutSpacing } from "../../hooks";
+import { colors } from "../../theme/colors";
 
 // Create motion-enabled components
 const MotionCard = motion.create(Card);
@@ -32,21 +33,16 @@ interface SummaryCardsProps {
   selectedYear?: number;
 }
 
-// ============================================
-// PALETA COFFEE — Cozy Design System
-// ============================================
+// Paleta do design system
 const COFFEE = {
-  // Sage green — receitas / saldo positivo
-  sage: "#5B8A5A",
-  sageDark: "#7AB87A",
-  sageLight: "#8FBC8F",
-  // Dusty rose — despesas / saldo negativo
-  dustyRose: "#B85450",
-  dustyRoseDark: "#E07870",
-  dustyRoseLight: "#D4817D",
-  // Caramel — saldo / balanço (neutro positivo)
-  caramel: "#C4883A",
-  caramelLight: "#DDB899",
+  sage:          colors.income,
+  sageDark:      "#22c55e",
+  sageLight:     alpha(colors.income, 0.7),
+  dustyRose:     colors.expense,
+  dustyRoseDark: "#ef4444",
+  dustyRoseLight:alpha(colors.expense, 0.7),
+  caramel:       colors.primary,
+  caramelLight:  alpha(colors.primary, 0.7),
 };
 
 // Configuração de cores dos cards — Paleta Coffee
@@ -57,8 +53,8 @@ const cardStyles = {
       iconBgLight: COFFEE.sageLight,
       accentColor: COFFEE.sage,
       accentDark: COFFEE.sageDark,
-      gradientLight: "linear-gradient(135deg, rgba(91, 138, 90, 0.08) 0%, rgba(91, 138, 90, 0.03) 100%)",
-      gradientDark: "linear-gradient(135deg, rgba(122, 184, 122, 0.14) 0%, rgba(122, 184, 122, 0.06) 100%)",
+      gradientLight: `linear-gradient(135deg, ${alpha(colors.income, 0.08)} 0%, ${alpha(colors.income, 0.03)} 100%)`,
+      gradientDark:  `linear-gradient(135deg, ${alpha(colors.income, 0.14)} 0%, ${alpha(colors.income, 0.06)} 100%)`,
       emoji: "",
     },
     negative: {
@@ -66,8 +62,8 @@ const cardStyles = {
       iconBgLight: COFFEE.dustyRoseLight,
       accentColor: COFFEE.dustyRose,
       accentDark: COFFEE.dustyRoseDark,
-      gradientLight: "linear-gradient(135deg, rgba(184, 84, 80, 0.08) 0%, rgba(184, 84, 80, 0.03) 100%)",
-      gradientDark: "linear-gradient(135deg, rgba(224, 120, 112, 0.14) 0%, rgba(224, 120, 112, 0.06) 100%)",
+      gradientLight: `linear-gradient(135deg, ${alpha(colors.expense, 0.08)} 0%, ${alpha(colors.expense, 0.03)} 100%)`,
+      gradientDark:  `linear-gradient(135deg, ${alpha(colors.expense, 0.14)} 0%, ${alpha(colors.expense, 0.06)} 100%)`,
       emoji: "",
     },
   },
@@ -76,8 +72,8 @@ const cardStyles = {
     iconBgLight: COFFEE.sageLight,
     accentColor: COFFEE.sage,
     accentDark: COFFEE.sageDark,
-    gradientLight: "linear-gradient(135deg, rgba(91, 138, 90, 0.06) 0%, rgba(91, 138, 90, 0.02) 100%)",
-    gradientDark: "linear-gradient(135deg, rgba(122, 184, 122, 0.12) 0%, rgba(122, 184, 122, 0.05) 100%)",
+    gradientLight: `linear-gradient(135deg, ${alpha(colors.income, 0.06)} 0%, ${alpha(colors.income, 0.02)} 100%)`,
+    gradientDark:  `linear-gradient(135deg, ${alpha(colors.income, 0.12)} 0%, ${alpha(colors.income, 0.05)} 100%)`,
     emoji: "",
   },
   expense: {
@@ -85,8 +81,8 @@ const cardStyles = {
     iconBgLight: COFFEE.dustyRoseLight,
     accentColor: COFFEE.dustyRose,
     accentDark: COFFEE.dustyRoseDark,
-    gradientLight: "linear-gradient(135deg, rgba(184, 84, 80, 0.06) 0%, rgba(184, 84, 80, 0.02) 100%)",
-    gradientDark: "linear-gradient(135deg, rgba(224, 120, 112, 0.12) 0%, rgba(224, 120, 112, 0.05) 100%)",
+    gradientLight: `linear-gradient(135deg, ${alpha(colors.expense, 0.06)} 0%, ${alpha(colors.expense, 0.02)} 100%)`,
+    gradientDark:  `linear-gradient(135deg, ${alpha(colors.expense, 0.12)} 0%, ${alpha(colors.expense, 0.05)} 100%)`,
     emoji: "",
   },
 };

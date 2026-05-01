@@ -41,11 +41,12 @@ import {
 } from "../../services/geminiService";
 import { parseImportFile } from "../../services/importService";
 import { useConfirmDialog } from "../../contexts";
+import { colors } from "../../theme/colors";
 
 const MotionPaper = motion.create(Paper);
 const MotionBox = motion.create(Box);
 
-const NIX_PURPLE = "#6366F1";
+const NIX_PURPLE = colors.primary;
 
 const pulseAnimation = keyframes`
   0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }

@@ -50,19 +50,19 @@ interface TransactionTableProps {
 // Mapeamento de categorias para ícones e cores
 const categoryConfig: Record<string, { icon: React.ElementType; color: string; bgLight: string }> = {
   // Despesas
-  "Alimentação": { icon: FoodIcon, color: "#EA580C", bgLight: "#FFF7ED" },
-  "Transporte": { icon: TransportIcon, color: "#0284C7", bgLight: "#F0F9FF" },
-  "Moradia": { icon: HomeIcon, color: "#7C3AED", bgLight: "#F5F3FF" },
-  "Saúde": { icon: HealthIcon, color: "#DC2626", bgLight: "#FEF2F2" },
-  "Educação": { icon: EducationIcon, color: "#2563EB", bgLight: "#EFF6FF" },
-  "Lazer": { icon: EntertainmentIcon, color: "#DB2777", bgLight: "#FDF2F8" },
-  "Compras": { icon: ShoppingIcon, color: "#9333EA", bgLight: "#FAF5FF" },
+  "Alimentação":  { icon: FoodIcon,          color: "#fb923c", bgLight: "rgba(251,146,60,0.12)"  },
+  "Transporte":   { icon: TransportIcon,      color: "#38bdf8", bgLight: "rgba(56,189,248,0.12)"  },
+  "Moradia":      { icon: HomeIcon,           color: "#a855f7", bgLight: "rgba(168,85,247,0.12)"  },
+  "Saúde":        { icon: HealthIcon,         color: "#f87171", bgLight: "rgba(248,113,113,0.12)" },
+  "Educação":     { icon: EducationIcon,      color: "#60a5fa", bgLight: "rgba(96,165,250,0.12)"  },
+  "Lazer":        { icon: EntertainmentIcon,  color: "#f472b6", bgLight: "rgba(244,114,182,0.12)" },
+  "Compras":      { icon: ShoppingIcon,       color: "#c084fc", bgLight: "rgba(192,132,252,0.12)" },
   // Receitas
-  "Salário": { icon: SalaryIcon, color: "#059669", bgLight: "#ECFDF5" },
-  "Investimentos": { icon: SavingsIcon, color: "#0D9488", bgLight: "#F0FDFA" },
-  "Freelance": { icon: SalaryIcon, color: "#10B981", bgLight: "#D1FAE5" },
+  "Salário":      { icon: SalaryIcon,         color: "#4ade80", bgLight: "rgba(74,222,128,0.12)"  },
+  "Investimentos":{ icon: SavingsIcon,        color: "#2dd4bf", bgLight: "rgba(45,212,191,0.12)"  },
+  "Freelance":    { icon: SalaryIcon,         color: "#4ade80", bgLight: "rgba(74,222,128,0.12)"  },
   // Default
-  "default": { icon: OtherIcon, color: "#64748B", bgLight: "#F8FAFC" },
+  "default":      { icon: OtherIcon,          color: "#7c80a8", bgLight: "rgba(124,128,168,0.12)" },
 };
 
 const getCategoryConfig = (category: string) => {

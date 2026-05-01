@@ -49,25 +49,25 @@ const OfflineBanner: React.FC<OfflineBannerProps> = ({ isOnline, pendingCount })
     bg: string; border: string; color: string; icon: React.ReactNode; text: string;
   }> = {
     offline: {
-      bg: isDark ? alpha("#EF4444", 0.15) : alpha("#FEF2F2", 0.95),
-      border: isDark ? alpha("#EF4444", 0.25) : alpha("#EF4444", 0.2),
-      color: isDark ? "#FCA5A5" : "#DC2626",
+      bg:     alpha("#f87171", 0.15),
+      border: alpha("#f87171", 0.25),
+      color:  "#fca5a5",
       icon: <WifiOff size={14} />,
       text: pendingCount > 0
         ? `Offline — ${pendingCount} alteraç${pendingCount === 1 ? "ão" : "ões"} pendente${pendingCount === 1 ? "" : "s"}`
         : "Sem conexão",
     },
     syncing: {
-      bg: isDark ? alpha("#F59E0B", 0.12) : alpha("#FFFBEB", 0.95),
-      border: isDark ? alpha("#F59E0B", 0.22) : alpha("#F59E0B", 0.3),
-      color: isDark ? "#FCD34D" : "#D97706",
+      bg:     alpha("#fcd34d", 0.12),
+      border: alpha("#fcd34d", 0.25),
+      color:  "#fcd34d",
       icon: <CloudUpload size={14} />,
       text: "Sincronizando...",
     },
     synced: {
-      bg: isDark ? alpha("#10B981", 0.12) : alpha("#ECFDF5", 0.95),
-      border: isDark ? alpha("#10B981", 0.22) : alpha("#10B981", 0.2),
-      color: isDark ? "#6EE7B7" : "#059669",
+      bg:     alpha("#4ade80", 0.12),
+      border: alpha("#4ade80", 0.22),
+      color:  "#4ade80",
       icon: <CheckCircle size={14} />,
       text: "Sincronizado",
     },
