@@ -47,6 +47,8 @@ export default {
     logout: "Sair",
     investments: "Investimentos",
     subscriptions: "Assinaturas",
+    paymentMethods: "Pagamentos",
+    others: "Outros",
   },
 
   // Dashboard
@@ -61,6 +63,9 @@ export default {
     newTransaction: "Nova Transação",
     removeAdvancedFiltersForMonth:
       "Remova os filtros avançados para usar o filtro de mês",
+    incomeByCategory: "Receitas por Categoria",
+    expensesByCategory: "Despesas por Categoria",
+    expensesByPaymentMethod: "Despesas por Método de Pagamento",
   },
 
   // Transactions

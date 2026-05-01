@@ -112,6 +112,7 @@ const DashboardMainSection: React.FC = () => {
           sx={{
             display: "flex",
             alignItems: "center",
+            flexWrap: "wrap",
             gap: { xs: 0.5, sm: 1.5 },
             width: { xs: "100%", sm: "auto" },
           }}

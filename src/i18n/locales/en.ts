@@ -47,6 +47,8 @@ export default {
     logout: "Logout",
     investments: "Investments",
     subscriptions: "Subscriptions",
+    paymentMethods: "Payment Methods",
+    others: "Others",
   },
 
   // Dashboard
@@ -61,6 +63,9 @@ export default {
     newTransaction: "New Transaction",
     removeAdvancedFiltersForMonth:
       "Remove advanced filters to use the month filter",
+    incomeByCategory: "Income by Category",
+    expensesByCategory: "Expenses by Category",
+    expensesByPaymentMethod: "Expenses by Payment Method",
   },
 
   // Transactions

@@ -466,8 +466,39 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
           <Divider />
 
           {/* Conteúdo dos filtros */}
-          <Box sx={{ p: 2.5, pb: 4 }}>
+          <Box sx={{ p: 2.5, pb: 2 }}>
             {filterContent}
+          </Box>
+
+          {/* Footer de ações */}
+          <Box
+            sx={{
+              p: 2,
+              display: "flex",
+              gap: 1.5,
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.15)}`,
+              bgcolor: "background.paper",
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="error"
+              fullWidth
+              startIcon={<ClearIcon />}
+              onClick={handleClearFilters}
+              sx={{ textTransform: "none" }}
+            >
+              Limpar filtros
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={onToggleFilters}
+              sx={{ textTransform: "none" }}
+            >
+              Aplicar
+            </Button>
           </Box>
         </SwipeableDrawer>
       ) : (

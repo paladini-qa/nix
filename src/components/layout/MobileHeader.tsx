@@ -1,4 +1,5 @@
 import React from "react";
+import logoUrl from "../../assets/logo.svg?url";
 import { Box, useTheme, alpha } from "@mui/material";
 import { motion } from "framer-motion";
 import { Menu, Eye, EyeOff } from "lucide-react";
@@ -90,7 +91,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
       >
         <Box
           component="img"
-          src={`${import.meta.env.BASE_URL}logo.svg`}
+          src={logoUrl}
           alt="Finance Control Logo"
           sx={{ width: 32, height: 32, objectFit: "contain" }}
         />

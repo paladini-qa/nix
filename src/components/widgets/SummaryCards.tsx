@@ -157,14 +157,15 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
       .filter((t) => t.type === "expense")
       .reduce((acc, t) => acc + (t.amount || 0), 0);
 
-    // Porcentagem de mudança
-    const incomeChange = prevIncome > 0 
-      ? Math.round(((summary.totalIncome - prevIncome) / prevIncome) * 100) 
-      : summary.totalIncome > 0 ? 100 : 0;
-    
-    const expenseChange = prevExpense > 0 
-      ? Math.round(((summary.totalExpense - prevExpense) / prevExpense) * 100) 
-      : summary.totalExpense > 0 ? 100 : 0;
+    // Porcentagem de mudança — retorna null quando não há dado anterior ou variação é extrema
+    const MAX_PCT = 999;
+    const calcChange = (current: number, prev: number): number | null => {
+      if (prev <= 0) return null;
+      const pct = Math.round(((current - prev) / prev) * 100);
+      return Math.abs(pct) > MAX_PCT ? null : pct;
+    };
+    const incomeChange  = calcChange(summary.totalIncome,  prevIncome);
+    const expenseChange = calcChange(summary.totalExpense, prevExpense);
 
     // Progresso relativo ao mês anterior (para barras)
     const incomeProgress = prevIncome > 0 
@@ -421,16 +422,14 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                       fontVariantNumeric: "tabular-nums",
                       minHeight: isMobile ? 24 : 36,
                       display: "block",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      wordBreak: "break-word",
                       ...privacyStylesStrong,
                     }}
                   />
                   
                   <Tooltip 
-                    title={comparison.prevIncome > 0 
-                      ? `${comparison.incomeChange >= 0 ? '+' : ''}${comparison.incomeChange}% vs mês anterior` 
+                    title={comparison.incomeChange !== null
+                      ? `${comparison.incomeChange >= 0 ? '+' : ''}${comparison.incomeChange}% vs mês anterior`
                       : 'Sem dados do mês anterior'}
                     arrow
                   >
@@ -461,7 +460,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   </Tooltip>
                   
                   <Box sx={{ minHeight: 18, mt: 0.5 }}>
-                    {comparison.prevIncome > 0 && (
+                    {comparison.incomeChange !== null && (
                       <Typography
                         variant="caption"
                         sx={{
@@ -555,16 +554,14 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                       fontVariantNumeric: "tabular-nums",
                       minHeight: isMobile ? 24 : 36,
                       display: "block",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      wordBreak: "break-word",
                       ...privacyStylesStrong,
                     }}
                   />
                   
                   <Tooltip 
-                    title={comparison.prevExpense > 0 
-                      ? `${comparison.expenseChange >= 0 ? '+' : ''}${comparison.expenseChange}% vs mês anterior` 
+                    title={comparison.expenseChange !== null
+                      ? `${comparison.expenseChange >= 0 ? '+' : ''}${comparison.expenseChange}% vs mês anterior`
                       : 'Sem dados do mês anterior'}
                     arrow
                   >
@@ -595,7 +592,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   </Tooltip>
                   
                   <Box sx={{ minHeight: 18, mt: 0.5 }}>
-                    {comparison.prevExpense > 0 && (
+                    {comparison.expenseChange !== null && (
                       <Typography
                         variant="caption"
                         sx={{

@@ -8,6 +8,7 @@ import {
   GridView as GridViewIcon,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import OthersGridModal from "./OthersGridModal";
 
 const MotionBox = motion.create(Box);
@@ -125,6 +126,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   onCreateTransaction,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const isDarkMode = theme.palette.mode === "dark";
   const [othersModalOpen, setOthersModalOpen] = useState(false);
 
@@ -213,7 +215,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           }}
         >
           <NavItem
-            label="Dashboard"
+            label={t("nav.dashboard")}
             icon={<GridViewIcon fontSize="inherit" />}
             isActive={currentView === "dashboard"}
             onClick={() => handleNavigation("dashboard")}
@@ -221,7 +223,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           />
 
           <NavItem
-            label="Transactions"
+            label={t("nav.transactions")}
             icon={<TransactionsIcon fontSize="inherit" />}
             isActive={currentView === "transactions"}
             onClick={() => handleNavigation("transactions")}
@@ -262,7 +264,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           </Box>
 
           <NavItem
-            label="Payments"
+            label={t("nav.paymentMethods")}
             icon={<PaymentMethodsIcon fontSize="inherit" />}
             isActive={currentView === "paymentMethods"}
             onClick={() => handleNavigation("paymentMethods")}
@@ -270,7 +272,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           />
 
           <NavItem
-            label="Others"
+            label={t("nav.others")}
             icon={<OthersIcon fontSize="inherit" />}
             isActive={getActiveValue() === "others"}
             onClick={() => handleNavigation("others")}

@@ -19,6 +19,7 @@ import {
   Cell,
   Tooltip,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 import { Transaction, TransactionType } from "../../types";
 import { useSettings } from "../../contexts";
 import { useLayoutSpacing } from "../../hooks";
@@ -335,6 +336,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   onPaymentMethodClick,
   onCategoryClick,
 }) => {
+  const { t } = useTranslation();
   const { getCategoryColor, getPaymentMethodColor } = useSettings();
   const { gridSpacing } = useLayoutSpacing();
   const theme = useTheme();
@@ -396,7 +398,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
       {/* Income by Category */}
       <Grid size={{ xs: 12, md: 6, xl: 4 }}>
         <PieChartCard
-          title="Income by Category"
+          title={t("dashboard.incomeByCategory")}
           icon={
             <TrendingUpIcon
               sx={{ fontSize: isMobile ? 18 : 22, color: "#059669" }}
@@ -420,7 +422,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
       {/* Expense by Category */}
       <Grid size={{ xs: 12, md: 6, xl: 4 }}>
         <PieChartCard
-          title="Expenses by Category"
+          title={t("dashboard.expensesByCategory")}
           icon={
             <TrendingDownIcon
               sx={{ fontSize: isMobile ? 18 : 22, color: "#DC2626" }}
@@ -444,7 +446,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
       {/* Expense by Payment Method */}
       <Grid size={{ xs: 12, md: 12, xl: 4 }}>
         <PieChartCard
-          title="Expenses by Payment Method"
+          title={t("dashboard.expensesByPaymentMethod")}
           icon={
             <CreditCardIcon
               sx={{ fontSize: isMobile ? 18 : 22, color: "#6366f1" }}

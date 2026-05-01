@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Paper, Typography, Box } from "@mui/material";
 import {
   PieChart,
@@ -26,6 +27,7 @@ const COLORS = [
 ];
 
 const Charts: React.FC<ChartsProps> = ({ transactions }) => {
+  const { t } = useTranslation();
   const expenses = transactions.filter((t) => t.type === "expense");
 
   if (expenses.length === 0) return null;
@@ -47,7 +49,7 @@ const Charts: React.FC<ChartsProps> = ({ transactions }) => {
   return (
     <Paper sx={{ p: 3, height: "100%" }}>
       <Typography variant="h6" fontWeight={600} gutterBottom>
-        Expenses by Category
+        {t("dashboard.expensesByCategory")}
       </Typography>
       <Box sx={{ height: 280, width: "100%" }}>
         <ResponsiveContainer width="100%" height="100%">

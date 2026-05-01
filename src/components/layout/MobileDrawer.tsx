@@ -1,4 +1,5 @@
 import React from "react";
+import logoUrl from "../../assets/logo.svg?url";
 import {
   Drawer,
   Box,
@@ -352,9 +353,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           },
         }}
       >
-        <MotionBox
-          whileHover={{ scale: 1.05, rotate: 5 }}
-          whileTap={{ scale: 0.95 }}
+        <Box
           sx={{
             width: 48,
             height: 48,
@@ -373,7 +372,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         >
           <Box
             component="img"
-            src={`${import.meta.env.BASE_URL}logo.svg`}
+            src={logoUrl}
             alt="Finance Control Logo"
             sx={{
               width: 36,
@@ -381,7 +380,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
               objectFit: "contain",
             }}
           />
-        </MotionBox>
+        </Box>
         <Box sx={{ flex: 1 }}>
           <Typography
             variant="h5"
@@ -408,6 +407,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           onClick={onClose}
           sx={{
             color: "text.secondary",
+            touchAction: "manipulation",
             transition: "all 0.2s ease",
             "&:hover": {
               color: "text.primary",
