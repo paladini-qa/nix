@@ -47,8 +47,6 @@ import {
   TrendingDown as TrendingDownIcon,
   TrendingUp as TrendingUpIcon,
   CheckCircle as CheckCircleIcon,
-  ExpandMore as ExpandMoreIcon,
-  Settings as SettingsIcon,
   ChevronRight as ChevronRightIcon,
   ReceiptLong as ReceiptIcon,
 } from "@mui/icons-material";
@@ -356,12 +354,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     "installments" | "shared" | "balance"
   >("balance");
 
-  // Estado para controlar opções avançadas colapsáveis
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  // Notas opcionais
-  const [notes, setNotes] = useState("");
-
   // Aba do drawer: formulário manual ou Nix AI (só para nova transação)
   const [formTab, setFormTab] = useState<"manual" | "nixai">("manual");
 
@@ -577,7 +569,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setIsShared(editTransaction.isShared || false);
       setSharedWith(editTransaction.sharedWith || "");
       setIOwe(editTransaction.iOwe || false);
-      setNotes(editTransaction.notes || "");
       // Vencimento da fatura: usar valor salvo ou sugerir a partir da data da transação
       const dueDay = getPaymentMethodPaymentDay?.(editTransaction.paymentMethod);
       if (dueDay != null && dueDay >= 1 && dueDay <= 31) {
@@ -637,14 +628,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     setLastDuplicateKey("");
     // Auto-expandir opções avançadas se editando transação com opções ativas
     if (editTransaction) {
-      const hasAdvanced =
-        editTransaction.isRecurring ||
-        (editTransaction.installments !== undefined &&
-          editTransaction.installments > 1) ||
-        editTransaction.isShared;
-      setShowAdvanced(hasAdvanced);
     } else {
-      setShowAdvanced(false);
       // Aplicar contexto inicial quando abrindo a partir de uma aba específica
       if (isOpen && initialContext) {
         if (initialContext.paymentMethod) {
@@ -667,11 +651,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         if (initialContext.hasInstallments !== undefined) {
           setHasInstallments(initialContext.hasInstallments);
         }
-        const hasAdvancedFromContext =
-          initialContext.isShared ||
-          initialContext.isRecurring ||
-          initialContext.hasInstallments;
-        if (hasAdvancedFromContext) setShowAdvanced(true);
       }
     }
   }, [editTransaction, isOpen, initialContext, getPaymentMethodPaymentDay, getSuggestedInvoiceDueMonthYear]);
@@ -815,7 +794,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         isShared,
         sharedWith: isShared ? sharedWith : undefined,
         iOwe: isShared ? iOwe : undefined,
-        notes: notes.trim() || undefined,
       },
       editTransaction?.id || undefined
     );
@@ -1724,141 +1702,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Box>
             )}
 
-            {/* ========== OPÇÕES AVANÇADAS - Colapsável ========== */}
-            <Paper
-              elevation={0}
-              onClick={() => setShowAdvanced(!showAdvanced)}
+            {/* ========== OPÇÕES AVANÇADAS ========== */}
+            <Box
               sx={{
-                p: 2,
-                borderRadius: "20px",
-                cursor: "pointer",
-                bgcolor: isDarkMode
-                  ? alpha(theme.palette.background.default, 0.3)
-                  : alpha("#000000", 0.02),
-                border: `1px solid ${
-                  isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-                }`,
-                transition: "all 0.2s ease",
-                "&:hover": {
-                  bgcolor: isDarkMode
-                    ? alpha(theme.palette.background.default, 0.5)
-                    : alpha("#000000", 0.04),
-                },
+                display: "flex",
+                flexDirection: "column",
+                gap: 2.5,
+                pt: 1,
               }}
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: "20px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor:
-                        isRecurring || hasInstallments || isShared
-                          ? alpha(
-                              theme.palette.primary.main,
-                              isDarkMode ? 0.2 : 0.12
-                            )
-                          : alpha("#64748B", 0.1),
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    <SettingsIcon
-                      fontSize="small"
-                      sx={{
-                        color:
-                          isRecurring || hasInstallments || isShared
-                            ? "primary.main"
-                            : "text.secondary",
-                        transition: "color 0.2s ease",
-                      }}
-                    />
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" fontWeight={500}>
-                      Opções Avançadas
-                    </Typography>
-                    {/* Chips mostrando opções ativas quando colapsado */}
-                    {!showAdvanced &&
-                      (isRecurring || hasInstallments || isShared) && (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            gap: 0.5,
-                            mt: 0.5,
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          {isRecurring && (
-                            <Chip
-                              label={`Recorrente (${
-                                frequency === "monthly" ? "Mensal" : "Anual"
-                              })`}
-                              size="small"
-                              sx={{
-                                height: 20,
-                                fontSize: "0.7rem",
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                color: theme.palette.primary.main,
-                              }}
-                            />
-                          )}
-                          {hasInstallments && (
-                            <Chip
-                              label={`${installments}x Parcelado`}
-                              size="small"
-                              sx={{
-                                height: 20,
-                                fontSize: "0.7rem",
-                                bgcolor: alpha(theme.palette.warning.main, 0.1),
-                                color: theme.palette.warning.main,
-                              }}
-                            />
-                          )}
-                          {isShared && sharedWith && (
-                            <Chip
-                              label={`Com ${sharedWith}`}
-                              size="small"
-                              sx={{
-                                height: 20,
-                                fontSize: "0.7rem",
-                                bgcolor: alpha(theme.palette.info.main, 0.1),
-                                color: theme.palette.info.main,
-                              }}
-                            />
-                          )}
-                        </Box>
-                      )}
-                  </Box>
-                </Box>
-                <ExpandMoreIcon
-                  sx={{
-                    transition: "transform 0.2s ease",
-                    transform: showAdvanced ? "rotate(180deg)" : "rotate(0deg)",
-                    color: "text.secondary",
-                  }}
-                />
-              </Box>
-            </Paper>
-
-            <Collapse in={showAdvanced} timeout={300}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2.5,
-                  pt: 1,
-                }}
-              >
                 {/* Recorrente Toggle */}
                 <Grid container spacing={2.5}>
                   <Grid size={{ xs: 12, sm: 6 }}>
@@ -2421,8 +2273,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     </Box>
                   )}
                 </Box>
-              </Box>
-            </Collapse>
+            </Box>
 
             {/* ========== PREVIEW UNIFICADO - Substitui 3 cards por 1 com tabs ========== */}
             {shouldShowUnifiedPreview && (
@@ -2733,22 +2584,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Paper>
             )}
           </Box>
-        </Box>
-
-        {/* ====== NOTES FIELD ====== */}
-        <Box sx={{ px: 2.5, pb: 2 }}>
-          <TextField
-            label="Observações (opcional)"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            multiline
-            rows={2}
-            fullWidth
-            placeholder="Adicione uma nota sobre esta transação..."
-            inputProps={{ maxLength: 500 }}
-            helperText={notes.length > 0 ? `${notes.length}/500` : undefined}
-            sx={inputSx}
-          />
         </Box>
 
         {/* ====== BOTTOM ACTION BAR ====== */}

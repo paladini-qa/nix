@@ -290,7 +290,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   });
 
   const mobileListParentRef = useRef<HTMLDivElement>(null);
-  const CARD_ESTIMATE_HEIGHT = 100;
+  const CARD_ESTIMATE_HEIGHT = isMobile ? 60 : 100;
   const mobileListVirtualizer = useVirtualizer({
     count: paginatedData.length,
     getScrollElement: () => mobileListParentRef.current,
@@ -1121,10 +1121,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 sx={{
                   display: "inline-flex",
                   alignItems: "stretch",
-                  height: 38,
+                  height: 32,
                   border: "1px solid",
                   borderColor: activeFiltersCount > 0 ? "primary.main" : "divider",
-                  borderRadius: "12px",
+                  borderRadius: "10px",
                   overflow: "hidden",
                   flexShrink: 0,
                   transition: "border-color 0.2s",
@@ -1665,6 +1665,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                               setMobileActionAnchor({ element, transaction })
                             }
                             formatDateShort={formatDateShort}
+                            compact={isMobile}
                           />
                         </Box>
                       );
@@ -1695,6 +1696,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                         setMobileActionAnchor({ element, transaction })
                       }
                       formatDateShort={formatDateShort}
+                      compact={isMobile}
                     />
                   </motion.div>
                 ))}

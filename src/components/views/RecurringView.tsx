@@ -1364,7 +1364,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          {onRefreshData && (
+          {onRefreshData && !isMobile && (
             <Tooltip title="Atualizar dados">
               <IconButton
                 onClick={handleRefresh}

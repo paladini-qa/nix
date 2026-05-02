@@ -1545,7 +1545,7 @@ const SharedView: React.FC<SharedViewProps> = ({
           </FormControl>
 
           {/* Refresh Button */}
-          {onRefreshData && (
+          {onRefreshData && !isMobile && (
             <Tooltip title="Atualizar dados">
               <IconButton
                 onClick={handleRefresh}

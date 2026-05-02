@@ -348,14 +348,16 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   </MotionBox>
                 </Box>
                 
-                <MotionBox
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
-                  sx={getIconContainerStyles(flowStyles.iconBg, flowStyles.iconBgLight)}
-                >
-                  <WalletIcon sx={{ fontSize: isMobile ? 18 : 26, color: flowAccent }} />
-                </MotionBox>
+                {!isMobile && (
+                  <MotionBox
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
+                    sx={getIconContainerStyles(flowStyles.iconBg, flowStyles.iconBgLight)}
+                  >
+                    <WalletIcon sx={{ fontSize: 26, color: flowAccent }} />
+                  </MotionBox>
+                )}
               </Box>
             </CardContent>
           </MotionCard>
@@ -414,7 +416,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     formatter={isMobile ? formatBRL : formatBRLFull}
                     duration={1.2}
                     delay={0.4}
-                    variant={isMobile ? "h6" : "h4"}
+                    variant={isMobile ? "h5" : "h4"}
                     sx={{
                       fontWeight: 700,
                       color: "text.primary",
@@ -475,19 +477,21 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   </Box>
                 </Box>
                 
-                <MotionBox
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.3, type: "spring", stiffness: 400 }}
-                  sx={getIconContainerStyles(cardStyles.income.iconBg, cardStyles.income.iconBgLight)}
-                >
-                  <TrendingUpIcon
-                    sx={{
-                      fontSize: isMobile ? 18 : 26,
-                      color: isDarkMode ? cardStyles.income.accentDark : cardStyles.income.accentColor,
-                    }}
-                  />
-                </MotionBox>
+                {!isMobile && (
+                  <MotionBox
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.3, type: "spring", stiffness: 400 }}
+                    sx={getIconContainerStyles(cardStyles.income.iconBg, cardStyles.income.iconBgLight)}
+                  >
+                    <TrendingUpIcon
+                      sx={{
+                        fontSize: 26,
+                        color: isDarkMode ? cardStyles.income.accentDark : cardStyles.income.accentColor,
+                      }}
+                    />
+                  </MotionBox>
+                )}
               </Box>
             </CardContent>
           </MotionCard>
@@ -546,7 +550,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                     formatter={isMobile ? formatBRL : formatBRLFull}
                     duration={1.2}
                     delay={0.5}
-                    variant={isMobile ? "h6" : "h4"}
+                    variant={isMobile ? "h5" : "h4"}
                     sx={{
                       fontWeight: 700,
                       color: "text.primary",
@@ -607,19 +611,21 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                   </Box>
                 </Box>
                 
-                <MotionBox
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.4, type: "spring", stiffness: 400 }}
-                  sx={getIconContainerStyles(cardStyles.expense.iconBg, cardStyles.expense.iconBgLight)}
-                >
-                  <TrendingDownIcon
-                    sx={{
-                      fontSize: isMobile ? 18 : 26,
-                      color: isDarkMode ? cardStyles.expense.accentDark : cardStyles.expense.accentColor,
-                    }}
-                  />
-                </MotionBox>
+                {!isMobile && (
+                  <MotionBox
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.4, type: "spring", stiffness: 400 }}
+                    sx={getIconContainerStyles(cardStyles.expense.iconBg, cardStyles.expense.iconBgLight)}
+                  >
+                    <TrendingDownIcon
+                      sx={{
+                        fontSize: 26,
+                        color: isDarkMode ? cardStyles.expense.accentDark : cardStyles.expense.accentColor,
+                      }}
+                    />
+                  </MotionBox>
+                )}
               </Box>
             </CardContent>
           </MotionCard>

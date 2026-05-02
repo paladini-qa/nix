@@ -1828,7 +1828,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             </Select>
           </FormControl>
 
-          {onRefreshData && (
+          {onRefreshData && !isMobile && (
             <Tooltip title="Atualizar dados">
               <IconButton
                 onClick={handleRefresh}

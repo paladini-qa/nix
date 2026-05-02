@@ -4,6 +4,9 @@ import {
   Typography,
   Paper,
   Grid,
+  List,
+  ListItemButton,
+  ListItemText,
   Button,
   Chip,
   useMediaQuery,
@@ -27,6 +30,7 @@ import {
   ToggleButton,
   InputLabel,
 } from "@mui/material";
+import { ChevronRight as ChevronRightIcon } from "@mui/icons-material";
 import {
   CreditCard as CreditCardIcon,
   Payment as PaymentIcon,
@@ -557,6 +561,38 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
           {/* Payment Methods Grid */}
           {paymentMethodsSummary.filter((s) => s.transactionCount > 0).length >
           0 ? (
+            isMobile ? (
+              /* Mobile compact list */
+              <Paper elevation={0} sx={{ borderRadius: "16px", overflow: "hidden", border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}` }}>
+                <List disablePadding>
+                  {paymentMethodsSummary
+                    .filter((s) => s.transactionCount > 0)
+                    .map((summary, index, arr) => {
+                      const colors = getPaymentMethodColor(summary.name);
+                      return (
+                        <ListItemButton
+                          key={summary.name}
+                          onClick={() => onSelectPaymentMethod(summary.name)}
+                          divider={index < arr.length - 1}
+                          sx={{ minHeight: 60, gap: 1.5, px: 2, py: 1 }}
+                        >
+                          <Box sx={{ width: 4, height: 36, borderRadius: "2px", bgcolor: colors.primary, flexShrink: 0 }} />
+                          <ListItemText
+                            primary={summary.name}
+                            secondary={`${summary.transactionCount} transação${summary.transactionCount !== 1 ? "ões" : ""}`}
+                            primaryTypographyProps={{ fontWeight: 600, fontSize: "0.9rem" }}
+                            secondaryTypographyProps={{ fontSize: "0.75rem" }}
+                          />
+                          <Typography fontWeight={700} color={colors.primary} sx={{ fontSize: "0.9rem", flexShrink: 0 }}>
+                            {formatCurrency(summary.totalExpense)}
+                          </Typography>
+                          <ChevronRightIcon fontSize="small" sx={{ color: "text.disabled", flexShrink: 0 }} />
+                        </ListItemButton>
+                      );
+                    })}
+                </List>
+              </Paper>
+            ) : (
             <Grid container spacing={gridSpacing}>
               {paymentMethodsSummary
                 .filter((s) => s.transactionCount > 0)
@@ -852,6 +888,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                   );
                 })}
             </Grid>
+            )
           ) : (
             <Paper
               elevation={0}

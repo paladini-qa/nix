@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
+import { motion } from "framer-motion";
 import { useAppStore } from "../../hooks/useAppStore";
 import { useTransactionsQuery } from "../../hooks/useTransactionsQuery";
 import { useWalletSync } from "../../hooks/useWalletSync";
@@ -11,7 +12,7 @@ import Sidebar from "./Sidebar";
 import AppViewSwitcher from "./AppViewSwitcher";
 import ProfileModal from "./ProfileModal";
 import GlobalSearch from "../panels/GlobalSearch";
-import { MobileHeader, MobileDrawer, MobileNavigation } from "../layout";
+import { MobileHeader, MobileNavigation } from "../layout";
 import TransactionForm from "../forms/TransactionForm";
 import TransactionOptionsPanel from "../panels/TransactionOptionsPanel";
 import SharedOptionsDialog from "../ui/SharedOptionsDialog";
@@ -39,8 +40,6 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
   const navigate = useNavigate();
 
   const {
-    isMobileDrawerOpen,
-    setIsMobileDrawerOpen,
     isFormOpen,
     setIsFormOpen,
     isSearchOpen,
@@ -135,11 +134,23 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
 
   const { isOnline, pendingCount } = useNetworkStatus();
 
-  const { isRefreshing, pullOffset } = usePullToRefresh({
+  const {
+    isRefreshing,
+    y: pullY,
+    isPulling,
+    indicatorOpacity,
+    indicatorScale,
+    indicatorRotation,
+    onPanStart,
+    onPan,
+    onPanEnd,
+  } = usePullToRefresh({
     onRefresh: async () => {
       await refetch();
     },
   });
+
+  const MotionMain = motion.create(Box);
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
@@ -157,26 +168,18 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
       {isMobile && (
         <>
           <MobileHeader
-            onOpenDrawer={() => setIsMobileDrawerOpen(true)}
             onOpenSearch={() => setIsSearchOpen(true)}
             onOpenProfile={() => setIsProfileModalOpen(true)}
           />
           <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
-          <MobileDrawer
-            open={isMobileDrawerOpen}
-            onClose={() => setIsMobileDrawerOpen(false)}
-            currentView={currentView}
-            onNavigate={handleNavigate}
-            onLogout={handleLogout}
-            displayName={displayName}
-            userEmail={session.user.email || ""}
-            onOpenProfile={() => setIsProfileModalOpen(true)}
-          />
         </>
       )}
 
-      <Box
+      <MotionMain
         component="main"
+        onPanStart={isMobile ? onPanStart : undefined}
+        onPan={isMobile ? onPan : undefined}
+        onPanEnd={isMobile ? onPanEnd : undefined}
         sx={{
           flexGrow: 1,
           px: isMobile ? 2 : 3,
@@ -186,14 +189,24 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
           pb: isMobile ? "calc(80px + env(safe-area-inset-bottom, 0px))" : 3,
           width: "100%",
           overflowX: "hidden",
+          position: "relative",
         }}
       >
-        {isMobile && <PullToRefreshIndicator isRefreshing={isRefreshing} pullOffset={pullOffset} />}
-        
+        {isMobile && (
+          <PullToRefreshIndicator
+            isRefreshing={isRefreshing}
+            isPulling={isPulling}
+            y={pullY}
+            opacity={indicatorOpacity}
+            scale={indicatorScale}
+            rotation={indicatorRotation}
+          />
+        )}
+
         <Suspense fallback={null}>
           <AppViewSwitcher currentView={currentView} session={session} />
         </Suspense>
-      </Box>
+      </MotionMain>
 
       {isMobile && (
         <MobileNavigation
@@ -203,6 +216,10 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
             setWalletInitialContext(null);
             setIsFormOpen(true);
           }}
+          displayName={displayName}
+          userEmail={session.user.email || ""}
+          onLogout={handleLogout}
+          onOpenProfile={() => setIsProfileModalOpen(true)}
         />
       )}
 

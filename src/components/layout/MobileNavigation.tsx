@@ -114,6 +114,10 @@ interface MobileNavigationProps {
   currentView: AppCurrentView;
   onNavigate: (view: AppCurrentView) => void;
   onCreateTransaction?: () => void;
+  displayName: string;
+  userEmail: string;
+  onLogout: () => void;
+  onOpenProfile: () => void;
 }
 
 /**
@@ -124,6 +128,10 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   currentView,
   onNavigate,
   onCreateTransaction,
+  displayName,
+  userEmail,
+  onLogout,
+  onOpenProfile,
 }) => {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -289,6 +297,10 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           onNavigate(view);
           setOthersModalOpen(false);
         }}
+        displayName={displayName}
+        userEmail={userEmail}
+        onLogout={onLogout}
+        onOpenProfile={onOpenProfile}
       />
     </>
   );

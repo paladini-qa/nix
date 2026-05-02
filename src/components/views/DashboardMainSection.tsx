@@ -9,6 +9,7 @@ import {
   Tooltip,
   Stack,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import { Add as AddIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import SummaryCards from "../widgets/SummaryCards";
@@ -31,7 +32,7 @@ const AnalyticsView = lazy(() => import("./AnalyticsView"));
 const DashboardMainSection: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
-  const isMobile = theme.breakpoints.down("md"); // Simplified for now
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
 
   const { filters, setFilters, setIsFormOpen, setEditingTransaction } = useAppStore();
@@ -131,39 +132,43 @@ const DashboardMainSection: React.FC = () => {
             disabled={hasAdvancedFiltersActive}
           />
 
-          <Tooltip title={t("common.refresh")}>
-            <IconButton
-              onClick={handleRefetch}
-              disabled={isRefetching}
-              sx={{
-                width: 44,
-                height: 44,
-                border: 1,
-                borderColor: "divider",
-                borderRadius: "22px",
-              }}
-            >
-              <RefreshIcon
+          {!isMobile && (
+            <Tooltip title={t("common.refresh")}>
+              <IconButton
+                onClick={handleRefetch}
+                disabled={isRefetching}
                 sx={{
-                  fontSize: 24,
-                  animation: isRefetching ? "spin 1s linear infinite" : "none",
-                  "@keyframes spin": {
-                    "0%": { transform: "rotate(0deg)" },
-                    "100%": { transform: "rotate(360deg)" },
-                  },
+                  width: 44,
+                  height: 44,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: "22px",
                 }}
-              />
-            </IconButton>
-          </Tooltip>
+              >
+                <RefreshIcon
+                  sx={{
+                    fontSize: 24,
+                    animation: isRefetching ? "spin 1s linear infinite" : "none",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onNewTransaction}
-            sx={CREATE_TRANSACTION_BUTTON.sx}
-          >
-            {CREATE_TRANSACTION_BUTTON.label}
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onNewTransaction}
+              sx={CREATE_TRANSACTION_BUTTON.sx}
+            >
+              {CREATE_TRANSACTION_BUTTON.label}
+            </Button>
+          )}
         </Box>
       </Box>
 

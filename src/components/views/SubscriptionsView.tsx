@@ -652,21 +652,23 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
             </Select>
           </FormControl>
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onNewTransaction}
-            sx={{
-              height: 40,
-              borderRadius: "20px",
-              px: 2.5,
-              textTransform: "none",
-              fontWeight: 600,
-              boxShadow: `0 4px 14px -4px ${alpha(primary, 0.4)}`,
-            }}
-          >
-            {isMobile ? "Nova" : "Nova assinatura"}
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onNewTransaction}
+              sx={{
+                height: 40,
+                borderRadius: "20px",
+                px: 2.5,
+                textTransform: "none",
+                fontWeight: 600,
+                boxShadow: `0 4px 14px -4px ${alpha(primary, 0.4)}`,
+              }}
+            >
+              Nova assinatura
+            </Button>
+          )}
         </Stack>
       </Box>
 

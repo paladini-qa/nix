@@ -33,6 +33,7 @@ interface SwipeableTransactionCardProps {
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onOpenMenu?: (element: HTMLElement, transaction: Transaction) => void;
   formatDateShort: (date: string) => string;
+  compact?: boolean;
 }
 
 /**
@@ -50,6 +51,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
   onTogglePaid,
   onOpenMenu,
   formatDateShort,
+  compact = false,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -172,151 +174,172 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
       >
         <CardContent
           sx={{
-            p: 1.75,
-            "&:last-child": { pb: 1.75 },
+            p: compact ? 1 : 1.75,
+            "&:last-child": { pb: compact ? 1 : 1.75 },
             display: "flex",
             alignItems: "center",
-            gap: 1.5,
+            gap: compact ? 1 : 1.5,
+            minHeight: compact ? 60 : undefined,
           }}
         >
-          {/* Checkbox */}
-          <Tooltip
-            title={
-              t.isVirtual
-                ? "Mark recurring occurrence as paid"
-                : t.isPaid !== false
-                  ? "Paid"
-                  : "Not paid"
-            }
-          >
-            <Checkbox
-              checked={t.isPaid !== false}
-              onChange={(e) =>
-                onTogglePaid(
-                  t.isVirtual && t.originalTransactionId
-                    ? t.originalTransactionId
-                    : t.id,
-                  e.target.checked
-                )
-              }
-              size="small"
-              color={t.isVirtual ? "info" : "success"}
-              sx={{ mt: -0.5, ml: -1 }}
-            />
-          </Tooltip>
-
-          {/* Icon */}
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: "10px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(accentColor, 0.2)} 0%, ${alpha(accentColor, 0.1)} 100%)`
-                : `linear-gradient(135deg, ${isIncome ? "#D1FAE5" : "#FEE2E2"} 0%, ${alpha(isIncome ? "#D1FAE5" : "#FEE2E2", 0.6)} 100%)`,
-              border: `1px solid ${isDarkMode ? alpha(accentColor, 0.2) : alpha(accentColor, 0.15)}`,
-              boxShadow: isDarkMode
-                ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
-                : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
-            }}
-          >
-            {isIncome ? (
-              <ArrowUpIcon sx={{ fontSize: 16, color: accentColor }} />
-            ) : (
-              <ArrowDownIcon sx={{ fontSize: 16, color: accentColor }} />
-            )}
-          </Box>
-
-          {/* Content */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                gap: 1,
-              }}
-            >
-              <Typography
-                variant="body2"
-                fontWeight={600}
+          {compact ? (
+            /* Compact layout: dot + content + menu */
+            <>
+              {/* Color dot */}
+              <Box
                 sx={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  fontSize: "0.925rem",
-                  color: "text.primary",
+                  width: 6,
+                  height: 6,
+                  borderRadius: "2px",
+                  bgcolor: accentColor,
+                  flexShrink: 0,
+                  boxShadow: `0 0 4px ${alpha(accentColor, 0.5)}`,
+                }}
+              />
+
+              {/* Content */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "0.875rem", color: "text.primary" }}
+                  >
+                    {t.description}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight={700}
+                    color={isIncome ? "success.main" : "error.main"}
+                    sx={{ flexShrink: 0, fontSize: "0.875rem", ...privacyStyles, ...noWrapStyle }}
+                  >
+                    {isIncome ? "+" : "-"} {format(t.amount || 0)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
+                    {t.category}
+                  </Typography>
+                  <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.7rem" }}>·</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
+                    {formatDateShort(t.date)}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Actions Menu Button */}
+              {onOpenMenu && (
+                <IconButton
+                  size="small"
+                  onClick={(e) => onOpenMenu(e.currentTarget, t)}
+                  sx={{
+                    p: 0.5,
+                    bgcolor: isDarkMode ? alpha(theme.palette.action.hover, 0.3) : alpha(theme.palette.action.hover, 0.5),
+                    "&:hover": { bgcolor: isDarkMode ? alpha(theme.palette.action.hover, 0.5) : alpha(theme.palette.action.hover, 0.8) },
+                  }}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              )}
+            </>
+          ) : (
+            /* Full layout: checkbox + icon + content + menu */
+            <>
+              {/* Checkbox */}
+              <Tooltip
+                title={
+                  t.isVirtual
+                    ? "Mark recurring occurrence as paid"
+                    : t.isPaid !== false
+                      ? "Paid"
+                      : "Not paid"
+                }
+              >
+                <Checkbox
+                  checked={t.isPaid !== false}
+                  onChange={(e) =>
+                    onTogglePaid(
+                      t.isVirtual && t.originalTransactionId
+                        ? t.originalTransactionId
+                        : t.id,
+                      e.target.checked
+                    )
+                  }
+                  size="small"
+                  color={t.isVirtual ? "info" : "success"}
+                  sx={{ mt: -0.5, ml: -1 }}
+                />
+              </Tooltip>
+
+              {/* Icon */}
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  background: isDarkMode
+                    ? `linear-gradient(135deg, ${alpha(accentColor, 0.2)} 0%, ${alpha(accentColor, 0.1)} 100%)`
+                    : `linear-gradient(135deg, ${isIncome ? "#D1FAE5" : "#FEE2E2"} 0%, ${alpha(isIncome ? "#D1FAE5" : "#FEE2E2", 0.6)} 100%)`,
+                  border: `1px solid ${isDarkMode ? alpha(accentColor, 0.2) : alpha(accentColor, 0.15)}`,
+                  boxShadow: isDarkMode
+                    ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
+                    : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
                 }}
               >
-                {t.description}
-              </Typography>
-              <Typography
-                variant="body2"
-                fontWeight={700}
-                color={isIncome ? "success.main" : "error.main"}
-                sx={{ 
-                  flexShrink: 0, 
-                  fontSize: "0.95rem",
-                  ...privacyStyles, 
-                  ...noWrapStyle 
-                }}
-              >
-                {isIncome ? "+" : "-"} {format(t.amount || 0)}
-              </Typography>
-            </Box>
+                {isIncome ? (
+                  <ArrowUpIcon sx={{ fontSize: 16, color: accentColor }} />
+                ) : (
+                  <ArrowDownIcon sx={{ fontSize: 16, color: accentColor }} />
+                )}
+              </Box>
 
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                mt: 0.5,
-                flexWrap: "wrap",
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {formatDateShort(t.date)}
-              </Typography>
-              <Typography variant="caption" color="text.disabled">
-                •
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {t.category}
-              </Typography>
-              <Typography variant="caption" color="text.disabled">
-                •
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {t.paymentMethod}
-              </Typography>
-            </Box>
+              {/* Content */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "0.925rem", color: "text.primary" }}
+                  >
+                    {t.description}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight={700}
+                    color={isIncome ? "success.main" : "error.main"}
+                    sx={{ flexShrink: 0, fontSize: "0.95rem", ...privacyStyles, ...noWrapStyle }}
+                  >
+                    {isIncome ? "+" : "-"} {format(t.amount || 0)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5, flexWrap: "wrap" }}>
+                  <Typography variant="caption" color="text.secondary">{formatDateShort(t.date)}</Typography>
+                  <Typography variant="caption" color="text.disabled">•</Typography>
+                  <Typography variant="caption" color="text.secondary">{t.category}</Typography>
+                  <Typography variant="caption" color="text.disabled">•</Typography>
+                  <Typography variant="caption" color="text.secondary">{t.paymentMethod}</Typography>
+                </Box>
+                <TransactionTags transaction={t} />
+              </Box>
 
-            {/* Tags */}
-            <TransactionTags transaction={t} />
-          </Box>
-
-          {/* Actions Menu Button */}
-          {onOpenMenu && (
-            <IconButton
-              size="small"
-              onClick={(e) => onOpenMenu(e.currentTarget, t)}
-              sx={{
-                bgcolor: isDarkMode
-                  ? alpha(theme.palette.action.hover, 0.3)
-                  : alpha(theme.palette.action.hover, 0.5),
-                "&:hover": {
-                  bgcolor: isDarkMode
-                    ? alpha(theme.palette.action.hover, 0.5)
-                    : alpha(theme.palette.action.hover, 0.8),
-                },
-              }}
-            >
-              <MoreVertIcon fontSize="small" />
-            </IconButton>
+              {/* Actions Menu Button */}
+              {onOpenMenu && (
+                <IconButton
+                  size="small"
+                  onClick={(e) => onOpenMenu(e.currentTarget, t)}
+                  sx={{
+                    bgcolor: isDarkMode ? alpha(theme.palette.action.hover, 0.3) : alpha(theme.palette.action.hover, 0.5),
+                    "&:hover": { bgcolor: isDarkMode ? alpha(theme.palette.action.hover, 0.5) : alpha(theme.palette.action.hover, 0.8) },
+                  }}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              )}
+            </>
           )}
         </CardContent>
 

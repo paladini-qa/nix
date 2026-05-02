@@ -5,11 +5,16 @@ import {
   Grid,
   Typography,
   IconButton,
+  Avatar,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   useTheme,
   alpha,
   Button,
   Divider,
 } from "@mui/material";
+import { Logout as LogoutIcon, Person as PersonIcon } from "@mui/icons-material";
 import {
   Close as CloseIcon,
   CreditCard as CreditCardIcon,
@@ -36,6 +41,10 @@ interface OthersGridModalProps {
   open: boolean;
   onClose: () => void;
   onNavigate: (view: AppCurrentView) => void;
+  displayName: string;
+  userEmail: string;
+  onLogout: () => void;
+  onOpenProfile: () => void;
 }
 
 interface GridItem {
@@ -72,6 +81,10 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
   open,
   onClose,
   onNavigate,
+  displayName,
+  userEmail,
+  onLogout,
+  onOpenProfile,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -236,6 +249,49 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
               </IconButton>
             </Box>
 
+            {/* Profile Card */}
+            <MotionBox
+              onClick={() => { onOpenProfile(); onClose(); }}
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              sx={{
+                p: 2,
+                mb: 3,
+                borderRadius: "16px",
+                cursor: "pointer",
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.background.default, 0.6)
+                  : alpha("#FFFFFF", 0.8),
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha(theme.palette.primary.main, 0.08)}`,
+                boxShadow: isDarkMode
+                  ? `0 4px 16px -4px ${alpha("#000000", 0.3)}`
+                  : `0 4px 16px -4px ${alpha(theme.palette.primary.main, 0.1)}`,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Avatar
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.1),
+                    color: "primary.main",
+                    fontWeight: 600,
+                    fontSize: 16,
+                  }}
+                >
+                  {displayName ? displayName.charAt(0).toUpperCase() : <PersonIcon fontSize="small" />}
+                </Avatar>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" fontWeight={600} noWrap color="text.primary">
+                    {displayName || "User"}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" noWrap sx={{ opacity: 0.8 }}>
+                    {userEmail}
+                  </Typography>
+                </Box>
+              </Box>
+            </MotionBox>
+
             {/* Grid — Geral */}
             {renderGrid(mainGridItems, 0)}
 
@@ -288,6 +344,33 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                 Finance Control AI — Análise Inteligente
               </Button>
             </MotionBox>
+
+            {/* Logout */}
+            <ListItemButton
+              onClick={() => { onLogout(); onClose(); }}
+              sx={{
+                mt: 2,
+                borderRadius: "16px",
+                py: 1.5,
+                minHeight: 44,
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.error.main, 0.08)
+                  : alpha(theme.palette.error.main, 0.04),
+                "&:hover": {
+                  bgcolor: alpha(theme.palette.error.main, 0.12),
+                  color: "error.main",
+                  "& .MuiListItemIcon-root": { color: "error.main" },
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 44 }}>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary="Sair"
+                primaryTypographyProps={{ fontWeight: 500, fontSize: 15 }}
+              />
+            </ListItemButton>
           </MotionBox>
         )}
       </AnimatePresence>
