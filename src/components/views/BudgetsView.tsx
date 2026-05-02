@@ -372,7 +372,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
       <Grid container spacing={gridSpacing}>
         <Grid size={{ xs: 6, md: 3 }}>
           <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
               Total Orçado
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em" }}>
@@ -382,7 +382,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
               Total Gasto
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em" }}>
@@ -392,7 +392,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
               Estourado
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.overBudgetCount > 0 ? "#DC2626" : "#059669", letterSpacing: "-0.02em" }}>
@@ -402,7 +402,7 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
               Próx. Limite
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.warningCount > 0 ? "#F59E0B" : "text.primary", letterSpacing: "-0.02em" }}>

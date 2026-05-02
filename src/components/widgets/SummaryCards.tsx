@@ -284,7 +284,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.08em",
-                  fontSize: isMobile ? 9 : 12,
+                  fontSize: isMobile ? 10 : 12,
                   fontWeight: 700,
                   display: "block",
                   mb: 0.5,
@@ -398,7 +398,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.08em",
-                  fontSize: isMobile ? 9 : 12,
+                  fontSize: isMobile ? 10 : 12,
                   fontWeight: 700,
                   display: "block",
                   mb: 0.5,
@@ -530,7 +530,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
                 sx={{
                   color: "text.secondary",
                   letterSpacing: "0.08em",
-                  fontSize: isMobile ? 9 : 12,
+                  fontSize: isMobile ? 10 : 12,
                   fontWeight: 700,
                   display: "block",
                   mb: 0.5,

@@ -113,7 +113,7 @@ const DashboardMainSection: React.FC = () => {
             display: "flex",
             alignItems: "center",
             flexWrap: "wrap",
-            gap: { xs: 0.5, sm: 1.5 },
+            gap: { xs: 1, sm: 1.5 },
             width: { xs: "100%", sm: "auto" },
           }}
         >
@@ -136,11 +136,11 @@ const DashboardMainSection: React.FC = () => {
               onClick={handleRefetch}
               disabled={isRefetching}
               sx={{
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 border: 1,
                 borderColor: "divider",
-                borderRadius: "20px",
+                borderRadius: "22px",
               }}
             >
               <RefreshIcon

@@ -131,7 +131,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                   fontWeight: 600,
                   textAlign: "center",
                   color: theme.palette.primary.main,
-                  fontSize: "0.65rem",
+                  fontSize: "0.7rem",
                   lineHeight: 1.2,
                 }}
               >
@@ -148,7 +148,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
     fontWeight: 700,
     color: "text.disabled",
     letterSpacing: "0.08em",
-    fontSize: "0.6rem",
+    fontSize: "0.7rem",
     textTransform: "uppercase" as const,
     mb: 1,
     display: "block",
@@ -193,7 +193,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            sx={{ p: 3, pb: 4 }}
+            sx={{ p: 3, pb: "calc(32px + env(safe-area-inset-bottom, 0px))" }}
           >
             {/* Header */}
             <Box
@@ -217,8 +217,8 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
               <IconButton
                 onClick={onClose}
                 sx={{
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   color: "text.secondary",
                   transition: "all 0.2s ease",
                   "&:hover": {

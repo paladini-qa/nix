@@ -743,7 +743,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     sx={{
                       color: "text.secondary",
                       letterSpacing: "0.08em",
-                      fontSize: isMobile ? 9 : 10,
+                      fontSize: isMobile ? 10 : 11,
                       fontWeight: 600,
                       display: "block",
                       mb: 0.25,
@@ -877,7 +877,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     sx={{
                       color: "text.secondary",
                       letterSpacing: "0.08em",
-                      fontSize: isMobile ? 9 : 10,
+                      fontSize: isMobile ? 10 : 11,
                       fontWeight: 600,
                       display: "block",
                       mb: 0.25,
@@ -1006,7 +1006,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     sx={{
                       color: "text.secondary",
                       letterSpacing: "0.08em",
-                      fontSize: isMobile ? 9 : 10,
+                      fontSize: isMobile ? 10 : 11,
                       fontWeight: 600,
                       display: "block",
                       mb: 0.25,

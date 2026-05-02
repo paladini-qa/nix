@@ -286,7 +286,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           color: "text.secondary",
           fontWeight: 600,
           letterSpacing: "0.1em",
-          fontSize: 11,
+          fontSize: 12,
         }}
       >
         {title}
@@ -406,6 +406,8 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         <IconButton
           onClick={onClose}
           sx={{
+            width: 44,
+            height: 44,
             color: "text.secondary",
             touchAction: "manipulation",
             transition: "all 0.2s ease",

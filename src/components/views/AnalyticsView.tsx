@@ -579,7 +579,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               },
             }}
           >
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600, position: "relative", zIndex: 1 }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600, position: "relative", zIndex: 1 }}>
               Média Mensal (Receita)
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
@@ -613,7 +613,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               },
             }}
           >
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600, position: "relative", zIndex: 1 }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600, position: "relative", zIndex: 1 }}>
               Média Mensal (Despesa)
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
@@ -647,7 +647,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               },
             }}
           >
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600, position: "relative", zIndex: 1 }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600, position: "relative", zIndex: 1 }}>
               Taxa de Economia
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
@@ -681,7 +681,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               },
             }}
           >
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600, position: "relative", zIndex: 1 }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600, position: "relative", zIndex: 1 }}>
               Total de Transações
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#8b5cf6", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>

@@ -341,7 +341,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
             }}
           >
             <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
-              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
                 Total Balance
               </Typography>
               <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.totalBalance >= 0 ? "#059669" : "#DC2626", letterSpacing: "-0.02em" }}>
@@ -375,7 +375,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
             }}
           >
             <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
-              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
                 Assets
               </Typography>
               <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em" }}>
@@ -409,7 +409,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
             }}
           >
             <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
-              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
                 Liabilities
               </Typography>
               <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em" }}>
@@ -443,7 +443,7 @@ const AccountsView: React.FC<AccountsViewProps> = ({
             }}
           >
             <CardContent sx={{ position: "relative", zIndex: 1, p: isMobile ? 1.5 : 2, textAlign: "center", "&:last-child": { pb: isMobile ? 1.5 : 2 } }}>
-              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 9 : 10, fontWeight: 600 }}>
+              <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
                 Active Accounts
               </Typography>
               <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em" }}>

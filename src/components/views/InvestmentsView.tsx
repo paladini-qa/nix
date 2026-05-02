@@ -916,7 +916,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                     sx={{
                       color: "text.secondary",
                       letterSpacing: "0.08em",
-                      fontSize: isMobile ? 9 : 10,
+                      fontSize: isMobile ? 10 : 11,
                       fontWeight: 600,
                       position: "relative",
                       zIndex: 1,

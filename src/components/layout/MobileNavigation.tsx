@@ -89,7 +89,7 @@ const NavItem: React.FC<{
     <Box
       component="span"
       sx={{
-        fontSize: "0.7rem",
+        fontSize: "0.75rem",
         fontWeight: isActive ? 700 : 500,
         lineHeight: 1.2,
         textAlign: "center",

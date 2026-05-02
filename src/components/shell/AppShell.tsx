@@ -179,7 +179,10 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: isMobile ? 2 : 3,
+          px: isMobile ? 2 : 3,
+          pt: isMobile
+            ? "calc(64px + env(safe-area-inset-top, 0px) + 16px)"
+            : 3,
           pb: isMobile ? "calc(80px + env(safe-area-inset-bottom, 0px))" : 3,
           width: "100%",
           overflowX: "hidden",
