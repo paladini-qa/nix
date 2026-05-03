@@ -13,7 +13,6 @@ import {
   IconButton,
   Divider,
 } from "@mui/material";
-import { Avatar, Text } from "@radix-ui/themes";
 import {
   Dashboard as DashboardIcon,
   AccountBalanceWallet as WalletIcon,
@@ -114,6 +113,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
     { icon: PaymentIcon, label: "Pagamentos", id: "paymentMethods" },
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
+  ];
+
+  const reportsNavItems: NavItem[] = [
+    { icon: GoalsIcon, label: "Metas", id: "goals" },
+    { icon: BudgetsIcon, label: "Orçamentos", id: "budgets" },
+    { icon: PlanningIcon, label: "Planejamento", id: "planning" },
     { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },
     { icon: SubscriptionsIcon, label: t("nav.subscriptions"), id: "subscriptions" },
   ];
@@ -141,21 +146,21 @@ const Sidebar: React.FC<SidebarProps> = ({
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           sx={{
-            borderRadius: "16px",
-            py: isSubItem ? 0.5 : 0.75,
-            px: 1.5,
+            borderRadius: "10px",
+            py: isSubItem ? 0.5 : 0.6,
+            px: 1.25,
             ml: isSubItem ? 2 : 0,
             position: "relative",
             overflow: "hidden",
             ...(isActive && {
               bgcolor: isDarkMode
-                ? alpha(theme.palette.primary.main, 0.15)
-                : alpha(theme.palette.primary.main, 0.08),
+                ? alpha(theme.palette.primary.main, 0.18)
+                : alpha(theme.palette.primary.main, 0.12),
             }),
             "&:hover": {
               bgcolor: isDarkMode
-                ? alpha(theme.palette.primary.main, 0.1)
-                : alpha(theme.palette.primary.main, 0.05),
+                ? alpha(theme.palette.primary.main, 0.12)
+                : alpha(theme.palette.primary.main, 0.07),
             },
           }}
         >
@@ -219,8 +224,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             primary={item.label}
             primaryTypographyProps={{
               fontWeight: isActive ? 600 : 500,
-              fontSize: isSubItem ? 13 : 14,
-              color: isActive ? "primary.main" : "text.primary",
+              fontSize: isSubItem ? 12.5 : 13.5,
+              color: isActive ? "primary.main" : "text.secondary",
               sx: { transition: "all 0.2s ease" },
             }}
           />
@@ -259,13 +264,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         top: 0,
         height: "100vh",
         boxSizing: "border-box",
-        border: "none",
-        boxShadow: isDarkMode
-          ? `1px 0 24px -8px rgba(28, 16, 8, 0.5)`
-          : `1px 0 24px -8px rgba(124, 66, 38, 0.10)`,
-        bgcolor: isDarkMode
-          ? theme.palette.background.paper
-          : "#FEF8F2",
+        borderRight: `1px solid ${theme.palette.divider}`,
+        bgcolor: theme.palette.background.paper,
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -278,27 +278,33 @@ const Sidebar: React.FC<SidebarProps> = ({
         animate="visible"
         sx={{ flex: 1, px: 2, py: 2, overflowY: "auto" }}
       >
-        {/* Brand Accent Header */}
-        <Box sx={{ mb: 2, px: 1 }}>
-          <Typography
-            variant="caption"
+        {/* Brand Header */}
+        <Box sx={{ mb: 2.5, px: 0.5, display: "flex", alignItems: "center", gap: 1.25 }}>
+          <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.75,
-              fontWeight: 700,
-              color: "text.secondary",
-              letterSpacing: "0.08em",
-              fontSize: "0.65rem",
-              textTransform: "uppercase",
+              width: 36, height: 36, borderRadius: "11px", flexShrink: 0,
+              background: "linear-gradient(135deg, #a855f7 0%, #c084fc 100%)",
+              display: "grid", placeItems: "center",
+              boxShadow: "0 6px 16px -6px rgba(168,85,247,0.6)",
             }}
           >
-             <span>Finance Control</span>
-          </Typography>
+            <Typography sx={{ fontWeight: 800, color: "white", fontSize: 17, lineHeight: 1 }}>N</Typography>
+          </Box>
+          <Box>
+            <Typography sx={{ fontWeight: 700, fontSize: 15, letterSpacing: "-0.01em", lineHeight: 1.2, color: "text.primary" }}>
+              Nix Finance
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: "text.disabled", fontWeight: 500 }}>
+              {new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+            </Typography>
+          </Box>
         </Box>
 
-        {/* Main Navigation Items */}
-        <List sx={{ mt: 0 }}>
+        {/* Main Section */}
+        <Typography variant="caption" sx={{ px: 1.25, fontWeight: 700, color: "text.disabled", letterSpacing: "0.08em", fontSize: "0.6rem", textTransform: "uppercase" }}>
+          Main
+        </Typography>
+        <List sx={{ mt: 0.25 }}>
           {mainNavItems.map((item, idx) => (
             <motion.div key={item.id} variants={itemVariants}>
               {renderNavItem(item, false, idx)}
@@ -306,20 +312,27 @@ const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </List>
 
-
+        {/* Reports Section */}
+        <Box sx={{ mt: 0.5, mb: 0.25, px: 1 }}>
+          <Divider sx={{ mb: 1, opacity: 0.4 }} />
+          <Typography variant="caption" sx={{ fontWeight: 700, color: "text.disabled", letterSpacing: "0.08em", fontSize: "0.6rem", textTransform: "uppercase" }}>
+            Relatórios
+          </Typography>
+        </Box>
+        <List sx={{ mt: 0 }}>
+          {reportsNavItems.map((item, idx) => (
+            <motion.div key={item.id} variants={itemVariants}>
+              {renderNavItem(item, false, idx)}
+            </motion.div>
+          ))}
+        </List>
 
         {/* Tools Section */}
         <Box sx={{ mt: 0.5, mb: 0.25, px: 1 }}>
           <Divider sx={{ mb: 1, opacity: 0.4 }} />
           <Typography
             variant="caption"
-            sx={{
-              fontWeight: 700,
-              color: "text.disabled",
-              letterSpacing: "0.08em",
-              fontSize: "0.6rem",
-              textTransform: "uppercase",
-            }}
+            sx={{ fontWeight: 700, color: "text.disabled", letterSpacing: "0.08em", fontSize: "0.6rem", textTransform: "uppercase" }}
           >
             Ferramentas
           </Typography>
@@ -339,96 +352,64 @@ const Sidebar: React.FC<SidebarProps> = ({
       <MotionBox
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        sx={{ px: 2, pb: 2, pt: 1 }}
+        sx={{ px: "14px", pb: "14px", pt: 1, borderTop: `1px solid ${alpha(theme.palette.divider, 0.6)}` }}
       >
         <MotionBox
           onClick={onOpenProfile}
-          whileHover={{ y: -2, scale: 1.01 }}
+          whileHover={{ y: -1 }}
           whileTap={{ scale: 0.99 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           sx={{
-            p: 1.5,
-            borderRadius: "16px",
+            p: 1,
+            borderRadius: "10px",
             cursor: "pointer",
-            bgcolor: isDarkMode
-              ? alpha(theme.palette.background.default, 0.6)
-              : alpha("#FEF3E2", 0.85),
-            border: `1px solid ${
-              isDarkMode
-                ? alpha(theme.palette.primary.main, 0.12)
-                : alpha("#C4885F", 0.15)
-            }`,
-            boxShadow: isDarkMode
-              ? `0 4px 16px -4px rgba(28, 16, 8, 0.35)`
-              : `0 4px 16px -4px rgba(124, 66, 38, 0.10)`,
+            "&:hover": { bgcolor: alpha(theme.palette.action.hover, 0.6) },
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Avatar
-              size="3"
-              radius="full"
-              fallback={displayName ? displayName.charAt(0).toUpperCase() : "U"}
-              style={{
-                width: 42,
-                height: 42,
-                minWidth: 42,
-                minHeight: 42,
-              }}
-            />
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography
-                variant="body2"
-                fontWeight={600}
-                noWrap
-                color="text.primary"
-              >
-                {displayName || "User"}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                noWrap
-                sx={{ opacity: 0.8 }}
-              >
-                {userEmail}
-              </Typography>
-            </Box>
-            <MotionBox
-              animate={{ x: [0, 3, 0] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "easeInOut",
+          <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Box
+              sx={{
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #a855f7, #c084fc)",
+                color: "white",
+                display: "grid",
+                placeItems: "center",
+                fontWeight: 700,
+                fontSize: 13,
+                flexShrink: 0,
               }}
             >
-              <ChevronRightIcon
-                fontSize="small"
-                sx={{ color: "text.disabled" }}
-              />
-            </MotionBox>
+              {displayName ? displayName.charAt(0).toUpperCase() : "U"}
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography sx={{ fontWeight: 600, fontSize: 13, color: "text.primary" }} noWrap>
+                {displayName || "User"}
+              </Typography>
+              <Typography sx={{ fontSize: 11.5, color: "text.disabled" }} noWrap>
+                Pro plan
+              </Typography>
+            </Box>
+            <ChevronRightIcon fontSize="small" sx={{ color: "text.disabled", fontSize: 14 }} />
           </Box>
         </MotionBox>
 
         {/* Sign Out Button */}
         <MotionListItemButton
           onClick={onLogout}
-          whileHover={{ x: 4 }}
+          whileHover={{ x: 2 }}
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
           sx={{
-            mt: 1.5,
-            borderRadius: "16px",
-            py: 1,
+            mt: 1,
+            borderRadius: "10px",
+            py: 0.75,
             color: "text.secondary",
-            bgcolor: isDarkMode
-              ? alpha(theme.palette.error.main, 0.08)
-              : alpha(theme.palette.error.main, 0.04),
             "&:hover": {
-              bgcolor: alpha(theme.palette.error.main, 0.12),
+              bgcolor: alpha(theme.palette.error.main, 0.08),
               color: "error.main",
-              "& .MuiListItemIcon-root": {
-                color: "error.main",
-              },
+              "& .MuiListItemIcon-root": { color: "error.main" },
             },
           }}
         >
@@ -443,10 +424,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </ListItemIcon>
           <ListItemText
             primary={t("nav.logout")}
-            primaryTypographyProps={{
-              fontWeight: 500,
-              fontSize: 14,
-            }}
+            primaryTypographyProps={{ fontWeight: 500, fontSize: 13.5 }}
           />
         </MotionListItemButton>
 

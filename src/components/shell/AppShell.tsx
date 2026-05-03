@@ -8,6 +8,7 @@ import { useSettings, useNotification } from "../../contexts";
 import { ROUTE_VIEWS, VIEW_ROUTES } from "../../routes";
 import { AppCurrentView } from "../../types/appView";
 import Sidebar from "./Sidebar";
+import Topbar from "./Topbar";
 import AppViewSwitcher from "./AppViewSwitcher";
 import ProfileModal from "./ProfileModal";
 import GlobalSearch from "../panels/GlobalSearch";
@@ -144,8 +145,8 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {!isMobile && (
-        <Sidebar 
-          currentView={currentView} 
+        <Sidebar
+          currentView={currentView}
           onNavigate={handleNavigate}
           onLogout={handleLogout}
           displayName={displayName}
@@ -153,7 +154,32 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
           onOpenProfile={() => setIsProfileModalOpen(true)}
         />
       )}
-      
+
+      {/* Desktop: flex-col wrapper so Topbar sits above content */}
+      {!isMobile && (
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+          <Topbar
+            onOpenSearch={() => setIsSearchOpen(true)}
+            onOpenNewTransaction={() => {
+              setEditingTransaction(null);
+              setIsFormOpen(true);
+            }}
+          />
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              overflowX: "hidden",
+              overflowY: "auto",
+            }}
+          >
+            <Suspense fallback={null}>
+              <AppViewSwitcher currentView={currentView} session={session} />
+            </Suspense>
+          </Box>
+        </Box>
+      )}
+
       {isMobile && (
         <>
           <MobileHeader
@@ -172,37 +198,30 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
             userEmail={session.user.email || ""}
             onOpenProfile={() => setIsProfileModalOpen(true)}
           />
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              px: 2,
+              pt: "calc(64px + env(safe-area-inset-top, 0px) + 16px)",
+              pb: "calc(80px + env(safe-area-inset-bottom, 0px))",
+              width: "100%",
+              overflowX: "hidden",
+            }}
+          >
+            <PullToRefreshIndicator isRefreshing={isRefreshing} pullOffset={pullOffset} />
+            <Suspense fallback={null}>
+              <AppViewSwitcher currentView={currentView} session={session} />
+            </Suspense>
+          </Box>
         </>
       )}
-
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          px: isMobile ? 2 : 3,
-          pt: isMobile
-            ? "calc(64px + env(safe-area-inset-top, 0px) + 16px)"
-            : 3,
-          pb: isMobile ? "calc(80px + env(safe-area-inset-bottom, 0px))" : 3,
-          width: "100%",
-          overflowX: "hidden",
-        }}
-      >
-        {isMobile && <PullToRefreshIndicator isRefreshing={isRefreshing} pullOffset={pullOffset} />}
-        
-        <Suspense fallback={null}>
-          <AppViewSwitcher currentView={currentView} session={session} />
-        </Suspense>
-      </Box>
 
       {isMobile && (
         <MobileNavigation
           currentView={currentView}
           onNavigate={handleNavigate}
-          onCreateTransaction={() => {
-            setWalletInitialContext(null);
-            setIsFormOpen(true);
-          }}
+          onOpenProfile={() => setIsProfileModalOpen(true)}
         />
       )}
 

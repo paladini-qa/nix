@@ -311,61 +311,51 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
   };
 
   return (
-    <Box sx={{ 
-      display: "flex", 
-      flexDirection: "column", 
+    <Box sx={{
+      display: "flex",
+      flexDirection: "column",
       gap: isMobile ? 2 : 3,
-      // Extra padding para bottom navigation + FABs
-      pb: { xs: "180px", md: 0 },
+      px: { xs: 0, md: "28px" },
+      pt: { xs: 0, md: "24px" },
+      pb: { xs: "180px", md: "60px" },
     }}>
       {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: 2,
-        }}
-      >
+      <Box sx={{ display: "flex", alignItems: "flex-end", gap: "14px", flexWrap: "wrap" }}>
         <Box>
-          <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-            Orçamentos
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
+            Budgets
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Defina limites de gastos por categoria
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+            Set spending limits per category
           </Typography>
         </Box>
 
         {!isMobile && (
-          <NixButton
-            size="small"
-            variant="soft"
-            color="purple"
-            onClick={handleCopyFromPreviousMonth}
-          >
-            <CopyIcon /> Copiar Anterior
-          </NixButton>
-        )}
-
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <DateFilter
-            month={selectedMonth}
-            year={selectedYear}
-            onDateChange={onDateChange}
-            compact={isMobile}
-          />
-          {!isMobile && (
-              <NixButton
+          <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
+            <NixButton
+              size="small"
+              variant="soft"
+              color="purple"
+              onClick={handleCopyFromPreviousMonth}
+            >
+              <CopyIcon /> Copy Previous
+            </NixButton>
+            <DateFilter
+              month={selectedMonth}
+              year={selectedYear}
+              onDateChange={onDateChange}
+              compact={isMobile}
+            />
+            <NixButton
               size="medium"
               variant="solid"
               color="purple"
               onClick={() => handleOpenForm()}
             >
-              <AddIcon /> Novo Orçamento
+              <AddIcon /> New Budget
             </NixButton>
-          )}
-        </Box>
+          </Box>
+        )}
       </Box>
 
       {/* Summary Cards */}

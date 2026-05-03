@@ -319,15 +319,15 @@ export const lightTheme = createTheme({
       contrastText: "#ffffff",
     },
     background: {
-      default: "#f8fafc",
+      default: "#fafafa",
       paper:   "#ffffff",
     },
     text: {
-      primary:   "#1e1b4b",
-      secondary: "#4c1d95",
-      disabled:  "#a0a0c0",
+      primary:   "#18181b",
+      secondary: "#52525b",
+      disabled:  "#a1a1aa",
     },
-    divider: alpha(colors.primary, 0.15),
+    divider: "#e4e4e7",
   },
 });
 

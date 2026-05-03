@@ -96,7 +96,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           sx={{ width: 32, height: 32, objectFit: "contain" }}
         />
         <Text size="5" weight="bold" style={{ letterSpacing: "-0.02em", fontSize: 20 }}>
-          Finance Control
+          Nix Finance
         </Text>
       </MotionBox>
 

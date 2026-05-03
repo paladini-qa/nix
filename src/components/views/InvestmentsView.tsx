@@ -588,30 +588,21 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
         display: "flex",
         flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        pb: { xs: "140px", md: 0 },
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "24px" },
+        pb: { xs: "140px", md: "60px" },
         width: "100%",
         minWidth: 0,
       }}
     >
       {/* Header */}
-      <Box display="flex" alignItems="center" gap={1.5}>
-        <Box
-          sx={{
-            p: 1,
-            borderRadius: "20px",
-            bgcolor: alpha(theme.palette.primary.main, 0.1),
-            color: "primary.main",
-            display: "flex",
-          }}
-        >
-          <TrendingUpIcon />
-        </Box>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "14px", mb: "22px" }}>
         <Box>
-          <Typography variant="h5" fontWeight={700}>
-            Investimentos
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
+            Investments
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Acompanhe aportes, rendimentos e evolução do portfólio
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+            Track contributions, returns and portfolio growth
           </Typography>
         </Box>
       </Box>

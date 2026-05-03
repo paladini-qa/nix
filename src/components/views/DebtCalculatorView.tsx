@@ -161,12 +161,12 @@ const DebtCalculatorView: React.FC = () => {
   );
 
   return (
-    <Box ref={containerRef} sx={{ display: "flex", flexDirection: "column", gap: 3, pb: { xs: "140px", md: 0 } }}>
+    <Box ref={containerRef} sx={{ display: "flex", flexDirection: "column", gap: 3, px: { xs: 0, md: "28px" }, pt: { xs: 0, md: "24px" }, pb: { xs: "140px", md: "60px" } }}>
       {/* Header */}
-      <Box>
-        <Typography variant="h5" fontWeight="bold">Calculadora de Dívidas</Typography>
-        <Typography variant="body2" color="text.secondary">
-          Compare amortização Price e SAC, simule pagamentos e visualize a evolução do saldo
+      <Box sx={{ mb: "22px" }}>
+        <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>Debt Calculator</Typography>
+        <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+          Compare Price vs SAC amortization, simulate payments and track balance evolution
         </Typography>
       </Box>
 

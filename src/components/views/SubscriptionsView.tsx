@@ -600,40 +600,31 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
         display: "flex",
         flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        pb: { xs: "140px", md: 0 },
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "24px" },
+        pb: { xs: "140px", md: "60px" },
         width: "100%",
         minWidth: 0,
       }}
     >
-      {/* Cabeçalho */}
+      {/* Header */}
       <Box
         display="flex"
-        alignItems="center"
+        alignItems="flex-end"
         justifyContent="space-between"
-        gap={2}
+        gap="14px"
         flexWrap="wrap"
+        sx={{ mb: "22px" }}
       >
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <Box
-            sx={{
-              p: 1,
-              borderRadius: "20px",
-              bgcolor: alpha(primary, 0.1),
-              color: "primary.main",
-              display: "flex",
-            }}
-          >
-            <SubscriptionsIcon />
-          </Box>
-          <Box>
-            <Typography variant="h5" fontWeight={700}>
-              Assinaturas
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Acompanhe seus serviços e mensalidades
-            </Typography>
-          </Box>
+        <Box>
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
+            Subscriptions
+          </Typography>
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+            Track your recurring services and plans
+          </Typography>
         </Box>
+        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
 
         <Stack direction="row" gap={1} alignItems="center">
           <FormControl size="small" sx={{ minWidth: 110 }}>
@@ -668,6 +659,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
             {isMobile ? "Nova" : "Nova assinatura"}
           </Button>
         </Stack>
+        </Box>
       </Box>
 
       {/* Cards de resumo */}

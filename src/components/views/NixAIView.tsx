@@ -1390,6 +1390,8 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         width: "100%",
         overflow: "hidden",
         position: 'relative',
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "16px" },
       }}
       onPaste={handlePaste}
       onDrop={handleDrop}

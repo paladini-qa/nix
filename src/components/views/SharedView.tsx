@@ -679,8 +679,9 @@ const SharedView: React.FC<SharedViewProps> = ({
         display: "flex",
         flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        // Extra padding para bottom navigation + FABs
-        pb: { xs: "180px", md: 0 },
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "24px" },
+        pb: { xs: "180px", md: "60px" },
       }}
     >
       {/* Header */}
@@ -688,29 +689,32 @@ const SharedView: React.FC<SharedViewProps> = ({
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-start",
+          alignItems: "flex-end",
           flexWrap: "wrap",
-          gap: 2,
+          gap: "14px",
+          mb: "22px",
         }}
       >
         <Box>
-          <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-            Despesas Compartilhadas
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
+            Shared expenses
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Gerencie contas divididas com amigos
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+            Manage bills split with friends
           </Typography>
         </Box>
 
         {!isMobile && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onNewTransaction}
-            sx={CREATE_TRANSACTION_BUTTON.sx}
-          >
-            {CREATE_TRANSACTION_BUTTON.label}
-          </Button>
+          <Box sx={{ ml: "auto", display: "flex", gap: "10px", alignItems: "center" }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onNewTransaction}
+              sx={{ ...CREATE_TRANSACTION_BUTTON.sx, borderRadius: "10px", px: "14px", py: "8px", fontSize: 13 }}
+            >
+              {CREATE_TRANSACTION_BUTTON.label}
+            </Button>
+          </Box>
         )}
       </Box>
 

@@ -1,19 +1,17 @@
-import React, { useState } from "react";
+import React from "react";
 import { Box, useTheme, alpha } from "@mui/material";
 import {
+  GridView as HomeIcon,
   Receipt as TransactionsIcon,
-  CreditCard as PaymentMethodsIcon,
-  MoreVert as OthersIcon,
-  Add as AddIcon,
-  GridView as GridViewIcon,
+  Category as CategoriesIcon,
+  Person as ProfileIcon,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import OthersGridModal from "./OthersGridModal";
+import { AutoAwesome as NixAIIcon } from "@mui/icons-material";
 
 const MotionBox = motion.create(Box);
 
-// Item de navegação reutilizável com indicador animado e touch target correto
 const NavItem: React.FC<{
   label: string;
   icon: React.ReactNode;
@@ -36,7 +34,6 @@ const NavItem: React.FC<{
       alignItems: "center",
       justifyContent: "center",
       gap: 0.25,
-      // Touch target mínimo 44×44px (Apple HIG / Material)
       minWidth: 44,
       minHeight: 44,
       flex: "1 1 0",
@@ -49,7 +46,6 @@ const NavItem: React.FC<{
       "&:active": { transform: "scale(0.92)" },
     }}
   >
-    {/* Pill indicadora animada atrás do ícone */}
     <AnimatePresence>
       {isActive && (
         <motion.span
@@ -89,7 +85,7 @@ const NavItem: React.FC<{
     <Box
       component="span"
       sx={{
-        fontSize: "0.75rem",
+        fontSize: "0.72rem",
         fontWeight: isActive ? 700 : 500,
         lineHeight: 1.2,
         textAlign: "center",
@@ -104,81 +100,40 @@ const NavItem: React.FC<{
   </Box>
 );
 
-// Altura da barra de navegação (para calcular fade gradient)
-const NAV_HEIGHT = 80;
+const NAV_HEIGHT = 72;
 
-// View type matching App.tsx
 import { AppCurrentView } from "../../types/appView";
 
 interface MobileNavigationProps {
   currentView: AppCurrentView;
   onNavigate: (view: AppCurrentView) => void;
-  onCreateTransaction?: () => void;
+  onOpenProfile?: () => void;
 }
 
-/**
- * MobileNavigation - Bottom navigation bar for mobile with glassmorphism
- * New layout: Dashboard, Transactions, Create Button, Payment Methods, Others
- */
 const MobileNavigation: React.FC<MobileNavigationProps> = ({
   currentView,
   onNavigate,
-  onCreateTransaction,
+  onOpenProfile,
 }) => {
   const theme = useTheme();
   const { t } = useTranslation();
-  const isDarkMode = theme.palette.mode === "dark";
-  const [othersModalOpen, setOthersModalOpen] = useState(false);
-
-  // Determina qual item está ativo (considerando que "others" não é uma view real)
-  const getActiveValue = () => {
-    if (
-      currentView === "splits" ||
-      currentView === "shared" ||
-      currentView === "recurring" ||
-      currentView === "categories" ||
-      currentView === "nixai" ||
-      currentView === "goals" ||
-      currentView === "budgets" ||
-      currentView === "analytics" ||
-      currentView === "planning" ||
-      currentView === "import" ||
-      currentView === "fiscal-report" ||
-      currentView === "debt-calculator" ||
-      currentView === "subscriptions"
-    ) {
-      return "others";
-    }
-    return currentView;
-  };
-
-  const handleNavigation = (value: string) => {
-    if (value === "others") {
-      setOthersModalOpen(true);
-    } else if (value === "create") {
-      onCreateTransaction?.();
-    } else {
-      onNavigate(value as AppCurrentView);
-    }
-  };
 
   return (
     <>
-      {/* Gradiente de fade-out para suavizar transição de conteúdo */}
+      {/* Fade gradient above nav bar */}
       <Box
         sx={{
           position: "fixed",
           bottom: `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
           left: 0,
           right: 0,
-          height: 48,
-          background: isDarkMode
-            ? `linear-gradient(to bottom, transparent 0%, ${theme.palette.background.default} 100%)`
-            : `linear-gradient(to bottom, transparent 0%, ${theme.palette.background.default} 100%)`,
+          height: 40,
+          background: `linear-gradient(to bottom, transparent 0%, ${theme.palette.background.default} 100%)`,
           pointerEvents: "none",
           zIndex: 1199,
         }}
       />
+
       <MotionBox
         component="nav"
         initial={{ y: 100 }}
@@ -190,15 +145,13 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           left: 0,
           right: 0,
           zIndex: 1200,
-          bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.92)
-            : alpha("#FEF8F2", 0.96),
+          bgcolor: alpha(theme.palette.background.paper, 0.96),
           backdropFilter: "blur(20px) saturate(160%)",
           WebkitBackdropFilter: "blur(20px) saturate(160%)",
-          borderTop: `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.12) : alpha("#C4885F", 0.18)}`,
-          boxShadow: isDarkMode
-            ? `0 -4px 20px -4px rgba(28, 16, 8, 0.5)`
-            : `0 -4px 20px -4px rgba(124, 66, 38, 0.10)`,
+          borderTop: `1px solid ${theme.palette.divider}`,
+          boxShadow: theme.palette.mode === "dark"
+            ? `0 -4px 20px -4px rgba(0,0,0,0.5)`
+            : `0 -4px 20px -4px rgba(0,0,0,0.06)`,
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
           borderRadius: 0,
         }}
@@ -209,41 +162,40 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             alignItems: "center",
             justifyContent: "space-evenly",
             height: NAV_HEIGHT,
-            px: 3,
+            px: 1,
             position: "relative",
-            maxWidth: "100%",
           }}
         >
+          {/* Home */}
           <NavItem
             label={t("nav.dashboard")}
-            icon={<GridViewIcon fontSize="inherit" />}
+            icon={<HomeIcon fontSize="inherit" />}
             isActive={currentView === "dashboard"}
-            onClick={() => handleNavigation("dashboard")}
+            onClick={() => onNavigate("dashboard")}
             primaryColor={theme.palette.primary.main}
           />
 
+          {/* Transactions */}
           <NavItem
             label={t("nav.transactions")}
             icon={<TransactionsIcon fontSize="inherit" />}
             isActive={currentView === "transactions"}
-            onClick={() => handleNavigation("transactions")}
+            onClick={() => onNavigate("transactions")}
             primaryColor={theme.palette.primary.main}
           />
 
-          {/* Create Button - FAB central */}
+          {/* Nix AI — center gradient circle */}
           <Box
             component="button"
             type="button"
-            aria-label="Create transaction"
-            onClick={() => handleNavigation("create")}
-            className="nix-fab-create"
+            aria-label="Nix AI"
+            onClick={() => onNavigate("nixai")}
             sx={{
               flex: "0 0 auto",
-              width: 52,
-              height: 52,
-              minWidth: 52,
-              minHeight: 52,
-              borderRadius: "16px",
+              width: 46,
+              height: 46,
+              minWidth: 46,
+              borderRadius: "50%",
               border: "none",
               padding: 0,
               cursor: "pointer",
@@ -252,47 +204,37 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: theme.palette.primary.main,
-              boxShadow: isDarkMode
-                ? `0 4px 16px rgba(167, 139, 250, 0.45)`
-                : `0 4px 16px rgba(124, 58, 237, 0.38)`,
+              background: "linear-gradient(135deg, #a855f7, #c084fc)",
+              boxShadow: "0 6px 14px -4px rgba(168,85,247,0.55)",
+              mt: "-10px",
               transition: "all 0.2s ease",
-              "&:active": { transform: "scale(0.94)" },
+              "&:active": { transform: "scale(0.93)" },
             }}
           >
-            <AddIcon sx={{ fontSize: 28, color: "#fff" }} />
+            <NixAIIcon sx={{ fontSize: 20, color: "#fff" }} />
           </Box>
 
+          {/* Categories */}
           <NavItem
-            label={t("nav.paymentMethods")}
-            icon={<PaymentMethodsIcon fontSize="inherit" />}
-            isActive={currentView === "paymentMethods"}
-            onClick={() => handleNavigation("paymentMethods")}
+            label="Categorias"
+            icon={<CategoriesIcon fontSize="inherit" />}
+            isActive={currentView === "categories"}
+            onClick={() => onNavigate("categories")}
             primaryColor={theme.palette.primary.main}
           />
 
+          {/* Profile */}
           <NavItem
-            label={t("nav.others")}
-            icon={<OthersIcon fontSize="inherit" />}
-            isActive={getActiveValue() === "others"}
-            onClick={() => handleNavigation("others")}
+            label="Perfil"
+            icon={<ProfileIcon fontSize="inherit" />}
+            isActive={false}
+            onClick={() => onOpenProfile?.()}
             primaryColor={theme.palette.primary.main}
           />
         </Box>
       </MotionBox>
-
-      {/* Others Grid Modal */}
-      <OthersGridModal
-        open={othersModalOpen}
-        onClose={() => setOthersModalOpen(false)}
-        onNavigate={(view) => {
-          onNavigate(view);
-          setOthersModalOpen(false);
-        }}
-      />
     </>
   );
 };
 
 export default MobileNavigation;
-

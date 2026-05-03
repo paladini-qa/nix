@@ -271,40 +271,36 @@ const GoalsView: React.FC<GoalsViewProps> = ({ userId, onCreateTransaction }) =>
   };
 
   return (
-    <Box sx={{ 
-      display: "flex", 
-      flexDirection: "column", 
+    <Box sx={{
+      display: "flex",
+      flexDirection: "column",
       gap: isMobile ? 2 : 3,
-      // Extra padding para bottom navigation + FABs
-      pb: { xs: "180px", md: 0 },
+      px: { xs: 0, md: "28px" },
+      pt: { xs: 0, md: "24px" },
+      pb: { xs: "180px", md: "60px" },
     }}>
       {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: 2,
-        }}
-      >
+      <Box sx={{ display: "flex", alignItems: "flex-end", gap: "14px", flexWrap: "wrap" }}>
         <Box>
-          <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
             Financial Goals
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
             Track your savings goals and milestones
           </Typography>
         </Box>
 
         {!isMobile && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenForm()}
-          >
-            New Goal
-          </Button>
+          <Box sx={{ ml: "auto" }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenForm()}
+              sx={{ borderRadius: "10px", px: "14px", py: "8px", fontSize: 13, fontWeight: 600, textTransform: "none", boxShadow: "0 6px 14px -8px rgba(168,85,247,0.7)" }}
+            >
+              New Goal
+            </Button>
+          </Box>
         )}
       </Box>
 

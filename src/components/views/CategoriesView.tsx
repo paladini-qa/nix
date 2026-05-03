@@ -1306,41 +1306,32 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         display: "flex",
         flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        pb: { xs: "140px", md: 0 },
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "24px" },
+        pb: { xs: "140px", md: "60px" },
       }}
     >
       {/* Header */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
           justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: 2,
+          alignItems: "flex-end",
+          flexWrap: "wrap",
+          gap: "14px",
+          mb: "22px",
         }}
       >
         <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              sx={{
-                p: 1,
-                borderRadius: "12px",
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                display: "flex",
-              }}
-            >
-              <CategoryIcon color="primary" />
-            </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-              Categorias
-            </Typography>
-          </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Gerencie suas categorias de receitas e despesas
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
+            Categories
+          </Typography>
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+            Manage your income and expense categories
           </Typography>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
           {tabValue === 0 && (
             <DateFilter
               month={selectedMonth}

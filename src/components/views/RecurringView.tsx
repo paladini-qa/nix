@@ -1330,61 +1330,39 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         display: "flex",
         flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        pb: { xs: "180px", md: 0 },
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "24px" },
+        pb: { xs: "180px", md: "60px" },
       }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: 2,
-        }}
-      >
+      <Box sx={{ display: "flex", alignItems: "flex-end", gap: "14px", flexWrap: "wrap" }}>
         <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              sx={{
-                p: 1,
-                borderRadius: "12px",
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                display: "flex",
-              }}
-            >
-              <RepeatIcon color="primary" />
-            </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-              Recorrentes
-            </Typography>
-          </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Gerencie suas receitas e despesas que se repetem
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
+            Recurring
+          </Typography>
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+            Income & expenses that repeat each cycle
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
           {onRefreshData && (
-            <Tooltip title="Atualizar dados">
+            <Tooltip title="Refresh">
               <IconButton
                 onClick={handleRefresh}
                 disabled={isRefreshing}
                 sx={{
-                  border: 1,
-                  borderColor: "divider",
+                  width: 38, height: 38,
                   borderRadius: "10px",
-                  "&:hover": { borderColor: theme.palette.primary.main },
+                  border: `1px solid`,
+                  borderColor: "divider",
                 }}
               >
                 <RefreshIcon
                   sx={{
-                    animation: isRefreshing
-                      ? "spin 1s linear infinite"
-                      : "none",
-                    "@keyframes spin": {
-                      "0%": { transform: "rotate(0deg)" },
-                      "100%": { transform: "rotate(360deg)" },
-                    },
+                    fontSize: 16,
+                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                    "@keyframes spin": { "0%": { transform: "rotate(0deg)" }, "100%": { transform: "rotate(360deg)" } },
                   }}
                 />
               </IconButton>
@@ -1395,9 +1373,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               variant="contained"
               startIcon={<AddIcon />}
               onClick={onNewTransaction}
-              sx={CREATE_TRANSACTION_BUTTON.sx}
+              sx={{ borderRadius: "10px", px: "14px", py: "8px", fontSize: 13, fontWeight: 600, textTransform: "none", boxShadow: "0 6px 14px -8px rgba(168,85,247,0.7)" }}
             >
-              {CREATE_TRANSACTION_BUTTON.label}
+              New recurring
             </Button>
           )}
         </Box>

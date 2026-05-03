@@ -613,44 +613,47 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         display: "flex",
         flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        // Extra padding para FABs + bottom navigation (64px + safe area + FAB height + margem)
-        pb: { xs: "180px", md: 0 },
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "24px" },
+        pb: { xs: "180px", md: "60px" },
       }}
     >
       {/* Header */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
-          gap: 2,
+          alignItems: "flex-end",
+          gap: "14px",
+          flexWrap: "wrap",
+          mb: { xs: 0, md: "6px" },
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
-          <Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-              All Transactions
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {MONTHS[selectedMonth]} {selectedYear} • {filteredData.length}{" "}
-              transactions
-            </Typography>
-          </Box>
+        <Box>
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
+            All Transactions
+          </Typography>
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+            {MONTHS[selectedMonth]} {selectedYear} • {filteredData.length} transactions
+          </Typography>
+        </Box>
 
-          {/* Desktop New Transaction Button */}
+        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
           {!isMobile && (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={onNewTransaction}
-              sx={CREATE_TRANSACTION_BUTTON.sx}
+              sx={{
+                borderRadius: "10px",
+                px: "14px",
+                py: "8px",
+                fontSize: 13,
+                fontWeight: 600,
+                textTransform: "none",
+                boxShadow: "0 6px 14px -8px rgba(168,85,247,0.7)",
+              }}
             >
-              {CREATE_TRANSACTION_BUTTON.label}
+              Transaction
             </Button>
           )}
         </Box>

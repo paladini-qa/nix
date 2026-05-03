@@ -143,12 +143,12 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
         }
       `}</style>
 
-      <Box id="fiscal-report-root" ref={printRef} sx={{ display: "flex", flexDirection: "column", gap: 3, pb: { xs: "140px", md: 0 } }}>
+      <Box id="fiscal-report-root" ref={printRef} sx={{ display: "flex", flexDirection: "column", gap: 3, px: { xs: 0, md: "28px" }, pt: { xs: 0, md: "24px" }, pb: { xs: "140px", md: "60px" } }}>
         {/* Header */}
-        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "14px", mb: "22px" }}>
           <Box>
-            <Typography variant="h5" fontWeight="bold">Relatório Fiscal</Typography>
-            <Typography variant="body2" color="text.secondary">Resumo anual de receitas, despesas e saldo</Typography>
+            <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>Fiscal Report</Typography>
+            <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>Annual summary of income, expenses and balance</Typography>
           </Box>
           <Stack direction="row" spacing={1} className="no-print" flexWrap="wrap">
             <FormControl size="small" sx={{ minWidth: 100 }}>

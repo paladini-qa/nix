@@ -1546,48 +1546,32 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         display: "flex",
         flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        pb: { xs: "180px", md: 0 },
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "24px" },
+        pb: { xs: "180px", md: "60px" },
       }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: 2,
-        }}
-      >
+      <Box sx={{ display: "flex", alignItems: "flex-end", gap: "14px", flexWrap: "wrap" }}>
         <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              sx={{
-                p: 1,
-                borderRadius: "12px",
-                bgcolor: alpha("#F59E0B", 0.1),
-                display: "flex",
-              }}
-            >
-              <PaymentsIcon sx={{ color: "#F59E0B" }} />
-            </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-              Parcelamentos
-            </Typography>
-          </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Gerencie suas compras parceladas
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
+            Splits
+          </Typography>
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+            Manage your installment purchases
           </Typography>
         </Box>
         {!isMobile && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onNewTransaction}
-            sx={CREATE_TRANSACTION_BUTTON.sx}
-          >
-            {CREATE_TRANSACTION_BUTTON.label}
-          </Button>
+          <Box sx={{ ml: "auto" }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onNewTransaction}
+              sx={{ borderRadius: "10px", px: "14px", py: "8px", fontSize: 13, fontWeight: 600, textTransform: "none", boxShadow: "0 6px 14px -8px rgba(168,85,247,0.7)" }}
+            >
+              New transaction
+            </Button>
+          </Box>
         )}
       </Box>
 

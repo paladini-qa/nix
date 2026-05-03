@@ -7,8 +7,10 @@ import {
   Button,
   IconButton,
   Tooltip,
-  Stack,
   useTheme,
+  useMediaQuery,
+  Stack,
+  alpha,
 } from "@mui/material";
 import { Add as AddIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import SummaryCards from "../widgets/SummaryCards";
@@ -16,13 +18,12 @@ import CategoryBreakdown from "../widgets/CategoryBreakdown";
 import DateFilter from "../ui/DateFilter";
 import { AdvancedFiltersButton } from "../panels/AdvancedFilters";
 import type { AdvancedFiltersState } from "../panels/AdvancedFilters";
-import { CREATE_TRANSACTION_BUTTON } from "../../constants";
 import DashboardSkeleton from "../skeletons/DashboardSkeleton";
 import RecentTransactionsWidget from "../widgets/RecentTransactionsWidget";
 import { useAppStore } from "../../hooks/useAppStore";
 import { useTransactionsQuery } from "../../hooks/useTransactionsQuery";
 import { useFilteredTransactions } from "../../hooks/useFilteredTransactions";
-import { supabase } from "../../services/supabaseClient";
+import { useCurrency, useSettings } from "../../hooks";
 import { VIEW_ROUTES } from "../../routes";
 
 const AdvancedFilters = lazy(() => import("../panels/AdvancedFilters"));
@@ -31,13 +32,15 @@ const AnalyticsView = lazy(() => import("./AnalyticsView"));
 const DashboardMainSection: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
-  const isMobile = theme.breakpoints.down("md"); // Simplified for now
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { format: formatCurrency, formatCompact } = useCurrency();
+  const { displayName } = useSettings();
   const navigate = useNavigate();
 
   const { filters, setFilters, setIsFormOpen, setEditingTransaction } = useAppStore();
   const { data: transactions = [], isRefetching, refetch } = useTransactionsQuery();
   const { filteredTransactions, summary } = useFilteredTransactions();
-  
+
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFiltersState>({
     startDate: null,
@@ -65,58 +68,75 @@ const DashboardMainSection: React.FC = () => {
     setIsFormOpen(true);
   }, [setEditingTransaction, setIsFormOpen]);
 
-  const handleToggleFilters = useCallback(
-    () => setShowAdvancedFilters((v) => !v),
-    []
-  );
-
+  const handleToggleFilters = useCallback(() => setShowAdvancedFilters((v) => !v), []);
   const handleDateChange = useCallback(
     (month: number, year: number) => setFilters({ month, year }),
     [setFilters]
   );
-
   const handleRefetch = useCallback(() => refetch(), [refetch]);
-
   const handlePaymentMethodClick = useCallback(
     () => navigate(VIEW_ROUTES.paymentMethods),
     [navigate]
   );
-
-  // Callback estável para evitar re-renders em children que recebem onCategoryClick
   const NOOP = useCallback(() => {}, []);
 
+  const firstName = displayName ? displayName.split(" ")[0] : t("dashboard.title");
+  const monthLabel = new Date(filters.year, filters.month - 1).toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
+
   return (
-    <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+    <Box sx={{ px: { xs: 0, md: "28px" }, pt: { xs: 0, md: "24px" }, pb: { xs: 0, md: "60px" } }}>
+      {/* Mobile balance hero */}
+      {isMobile && (
+        <Box
+          sx={{
+            mx: -2,
+            mb: 2,
+            p: 2.5,
+            background: "linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)",
+            color: "white",
+          }}
+        >
+          <Typography sx={{ fontSize: 11, fontWeight: 700, opacity: 0.85, textTransform: "uppercase", letterSpacing: ".08em" }}>
+            {monthLabel}
+          </Typography>
+          <Typography sx={{ fontSize: 30, fontWeight: 800, mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+            {formatCurrency(summary.balance)}
+          </Typography>
+          <Stack direction="row" spacing={3} mt={1.5} alignItems="center">
+            <Box>
+              <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Receitas</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 13 }}>+{formatCompact(summary.totalIncome)}</Typography>
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Despesas</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 13 }}>−{formatCompact(summary.totalExpense)}</Typography>
+            </Box>
+          </Stack>
+        </Box>
+      )}
+
+      {/* Page head */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: { xs: 1.5, sm: 2 },
+          alignItems: "flex-end",
+          gap: "14px",
+          mb: "22px",
+          flexWrap: "wrap",
         }}
       >
         <Box>
-          <Typography
-            variant="h5"
-            sx={{ fontWeight: "bold", color: "text.primary" }}
-          >
-            {t("dashboard.title")}
+          <Typography sx={{ fontSize: { xs: 22, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+            {t("dashboard.welcome_name", { name: firstName }) || `Welcome back, ${firstName}`}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t("dashboard.welcome")}
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+            {t("dashboard.subtitle") || "Here's your financial pulse for this month"}
           </Typography>
         </Box>
-
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: { xs: 1, sm: 1.5 },
-            width: { xs: "100%", sm: "auto" },
-          }}
-        >
+        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
           <AdvancedFiltersButton
             hasActiveFilters={hasAdvancedFiltersActive}
             activeFiltersCount={activeFiltersCount}
@@ -130,40 +150,48 @@ const DashboardMainSection: React.FC = () => {
             showIcon
             disabled={hasAdvancedFiltersActive}
           />
-
           <Tooltip title={t("common.refresh")}>
             <IconButton
               onClick={handleRefetch}
               disabled={isRefetching}
               sx={{
-                width: 44,
-                height: 44,
-                border: 1,
-                borderColor: "divider",
-                borderRadius: "22px",
+                width: 38,
+                height: 38,
+                borderRadius: "10px",
+                bgcolor: theme.palette.mode === "dark"
+                  ? alpha("#fff", 0.06)
+                  : alpha("#000", 0.04),
+                border: `1px solid ${theme.palette.divider}`,
+                "&:hover": { bgcolor: theme.palette.mode === "dark" ? alpha("#fff", 0.1) : alpha("#000", 0.07) },
               }}
             >
               <RefreshIcon
                 sx={{
-                  fontSize: 24,
+                  fontSize: 16,
                   animation: isRefetching ? "spin 1s linear infinite" : "none",
-                  "@keyframes spin": {
-                    "0%": { transform: "rotate(0deg)" },
-                    "100%": { transform: "rotate(360deg)" },
-                  },
+                  "@keyframes spin": { "0%": { transform: "rotate(0deg)" }, "100%": { transform: "rotate(360deg)" } },
                 }}
               />
             </IconButton>
           </Tooltip>
-
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onNewTransaction}
-            sx={CREATE_TRANSACTION_BUTTON.sx}
-          >
-            {CREATE_TRANSACTION_BUTTON.label}
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon sx={{ fontSize: "14px !important" }} />}
+              onClick={onNewTransaction}
+              sx={{
+                borderRadius: "10px",
+                px: "14px",
+                py: "8px",
+                fontSize: 13,
+                fontWeight: 600,
+                textTransform: "none",
+                boxShadow: "0 6px 14px -8px rgba(168,85,247,0.7)",
+              }}
+            >
+              {t("common.addTransaction") || "Transaction"}
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -177,6 +205,7 @@ const DashboardMainSection: React.FC = () => {
         />
       </Suspense>
 
+      {/* Summary cards */}
       <SummaryCards
         summary={summary}
         transactions={filteredTransactions}
@@ -184,25 +213,35 @@ const DashboardMainSection: React.FC = () => {
         selectedYear={filters.year}
       />
 
-      <RecentTransactionsWidget
-        transactions={filteredTransactions}
-      />
-
-      <CategoryBreakdown
-        transactions={filteredTransactions}
-        onPaymentMethodClick={handlePaymentMethodClick}
-        onCategoryClick={NOOP}
-      />
-
-      <Suspense fallback={<DashboardSkeleton />}>
-        <AnalyticsView
+      {/* Dash grid: recent transactions + category breakdown */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "1.4fr 1fr" },
+          gap: "18px",
+          mt: "24px",
+        }}
+      >
+        <RecentTransactionsWidget transactions={filteredTransactions} />
+        <CategoryBreakdown
           transactions={filteredTransactions}
-          hasAdvancedFilters={hasAdvancedFiltersActive}
-          advancedFilters={advancedFilters}
+          onPaymentMethodClick={handlePaymentMethodClick}
           onCategoryClick={NOOP}
         />
-      </Suspense>
-    </Stack>
+      </Box>
+
+      {/* Analytics section */}
+      <Box sx={{ mt: "18px" }}>
+        <Suspense fallback={<DashboardSkeleton />}>
+          <AnalyticsView
+            transactions={filteredTransactions}
+            hasAdvancedFilters={hasAdvancedFiltersActive}
+            advancedFilters={advancedFilters}
+            onCategoryClick={NOOP}
+          />
+        </Suspense>
+      </Box>
+    </Box>
   );
 };
 

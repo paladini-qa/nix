@@ -540,13 +540,13 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   return (
     <Box
       ref={containerRef}
-      sx={{ 
-        display: "flex", 
-        flexDirection: "column", 
+      sx={{
+        display: "flex",
+        flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        // Extra padding para bottom navigation
-        pb: { xs: "140px", md: 0 },
-        // Fix para ResponsiveContainer funcionar corretamente em flexbox
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "24px" },
+        pb: { xs: "140px", md: "60px" },
         width: "100%",
         minWidth: 0,
       }}

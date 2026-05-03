@@ -260,29 +260,31 @@ const AccountsView: React.FC<AccountsViewProps> = ({
 
   return (
     <Box
-      sx={{ 
-        display: "flex", 
-        flexDirection: "column", 
+      sx={{
+        display: "flex",
+        flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        // Extra padding para bottom navigation + FABs
-        pb: { xs: "180px", md: 0 },
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "24px" },
+        pb: { xs: "180px", md: "60px" },
       }}
     >
       {/* Header */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
           justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: 2,
+          alignItems: "flex-end",
+          flexWrap: "wrap",
+          gap: "14px",
+          mb: "22px",
         }}
       >
         <Box>
-          <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
             Accounts
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
             Manage your bank accounts and wallets
           </Typography>
         </Box>

@@ -605,7 +605,9 @@ const PlanningView: React.FC<PlanningViewProps> = ({
         display: "flex",
         flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        pb: { xs: "180px", md: 0 },
+        px: { xs: 0, md: "28px" },
+        pt: { xs: 0, md: "24px" },
+        pb: { xs: "180px", md: "60px" },
       }}
     >
       {/* Header */}
@@ -613,26 +615,32 @@ const PlanningView: React.FC<PlanningViewProps> = ({
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-start",
+          alignItems: "flex-end",
+          flexWrap: "wrap",
+          gap: "14px",
+          mb: "22px",
         }}
       >
         <Box>
-          <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
-            Planejamentos
+          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
+            Planning
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Planeje seus gastos antes de transformá-los em transações
+          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+            Plan your spending before converting to transactions
           </Typography>
         </Box>
 
         {!isMobile && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenPlanningForm()}
-          >
-            Novo Planejamento
-          </Button>
+          <Box sx={{ ml: "auto" }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenPlanningForm()}
+              sx={{ borderRadius: "10px", px: "14px", py: "8px", fontSize: 13 }}
+            >
+              New Plan
+            </Button>
+          </Box>
         )}
       </Box>
 
