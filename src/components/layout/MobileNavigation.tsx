@@ -6,7 +6,7 @@ import {
   Category as CategoriesIcon,
   Person as ProfileIcon,
 } from "@mui/icons-material";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { AutoAwesome as NixAIIcon } from "@mui/icons-material";
 
@@ -42,46 +42,10 @@ const NavItem: React.FC<{
       transition: "color 0.2s ease",
       touchAction: "manipulation",
       WebkitTapHighlightColor: "transparent",
-      position: "relative",
-      "&:active": { transform: "scale(0.92)" },
+      "&:active": { opacity: 0.7 },
     }}
   >
-    <AnimatePresence>
-      {isActive && (
-        <motion.span
-          layoutId="nav-active-pill"
-          initial={{ opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.6 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -58%)",
-            width: 36,
-            height: 20,
-            borderRadius: 10,
-            background: `${primaryColor}22`,
-            pointerEvents: "none",
-          }}
-        />
-      )}
-    </AnimatePresence>
-
-    <Box
-      sx={{
-        fontSize: 22,
-        lineHeight: 1,
-        transition: "transform 0.2s ease",
-        transform: isActive ? "scale(1.15)" : "scale(1)",
-        position: "relative",
-        zIndex: 1,
-      }}
-    >
-      {icon}
-    </Box>
-
+    <Box sx={{ fontSize: 22, lineHeight: 1 }}>{icon}</Box>
     <Box
       component="span"
       sx={{
@@ -90,9 +54,6 @@ const NavItem: React.FC<{
         lineHeight: 1.2,
         textAlign: "center",
         whiteSpace: "nowrap",
-        letterSpacing: isActive ? "0.01em" : 0,
-        position: "relative",
-        zIndex: 1,
       }}
     >
       {label}

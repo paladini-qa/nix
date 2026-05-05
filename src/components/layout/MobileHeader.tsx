@@ -2,14 +2,14 @@ import React from "react";
 import logoUrl from "../../assets/logo.svg?url";
 import { Box, useTheme, alpha } from "@mui/material";
 import { motion } from "framer-motion";
-import { Menu, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { IconButton, Text } from "@radix-ui/themes";
 import { usePrivacy } from "../../contexts";
 
 const MotionBox = motion.create(Box);
 
 interface MobileHeaderProps {
-  onOpenDrawer: () => void;
+  onOpenDrawer?: () => void;
   onOpenSearch?: () => void;
   onOpenProfile?: () => void;
 }
@@ -61,22 +61,6 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
-      <MotionBox
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
-      >
-        <IconButton
-          size="3"
-          variant="ghost"
-          onClick={onOpenDrawer}
-          aria-label="Open navigation menu"
-          style={{ width: 48, height: 48 }}
-        >
-          <Menu size={26} />
-        </IconButton>
-      </MotionBox>
-
       <MotionBox
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}

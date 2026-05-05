@@ -704,18 +704,6 @@ const SharedView: React.FC<SharedViewProps> = ({
           </Typography>
         </Box>
 
-        {!isMobile && (
-          <Box sx={{ ml: "auto", display: "flex", gap: "10px", alignItems: "center" }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onNewTransaction}
-              sx={{ ...CREATE_TRANSACTION_BUTTON.sx, borderRadius: "10px", px: "14px", py: "8px", fontSize: 13 }}
-            >
-              {CREATE_TRANSACTION_BUTTON.label}
-            </Button>
-          </Box>
-        )}
       </Box>
 
       {/* Summary Cards */}
@@ -2121,24 +2109,6 @@ const SharedView: React.FC<SharedViewProps> = ({
         </MenuItem>
       </Menu>
 
-      {/* Mobile FAB - padronizado 64px, border-radius 20px */}
-      {isMobile && (
-        <NixButton
-          size="fab"
-          variant="solid"
-          color="purple"
-          onClick={onNewTransaction}
-          className="nix-fab-create"
-          style={{
-            position: "fixed",
-            bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
-            right: 16,
-            zIndex: 1100,
-          }}
-        >
-          <AddIcon />
-        </NixButton>
-      )}
     </Box>
   );
 };

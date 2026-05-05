@@ -242,7 +242,7 @@ const PieChartCard: React.FC<PieChartCardProps> = ({
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between",
+                    gap: 1,
                     py: 0.6,
                     px: 1,
                     borderRadius: "10px",
@@ -255,46 +255,42 @@ const PieChartCard: React.FC<PieChartCardProps> = ({
                       : {},
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flex: 1 }}>
-                    <Box
-                      sx={{
-                        width: 9,
-                        height: 9,
-                        borderRadius: "50%",
-                        flexShrink: 0,
-                        background: `linear-gradient(135deg, ${item.color}, ${item.secondaryColor})`,
-                        boxShadow: isActive ? `0 0 6px ${alpha(item.color, 0.6)}` : "none",
-                        transition: "box-shadow 0.15s ease",
-                      }}
-                    />
+                  <Box
+                    sx={{
+                      width: 9,
+                      height: 9,
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                      mt: "2px",
+                      background: `linear-gradient(135deg, ${item.color}, ${item.secondaryColor})`,
+                      boxShadow: isActive ? `0 0 6px ${alpha(item.color, 0.6)}` : "none",
+                      transition: "box-shadow 0.15s ease",
+                    }}
+                  />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
                       variant="caption"
                       fontWeight={isActive ? 600 : 500}
                       noWrap
-                      sx={{ flex: 1, color: isActive ? item.color : "text.primary", transition: "color 0.15s ease" }}
+                      sx={{ display: "block", color: isActive ? item.color : "text.primary", transition: "color 0.15s ease" }}
                     >
                       {item.name}
                     </Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: 0 }}>
-                    <Typography
-                      variant="caption"
-                      fontWeight={600}
-                      sx={{ color: item.color, fontSize: 12 }}
-                    >
-                      {formatCurrency(item.value)}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "text.disabled",
-                        minWidth: 28,
-                        textAlign: "right",
-                        fontSize: 11,
-                      }}
-                    >
-                      {pct.toFixed(0)}%
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                      <Typography
+                        variant="caption"
+                        fontWeight={600}
+                        sx={{ color: item.color, fontSize: 11 }}
+                      >
+                        {formatCurrency(item.value)}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "text.disabled", fontSize: 10 }}
+                      >
+                        {pct.toFixed(0)}%
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
               );

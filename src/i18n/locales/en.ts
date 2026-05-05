@@ -60,6 +60,7 @@ export default {
     totalIncome: "Total Income",
     totalExpenses: "Total Expenses",
     balance: "Balance",
+    subtitle: "Here's your financial pulse for this month",
     newTransaction: "New Transaction",
     removeAdvancedFiltersForMonth:
       "Remove advanced filters to use the month filter",

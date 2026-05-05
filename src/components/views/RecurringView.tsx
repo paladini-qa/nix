@@ -1368,16 +1368,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               </IconButton>
             </Tooltip>
           )}
-          {!isMobile && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onNewTransaction}
-              sx={{ borderRadius: "10px", px: "14px", py: "8px", fontSize: 13, fontWeight: 600, textTransform: "none", boxShadow: "0 6px 14px -8px rgba(168,85,247,0.7)" }}
-            >
-              New recurring
-            </Button>
-          )}
         </Box>
       </Box>
 
@@ -1697,24 +1687,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         </Grid>
       )}
 
-      {/* Mobile FAB - padronizado 64px, border-radius 20px */}
-      {isMobile && (
-        <NixButton
-          size="fab"
-          variant="solid"
-          color="purple"
-          onClick={onNewTransaction}
-          className="nix-fab-create"
-          style={{
-            position: "fixed",
-            bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
-            right: 16,
-            zIndex: 1100,
-          }}
-        >
-          <AddIcon />
-        </NixButton>
-      )}
 
       {/* Mobile Menus */}
       <Menu

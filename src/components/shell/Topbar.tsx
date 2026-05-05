@@ -14,7 +14,6 @@ import {
   LightMode as SunIcon,
   DarkMode as MoonIcon,
   Search as SearchIcon,
-  Bolt as ZapIcon,
 } from "@mui/icons-material";
 import { useSettings } from "../../contexts";
 
@@ -86,30 +85,6 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction }) =
       </Box>
 
       <Box sx={{ flex: 1 }} />
-
-      {/* Upgrade button */}
-      <Button
-        startIcon={<ZapIcon sx={{ fontSize: "14px !important" }} />}
-        size="small"
-        sx={{
-          bgcolor: alpha(theme.palette.primary.main, isDark ? 0.18 : 0.12),
-          color: "primary.main",
-          borderRadius: "10px",
-          px: "10px",
-          py: "6px",
-          fontSize: 12,
-          fontWeight: 600,
-          textTransform: "none",
-          boxShadow: "none",
-          "&:hover": {
-            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.24 : 0.18),
-            boxShadow: "none",
-            transform: "none",
-          },
-        }}
-      >
-        Upgrade
-      </Button>
 
       {/* Notifications bell */}
       <Box sx={{ position: "relative" }}>

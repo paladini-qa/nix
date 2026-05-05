@@ -1561,18 +1561,6 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             Manage your installment purchases
           </Typography>
         </Box>
-        {!isMobile && (
-          <Box sx={{ ml: "auto" }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onNewTransaction}
-              sx={{ borderRadius: "10px", px: "14px", py: "8px", fontSize: 13, fontWeight: 600, textTransform: "none", boxShadow: "0 6px 14px -8px rgba(168,85,247,0.7)" }}
-            >
-              New transaction
-            </Button>
-          </Box>
-        )}
       </Box>
 
       {/* Summary Cards */}
@@ -1915,24 +1903,6 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         </MenuItem>
       </Menu>
 
-      {/* Mobile FAB - padronizado 64px, border-radius 20px */}
-      {isMobile && (
-        <NixButton
-          size="fab"
-          variant="solid"
-          color="purple"
-          onClick={onNewTransaction}
-          className="nix-fab-create"
-          style={{
-            position: "fixed",
-            bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
-            right: 16,
-            zIndex: 1100,
-          }}
-        >
-          <AddIcon />
-        </NixButton>
-      )}
 
       {/* Painel lateral para alterar datas de vencimento */}
       <Drawer

@@ -290,11 +290,12 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   });
 
   const mobileListParentRef = useRef<HTMLDivElement>(null);
-  const CARD_ESTIMATE_HEIGHT = 100;
+  const CARD_ESTIMATE_HEIGHT = 120;
   const mobileListVirtualizer = useVirtualizer({
     count: paginatedData.length,
     getScrollElement: () => mobileListParentRef.current,
     estimateSize: () => CARD_ESTIMATE_HEIGHT,
+    measureElement: (el) => el?.getBoundingClientRect().height ?? CARD_ESTIMATE_HEIGHT,
     overscan: 3,
     enabled: isMobile && paginatedData.length > 30,
   });
@@ -637,26 +638,6 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           </Typography>
         </Box>
 
-        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-          {!isMobile && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onNewTransaction}
-              sx={{
-                borderRadius: "10px",
-                px: "14px",
-                py: "8px",
-                fontSize: 13,
-                fontWeight: 600,
-                textTransform: "none",
-                boxShadow: "0 6px 14px -8px rgba(168,85,247,0.7)",
-              }}
-            >
-              Transaction
-            </Button>
-          )}
-        </Box>
       </Box>
 
       {/* Summary Cards - Modern Compact Style */}
@@ -1616,7 +1597,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             position: "relative",
             display: "flex",
             flexDirection: "column",
-            gap: 1.5,
+            gap: 0,
             pt: isPulling || isPullRefreshing ? 8 : 0,
             transition: "padding-top 0.2s ease",
           }}
@@ -1650,13 +1631,15 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       return (
                         <Box
                           key={t.id}
+                          ref={mobileListVirtualizer.measureElement}
+                          data-index={virtualRow.index}
                           sx={{
                             position: "absolute",
                             top: 0,
                             left: 0,
                             width: "100%",
                             transform: `translateY(${virtualRow.start}px)`,
-                            py: 0.75,
+                            pb: 1,
                           }}
                         >
                           <SwipeableTransactionCard
@@ -1688,6 +1671,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       damping: 30,
                       delay: index * 0.05,
                     }}
+                    style={{ marginBottom: 8 }}
                   >
                     <SwipeableTransactionCard
                       transaction={t}
@@ -1710,6 +1694,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 sx={{
                   position: "relative",
                   overflow: "hidden",
+                  mt: 1,
                   background: isDarkMode
                     ? `linear-gradient(135deg, ${alpha(
                         theme.palette.background.paper,
@@ -1840,24 +1825,6 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             </MenuItem>
           </Menu>
 
-          {/* FAB apenas no desktop; no mobile o botão central da bottom nav já cria transação */}
-          {!isMobile && (
-            <NixButton
-              size="fab"
-              variant="solid"
-              color="purple"
-              onClick={onNewTransaction}
-              className="nix-fab-create"
-              style={{
-                position: "fixed",
-                bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
-                right: 16,
-                zIndex: 1100,
-              }}
-            >
-              <AddIcon />
-            </NixButton>
-          )}
         </Box>
       ) : (
         /* Desktop Table View */
