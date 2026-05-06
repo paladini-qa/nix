@@ -53,9 +53,9 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
     const years = new Set<number>();
     transactions.forEach((t) => {
       const y = parseInt(t.date.split("-")[0]);
-      if (!isNaN(y)) years.add(y);
+      if (!isNaN(y) && y >= 2026) years.add(y);
     });
-    years.add(currentYear);
+    years.add(Math.max(currentYear, 2026));
     return Array.from(years).sort((a, b) => b - a);
   }, [transactions, currentYear]);
 

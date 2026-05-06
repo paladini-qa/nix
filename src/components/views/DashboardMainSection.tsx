@@ -26,6 +26,7 @@ import {
   CreditCard as PaymentMethodsIcon,
 } from "@mui/icons-material";
 import CategoryBreakdown from "../widgets/CategoryBreakdown";
+import SummaryCards from "../widgets/SummaryCards";
 import DateFilter from "../ui/DateFilter";
 import { AdvancedFiltersButton } from "../panels/AdvancedFilters";
 import type { AdvancedFiltersState } from "../panels/AdvancedFilters";
@@ -209,6 +210,18 @@ const DashboardMainSection: React.FC = () => {
           <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
             {t("dashboard.subtitle")}
           </Typography>
+        </Box>
+      )}
+
+      {/* Summary cards — desktop only */}
+      {!isMobile && (
+        <Box sx={{ mb: "22px" }}>
+          <SummaryCards
+            summary={summary}
+            transactions={transactions}
+            selectedMonth={filters.month}
+            selectedYear={filters.year}
+          />
         </Box>
       )}
 

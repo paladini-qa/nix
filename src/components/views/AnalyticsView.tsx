@@ -185,7 +185,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       for (let offset = -3; offset <= 3; offset++) {
         let targetMonth = refMonth + offset;
         let targetYear = refYear;
-        
+
         // Ajusta o ano se necessário
         while (targetMonth < 0) {
           targetMonth += 12;
@@ -195,9 +195,11 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           targetMonth -= 12;
           targetYear += 1;
         }
-        
+
         keysToShow.push(getMonthKey(targetYear, targetMonth));
       }
+      // Remove meses anteriores a janeiro de 2026
+      keysToShow = keysToShow.filter((k) => k >= "2026-01");
     } else if (advancedFilters?.startDate && advancedFilters?.endDate) {
       // Com filtro avançado com datas: gera meses entre as datas
       const startYear = advancedFilters.startDate.year();

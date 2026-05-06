@@ -79,6 +79,7 @@ export function useTransactionsQuery() {
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
+        .gte("date", "2026-01-01")
         .order("date", { ascending: false });
 
       if (error) throw error;

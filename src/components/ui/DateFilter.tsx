@@ -70,6 +70,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
 
   const handlePreviousMonth = () => {
     const newDate = selectedDate.subtract(1, "month");
+    if (newDate.year() < 2026) return;
     onDateChange(newDate.month(), newDate.year());
   };
 
@@ -133,6 +134,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
       value={selectedDate}
       onChange={handleDateChange}
       disabled={disabled}
+      minDate={dayjs("2026-01-01")}
       format="MMMM YYYY"
       slotProps={{
         textField: {
@@ -335,7 +337,8 @@ const DateFilter: React.FC<DateFilterProps> = ({
         >
           <IconButton
             size="small"
-            onClick={() => setPickerYear((y) => y - 1)}
+            onClick={() => setPickerYear((y) => Math.max(2026, y - 1))}
+            disabled={pickerYear <= 2026}
             sx={{ border: 1, borderColor: "divider", borderRadius: "10px", width: 36, height: 36 }}
           >
             <ChevronLeftIcon fontSize="small" />

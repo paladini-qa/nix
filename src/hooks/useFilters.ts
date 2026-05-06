@@ -103,11 +103,13 @@ export function useFilters(initialState?: Partial<ExtendedFilterState>) {
     }));
   }, []);
 
-  // Navegar para mês anterior
+  // Navegar para mês anterior (mínimo: janeiro de 2026)
   const previousMonth = useCallback(() => {
     setFilters((prev) => {
+      if (prev.year === 2026 && prev.month === 0) return prev;
       const newMonth = prev.month === 0 ? 11 : prev.month - 1;
       const newYear = prev.month === 0 ? prev.year - 1 : prev.year;
+      if (newYear < 2026) return prev;
       return { ...prev, month: newMonth, year: newYear };
     });
   }, []);
