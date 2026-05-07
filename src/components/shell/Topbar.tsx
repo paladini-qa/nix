@@ -16,6 +16,8 @@ import {
   Search as SearchIcon,
 } from "@mui/icons-material";
 import { useSettings } from "../../contexts";
+import { useAppStore } from "../../hooks/useAppStore";
+import DateFilter from "../ui/DateFilter";
 
 interface TopbarProps {
   onOpenSearch: () => void;
@@ -25,7 +27,6 @@ interface TopbarProps {
 const NOTIFICATIONS = [
   { text: "Spotify charge — R$ 34.90", sub: "Pending payment · Apr 30", unread: true },
   { text: "Budget warning: Groceries", sub: "83% of monthly limit reached", unread: true },
-  { text: "Goal milestone: Emergency Fund", sub: "You hit 50% of your target!", unread: true },
   { text: "Lucas paid you R$ 124.50", sub: "Settled: Dinner — Outback", unread: false },
   { text: "Recurring detected", sub: "ChatGPT Plus — R$ 109.90/mo", unread: false },
 ];
@@ -34,6 +35,7 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction }) =
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const { themePreference, setThemePreference } = useSettings();
+  const { filters, setFilters } = useAppStore();
 
   const [notifAnchor, setNotifAnchor] = useState<HTMLButtonElement | null>(null);
   const notifOpen = Boolean(notifAnchor);
@@ -85,6 +87,14 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction }) =
       </Box>
 
       <Box sx={{ flex: 1 }} />
+
+      {/* Date filter */}
+      <DateFilter
+        month={filters.month}
+        year={filters.year}
+        onDateChange={(month, year) => setFilters({ month, year })}
+        showIcon
+      />
 
       {/* Notifications bell */}
       <Box sx={{ position: "relative" }}>
@@ -198,6 +208,7 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction }) =
       {/* Theme toggle */}
       <IconButton
         onClick={handleThemeToggle}
+        title={isDark ? "Dark mode — click for light" : "Light mode — click for dark"}
         sx={{
           width: 38,
           height: 38,
@@ -211,7 +222,7 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction }) =
           },
         }}
       >
-        {isDark ? <SunIcon sx={{ fontSize: 17 }} /> : <MoonIcon sx={{ fontSize: 17 }} />}
+        {isDark ? <MoonIcon sx={{ fontSize: 17 }} /> : <SunIcon sx={{ fontSize: 17 }} />}
       </IconButton>
 
       {/* New transaction button */}

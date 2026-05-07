@@ -29,7 +29,6 @@ import {
   Close as CloseIcon,
   AccountBalanceWallet as WalletIcon,
   Category as CategoryIcon,
-  TrendingUp as TrendingUpIcon,
   AutoAwesome as SparklesIcon,
   ArrowForward as ArrowForwardIcon,
   Celebration as CelebrationIcon,
@@ -127,19 +126,6 @@ const Onboarding: React.FC<OnboardingProps> = ({
       },
       actionLabel: "Go to Settings",
       isCompleted: completedSteps.includes("categories"),
-    },
-    {
-      id: "goals",
-      title: "Defina uma meta financeira",
-      description: "Crie metas de poupança para manter o foco e acompanhar o progresso.",
-      icon: <TrendingUpIcon />,
-      action: () => {
-        onNavigate("goals");
-        markStepCompleted("goals");
-        handleComplete();
-      },
-      actionLabel: "Ver Metas",
-      isCompleted: completedSteps.includes("goals"),
     },
     {
       id: "ai",

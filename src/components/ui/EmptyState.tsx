@@ -8,7 +8,6 @@ import NixButton from "../radix/Button";
 export type EmptyStateType =
   | "transactions"
   | "budgets"
-  | "goals"
   | "accounts"
   | "shared"
   | "recurring"
@@ -106,26 +105,6 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
       <circle cx="80" cy="78" r="6" fill={COFFEE_CARAMEL} opacity="0.2" />
       {/* Sinalzinho de R$ */}
       <text x="80" y="72" textAnchor="middle" fill={COFFEE_MOCHA} fontSize="12" fontWeight="bold" opacity="0.5">R$</text>
-    </svg>
-  ),
-  goals: (
-    <svg width="160" height="120" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Plantinha crescendo */}
-      <ellipse cx="80" cy="98" rx="28" ry="6" fill={COFFEE_MOCHA} opacity="0.07" />
-      {/* Vaso */}
-      <path d="M65 88 L60 100 L100 100 L95 88 Z" fill={COFFEE_CAPPUCCINO} opacity="0.25" />
-      <rect x="58" y="84" width="44" height="6" rx="3" fill={COFFEE_CAPPUCCINO} opacity="0.2" />
-      {/* Haste */}
-      <path d="M80 84 L80 55" stroke={COFFEE_SAGE} strokeWidth="3" strokeLinecap="round" opacity="0.5" />
-      {/* Folhas */}
-      <path d="M80 70 Q65 62 62 50 Q74 52 80 62" fill={COFFEE_SAGE} opacity="0.35" />
-      <path d="M80 65 Q95 57 98 45 Q86 47 80 57" fill={COFFEE_SAGE} opacity="0.3" />
-      {/* Florzinha no topo */}
-      <circle cx="80" cy="50" r="8" fill={COFFEE_CARAMEL} opacity="0.3" />
-      <circle cx="80" cy="50" r="4" fill={COFFEE_CARAMEL} opacity="0.5" />
-      {/* Estrelinhas */}
-      <text x="110" y="50" fontSize="14" opacity="0.4"></text>
-      <text x="30" y="60" fontSize="12" opacity="0.3"></text>
     </svg>
   ),
   accounts: (

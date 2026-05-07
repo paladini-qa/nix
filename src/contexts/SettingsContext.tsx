@@ -536,6 +536,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
   const setThemePreference = useCallback(
     async (theme: ThemePreference) => {
       setThemePreferenceState(theme);
+      window.dispatchEvent(new CustomEvent("nix:themechange", { detail: theme }));
       if (session?.user?.id) {
         try {
           await supabase.from("user_settings").upsert({

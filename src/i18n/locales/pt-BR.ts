@@ -37,7 +37,6 @@ export default {
     dashboard: "Painel",
     transactions: "Transações",
     budgets: "Orçamentos",
-    goals: "Metas",
     accounts: "Contas",
     recurring: "Recorrentes",
     splits: "Parcelas",
@@ -108,26 +107,6 @@ export default {
     noBudgets: "Nenhum orçamento definido para este mês",
     totalBudgeted: "Total Orçado",
     totalSpent: "Total Gasto",
-  },
-
-  // Goals
-  goals: {
-    title: "Metas Financeiras",
-    subtitle: "Acompanhe suas metas de economia",
-    newGoal: "Nova Meta",
-    goalName: "Nome da Meta",
-    targetAmount: "Valor Alvo",
-    currentAmount: "Valor Atual",
-    deadline: "Prazo",
-    addAmount: "Adicionar Valor",
-    completed: "Concluída",
-    daysLeft: "dias restantes",
-    overdue: "Atrasada",
-    noGoals: "Nenhuma meta ainda",
-    createFirst: "Crie sua primeira meta financeira",
-    avgProgress: "Progresso Médio",
-    totalTarget: "Meta Total",
-    totalSaved: "Total Economizado",
   },
 
   // Accounts

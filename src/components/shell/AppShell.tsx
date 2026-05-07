@@ -72,7 +72,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
   } = useSettings();
 
   const handleNavigate = useCallback((view: AppCurrentView) => {
-    navigate(VIEW_ROUTES[view] || "/dashboard");
+    navigate(VIEW_ROUTES[view] || VIEW_ROUTES.transactions);
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -110,6 +110,12 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
 
   const normalizedPath = location.pathname.replace(/\/$/, "") || "/";
   const currentView: AppCurrentView = (ROUTE_VIEWS[normalizedPath] as AppCurrentView) ?? "dashboard";
+
+  React.useEffect(() => {
+    if (normalizedPath === "/") {
+      navigate(VIEW_ROUTES.dashboard);
+    }
+  }, [normalizedPath, navigate]);
 
   // Google Wallet Sync — mostra o WalletDraftBanner em vez de abrir o form diretamente
   const handleWalletTransaction = useCallback((data: WalletTransaction) => {
@@ -261,9 +267,16 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
       />
 
       {isSearchOpen && (
-        <GlobalSearch 
-          open={isSearchOpen} 
-          onClose={() => setIsSearchOpen(false)} 
+        <GlobalSearch
+          open={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          transactions={transactions}
+          onNavigate={handleNavigate}
+          onSelectTransaction={(tx) => {
+            setEditingTransaction(tx);
+            setIsFormOpen(true);
+            setIsSearchOpen(false);
+          }}
         />
       )}
     </Box>

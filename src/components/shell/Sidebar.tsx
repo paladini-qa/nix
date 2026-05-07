@@ -27,7 +27,6 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   Star as BatchRegistrationIcon,
-  EmojiEvents as GoalsIcon,
   AccountBalance as BudgetsIcon,
   BarChart as AnalyticsIcon,
   CalendarMonth as PlanningIcon,
@@ -106,8 +105,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Itens de menu principais
   const mainNavItems: NavItem[] = [
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
-    { icon: BatchRegistrationIcon, label: t("nav.nixai"), id: "nixai" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
+    { icon: BatchRegistrationIcon, label: t("nav.nixai"), id: "nixai" },
     { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
     { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
@@ -116,7 +115,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const reportsNavItems: NavItem[] = [
-    { icon: GoalsIcon, label: "Metas", id: "goals" },
     { icon: BudgetsIcon, label: "Orçamentos", id: "budgets" },
     { icon: PlanningIcon, label: "Planejamento", id: "planning" },
     { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },

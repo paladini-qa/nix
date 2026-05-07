@@ -277,18 +277,9 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, px: { xs: 0, md: "28px" }, pt: { xs: 0, md: "24px" }, pb: { xs: 0, md: "60px" } }}>
       {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: 2,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <IconButton onClick={onBack} sx={{ bgcolor: "action.hover" }}>
             <ArrowBackIcon />
           </IconButton>
@@ -312,26 +303,6 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               Transactions for {MONTHS[selectedMonth]} {selectedYear}
             </Typography>
           </Box>
-        </Box>
-
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <DateFilter
-            month={selectedMonth}
-            year={selectedYear}
-            onDateChange={onDateChange}
-            showIcon
-          />
-          {!isMobile && onNewTransaction && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onNewTransaction}
-              sx={CREATE_TRANSACTION_BUTTON.sx}
-            >
-              {CREATE_TRANSACTION_BUTTON.label}
-            </Button>
-          )}
-        </Box>
       </Box>
 
       {/* Pay All Banner */}

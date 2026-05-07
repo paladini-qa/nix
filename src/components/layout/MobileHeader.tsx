@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import { IconButton, Text } from "@radix-ui/themes";
 import { usePrivacy } from "../../contexts";
+import { useAppStore } from "../../hooks/useAppStore";
+import DateFilter from "../ui/DateFilter";
 
 const MotionBox = motion.create(Box);
 
@@ -32,6 +34,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
+  const { filters, setFilters } = useAppStore();
 
   return (
     <MotionBox
@@ -88,7 +91,14 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.18, type: "spring", stiffness: 400 }}
+        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
       >
+        <DateFilter
+          month={filters.month}
+          year={filters.year}
+          onDateChange={(month, year) => setFilters({ month, year })}
+          compact
+        />
         <IconButton
           size="3"
           variant={isPrivacyMode ? "soft" : "ghost"}
@@ -96,9 +106,9 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           onClick={togglePrivacyMode}
           aria-label={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
           title={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
-          style={{ width: 48, height: 48 }}
+          style={{ width: 44, height: 44 }}
         >
-          {isPrivacyMode ? <EyeOff size={24} /> : <Eye size={24} />}
+          {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
         </IconButton>
       </MotionBox>
 

@@ -31,7 +31,6 @@ import {
   CreditCard as CreditCardIcon,
   Payment as PaymentIcon,
   CheckCircle as CheckCircleIcon,
-  ArrowForward as ArrowForwardIcon,
   Receipt as ReceiptIcon,
   TrendingDown as TrendingDownIcon,
   TrendingUp as TrendingUpIcon,
@@ -324,17 +323,6 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
           </Typography>
         </Box>
 
-        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
-          {tabValue === 0 && (
-            <DateFilter
-              month={selectedMonth}
-              year={selectedYear}
-              onDateChange={onDateChange}
-              showIcon
-              compact={isMobile}
-            />
-          )}
-        </Box>
       </Box>
 
       {/* Summary Cards - Always Visible */}
@@ -560,284 +548,155 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                   const hasUnpaid = summary.unpaidCount > 0;
 
                   return (
-                    <Grid key={summary.name} size={{ xs: 12, sm: 6, lg: 4 }} sx={{ display: "flex" }}>
+                    <Grid key={summary.name} size={{ xs: 12, sm: 6, lg: 2.4 }}>
                       <Paper
                         elevation={0}
                         onClick={() => onSelectPaymentMethod(summary.name)}
                         sx={{
-                          p: isMobile ? 2 : 2.5,
+                          p: 2.5,
                           cursor: "pointer",
-                          position: "relative",
-                          overflow: "hidden",
                           display: "flex",
                           flexDirection: "column",
-                          width: "100%",
-                          transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                          background: isDarkMode
-                            ? `linear-gradient(135deg, ${alpha(
-                                theme.palette.background.paper,
-                                0.7
-                              )} 0%, ${alpha(
-                                theme.palette.background.paper,
-                                0.5
-                              )} 100%)`
-                            : `linear-gradient(135deg, ${alpha(
-                                "#FFFFFF",
-                                0.85
-                              )} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-                          backdropFilter: "blur(16px)",
-                          border: `1px solid ${
-                            isDarkMode
-                              ? alpha("#FFFFFF", 0.08)
-                              : alpha("#000000", 0.06)
-                          }`,
-                          borderLeft: `3px solid ${colors.primary}`,
+                          height: "100%",
                           borderRadius: "16px",
-                          boxShadow: isDarkMode
-                            ? `0 6px 24px -6px ${alpha(colors.primary, 0.2)}`
-                            : `0 6px 24px -6px ${alpha(colors.primary, 0.15)}`,
+                          background: isDarkMode
+                            ? alpha(theme.palette.background.paper, 0.7)
+                            : alpha("#fff", 0.95),
+                          border: `1.5px solid ${alpha(colors.primary, isDarkMode ? 0.45 : 0.25)}`,
+                          transition: "all 0.2s ease",
                           "&:hover": {
-                            transform: "translateY(-4px)",
-                            boxShadow: isDarkMode
-                              ? `0 12px 32px -6px ${alpha(colors.primary, 0.3)}`
-                              : `0 12px 32px -6px ${alpha(
-                                  colors.primary,
-                                  0.25
-                                )}`,
-                          },
-                          "&::before": {
-                            content: '""',
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: isDarkMode
-                              ? `linear-gradient(135deg, ${alpha(
-                                  colors.primary,
-                                  0.08
-                                )} 0%, ${alpha(colors.secondary, 0.02)} 100%)`
-                              : `linear-gradient(135deg, ${alpha(
-                                  colors.primary,
-                                  0.04
-                                )} 0%, ${alpha(colors.secondary, 0.01)} 100%)`,
-                            pointerEvents: "none",
+                            transform: "translateY(-3px)",
+                            boxShadow: `0 10px 28px -6px ${alpha(colors.primary, 0.3)}`,
+                            border: `1.5px solid ${alpha(colors.primary, 0.65)}`,
                           },
                         }}
                       >
                         {/* Header */}
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-start",
-                            mb: 2,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "flex-start",
-                              gap: 1.5,
-                              flex: 1,
-                              minWidth: 0,
-                            }}
-                          >
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
                             <Box
                               sx={{
-                                p: 1,
-                                borderRadius: "12px",
+                                p: 0.875,
+                                borderRadius: "10px",
                                 background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                                 display: "flex",
                                 flexShrink: 0,
                               }}
                             >
-                              <CreditCardIcon
-                                sx={{ color: "#fff", fontSize: 20 }}
-                              />
+                              <CreditCardIcon sx={{ color: "#fff", fontSize: 18 }} />
                             </Box>
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Typography
-                                variant="subtitle1"
-                                fontWeight={600}
-                                sx={{
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {summary.name}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                {summary.transactionCount} transações
-                              </Typography>
-                            </Box>
-                          </Box>
-                          <Tooltip title="Ver detalhes">
-                            <IconButton
-                              size="small"
+                            <Typography
+                              fontWeight={700}
                               sx={{
-                                color: colors.primary,
-                                bgcolor: alpha(colors.primary, 0.1),
-                                "&:hover": {
-                                  bgcolor: alpha(colors.primary, 0.2),
-                                },
+                                fontSize: 14,
+                                lineHeight: 1.2,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                maxWidth: 110,
                               }}
                             >
-                              <ArrowForwardIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                              {summary.name}
+                            </Typography>
+                          </Box>
+                          {hasUnpaid && (
+                            <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", whiteSpace: "nowrap" }}>
+                              {summary.unpaidCount} pending
+                            </Typography>
+                          )}
                         </Box>
 
                         {/* Amount */}
-                        <Box sx={{ mb: 2 }}>
+                        <Box sx={{ mb: 1.5, flex: 1 }}>
                           <Typography
-                            variant="h5"
-                            fontWeight="bold"
                             sx={{
-                              color: colors.primary,
-                              fontFamily: "monospace",
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: "text.disabled",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.1em",
+                              mb: 0.5,
+                            }}
+                          >
+                            This month
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: 20,
+                              fontWeight: 800,
                               letterSpacing: "-0.02em",
+                              lineHeight: 1.15,
                             }}
                           >
                             {formatCurrency(summary.totalExpense)}
                           </Typography>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              mt: 1,
-                            }}
-                          >
-                            <LinearProgress
-                              variant="determinate"
-                              value={percentage}
-                              sx={{
-                                flex: 1,
-                                height: 4,
-                                borderRadius: "4px",
-                                bgcolor: alpha(colors.primary, 0.1),
-                                "& .MuiLinearProgress-bar": {
-                                  borderRadius: "4px",
-                                  background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
-                                },
-                              }}
-                            />
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ minWidth: 35 }}
-                            >
-                              {percentage.toFixed(0)}%
-                            </Typography>
-                          </Box>
                         </Box>
 
-                        {/* Status & Actions */}
+                        {/* Progress bar */}
+                        <LinearProgress
+                          variant="determinate"
+                          value={Math.min(percentage, 100)}
+                          sx={{
+                            height: 4,
+                            borderRadius: 2,
+                            mb: 2,
+                            bgcolor: alpha(colors.primary, 0.15),
+                            "& .MuiLinearProgress-bar": {
+                              borderRadius: 2,
+                              background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
+                            },
+                          }}
+                        />
+
+                        {/* Footer */}
                         <Box
                           sx={{
                             display: "flex",
-                            justifyContent: "space-between",
                             alignItems: "center",
-                            flexWrap: "wrap",
-                            gap: 1,
-                            mt: "auto",
+                            justifyContent: hasUnpaid ? "space-between" : "center",
+                            borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                            pt: 1.5,
                           }}
                         >
-                          {hasUnpaid ? (
-                            <Chip
-                              icon={<WarningIcon />}
-                              label={
-                                summary.unpaidCount === 1
-                                  ? "1 pendente"
-                                  : `${summary.unpaidCount} pendentes`
-                              }
-                              size="small"
-                              color="warning"
-                              variant="outlined"
-                              sx={{
-                                fontSize: 11,
-                                height: 24,
-                                borderRadius: "8px",
-                              }}
-                            />
-                          ) : (
-                            <Chip
-                              icon={<CheckCircleIcon />}
-                              label="Todas pagas"
-                              size="small"
-                              color="success"
-                              variant="outlined"
-                              sx={{
-                                fontSize: 11,
-                                height: 24,
-                                borderRadius: "8px",
-                              }}
-                            />
-                          )}
-
+                          <Button
+                            size="small"
+                            onClick={(e) => { e.stopPropagation(); onSelectPaymentMethod(summary.name); }}
+                            sx={{
+                              color: colors.primary,
+                              textTransform: "none",
+                              fontWeight: 600,
+                              fontSize: 13,
+                              p: 0,
+                              minWidth: 0,
+                              "&:hover": { background: "none", opacity: 0.75 },
+                            }}
+                          >
+                            Details
+                          </Button>
                           {hasUnpaid && (
                             <Button
                               size="small"
                               variant="contained"
-                              startIcon={<CheckCircleIcon />}
                               onClick={(e) => handlePayAll(summary.name, e)}
                               sx={{
                                 textTransform: "none",
-                                fontSize: 11,
+                                fontWeight: 700,
+                                fontSize: 12,
+                                px: 2,
                                 py: 0.5,
-                                px: 1.5,
-                                borderRadius: "8px",
+                                borderRadius: "20px",
+                                lineHeight: 1.5,
                                 background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                boxShadow: `0 4px 12px -2px ${alpha(colors.primary, 0.4)}`,
                                 "&:hover": {
                                   background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})`,
                                 },
                               }}
                             >
-                              Pagar
+                              Pay
                             </Button>
                           )}
                         </Box>
-
-                        {/* Unpaid Amount */}
-                        {hasUnpaid && (
-                          <Box
-                            sx={{
-                              mt: 2,
-                              pt: 2,
-                              borderTop: `1px solid ${alpha(
-                                theme.palette.divider,
-                                0.5
-                              )}`,
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                              }}
-                            >
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                Valor pendente:
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                fontWeight={600}
-                                color="warning.main"
-                              >
-                                {formatCurrency(summary.unpaidAmount)}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        )}
                       </Paper>
                     </Grid>
                   );

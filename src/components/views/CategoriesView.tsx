@@ -707,7 +707,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
 
     return (
       <Box
-        sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3 }}
+        sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3, px: { xs: 0, md: "28px" }, pt: { xs: 0, md: "24px" }, pb: { xs: 0, md: "60px" } }}
       >
         {/* Header */}
         <Box
@@ -754,13 +754,6 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             </Box>
           </Box>
 
-          <DateFilter
-            month={selectedMonth}
-            year={selectedYear}
-            onDateChange={onDateChange}
-            showIcon
-            compact={isMobile}
-          />
         </Box>
 
         {/* Summary Cards */}
@@ -1331,17 +1324,6 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           </Typography>
         </Box>
 
-        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
-          {tabValue === 0 && (
-            <DateFilter
-              month={selectedMonth}
-              year={selectedYear}
-              onDateChange={onDateChange}
-              showIcon
-              compact={isMobile}
-            />
-          )}
-        </Box>
       </Box>
 
       {/* Summary Cards */}

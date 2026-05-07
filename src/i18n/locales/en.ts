@@ -37,7 +37,6 @@ export default {
     dashboard: "Dashboard",
     transactions: "Transactions",
     budgets: "Budgets",
-    goals: "Goals",
     accounts: "Accounts",
     recurring: "Recurring",
     splits: "Splits",
@@ -108,26 +107,6 @@ export default {
     noBudgets: "No budgets set for this month",
     totalBudgeted: "Total Budgeted",
     totalSpent: "Total Spent",
-  },
-
-  // Goals
-  goals: {
-    title: "Financial Goals",
-    subtitle: "Track your savings goals and milestones",
-    newGoal: "New Goal",
-    goalName: "Goal Name",
-    targetAmount: "Target Amount",
-    currentAmount: "Current Amount",
-    deadline: "Deadline",
-    addAmount: "Add Amount",
-    completed: "Completed",
-    daysLeft: "days left",
-    overdue: "Overdue",
-    noGoals: "No goals yet",
-    createFirst: "Create your first financial goal",
-    avgProgress: "Avg. Progress",
-    totalTarget: "Total Target",
-    totalSaved: "Total Saved",
   },
 
   // Accounts

@@ -11,25 +11,14 @@ import {
   ListItemText,
   useTheme,
   useMediaQuery,
-  Card,
-  CardContent,
   Divider,
   Grid,
   FormControl,
   InputLabel,
   Select,
   SelectChangeEvent,
-  Button,
-  Collapse,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  TableHead,
   alpha,
-  Checkbox,
   Tooltip,
-  LinearProgress,
 } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -40,25 +29,12 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   CalendarMonth as CalendarIcon,
-  Add as AddIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-  Schedule as ScheduleIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as UnpaidIcon,
-  Visibility as VisibilityIcon,
   Refresh as RefreshIcon,
   AllInclusive as InfiniteIcon,
 } from "@mui/icons-material";
-import NixButton from "../radix/Button";
-import { CREATE_TRANSACTION_BUTTON } from "../../constants";
-import TransactionTags from "../ui/TransactionTags";
 import SearchBar from "../ui/SearchBar";
-import {
-  getTableContainerSx,
-  getHeaderCellSx,
-  getRowSx,
-} from "../../utils/tableStyles";
 import { Transaction } from "../../types";
 import { useLayoutSpacing } from "../../hooks";
 import EmptyState from "../ui/EmptyState";
@@ -206,7 +182,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   const recurringVirtualizer = useVirtualizer({
     count: recurringTransactions.length,
     getScrollElement: () => recurringListRef.current,
-    estimateSize: () => 200,
+    estimateSize: () => 73,
     overscan: 3,
     enabled: recurringTransactions.length > RECURRING_VIRTUALIZE_THRESHOLD,
   });
@@ -638,686 +614,150 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   };
 
   // =============================================
-  // CARD COMPONENT - Design alinhado com PaymentMethodsView
+  // CATEGORY COLOR — deterministic from name
   // =============================================
-  const renderRecurringCard = (t: Transaction) => {
-    const isExpanded = expandedItems.has(t.id);
+  const ICON_PALETTES = [
+    { primary: "#6366f1", secondary: "#8b5cf6" },
+    { primary: "#059669", secondary: "#10b981" },
+    { primary: "#f59e0b", secondary: "#d97706" },
+    { primary: "#06b6d4", secondary: "#0891b2" },
+    { primary: "#ec4899", secondary: "#db2777" },
+    { primary: "#3b82f6", secondary: "#2563eb" },
+    { primary: "#8b5cf6", secondary: "#7c3aed" },
+    { primary: "#f97316", secondary: "#ea580c" },
+  ];
+
+  const getCategoryPalette = (category: string) => {
+    let hash = 0;
+    for (let i = 0; i < category.length; i++) {
+      hash = category.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return ICON_PALETTES[Math.abs(hash) % ICON_PALETTES.length];
+  };
+
+  // =============================================
+  // LIST ROW
+  // =============================================
+  const renderRecurringRow = (t: Transaction, isLast: boolean) => {
     const isIncome = t.type === "income";
     const occurrences = calculateOccurrences(t);
-    const occurrencesList = getOccurrencesList(t);
-    const accentColor = isIncome ? "#059669" : "#DC2626";
-    const relatedTx = getRelatedTransaction(t);
-
-    // Calcula progresso baseado em quantas já passaram
-    const paidOccurrences = occurrencesList.filter(
-      (o) => o.isPast || (o.isCurrent && t.isPaid)
-    ).length;
-    const progressPercentage =
-      occurrencesList.length > 0
-        ? (paidOccurrences / occurrencesList.length) * 100
-        : 0;
+    const palette = isIncome
+      ? { primary: "#059669", secondary: "#10b981" }
+      : getCategoryPalette(t.category);
 
     return (
-      <Card
-        key={t.id}
-        elevation={0}
-        sx={{
-          position: "relative",
-          overflow: "hidden",
-          background: isDarkMode
-            ? `linear-gradient(135deg, ${alpha(
-                theme.palette.background.paper,
-                0.7
-              )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha(
-                "#FFFFFF",
-                0.65
-              )} 100%)`,
-          backdropFilter: "blur(16px)",
-          border: `1px solid ${
-            isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-          }`,
-          borderLeft: `3px solid ${accentColor}`,
-          borderRadius: "16px",
-          boxShadow: isDarkMode
-            ? `0 6px 24px -6px ${alpha(accentColor, 0.2)}`
-            : `0 6px 24px -6px ${alpha(accentColor, 0.15)}`,
-          transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-          "&:hover": {
-            transform: "translateY(-4px)",
-            boxShadow: isDarkMode
-              ? `0 12px 32px -6px ${alpha(accentColor, 0.3)}`
-              : `0 12px 32px -6px ${alpha(accentColor, 0.25)}`,
-          },
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: isDarkMode
-              ? `linear-gradient(135deg, ${alpha(
-                  accentColor,
-                  0.08
-                )} 0%, ${alpha(accentColor, 0.02)} 100%)`
-              : `linear-gradient(135deg, ${alpha(
-                  accentColor,
-                  0.04
-                )} 0%, ${alpha(accentColor, 0.01)} 100%)`,
-            pointerEvents: "none",
-          },
-        }}
-      >
-        <CardContent
+      <React.Fragment key={t.id}>
+        <Box
           sx={{
-            p: isMobile ? 2 : 2.5,
-            "&:last-child": { pb: isMobile ? 2 : 2.5 },
+            display: "flex",
+            alignItems: "center",
+            px: isMobile ? 2 : 2.5,
+            py: isMobile ? 1.5 : 2,
+            gap: 2,
+            transition: "background 0.15s",
+            "&:hover": {
+              bgcolor: isDarkMode
+                ? alpha("#fff", 0.03)
+                : alpha("#000", 0.02),
+            },
           }}
         >
-          {/* Header Row */}
+          {/* Icon */}
           <Box
             sx={{
+              width: 44,
+              height: 44,
+              borderRadius: "12px",
+              background: `linear-gradient(135deg, ${palette.primary}, ${palette.secondary})`,
               display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              cursor: "pointer",
-            }}
-            onClick={() => toggleExpand(t.id)}
-          >
-            {/* Left: Icon + Info */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 1.5,
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: "12px",
-                  background: `linear-gradient(135deg, ${accentColor}, ${alpha(
-                    accentColor,
-                    0.7
-                  )})`,
-                  display: "flex",
-                  flexShrink: 0,
-                }}
-              >
-                {isIncome ? (
-                  <TrendingUpIcon sx={{ color: "#fff", fontSize: 20 }} />
-                ) : (
-                  <TrendingDownIcon sx={{ color: "#fff", fontSize: 20 }} />
-                )}
-              </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  variant="subtitle1"
-                  fontWeight={600}
-                  sx={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    mb: 0.25,
-                  }}
-                >
-                  {t.description}
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Typography variant="caption" color="text.secondary">
-                    {t.category}
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    •
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {t.paymentMethod}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Right: Amount + Actions */}
-            <Box sx={{ textAlign: "right", flexShrink: 0, ml: 1 }}>
-              <Typography
-                variant="h6"
-                fontWeight={700}
-                color={isIncome ? "success.main" : "error.main"}
-                sx={{ fontFamily: "monospace", letterSpacing: "-0.02em" }}
-              >
-                {isIncome ? "+" : "-"}
-                {formatCurrency(t.amount || 0)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                /{t.frequency === "monthly" ? "mês" : "ano"}
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Info Row: Status Chips + Next Date */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
-              mt: 2,
-              flexWrap: "wrap",
-              gap: 1,
+              justifyContent: "center",
+              flexShrink: 0,
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                gap: 0.75,
-                flexWrap: "wrap",
-                alignItems: "center",
-              }}
-            >
-              <Chip
-                icon={<RepeatIcon sx={{ fontSize: 14 }} />}
-                label={t.frequency === "monthly" ? "Mensal" : "Anual"}
-                size="small"
-                variant="outlined"
-                sx={{
-                  height: 24,
-                  fontSize: 11,
-                  borderRadius: "8px",
-                  borderColor: alpha(accentColor, 0.3),
-                  color: accentColor,
-                }}
-              />
-              <Chip
-                icon={
-                  t.isPaid ? (
-                    <CheckCircleIcon sx={{ fontSize: 14 }} />
-                  ) : (
-                    <UnpaidIcon sx={{ fontSize: 14 }} />
-                  )
-                }
-                label={t.isPaid ? "Pago" : "Pendente"}
-                size="small"
-                color={t.isPaid ? "success" : "default"}
-                variant={t.isPaid ? "filled" : "outlined"}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onTogglePaid(t.id, !t.isPaid);
-                }}
-                sx={{
-                  height: 24,
-                  fontSize: 11,
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease-in-out",
-                  "&:hover": { transform: "scale(1.05)" },
-                }}
-              />
-              {t.isShared && relatedTx && (
-                <Chip
-                  label={`÷ ${t.sharedWith}`}
-                  size="small"
-                  color="info"
-                  variant="outlined"
-                  sx={{ height: 24, fontSize: 11, borderRadius: "8px" }}
-                />
-              )}
-            </Box>
+            {isIncome ? (
+              <TrendingUpIcon sx={{ color: "#fff", fontSize: 20 }} />
+            ) : (
+              <TrendingDownIcon sx={{ color: "#fff", fontSize: 20 }} />
+            )}
+          </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <ScheduleIcon
-                fontSize="small"
-                color="action"
-                sx={{ fontSize: 16 }}
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={500}
-              >
-                Próximo: {getNextOccurrence(t)}
+          {/* Info */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              fontWeight={700}
+              sx={{ fontSize: 14, lineHeight: 1.3, mb: 0.25 }}
+            >
+              {t.description}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+              <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                {t.category}
+              </Typography>
+              <Typography sx={{ fontSize: 11, color: "text.disabled" }}>•</Typography>
+              <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                {t.frequency === "monthly" ? "Monthly" : "Yearly"}
+              </Typography>
+              <Typography sx={{ fontSize: 11, color: "text.disabled" }}>•</Typography>
+              <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                {occurrences} occurrences
               </Typography>
             </Box>
           </Box>
 
-          {/* Progress Bar */}
-          <Box sx={{ mt: 1.5 }}>
-            <Box
+          {/* Amount + Badge + Edit */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexShrink: 0 }}>
+            <Typography
+              fontWeight={700}
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mb: 0.5,
+                fontSize: isMobile ? 14 : 16,
+                letterSpacing: "-0.01em",
+                color: isIncome ? "#10b981" : "text.primary",
               }}
             >
-              <Typography variant="caption" color="text.secondary">
-                {occurrences}× ocorrências desde{" "}
-                {formatDate(t.date).split(" de ")[0]}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {progressPercentage.toFixed(0)}%
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={progressPercentage}
+              {isIncome ? "+" : ""}{formatCurrency(t.amount || 0)}
+            </Typography>
+            <Chip
+              label={t.isPaid ? "Paid" : "Pending"}
+              size="small"
+              onClick={(e) => { e.stopPropagation(); onTogglePaid(t.id, !t.isPaid); }}
               sx={{
-                height: 4,
-                borderRadius: "4px",
-                bgcolor: alpha(accentColor, 0.1),
-                "& .MuiLinearProgress-bar": {
-                  borderRadius: "4px",
-                  background: `linear-gradient(90deg, ${accentColor}, ${alpha(
-                    accentColor,
-                    0.7
-                  )})`,
-                },
+                height: 24,
+                fontSize: 11,
+                fontWeight: 700,
+                borderRadius: "8px",
+                cursor: "pointer",
+                border: "none",
+                bgcolor: t.isPaid
+                  ? alpha("#10b981", isDarkMode ? 0.2 : 0.12)
+                  : alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
+                color: t.isPaid ? "#10b981" : "#f59e0b",
+                "& .MuiChip-label": { px: 1.25 },
+                "&:hover": { opacity: 0.8 },
               }}
             />
-          </Box>
-
-          {/* Tags */}
-          <TransactionTags
-            transaction={t}
-            showRecurring={false}
-            showInstallments={false}
-          />
-
-          {/* Expand Button */}
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 1.5 }}>
-            <Button
+            <IconButton
               size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleExpand(t.id);
-              }}
-              endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              onClick={() => onEdit(t)}
               sx={{
-                textTransform: "none",
+                width: 30,
+                height: 30,
+                borderRadius: "8px",
                 color: "text.secondary",
-                fontSize: 12,
-                "&:hover": { bgcolor: alpha(accentColor, 0.08) },
+                "&:hover": {
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: "primary.main",
+                },
               }}
             >
-              {isExpanded
-                ? "Ocultar detalhes"
-                : `Ver ${occurrencesList.length} ocorrências`}
-            </Button>
+              <EditIcon sx={{ fontSize: 16 }} />
+            </IconButton>
           </Box>
-        </CardContent>
-
-        {/* Expanded Content */}
-        <Collapse in={isExpanded}>
-          <Divider />
-          <Box
-            sx={{
-              p: isMobile ? 2 : 2.5,
-              bgcolor: alpha(theme.palette.background.default, 0.5),
-            }}
-          >
-            {/* Actions */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 1,
-                mb: 2,
-                flexWrap: "wrap",
-              }}
-            >
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<EditIcon />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(t);
-                }}
-                sx={{ borderRadius: "10px", textTransform: "none" }}
-              >
-                Editar
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(t.id);
-                }}
-                sx={{ borderRadius: "10px", textTransform: "none" }}
-              >
-                Excluir
-              </Button>
-            </Box>
-
-            {/* Occurrences Table/Cards */}
-            <Typography
-              variant="subtitle2"
-              gutterBottom
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <VisibilityIcon fontSize="small" color="primary" />
-              Próximas ocorrências
-            </Typography>
-
-            {isMobile ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {occurrencesList.slice(0, 6).map((occ, idx) => {
-                  const isPaidOcc = occ.isModified
-                    ? occ.modifiedTransaction?.isPaid
-                    : occ.isCurrent && t.isPaid;
-
-                  return (
-                    <Paper
-                      key={idx}
-                      sx={{
-                        p: 1.5,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        opacity: isPaidOcc ? 0.6 : 1,
-                        bgcolor: occ.isCurrent
-                          ? alpha(theme.palette.primary.main, 0.08)
-                          : "background.paper",
-                        border: occ.isCurrent
-                          ? `2px solid ${theme.palette.primary.main}`
-                          : `1px solid ${theme.palette.divider}`,
-                        borderRadius: "10px",
-                      }}
-                    >
-                      <Checkbox
-                        checked={!!isPaidOcc}
-                        onChange={(e) => {
-                          if (occ.isModified && occ.modifiedTransaction) {
-                            onTogglePaid(
-                              occ.modifiedTransaction.id,
-                              e.target.checked
-                            );
-                          } else if (occ.isCurrent) {
-                            onTogglePaid(t.id, e.target.checked);
-                          }
-                        }}
-                        size="small"
-                        color="success"
-                        disabled={!occ.isCurrent && !occ.isModified}
-                        sx={{ p: 0.5 }}
-                      />
-                      <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant="body2"
-                          fontWeight={occ.isCurrent ? 600 : 500}
-                        >
-                          {occ.formattedDate}
-                        </Typography>
-                        {occ.isCurrent && (
-                          <Chip
-                            label="Atual"
-                            size="small"
-                            color="primary"
-                            sx={{ height: 16, fontSize: 9, mt: 0.5 }}
-                          />
-                        )}
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        color={isIncome ? "success.main" : "error.main"}
-                      >
-                        {isIncome ? "+" : "-"}
-                        {formatCurrency(
-                          occ.modifiedTransaction?.amount ?? t.amount ?? 0
-                        )}
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMobileOccurrenceMenuAnchor({
-                            element: e.currentTarget,
-                            transaction: t,
-                            occurrence: occ,
-                          });
-                        }}
-                      >
-                        <MoreVertIcon fontSize="small" />
-                      </IconButton>
-                    </Paper>
-                  );
-                })}
-              </Box>
-            ) : (
-              <Table size="small" sx={{ "& td, & th": { py: 1 } }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell
-                      sx={getHeaderCellSx(theme, isDarkMode)}
-                      padding="checkbox"
-                    >
-                      Pago
-                    </TableCell>
-                    <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                      #
-                    </TableCell>
-                    <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                      Data
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        ...getHeaderCellSx(theme, isDarkMode),
-                        textAlign: "right",
-                      }}
-                    >
-                      Valor
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        ...getHeaderCellSx(theme, isDarkMode),
-                        textAlign: "center",
-                      }}
-                    >
-                      Status
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        ...getHeaderCellSx(theme, isDarkMode),
-                        textAlign: "center",
-                      }}
-                    >
-                      Ações
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {occurrencesList.slice(0, 12).map((occ, idx) => {
-                    const isPaidOcc = occ.isModified
-                      ? occ.modifiedTransaction?.isPaid
-                      : occ.isCurrent && t.isPaid;
-                    const displayAmount =
-                      occ.modifiedTransaction?.amount ?? t.amount;
-                    const displayType = occ.modifiedTransaction?.type ?? t.type;
-                    const isModifiedIncome = displayType === "income";
-
-                    return (
-                      <TableRow
-                        key={idx}
-                        sx={{
-                          opacity: isPaidOcc ? 0.6 : 1,
-                          bgcolor: occ.isCurrent
-                            ? alpha(theme.palette.primary.main, 0.08)
-                            : occ.isModified
-                            ? alpha(theme.palette.warning.main, 0.05)
-                            : "transparent",
-                        }}
-                      >
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            checked={!!isPaidOcc}
-                            onChange={(e) => {
-                              if (occ.isModified && occ.modifiedTransaction) {
-                                onTogglePaid(
-                                  occ.modifiedTransaction.id,
-                                  e.target.checked
-                                );
-                              } else if (occ.isCurrent) {
-                                onTogglePaid(t.id, e.target.checked);
-                              }
-                            }}
-                            size="small"
-                            color="success"
-                            disabled={!occ.isCurrent && !occ.isModified}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={`#${occ.occurrenceNumber}`}
-                            size="small"
-                            variant="outlined"
-                            color={occ.isCurrent ? "primary" : "default"}
-                            sx={{ fontWeight: 600, height: 22 }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography
-                            variant="body2"
-                            fontWeight={occ.isCurrent ? 600 : 400}
-                          >
-                            {occ.formattedDate}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography
-                            variant="body2"
-                            fontWeight={600}
-                            color={
-                              isModifiedIncome ? "success.main" : "error.main"
-                            }
-                          >
-                            {isModifiedIncome ? "+" : "-"}
-                            {formatCurrency(displayAmount || 0)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          {isPaidOcc ? (
-                            <Chip
-                              label="Pago"
-                              size="small"
-                              color="success"
-                              sx={{ height: 22 }}
-                            />
-                          ) : occ.isCurrent ? (
-                            <Chip
-                              label="Atual"
-                              size="small"
-                              color="primary"
-                              sx={{ height: 22 }}
-                            />
-                          ) : occ.isModified ? (
-                            <Chip
-                              label="Modificado"
-                              size="small"
-                              color="warning"
-                              sx={{ height: 22 }}
-                            />
-                          ) : (
-                            <Chip
-                              label="Agendado"
-                              size="small"
-                              variant="outlined"
-                              sx={{ height: 22, opacity: 0.7 }}
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Tooltip title="Editar">
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                occ.isModified && occ.modifiedTransaction
-                                  ? onEdit(occ.modifiedTransaction)
-                                  : handleOccurrenceEdit(t, occ)
-                              }
-                              color="primary"
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Excluir">
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                occ.isModified && occ.modifiedTransaction
-                                  ? onDelete(occ.modifiedTransaction.id)
-                                  : handleOccurrenceDelete(t, occ)
-                              }
-                              color="error"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-
-            {/* Annual Impact */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                mt: 2,
-                borderRadius: "12px",
-                bgcolor: alpha(accentColor, 0.05),
-                border: `1px solid ${alpha(accentColor, 0.15)}`,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={500}
-                  >
-                    Impacto Anual
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {t.frequency === "monthly" ? "12 meses" : "1 ano"} ×{" "}
-                    {formatCurrency(t.amount || 0)}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="h6"
-                  fontWeight={700}
-                  color={isIncome ? "success.main" : "error.main"}
-                >
-                  {isIncome ? "+" : "-"}
-                  {formatCurrency(
-                    (t.amount || 0) * (t.frequency === "monthly" ? 12 : 1)
-                  )}
-                </Typography>
-              </Box>
-            </Paper>
-          </Box>
-        </Collapse>
-      </Card>
+        </Box>
+        {!isLast && (
+          <Divider sx={{ mx: isMobile ? 2 : 2.5 }} />
+        )}
+      </React.Fragment>
     );
   };
 
@@ -1657,34 +1097,46 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           description="Crie uma transação recorrente para gerenciá-la aqui"
           compact
         />
-      ) : recurringTransactions.length > RECURRING_VIRTUALIZE_THRESHOLD ? (
-        <Box ref={recurringListRef} sx={{ maxHeight: "70vh", overflow: "auto" }}>
-          <Box sx={{ height: recurringVirtualizer.getTotalSize(), position: "relative" }}>
-            {recurringVirtualizer.getVirtualItems().map((virtualRow) => (
-              <Box
-                key={recurringTransactions[virtualRow.index].id}
-                sx={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  transform: `translateY(${virtualRow.start}px)`,
-                  pb: 2,
-                }}
-              >
-                {renderRecurringCard(recurringTransactions[virtualRow.index])}
-              </Box>
-            ))}
-          </Box>
-        </Box>
       ) : (
-        <Grid container spacing={2}>
-          {recurringTransactions.map((t) => (
-            <Grid key={t.id} size={{ xs: 12, md: 6 }}>
-              {renderRecurringCard(t)}
-            </Grid>
-          ))}
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: "16px",
+            border: `1px solid ${isDarkMode ? alpha("#fff", 0.08) : alpha("#000", 0.06)}`,
+            overflow: "hidden",
+            bgcolor: isDarkMode
+              ? alpha(theme.palette.background.paper, 0.7)
+              : "#fff",
+          }}
+        >
+          {recurringTransactions.length > RECURRING_VIRTUALIZE_THRESHOLD ? (
+            <Box ref={recurringListRef} sx={{ maxHeight: "70vh", overflow: "auto" }}>
+              <Box sx={{ height: recurringVirtualizer.getTotalSize(), position: "relative" }}>
+                {recurringVirtualizer.getVirtualItems().map((virtualRow) => (
+                  <Box
+                    key={recurringTransactions[virtualRow.index].id}
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    {renderRecurringRow(
+                      recurringTransactions[virtualRow.index],
+                      virtualRow.index === recurringTransactions.length - 1
+                    )}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          ) : (
+            recurringTransactions.map((t, index) =>
+              renderRecurringRow(t, index === recurringTransactions.length - 1)
+            )
+          )}
+        </Paper>
       )}
 
 

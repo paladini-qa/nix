@@ -30,10 +30,23 @@ const App: React.FC = () => {
 
   const { data: settings, isLoading: isLoadingSettings } = useSettingsQuery(session?.user?.id);
 
-  const themePreference = settings?.theme_preference || "system";
-  const darkMode = 
-    themePreference === "dark" || 
-    (themePreference === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const [themePref, setThemePref] = useState<string>(() =>
+    localStorage.getItem("themePreference") || settings?.theme_preference || "system"
+  );
+
+  useEffect(() => {
+    if (settings?.theme_preference) setThemePref(settings.theme_preference);
+  }, [settings?.theme_preference]);
+
+  useEffect(() => {
+    const handler = (e: Event) => setThemePref((e as CustomEvent<string>).detail);
+    window.addEventListener("nix:themechange", handler);
+    return () => window.removeEventListener("nix:themechange", handler);
+  }, []);
+
+  const darkMode =
+    themePref === "dark" ||
+    (themePref === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const theme = darkMode ? darkTheme : lightTheme;
 
   if (loadingInitial || (session && isLoadingSettings)) {

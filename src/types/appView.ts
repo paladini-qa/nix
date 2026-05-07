@@ -11,7 +11,6 @@ export type AppCurrentView =
   | "nixai"
   | "paymentMethods"
   | "categories"
-  | "goals"
   | "budgets"
   | "analytics"
   | "planning"

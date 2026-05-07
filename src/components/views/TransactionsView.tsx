@@ -64,7 +64,6 @@ import SwipeableTransactionCard from "../ui/SwipeableTransactionCard";
 import PullToRefreshIndicator from "../banners/PullToRefreshIndicator";
 import { Transaction, PaymentMethodConfig } from "../../types";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../../constants";
-import DateFilter from "../ui/DateFilter";
 import { useNotification } from "../../contexts";
 import { usePullToRefresh, useLayoutSpacing } from "../../hooks";
 import EmptyState from "../ui/EmptyState";
@@ -1240,14 +1239,6 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 </IconButton>
               </>
             )}
-
-            {/* Date Filter */}
-            <DateFilter
-              month={selectedMonth}
-              year={selectedYear}
-              onDateChange={onDateChange}
-              compact={isMobile}
-            />
 
             {/* Refresh Button — apenas desktop */}
             {onRefreshData && !isMobile && (

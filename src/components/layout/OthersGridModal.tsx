@@ -17,7 +17,6 @@ import {
   Repeat as RepeatIcon,
   Category as CategoryIcon,
   AutoAwesome as SparklesIcon,
-  EmojiEvents as GoalsIcon,
   AccountBalance as BudgetsIcon,
   BarChart as AnalyticsIcon,
   CalendarMonth as PlanningIcon,
@@ -53,7 +52,6 @@ const mainGridItems: GridItem[] = [
 ];
 
 const planningGridItems: GridItem[] = [
-  { id: "goals", label: "Metas", icon: GoalsIcon },
   { id: "budgets", label: "Orçamentos", icon: BudgetsIcon },
   { id: "analytics", label: "Analytics", icon: AnalyticsIcon },
   { id: "planning", label: "Planejamento", icon: PlanningIcon },

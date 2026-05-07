@@ -16,7 +16,6 @@ import ListCardsSkeleton from "../skeletons/ListCardsSkeleton";
 import PaymentMethodsSkeleton from "../skeletons/PaymentMethodsSkeleton";
 import CategoriesSkeleton from "../skeletons/CategoriesSkeleton";
 import BudgetsSkeleton from "../skeletons/BudgetsSkeleton";
-import GoalsSkeleton from "../skeletons/GoalsSkeleton";
 import PlanningSkeleton from "../skeletons/PlanningSkeleton";
 
 // Lazy views
@@ -28,7 +27,6 @@ const RecurringView = lazy(() => import("../views/RecurringView"));
 const NixAIView = lazy(() => import("../views/NixAIView"));
 const PaymentMethodsView = lazy(() => import("../views/PaymentMethodsView"));
 const CategoriesView = lazy(() => import("../views/CategoriesView"));
-const GoalsView = lazy(() => import("../views/GoalsView"));
 const BudgetsView = lazy(() => import("../views/BudgetsView"));
 const AnalyticsView = lazy(() => import("../views/AnalyticsView"));
 const PlanningView = lazy(() => import("../views/PlanningView"));
@@ -95,13 +93,12 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
 
   // Ordem das views na barra de navegação primária — usada para detectar direção
   const PRIMARY_VIEW_ORDER: Partial<Record<AppCurrentView, number>> = {
-    dashboard: 0,
-    transactions: 1,
-    paymentMethods: 2,
+    transactions: 0,
+    paymentMethods: 1,
   };
   const SECONDARY_VIEWS = new Set<AppCurrentView>([
     "splits", "shared", "recurring", "categories", "nixai",
-    "goals", "budgets", "analytics", "planning", "import",
+    "budgets", "analytics", "planning", "import",
     "fiscal-report", "debt-calculator", "subscriptions", "investments",
   ]);
 
@@ -136,8 +133,6 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
 
   const renderView = () => {
     switch (currentView) {
-      case "dashboard":
-        return <DashboardMainSection />;
       case "transactions":
         return (
           <Suspense fallback={<TransactionsSkeleton />}>
@@ -280,12 +275,6 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
             />
           </Suspense>
         );
-      case "goals":
-        return (
-          <Suspense fallback={<GoalsSkeleton />}>
-            <GoalsView userId={session.user.id} />
-          </Suspense>
-        );
       case "budgets":
         return (
           <Suspense fallback={<BudgetsSkeleton />}>
@@ -375,8 +364,24 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
             />
           </Suspense>
         );
-      default:
+      case "dashboard":
         return <DashboardMainSection />;
+      default:
+        return (
+          <Suspense fallback={<TransactionsSkeleton />}>
+            <TransactionsView
+              transactions={transactions}
+              onNewTransaction={handleNewTransaction}
+              onEdit={setEditingTransaction}
+              onDelete={deleteTransaction}
+              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              selectedMonth={filters.month}
+              selectedYear={filters.year}
+              onDateChange={(month, year) => setFilters({ month, year })}
+              paymentMethodConfigs={paymentMethodConfigs}
+            />
+          </Suspense>
+        );
     }
   };
 

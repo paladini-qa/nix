@@ -13,7 +13,6 @@ import {
   CallSplit as SplitsIcon,
   Group as SharedIcon,
   Repeat as RecurringIcon,
-  EmojiEvents as GoalsIcon,
   Savings as BudgetsIcon,
   BarChart as AnalyticsIcon,
   CalendarMonth as PlanningIcon,
@@ -27,7 +26,6 @@ import {
 } from "@mui/icons-material";
 import CategoryBreakdown from "../widgets/CategoryBreakdown";
 import SummaryCards from "../widgets/SummaryCards";
-import DateFilter from "../ui/DateFilter";
 import { AdvancedFiltersButton } from "../panels/AdvancedFilters";
 import type { AdvancedFiltersState } from "../panels/AdvancedFilters";
 import DashboardSkeleton from "../skeletons/DashboardSkeleton";
@@ -45,7 +43,6 @@ const MOBILE_SHORTCUTS = [
   { view: "splits" as const,            icon: <SplitsIcon sx={{ fontSize: 20 }} />,       label: "Divisões",     color: "#6366f1" },
   { view: "shared" as const,            icon: <SharedIcon sx={{ fontSize: 20 }} />,        label: "Partilhas",    color: "#10b981" },
   { view: "recurring" as const,         icon: <RecurringIcon sx={{ fontSize: 20 }} />,     label: "Recorrentes",  color: "#f59e0b" },
-  { view: "goals" as const,             icon: <GoalsIcon sx={{ fontSize: 20 }} />,         label: "Metas",        color: "#eab308" },
   { view: "budgets" as const,           icon: <BudgetsIcon sx={{ fontSize: 20 }} />,       label: "Orçamentos",   color: "#3b82f6" },
   { view: "analytics" as const,         icon: <AnalyticsIcon sx={{ fontSize: 20 }} />,     label: "Análises",     color: "#8b5cf6" },
   { view: "planning" as const,          icon: <PlanningIcon sx={{ fontSize: 20 }} />,      label: "Planejamento", color: "#14b8a6" },
@@ -66,7 +63,7 @@ const DashboardMainSection: React.FC = () => {
   const { displayName } = useSettings();
   const navigate = useNavigate();
 
-  const { filters, setFilters, setIsFormOpen, setEditingTransaction } = useAppStore();
+  const { filters, setIsFormOpen, setEditingTransaction } = useAppStore();
   const { data: transactions = [], refetch } = useTransactionsQuery();
   const { filteredTransactions, summary } = useFilteredTransactions();
 
@@ -93,10 +90,6 @@ const DashboardMainSection: React.FC = () => {
     advancedFilters.paymentMethods.length;
 
   const handleToggleFilters = useCallback(() => setShowAdvancedFilters((v) => !v), []);
-  const handleDateChange = useCallback(
-    (month: number, year: number) => setFilters({ month, year }),
-    [setFilters]
-  );
   const handlePaymentMethodClick = useCallback(
     () => navigate(VIEW_ROUTES.paymentMethods),
     [navigate]
@@ -225,7 +218,7 @@ const DashboardMainSection: React.FC = () => {
         </Box>
       )}
 
-      {/* Filters row */}
+      {/* Advanced filters button row */}
       <Box
         sx={{
           display: "flex",
@@ -241,13 +234,6 @@ const DashboardMainSection: React.FC = () => {
           activeFiltersCount={activeFiltersCount}
           showFilters={showAdvancedFilters}
           onToggleFilters={handleToggleFilters}
-        />
-        <DateFilter
-          month={filters.month}
-          year={filters.year}
-          onDateChange={handleDateChange}
-          showIcon
-          disabled={hasAdvancedFiltersActive}
         />
       </Box>
 

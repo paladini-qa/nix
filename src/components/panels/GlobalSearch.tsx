@@ -28,7 +28,6 @@ import {
   CreditCard as CreditCardIcon,
   People as PeopleIcon,
   PieChart as BudgetIcon,
-  Flag as GoalIcon,
   AccountBalance as AccountIcon,
   Analytics as AnalyticsIcon,
   ArrowForward as ArrowIcon,
@@ -52,7 +51,6 @@ type ViewId =
   | "shared"
   | "recurring"
   | "budgets"
-  | "goals"
   | "accounts"
   | "analytics"
   | "nixai"
@@ -88,7 +86,6 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       { id: "shared", label: t("nav.shared"), icon: <PeopleIcon />, keywords: ["compartilhado", "amigo", "dividir"] },
       { id: "recurring", label: t("nav.recurring"), icon: <RepeatIcon />, keywords: ["recorrente", "mensal", "fixo"] },
       { id: "budgets", label: t("nav.budgets"), icon: <BudgetIcon />, keywords: ["orcamento", "limite", "budget"] },
-      { id: "goals", label: t("nav.goals"), icon: <GoalIcon />, keywords: ["meta", "objetivo", "economia"] },
       { id: "accounts", label: t("nav.accounts"), icon: <AccountIcon />, keywords: ["conta", "banco", "carteira"] },
       { id: "analytics", label: "Analytics", icon: <AnalyticsIcon />, keywords: ["grafico", "relatorio", "estatistica"] },
       { id: "nixai", label: t("nav.nixai"), icon: <SparklesIcon />, keywords: ["ai", "assistente", "inteligencia"] },

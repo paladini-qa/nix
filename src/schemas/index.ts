@@ -72,33 +72,6 @@ export const budgetSchema = z.object({
 export type BudgetInput = z.infer<typeof budgetSchema>;
 
 // =============================================
-// GOAL SCHEMAS
-// =============================================
-
-export const goalSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Goal name is required")
-    .max(100, "Name must be less than 100 characters"),
-  targetAmount: z
-    .number({ invalid_type_error: "Target must be a number" })
-    .positive("Target must be greater than 0"),
-  currentAmount: z
-    .number({ invalid_type_error: "Current amount must be a number" })
-    .min(0, "Current amount cannot be negative")
-    .default(0),
-  deadline: z.string().optional(),
-  category: z.string().optional(),
-  color: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format")
-    .default("#6366f1"),
-  icon: z.string().default("savings"),
-});
-
-export type GoalInput = z.infer<typeof goalSchema>;
-
-// =============================================
 // ACCOUNT SCHEMAS
 // =============================================
 

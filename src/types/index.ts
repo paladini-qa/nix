@@ -93,28 +93,6 @@ export interface BudgetWithSpending extends Budget {
   isOverBudget: boolean;
 }
 
-// Sistema de Metas Financeiras
-export interface Goal {
-  id: string;
-  name: string;
-  targetAmount: number;
-  currentAmount: number;
-  deadline?: string; // ISO Date
-  category?: string;
-  color: string;
-  icon: string;
-  isCompleted: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface GoalProgress extends Goal {
-  percentage: number;
-  remainingAmount: number;
-  daysRemaining?: number;
-  isOverdue?: boolean;
-}
-
 // Sistema de Contas/Carteiras
 export type AccountType = 'checking' | 'savings' | 'credit_card' | 'cash' | 'investment' | 'other';
 

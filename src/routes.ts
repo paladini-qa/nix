@@ -13,7 +13,6 @@ export const VIEW_ROUTES: Record<AppCurrentView, string> = {
   nixai: "/nixai",
   paymentMethods: "/payment-methods",
   categories: "/categories",
-  goals: "/goals",
   budgets: "/budgets",
   analytics: "/analytics",
   planning: "/planning",
