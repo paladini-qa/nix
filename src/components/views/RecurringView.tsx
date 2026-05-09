@@ -19,6 +19,7 @@ import {
   SelectChangeEvent,
   alpha,
   Tooltip,
+  Button,
 } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -33,6 +34,7 @@ import {
   RadioButtonUnchecked as UnpaidIcon,
   Refresh as RefreshIcon,
   AllInclusive as InfiniteIcon,
+  ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import SearchBar from "../ui/SearchBar";
 import { Transaction } from "../../types";
@@ -84,6 +86,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedRecurringId, setSelectedRecurringId] = useState<string | null>(null);
 
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<{
     element: HTMLElement | null;
@@ -738,7 +741,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             />
             <IconButton
               size="small"
-              onClick={() => onEdit(t)}
+              onClick={() => setSelectedRecurringId(t.id)}
               sx={{
                 width: 30,
                 height: 30,
@@ -760,6 +763,234 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       </React.Fragment>
     );
   };
+
+  // =============================================
+  // DETAIL VIEW
+  // =============================================
+  const selectedRecurring = selectedRecurringId
+    ? transactions.find((t) => t.id === selectedRecurringId) ?? null
+    : null;
+
+  if (selectedRecurring) {
+    const isIncome = selectedRecurring.type === "income";
+    const palette = isIncome
+      ? { primary: "#059669", secondary: "#10b981" }
+      : getCategoryPalette(selectedRecurring.category);
+    const occurrencesList = getOccurrencesList(selectedRecurring);
+
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+          px: { xs: 0, md: "28px" },
+          pt: { xs: 0, md: "24px" },
+          pb: { xs: "180px", md: "60px" },
+        }}
+      >
+        {/* Header */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+          <IconButton
+            onClick={() => setSelectedRecurringId(null)}
+            sx={{ bgcolor: "action.hover", borderRadius: "10px" }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, minWidth: 0 }}>
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: "12px",
+                background: `linear-gradient(135deg, ${palette.primary}, ${palette.secondary})`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {isIncome ? (
+                <TrendingUpIcon sx={{ color: "#fff", fontSize: 20 }} />
+              ) : (
+                <TrendingDownIcon sx={{ color: "#fff", fontSize: 20 }} />
+              )}
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1.2 }}>
+                {selectedRecurring.description}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {selectedRecurring.category} · {selectedRecurring.frequency === "monthly" ? "Monthly" : "Yearly"} · {formatCurrency(selectedRecurring.amount || 0)}
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => onEdit(selectedRecurring)}
+              sx={{ borderRadius: "10px", textTransform: "none" }}
+            >
+              Edit series
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={() => {
+                onDelete(selectedRecurring.id);
+                setSelectedRecurringId(null);
+              }}
+              sx={{ borderRadius: "10px", textTransform: "none" }}
+            >
+              Delete
+            </Button>
+          </Box>
+        </Box>
+
+        {/* Occurrences list */}
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: "16px",
+            border: `1px solid ${isDarkMode ? alpha("#fff", 0.08) : alpha("#000", 0.06)}`,
+            overflow: "hidden",
+            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.7) : "#fff",
+          }}
+        >
+          {occurrencesList.length === 0 ? (
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <Typography color="text.secondary">No occurrences found</Typography>
+            </Box>
+          ) : (
+            occurrencesList.map((occ, index) => {
+              const isPaid = occ.isModified
+                ? !!occ.modifiedTransaction?.isPaid
+                : occ.isCurrent && selectedRecurring.isPaid;
+              const amount = occ.modifiedTransaction?.amount ?? selectedRecurring.amount ?? 0;
+              const isLast = index === occurrencesList.length - 1;
+
+              return (
+                <React.Fragment key={index}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      px: isMobile ? 2 : 2.5,
+                      py: 1.75,
+                      gap: 2,
+                      opacity: occ.isPast && !occ.isCurrent ? 0.55 : 1,
+                      transition: "background 0.15s",
+                      "&:hover": {
+                        bgcolor: isDarkMode ? alpha("#fff", 0.03) : alpha("#000", 0.02),
+                      },
+                    }}
+                  >
+                    {/* Date */}
+                    <Box sx={{ minWidth: isMobile ? 70 : 110, flexShrink: 0 }}>
+                      <Typography fontWeight={occ.isCurrent ? 700 : 500} sx={{ fontSize: 13 }}>
+                        {occ.formattedDate}
+                      </Typography>
+                      {occ.isCurrent && (
+                        <Typography sx={{ fontSize: 10, fontWeight: 700, color: theme.palette.primary.main, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                          Current
+                        </Typography>
+                      )}
+                    </Box>
+
+                    <Box sx={{ flex: 1 }} />
+
+                    {/* Amount */}
+                    <Typography
+                      fontWeight={700}
+                      sx={{
+                        fontSize: isMobile ? 13 : 15,
+                        letterSpacing: "-0.01em",
+                        color: isIncome ? "#10b981" : "text.primary",
+                      }}
+                    >
+                      {isIncome ? "+" : ""}{formatCurrency(amount)}
+                    </Typography>
+
+                    {/* Paid/Pending chip */}
+                    <Chip
+                      label={isPaid ? "Paid" : "Pending"}
+                      size="small"
+                      onClick={() => {
+                        if (occ.isModified && occ.modifiedTransaction) {
+                          onTogglePaid(occ.modifiedTransaction.id, !occ.modifiedTransaction.isPaid);
+                        } else if (occ.isCurrent) {
+                          onTogglePaid(selectedRecurring.id, !selectedRecurring.isPaid);
+                        }
+                      }}
+                      sx={{
+                        height: 24,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        borderRadius: "8px",
+                        cursor: occ.isCurrent || occ.isModified ? "pointer" : "default",
+                        border: "none",
+                        bgcolor: isPaid
+                          ? alpha("#10b981", isDarkMode ? 0.2 : 0.12)
+                          : alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
+                        color: isPaid ? "#10b981" : "#f59e0b",
+                        "& .MuiChip-label": { px: 1.25 },
+                        "&:hover": { opacity: occ.isCurrent || occ.isModified ? 0.8 : 1 },
+                      }}
+                    />
+
+                    {/* Edit */}
+                    <Tooltip title="Edit occurrence">
+                      <IconButton
+                        size="small"
+                        onClick={() =>
+                          occ.isModified && occ.modifiedTransaction
+                            ? onEdit(occ.modifiedTransaction)
+                            : onEdit(createVirtualTransaction(selectedRecurring, occ))
+                        }
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: "8px",
+                          color: "text.secondary",
+                          "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.1), color: "primary.main" },
+                        }}
+                      >
+                        <EditIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+
+                    {/* Delete */}
+                    <Tooltip title="Delete occurrence">
+                      <IconButton
+                        size="small"
+                        onClick={() =>
+                          occ.isModified && occ.modifiedTransaction
+                            ? onDelete(occ.modifiedTransaction.id)
+                            : onDelete(createVirtualTransaction(selectedRecurring, occ).id)
+                        }
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: "8px",
+                          color: "text.secondary",
+                          "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.1), color: "error.main" },
+                        }}
+                      >
+                        <DeleteIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  {!isLast && <Divider sx={{ mx: isMobile ? 2 : 2.5 }} />}
+                </React.Fragment>
+              );
+            })
+          )}
+        </Paper>
+      </Box>
+    );
+  }
 
   // =============================================
   // MAIN RENDER
