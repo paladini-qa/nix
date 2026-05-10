@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Link,
   useTheme,
+  useMediaQuery,
   alpha,
   Checkbox,
   FormControlLabel,
@@ -29,6 +30,7 @@ import { supabase } from "../../services/supabaseClient";
 const LoginView: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -219,31 +221,45 @@ const LoginView: React.FC = () => {
       <Box
         sx={{
           width: "100%",
-          maxWidth: 400,
-          px: 2,
+          maxWidth: isMobile ? "100%" : 400,
+          px: isMobile ? 0 : 2,
           zIndex: 1,
+          ...(isMobile && {
+            position: "fixed",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            overflowY: "auto",
+          }),
         }}
       >
         <Box
           sx={{
-            borderRadius: "20px",
+            borderRadius: isMobile ? 0 : "20px",
             overflow: "hidden",
-            // Glassmorphism Cozy — creme quente
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.paper, 0.85)
               : alpha("#FEF8F0", 0.90),
             backdropFilter: "blur(24px)",
             WebkitBackdropFilter: "blur(24px)",
-            border: `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.15) : alpha("#C4885F", 0.2)}`,
-            boxShadow: isDarkMode
+            border: isMobile ? "none" : `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.15) : alpha("#C4885F", 0.2)}`,
+            boxShadow: isMobile ? "none" : (isDarkMode
               ? `0 24px 80px -20px rgba(28, 16, 8, 0.7), inset 0 1px 0 ${alpha("#F0D9C0", 0.05)}`
-              : `0 24px 80px -20px ${alpha("#7B4226", 0.18)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
+              : `0 24px 80px -20px ${alpha("#7B4226", 0.18)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`),
             transition: "all 0.3s ease-in-out",
+            ...(!isMobile && {
               "&:hover": {
-              boxShadow: isDarkMode
-                ? `0 32px 100px -24px rgba(28, 16, 8, 0.8)`
-                : `0 32px 100px -24px ${alpha("#7B4226", 0.25)}`,
-            },
+                boxShadow: isDarkMode
+                  ? `0 32px 100px -24px rgba(28, 16, 8, 0.8)`
+                  : `0 32px 100px -24px ${alpha("#7B4226", 0.25)}`,
+              },
+            }),
+            ...(isMobile && {
+              minHeight: "100%",
+              pt: "env(safe-area-inset-top, 0px)",
+              pb: "env(safe-area-inset-bottom, 0px)",
+            }),
           }}
         >
           {/* Header */}

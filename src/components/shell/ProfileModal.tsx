@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useConfirmDialog, usePrivacy } from "../../contexts";
-import { ThemePreference } from "../../types";
+import { useSettings } from "../../contexts";
 import { Capacitor } from "@capacitor/core";
 import ThemeSwitch from "../ui/ThemeSwitch";
 import {
@@ -15,6 +15,7 @@ import {
   Alert,
   CircularProgress,
   useTheme,
+  useMediaQuery,
   alpha,
 } from "@mui/material";
 import {
@@ -28,53 +29,39 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
 } from "@mui/icons-material";
+import { supabase } from "../../services/supabaseClient";
 
 interface ProfileModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  themePreference: ThemePreference;
-  onThemeChange: (theme: ThemePreference) => void;
-  displayName: string;
-  userEmail: string;
-  onUpdateDisplayName: (name: string) => void;
-  onChangeEmail: (newEmail: string) => Promise<void>;
-  onResetPassword: () => Promise<void>;
-  walletSyncEnabled?: boolean;
-  onRequestWalletSync?: () => void;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({
-  isOpen,
-  onClose,
-  themePreference,
-  onThemeChange,
-  displayName,
-  userEmail,
-  onUpdateDisplayName,
-  onChangeEmail,
-  onResetPassword,
-  walletSyncEnabled,
-  onRequestWalletSync,
-}) => {
+const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { confirm } = useConfirmDialog();
   const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
+  const { themePreference, setThemePreference, displayName, setDisplayName } = useSettings();
 
+  const [userEmail, setUserEmail] = useState("");
   const [localDisplayName, setLocalDisplayName] = useState(displayName);
   const [newEmail, setNewEmail] = useState("");
-  const [nameStatus, setNameStatus] = useState<"idle" | "saving" | "saved">(
-    "idle"
-  );
-  const [emailStatus, setEmailStatus] = useState<
-    "idle" | "saving" | "sent" | "error"
-  >("idle");
-  const [passwordStatus, setPasswordStatus] = useState<
-    "idle" | "sending" | "sent" | "error"
-  >("idle");
+  const [nameStatus, setNameStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [emailStatus, setEmailStatus] = useState<"idle" | "saving" | "sent" | "error">("idle");
+  const [passwordStatus, setPasswordStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Estilos de input soft
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserEmail(data.user.email);
+    });
+  }, [open]);
+
+  useEffect(() => {
+    setLocalDisplayName(displayName);
+  }, [displayName]);
+
   const inputSx = {
     "& .MuiOutlinedInput-root": {
       borderRadius: "20px",
@@ -106,7 +93,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     },
   };
 
-  // Estilos de seção
   const sectionSx = {
     p: 3,
     borderRadius: "20px",
@@ -125,7 +111,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const handleSaveName = async () => {
     if (localDisplayName.trim() && localDisplayName !== displayName) {
       setNameStatus("saving");
-      onUpdateDisplayName(localDisplayName.trim());
+      await setDisplayName(localDisplayName.trim());
       setNameStatus("saved");
       setTimeout(() => setNameStatus("idle"), 2000);
     }
@@ -137,12 +123,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       setEmailStatus("error");
       return;
     }
-
     setEmailStatus("saving");
     setErrorMessage("");
-
     try {
-      await onChangeEmail(newEmail.trim());
+      const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+      if (error) throw error;
       setEmailStatus("sent");
       setNewEmail("");
     } catch (err: any) {
@@ -160,12 +145,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       variant: "warning",
     });
     if (!confirmed) return;
-
     setPasswordStatus("sending");
     setErrorMessage("");
-
     try {
-      await onResetPassword();
+      const { error } = await supabase.auth.resetPasswordForEmail(userEmail);
+      if (error) throw error;
       setPasswordStatus("sent");
     } catch (err: any) {
       setErrorMessage(err.message || "Erro ao enviar email de recuperação.");
@@ -175,21 +159,23 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 
   return (
     <Dialog
-      open={isOpen}
+      open={open}
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         sx: {
-          borderRadius: "20px",
+          borderRadius: isMobile ? 0 : "20px",
           overflow: "hidden",
-          // Glassmorphism
           bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.85)
-            : alpha("#FFFFFF", 0.92),
+            ? alpha(theme.palette.background.paper, 0.95)
+            : alpha("#FFFFFF", 0.97),
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
-          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
+          border: isMobile
+            ? "none"
+            : `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
           boxShadow: isDarkMode
             ? `0 32px 100px -24px ${alpha("#000000", 0.7)}`
             : `0 32px 100px -24px ${alpha(theme.palette.primary.main, 0.25)}`,
@@ -206,35 +192,29 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
         },
       }}
     >
-      {/* Header com Avatar Grande */}
+      {/* Header */}
       <Box
         sx={{
           position: "relative",
           px: 4,
-          pt: 5,
+          pt: isMobile ? `calc(env(safe-area-inset-top, 0px) + 40px)` : 5,
           pb: 4,
           textAlign: "center",
-          // Gradiente de fundo sutil
           background: isDarkMode
             ? `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 100%)`
             : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.06)} 0%, transparent 100%)`,
         }}
       >
-        {/* Close Button */}
         <IconButton
           onClick={onClose}
           sx={{
             position: "absolute",
-            top: 16,
+            top: isMobile ? `calc(env(safe-area-inset-top, 0px) + 12px)` : 16,
             right: 16,
-            bgcolor: isDarkMode
-              ? alpha("#FFFFFF", 0.05)
-              : alpha("#000000", 0.04),
+            bgcolor: isDarkMode ? alpha("#FFFFFF", 0.05) : alpha("#000000", 0.04),
             transition: "all 0.2s ease-in-out",
             "&:hover": {
-              bgcolor: isDarkMode
-                ? alpha("#FFFFFF", 0.1)
-                : alpha("#000000", 0.08),
+              bgcolor: isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.08),
               transform: "rotate(90deg)",
             },
           }}
@@ -242,7 +222,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
           <CloseIcon />
         </IconButton>
 
-        {/* Avatar Premium */}
         <Avatar
           sx={{
             width: 88,
@@ -262,40 +241,27 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
           {displayName ? displayName.charAt(0).toUpperCase() : <UserIcon sx={{ fontSize: 40 }} />}
         </Avatar>
 
-        {/* Nome e Email */}
-        <Typography
-          variant="h4"
-          fontWeight={700}
-          sx={{ letterSpacing: "-0.02em", mb: 0.5 }}
-        >
+        <Typography variant="h4" fontWeight={700} sx={{ letterSpacing: "-0.02em", mb: 0.5 }}>
           {displayName || "Usuário"}
         </Typography>
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          sx={{ fontWeight: 500 }}
-        >
+        <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
           {userEmail}
         </Typography>
       </Box>
 
       <DialogContent sx={{ px: 3, pb: 4 }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-          {/* Error Message */}
           {errorMessage && (
             <Alert
               severity="error"
               icon={<AlertCircleIcon fontSize="small" />}
-              sx={{
-                borderRadius: "20px",
-                border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
-              }}
+              sx={{ borderRadius: "20px", border: `1px solid ${alpha(theme.palette.error.main, 0.2)}` }}
             >
               {errorMessage}
             </Alert>
           )}
 
-          {/* Privacy Mode & Theme Switch Row */}
+          {/* Privacy Mode & Theme */}
           <Box
             sx={{
               p: 2,
@@ -306,7 +272,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
               border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha(theme.palette.primary.main, 0.1)}`,
             }}
           >
-            {/* Privacy Toggle */}
             <Box
               sx={{
                 display: "flex",
@@ -314,27 +279,18 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 justifyContent: "space-between",
                 mb: 2,
                 pb: 2,
-                borderBottom: `1px solid ${
-                  isDarkMode ? alpha("#FFFFFF", 0.06) : alpha(theme.palette.primary.main, 0.1)
-                }`,
+                borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha(theme.palette.primary.main, 0.1)}`,
               }}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 {isPrivacyMode ? (
-                  <VisibilityOffIcon
-                    sx={{ fontSize: 20, color: "primary.main" }}
-                  />
+                  <VisibilityOffIcon sx={{ fontSize: 20, color: "primary.main" }} />
                 ) : (
-                  <VisibilityIcon
-                    sx={{ fontSize: 20, color: "text.secondary" }}
-                  />
+                  <VisibilityIcon sx={{ fontSize: 20, color: "text.secondary" }} />
                 )}
                 <Typography
                   variant="subtitle1"
-                  sx={{
-                    fontWeight: 600,
-                    color: isPrivacyMode ? "primary.main" : "text.secondary",
-                  }}
+                  sx={{ fontWeight: 600, color: isPrivacyMode ? "primary.main" : "text.secondary" }}
                 >
                   Modo Privado
                 </Typography>
@@ -348,7 +304,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   borderRadius: "16px",
                   fontWeight: 600,
                   textTransform: "none",
-                  ...( !isPrivacyMode && {
+                  ...(!isPrivacyMode && {
                     borderColor: isDarkMode ? alpha("#FFFFFF", 0.2) : alpha("#000000", 0.2),
                   }),
                 }}
@@ -356,16 +312,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 {isPrivacyMode ? "Ativado" : "Desativado"}
               </Button>
             </Box>
-
-            {/* Theme Switch */}
-            <ThemeSwitch value={themePreference} onChange={onThemeChange} />
+            <ThemeSwitch value={themePreference} onChange={setThemePreference} />
           </Box>
 
-          {/* Display Name Section */}
+          {/* Display Name */}
           <Box sx={sectionSx}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
-            >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
               <Box
                 sx={{
                   width: 36,
@@ -382,12 +334,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 <EditIcon fontSize="small" color="primary" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={600}>
-                  Nome de Exibição
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Como você quer ser chamado
-                </Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Nome de Exibição</Typography>
+                <Typography variant="caption" color="text.secondary">Como você quer ser chamado</Typography>
               </Box>
             </Box>
             <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -406,9 +354,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 variant="contained"
                 color={nameStatus === "saved" ? "success" : "primary"}
                 onClick={handleSaveName}
-                disabled={
-                  localDisplayName === displayName || nameStatus === "saving"
-                }
+                disabled={localDisplayName === displayName || nameStatus === "saving"}
                 startIcon={
                   nameStatus === "saving" ? (
                     <CircularProgress size={16} color="inherit" />
@@ -430,11 +376,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
             </Box>
           </Box>
 
-          {/* Change Email Section */}
+          {/* Change Email */}
           <Box sx={sectionSx}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}
-            >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
               <Box
                 sx={{
                   width: 36,
@@ -451,16 +395,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 <MailIcon fontSize="small" color="info" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={600}>
-                  Alterar Email
-                </Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Alterar Email</Typography>
               </Box>
             </Box>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mb: 2, ml: 6.5 }}
-            >
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2, ml: 6.5 }}>
               Confirmação será enviada para ambos os emails.
             </Typography>
             <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -493,9 +431,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   borderRadius: "20px",
                   fontWeight: 600,
                   boxShadow: `0 4px 14px -4px ${alpha(
-                    emailStatus === "sent"
-                      ? theme.palette.success.main
-                      : theme.palette.primary.main,
+                    emailStatus === "sent" ? theme.palette.success.main : theme.palette.primary.main,
                     0.4
                   )}`,
                 }}
@@ -505,11 +441,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
             </Box>
           </Box>
 
-          {/* Reset Password Section */}
+          {/* Reset Password */}
           <Box sx={sectionSx}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}
-            >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
               <Box
                 sx={{
                   width: 36,
@@ -526,16 +460,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 <KeyIcon fontSize="small" color="warning" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={600}>
-                  Redefinir Senha
-                </Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Redefinir Senha</Typography>
               </Box>
             </Box>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mb: 2, ml: 6.5 }}
-            >
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2, ml: 6.5 }}>
               Link de recuperação será enviado para {userEmail}
             </Typography>
             <Button
@@ -558,18 +486,14 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 py: 1.5,
                 fontWeight: 600,
                 boxShadow: `0 6px 20px -6px ${alpha(
-                  passwordStatus === "sent"
-                    ? theme.palette.success.main
-                    : theme.palette.warning.main,
+                  passwordStatus === "sent" ? theme.palette.success.main : theme.palette.warning.main,
                   0.4
                 )}`,
                 transition: "all 0.2s ease-in-out",
                 "&:hover": {
                   transform: "translateY(-2px)",
                   boxShadow: `0 10px 28px -6px ${alpha(
-                    passwordStatus === "sent"
-                      ? theme.palette.success.main
-                      : theme.palette.warning.main,
+                    passwordStatus === "sent" ? theme.palette.success.main : theme.palette.warning.main,
                     0.5
                   )}`,
                 },
@@ -579,12 +503,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
             </Button>
           </Box>
 
-          {/* Google Wallet Sync Section (Android Only) */}
+          {/* Google Wallet Sync — Android only */}
           {Capacitor.getPlatform() === "android" && (
             <Box sx={sectionSx}>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}
-              >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 36,
@@ -598,42 +520,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                       : alpha(theme.palette.secondary.main, 0.1),
                   }}
                 >
-                  <Avatar 
+                  <Avatar
                     src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Wallet_Icon_2022.svg/1024px-Google_Wallet_Icon_2022.svg.png"
                     sx={{ width: 20, height: 20, borderRadius: 0 }}
                   />
                 </Box>
-                <Box>
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    Google Wallet Sync
-                  </Typography>
-                </Box>
+                <Typography variant="subtitle1" fontWeight={600}>Google Wallet Sync</Typography>
               </Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mb: 2, ml: 6.5 }}
-              >
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, mb: 2, ml: 6.5 }}>
                 Rastreia notificações para registro automático de transações.
               </Typography>
-              <Button
-                fullWidth
-                variant={walletSyncEnabled ? "contained" : "outlined"}
-                color={walletSyncEnabled ? "success" : "secondary"}
-                onClick={onRequestWalletSync}
-                startIcon={walletSyncEnabled ? <CheckIcon /> : null}
-                sx={{
-                  borderRadius: "20px",
-                  py: 1.5,
-                  fontWeight: 600,
-                  textTransform: "none",
-                  ...( !walletSyncEnabled && {
-                    borderColor: isDarkMode ? alpha("#FFFFFF", 0.2) : alpha("#000000", 0.2),
-                  }),
-                }}
-              >
-                {walletSyncEnabled ? "Ativado (Acesso Concedido)" : "Ativar Sincronização"}
-              </Button>
             </Box>
           )}
         </Box>
@@ -643,4 +539,3 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 };
 
 export default ProfileModal;
-
