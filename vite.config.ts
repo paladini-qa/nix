@@ -59,7 +59,7 @@ export default defineConfig(({ mode }) => {
       react(),
       VitePWA({
         registerType: "autoUpdate",
-        includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
+        includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "apple-touch-icon.png", "og.png"],
         manifest: {
           name: "Nix Finance",
           short_name: "Nix",

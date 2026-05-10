@@ -1,5 +1,5 @@
 import React from "react";
-import logoUrl from "../../assets/logo.svg?url";
+import logoUrl from "../../assets/logo.png";
 import {
   Drawer,
   Box,

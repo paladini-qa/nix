@@ -280,7 +280,7 @@ const LoginView: React.FC = () => {
             >
               <Box
                 component="img"
-                src={`${import.meta.env.BASE_URL}logo.svg`}
+                src={`${import.meta.env.BASE_URL}logo.png`}
                 alt="Finance Control Logo"
                 sx={{ width: 36, height: 36 }}
               />
