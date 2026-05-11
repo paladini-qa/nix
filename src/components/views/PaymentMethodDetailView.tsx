@@ -251,16 +251,13 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
 
   const handlePayAll = () => {
     if (!onPayAll) return;
-    const ids = filteredTransactions
-      .filter((t) => !t.isPaid)
-      .map((t) => (t.isVirtual && t.originalTransactionId ? t.originalTransactionId : t.id));
+    const ids = filteredTransactions.filter((t) => !t.isPaid).map((t) => t.id);
     onPayAll(ids);
   };
 
   const handleTogglePaid = (tx: Transaction) => {
     if (onTogglePaid) {
-      const id = tx.isVirtual && tx.originalTransactionId ? tx.originalTransactionId : tx.id;
-      onTogglePaid(id, !tx.isPaid);
+      onTogglePaid(tx.id, !tx.isPaid);
     }
   };
 

@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useState, useRef } from "react";
+import dayjs from "dayjs";
 import { useLocation, useNavigate } from "react-router-dom";
 import DashboardMainSection from "../views/DashboardMainSection";
 import PageTransition, { TransitionType } from "../motion/PageTransition";
@@ -249,24 +250,35 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "all_future":
       case "all": {
         if (formTx?.installmentGroupId) {
-          // Atualiza todas as parcelas afetadas, mantendo date e currentInstallment individuais
           const affected = transactions.filter(
             (t) =>
               t.installmentGroupId === formTx.installmentGroupId &&
               (editMode === "all" ||
                 (t.currentInstallment ?? 0) >= (formTx.currentInstallment ?? 0))
           );
+          // newTx.date é o mês de início (parcela 1); recalcula data de cada parcela
+          const startDate = dayjs(newTx.date);
+          const pmConfig = paymentMethodConfigs.find((c) => c.name === newTx.paymentMethod);
+          const isCardMethod = pmConfig?.type === "card" && !!pmConfig.closingDay && !!pmConfig.paymentDay;
           await Promise.all(
-            affected.map((t) =>
-              updateTransaction({
+            affected.map((t) => {
+              const monthOffset = (t.currentInstallment ?? 1) - 1;
+              const newDate = startDate.add(monthOffset, "month").format("YYYY-MM-DD");
+              const newInvoiceDueDate = isCardMethod && pmConfig
+                ? calculateInvoiceDueDate(newDate, pmConfig)
+                : newTx.invoiceDueDate
+                  ? dayjs(newTx.invoiceDueDate).add(monthOffset, "month").format("YYYY-MM-DD")
+                  : newTx.invoiceDueDate;
+              return updateTransaction({
                 id: t.id,
                 ...newTx,
-                date: t.date,
+                date: newDate,
+                ...(newInvoiceDueDate !== undefined && { invoiceDueDate: newInvoiceDueDate }),
                 currentInstallment: t.currentInstallment,
                 installments: t.installments,
                 installmentGroupId: t.installmentGroupId,
-              })
-            )
+              });
+            })
           );
         } else if (recurringId) {
           await updateTransaction({ id: recurringId, ...newTx });
@@ -355,10 +367,59 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     }
   };
 
+  // Ao marcar pago em ocorrência virtual de recorrência, materializa um registro real no DB
+  // para que apenas aquele mês seja afetado — sem alterar a transação original nem outras ocorrências.
+  const handleTogglePaid = async (id: string, isPaid: boolean) => {
+    const recurringMatch = id.match(/^(.+)_recurring_(\d{4})-(\d{2})$/);
+    if (recurringMatch) {
+      if (!isPaid) return; // ocorrências virtuais já aparecem como não pagas; desmarcar não faz nada
+      const [, originalId, yearStr, monthStr] = recurringMatch;
+      const year = Number(yearStr);
+      const month = Number(monthStr);
+      const original = transactions.find((t) => t.id === originalId);
+      if (!original) return;
+
+      const origDay = Number(original.date.split("-")[2]);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const adjustedDay = Math.min(origDay, daysInMonth);
+      const virtualDate = `${yearStr}-${monthStr}-${String(adjustedDay).padStart(2, "0")}`;
+
+      let invoiceDueDate: string | undefined;
+      const pmConfig = paymentMethodConfigs.find((c) => c.name === original.paymentMethod);
+      if (pmConfig?.type === "card" && pmConfig.closingDay && pmConfig.paymentDay) {
+        invoiceDueDate = calculateInvoiceDueDate(virtualDate, pmConfig) ?? undefined;
+      } else if (original.invoiceDueDate) {
+        const origInvDay = Number(original.invoiceDueDate.split("-")[2]);
+        const daysInInvMonth = new Date(year, month, 0).getDate();
+        const adjustedInvDay = Math.min(origInvDay, daysInInvMonth);
+        invoiceDueDate = `${yearStr}-${monthStr}-${String(adjustedInvDay).padStart(2, "0")}`;
+      }
+
+      await addTransaction({
+        description: original.description,
+        amount: original.amount,
+        type: original.type,
+        category: original.category,
+        paymentMethod: original.paymentMethod,
+        date: virtualDate,
+        ...(invoiceDueDate ? { invoiceDueDate } : {}),
+        isRecurring: false,
+        recurringGroupId: originalId,
+        isPaid: true,
+        isShared: original.isShared,
+        sharedWith: original.sharedWith,
+        iOwe: original.iOwe,
+        notes: original.notes,
+      });
+      return;
+    }
+    await updateTransaction({ id, isPaid });
+  };
+
   const handlePayAll = async (ids: string[]) => {
     if (ids.length === 0) return;
     try {
-      await Promise.all(ids.map((id) => updateTransaction({ id, isPaid: true })));
+      await Promise.all(ids.map((id) => handleTogglePaid(id, true)));
       showSuccess("Todas as transações marcadas como pagas!");
     } catch (error) {
       showError("Erro ao pagar transações");
@@ -375,7 +436,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               onNewTransaction={handleNewTransaction}
               onEdit={handleEditAware}
               onDelete={handleDeleteAware}
-              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onTogglePaid={handleTogglePaid}
               selectedMonth={filters.month}
               selectedYear={filters.year}
               onDateChange={(month, year) => setFilters({ month, year })}
@@ -391,7 +452,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               onNewTransaction={handleNewTransaction}
               onEdit={handleEditAware}
               onDelete={handleDeleteAware}
-              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onTogglePaid={handleTogglePaid}
               onRefreshData={async () => { await refetchTransactions(); }}
               onUpdateInstallmentDates={updateInstallmentDates}
             />
@@ -405,7 +466,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               onEditSeries={handleEdit}
               onEditWithScope={handleRecurringEditWithScope}
               onDeleteWithScope={handleDeleteWithScope}
-              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onTogglePaid={handleTogglePaid}
               onNewTransaction={handleNewTransaction}
               onRefreshData={async () => { await refetchTransactions(); }}
             />
@@ -462,7 +523,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
                 onBack={() => setSelectedPaymentMethod(null)}
                 onNewTransaction={handleNewTransaction}
                 onPayAll={handlePayAll}
-                onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+                onTogglePaid={handleTogglePaid}
                 onEdit={handleEditAware}
                 onDelete={handleDeleteAware}
               />
@@ -501,7 +562,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               onDateChange={(month, year) => setFilters({ month, year })}
               onAddCategory={addCategory}
               onRemoveCategory={removeCategory}
-              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onTogglePaid={handleTogglePaid}
               onEditTransaction={handleEditAware}
               onDeleteTransaction={handleDeleteAware}
               initialSelectedCategory={selectedCategoryNav}
@@ -593,7 +654,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               onNewTransaction={handleNewTransaction}
               onEdit={handleEditAware}
               onDelete={handleDeleteAware}
-              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onTogglePaid={handleTogglePaid}
               onRefreshData={async () => { await refetchTransactions(); }}
             />
           </Suspense>
@@ -610,7 +671,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
             <PaymentGuideView
               transactions={transactions}
               paymentMethodConfigs={paymentMethodConfigs}
-              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onTogglePaid={handleTogglePaid}
               selectedMonth={filters.month}
               selectedYear={filters.year}
             />
@@ -626,7 +687,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               onNewTransaction={handleNewTransaction}
               onEdit={handleEditAware}
               onDelete={handleDeleteAware}
-              onTogglePaid={(id, isPaid) => updateTransaction({ id, isPaid })}
+              onTogglePaid={handleTogglePaid}
               selectedMonth={filters.month}
               selectedYear={filters.year}
               onDateChange={(month, year) => setFilters({ month, year })}

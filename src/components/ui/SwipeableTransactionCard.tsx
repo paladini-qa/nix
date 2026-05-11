@@ -194,14 +194,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
           >
             <Checkbox
               checked={t.isPaid !== false}
-              onChange={(e) =>
-                onTogglePaid(
-                  t.isVirtual && t.originalTransactionId
-                    ? t.originalTransactionId
-                    : t.id,
-                  e.target.checked
-                )
-              }
+              onChange={(e) => onTogglePaid(t.id, e.target.checked)}
               size="small"
               color={t.isVirtual ? "info" : "success"}
               sx={{ mt: -0.5, ml: -1 }}
