@@ -323,8 +323,14 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                   p: 2,
                   borderRadius: "20px",
                   bgcolor: isDarkMode
-                    ? "transparent"
+                    ? alpha(theme.palette.background.paper, 0.6)
                     : alpha("#FFFFFF", 0.8),
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                  boxShadow: isDarkMode
+                    ? `0 4px 20px -4px ${alpha("#000000", 0.3)}`
+                    : `0 4px 20px -4px ${alpha(theme.palette.primary.main, 0.08)}`,
                 }}
               >
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
@@ -430,14 +436,15 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                         mb: 1.5,
                         p: 2,
                         bgcolor: isDarkMode
-                          ? "transparent"
+                          ? alpha(theme.palette.background.paper, 0.5)
                           : alpha("#FFFFFF", 0.8),
-                        transition: "all 0.2s ease",
+                        border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}`,
+                        transition: "all 0.2s ease-in-out",
                         "&:hover": {
-                          borderColor: alpha(option.color, 0.5),
+                          borderColor: alpha(option.color, 0.4),
                           bgcolor: alpha(option.color, isDarkMode ? 0.08 : 0.04),
-                          transform: "translateX(-4px)",
-                          boxShadow: `4px 0 0 0 ${option.color}`,
+                          transform: "translateY(-2px)",
+                          boxShadow: `0 8px 24px -6px ${alpha(option.color, 0.25)}`,
                         },
                       }}
                     >

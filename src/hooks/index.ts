@@ -12,4 +12,5 @@ export { usePullToRefresh, type PullToRefreshConfig, type PullToRefreshReturn } 
 export { usePrivacyMode } from "./usePrivacyMode";
 export { useLayoutSpacing, type LayoutSpacing } from "./useLayoutSpacing";
 export { useCancelledSubscriptions } from "./useCancelledSubscriptions";
+export { useNotifications } from "./useNotifications";
 

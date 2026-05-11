@@ -21,8 +21,6 @@ import {
   LinearProgress,
   Button,
   Collapse,
-  Card,
-  CardContent,
   Divider,
   Table,
   TableBody,
@@ -40,7 +38,6 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
-  CreditCard as CreditCardIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   MoreVert as MoreVertIcon,
@@ -67,6 +64,9 @@ import { getReportDate } from "../../utils/transactionUtils";
 import EmptyState from "../ui/EmptyState";
 import NixButton from "../radix/Button";
 import { CREATE_TRANSACTION_BUTTON } from "../../constants";
+import PaymentMethodIcon from "../ui/PaymentMethodIcon";
+import { useSettings } from "../../contexts";
+import { hashColor } from "../../utils/imageColorUtils";
 
 interface SplitsViewProps {
   transactions: Transaction[];
@@ -117,6 +117,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { gridSpacing } = useLayoutSpacing();
+  const { getPaymentMethodColor, getPaymentMethodConfig } = useSettings();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<SplitStatus>("in_progress");
@@ -538,7 +539,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         ? (group.paidCount / actualInstallmentCount) * 100
         : 0;
     const isIncome = group.type === "income";
-    const accentColor = isIncome ? "#059669" : "#F59E0B";
+
+    const palette = getPaymentMethodColor(group.paymentMethod);
+    const accentColor = isIncome ? "#059669" : palette.primary;
 
     // Transações relacionadas (shared)
     const relatedTransactions = group.installments
@@ -546,341 +549,179 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       .filter((t): t is Transaction => t !== null);
 
     return (
-      <Card
-        key={group.key}
-        elevation={0}
-        sx={{
-          position: "relative",
-          overflow: "hidden",
-          background: isDarkMode
-            ? `linear-gradient(135deg, ${alpha(
-                theme.palette.background.paper,
-                0.7
-              )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha(
-                "#FFFFFF",
-                0.65
-              )} 100%)`,
-          backdropFilter: "blur(16px)",
-          border: `1px solid ${
-            isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-          }`,
-          borderLeft: `3px solid ${accentColor}`,
-          borderRadius: "16px",
-          boxShadow: isDarkMode
-            ? `0 6px 24px -6px ${alpha(accentColor, 0.2)}`
-            : `0 6px 24px -6px ${alpha(accentColor, 0.15)}`,
-          transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-          "&:hover": {
-            transform: "translateY(-4px)",
-            boxShadow: isDarkMode
-              ? `0 12px 32px -6px ${alpha(accentColor, 0.3)}`
-              : `0 12px 32px -6px ${alpha(accentColor, 0.25)}`,
-          },
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: isDarkMode
-              ? `linear-gradient(135deg, ${alpha(
-                  accentColor,
-                  0.08
-                )} 0%, ${alpha(accentColor, 0.02)} 100%)`
-              : `linear-gradient(135deg, ${alpha(
-                  accentColor,
-                  0.04
-                )} 0%, ${alpha(accentColor, 0.01)} 100%)`,
-            pointerEvents: "none",
-          },
-        }}
-      >
-        <CardContent
+      <Grid key={group.key} size={{ xs: 12, sm: 6, lg: 4 }}>
+        <Paper
+          elevation={0}
           sx={{
-            p: isMobile ? 2 : 2.5,
-            "&:last-child": { pb: isMobile ? 2 : 2.5 },
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            borderRadius: "16px",
+            cursor: "default",
+            background: isDarkMode ? alpha(theme.palette.background.paper, 0.7) : alpha("#fff", 0.95),
+            border: `1.5px solid ${alpha(accentColor, isDarkMode ? 0.45 : 0.25)}`,
+            transition: "all 0.2s ease-in-out",
+            overflow: "hidden",
+            "&:hover": {
+              transform: "translateY(-3px)",
+              boxShadow: `0 10px 28px -6px ${alpha(accentColor, 0.3)}`,
+              border: `1.5px solid ${alpha(accentColor, 0.65)}`,
+            },
           }}
         >
-          {/* Header Row */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              cursor: "pointer",
-            }}
-            onClick={() => toggleGroup(group.key)}
-          >
-            {/* Left: Icon + Info */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 1.5,
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: "12px",
-                  background: `linear-gradient(135deg, ${accentColor}, ${alpha(
-                    accentColor,
-                    0.7
-                  )})`,
-                  display: "flex",
-                  flexShrink: 0,
-                }}
-              >
-                <CreditCardIcon sx={{ color: "#fff", fontSize: 20 }} />
-              </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={600}
-                    sx={{
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {group.description}
-                  </Typography>
+          {/* Main content — clickable for expand */}
+          <Box sx={{ p: 2.5, flex: 1 }} onClick={() => toggleGroup(group.key)} style={{ cursor: "pointer" }}>
+            {/* Header row */}
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
+                <PaymentMethodIcon
+                  imageUrl={getPaymentMethodConfig(group.paymentMethod)?.imageUrl}
+                  colors={palette}
+                  size={36}
+                  borderRadius="10px"
+                  iconSize={18}
+                />
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Tooltip title={group.description}>
+                    <Typography
+                      fontWeight={700}
+                      sx={{ fontSize: 14, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    >
+                      {group.description}
+                    </Typography>
+                  </Tooltip>
                   {group.descriptions.length > 1 && (
-                    <Chip
-                      label={`+${group.descriptions.length - 1}`}
-                      size="small"
-                      color="info"
-                      variant="outlined"
-                      sx={{ height: 18, fontSize: 10 }}
-                    />
+                    <Chip label={`+${group.descriptions.length - 1}`} size="small" color="info" variant="outlined" sx={{ height: 16, fontSize: 10, mt: 0.25 }} />
                   )}
                 </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    flexWrap: "wrap",
-                    mt: 0.25,
-                  }}
-                >
-                  <Typography variant="caption" color="text.secondary">
-                    {group.category}
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    •
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {group.paymentMethod}
+              </Box>
+              <Chip
+                icon={isCompleted ? <CheckCircleIcon sx={{ fontSize: 13 }} /> : <ScheduleIcon sx={{ fontSize: 13 }} />}
+                label={`${group.paidCount}/${actualInstallmentCount}x`}
+                size="small"
+                sx={{
+                  height: 22,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  borderRadius: "8px",
+                  flexShrink: 0,
+                  ml: 1,
+                  bgcolor: isCompleted ? alpha("#059669", isDarkMode ? 0.2 : 0.1) : alpha("#F59E0B", isDarkMode ? 0.2 : 0.1),
+                  color: isCompleted ? "#059669" : "#F59E0B",
+                  "& .MuiChip-label": { px: 1.25 },
+                }}
+              />
+            </Box>
+
+            {/* Amount section */}
+            <Box sx={{ mb: 1.5 }}>
+              <Typography sx={{ fontSize: 10, fontWeight: 700, color: "text.disabled", textTransform: "uppercase", letterSpacing: "0.1em", mb: 0.5 }}>
+                {group.category}
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15, color: isIncome ? "#10b981" : "text.primary" }}>
+                {isIncome ? "+" : "-"}{formatCurrency(group.totalAmount)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                {formatDateShort(group.startDate)} → {formatDateShort(group.endDate)}
+                {!isCompleted && ` · Restante: ${formatCurrency(group.totalAmount - group.paidAmount)}`}
+              </Typography>
+            </Box>
+
+            {/* Progress bar */}
+            <Box sx={{ mb: relatedTransactions.length > 0 ? 1.5 : 0 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">{group.paymentMethod}</Typography>
+                <Typography variant="caption" fontWeight={600} color={accentColor}>{Math.round(progress)}% pago</Typography>
+              </Box>
+              <LinearProgress
+                variant="determinate"
+                value={progress}
+                sx={{
+                  height: 4,
+                  borderRadius: "4px",
+                  bgcolor: alpha(accentColor, 0.1),
+                  "& .MuiLinearProgress-bar": { borderRadius: "4px", background: `linear-gradient(90deg, ${accentColor}, ${alpha(accentColor, 0.7)})` },
+                }}
+              />
+            </Box>
+
+            {/* Shared info */}
+            {relatedTransactions.length > 0 && (
+              <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: alpha("#059669", 0.08), border: `1px solid ${alpha("#059669", 0.2)}` }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <ArrowUpIcon fontSize="small" color="success" />
+                    <Typography variant="body2" fontWeight={500}>Compartilhado com {group.sharedWith}</Typography>
+                  </Box>
+                  <Typography variant="body2" fontWeight={700} color="success.main">
+                    +{formatCurrency(relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0))}
                   </Typography>
                 </Box>
               </Box>
-            </Box>
+            )}
 
-            {/* Right: Amount + Status */}
-            <Box sx={{ textAlign: "right", flexShrink: 0, ml: 1 }}>
-              <Typography
-                variant="h6"
-                fontWeight={700}
-                color={isIncome ? "success.main" : "warning.main"}
-                sx={{ fontFamily: "monospace", letterSpacing: "-0.02em" }}
-              >
-                {isIncome ? "+" : "-"}
-                {formatCurrency(group.totalAmount)}
-              </Typography>
-              <Chip
-                icon={
-                  isCompleted ? (
-                    <CheckCircleIcon sx={{ fontSize: 14 }} />
-                  ) : (
-                    <ScheduleIcon sx={{ fontSize: 14 }} />
-                  )
-                }
-                label={`${group.paidCount}/${actualInstallmentCount}x`}
-                size="small"
-                color={isCompleted ? "success" : "warning"}
-                sx={{ height: 22, fontSize: 11, borderRadius: "8px", mt: 0.5 }}
-              />
-            </Box>
-          </Box>
-
-          {/* Progress + Period */}
-          <Box sx={{ mt: 2 }}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mb: 0.5,
+            {/* Tags */}
+            <TransactionTags
+              transaction={{
+                isRecurring: false,
+                frequency: undefined,
+                isVirtual: false,
+                installments: undefined,
+                currentInstallment: undefined,
+                isShared: group.isShared,
+                sharedWith: group.sharedWith,
+                type: group.type,
+                relatedTransactionId: group.relatedTransactionId,
+                isPaid: undefined,
               }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {formatDateShort(group.startDate)} →{" "}
-                {formatDateShort(group.endDate)}
-              </Typography>
-              <Typography
-                variant="caption"
-                fontWeight={600}
-                color={accentColor}
-              >
-                {Math.round(progress)}% pago
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              sx={{
-                height: 4,
-                borderRadius: "4px",
-                bgcolor: alpha(accentColor, 0.1),
-                "& .MuiLinearProgress-bar": {
-                  borderRadius: "4px",
-                  background: `linear-gradient(90deg, ${accentColor}, ${alpha(
-                    accentColor,
-                    0.7
-                  )})`,
-                },
-              }}
+              showRecurring={false}
+              showInstallments={false}
             />
           </Box>
 
-          {/* Shared Info (if applicable) */}
-          {relatedTransactions.length > 0 && (
-            <Box
-              sx={{
-                mt: 1.5,
-                p: 1.5,
-                borderRadius: "10px",
-                bgcolor: alpha(theme.palette.success.main, 0.08),
-                border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: 1,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <ArrowUpIcon fontSize="small" color="success" />
-                  <Typography variant="body2" fontWeight={500}>
-                    Compartilhado com {group.sharedWith}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="body2"
-                  fontWeight={700}
-                  color="success.main"
-                >
-                  +
-                  {formatCurrency(
-                    relatedTransactions.reduce(
-                      (sum, t) => sum + (t.amount || 0),
-                      0
-                    )
-                  )}
-                </Typography>
-              </Box>
-            </Box>
-          )}
-
-          {/* Tags */}
-          <TransactionTags
-            transaction={{
-              isRecurring: false,
-              frequency: undefined,
-              isVirtual: false,
-              installments: undefined,
-              currentInstallment: undefined,
-              isShared: group.isShared,
-              sharedWith: group.sharedWith,
-              type: group.type,
-              relatedTransactionId: group.relatedTransactionId,
-              isPaid: undefined,
-            }}
-            showRecurring={false}
-            showInstallments={false}
-          />
-
-          {/* Action Buttons */}
+          {/* Footer */}
           <Box
             sx={{
               display: "flex",
-              justifyContent: "center",
-              gap: 1,
-              mt: 1.5,
-              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              px: 2.5,
+              py: 1.5,
             }}
           >
             <Button
               size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleGroup(group.key);
-              }}
+              onClick={(e) => { e.stopPropagation(); toggleGroup(group.key); }}
               endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              sx={{ textTransform: "none", color: "text.secondary", fontSize: 12, p: 0, minWidth: 0, "&:hover": { background: "none", opacity: 0.75 } }}
+            >
+              {isExpanded ? "Ocultar" : `Ver ${actualInstallmentCount} parcelas`}
+            </Button>
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              {onUpdateInstallmentDates && (
+                <Tooltip title="Alterar datas de vencimento">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); handleOpenDateDialog(group); }}
+                    sx={{ width: 28, height: 28, borderRadius: "8px", color: "text.secondary", "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.1), color: "primary.main" } }}
+                  >
+                    <CalendarMonthIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
+          </Box>
+
+          {/* Expanded Content */}
+          <Collapse in={isExpanded}>
+            <Divider />
+            <Box
               sx={{
-                textTransform: "none",
-                color: "text.secondary",
-                fontSize: 12,
-                "&:hover": { bgcolor: alpha(accentColor, 0.08) },
+                p: isMobile ? 2 : 2.5,
+                bgcolor: alpha(theme.palette.background.default, 0.5),
               }}
             >
-              {isExpanded
-                ? "Ocultar parcelas"
-                : `Ver ${actualInstallmentCount} parcelas`}
-            </Button>
-
-            {onUpdateInstallmentDates && (
-              <Tooltip title="Alterar datas de vencimento">
-                <Button
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleOpenDateDialog(group);
-                  }}
-                  startIcon={<CalendarMonthIcon sx={{ fontSize: 16 }} />}
-                  sx={{
-                    textTransform: "none",
-                    color: "text.secondary",
-                    fontSize: 12,
-                    "&:hover": {
-                      bgcolor: alpha(theme.palette.primary.main, 0.08),
-                      color: "primary.main",
-                    },
-                  }}
-                >
-                  Alterar Datas
-                </Button>
-              </Tooltip>
-            )}
-          </Box>
-        </CardContent>
-
-        {/* Expanded Content */}
-        <Collapse in={isExpanded}>
-          <Divider />
-          <Box
-            sx={{
-              p: isMobile ? 2 : 2.5,
-              bgcolor: alpha(theme.palette.background.default, 0.5),
-            }}
-          >
             {/* Tabs for shared transactions */}
             {relatedTransactions.length > 0 && (
               <Box sx={{ mb: 2 }}>
@@ -1531,9 +1372,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                   </Paper>
                 </>
               )}
-          </Box>
-        </Collapse>
-      </Card>
+            </Box>
+          </Collapse>
+        </Paper>
+      </Grid>
     );
   };
 
@@ -1560,6 +1402,33 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
             Manage your installment purchases
           </Typography>
+        </Box>
+        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={onNewTransaction}
+            sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
+          >
+            {isMobile ? "Nova" : "Nova compra"}
+          </Button>
+          {onRefreshData && (
+            <Tooltip title="Refresh">
+              <IconButton
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                sx={{ width: 38, height: 38, borderRadius: "10px", border: `1px solid`, borderColor: "divider" }}
+              >
+                <RefreshIcon
+                  sx={{
+                    fontSize: 16,
+                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                    "@keyframes spin": { "0%": { transform: "rotate(0deg)" }, "100%": { transform: "rotate(360deg)" } },
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </Box>
 
@@ -1800,32 +1669,6 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             </Select>
           </FormControl>
 
-          {onRefreshData && (
-            <Tooltip title="Atualizar dados">
-              <IconButton
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                sx={{
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: "20px",
-                  "&:hover": { borderColor: theme.palette.primary.main },
-                }}
-              >
-                <RefreshIcon
-                  sx={{
-                    animation: isRefreshing
-                      ? "spin 1s linear infinite"
-                      : "none",
-                    "@keyframes spin": {
-                      "0%": { transform: "rotate(0deg)" },
-                      "100%": { transform: "rotate(360deg)" },
-                    },
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-          )}
         </Box>
       </Paper>
 
@@ -1852,12 +1695,8 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             </Box>
           </Box>
         ) : (
-        <Grid container spacing={2}>
-          {filteredGroups.map((group) => (
-            <Grid key={group.key} size={{ xs: 12, md: 6 }}>
-              {renderInstallmentCard(group)}
-            </Grid>
-          ))}
+        <Grid container spacing={gridSpacing}>
+          {filteredGroups.map((group) => renderInstallmentCard(group))}
         </Grid>
         )
       ) : (

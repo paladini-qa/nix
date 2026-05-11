@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Box,
   Typography,
@@ -20,8 +21,13 @@ import {
   alpha,
   Tooltip,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import TransactionOptionsPanel, { ActionType, OptionType } from "../panels/TransactionOptionsPanel";
 import {
   Repeat as RepeatIcon,
   Edit as EditIcon,
@@ -35,19 +41,43 @@ import {
   Refresh as RefreshIcon,
   AllInclusive as InfiniteIcon,
   ArrowBack as ArrowBackIcon,
+  Add as AddIcon,
 } from "@mui/icons-material";
 import SearchBar from "../ui/SearchBar";
 import { Transaction } from "../../types";
 import { useLayoutSpacing } from "../../hooks";
 import EmptyState from "../ui/EmptyState";
+import { useSettings } from "../../contexts";
+import PaymentMethodIcon from "../ui/PaymentMethodIcon";
+import PaymentMethodImagePicker from "../ui/PaymentMethodImagePicker";
+import { extractDominantColor, hashColor } from "../../utils/imageColorUtils";
+import { Image as ImageIcon } from "@mui/icons-material";
 
 interface RecurringViewProps {
   transactions: Transaction[];
-  onEdit: (transaction: Transaction) => void;
-  onDelete: (id: string) => void;
+  onEditSeries: (transaction: Transaction) => void;
+  onEditWithScope: (tx: Transaction, scope: OptionType, virtualDate?: string) => void;
+  onDeleteWithScope: (tx: Transaction, scope: OptionType, virtualDate?: string) => Promise<void>;
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onNewTransaction: () => void;
   onRefreshData?: () => Promise<void>;
+}
+
+interface OptionsPanelState {
+  open: boolean;
+  displayTransaction: Transaction | null;
+  baseTransaction: Transaction | null;
+  occurrence: RecurringOccurrence | null;
+  actionType: ActionType;
+}
+
+interface DeleteConfirmState {
+  open: boolean;
+  displayTransaction: Transaction | null;
+  baseTransaction: Transaction | null;
+  occurrence: RecurringOccurrence | null;
+  scope: OptionType;
+  isLoading: boolean;
 }
 
 interface RecurringOccurrence {
@@ -65,8 +95,9 @@ interface RecurringOccurrence {
 
 const RecurringView: React.FC<RecurringViewProps> = ({
   transactions,
-  onEdit,
-  onDelete,
+  onEditSeries,
+  onEditWithScope,
+  onDeleteWithScope,
   onTogglePaid,
   onNewTransaction,
   onRefreshData,
@@ -74,7 +105,12 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isLargeDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const { gridSpacing } = useLayoutSpacing();
+  const { getSubscriptionImage, updateSubscriptionImage, getSubscriptionColor, updateSubscriptionColor } = useSettings();
+
+  const [imgPickerOpen, setImgPickerOpen] = useState(false);
+  const [imgPickerTarget, setImgPickerTarget] = useState<string>("");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">(
@@ -99,6 +135,23 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     occurrence: RecurringOccurrence | null;
   }>({ element: null, transaction: null, occurrence: null });
 
+  const [optionsPanel, setOptionsPanel] = useState<OptionsPanelState>({
+    open: false,
+    displayTransaction: null,
+    baseTransaction: null,
+    occurrence: null,
+    actionType: "edit",
+  });
+
+  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState>({
+    open: false,
+    displayTransaction: null,
+    baseTransaction: null,
+    occurrence: null,
+    scope: "single",
+    isLoading: false,
+  });
+
   // Handler de refresh
   const handleRefresh = useCallback(async () => {
     if (!onRefreshData || isRefreshing) return;
@@ -109,6 +162,70 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       setIsRefreshing(false);
     }
   }, [onRefreshData, isRefreshing]);
+
+  const openEditOptions = (baseTransaction: Transaction, occurrence?: RecurringOccurrence) => {
+    const displayTx = occurrence
+      ? (occurrence.isModified && occurrence.modifiedTransaction
+          ? occurrence.modifiedTransaction
+          : createVirtualTransaction(baseTransaction, occurrence))
+      : baseTransaction;
+    setOptionsPanel({ open: true, displayTransaction: displayTx, baseTransaction, occurrence: occurrence ?? null, actionType: "edit" });
+  };
+
+  const openDeleteOptions = (baseTransaction: Transaction, occurrence?: RecurringOccurrence) => {
+    const displayTx = occurrence
+      ? (occurrence.isModified && occurrence.modifiedTransaction
+          ? occurrence.modifiedTransaction
+          : createVirtualTransaction(baseTransaction, occurrence))
+      : baseTransaction;
+    setOptionsPanel({ open: true, displayTransaction: displayTx, baseTransaction, occurrence: occurrence ?? null, actionType: "delete" });
+  };
+
+  const handleOptionSelect = (scope: OptionType) => {
+    const { displayTransaction, occurrence, actionType } = optionsPanel;
+    setOptionsPanel((prev) => ({ ...prev, open: false }));
+    if (!displayTransaction) return;
+    if (actionType === "edit") {
+      onEditWithScope(displayTransaction, scope, occurrence?.date);
+    } else {
+      setDeleteConfirm({
+        open: true,
+        displayTransaction,
+        baseTransaction: optionsPanel.baseTransaction,
+        occurrence: occurrence ?? null,
+        scope,
+        isLoading: false,
+      });
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    const { displayTransaction, baseTransaction, occurrence, scope } = deleteConfirm;
+    if (!displayTransaction) return;
+    setDeleteConfirm((prev) => ({ ...prev, isLoading: true }));
+    try {
+      await onDeleteWithScope(displayTransaction, scope, occurrence?.date);
+      if (scope !== "single" && baseTransaction && selectedRecurringId === baseTransaction.id) {
+        setSelectedRecurringId(null);
+      }
+    } finally {
+      setDeleteConfirm({ open: false, displayTransaction: null, baseTransaction: null, occurrence: null, scope: "single", isLoading: false });
+    }
+  };
+
+  const getDeleteConfirmText = () => {
+    const { displayTransaction, occurrence, scope } = deleteConfirm;
+    if (!displayTransaction) return "";
+    const name = `"${displayTransaction.description}"`;
+    switch (scope) {
+      case "single":
+        return `A ocorrência de ${name}${occurrence ? ` em ${occurrence.formattedDate}` : ""} será excluída permanentemente.`;
+      case "all_future":
+        return `Esta e todas as ocorrências futuras de ${name} serão excluídas permanentemente.`;
+      case "all":
+        return `Todas as ocorrências de ${name} (passadas e futuras) serão excluídas. Esta ação não pode ser desfeita.`;
+    }
+  };
 
   // Lista de todas as categorias únicas
   const allCategories = useMemo(() => {
@@ -180,14 +297,26 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     relatedTransactionIds,
   ]);
 
-  const RECURRING_VIRTUALIZE_THRESHOLD = 30;
-  const recurringListRef = useRef<HTMLDivElement>(null);
-  const recurringVirtualizer = useVirtualizer({
-    count: recurringTransactions.length,
-    getScrollElement: () => recurringListRef.current,
-    estimateSize: () => 73,
-    overscan: 3,
-    enabled: recurringTransactions.length > RECURRING_VIRTUALIZE_THRESHOLD,
+  // Virtualização do grid de cards para listas longas
+  const RECURRING_VIRTUALIZE_THRESHOLD = 20;
+  const cols = isMobile ? 1 : isLargeDesktop ? 3 : 2;
+  const shouldVirtualize = recurringTransactions.length > RECURRING_VIRTUALIZE_THRESHOLD;
+
+  const virtualGridRows = useMemo(() => {
+    if (!shouldVirtualize) return [];
+    const rows: Transaction[][] = [];
+    for (let i = 0; i < recurringTransactions.length; i += cols) {
+      rows.push(recurringTransactions.slice(i, i + cols));
+    }
+    return rows;
+  }, [recurringTransactions, cols, shouldVirtualize]);
+
+  const listParentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: virtualGridRows.length,
+    getScrollElement: () => listParentRef.current,
+    estimateSize: () => 220,
+    overscan: 2,
   });
 
   // Estatísticas
@@ -586,28 +715,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     };
   };
 
-  const handleOccurrenceEdit = (
-    transaction: Transaction,
-    occurrence: RecurringOccurrence
-  ) => {
-    const virtualTransaction = createVirtualTransaction(
-      transaction,
-      occurrence
-    );
-    onEdit(virtualTransaction);
-  };
-
-  const handleOccurrenceDelete = (
-    transaction: Transaction,
-    occurrence: RecurringOccurrence
-  ) => {
-    const virtualTransaction = createVirtualTransaction(
-      transaction,
-      occurrence
-    );
-    onDelete(virtualTransaction.id);
-  };
-
   const handleCloseMobileOccurrenceMenu = () => {
     setMobileOccurrenceMenuAnchor({
       element: null,
@@ -617,111 +724,130 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   };
 
   // =============================================
-  // CATEGORY COLOR — deterministic from name
+  // CARD
   // =============================================
-  const ICON_PALETTES = [
-    { primary: "#6366f1", secondary: "#8b5cf6" },
-    { primary: "#059669", secondary: "#10b981" },
-    { primary: "#f59e0b", secondary: "#d97706" },
-    { primary: "#06b6d4", secondary: "#0891b2" },
-    { primary: "#ec4899", secondary: "#db2777" },
-    { primary: "#3b82f6", secondary: "#2563eb" },
-    { primary: "#8b5cf6", secondary: "#7c3aed" },
-    { primary: "#f97316", secondary: "#ea580c" },
-  ];
-
-  const getCategoryPalette = (category: string) => {
-    let hash = 0;
-    for (let i = 0; i < category.length; i++) {
-      hash = category.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return ICON_PALETTES[Math.abs(hash) % ICON_PALETTES.length];
-  };
-
-  // =============================================
-  // LIST ROW
-  // =============================================
-  const renderRecurringRow = (t: Transaction, isLast: boolean) => {
+  const renderRecurringCard = (t: Transaction) => {
     const isIncome = t.type === "income";
-    const occurrences = calculateOccurrences(t);
-    const palette = isIncome
-      ? { primary: "#059669", secondary: "#10b981" }
-      : getCategoryPalette(t.category);
+    const savedColor = getSubscriptionColor(t.description);
+    const palette = savedColor ?? hashColor(t.description);
 
     return (
-      <React.Fragment key={t.id}>
-        <Box
+      <Grid key={t.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+        <Paper
+          elevation={0}
+          onClick={() => setSelectedRecurringId(t.id)}
           sx={{
+            p: 2.5,
             display: "flex",
-            alignItems: "center",
-            px: isMobile ? 2 : 2.5,
-            py: isMobile ? 1.5 : 2,
-            gap: 2,
-            transition: "background 0.15s",
+            flexDirection: "column",
+            height: "100%",
+            borderRadius: "16px",
+            cursor: "pointer",
+            background: isDarkMode
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha("#fff", 0.95),
+            border: `1.5px solid ${alpha(palette.primary, isDarkMode ? 0.45 : 0.25)}`,
+            transition: "all 0.2s ease-in-out",
             "&:hover": {
-              bgcolor: isDarkMode
-                ? alpha("#fff", 0.03)
-                : alpha("#000", 0.02),
+              transform: "translateY(-3px)",
+              boxShadow: `0 10px 28px -6px ${alpha(palette.primary, 0.3)}`,
+              border: `1.5px solid ${alpha(palette.primary, 0.65)}`,
             },
           }}
         >
-          {/* Icon */}
-          <Box
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: "12px",
-              background: `linear-gradient(135deg, ${palette.primary}, ${palette.secondary})`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            {isIncome ? (
-              <TrendingUpIcon sx={{ color: "#fff", fontSize: 20 }} />
-            ) : (
-              <TrendingDownIcon sx={{ color: "#fff", fontSize: 20 }} />
-            )}
-          </Box>
-
-          {/* Info */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              fontWeight={700}
-              sx={{ fontSize: 14, lineHeight: 1.3, mb: 0.25 }}
-            >
-              {t.description}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-              <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                {t.category}
-              </Typography>
-              <Typography sx={{ fontSize: 11, color: "text.disabled" }}>•</Typography>
-              <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                {t.frequency === "monthly" ? "Monthly" : "Yearly"}
-              </Typography>
-              <Typography sx={{ fontSize: 11, color: "text.disabled" }}>•</Typography>
-              <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                {occurrences} occurrences
-              </Typography>
+          {/* Header */}
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
+              <Box
+                sx={{ position: "relative", cursor: "pointer", flexShrink: 0 }}
+                onClick={(e) => { e.stopPropagation(); setImgPickerTarget(t.description); setImgPickerOpen(true); }}
+              >
+                <PaymentMethodIcon
+                  imageUrl={getSubscriptionImage(t.description)}
+                  colors={palette}
+                  size={36}
+                  borderRadius="10px"
+                  iconSize={18}
+                />
+                <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, borderRadius: "10px", bgcolor: "rgba(0,0,0,0.35)", transition: "opacity 0.15s", "&:hover": { opacity: 1 } }}>
+                  <ImageIcon sx={{ color: "#fff", fontSize: 14 }} />
+                </Box>
+              </Box>
+              <Tooltip title={t.description}>
+                <Typography
+                  fontWeight={700}
+                  sx={{
+                    fontSize: 14,
+                    lineHeight: 1.2,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t.description}
+                </Typography>
+              </Tooltip>
             </Box>
+            <Chip
+              label={t.frequency === "monthly" ? "Mensal" : "Anual"}
+              size="small"
+              sx={{
+                height: 22,
+                fontSize: 11,
+                fontWeight: 600,
+                borderRadius: "8px",
+                flexShrink: 0,
+                ml: 1,
+                bgcolor: alpha(palette.primary, isDarkMode ? 0.2 : 0.1),
+                color: palette.primary,
+                "& .MuiChip-label": { px: 1.25 },
+              }}
+            />
           </Box>
 
-          {/* Amount + Badge + Edit */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexShrink: 0 }}>
+          {/* Amount section */}
+          <Box sx={{ mb: 1.5, flex: 1 }}>
             <Typography
-              fontWeight={700}
               sx={{
-                fontSize: isMobile ? 14 : 16,
-                letterSpacing: "-0.01em",
+                fontSize: 10,
+                fontWeight: 700,
+                color: "text.disabled",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                mb: 0.5,
+              }}
+            >
+              {t.category}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 20,
+                fontWeight: 800,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.15,
                 color: isIncome ? "#10b981" : "text.primary",
               }}
             >
               {isIncome ? "+" : ""}{formatCurrency(t.amount || 0)}
             </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+              Próx: {getNextOccurrence(t)} · {calculateOccurrences(t)} ocorrências
+            </Typography>
+          </Box>
+
+          {/* Footer */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              pt: 1.5,
+            }}
+          >
+            {/* Paid/Pending chip */}
             <Chip
-              label={t.isPaid ? "Paid" : "Pending"}
+              label={t.isPaid ? "Pago" : "Pendente"}
               size="small"
               onClick={(e) => { e.stopPropagation(); onTogglePaid(t.id, !t.isPaid); }}
               sx={{
@@ -739,28 +865,49 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 "&:hover": { opacity: 0.8 },
               }}
             />
-            <IconButton
-              size="small"
-              onClick={() => setSelectedRecurringId(t.id)}
-              sx={{
-                width: 30,
-                height: 30,
-                borderRadius: "8px",
-                color: "text.secondary",
-                "&:hover": {
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  color: "primary.main",
-                },
-              }}
-            >
-              <EditIcon sx={{ fontSize: 16 }} />
-            </IconButton>
+
+            {/* Edit + Delete */}
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <Tooltip title="Editar série">
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); onEditSeries(t); }}
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    color: "text.secondary",
+                    "&:hover": {
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                      color: "primary.main",
+                    },
+                  }}
+                >
+                  <EditIcon sx={{ fontSize: 15 }} />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Excluir">
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); openDeleteOptions(t); }}
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    color: "text.secondary",
+                    "&:hover": {
+                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                      color: "error.main",
+                    },
+                  }}
+                >
+                  <DeleteIcon sx={{ fontSize: 15 }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
           </Box>
-        </Box>
-        {!isLast && (
-          <Divider sx={{ mx: isMobile ? 2 : 2.5 }} />
-        )}
-      </React.Fragment>
+        </Paper>
+      </Grid>
     );
   };
 
@@ -773,12 +920,11 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
   if (selectedRecurring) {
     const isIncome = selectedRecurring.type === "income";
-    const palette = isIncome
-      ? { primary: "#059669", secondary: "#10b981" }
-      : getCategoryPalette(selectedRecurring.category);
+    const palette = getSubscriptionColor(selectedRecurring.description) ?? hashColor(selectedRecurring.description);
     const occurrencesList = getOccurrencesList(selectedRecurring);
 
     return (
+      <>
       <Box
         sx={{
           display: "flex",
@@ -829,22 +975,19 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             <Button
               variant="outlined"
               startIcon={<EditIcon />}
-              onClick={() => onEdit(selectedRecurring)}
+              onClick={() => onEditSeries(selectedRecurring)}
               sx={{ borderRadius: "10px", textTransform: "none" }}
             >
-              Edit series
+              Editar série
             </Button>
             <Button
               variant="outlined"
               color="error"
               startIcon={<DeleteIcon />}
-              onClick={() => {
-                onDelete(selectedRecurring.id);
-                setSelectedRecurringId(null);
-              }}
+              onClick={() => openDeleteOptions(selectedRecurring)}
               sx={{ borderRadius: "10px", textTransform: "none" }}
             >
-              Delete
+              Excluir
             </Button>
           </Box>
         </Box>
@@ -941,14 +1084,10 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                     />
 
                     {/* Edit */}
-                    <Tooltip title="Edit occurrence">
+                    <Tooltip title="Editar ocorrência">
                       <IconButton
                         size="small"
-                        onClick={() =>
-                          occ.isModified && occ.modifiedTransaction
-                            ? onEdit(occ.modifiedTransaction)
-                            : onEdit(createVirtualTransaction(selectedRecurring, occ))
-                        }
+                        onClick={() => openEditOptions(selectedRecurring, occ)}
                         sx={{
                           width: 30,
                           height: 30,
@@ -962,14 +1101,10 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                     </Tooltip>
 
                     {/* Delete */}
-                    <Tooltip title="Delete occurrence">
+                    <Tooltip title="Excluir ocorrência">
                       <IconButton
                         size="small"
-                        onClick={() =>
-                          occ.isModified && occ.modifiedTransaction
-                            ? onDelete(occ.modifiedTransaction.id)
-                            : onDelete(createVirtualTransaction(selectedRecurring, occ).id)
-                        }
+                        onClick={() => openDeleteOptions(selectedRecurring, occ)}
                         sx={{
                           width: 30,
                           height: 30,
@@ -989,6 +1124,104 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           )}
         </Paper>
       </Box>
+
+      {/* Modais — presentes tanto na detail view quanto na lista */}
+      <TransactionOptionsPanel
+        open={optionsPanel.open}
+        onClose={() => setOptionsPanel((prev) => ({ ...prev, open: false }))}
+        transaction={optionsPanel.displayTransaction}
+        actionType={optionsPanel.actionType}
+        onSelect={handleOptionSelect}
+      />
+      <Dialog
+        open={deleteConfirm.open}
+        onClose={() => !deleteConfirm.isLoading && setDeleteConfirm((prev) => ({ ...prev, open: false }))}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: "20px",
+            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.95) : alpha("#FFFFFF", 0.98),
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            boxShadow: isDarkMode
+              ? `0 24px 60px -12px ${alpha("#000000", 0.6)}`
+              : `0 24px 60px -12px ${alpha(theme.palette.error.main, 0.18)}`,
+          },
+        }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: isDarkMode ? alpha("#0F172A", 0.7) : alpha("#64748B", 0.35),
+              backdropFilter: "blur(6px)",
+            },
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 1, pt: 2.5, px: 2.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: "14px",
+                bgcolor: alpha(theme.palette.error.main, 0.12),
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <DeleteIcon sx={{ fontSize: 28, color: "error.main" }} />
+            </Box>
+            <Typography variant="h6" fontWeight={700} fontSize="1rem" lineHeight={1.3}>
+              {deleteConfirm.scope === "single" ? "Excluir ocorrência" :
+               deleteConfirm.scope === "all_future" ? "Excluir esta e futuras" :
+               "Excluir toda a série"}
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ px: 2.5, pb: 1 }}>
+          <DialogContentText sx={{ color: "text.secondary", fontSize: "0.9rem" }}>
+            {getDeleteConfirmText()}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
+          <Button
+            onClick={() => setDeleteConfirm((prev) => ({ ...prev, open: false }))}
+            disabled={deleteConfirm.isLoading}
+            sx={{
+              borderRadius: "10px",
+              textTransform: "none",
+              fontWeight: 600,
+              color: "text.secondary",
+              bgcolor: alpha(theme.palette.text.secondary, 0.08),
+              "&:hover": { bgcolor: alpha(theme.palette.text.secondary, 0.14) },
+              px: 2.5,
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleteConfirm.isLoading}
+            sx={{
+              borderRadius: "10px",
+              textTransform: "none",
+              fontWeight: 600,
+              boxShadow: `0 4px 12px -2px ${alpha(theme.palette.error.main, 0.4)}`,
+              "&:hover": { boxShadow: `0 6px 16px -2px ${alpha(theme.palette.error.main, 0.5)}`, transform: "translateY(-1px)" },
+              px: 2.5,
+            }}
+          >
+            {deleteConfirm.isLoading ? "Excluindo..." : "Excluir"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      </>
     );
   }
 
@@ -1017,6 +1250,14 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           </Typography>
         </Box>
         <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={onNewTransaction}
+            sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
+          >
+            Nova recorrente
+          </Button>
           {onRefreshData && (
             <Tooltip title="Refresh">
               <IconButton
@@ -1328,46 +1569,35 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           description="Crie uma transação recorrente para gerenciá-la aqui"
           compact
         />
-      ) : (
-        <Paper
-          elevation={0}
-          sx={{
-            borderRadius: "16px",
-            border: `1px solid ${isDarkMode ? alpha("#fff", 0.08) : alpha("#000", 0.06)}`,
-            overflow: "hidden",
-            bgcolor: isDarkMode
-              ? alpha(theme.palette.background.paper, 0.7)
-              : "#fff",
-          }}
+      ) : shouldVirtualize ? (
+        <Box
+          ref={listParentRef}
+          sx={{ maxHeight: "70vh", overflow: "auto", pr: 0.5 }}
         >
-          {recurringTransactions.length > RECURRING_VIRTUALIZE_THRESHOLD ? (
-            <Box ref={recurringListRef} sx={{ maxHeight: "70vh", overflow: "auto" }}>
-              <Box sx={{ height: recurringVirtualizer.getTotalSize(), position: "relative" }}>
-                {recurringVirtualizer.getVirtualItems().map((virtualRow) => (
-                  <Box
-                    key={recurringTransactions[virtualRow.index].id}
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
-                  >
-                    {renderRecurringRow(
-                      recurringTransactions[virtualRow.index],
-                      virtualRow.index === recurringTransactions.length - 1
-                    )}
-                  </Box>
-                ))}
+          <Box sx={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}>
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => (
+              <Box
+                key={virtualRow.index}
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${virtualRow.start}px)`,
+                  pb: gridSpacing,
+                }}
+              >
+                <Grid container spacing={gridSpacing}>
+                  {virtualGridRows[virtualRow.index].map((t) => renderRecurringCard(t))}
+                </Grid>
               </Box>
-            </Box>
-          ) : (
-            recurringTransactions.map((t, index) =>
-              renderRecurringRow(t, index === recurringTransactions.length - 1)
-            )
-          )}
-        </Paper>
+            ))}
+          </Box>
+        </Box>
+      ) : (
+        <Grid container spacing={gridSpacing}>
+          {recurringTransactions.map((t) => renderRecurringCard(t))}
+        </Grid>
       )}
 
 
@@ -1405,21 +1635,21 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         </MenuItem>
         <MenuItem
           onClick={() => {
-            if (mobileMenuAnchor.transaction)
-              onEdit(mobileMenuAnchor.transaction);
+            const tx = mobileMenuAnchor.transaction;
             setMobileMenuAnchor({ element: null, transaction: null });
+            if (tx) onEditSeries(tx);
           }}
         >
           <ListItemIcon>
             <EditIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Editar</ListItemText>
+          <ListItemText>Editar série</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() => {
-            if (mobileMenuAnchor.transaction)
-              onDelete(mobileMenuAnchor.transaction.id);
+            const tx = mobileMenuAnchor.transaction;
             setMobileMenuAnchor({ element: null, transaction: null });
+            if (tx) openDeleteOptions(tx);
           }}
         >
           <ListItemIcon>
@@ -1462,16 +1692,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         )}
         <MenuItem
           onClick={() => {
-            if (
-              mobileOccurrenceMenuAnchor.transaction &&
-              mobileOccurrenceMenuAnchor.occurrence
-            ) {
-              handleOccurrenceEdit(
-                mobileOccurrenceMenuAnchor.transaction,
-                mobileOccurrenceMenuAnchor.occurrence
-              );
-            }
+            const { transaction, occurrence } = mobileOccurrenceMenuAnchor;
             handleCloseMobileOccurrenceMenu();
+            if (transaction && occurrence) openEditOptions(transaction, occurrence);
           }}
         >
           <ListItemIcon>
@@ -1481,16 +1704,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         </MenuItem>
         <MenuItem
           onClick={() => {
-            if (
-              mobileOccurrenceMenuAnchor.transaction &&
-              mobileOccurrenceMenuAnchor.occurrence
-            ) {
-              handleOccurrenceDelete(
-                mobileOccurrenceMenuAnchor.transaction,
-                mobileOccurrenceMenuAnchor.occurrence
-              );
-            }
+            const { transaction, occurrence } = mobileOccurrenceMenuAnchor;
             handleCloseMobileOccurrenceMenu();
+            if (transaction && occurrence) openDeleteOptions(transaction, occurrence);
           }}
         >
           <ListItemIcon>
@@ -1499,6 +1715,121 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           <ListItemText>Excluir</ListItemText>
         </MenuItem>
       </Menu>
+
+      <PaymentMethodImagePicker
+        open={imgPickerOpen}
+        onClose={() => setImgPickerOpen(false)}
+        methodName={imgPickerTarget}
+        currentUrl={getSubscriptionImage(imgPickerTarget)}
+        onSelect={async (url) => {
+          if (!imgPickerTarget) return;
+          await updateSubscriptionImage(imgPickerTarget, url);
+          if (url) {
+            extractDominantColor(url).then((colors) => {
+              updateSubscriptionColor(imgPickerTarget, colors ?? hashColor(imgPickerTarget));
+            });
+          }
+        }}
+      />
+
+      {/* Options Panel — escopo de edição/deleção */}
+      <TransactionOptionsPanel
+        open={optionsPanel.open}
+        onClose={() => setOptionsPanel((prev) => ({ ...prev, open: false }))}
+        transaction={optionsPanel.displayTransaction}
+        actionType={optionsPanel.actionType}
+        onSelect={handleOptionSelect}
+      />
+
+      {/* Confirmação de deleção */}
+      <Dialog
+        open={deleteConfirm.open}
+        onClose={() => !deleteConfirm.isLoading && setDeleteConfirm((prev) => ({ ...prev, open: false }))}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: "20px",
+            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.95) : alpha("#FFFFFF", 0.98),
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+            boxShadow: isDarkMode
+              ? `0 24px 60px -12px ${alpha("#000000", 0.6)}`
+              : `0 24px 60px -12px ${alpha(theme.palette.error.main, 0.18)}`,
+          },
+        }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: isDarkMode ? alpha("#0F172A", 0.7) : alpha("#64748B", 0.35),
+              backdropFilter: "blur(6px)",
+            },
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 1, pt: 2.5, px: 2.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: "14px",
+                bgcolor: alpha(theme.palette.error.main, 0.12),
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <DeleteIcon sx={{ fontSize: 28, color: "error.main" }} />
+            </Box>
+            <Typography variant="h6" fontWeight={700} fontSize="1rem" lineHeight={1.3}>
+              {deleteConfirm.scope === "single" ? "Excluir ocorrência" :
+               deleteConfirm.scope === "all_future" ? "Excluir esta e futuras" :
+               "Excluir toda a série"}
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ px: 2.5, pb: 1 }}>
+          <DialogContentText sx={{ color: "text.secondary", fontSize: "0.9rem" }}>
+            {getDeleteConfirmText()}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
+          <Button
+            onClick={() => setDeleteConfirm((prev) => ({ ...prev, open: false }))}
+            disabled={deleteConfirm.isLoading}
+            sx={{
+              borderRadius: "10px",
+              textTransform: "none",
+              fontWeight: 600,
+              color: "text.secondary",
+              bgcolor: alpha(theme.palette.text.secondary, 0.08),
+              "&:hover": { bgcolor: alpha(theme.palette.text.secondary, 0.14) },
+              px: 2.5,
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleteConfirm.isLoading}
+            sx={{
+              borderRadius: "10px",
+              textTransform: "none",
+              fontWeight: 600,
+              boxShadow: `0 4px 12px -2px ${alpha(theme.palette.error.main, 0.4)}`,
+              "&:hover": { boxShadow: `0 6px 16px -2px ${alpha(theme.palette.error.main, 0.5)}`, transform: "translateY(-1px)" },
+              px: 2.5,
+            }}
+          >
+            {deleteConfirm.isLoading ? "Excluindo..." : "Excluir"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

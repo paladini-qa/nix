@@ -8,14 +8,12 @@ import {
   alpha,
   Button,
 } from "@mui/material";
-import {
-  ArrowUpward as IncomeIcon,
-  ArrowDownward as ExpenseIcon,
-  ArrowForward as ArrowForwardIcon,
-} from "@mui/icons-material";
+import { ArrowForward as ArrowForwardIcon } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import { Transaction } from "../../types";
 import { usePrivacyMode } from "../../hooks";
+import { useSettings } from "../../contexts";
+import PaymentMethodIcon from "../ui/PaymentMethodIcon";
 
 const MotionPaper = motion.create(Paper);
 
@@ -39,6 +37,7 @@ const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const { isPrivacyMode, privacyStyles } = usePrivacyMode();
+  const { getPaymentMethodConfig, getPaymentMethodColor, getCategoryColor } = useSettings();
 
   // Pegar as 5 transações mais recentes (por createdAt, independente do filtro de data)
   const recentTransactions = [...transactions]
@@ -86,6 +85,9 @@ const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> = ({
       >
         {recentTransactions.map((tx, index) => {
           const isIncome = tx.type === "income";
+          const methodConfig = getPaymentMethodConfig(tx.paymentMethod);
+          const methodColors = getPaymentMethodColor(tx.paymentMethod);
+          const catColors = getCategoryColor(tx.type, tx.category);
           return (
             <MotionPaper
               key={tx.id}
@@ -112,27 +114,15 @@ const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> = ({
                 transition: "background 0.15s ease",
               }}
             >
-              {/* Ícone de tipo */}
-              <Box
-                sx={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: "10px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  bgcolor: isIncome
-                    ? alpha(theme.palette.success.main, isDark ? 0.2 : 0.1)
-                    : alpha(theme.palette.error.main, isDark ? 0.2 : 0.1),
-                }}
-              >
-                {isIncome ? (
-                  <IncomeIcon sx={{ fontSize: 16, color: theme.palette.success.main }} />
-                ) : (
-                  <ExpenseIcon sx={{ fontSize: 16, color: theme.palette.error.main }} />
-                )}
-              </Box>
+              {/* Logo do meio de pagamento */}
+              <PaymentMethodIcon
+                imageUrl={methodConfig?.imageUrl}
+                colors={methodColors}
+                type={methodConfig?.type}
+                size={34}
+                borderRadius="10px"
+                iconSize={16}
+              />
 
               {/* Descrição e categoria */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -154,10 +144,8 @@ const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> = ({
                       height: 16,
                       fontSize: 9,
                       fontWeight: 600,
-                      bgcolor: isIncome
-                        ? alpha(theme.palette.success.main, 0.08)
-                        : alpha(theme.palette.primary.main, 0.08),
-                      color: isIncome ? theme.palette.success.main : theme.palette.primary.main,
+                      bgcolor: alpha(catColors.primary, 0.12),
+                      color: catColors.primary,
                       border: "none",
                       "& .MuiChip-label": { px: 0.75 },
                     }}

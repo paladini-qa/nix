@@ -35,12 +35,18 @@ import {
   Calculate as DebtCalcIcon,
   TrendingUp as InvestmentsIcon,
   Subscriptions as SubscriptionsIcon,
+  NotificationsOutlined as NotificationsIcon,
+  FactCheck as PaymentGuideIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@mui/material";
 
+import logoUrl from "../../assets/logo.png";
 import { SIDEBAR_WIDTH } from "../../layoutConstants";
 import type { AppCurrentView } from "../../types/appView";
+import { useNotifications } from "../../hooks";
+import { useAppStore } from "../../hooks/useAppStore";
 
 // Motion-enabled components
 const MotionBox = motion.create(Box);
@@ -101,24 +107,30 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const { filters } = useAppStore();
+  const { unreadCount } = useNotifications(filters.month, filters.year);
 
-  // Itens de menu principais
   const mainNavItems: NavItem[] = [
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
     { icon: BatchRegistrationIcon, label: t("nav.nixai"), id: "nixai" },
-    { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
-    { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
-    { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
-    { icon: PaymentIcon, label: "Pagamentos", id: "paymentMethods" },
-    { icon: CategoryIcon, label: "Categorias", id: "categories" },
+    { icon: NotificationsIcon, label: "Notificações", id: "notifications" },
   ];
 
-  const reportsNavItems: NavItem[] = [
+  const resourcesNavItems: NavItem[] = [
+    { icon: PaymentIcon, label: "Pagamentos", id: "paymentMethods" },
+    { icon: PaymentGuideIcon, label: "Guia de Pagamento", id: "paymentGuide" },
+    { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
+    { icon: CreditCardIcon, label: "Parcelas", id: "splits" },
+    { icon: CategoryIcon, label: "Categorias", id: "categories" },
+    { icon: SubscriptionsIcon, label: t("nav.subscriptions"), id: "subscriptions" },
+  ];
+
+  const financeNavItems: NavItem[] = [
+    { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
     { icon: BudgetsIcon, label: "Orçamentos", id: "budgets" },
     { icon: PlanningIcon, label: "Planejamento", id: "planning" },
     { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },
-    { icon: SubscriptionsIcon, label: t("nav.subscriptions"), id: "subscriptions" },
   ];
 
   const toolsNavItems: NavItem[] = [
@@ -215,7 +227,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                 transition: "all 0.2s ease",
               }}
             >
-              <item.icon fontSize="small" />
+              <Badge
+                badgeContent={item.id === "notifications" ? unreadCount : 0}
+                color="error"
+                max={9}
+                sx={{ "& .MuiBadge-badge": { fontSize: 9, minWidth: 14, height: 14, p: 0 } }}
+              >
+                <item.icon fontSize="small" />
+              </Badge>
             </MotionBox>
           </ListItemIcon>
           <ListItemText
@@ -279,15 +298,15 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header */}
         <Box sx={{ mb: 2.5, px: 0.5, display: "flex", alignItems: "center", gap: 1.25 }}>
           <Box
+            component="img"
+            src={logoUrl}
+            alt="Nix Finance"
             sx={{
               width: 36, height: 36, borderRadius: "11px", flexShrink: 0,
-              background: "linear-gradient(135deg, #a855f7 0%, #c084fc 100%)",
-              display: "grid", placeItems: "center",
+              objectFit: "contain",
               boxShadow: "0 6px 16px -6px rgba(168,85,247,0.6)",
             }}
-          >
-            <Typography sx={{ fontWeight: 800, color: "white", fontSize: 17, lineHeight: 1 }}>N</Typography>
-          </Box>
+          />
           <Box>
             <Typography sx={{ fontWeight: 700, fontSize: 15, letterSpacing: "-0.01em", lineHeight: 1.2, color: "text.primary" }}>
               Nix Finance
@@ -310,15 +329,30 @@ const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </List>
 
-        {/* Reports Section */}
+        {/* Resources Section */}
         <Box sx={{ mt: 0.5, mb: 0.25, px: 1 }}>
           <Divider sx={{ mb: 1, opacity: 0.4 }} />
           <Typography variant="caption" sx={{ fontWeight: 700, color: "text.disabled", letterSpacing: "0.08em", fontSize: "0.6rem", textTransform: "uppercase" }}>
-            Relatórios
+            Resources
           </Typography>
         </Box>
         <List sx={{ mt: 0 }}>
-          {reportsNavItems.map((item, idx) => (
+          {resourcesNavItems.map((item, idx) => (
+            <motion.div key={item.id} variants={itemVariants}>
+              {renderNavItem(item, false, idx)}
+            </motion.div>
+          ))}
+        </List>
+
+        {/* Finance Section */}
+        <Box sx={{ mt: 0.5, mb: 0.25, px: 1 }}>
+          <Divider sx={{ mb: 1, opacity: 0.4 }} />
+          <Typography variant="caption" sx={{ fontWeight: 700, color: "text.disabled", letterSpacing: "0.08em", fontSize: "0.6rem", textTransform: "uppercase" }}>
+            Finance
+          </Typography>
+        </Box>
+        <List sx={{ mt: 0 }}>
+          {financeNavItems.map((item, idx) => (
             <motion.div key={item.id} variants={itemVariants}>
               {renderNavItem(item, false, idx)}
             </motion.div>
@@ -342,8 +376,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             </motion.div>
           ))}
         </List>
-
-        {/* Reports Items - Flat (sem dropdown) */}
       </MotionBox>
 
       {/* Bottom Actions */}

@@ -19,9 +19,11 @@ import {
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import TransactionTags from "./TransactionTags";
+import PaymentMethodIcon from "./PaymentMethodIcon";
 import { Transaction } from "../../types";
 import { useSwipeActions, usePrivacyMode } from "../../hooks";
 import { useCurrency } from "../../hooks/useCurrency";
+import { useSettings } from "../../contexts";
 
 const MotionCard = motion.create(Card);
 const MotionBox = motion.create(Box);
@@ -55,6 +57,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
   const isDarkMode = theme.palette.mode === "dark";
   const { format, noWrapStyle } = useCurrency();
   const { privacyStyles } = usePrivacyMode();
+  const { getPaymentMethodColor, getPaymentMethodConfig } = useSettings();
 
   const isIncome = t.type === "income";
   const accentColor = isIncome ? "#059669" : "#DC2626";
@@ -290,9 +293,18 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
               <Typography variant="caption" color="text.disabled">
                 •
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {t.paymentMethod}
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <PaymentMethodIcon
+                  imageUrl={getPaymentMethodConfig(t.paymentMethod)?.imageUrl}
+                  colors={getPaymentMethodColor(t.paymentMethod)}
+                  size={16}
+                  borderRadius="4px"
+                  iconSize={9}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  {t.paymentMethod}
+                </Typography>
+              </Box>
             </Box>
 
             {/* Tags */}

@@ -9,10 +9,7 @@ import {
   useMediaQuery,
   useTheme,
   alpha,
-  Tabs,
-  Tab,
   Chip,
-  Collapse,
   LinearProgress,
   Tooltip,
   Table,
@@ -30,6 +27,13 @@ import {
   CardContent,
   Checkbox,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  ToggleButtonGroup,
+  ToggleButton,
+  Divider,
 } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -38,10 +42,7 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   Category as CategoryIcon,
-  ArrowForward as ArrowForwardIcon,
   ArrowBack as ArrowBackIcon,
-  Assessment as AssessmentIcon,
-  Settings as SettingsIcon,
   Receipt as ReceiptIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as UnpaidIcon,
@@ -50,6 +51,9 @@ import {
   Warning as WarningIcon,
   AccountBalance as BalanceIcon,
 } from "@mui/icons-material";
+import PaymentMethodIcon from "../ui/PaymentMethodIcon";
+import PaymentMethodImagePicker from "../ui/PaymentMethodImagePicker";
+import { extractDominantColor, hashColor } from "../../utils/imageColorUtils";
 import TransactionTags from "../ui/TransactionTags";
 import {
   getTableContainerSx,
@@ -65,19 +69,9 @@ import {
 import { useLayoutSpacing } from "../../hooks";
 import { getReportDate } from "../../utils/transactionUtils";
 import { useSettings } from "../../contexts";
-import ColorPicker from "../ui/ColorPicker";
-import DateFilter from "../ui/DateFilter";
 import EmptyState from "../ui/EmptyState";
 import AutoCategorizationRules from "../ui/AutoCategorizationRules";
 
-const DEFAULT_INCOME_COLORS: ColorConfig = {
-  primary: "#10b981",
-  secondary: "#059669",
-};
-const DEFAULT_EXPENSE_COLORS: ColorConfig = {
-  primary: "#ef4444",
-  secondary: "#dc2626",
-};
 
 interface CategoriesViewProps {
   transactions: Transaction[];
@@ -88,11 +82,6 @@ interface CategoriesViewProps {
   onDateChange: (month: number, year: number) => void;
   onAddCategory: (type: TransactionType, category: string) => void;
   onRemoveCategory: (type: TransactionType, category: string) => void;
-  onUpdateCategoryColor: (
-    type: TransactionType,
-    category: string,
-    colors: ColorConfig
-  ) => void;
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onEditTransaction: (transaction: Transaction) => void;
   onDeleteTransaction: (id: string) => void;
@@ -119,7 +108,6 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
   onDateChange,
   onAddCategory,
   onRemoveCategory,
-  onUpdateCategoryColor,
   onTogglePaid,
   onEditTransaction,
   onDeleteTransaction,
@@ -130,11 +118,11 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { gridSpacing } = useLayoutSpacing();
   const isDarkMode = theme.palette.mode === "dark";
-  const { getCategoryColor } = useSettings();
+  const { getCategoryColor, getCategoryImage, updateCategoryImage, updateCategoryColor } = useSettings();
 
-  const [tabValue, setTabValue] = useState(0);
-  const [newIncomeCat, setNewIncomeCat] = useState("");
-  const [newExpenseCat, setNewExpenseCat] = useState("");
+  const [addCategoryDialogOpen, setAddCategoryDialogOpen] = useState(false);
+  const [addCategoryType, setAddCategoryType] = useState<TransactionType>("expense");
+  const [addCategoryName, setAddCategoryName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<{
     name: string;
     type: TransactionType;
@@ -144,6 +132,9 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     element: HTMLElement | null;
     transaction: Transaction | null;
   }>({ element: null, transaction: null });
+
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [imagePickerTarget, setImagePickerTarget] = useState<{ type: TransactionType; name: string } | null>(null);
 
   useEffect(() => {
     if (initialSelectedCategory) {
@@ -253,7 +244,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
 
     // Inicializa com categorias cadastradas
     (categories?.income || []).forEach((cat) => {
-      const colors = categoryColors.income?.[cat] || DEFAULT_INCOME_COLORS;
+      const colors = categoryColors.income?.[cat] || hashColor(cat);
       incomeMap.set(cat, {
         name: cat,
         type: "income",
@@ -265,7 +256,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       });
     });
     (categories?.expense || []).forEach((cat) => {
-      const colors = categoryColors.expense?.[cat] || DEFAULT_EXPENSE_COLORS;
+      const colors = categoryColors.expense?.[cat] || hashColor(cat);
       expenseMap.set(cat, {
         name: cat,
         type: "expense",
@@ -280,15 +271,13 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     // Processa todas as transações, criando categorias dinamicamente se necessário
     (monthTransactions || []).forEach((tx) => {
       const map = tx.type === "income" ? incomeMap : expenseMap;
-      const defaultColors =
-        tx.type === "income" ? DEFAULT_INCOME_COLORS : DEFAULT_EXPENSE_COLORS;
 
       // Se a categoria não existe no mapa, cria dinamicamente
       if (!map.has(tx.category)) {
         const colors =
           (tx.type === "income"
             ? categoryColors.income
-            : categoryColors.expense)?.[tx.category] || defaultColors;
+            : categoryColors.expense)?.[tx.category] || hashColor(tx.category);
         map.set(tx.category, {
           name: tx.category,
           type: tx.type,
@@ -379,13 +368,11 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     return `${day}/${month}/${year}`;
   };
 
-  const handleAddCat = (type: TransactionType) => {
-    const val = type === "income" ? newIncomeCat : newExpenseCat;
-    const setVal = type === "income" ? setNewIncomeCat : setNewExpenseCat;
-
-    if (val.trim()) {
-      onAddCategory(type, val.trim());
-      setVal("");
+  const handleAddCategory = () => {
+    if (addCategoryName.trim()) {
+      onAddCategory(addCategoryType, addCategoryName.trim());
+      setAddCategoryName("");
+      setAddCategoryDialogOpen(false);
     }
   };
 
@@ -395,290 +382,159 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
   const renderCategoryCard = (summary: CategorySummary, total: number) => {
     const percentage = total > 0 ? (summary.total / total) * 100 : 0;
     const isIncome = summary.type === "income";
-    const accentColor = summary.colors.primary;
+    const colors = summary.colors;
 
     return (
-      <Paper
-        key={summary.name}
-        elevation={0}
-        onClick={() =>
-          setSelectedCategory({ name: summary.name, type: summary.type })
-        }
-        sx={{
-          p: isMobile ? 2 : 2.5,
-          cursor: "pointer",
-          position: "relative",
-          overflow: "hidden",
-          transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-          background: isDarkMode
-            ? `linear-gradient(135deg, ${alpha(
-                theme.palette.background.paper,
-                0.7
-              )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha(
-                "#FFFFFF",
-                0.65
-              )} 100%)`,
-          backdropFilter: "blur(16px)",
-          border: `1px solid ${
-            isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-          }`,
-          borderLeft: `3px solid ${accentColor}`,
-          borderRadius: "16px",
-          boxShadow: isDarkMode
-            ? `0 6px 24px -6px ${alpha(accentColor, 0.2)}`
-            : `0 6px 24px -6px ${alpha(accentColor, 0.15)}`,
-          "&:hover": {
-            transform: "translateY(-4px)",
-            boxShadow: isDarkMode
-              ? `0 12px 32px -6px ${alpha(accentColor, 0.3)}`
-              : `0 12px 32px -6px ${alpha(accentColor, 0.25)}`,
-          },
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: isDarkMode
-              ? `linear-gradient(135deg, ${alpha(
-                  accentColor,
-                  0.08
-                )} 0%, ${alpha(summary.colors.secondary, 0.02)} 100%)`
-              : `linear-gradient(135deg, ${alpha(
-                  accentColor,
-                  0.04
-                )} 0%, ${alpha(summary.colors.secondary, 0.01)} 100%)`,
-            pointerEvents: "none",
-          },
-        }}
-      >
-        {/* Header */}
-        <Box
+      <Grid key={summary.name} size={{ xs: 12, sm: 6, lg: 4 }}>
+        <Paper
+          elevation={0}
+          onClick={() => setSelectedCategory({ name: summary.name, type: summary.type })}
           sx={{
+            p: 2.5,
+            cursor: "pointer",
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 1.5,
+            flexDirection: "column",
+            height: "100%",
+            borderRadius: "16px",
+            background: isDarkMode
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha("#fff", 0.95),
+            border: `1.5px solid ${alpha(colors.primary, isDarkMode ? 0.45 : 0.25)}`,
+            transition: "all 0.2s ease",
+            "&:hover": {
+              transform: "translateY(-3px)",
+              boxShadow: `0 10px 28px -6px ${alpha(colors.primary, 0.3)}`,
+              border: `1.5px solid ${alpha(colors.primary, 0.65)}`,
+            },
           }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 1.5,
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
-            <Box
-              sx={{
-                p: 1,
-                borderRadius: "12px",
-                background: `linear-gradient(135deg, ${accentColor}, ${summary.colors.secondary})`,
-                display: "flex",
-                flexShrink: 0,
-              }}
-            >
-              {isIncome ? (
-                <TrendingUpIcon sx={{ color: "#fff", fontSize: 18 }} />
-              ) : (
-                <TrendingDownIcon sx={{ color: "#fff", fontSize: 18 }} />
-              )}
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+          {/* Header */}
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+              <PaymentMethodIcon
+                imageUrl={getCategoryImage(isIncome ? "income" : "expense", summary.name)}
+                colors={colors}
+                size={36}
+                borderRadius="10px"
+                iconSize={18}
+              />
               <Typography
-                variant="subtitle1"
-                fontWeight={600}
+                fontWeight={700}
                 sx={{
+                  fontSize: 14,
+                  lineHeight: 1.2,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
+                  maxWidth: 120,
                 }}
               >
                 {summary.name}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {summary.transactionCount} transaç
-                {summary.transactionCount === 1 ? "ão" : "ões"}
-              </Typography>
             </Box>
-          </Box>
-          <Tooltip title="Ver detalhes">
-            <IconButton
-              size="small"
-              sx={{
-                color: accentColor,
-                bgcolor: alpha(accentColor, 0.1),
-                "&:hover": { bgcolor: alpha(accentColor, 0.2) },
-              }}
-            >
-              <ArrowForwardIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        {/* Amount */}
-        <Typography
-          variant="h6"
-          fontWeight="bold"
-          sx={{
-            color: accentColor,
-            mb: 1.5,
-            fontFamily: "monospace",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {isIncome ? "+" : "-"}
-          {formatCurrency(summary.total)}
-        </Typography>
-
-        {/* Progress */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <LinearProgress
-            variant="determinate"
-            value={percentage}
-            sx={{
-              flex: 1,
-              height: 4,
-              borderRadius: "4px",
-              bgcolor: alpha(accentColor, 0.1),
-              "& .MuiLinearProgress-bar": {
-                borderRadius: "4px",
-                background: `linear-gradient(90deg, ${accentColor}, ${summary.colors.secondary})`,
-              },
-            }}
-          />
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ minWidth: 35 }}
-          >
-            {percentage.toFixed(0)}%
-          </Typography>
-        </Box>
-
-        {/* Unpaid indicator */}
-        {summary.unpaidCount > 0 && (
-          <Box sx={{ mt: 1.5, display: "flex", justifyContent: "flex-end" }}>
-            <Chip
-              icon={<WarningIcon />}
-              label={
-                summary.unpaidCount === 1
-                  ? "1 pendente"
-                  : `${summary.unpaidCount} pendentes`
-              }
-              size="small"
-              color="warning"
-              variant="outlined"
-              sx={{ height: 22, fontSize: 10, borderRadius: "8px" }}
-            />
-          </Box>
-        )}
-      </Paper>
-    );
-  };
-
-  // =============================================
-  // MANAGE ITEM COMPONENT
-  // =============================================
-  const renderManageItem = (cat: string, type: TransactionType) => {
-    const defaultColors =
-      type === "income" ? DEFAULT_INCOME_COLORS : DEFAULT_EXPENSE_COLORS;
-    const colorKey =
-      type === "income" ? categoryColors.income : categoryColors.expense;
-    const colors = colorKey?.[cat] || defaultColors;
-    const summary = (
-      type === "income" ? categorySummaries.income : categorySummaries.expense
-    ).find((s) => s.name === cat);
-
-    return (
-      <Paper
-        key={cat}
-        elevation={0}
-        sx={{
-          p: 2,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          borderRadius: "16px",
-          transition: "all 0.2s ease",
-          border: `1px solid ${alpha(colors.primary, 0.2)}`,
-          borderLeft: `3px solid ${colors.primary}`,
-          background: isDarkMode
-            ? `linear-gradient(135deg, ${alpha(
-                colors.primary,
-                0.1
-              )} 0%, ${alpha(colors.secondary, 0.05)} 100%)`
-            : `linear-gradient(135deg, ${alpha(
-                colors.primary,
-                0.06
-              )} 0%, ${alpha(colors.secondary, 0.02)} 100%)`,
-          "&:hover": {
-            transform: "translateY(-2px)",
-            boxShadow: `0 8px 16px -4px ${alpha(colors.primary, 0.2)}`,
-          },
-        }}
-      >
-        <ColorPicker
-          value={colors}
-          onChange={(newColors) => onUpdateCategoryColor(type, cat, newColors)}
-          size="small"
-        />
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
-          {type === "income" ? (
-            <TrendingUpIcon fontSize="small" sx={{ color: colors.primary }} />
-          ) : (
-            <TrendingDownIcon fontSize="small" sx={{ color: colors.primary }} />
-          )}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="body1"
-              fontWeight={600}
-              sx={{
-                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {cat}
-            </Typography>
-            {summary && summary.transactionCount > 0 && (
-              <Typography variant="caption" color="text.secondary">
-                {summary.transactionCount} transações este mês
+            {summary.unpaidCount > 0 && (
+              <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", whiteSpace: "nowrap" }}>
+                {summary.unpaidCount} pendente{summary.unpaidCount > 1 ? "s" : ""}
               </Typography>
             )}
           </Box>
-        </Box>
-        <Tooltip title="Remover categoria">
-          <IconButton
-            size="small"
-            onClick={() => onRemoveCategory(type, cat)}
+
+          {/* Amount */}
+          <Box sx={{ mb: 1.5, flex: 1 }}>
+            <Typography
+              sx={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "text.disabled",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                mb: 0.5,
+              }}
+            >
+              Este mês
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 20,
+                fontWeight: 800,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.15,
+              }}
+            >
+              {formatCurrency(summary.total)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: "block" }}>
+              {summary.transactionCount} transaç{summary.transactionCount === 1 ? "ão" : "ões"}
+            </Typography>
+          </Box>
+
+          {/* Progress bar */}
+          <LinearProgress
+            variant="determinate"
+            value={Math.min(percentage, 100)}
             sx={{
-              color: "text.secondary",
-              "&:hover": {
-                bgcolor: alpha(theme.palette.error.main, 0.1),
-                color: "error.main",
+              height: 4,
+              borderRadius: 2,
+              mb: 2,
+              bgcolor: alpha(colors.primary, 0.15),
+              "& .MuiLinearProgress-bar": {
+                borderRadius: 2,
+                background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
               },
             }}
+          />
+
+          {/* Footer */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              pt: 1.5,
+            }}
           >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Paper>
+            <Button
+              size="small"
+              onClick={(e) => { e.stopPropagation(); setSelectedCategory({ name: summary.name, type: summary.type }); }}
+              sx={{
+                color: colors.primary,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: 13,
+                p: 0,
+                minWidth: 0,
+                "&:hover": { background: "none", opacity: 0.75 },
+              }}
+            >
+              Detalhes
+            </Button>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, color: "text.disabled", mr: 0.5 }}>
+                {percentage.toFixed(0)}%
+              </Typography>
+              <Tooltip title="Editar imagem">
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); setImagePickerTarget({ type: summary.type, name: summary.name }); setImagePickerOpen(true); }}
+                  sx={{ color: "text.secondary", "&:hover": { color: "primary.main", bgcolor: alpha(theme.palette.primary.main, 0.08) } }}
+                >
+                  <EditIcon sx={{ fontSize: 15 }} />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Excluir categoria">
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); onRemoveCategory(summary.type, summary.name); }}
+                  sx={{ color: "text.secondary", "&:hover": { color: "error.main", bgcolor: alpha(theme.palette.error.main, 0.08) } }}
+                >
+                  <DeleteIcon sx={{ fontSize: 15 }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Box>
+        </Paper>
+      </Grid>
     );
   };
 
@@ -1317,13 +1173,20 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       >
         <Box>
           <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            Categories
+            Categorias
           </Typography>
           <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
-            Manage your income and expense categories
+            Gerencie suas categorias de receita e despesa
           </Typography>
         </Box>
-
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setAddCategoryDialogOpen(true)}
+          sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
+        >
+          Nova categoria
+        </Button>
       </Box>
 
       {/* Summary Cards */}
@@ -1502,409 +1365,97 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         </Grid>
       </Grid>
 
-      {/* Tabs */}
-      <Paper
-        elevation={0}
-        sx={{
-          px: isMobile ? 1 : 2,
-          borderRadius: "16px",
-          border: `1px solid ${
-            isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-          }`,
-        }}
-      >
-        <Tabs
-          value={tabValue}
-          onChange={(_, newValue) => setTabValue(newValue)}
+
+      {/* Income Section */}
+      <Box>
+        <Paper
+          elevation={0}
           sx={{
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 600,
-              minHeight: 48,
-            },
+            p: isMobile ? 1.5 : 2,
+            borderRadius: "16px",
+            border: `1px solid ${alpha("#059669", 0.2)}`,
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha("#059669", 0.1)} 0%, ${alpha("#059669", 0.05)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#059669", 0.08)} 0%, ${alpha("#059669", 0.02)} 100%)`,
+            mb: 2,
           }}
         >
-          <Tab
-            icon={<AssessmentIcon />}
-            iconPosition="start"
-            label={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                Visão Geral
-                <Chip
-                  label={stats.incomeWithActivity + stats.expenseWithActivity}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    bgcolor:
-                      tabValue === 0
-                        ? alpha(theme.palette.primary.main, 0.15)
-                        : "action.hover",
-                    color: tabValue === 0 ? "primary.main" : "text.secondary",
-                  }}
-                />
-              </Box>
-            }
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ p: 1, borderRadius: "12px", background: "linear-gradient(135deg, #059669, #047857)", display: "flex" }}>
+              <TrendingUpIcon sx={{ color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={600} color="#059669">Receitas</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {categorySummaries.income.filter((s) => s.transactionCount > 0).length} ativas de {categorySummaries.income.length}
+              </Typography>
+            </Box>
+            <Typography variant="h6" fontWeight={700} color="#059669" sx={{ ml: "auto" }}>
+              {formatCurrency(stats.totalIncome)}
+            </Typography>
+          </Box>
+        </Paper>
+
+        {categorySummaries.income.length === 0 ? (
+          <EmptyState
+            type="transactions"
+            title="Nenhuma categoria de receita"
+            description="Clique em '+ Nova categoria' para adicionar"
+            compact
           />
-          <Tab
-            icon={<SettingsIcon />}
-            iconPosition="start"
-            label={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                Gerenciar
-                <Chip
-                  label={stats.incomeCategories + stats.expenseCategories}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    bgcolor:
-                      tabValue === 1
-                        ? alpha(theme.palette.primary.main, 0.15)
-                        : "action.hover",
-                    color: tabValue === 1 ? "primary.main" : "text.secondary",
-                  }}
-                />
-              </Box>
-            }
+        ) : (
+          <Grid container spacing={gridSpacing}>
+            {categorySummaries.income.map((summary) => renderCategoryCard(summary, stats.totalIncome))}
+          </Grid>
+        )}
+      </Box>
+
+      <Divider sx={{ opacity: 0.4 }} />
+
+      {/* Expense Section */}
+      <Box>
+        <Paper
+          elevation={0}
+          sx={{
+            p: isMobile ? 1.5 : 2,
+            borderRadius: "16px",
+            border: `1px solid ${alpha("#DC2626", 0.2)}`,
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha("#DC2626", 0.1)} 0%, ${alpha("#DC2626", 0.05)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#DC2626", 0.08)} 0%, ${alpha("#DC2626", 0.02)} 100%)`,
+            mb: 2,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ p: 1, borderRadius: "12px", background: "linear-gradient(135deg, #DC2626, #b91c1c)", display: "flex" }}>
+              <TrendingDownIcon sx={{ color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={600} color="#DC2626">Despesas</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {categorySummaries.expense.filter((s) => s.transactionCount > 0).length} ativas de {categorySummaries.expense.length}
+              </Typography>
+            </Box>
+            <Typography variant="h6" fontWeight={700} color="#DC2626" sx={{ ml: "auto" }}>
+              {formatCurrency(stats.totalExpense)}
+            </Typography>
+          </Box>
+        </Paper>
+
+        {categorySummaries.expense.length === 0 ? (
+          <EmptyState
+            type="transactions"
+            title="Nenhuma categoria de despesa"
+            description="Clique em '+ Nova categoria' para adicionar"
+            compact
           />
-        </Tabs>
-      </Paper>
-
-      {/* Tab: Overview */}
-      <Collapse in={tabValue === 0} unmountOnExit>
-        <Grid container spacing={gridSpacing}>
-          {/* Income */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: isMobile ? 1.5 : 2,
-                  borderRadius: "16px",
-                  border: `1px solid ${alpha("#059669", 0.2)}`,
-                  background: isDarkMode
-                    ? `linear-gradient(135deg, ${alpha(
-                        "#059669",
-                        0.1
-                      )} 0%, ${alpha("#059669", 0.05)} 100%)`
-                    : `linear-gradient(135deg, ${alpha(
-                        "#059669",
-                        0.08
-                      )} 0%, ${alpha("#059669", 0.02)} 100%)`,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      p: 1,
-                      borderRadius: "12px",
-                      background: "linear-gradient(135deg, #059669, #047857)",
-                      display: "flex",
-                    }}
-                  >
-                    <TrendingUpIcon sx={{ color: "#fff" }} />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight={600}
-                      color="#059669"
-                    >
-                      Receitas
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {
-                        categorySummaries.income.filter(
-                          (s) => s.transactionCount > 0
-                        ).length
-                      }{" "}
-                      categorias ativas
-                    </Typography>
-                  </Box>
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    color="#059669"
-                    sx={{ ml: "auto" }}
-                  >
-                    {formatCurrency(stats.totalIncome)}
-                  </Typography>
-                </Box>
-              </Paper>
-
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {categorySummaries.income
-                  .filter((s) => s.transactionCount > 0)
-                  .map((summary) =>
-                    renderCategoryCard(summary, stats.totalIncome)
-                  )}
-                {categorySummaries.income.filter((s) => s.transactionCount > 0)
-                  .length === 0 && (
-                  <EmptyState
-                    type="transactions"
-                    title="Nenhuma transação de receita"
-                    description="Não há transações de receita registradas"
-                    compact
-                  />
-                )}
-              </Box>
-            </Box>
+        ) : (
+          <Grid container spacing={gridSpacing}>
+            {categorySummaries.expense.map((summary) => renderCategoryCard(summary, stats.totalExpense))}
           </Grid>
+        )}
+      </Box>
 
-          {/* Expense */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: isMobile ? 1.5 : 2,
-                  borderRadius: "16px",
-                  border: `1px solid ${alpha("#DC2626", 0.2)}`,
-                  background: isDarkMode
-                    ? `linear-gradient(135deg, ${alpha(
-                        "#DC2626",
-                        0.1
-                      )} 0%, ${alpha("#DC2626", 0.05)} 100%)`
-                    : `linear-gradient(135deg, ${alpha(
-                        "#DC2626",
-                        0.08
-                      )} 0%, ${alpha("#DC2626", 0.02)} 100%)`,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      p: 1,
-                      borderRadius: "12px",
-                      background: "linear-gradient(135deg, #DC2626, #b91c1c)",
-                      display: "flex",
-                    }}
-                  >
-                    <TrendingDownIcon sx={{ color: "#fff" }} />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight={600}
-                      color="#DC2626"
-                    >
-                      Despesas
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {
-                        categorySummaries.expense.filter(
-                          (s) => s.transactionCount > 0
-                        ).length
-                      }{" "}
-                      categorias ativas
-                    </Typography>
-                  </Box>
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    color="#DC2626"
-                    sx={{ ml: "auto" }}
-                  >
-                    {formatCurrency(stats.totalExpense)}
-                  </Typography>
-                </Box>
-              </Paper>
-
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {categorySummaries.expense
-                  .filter((s) => s.transactionCount > 0)
-                  .map((summary) =>
-                    renderCategoryCard(summary, stats.totalExpense)
-                  )}
-                {categorySummaries.expense.filter((s) => s.transactionCount > 0)
-                  .length === 0 && (
-                  <EmptyState
-                    type="transactions"
-                    title="Nenhuma transação de despesa"
-                    description="Não há transações de despesa registradas"
-                    compact
-                  />
-                )}
-              </Box>
-            </Box>
-          </Grid>
-        </Grid>
-      </Collapse>
-
-      {/* Tab: Manage */}
-      <Collapse in={tabValue === 1} unmountOnExit>
-        <Grid container spacing={gridSpacing}>
-          {/* Income */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: isMobile ? 2 : 2.5,
-                  borderRadius: "16px",
-                  background: isDarkMode
-                    ? alpha("#10b981", 0.08)
-                    : alpha("#10b981", 0.04),
-                  border: `1px solid ${alpha("#10b981", 0.15)}`,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    mb: 2,
-                  }}
-                >
-                  <TrendingUpIcon sx={{ color: "#10b981" }} />
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={600}
-                    color="#10b981"
-                  >
-                    Categorias de Receita
-                  </Typography>
-                  <Chip
-                    label={categories.income.length}
-                    size="small"
-                    sx={{
-                      bgcolor: alpha("#10b981", 0.15),
-                      color: "#10b981",
-                      ml: "auto",
-                    }}
-                  />
-                </Box>
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Nova categoria..."
-                    value={newIncomeCat}
-                    onChange={(e) => setNewIncomeCat(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && handleAddCat("income")
-                    }
-                    sx={{
-                      "& .MuiOutlinedInput-root": { borderRadius: "10px" },
-                    }}
-                  />
-                  <Button
-                    onClick={() => handleAddCat("income")}
-                    variant="contained"
-                    sx={{
-                      minWidth: 48,
-                      borderRadius: "10px",
-                      bgcolor: "#10b981",
-                      "&:hover": { bgcolor: "#059669" },
-                    }}
-                  >
-                    <AddIcon />
-                  </Button>
-                </Box>
-              </Paper>
-
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {categories.income.map((cat) =>
-                  renderManageItem(cat, "income")
-                )}
-                {categories.income.length === 0 && (
-                  <EmptyState
-                    type="generic"
-                    title="Nenhuma categoria"
-                    description="Adicione uma categoria de receita para começar"
-                    compact
-                  />
-                )}
-              </Box>
-            </Box>
-          </Grid>
-
-          {/* Expense */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: isMobile ? 2 : 2.5,
-                  borderRadius: "16px",
-                  background: isDarkMode
-                    ? alpha("#ef4444", 0.08)
-                    : alpha("#ef4444", 0.04),
-                  border: `1px solid ${alpha("#ef4444", 0.15)}`,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    mb: 2,
-                  }}
-                >
-                  <TrendingDownIcon sx={{ color: "#ef4444" }} />
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={600}
-                    color="#ef4444"
-                  >
-                    Categorias de Despesa
-                  </Typography>
-                  <Chip
-                    label={categories.expense.length}
-                    size="small"
-                    sx={{
-                      bgcolor: alpha("#ef4444", 0.15),
-                      color: "#ef4444",
-                      ml: "auto",
-                    }}
-                  />
-                </Box>
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Nova categoria..."
-                    value={newExpenseCat}
-                    onChange={(e) => setNewExpenseCat(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && handleAddCat("expense")
-                    }
-                    sx={{
-                      "& .MuiOutlinedInput-root": { borderRadius: "10px" },
-                    }}
-                  />
-                  <Button
-                    onClick={() => handleAddCat("expense")}
-                    variant="contained"
-                    sx={{
-                      minWidth: 48,
-                      borderRadius: "10px",
-                      bgcolor: "#ef4444",
-                      "&:hover": { bgcolor: "#dc2626" },
-                    }}
-                  >
-                    <AddIcon />
-                  </Button>
-                </Box>
-              </Paper>
-
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {categories.expense.map((cat) =>
-                  renderManageItem(cat, "expense")
-                )}
-                {categories.expense.length === 0 && (
-                  <EmptyState
-                    type="generic"
-                    title="Nenhuma categoria"
-                    description="Adicione uma categoria de despesa para começar"
-                    compact
-                  />
-                )}
-              </Box>
-            </Box>
-          </Grid>
-        </Grid>
-      </Collapse>
-    
 
       {/* Auto-Categorização */}
       <Box
@@ -1920,6 +1471,74 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       >
         <AutoCategorizationRules categories={categories} />
       </Box>
+
+      {/* Add Category Dialog */}
+      <Dialog
+        open={addCategoryDialogOpen}
+        onClose={() => { setAddCategoryDialogOpen(false); setAddCategoryName(""); }}
+        PaperProps={{ sx: { borderRadius: "20px", minWidth: 340 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>Nova categoria</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <ToggleButtonGroup
+              value={addCategoryType}
+              exclusive
+              onChange={(_, v) => v && setAddCategoryType(v)}
+              fullWidth
+              size="small"
+            >
+              <ToggleButton value="income" sx={{ borderRadius: "10px 0 0 10px", fontWeight: 600, textTransform: "none" }}>
+                <TrendingUpIcon sx={{ mr: 1, fontSize: 18, color: addCategoryType === "income" ? "#059669" : "text.secondary" }} />
+                Receita
+              </ToggleButton>
+              <ToggleButton value="expense" sx={{ borderRadius: "0 10px 10px 0", fontWeight: 600, textTransform: "none" }}>
+                <TrendingDownIcon sx={{ mr: 1, fontSize: 18, color: addCategoryType === "expense" ? "#DC2626" : "text.secondary" }} />
+                Despesa
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <TextField
+              autoFocus
+              fullWidth
+              size="small"
+              label="Nome da categoria"
+              value={addCategoryName}
+              onChange={(e) => setAddCategoryName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => { setAddCategoryDialogOpen(false); setAddCategoryName(""); }} sx={{ borderRadius: "10px", textTransform: "none" }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleAddCategory}
+            disabled={!addCategoryName.trim()}
+            sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
+          >
+            Adicionar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <PaymentMethodImagePicker
+        open={imagePickerOpen}
+        onClose={() => setImagePickerOpen(false)}
+        methodName={imagePickerTarget?.name ?? ""}
+        currentUrl={imagePickerTarget ? getCategoryImage(imagePickerTarget.type, imagePickerTarget.name) : undefined}
+        onSelect={async (url) => {
+          if (!imagePickerTarget) return;
+          await updateCategoryImage(imagePickerTarget.type, imagePickerTarget.name, url);
+          if (url) {
+            extractDominantColor(url).then((extracted) => {
+              updateCategoryColor(imagePickerTarget.type, imagePickerTarget.name, extracted ?? hashColor(imagePickerTarget.name));
+            });
+          }
+        }}
+      />
     </Box>
   );
 };

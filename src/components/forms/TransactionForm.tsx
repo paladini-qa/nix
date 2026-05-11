@@ -30,7 +30,7 @@ import {
   Tab,
   keyframes,
 } from "@mui/material";
-import { useNotification } from "../../contexts";
+import { useNotification, useSettings } from "../../contexts";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import {
@@ -53,6 +53,7 @@ import {
   ReceiptLong as ReceiptIcon,
 } from "@mui/icons-material";
 import NixButton from "../radix/Button";
+import PaymentMethodIcon from "../ui/PaymentMethodIcon";
 import NixAIView from "../views/NixAIView";
 import { Transaction, TransactionType, FinancialSummary, ParsedTransaction, PaymentMethodConfig } from "../../types";
 import { calculateInvoiceDueDate, formatInvoiceMonth } from "../../utils/transactionUtils";
@@ -317,6 +318,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDarkMode = theme.palette.mode === "dark";
+  const { getPaymentMethodColor } = useSettings();
 
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -1459,11 +1461,23 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       }
                     }}
                   >
-                    {paymentMethods.map((method) => (
-                      <MenuItem key={method} value={method}>
-                        {method}
-                      </MenuItem>
-                    ))}
+                    {paymentMethods.map((method) => {
+                      const methodColors = getPaymentMethodColor(method);
+                      const methodCfg = getPaymentMethodConfig?.(method);
+                      return (
+                        <MenuItem key={method} value={method} sx={{ gap: 1.25 }}>
+                          <PaymentMethodIcon
+                            imageUrl={methodCfg?.imageUrl}
+                            colors={methodColors}
+                            type={methodCfg?.type}
+                            size={22}
+                            borderRadius="6px"
+                            iconSize={12}
+                          />
+                          {method}
+                        </MenuItem>
+                      );
+                    })}
                   </Select>
                 </FormControl>
               </Grid>

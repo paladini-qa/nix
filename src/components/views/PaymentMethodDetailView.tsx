@@ -58,6 +58,7 @@ import { generateRecurringTransactions } from "../../utils/recurringUtils";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "../../constants";
 import { useSettings } from "../../contexts";
 import DateFilter from "../ui/DateFilter";
+import PaymentMethodIcon from "../ui/PaymentMethodIcon";
 
 interface PaymentMethodDetailViewProps {
   paymentMethod: string;
@@ -93,6 +94,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { getPaymentMethodColor } = useSettings();
   const colors = getPaymentMethodColor(paymentMethod);
+  const methodConfig = paymentMethodConfigs.find((c) => c.name === paymentMethod);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType] = useState<"all" | "income" | "expense">("expense");
@@ -285,16 +287,14 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
           </IconButton>
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: "20px",
-                  background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                  display: "flex",
-                }}
-              >
-                <CreditCardIcon sx={{ color: "#fff" }} />
-              </Box>
+              <PaymentMethodIcon
+                imageUrl={methodConfig?.imageUrl}
+                colors={colors}
+                type={methodConfig?.type}
+                size={44}
+                borderRadius="14px"
+                iconSize={22}
+              />
               <Typography variant="h5" fontWeight="bold">
                 {paymentMethod}
               </Typography>

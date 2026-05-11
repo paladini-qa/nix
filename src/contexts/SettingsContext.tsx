@@ -51,6 +51,12 @@ interface SettingsContextValue {
   categories: { income: string[]; expense: string[] };
   addCategory: (type: TransactionType, category: string) => void;
   removeCategory: (type: TransactionType, category: string) => Promise<boolean>;
+  getCategoryImage: (type: TransactionType, name: string) => string | undefined;
+  updateCategoryImage: (type: TransactionType, name: string, url: string) => Promise<void>;
+  getSubscriptionImage: (name: string) => string | undefined;
+  updateSubscriptionImage: (name: string, url: string) => Promise<void>;
+  getSubscriptionColor: (name: string) => ColorConfig | undefined;
+  updateSubscriptionColor: (name: string, colors: ColorConfig) => Promise<void>;
   
   // Payment Methods (nomes para backward compat)
   paymentMethods: string[];
@@ -147,6 +153,11 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
     {}
   );
 
+  // Category & Subscription Images + Colors
+  const [categoryImages, setCategoryImages] = useState<{ income: Record<string, string>; expense: Record<string, string> }>({ income: {}, expense: {} });
+  const [subscriptionImages, setSubscriptionImages] = useState<Record<string, string>>({});
+  const [subscriptionColors, setSubscriptionColors] = useState<Record<string, ColorConfig>>({});
+
   // Theme
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>(() => {
     const saved = localStorage.getItem("themePreference") as ThemePreference;
@@ -189,6 +200,15 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
         }
         if (settings.category_colors) {
           setCategoryColors(settings.category_colors);
+        }
+        if (settings.category_images) {
+          setCategoryImages(settings.category_images);
+        }
+        if (settings.subscription_images) {
+          setSubscriptionImages(settings.subscription_images);
+        }
+        if (settings.subscription_colors) {
+          setSubscriptionColors(settings.subscription_colors);
         }
         if (settings.payment_method_colors) {
           setPaymentMethodColors(settings.payment_method_colors);
@@ -492,6 +512,89 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
     [paymentMethodColors, session?.user?.id]
   );
 
+  // ============================================
+  // Category & Subscription Image Functions
+  // ============================================
+
+  const getCategoryImage = useCallback(
+    (type: TransactionType, name: string): string | undefined => {
+      return categoryImages[type]?.[name];
+    },
+    [categoryImages]
+  );
+
+  const updateCategoryImage = useCallback(
+    async (type: TransactionType, name: string, url: string) => {
+      const updated = {
+        ...categoryImages,
+        [type]: { ...categoryImages[type], [name]: url || undefined },
+      } as { income: Record<string, string>; expense: Record<string, string> };
+      if (!url) delete updated[type][name];
+      setCategoryImages(updated);
+      if (session?.user?.id) {
+        try {
+          await supabase.from("user_settings").upsert({
+            user_id: session.user.id,
+            category_images: updated,
+          });
+        } catch (err) {
+          console.error("Error saving category images:", err);
+        }
+      }
+    },
+    [categoryImages, session?.user?.id]
+  );
+
+  const getSubscriptionImage = useCallback(
+    (name: string): string | undefined => {
+      return subscriptionImages[name];
+    },
+    [subscriptionImages]
+  );
+
+  const updateSubscriptionImage = useCallback(
+    async (name: string, url: string) => {
+      const updated = url
+        ? { ...subscriptionImages, [name]: url }
+        : (() => { const c = { ...subscriptionImages }; delete c[name]; return c; })();
+      setSubscriptionImages(updated);
+      if (session?.user?.id) {
+        try {
+          await supabase.from("user_settings").upsert({
+            user_id: session.user.id,
+            subscription_images: updated,
+          });
+        } catch (err) {
+          console.error("Error saving subscription images:", err);
+        }
+      }
+    },
+    [subscriptionImages, session?.user?.id]
+  );
+
+  const getSubscriptionColor = useCallback(
+    (name: string): ColorConfig | undefined => subscriptionColors[name],
+    [subscriptionColors]
+  );
+
+  const updateSubscriptionColor = useCallback(
+    async (name: string, colors: ColorConfig) => {
+      const updated = { ...subscriptionColors, [name]: colors };
+      setSubscriptionColors(updated);
+      if (session?.user?.id) {
+        try {
+          await supabase.from("user_settings").upsert({
+            user_id: session.user.id,
+            subscription_colors: updated,
+          });
+        } catch (err) {
+          console.error("Error saving subscription colors:", err);
+        }
+      }
+    },
+    [subscriptionColors, session?.user?.id]
+  );
+
   const getPaymentMethodPaymentDay = useCallback(
     (method: string): number | undefined => {
       // Prioriza paymentDay do config estruturado
@@ -581,6 +684,12 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       categories,
       addCategory,
       removeCategory,
+      getCategoryImage,
+      updateCategoryImage,
+      getSubscriptionImage,
+      updateSubscriptionImage,
+      getSubscriptionColor,
+      updateSubscriptionColor,
       paymentMethods,
       addPaymentMethod,
       removePaymentMethod,
@@ -609,6 +718,12 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       categories,
       addCategory,
       removeCategory,
+      getCategoryImage,
+      updateCategoryImage,
+      getSubscriptionImage,
+      updateSubscriptionImage,
+      getSubscriptionColor,
+      updateSubscriptionColor,
       paymentMethods,
       addPaymentMethod,
       removePaymentMethod,

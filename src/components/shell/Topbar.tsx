@@ -1,10 +1,11 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
   IconButton,
   Popover,
   Typography,
+  Badge,
   useTheme,
   alpha,
 } from "@mui/material";
@@ -14,28 +15,50 @@ import {
   LightMode as SunIcon,
   DarkMode as MoonIcon,
   Search as SearchIcon,
+  Warning as WarningIcon,
+  Error as ErrorIcon,
+  AccessTime as ClockIcon,
+  Repeat as RepeatIcon,
+  DoneAll as DoneAllIcon,
+  OpenInNew as OpenInNewIcon,
 } from "@mui/icons-material";
 import { useSettings } from "../../contexts";
 import { useAppStore } from "../../hooks/useAppStore";
+import { useNotifications } from "../../hooks";
 import DateFilter from "../ui/DateFilter";
+import { NotificationType } from "../../types";
+import { AppCurrentView } from "../../types/appView";
 
 interface TopbarProps {
   onOpenSearch: () => void;
   onOpenNewTransaction: () => void;
+  onNavigate?: (view: AppCurrentView) => void;
 }
 
-const NOTIFICATIONS = [
-  { text: "Spotify charge — R$ 34.90", sub: "Pending payment · Apr 30", unread: true },
-  { text: "Budget warning: Groceries", sub: "83% of monthly limit reached", unread: true },
-  { text: "Lucas paid you R$ 124.50", sub: "Settled: Dinner — Outback", unread: false },
-  { text: "Recurring detected", sub: "ChatGPT Plus — R$ 109.90/mo", unread: false },
-];
+const TYPE_ICON: Record<NotificationType, React.ReactNode> = {
+  budget_exceeded: <ErrorIcon sx={{ fontSize: 14, color: "#DC2626" }} />,
+  budget_warning: <WarningIcon sx={{ fontSize: 14, color: "#D97706" }} />,
+  unpaid_overdue: <ClockIcon sx={{ fontSize: 14, color: "#7C3AED" }} />,
+  recurring_due: <RepeatIcon sx={{ fontSize: 14, color: "#2563EB" }} />,
+};
 
-const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction }) => {
+const TYPE_COLOR: Record<NotificationType, string> = {
+  budget_exceeded: "#DC2626",
+  budget_warning: "#D97706",
+  unpaid_overdue: "#7C3AED",
+  recurring_due: "#2563EB",
+};
+
+const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction, onNavigate }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const { themePreference, setThemePreference } = useSettings();
   const { filters, setFilters } = useAppStore();
+
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(
+    filters.month,
+    filters.year
+  );
 
   const [notifAnchor, setNotifAnchor] = useState<HTMLButtonElement | null>(null);
   const notifOpen = Boolean(notifAnchor);
@@ -44,6 +67,13 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction }) =
     const next = isDark ? "light" : "dark";
     setThemePreference(next);
   };
+
+  const handleNotifClick = (link?: string) => {
+    setNotifAnchor(null);
+    if (link && onNavigate) onNavigate(link as AppCurrentView);
+  };
+
+  const preview = notifications.slice(0, 5);
 
   return (
     <Box
@@ -113,21 +143,10 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction }) =
             },
           }}
         >
-          <BellIcon sx={{ fontSize: 17 }} />
+          <Badge badgeContent={unreadCount} color="error" max={9}>
+            <BellIcon sx={{ fontSize: 17 }} />
+          </Badge>
         </IconButton>
-        <Box
-          sx={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            width: 7,
-            height: 7,
-            borderRadius: "50%",
-            bgcolor: "error.main",
-            border: `2px solid ${theme.palette.background.paper}`,
-            pointerEvents: "none",
-          }}
-        />
       </Box>
 
       {/* Notifications popover */}
@@ -149,6 +168,7 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction }) =
           },
         }}
       >
+        {/* Header */}
         <Box
           sx={{
             px: 2,
@@ -159,50 +179,155 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction }) =
           }}
         >
           <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Notifications</Typography>
+          {unreadCount > 0 && (
+            <Typography
+              sx={{
+                ml: 1,
+                px: "6px",
+                py: "1px",
+                borderRadius: "6px",
+                fontSize: 11,
+                fontWeight: 700,
+                bgcolor: "error.main",
+                color: "#fff",
+              }}
+            >
+              {unreadCount}
+            </Typography>
+          )}
           <Box sx={{ flex: 1 }} />
-          <Typography
-            sx={{ fontSize: 12, fontWeight: 600, color: "primary.main", cursor: "pointer" }}
-          >
-            Mark all read
-          </Typography>
-        </Box>
-        {NOTIFICATIONS.map((n, i) => (
-          <Box
-            key={i}
-            sx={{
-              px: 2,
-              py: "12px",
-              borderBottom: i < NOTIFICATIONS.length - 1
-                ? `1px solid ${alpha(theme.palette.divider, 0.5)}`
-                : "none",
-              display: "flex",
-              gap: "10px",
-              cursor: "pointer",
-              "&:hover": { bgcolor: isDark ? alpha("#fff", 0.04) : alpha("#000", 0.02) },
-            }}
-          >
-            {n.unread ? (
-              <Box
-                sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  bgcolor: "primary.main",
-                  mt: "6px",
-                  flexShrink: 0,
-                }}
-              />
-            ) : (
-              <Box sx={{ width: 8, flexShrink: 0 }} />
-            )}
-            <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontWeight: 600, fontSize: 13 }}>{n.text}</Typography>
-              <Typography sx={{ fontSize: 11.5, color: "text.secondary", mt: "2px" }}>
-                {n.sub}
-              </Typography>
+          {unreadCount > 0 && (
+            <Box
+              onClick={markAllAsRead}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                fontSize: 12,
+                fontWeight: 600,
+                color: "primary.main",
+                cursor: "pointer",
+                "&:hover": { opacity: 0.75 },
+              }}
+            >
+              <DoneAllIcon sx={{ fontSize: 14 }} />
+              Mark all read
             </Box>
+          )}
+        </Box>
+
+        {/* Notification list */}
+        {preview.length === 0 ? (
+          <Box sx={{ px: 2, py: 3, textAlign: "center" }}>
+            <BellIcon sx={{ fontSize: 32, color: "text.disabled", mb: 1 }} />
+            <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+              No notifications
+            </Typography>
           </Box>
-        ))}
+        ) : (
+          <>
+            {preview.map((n, i) => (
+              <Box
+                key={n.id}
+                onClick={() => {
+                  markAsRead(n.id);
+                  handleNotifClick(n.link);
+                }}
+                sx={{
+                  px: 2,
+                  py: "11px",
+                  borderBottom:
+                    i < preview.length - 1
+                      ? `1px solid ${alpha(theme.palette.divider, 0.5)}`
+                      : "none",
+                  display: "flex",
+                  gap: "10px",
+                  cursor: n.link ? "pointer" : "default",
+                  opacity: n.isRead ? 0.6 : 1,
+                  "&:hover": {
+                    bgcolor: n.link
+                      ? isDark
+                        ? alpha("#fff", 0.04)
+                        : alpha("#000", 0.02)
+                      : "transparent",
+                  },
+                }}
+              >
+                {!n.isRead ? (
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      bgcolor: TYPE_COLOR[n.type],
+                      mt: "5px",
+                      flexShrink: 0,
+                    }}
+                  />
+                ) : (
+                  <Box sx={{ width: 8, flexShrink: 0 }} />
+                )}
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    bgcolor: alpha(TYPE_COLOR[n.type], isDark ? 0.2 : 0.1),
+                  }}
+                >
+                  {TYPE_ICON[n.type]}
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontWeight: n.isRead ? 500 : 700,
+                      fontSize: 13,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {n.title}
+                  </Typography>
+                  <Typography sx={{ fontSize: 11.5, color: "text.secondary", mt: "2px" }}>
+                    {n.body}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+
+            {/* View all link */}
+            {onNavigate && (
+              <Box
+                onClick={() => {
+                  setNotifAnchor(null);
+                  onNavigate("notifications");
+                }}
+                sx={{
+                  px: 2,
+                  py: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 0.5,
+                  cursor: "pointer",
+                  borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                  color: "primary.main",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  "&:hover": { bgcolor: isDark ? alpha("#fff", 0.03) : alpha("#000", 0.02) },
+                }}
+              >
+                <OpenInNewIcon sx={{ fontSize: 14 }} />
+                View all notifications
+              </Box>
+            )}
+          </>
+        )}
       </Popover>
 
       {/* Theme toggle */}

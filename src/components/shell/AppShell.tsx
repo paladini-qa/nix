@@ -170,6 +170,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
               setEditingTransaction(null);
               setIsFormOpen(true);
             }}
+            onNavigate={handleNavigate}
           />
           <Box
             component="main"
@@ -192,6 +193,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
             onOpenDrawer={() => setIsMobileDrawerOpen(true)}
             onOpenSearch={() => setIsSearchOpen(true)}
             onOpenProfile={() => setIsProfileModalOpen(true)}
+            onNavigate={handleNavigate}
           />
           <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
           <MobileDrawer

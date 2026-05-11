@@ -168,10 +168,7 @@ const SharedView: React.FC<SharedViewProps> = ({
       // Pequeno delay para mostrar o loading
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Usa lista sem duplicatas (só despesa por item; receita relacionada não aparece como linha separada)
-      const listForReport = sharedTransactions.filter(
-        (t) => t.type === "expense" || !t.relatedTransactionId
-      );
+      const listForReport = sharedTransactions.filter((t) => t.type === "expense");
       const reportData = prepareFriendReportData(
         friendName,
         userName,
@@ -331,10 +328,7 @@ const SharedView: React.FC<SharedViewProps> = ({
   // Lista para exibição na tabela: apenas despesas + receitas avulsas (sem duplicar a contrapartida da conta dividida)
   // Exclui receitas que têm relatedTransactionId (são a "metade a receber" já representada pela linha da despesa)
   const sharedTransactionsForList = useMemo(
-    () =>
-      sharedTransactions.filter(
-        (t) => t.type === "expense" || !t.relatedTransactionId
-      ),
+    () => sharedTransactions.filter((t) => t.type === "expense"),
     [sharedTransactions]
   );
 

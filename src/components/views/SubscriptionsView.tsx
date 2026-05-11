@@ -21,6 +21,10 @@ import {
   ListItemIcon,
   ListItemText,
   MenuItem as MuiMenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   Subscriptions as SubscriptionsIcon,
@@ -33,12 +37,11 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  KeyboardArrowDown as ChevronDownIcon,
-  KeyboardArrowUp as ChevronUpIcon,
   MoreVert as MoreVertIcon,
   DoNotDisturb as CancelIcon,
   Refresh as ReactivateIcon,
   ExpandMore as ExpandMoreIcon,
+  ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import {
   BarChart,
@@ -52,6 +55,11 @@ import {
 import type { Transaction } from "../../types";
 import { useLayoutSpacing, useCancelledSubscriptions } from "../../hooks";
 import EmptyState from "../ui/EmptyState";
+import { useSettings, useNotification } from "../../contexts";
+import PaymentMethodIcon from "../ui/PaymentMethodIcon";
+import PaymentMethodImagePicker from "../ui/PaymentMethodImagePicker";
+import { extractDominantColor, hashColor } from "../../utils/imageColorUtils";
+import { Image as ImageIcon } from "@mui/icons-material";
 
 interface SubscriptionsViewProps {
   transactions: Transaction[];
@@ -95,25 +103,36 @@ const normalizeDesc = (desc: string) => desc.trim().toLowerCase();
 interface ServiceCardProps {
   group: ServiceGroup;
   isCancelled: boolean;
-  onEdit: (t: Transaction) => void;
-  onDelete: (t: Transaction) => void;
   onCancel: (name: string) => void;
   onReactivate: (name: string) => void;
+  onOpenDetail: (group: ServiceGroup) => void;
+  onDeleteGroup: (group: ServiceGroup) => void;
+  imageUrl?: string;
+  subscriptionColor?: { primary: string; secondary: string };
+  onSetImage: (name: string, url: string) => void;
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({
   group,
   isCancelled,
-  onEdit,
-  onDelete,
   onCancel,
   onReactivate,
+  onOpenDetail,
+  onDeleteGroup,
+  imageUrl,
+  subscriptionColor,
+  onSetImage,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const primary = theme.palette.primary.main;
-  const [open, setOpen] = useState(false);
+  const primary = isCancelled
+    ? theme.palette.error.main
+    : (subscriptionColor?.primary ?? theme.palette.primary.main);
+  const secondary = isCancelled
+    ? theme.palette.error.dark
+    : (subscriptionColor?.secondary ?? theme.palette.primary.dark ?? primary);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [imgPickerOpen, setImgPickerOpen] = useState(false);
 
   const TrendIcon = () => {
     if (group.trend === "up") return <TrendingUpIcon fontSize="small" color="error" />;
@@ -122,275 +141,203 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   };
 
   return (
-    <Box
-      sx={{
-        borderRadius: "16px",
-        border: `1px solid ${
-          isCancelled
-            ? alpha(theme.palette.error.main, 0.12)
-            : isDark
-            ? alpha("#fff", 0.07)
-            : alpha("#000", 0.06)
-        }`,
-        bgcolor: isCancelled
-          ? isDark
-            ? alpha(theme.palette.error.main, 0.04)
-            : alpha(theme.palette.error.main, 0.02)
-          : isDark
-          ? alpha("#fff", 0.03)
-          : alpha("#000", 0.02),
-        overflow: "hidden",
-        transition: "all 0.2s ease-in-out",
-        opacity: isCancelled ? 0.75 : 1,
-        ...(open &&
-          !isCancelled && {
-            borderColor: alpha(primary, 0.25),
-            boxShadow: `0 4px 20px -4px ${alpha(primary, 0.12)}`,
-          }),
-      }}
-    >
-      {/* Linha de resumo */}
-      <Box
-        onClick={() => !isCancelled && setOpen((v) => !v)}
-        sx={{
-          p: 2,
-          cursor: isCancelled ? "default" : "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          transition: "background 0.15s",
-          "&:hover": !isCancelled
-            ? { bgcolor: isDark ? alpha(primary, 0.07) : alpha(primary, 0.04) }
-            : {},
-        }}
-      >
-        {/* Toggle chevron — só mostra se não estiver encerrada */}
-        {!isCancelled ? (
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpen((v) => !v);
-            }}
-            sx={{ color: "text.secondary", flexShrink: 0 }}
-          >
-            {open ? <ChevronUpIcon fontSize="small" /> : <ChevronDownIcon fontSize="small" />}
-          </IconButton>
-        ) : (
-          <Box sx={{ width: 30, flexShrink: 0 }} />
-        )}
-
-        {/* Nome */}
-        <Tooltip title={group.name} placement="top">
-          <Typography
-            variant="body2"
-            fontWeight={600}
-            sx={{
-              flex: 1,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              ...(isCancelled && { textDecoration: "line-through", color: "text.disabled" }),
-            }}
-          >
-            {group.name}
-          </Typography>
-        </Tooltip>
-
-        {/* Badge encerrada */}
-        {isCancelled && (
-          <Chip
-            label="Encerrada"
-            size="small"
-            sx={{
-              height: 20,
-              fontSize: 11,
-              bgcolor: alpha(theme.palette.error.main, 0.1),
-              color: "error.main",
-              fontWeight: 600,
-              borderRadius: "6px",
-              flexShrink: 0,
-            }}
-          />
-        )}
-
-        {/* Chip de meses (só ativo) */}
-        {!isCancelled && (
-          <Chip
-            label={`${group.monthsActive} ${group.monthsActive === 1 ? "mês" : "meses"}`}
-            size="small"
-            sx={{
-              height: 20,
-              fontSize: 11,
-              bgcolor: alpha(primary, 0.08),
-              color: "primary.main",
-              fontWeight: 500,
-              borderRadius: "6px",
-              flexShrink: 0,
-            }}
-          />
-        )}
-
-        {/* Valor */}
-        <Typography
-          variant="body2"
-          fontWeight={700}
+    <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+      <Box>
+        <Paper
+          elevation={0}
+          onClick={() => !isCancelled && onOpenDetail(group)}
           sx={{
-            minWidth: 80,
-            textAlign: "right",
-            flexShrink: 0,
-            color: isCancelled ? "text.disabled" : "primary.main",
-            ...(isCancelled && { textDecoration: "line-through" }),
+            p: 2.5,
+            display: "flex",
+            flexDirection: "column",
+            borderRadius: "16px",
+            cursor: isCancelled ? "default" : "pointer",
+            background: isDark
+              ? alpha(theme.palette.background.paper, 0.7)
+              : alpha("#fff", 0.95),
+            border: `1.5px solid ${alpha(primary, isDark ? 0.45 : 0.25)}`,
+            transition: "all 0.2s ease-in-out",
+            opacity: isCancelled ? 0.8 : 1,
+            "&:hover": !isCancelled
+              ? {
+                  transform: "translateY(-3px)",
+                  boxShadow: `0 10px 28px -6px ${alpha(primary, 0.3)}`,
+                  border: `1.5px solid ${alpha(primary, 0.65)}`,
+                }
+              : {},
           }}
         >
-          {formatCurrency(group.lastAmount)}
-        </Typography>
-
-        {/* Tendência (só ativo) */}
-        {!isCancelled && (
-          <Box sx={{ flexShrink: 0 }}>
-            <TrendIcon />
-          </Box>
-        )}
-
-        {/* Menu MoreVert */}
-        <IconButton
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            setMenuAnchor(e.currentTarget);
-          }}
-          sx={{ color: "text.secondary", flexShrink: 0 }}
-        >
-          <MoreVertIcon fontSize="small" />
-        </IconButton>
-
-        <Menu
-          anchorEl={menuAnchor}
-          open={Boolean(menuAnchor)}
-          onClose={() => setMenuAnchor(null)}
-          transformOrigin={{ horizontal: "right", vertical: "top" }}
-          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-          PaperProps={{ sx: { borderRadius: "12px", minWidth: 200 } }}
-        >
-          {isCancelled ? (
-            <MuiMenuItem
-              onClick={() => {
-                onReactivate(group.name);
-                setMenuAnchor(null);
-              }}
-            >
-              <ListItemIcon>
-                <ReactivateIcon fontSize="small" color="primary" />
-              </ListItemIcon>
-              <ListItemText>Reativar assinatura</ListItemText>
-            </MuiMenuItem>
-          ) : (
-            <MuiMenuItem
-              onClick={() => {
-                onCancel(group.name);
-                setMenuAnchor(null);
-                setOpen(false);
-              }}
-            >
-              <ListItemIcon>
-                <CancelIcon fontSize="small" color="error" />
-              </ListItemIcon>
-              <ListItemText sx={{ color: "error.main" }}>Encerrar assinatura</ListItemText>
-            </MuiMenuItem>
-          )}
-        </Menu>
-      </Box>
-
-      {/* Transações individuais expandidas (só ativo) */}
-      {!isCancelled && (
-        <Collapse in={open} timeout="auto" unmountOnExit>
-          <Divider />
-          <Box
-            sx={{
-              bgcolor: isDark ? alpha("#fff", 0.02) : alpha("#000", 0.015),
-              borderTop: `2px solid ${alpha(primary, 0.15)}`,
-            }}
-          >
-            {group.transactions.map((tx, idx) => (
-              <Box key={tx.id}>
-                {idx > 0 && <Divider sx={{ opacity: 0.4 }} />}
-                <Box
+          {/* Header */}
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
+              <Box
+                sx={{ position: "relative", cursor: isCancelled ? "default" : "pointer", flexShrink: 0 }}
+                onClick={(e) => { e.stopPropagation(); !isCancelled && setImgPickerOpen(true); }}
+              >
+                <PaymentMethodIcon
+                  imageUrl={isCancelled ? undefined : imageUrl}
+                  colors={{ primary, secondary }}
+                  size={36}
+                  borderRadius="10px"
+                  iconSize={18}
+                />
+                {!isCancelled && !imageUrl && (
+                  <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, borderRadius: "10px", bgcolor: "rgba(0,0,0,0.35)", transition: "opacity 0.15s", "&:hover": { opacity: 1 } }}>
+                    <ImageIcon sx={{ color: "#fff", fontSize: 14 }} />
+                  </Box>
+                )}
+              </Box>
+              <Tooltip title={group.name} placement="top">
+                <Typography
+                  fontWeight={700}
                   sx={{
-                    px: 2,
-                    py: 1.25,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
+                    fontSize: 14,
+                    lineHeight: 1.2,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    ...(isCancelled && { textDecoration: "line-through", color: "text.disabled" }),
                   }}
                 >
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ minWidth: 72, flexShrink: 0 }}
-                  >
-                    {formatDate(tx.date)}
-                  </Typography>
-
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{
-                      flex: 1,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {tx.description}
-                  </Typography>
-
-                  <Typography
-                    variant="caption"
-                    fontWeight={700}
-                    color="error.main"
-                    sx={{ flexShrink: 0 }}
-                  >
-                    − {formatCurrency(tx.amount)}
-                  </Typography>
-
-                  <Box sx={{ display: "flex", gap: 0.25, flexShrink: 0 }}>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(tx);
-                      }}
-                      sx={{
-                        p: 0.5,
-                        color: "text.secondary",
-                        "&:hover": { color: "primary.main" },
-                      }}
-                    >
-                      <EditIcon sx={{ fontSize: 15 }} />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(tx);
-                      }}
-                      sx={{
-                        p: 0.5,
-                        color: "text.secondary",
-                        "&:hover": { color: "error.main" },
-                      }}
-                    >
-                      <DeleteIcon sx={{ fontSize: 15 }} />
-                    </IconButton>
-                  </Box>
-                </Box>
+                  {group.name}
+                </Typography>
+              </Tooltip>
+            </Box>
+            {isCancelled ? (
+              <Chip
+                label="Encerrada"
+                size="small"
+                sx={{
+                  height: 22,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  borderRadius: "8px",
+                  flexShrink: 0,
+                  ml: 1,
+                  bgcolor: alpha(theme.palette.error.main, 0.1),
+                  color: "error.main",
+                  "& .MuiChip-label": { px: 1.25 },
+                }}
+              />
+            ) : (
+              <Box sx={{ flexShrink: 0, ml: 1 }}>
+                <TrendIcon />
               </Box>
-            ))}
+            )}
           </Box>
-        </Collapse>
-      )}
-    </Box>
+
+          {/* Amount section */}
+          <Box sx={{ mb: 1.5, flex: 1 }}>
+            <Typography
+              sx={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "text.disabled",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                mb: 0.5,
+              }}
+            >
+              Último valor
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 20,
+                fontWeight: 800,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.15,
+                color: isCancelled ? "text.disabled" : "text.primary",
+                ...(isCancelled && { textDecoration: "line-through" }),
+              }}
+            >
+              {formatCurrency(group.lastAmount)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+              {group.monthsActive} {group.monthsActive === 1 ? "mês" : "meses"} ativo{group.monthsActive !== 1 ? "s" : ""}
+            </Typography>
+          </Box>
+
+          {/* Footer */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              pt: 1.5,
+            }}
+          >
+            <Button
+              size="small"
+              onClick={(e) => { e.stopPropagation(); if (!isCancelled) onOpenDetail(group); }}
+              disabled={isCancelled}
+              sx={{ color: primary, textTransform: "none", fontWeight: 600, fontSize: 13, p: 0, minWidth: 0, "&:hover": { background: "none", opacity: 0.75 } }}
+            >
+              Detalhes
+            </Button>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              {!isCancelled && (
+                <Tooltip title="Ver detalhes / editar">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); onOpenDetail(group); }}
+                    sx={{ color: "text.secondary", "&:hover": { color: "primary.main", bgcolor: alpha(primary, 0.08) } }}
+                  >
+                    <EditIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+              <Tooltip title="Excluir assinatura">
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); onDeleteGroup(group); }}
+                  sx={{ color: "text.secondary", "&:hover": { color: "error.main", bgcolor: alpha(theme.palette.error.main, 0.08) } }}
+                >
+                  <DeleteIcon sx={{ fontSize: 15 }} />
+                </IconButton>
+              </Tooltip>
+              <IconButton
+                size="small"
+                onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); }}
+                sx={{ width: 28, height: 28, borderRadius: "8px", color: "text.secondary", "&:hover": { bgcolor: alpha(primary, 0.1), color: primary } }}
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+
+              <Menu
+                anchorEl={menuAnchor}
+                open={Boolean(menuAnchor)}
+                onClose={() => setMenuAnchor(null)}
+                transformOrigin={{ horizontal: "right", vertical: "top" }}
+                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+                PaperProps={{ sx: { borderRadius: "12px", minWidth: 200 } }}
+              >
+                {isCancelled ? (
+                  <MuiMenuItem onClick={() => { onReactivate(group.name); setMenuAnchor(null); }}>
+                    <ListItemIcon><ReactivateIcon fontSize="small" color="primary" /></ListItemIcon>
+                    <ListItemText>Reativar assinatura</ListItemText>
+                  </MuiMenuItem>
+                ) : (
+                  <MuiMenuItem onClick={() => { onCancel(group.name); setMenuAnchor(null); }}>
+                    <ListItemIcon><CancelIcon fontSize="small" color="error" /></ListItemIcon>
+                    <ListItemText sx={{ color: "error.main" }}>Encerrar assinatura</ListItemText>
+                  </MuiMenuItem>
+                )}
+              </Menu>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+
+      <PaymentMethodImagePicker
+        open={imgPickerOpen}
+        onClose={() => setImgPickerOpen(false)}
+        methodName={group.name}
+        currentUrl={imageUrl}
+        onSelect={(url) => { onSetImage(group.name, url); }}
+      />
+    </Grid>
   );
 };
 
@@ -411,6 +358,10 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
   const primary = theme.palette.primary.main;
 
   const { isCancelled, cancel, reactivate } = useCancelledSubscriptions(userId);
+  const { getSubscriptionImage, updateSubscriptionImage, getSubscriptionColor, updateSubscriptionColor } = useSettings();
+  const { showSuccess, showError } = useNotification();
+  const [selectedGroup, setSelectedGroup] = useState<ServiceGroup | null>(null);
+  const [deleteConfirmGroup, setDeleteConfirmGroup] = useState<ServiceGroup | null>(null);
 
   // Calcula largura do gráfico via ResizeObserver
   const containerRef = useRef<HTMLDivElement>(null);
@@ -576,6 +527,18 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
     [allGroups, isCancelled]
   );
 
+  // Deriva o grupo exibido a partir do estado vivo, evitando snapshot stale após edição/deleção
+  const displayedGroup = useMemo(
+    () => selectedGroup
+      ? allGroups.find(g => g.normalizedName === selectedGroup.normalizedName) ?? null
+      : null,
+    [selectedGroup, allGroups]
+  );
+
+  useEffect(() => {
+    if (selectedGroup && !displayedGroup) setSelectedGroup(null);
+  }, [selectedGroup, displayedGroup]);
+
   const isEmpty = yearTransactions.length === 0;
 
   const tooltipContentStyle = {
@@ -592,6 +555,103 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
     { label: "Média mensal", value: formatCurrency(monthlyAverage), icon: <PaymentsIcon fontSize="small" />, color: primary },
     { label: "Serviços ativos", value: String(activeGroups.length), icon: <AppsIcon fontSize="small" />, color: primary },
   ];
+
+  // ─── Detail view ─────────────────────────────────────────────────────────────
+  if (displayedGroup) {
+    const imageUrl = getSubscriptionImage(displayedGroup.name);
+    const detailColors = getSubscriptionColor(displayedGroup.name) ?? hashColor(displayedGroup.name);
+    const totalSpent = displayedGroup.transactions.reduce((s, t) => s + t.amount, 0);
+    const TrendIcon = () => {
+      if (displayedGroup.trend === "up") return <TrendingUpIcon fontSize="small" color="error" />;
+      if (displayedGroup.trend === "down") return <TrendingDownIcon fontSize="small" color="success" />;
+      return <TrendingFlatIcon fontSize="small" sx={{ color: "text.disabled" }} />;
+    };
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 2 : 3, px: { xs: 0, md: "28px" }, pt: { xs: 0, md: "24px" }, pb: { xs: "140px", md: "60px" } }}>
+        {/* Header */}
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <IconButton onClick={() => setSelectedGroup(null)} sx={{ border: 1, borderColor: "divider", borderRadius: "10px" }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <PaymentMethodIcon
+              imageUrl={imageUrl}
+              colors={detailColors}
+              size={44}
+              borderRadius="14px"
+              iconSize={22}
+            />
+            <Box>
+              <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">{displayedGroup.name}</Typography>
+              <Typography variant="body2" color="text.secondary">Assinatura</Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Stats */}
+        <Grid container spacing={gridSpacing}>
+          <Grid size={{ xs: 6, md: 4 }}>
+            <Paper elevation={0} sx={{ p: isMobile ? 1.5 : 2, borderRadius: "16px", border: `1px solid ${alpha(detailColors.primary, 0.15)}`, backdropFilter: "blur(16px)" }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>Total gasto</Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color={detailColors.primary} sx={{ mt: 0.5 }}>
+                {formatCurrency(totalSpent)}
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid size={{ xs: 6, md: 4 }}>
+            <Paper elevation={0} sx={{ p: isMobile ? 1.5 : 2, borderRadius: "16px", border: `1px solid ${alpha(detailColors.primary, 0.15)}`, backdropFilter: "blur(16px)" }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>Meses ativos</Typography>
+              <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} sx={{ mt: 0.5 }}>
+                {displayedGroup.monthsActive}
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper elevation={0} sx={{ p: isMobile ? 1.5 : 2, borderRadius: "16px", border: `1px solid ${alpha(detailColors.primary, 0.15)}`, backdropFilter: "blur(16px)" }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>Tendência</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+                <TrendIcon />
+                <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700}>
+                  {displayedGroup.trend === "up" ? "Subindo" : displayedGroup.trend === "down" ? "Caindo" : "Estável"}
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
+        </Grid>
+
+        {/* Transaction history */}
+        <Paper elevation={0} sx={{ borderRadius: "16px", border: `1px solid ${isDark ? alpha("#fff", 0.08) : alpha("#000", 0.06)}`, overflow: "hidden" }}>
+          <Box sx={{ px: 2.5, py: 2, borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
+            <Typography fontWeight={700} fontSize={14}>Histórico de cobranças</Typography>
+          </Box>
+          {displayedGroup.transactions.map((tx, idx) => (
+            <Box key={tx.id}>
+              {idx > 0 && <Divider sx={{ opacity: 0.4 }} />}
+              <Box sx={{ px: 2.5, py: 1.5, display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 72, flexShrink: 0 }}>
+                  {formatDate(tx.date)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {tx.description}
+                </Typography>
+                <Typography variant="caption" fontWeight={700} color="error.main" sx={{ flexShrink: 0 }}>
+                  − {formatCurrency(tx.amount)}
+                </Typography>
+                <Box sx={{ display: "flex", gap: 0.25, flexShrink: 0 }}>
+                  <IconButton size="small" onClick={() => onEdit(tx)} sx={{ p: 0.5, color: "text.secondary", "&:hover": { color: "primary.main" } }}>
+                    <EditIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => onDelete(tx)} sx={{ p: 0.5, color: "text.secondary", "&:hover": { color: "error.main" } }}>
+                    <DeleteIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Box>
+              </Box>
+            </Box>
+          ))}
+        </Paper>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -773,13 +833,12 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
           </Paper>
 
           {/* Serviços ativos */}
-          <Paper elevation={0} sx={{ ...paperSx(), p: 0, overflow: "hidden" }}>
+          <Box>
             <Box
-              px={isMobile ? 2 : 3}
-              py={1.5}
               display="flex"
               alignItems="center"
               justifyContent="space-between"
+              mb={gridSpacing}
             >
               <Box display="flex" alignItems="center" gap={1.5}>
                 <Box
@@ -801,7 +860,6 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                 {activeGroups.length} ativo{activeGroups.length !== 1 ? "s" : ""}
               </Typography>
             </Box>
-            <Divider />
 
             {activeGroups.length === 0 ? (
               <Box py={4} textAlign="center">
@@ -810,31 +868,40 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                 </Typography>
               </Box>
             ) : (
-              <Stack spacing={0} divider={<Divider />}>
+              <Grid container spacing={gridSpacing}>
                 {activeGroups.map((group) => (
                   <ServiceCard
                     key={group.normalizedName}
                     group={group}
                     isCancelled={false}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
                     onCancel={cancel}
                     onReactivate={reactivate}
+                    onOpenDetail={setSelectedGroup}
+                    onDeleteGroup={setDeleteConfirmGroup}
+                    imageUrl={getSubscriptionImage(group.name)}
+                    subscriptionColor={getSubscriptionColor(group.name)}
+                    onSetImage={async (name, url) => {
+                      await updateSubscriptionImage(name, url);
+                      if (url) {
+                        extractDominantColor(url).then((colors) => {
+                          updateSubscriptionColor(name, colors ?? hashColor(name));
+                        });
+                      }
+                    }}
                   />
                 ))}
-              </Stack>
+              </Grid>
             )}
-          </Paper>
+          </Box>
 
           {/* Serviços encerrados — seção colapsável */}
           {cancelledGroups.length > 0 && (
-            <Paper elevation={0} sx={{ ...paperSx(theme.palette.error.main), p: 0, overflow: "hidden" }}>
+            <Box>
               <Box
-                px={isMobile ? 2 : 3}
-                py={1.5}
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
+                mb={gridSpacing}
                 onClick={() => setShowCancelled((v) => !v)}
                 sx={{ cursor: "pointer", userSelect: "none" }}
               >
@@ -878,25 +945,64 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
               </Box>
 
               <Collapse in={showCancelled} timeout="auto" unmountOnExit>
-                <Divider />
-                <Stack spacing={0} divider={<Divider />}>
+                <Grid container spacing={gridSpacing}>
                   {cancelledGroups.map((group) => (
                     <ServiceCard
                       key={group.normalizedName}
                       group={group}
                       isCancelled
-                      onEdit={onEdit}
-                      onDelete={onDelete}
                       onCancel={cancel}
                       onReactivate={reactivate}
+                      onOpenDetail={setSelectedGroup}
+                      onDeleteGroup={setDeleteConfirmGroup}
+                      imageUrl={getSubscriptionImage(group.name)}
+                      subscriptionColor={getSubscriptionColor(group.name)}
+                      onSetImage={async (name, url) => { await updateSubscriptionImage(name, url); }}
                     />
                   ))}
-                </Stack>
+                </Grid>
               </Collapse>
-            </Paper>
+            </Box>
           )}
         </>
       )}
+
+      {/* Delete group confirmation */}
+      <Dialog
+        open={Boolean(deleteConfirmGroup)}
+        onClose={() => setDeleteConfirmGroup(null)}
+        PaperProps={{ sx: { borderRadius: "20px", minWidth: 340 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Excluir assinatura</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Deseja excluir todas as {deleteConfirmGroup?.transactions.length} cobranças de <strong>{deleteConfirmGroup?.name}</strong>? Esta ação não pode ser desfeita.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setDeleteConfirmGroup(null)} sx={{ borderRadius: "10px", textTransform: "none" }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={async () => {
+              if (!deleteConfirmGroup) return;
+              try {
+                await Promise.all(deleteConfirmGroup.transactions.map((tx) => onDelete(tx)));
+                showSuccess(`Assinatura "${deleteConfirmGroup.name}" excluída`);
+              } catch {
+                showError("Erro ao excluir algumas cobranças");
+              } finally {
+                setDeleteConfirmGroup(null);
+              }
+            }}
+            sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
+          >
+            Excluir tudo
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -33,10 +33,12 @@ import {
   Notes as NotesIcon,
 } from "@mui/icons-material";
 import TransactionTags from "./TransactionTags";
+import PaymentMethodIcon from "./PaymentMethodIcon";
 import { motion, AnimatePresence } from "framer-motion";
 import { Transaction } from "../../types";
 import EmptyState from "./EmptyState";
 import { usePrivacyMode } from "../../hooks";
+import { useSettings } from "../../contexts";
 
 // Create motion-enabled components
 const MotionPaper = motion.create(Paper);
@@ -270,6 +272,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isDarkMode = theme.palette.mode === "dark";
   const { privacyStyles } = usePrivacyMode();
+  const { getPaymentMethodColor, getPaymentMethodConfig } = useSettings();
 
   const maxAmount = Math.max(...transactions.map((t) => t.amount || 0), 0.01);
 
@@ -459,7 +462,18 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         <Typography variant="body2" fontWeight={500} sx={{ color: catConfig.color }}>{transaction.category}</Typography>
                       </Box>
                     </TableCell>
-                    <TableCell component="div"><Typography variant="body2" color="text.secondary" fontWeight={500}>{transaction.paymentMethod}</Typography></TableCell>
+                    <TableCell component="div">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <PaymentMethodIcon
+                          imageUrl={getPaymentMethodConfig(transaction.paymentMethod)?.imageUrl}
+                          colors={getPaymentMethodColor(transaction.paymentMethod)}
+                          size={28}
+                          borderRadius="8px"
+                          iconSize={14}
+                        />
+                        <Typography variant="body2" color="text.secondary" fontWeight={500}>{transaction.paymentMethod}</Typography>
+                      </Box>
+                    </TableCell>
                     <TableCell component="div">
                       <Box>
                         <Typography variant="body2" fontWeight={700} sx={{ mb: 1, color: isIncome ? theme.palette.success.main : theme.palette.error.main, ...privacyStyles }}>
@@ -634,9 +648,18 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                      {transaction.paymentMethod}
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <PaymentMethodIcon
+                        imageUrl={getPaymentMethodConfig(transaction.paymentMethod)?.imageUrl}
+                        colors={getPaymentMethodColor(transaction.paymentMethod)}
+                        size={28}
+                        borderRadius="8px"
+                        iconSize={14}
+                      />
+                      <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                        {transaction.paymentMethod}
+                      </Typography>
+                    </Box>
                   </TableCell>
                   <TableCell>
                     <Box>

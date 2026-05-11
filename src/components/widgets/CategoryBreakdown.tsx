@@ -13,6 +13,7 @@ import {
   TrendingDown as TrendingDownIcon,
   CreditCard as CreditCardIcon,
 } from "@mui/icons-material";
+import PaymentMethodIcon from "../ui/PaymentMethodIcon";
 import {
   PieChart,
   Pie,
@@ -29,6 +30,7 @@ interface PieDataItem {
   value: number;
   color: string;
   secondaryColor: string;
+  imageUrl?: string;
 }
 
 interface CategoryBreakdownProps {
@@ -255,15 +257,15 @@ const PieChartCard: React.FC<PieChartCardProps> = ({
                       : {},
                   }}
                 >
-                  <Box
+                  <PaymentMethodIcon
+                    imageUrl={item.imageUrl}
+                    colors={{ primary: item.color, secondary: item.secondaryColor }}
+                    size={22}
+                    borderRadius="7px"
+                    iconSize={12}
                     sx={{
-                      width: 9,
-                      height: 9,
-                      borderRadius: "50%",
                       flexShrink: 0,
-                      mt: "2px",
-                      background: `linear-gradient(135deg, ${item.color}, ${item.secondaryColor})`,
-                      boxShadow: isActive ? `0 0 6px ${alpha(item.color, 0.6)}` : "none",
+                      boxShadow: isActive ? `0 0 8px ${alpha(item.color, 0.5)}` : "none",
                       transition: "box-shadow 0.15s ease",
                     }}
                   />
@@ -333,7 +335,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   onCategoryClick,
 }) => {
   const { t } = useTranslation();
-  const { getCategoryColor, getPaymentMethodColor } = useSettings();
+  const { getCategoryColor, getPaymentMethodColor, getCategoryImage, getPaymentMethodConfig } = useSettings();
   const { gridSpacing } = useLayoutSpacing();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -350,7 +352,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     .sort(([, a], [, b]) => b - a)
     .map(([name, value]) => {
       const c = getCategoryColor("income", name);
-      return { name, value, color: c.primary, secondaryColor: c.secondary };
+      return { name, value, color: c.primary, secondaryColor: c.secondary, imageUrl: getCategoryImage("income", name) };
     });
 
   const totalIncome = incomeData.reduce((s, d) => s + d.value, 0);
@@ -367,7 +369,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     .sort(([, a], [, b]) => b - a)
     .map(([name, value]) => {
       const c = getCategoryColor("expense", name);
-      return { name, value, color: c.primary, secondaryColor: c.secondary };
+      return { name, value, color: c.primary, secondaryColor: c.secondary, imageUrl: getCategoryImage("expense", name) };
     });
 
   const totalExpense = expenseData.reduce((s, d) => s + d.value, 0);
@@ -384,7 +386,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     .sort(([, a], [, b]) => b - a)
     .map(([name, value]) => {
       const c = getPaymentMethodColor(name);
-      return { name, value, color: c.primary, secondaryColor: c.secondary };
+      return { name, value, color: c.primary, secondaryColor: c.secondary, imageUrl: getPaymentMethodConfig(name)?.imageUrl };
     });
 
   const totalPayment = paymentData.reduce((s, d) => s + d.value, 0);

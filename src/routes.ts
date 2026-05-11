@@ -22,6 +22,8 @@ export const VIEW_ROUTES: Record<AppCurrentView, string> = {
   "debt-calculator": "/debt-calculator",
   investments: "/investments",
   subscriptions: "/subscriptions",
+  notifications: "/notifications",
+  paymentGuide: "/payment-guide",
 };
 
 /**

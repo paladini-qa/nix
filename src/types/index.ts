@@ -10,6 +10,8 @@ export interface PaymentMethodConfig {
   closingDay?: number;
   /** Dia do mês em que a fatura vence/é paga (1–28). Apenas para type = 'card'. */
   paymentDay?: number;
+  /** URL da imagem/logo do método de pagamento. */
+  imageUrl?: string;
 }
 
 // Opções para edição/deleção de transações compartilhadas
@@ -44,6 +46,7 @@ export interface Transaction {
   // Campo para vincular transações modificadas à recorrência original
   recurringGroupId?: string; // ID da transação recorrente original (para manter o vínculo após edição "single")
   notes?: string; // Observações livres adicionadas pelo usuário
+  virtualDate?: string; // Data da ocorrência virtual — usada no painel de opções para exibição
 }
 
 export interface FinancialSummary {
@@ -218,4 +221,22 @@ export interface PlanningItem {
 export interface PlanningWithItems extends Planning {
   items: PlanningItem[];
   totalAmount: number;
+}
+
+// Sistema de Notificações
+export type NotificationType =
+  | "budget_warning"
+  | "budget_exceeded"
+  | "unpaid_overdue"
+  | "recurring_due";
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  amount?: number;
+  isRead: boolean;
+  createdAt: string; // YYYY-MM-DD
+  link?: string; // AppCurrentView destino ao clicar
 }

@@ -127,6 +127,11 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
 -- Para usuários existentes, adicione a coluna payment_method_configs (configurações estruturadas de métodos de pagamento):
 ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS payment_method_configs JSONB DEFAULT NULL;
 
+-- Imagens por categoria e por assinatura:
+ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS category_images JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS subscription_images JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS subscription_colors JSONB DEFAULT '{}'::jsonb;
+
 -- Comentários na tabela
 COMMENT ON TABLE public.user_settings IS 'Configurações personalizadas do usuário';
 COMMENT ON COLUMN public.user_settings.display_name IS 'Nome de exibição do usuário';

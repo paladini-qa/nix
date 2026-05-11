@@ -1,12 +1,14 @@
 import React from "react";
 import logoUrl from "../../assets/logo.png";
-import { Box, useTheme, alpha } from "@mui/material";
+import { Box, Badge, useTheme, alpha } from "@mui/material";
 import { motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Bell } from "lucide-react";
 import { IconButton, Text } from "@radix-ui/themes";
 import { usePrivacy } from "../../contexts";
 import { useAppStore } from "../../hooks/useAppStore";
+import { useNotifications } from "../../hooks";
 import DateFilter from "../ui/DateFilter";
+import { AppCurrentView } from "../../types/appView";
 
 const MotionBox = motion.create(Box);
 
@@ -14,6 +16,7 @@ interface MobileHeaderProps {
   onOpenDrawer?: () => void;
   onOpenSearch?: () => void;
   onOpenProfile?: () => void;
+  onNavigate?: (view: AppCurrentView) => void;
 }
 
 /**
@@ -30,11 +33,13 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   onOpenDrawer,
   onOpenSearch,
   onOpenProfile,
+  onNavigate,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
   const { filters, setFilters } = useAppStore();
+  const { unreadCount } = useNotifications(filters.month, filters.year);
 
   return (
     <MotionBox
@@ -80,7 +85,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           component="img"
           src={logoUrl}
           alt="Finance Control Logo"
-          sx={{ width: 32, height: 32, objectFit: "contain" }}
+          sx={{ width: 32, height: 32, objectFit: "contain", borderRadius: "9px" }}
         />
         <Text size="5" weight="bold" style={{ letterSpacing: "-0.02em", fontSize: 20 }}>
           Nix Finance
@@ -109,6 +114,24 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           style={{ width: 44, height: 44 }}
         >
           {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
+        </IconButton>
+        <IconButton
+          size="3"
+          variant="ghost"
+          color="gray"
+          onClick={() => onNavigate?.("notifications")}
+          aria-label="Notificações"
+          title="Notificações"
+          style={{ width: 44, height: 44, position: "relative" }}
+        >
+          <Badge
+            badgeContent={unreadCount}
+            color="error"
+            max={9}
+            sx={{ "& .MuiBadge-badge": { fontSize: 9, minWidth: 14, height: 14, p: 0 } }}
+          >
+            <Bell size={20} />
+          </Badge>
         </IconButton>
       </MotionBox>
 
