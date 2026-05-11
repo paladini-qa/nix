@@ -330,6 +330,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [frequency, setFrequency] = useState<"monthly" | "yearly">("monthly");
   const [hasInstallments, setHasInstallments] = useState(false);
   const [installments, setInstallments] = useState("2");
+  const [installmentStartDate, setInstallmentStartDate] = useState<Dayjs | null>(null);
   const [isShared, setIsShared] = useState(false);
   const [sharedWith, setSharedWith] = useState("");
   const [iOwe, setIOwe] = useState(false); // true = amigo pagou, eu devo | false = eu paguei, amigo deve
@@ -576,6 +577,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           editTransaction.installments > 1
       );
       setInstallments(editTransaction.installments?.toString() || "2");
+      if (editTransaction.installments !== undefined && editTransaction.installments > 1) {
+        // Retrocede para o mês da primeira parcela
+        const offset = (editTransaction.currentInstallment ?? 1) - 1;
+        setInstallmentStartDate(dayjs(editTransaction.date).subtract(offset, "month"));
+      } else {
+        setInstallmentStartDate(null);
+      }
       setIsShared(editTransaction.isShared || false);
       setSharedWith(editTransaction.sharedWith || "");
       setIOwe(editTransaction.iOwe || false);
@@ -620,6 +628,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setFrequency("monthly");
       setHasInstallments(false);
       setInstallments("2");
+      setInstallmentStartDate(null);
       setIsShared(false);
       setSharedWith("");
       setIOwe(false);
@@ -806,7 +815,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         type,
         category,
         paymentMethod,
-        date: date.format("YYYY-MM-DD"),
+        date: hasInstallments && installmentStartDate
+          ? installmentStartDate.date(date.date()).format("YYYY-MM-DD")
+          : date.format("YYYY-MM-DD"),
         ...(invoiceDueDate !== undefined && { invoiceDueDate }),
         isRecurring,
         frequency: isRecurring ? frequency : undefined,
@@ -1948,7 +1959,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         onClick={() => {
                           const newValue = !hasInstallments;
                           setHasInstallments(newValue);
-                          if (newValue) setIsRecurring(false);
+                          if (newValue) {
+                            setIsRecurring(false);
+                            if (!installmentStartDate) setInstallmentStartDate(date);
+                          }
                         }}
                       >
                         <Box
@@ -2026,6 +2040,18 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     onChange={(e) => setInstallments(e.target.value)}
                     inputProps={{ min: 2, max: 48 }}
                     sx={inputSx}
+                  />
+                )}
+
+                {/* Mês de início do parcelamento */}
+                {hasInstallments && (
+                  <DatePicker
+                    label="Mês de início"
+                    value={installmentStartDate ?? date}
+                    onChange={(v) => setInstallmentStartDate(v)}
+                    views={["year", "month"]}
+                    openTo="month"
+                    slotProps={{ textField: { fullWidth: true, sx: inputSx } }}
                   />
                 )}
 
