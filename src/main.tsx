@@ -4,7 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { ErrorBoundary } from "@/presentation/contexts";
 import { initializeCapacitor, hideSplashScreen } from "@/infrastructure/native/capacitorService";
-import "./i18n"; // Initialize i18n
+import "@/shared/i18n";
 import "@radix-ui/themes/styles.css";
 import "./styles/index.css";
 import "./styles/radix-theme.css";

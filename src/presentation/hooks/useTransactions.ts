@@ -22,6 +22,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     setError(null);
 
     try {
+      // TODO: move to application service — layer violation
       const { data, error: fetchError } = await supabase
         .from("transactions")
         .select("*")
@@ -81,6 +82,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         };
         if (tx.invoiceDueDate) dbPayload.invoice_due_date = tx.invoiceDueDate;
 
+        // TODO: move to application service — layer violation
         const { data, error } = await supabase
           .from("transactions")
           .insert(dbPayload)
@@ -164,6 +166,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           payloads.push(payload);
         }
 
+        // TODO: move to application service — layer violation
         const { data, error } = await supabase
           .from("transactions")
           .insert(payloads)
@@ -224,6 +227,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         if (updates.isPaid !== undefined) dbPayload.is_paid = updates.isPaid;
         if (updates.invoiceDueDate !== undefined) dbPayload.invoice_due_date = updates.invoiceDueDate;
 
+        // TODO: move to application service — layer violation
         const { data, error } = await supabase
           .from("transactions")
           .update(dbPayload)
@@ -268,6 +272,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
   // Remove uma transação
   const deleteTransaction = useCallback(async (id: string): Promise<boolean> => {
     try {
+      // TODO: move to application service — layer violation
       const { error } = await supabase.from("transactions").delete().eq("id", id);
       if (error) throw error;
       setTransactions((prev) => prev.filter((t) => t.id !== id));
@@ -283,6 +288,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
   const togglePaid = useCallback(
     async (id: string, isPaid: boolean): Promise<boolean> => {
       try {
+        // TODO: move to application service — layer violation
         const { error } = await supabase
           .from("transactions")
           .update({ is_paid: isPaid })
@@ -397,6 +403,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     ): Promise<boolean> => {
       try {
         // Atualiza cada parcela com sua nova data
+        // TODO: move to application service — layer violation
         const updatePromises = newDates.map(({ id, date }) =>
           supabase
             .from("transactions")

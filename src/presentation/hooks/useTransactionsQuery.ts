@@ -76,6 +76,7 @@ export function useTransactionsQuery() {
   const query = useQuery({
     queryKey: TRANSACTIONS_KEY,
     queryFn: async () => {
+      // TODO: move to application service — layer violation
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
@@ -92,6 +93,7 @@ export function useTransactionsQuery() {
 
   const addMutation = useMutation({
     mutationFn: async (tx: Partial<Transaction>) => {
+      // TODO: move to application service — layer violation
       const {
         data: { user },
         error: userError,
@@ -102,6 +104,7 @@ export function useTransactionsQuery() {
 
       const payload = { ...mapTransactionToDb(tx), user_id: user.id };
 
+      // TODO: move to application service — layer violation
       const { data, error } = await supabase
         .from("transactions")
         .insert(payload)
@@ -164,6 +167,7 @@ export function useTransactionsQuery() {
     mutationFn: async ({ id, ...tx }: Partial<Transaction> & { id: string }) => {
       const payload = mapTransactionToDb(tx);
 
+      // TODO: move to application service — layer violation
       const { data, error } = await supabase
         .from("transactions")
         .update(payload)
@@ -206,6 +210,7 @@ export function useTransactionsQuery() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // TODO: move to application service — layer violation
       const { error } = await supabase.from("transactions").delete().eq("id", id);
       if (error) throw error;
     },
@@ -240,6 +245,7 @@ export function useTransactionsQuery() {
   const updateInstallmentDatesMutation = useMutation({
     mutationFn: async (newDates: { id: string; date: string }[]) => {
       const results = await Promise.all(
+        // TODO: move to application service — layer violation
         newDates.map(({ id, date }) =>
           supabase.from("transactions").update({ date }).eq("id", id)
         )

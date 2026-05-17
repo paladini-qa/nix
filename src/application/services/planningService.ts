@@ -1,5 +1,45 @@
 import { supabase } from "@/infrastructure/database/supabaseClient";
-import { Planning, PlanningItem, PlanningWithItems, Transaction } from "@/domain/entities";
+import { Planning, PlanningItem, PlanningWithItems, Transaction, TransactionType } from "@/domain/entities";
+
+// Tipo que representa a linha retornada pelo Supabase para a tabela plannings
+interface DbPlanning {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  target_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Tipo que representa a linha retornada pelo Supabase para a tabela planning_items
+interface DbPlanningItem {
+  id: string;
+  planning_id: string;
+  description: string;
+  amount: number;
+  category: string;
+  payment_method: string;
+  date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Tipo que representa a linha retornada pelo Supabase para a tabela transactions
+interface DbTransaction {
+  id: string;
+  user_id: string;
+  description: string;
+  amount: number;
+  type: TransactionType;
+  category: string;
+  payment_method: string;
+  date: string;
+  invoice_due_date: string | null;
+  created_at: string;
+  is_paid: boolean | null;
+}
 
 /**
  * Serviço para gerenciamento de planejamentos
@@ -117,7 +157,7 @@ export const planningService = {
     id: string,
     updates: Partial<Omit<Planning, "id" | "createdAt" | "updatedAt">>
   ): Promise<Planning> {
-    const dbUpdates: Record<string, any> = {};
+    const dbUpdates: Record<string, unknown> = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
     if (updates.description !== undefined) dbUpdates.description = updates.description || null;
     if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate || null;
@@ -175,7 +215,7 @@ export const planningService = {
     id: string,
     updates: Partial<Omit<PlanningItem, "id" | "planningId" | "createdAt" | "updatedAt">>
   ): Promise<PlanningItem> {
-    const dbUpdates: Record<string, any> = {};
+    const dbUpdates: Record<string, unknown> = {};
     if (updates.description !== undefined) dbUpdates.description = updates.description;
     if (updates.amount !== undefined) dbUpdates.amount = updates.amount;
     if (updates.category !== undefined) dbUpdates.category = updates.category;
@@ -306,10 +346,10 @@ export const planningService = {
     // Opcionalmente, remove o planejamento vazio
     // await this.delete(planningId);
 
-    return (transactions || []).map((t: any) => ({
+    return (transactions || []).map((t: DbTransaction) => ({
       id: t.id,
       description: t.description,
-      amount: parseFloat(t.amount),
+      amount: t.amount,
       type: t.type,
       category: t.category,
       paymentMethod: t.payment_method,
@@ -322,7 +362,7 @@ export const planningService = {
 };
 
 // Helper para mapear dados do banco para interface Planning
-function mapDbToPlanning(data: any): Planning {
+function mapDbToPlanning(data: DbPlanning): Planning {
   return {
     id: data.id,
     name: data.name,
@@ -334,12 +374,12 @@ function mapDbToPlanning(data: any): Planning {
 }
 
 // Helper para mapear dados do banco para interface PlanningItem
-function mapDbToPlanningItem(data: any): PlanningItem {
+function mapDbToPlanningItem(data: DbPlanningItem): PlanningItem {
   return {
     id: data.id,
     planningId: data.planning_id,
     description: data.description,
-    amount: parseFloat(data.amount),
+    amount: data.amount,
     category: data.category,
     paymentMethod: data.payment_method,
     date: data.date || undefined,

@@ -1,5 +1,20 @@
 import { supabase } from "@/infrastructure/database/supabaseClient";
 import { Account, AccountWithBalance, AccountType, Transaction } from "@/domain/entities";
+import { accountSchema } from "@/shared/schemas";
+
+// Tipo que representa a linha retornada pelo Supabase para a tabela accounts
+interface DbAccount {
+  id: string;
+  user_id: string;
+  name: string;
+  type: AccountType;
+  initial_balance: number;
+  color: string | null;
+  icon: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 /**
  * Serviço para gerenciamento de contas/carteiras
@@ -59,15 +74,17 @@ export const accountService = {
     userId: string,
     account: Omit<Account, "id" | "isActive" | "createdAt" | "updatedAt">
   ): Promise<Account> {
+    const validated = accountSchema.parse(account);
+
     const { data, error } = await supabase
       .from("accounts")
       .insert({
         user_id: userId,
-        name: account.name,
-        type: account.type,
-        initial_balance: account.initialBalance,
-        color: account.color,
-        icon: account.icon,
+        name: validated.name,
+        type: validated.type,
+        initial_balance: validated.initialBalance,
+        color: validated.color,
+        icon: validated.icon,
       })
       .select()
       .single();
@@ -84,12 +101,14 @@ export const accountService = {
     id: string,
     updates: Partial<Omit<Account, "id" | "createdAt" | "updatedAt">>
   ): Promise<Account> {
-    const dbUpdates: Record<string, any> = {};
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.type !== undefined) dbUpdates.type = updates.type;
-    if (updates.initialBalance !== undefined) dbUpdates.initial_balance = updates.initialBalance;
-    if (updates.color !== undefined) dbUpdates.color = updates.color;
-    if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
+    const validated = accountSchema.partial().parse(updates);
+
+    const dbUpdates: Record<string, unknown> = {};
+    if (validated.name !== undefined) dbUpdates.name = validated.name;
+    if (validated.type !== undefined) dbUpdates.type = validated.type;
+    if (validated.initialBalance !== undefined) dbUpdates.initial_balance = validated.initialBalance;
+    if (validated.color !== undefined) dbUpdates.color = validated.color;
+    if (validated.icon !== undefined) dbUpdates.icon = validated.icon;
     if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
 
     const { data, error } = await supabase
@@ -169,7 +188,7 @@ export const accountService = {
 };
 
 // Helper para mapear dados do banco
-function mapDbToAccount(data: any): Account {
+function mapDbToAccount(data: DbAccount): Account {
   return {
     id: data.id,
     name: data.name,

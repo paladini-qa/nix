@@ -54,6 +54,7 @@ import type { Transaction } from "@/domain/entities";
 import { getReportDate } from "@/domain/usecases/transactionUtils";
 import { useLayoutSpacing } from "@/presentation/hooks";
 import EmptyState from "@/presentation/components/ui/EmptyState";
+import { formatCurrency, formatDate, getMonthLabel } from "@/shared/utils/formatters";
 
 interface InvestmentsViewProps {
   transactions: Transaction[];
@@ -67,25 +68,6 @@ type TypeFilter = "all" | "expense" | "income";
 
 const INVESTMENT_CATEGORY = "Investments";
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(value);
-
-const formatCurrencyFull = (value: number) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-
-const formatDate = (dateStr: string) => dayjs(dateStr).format("DD/MM/YYYY");
-
-const getMonthLabel = (key: string) => {
-  const [year, month] = key.split("-");
-  return dayjs(`${year}-${month}-01`).format("MMM/YY");
-};
 
 interface InvestmentGroup {
   name: string;
@@ -195,13 +177,13 @@ const InvestmentRow: React.FC<{
           align="right"
           sx={{ color: "success.main", fontWeight: 600, fontSize: 13, whiteSpace: "nowrap" }}
         >
-          {formatCurrencyFull(group.totalDeposited)}
+          {formatCurrency(group.totalDeposited, "pt-BR", "BRL", 2)}
         </TableCell>
         <TableCell
           align="right"
           sx={{ color: "#6366f1", fontWeight: 600, fontSize: 13, whiteSpace: "nowrap" }}
         >
-          {formatCurrencyFull(group.totalReturns)}
+          {formatCurrency(group.totalReturns, "pt-BR", "BRL", 2)}
         </TableCell>
         {!isSmall && (
           <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
@@ -211,7 +193,7 @@ const InvestmentRow: React.FC<{
               color={isPositive ? "success.main" : "error.main"}
             >
               {isPositive ? "+" : ""}
-              {formatCurrencyFull(group.netBalance)}
+              {formatCurrency(group.netBalance, "pt-BR", "BRL", 2)}
             </Typography>
           </TableCell>
         )}
@@ -294,7 +276,7 @@ const InvestmentRow: React.FC<{
                             color: m.deposits > 0 ? "success.main" : "text.disabled",
                           }}
                         >
-                          {m.deposits > 0 ? formatCurrencyFull(m.deposits) : "—"}
+                          {m.deposits > 0 ? formatCurrency(m.deposits, "pt-BR", "BRL", 2) : "—"}
                         </TableCell>
                         <TableCell
                           align="right"
@@ -303,7 +285,7 @@ const InvestmentRow: React.FC<{
                             color: m.returns > 0 ? "#6366f1" : "text.disabled",
                           }}
                         >
-                          {m.returns > 0 ? formatCurrencyFull(m.returns) : "—"}
+                          {m.returns > 0 ? formatCurrency(m.returns, "pt-BR", "BRL", 2) : "—"}
                         </TableCell>
                         <TableCell>
                           <Stack spacing={0.3}>
@@ -326,7 +308,7 @@ const InvestmentRow: React.FC<{
                                   }}
                                 >
                                   {tx.type === "income" ? "+" : "−"}
-                                  {formatCurrencyFull(tx.amount)}
+                                  {formatCurrency(tx.amount, "pt-BR", "BRL", 2)}
                                 </Typography>
                               </Box>
                             ))}
@@ -477,7 +459,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
       // Aportes (deposits/expense) aumentam o patrimônio investido;
       // rendimentos (returns/income) são ganhos adicionais sobre o capital.
       cumulative += deposits + returns;
-      return { monthKey: key, month: getMonthLabel(key), deposits, returns, balance: cumulative };
+      return { monthKey: key, month: getMonthLabel(Number(key.split("-")[1]), Number(key.split("-")[0])), deposits, returns, balance: cumulative };
     });
   }, [allInvestmentTxs]);
 
@@ -511,7 +493,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([key, data]) => ({
             monthKey: key,
-            month: getMonthLabel(key),
+            month: getMonthLabel(Number(key.split("-")[1]), Number(key.split("-")[0])),
             ...data,
             txs: data.txs.sort((a, b) => (a.date < b.date ? 1 : -1)),
           }));

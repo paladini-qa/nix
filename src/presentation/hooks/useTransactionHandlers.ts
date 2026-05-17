@@ -177,6 +177,7 @@ export const useTransactionHandlers = ({
 
               // Inserir transações materializadas no banco
               if (materializedTransactions.length > 0) {
+                // TODO: move to application service — layer violation
                 const { data: insertedData, error: insertError } = await supabase
                   .from("transactions")
                   .insert(materializedTransactions)
@@ -210,6 +211,7 @@ export const useTransactionHandlers = ({
                 date: newTx.date, // Nova data de início
               };
 
+              // TODO: move to application service — layer violation
               const { error: updateError } = await supabase
                 .from("transactions")
                 .update(updatedPayload)
@@ -240,6 +242,7 @@ export const useTransactionHandlers = ({
                   related_transaction_id: originalTx.id,
                 };
 
+                // TODO: move to application service — layer violation
                 const { data: incomeData, error: incomeError } = await supabase
                   .from("transactions")
                   .insert(incomePayload)
@@ -247,6 +250,7 @@ export const useTransactionHandlers = ({
                   .single();
 
                 if (!incomeError && incomeData) {
+                  // TODO: move to application service — layer violation
                   await supabase
                     .from("transactions")
                     .update({ related_transaction_id: incomeData.id })
@@ -272,6 +276,7 @@ export const useTransactionHandlers = ({
 
               // Remove income if no longer shared
               if (wasShared && !isNowShared && originalTx.relatedTransactionId) {
+                // TODO: move to application service — layer violation
                 await supabase
                   .from("transactions")
                   .delete()
@@ -287,6 +292,7 @@ export const useTransactionHandlers = ({
                 const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
                 const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
+                // TODO: move to application service — layer violation
                 await supabase
                   .from("transactions")
                   .update({
@@ -376,6 +382,7 @@ export const useTransactionHandlers = ({
             const wasShared = originalTx.isShared && originalTx.sharedWith;
             const isNowShared = newTx.isShared && newTx.sharedWith;
 
+            // TODO: move to application service — layer violation
             const { error } = await supabase
               .from("transactions")
               .update(dbPayload)
@@ -402,6 +409,7 @@ export const useTransactionHandlers = ({
                 related_transaction_id: editId,
               };
 
+              // TODO: move to application service — layer violation
               const { data: incomeData, error: incomeError } = await supabase
                 .from("transactions")
                 .insert(incomePayload)
@@ -409,6 +417,7 @@ export const useTransactionHandlers = ({
                 .single();
 
               if (!incomeError && incomeData) {
+                // TODO: move to application service — layer violation
                 await supabase
                   .from("transactions")
                   .update({ related_transaction_id: incomeData.id })
@@ -434,6 +443,7 @@ export const useTransactionHandlers = ({
 
             // Remove income if no longer shared
             if (wasShared && !isNowShared && originalTx.relatedTransactionId) {
+              // TODO: move to application service — layer violation
               await supabase
                 .from("transactions")
                 .delete()
@@ -449,6 +459,7 @@ export const useTransactionHandlers = ({
               const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
               const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
+              // TODO: move to application service — layer violation
               await supabase
                 .from("transactions")
                 .update({
@@ -504,6 +515,7 @@ export const useTransactionHandlers = ({
               shared_with: newTx.sharedWith,
             };
 
+            // TODO: move to application service — layer violation
             const { data, error } = await supabase
               .from("transactions")
               .update(singlePayload)
@@ -521,6 +533,7 @@ export const useTransactionHandlers = ({
 
               // Handle shared transaction changes (similar to bulk edit)
               if (wasShared && !isNowShared && oldTransaction?.relatedTransactionId) {
+                // TODO: move to application service — layer violation
                 await supabase
                   .from("transactions")
                   .delete()
@@ -548,6 +561,7 @@ export const useTransactionHandlers = ({
                   related_transaction_id: data.id,
                 };
 
+                // TODO: move to application service — layer violation
                 const { data: incomeData, error: incomeError } = await supabase
                   .from("transactions")
                   .insert(incomePayload)
@@ -555,6 +569,7 @@ export const useTransactionHandlers = ({
                   .single();
 
                 if (!incomeError && incomeData) {
+                  // TODO: move to application service — layer violation
                   await supabase
                     .from("transactions")
                     .update({ related_transaction_id: incomeData.id })
@@ -583,6 +598,7 @@ export const useTransactionHandlers = ({
                 const incomeDescription = `${newTx.description} - ${newTx.sharedWith}`;
                 const incomeAmount = Math.round(((newTx.amount || 0) / 2) * 100) / 100;
 
+                // TODO: move to application service — layer violation
                 await supabase
                   .from("transactions")
                   .update({
@@ -690,6 +706,7 @@ export const useTransactionHandlers = ({
             installmentPayloads.push(payload);
           }
 
+          // TODO: move to application service — layer violation
           const { data, error } = await supabase
             .from("transactions")
             .insert(installmentPayloads)
@@ -736,6 +753,7 @@ export const useTransactionHandlers = ({
                 related_transaction_id: d.id,
               }));
 
+              // TODO: move to application service — layer violation
               const { data: incomeData, error: incomeError } = await supabase
                 .from("transactions")
                 .insert(incomePayloads)
@@ -783,6 +801,7 @@ export const useTransactionHandlers = ({
             shared_with: newTx.sharedWith,
           };
 
+          // TODO: move to application service — layer violation
           const { data, error } = await supabase
             .from("transactions")
             .insert(dbPayload)
@@ -830,6 +849,7 @@ export const useTransactionHandlers = ({
                 related_transaction_id: data.id,
               };
 
+              // TODO: move to application service — layer violation
               const { data: incomeData, error: incomeError } = await supabase
                 .from("transactions")
                 .insert(incomePayload)
@@ -842,6 +862,7 @@ export const useTransactionHandlers = ({
                   incomeError
                 );
               } else if (incomeData) {
+                // TODO: move to application service — layer violation
                 await supabase
                   .from("transactions")
                   .update({ related_transaction_id: incomeData.id })
@@ -942,6 +963,7 @@ export const useTransactionHandlers = ({
       }
 
       try {
+        // TODO: move to application service — layer violation
         const { error } = await supabase
           .from("transactions")
           .delete()
@@ -951,6 +973,7 @@ export const useTransactionHandlers = ({
         let idsToRemove = [id];
 
         if (deleteRelated && relatedTransaction) {
+          // TODO: move to application service — layer violation
           const { error: relatedError } = await supabase
             .from("transactions")
             .delete()
@@ -962,6 +985,7 @@ export const useTransactionHandlers = ({
             idsToRemove.push(relatedTransaction.id);
           }
         } else if (relatedTransaction) {
+          // TODO: move to application service — layer violation
           await supabase
             .from("transactions")
             .update({ related_transaction_id: null })
@@ -997,6 +1021,7 @@ export const useTransactionHandlers = ({
   const handleTogglePaid = useCallback(
     async (id: string, isPaid: boolean) => {
       try {
+        // TODO: move to application service — layer violation
         const { error } = await supabase
           .from("transactions")
           .update({ is_paid: isPaid })
@@ -1048,6 +1073,7 @@ export const useTransactionHandlers = ({
 
         if (unpaidIds.length === 0) return;
 
+        // TODO: move to application service — layer violation
         const { error } = await supabase
           .from("transactions")
           .update({ is_paid: true })

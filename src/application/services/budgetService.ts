@@ -1,6 +1,20 @@
 import { supabase } from "@/infrastructure/database/supabaseClient";
 import { Budget, BudgetWithSpending, Transaction, TransactionType } from "@/domain/entities";
 
+// Tipo que representa a linha retornada pelo Supabase para a tabela budgets
+interface DbBudget {
+  id: string;
+  user_id: string;
+  category: string;
+  type: TransactionType;
+  limit_amount: number;
+  month: number;
+  year: number;
+  is_recurring: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /**
  * Serviço para gerenciamento de orçamentos
  */
@@ -79,7 +93,7 @@ export const budgetService = {
       }
 
       // Agrupa por categoria+tipo para pegar apenas o mais recente de cada
-      const latestByCategory = new Map<string, any>();
+      const latestByCategory = new Map<string, DbBudget>();
       for (const budget of recurringBudgets) {
         const key = `${budget.type}-${budget.category}`;
         if (!latestByCategory.has(key)) {
@@ -155,7 +169,7 @@ export const budgetService = {
     id: string,
     updates: Partial<Omit<Budget, "id" | "createdAt" | "updatedAt">>
   ): Promise<Budget> {
-    const dbUpdates: Record<string, any> = {};
+    const dbUpdates: Record<string, unknown> = {};
     if (updates.category !== undefined) dbUpdates.category = updates.category;
     if (updates.type !== undefined) dbUpdates.type = updates.type;
     if (updates.limitAmount !== undefined) dbUpdates.limit_amount = updates.limitAmount;
@@ -256,7 +270,7 @@ export const budgetService = {
 };
 
 // Helper para mapear dados do banco para interface
-function mapDbToBudget(data: any): Budget {
+function mapDbToBudget(data: DbBudget): Budget {
   return {
     id: data.id,
     category: data.category,

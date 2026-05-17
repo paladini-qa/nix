@@ -42,7 +42,7 @@ import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@mui/material";
 
-import logoUrl from "../../assets/logo.png";
+import logoUrl from "../../../assets/logo.png";
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout";
 import type { AppCurrentView } from "@/shared/types/appView";
 import { useNotifications } from "@/presentation/hooks";

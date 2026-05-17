@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useFilters } from "@/presentation/hooks/useFilters";
+import { useFilters, getInitialMonthYear } from "@/presentation/hooks/useFilters";
 
 describe("useFilters", () => {
   it("should initialize with current month and year", () => {
     const { result } = renderHook(() => useFilters());
-    const now = new Date();
+    const { month, year } = getInitialMonthYear();
 
-    expect(result.current.filters.month).toBe(now.getMonth());
-    expect(result.current.filters.year).toBe(now.getFullYear());
+    expect(result.current.filters.month).toBe(month);
+    expect(result.current.filters.year).toBe(year);
   });
 
   it("should initialize with custom values", () => {
@@ -22,11 +22,11 @@ describe("useFilters", () => {
     const { result } = renderHook(() => useFilters());
 
     act(() => {
-      result.current.setDate(3, 2024);
+      result.current.setDate(3, 2027);
     });
 
     expect(result.current.filters.month).toBe(3);
-    expect(result.current.filters.year).toBe(2024);
+    expect(result.current.filters.year).toBe(2027);
   });
 
   it("should update search term", () => {
@@ -42,47 +42,47 @@ describe("useFilters", () => {
   });
 
   it("should navigate to previous month", () => {
-    const { result } = renderHook(() => useFilters({ month: 5, year: 2024 }));
+    const { result } = renderHook(() => useFilters({ month: 5, year: 2027 }));
 
     act(() => {
       result.current.previousMonth();
     });
 
     expect(result.current.filters.month).toBe(4);
-    expect(result.current.filters.year).toBe(2024);
+    expect(result.current.filters.year).toBe(2027);
   });
 
   it("should handle year change when navigating previous month from January", () => {
-    const { result } = renderHook(() => useFilters({ month: 0, year: 2024 }));
+    const { result } = renderHook(() => useFilters({ month: 0, year: 2027 }));
 
     act(() => {
       result.current.previousMonth();
     });
 
     expect(result.current.filters.month).toBe(11);
-    expect(result.current.filters.year).toBe(2023);
+    expect(result.current.filters.year).toBe(2026);
   });
 
   it("should navigate to next month", () => {
-    const { result } = renderHook(() => useFilters({ month: 5, year: 2024 }));
+    const { result } = renderHook(() => useFilters({ month: 5, year: 2027 }));
 
     act(() => {
       result.current.nextMonth();
     });
 
     expect(result.current.filters.month).toBe(6);
-    expect(result.current.filters.year).toBe(2024);
+    expect(result.current.filters.year).toBe(2027);
   });
 
   it("should handle year change when navigating next month from December", () => {
-    const { result } = renderHook(() => useFilters({ month: 11, year: 2024 }));
+    const { result } = renderHook(() => useFilters({ month: 11, year: 2027 }));
 
     act(() => {
       result.current.nextMonth();
     });
 
     expect(result.current.filters.month).toBe(0);
-    expect(result.current.filters.year).toBe(2025);
+    expect(result.current.filters.year).toBe(2028);
   });
 
   it("should reset all filters", () => {
@@ -122,15 +122,13 @@ describe("useFilters", () => {
   });
 
   it("should detect current month correctly", () => {
-    const now = new Date();
-    const { result } = renderHook(() =>
-      useFilters({ month: now.getMonth(), year: now.getFullYear() })
-    );
+    const { month, year } = getInitialMonthYear();
+    const { result } = renderHook(() => useFilters({ month, year }));
 
     expect(result.current.isCurrentMonth).toBe(true);
 
     act(() => {
-      result.current.previousMonth();
+      result.current.nextMonth();
     });
 
     expect(result.current.isCurrentMonth).toBe(false);

@@ -40,6 +40,7 @@ import { useLayoutSpacing } from "@/presentation/hooks";
 import { getReportDate } from "@/domain/usecases/transactionUtils";
 import type { Dayjs } from "dayjs";
 import EmptyState from "@/presentation/components/ui/EmptyState";
+import { formatCurrency } from "@/shared/utils/formatters";
 
 interface AdvancedFiltersInfo {
   startDate: Dayjs | null;
@@ -137,14 +138,6 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   
   // Chave do mês atual de referência
   const currentMonthKey = getMonthKey(currentReferenceMonth.year, currentReferenceMonth.month);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
 
   // Dados para gráfico de barras mensal
   // Sem filtro avançado: 3 meses antes + atual + 3 meses depois

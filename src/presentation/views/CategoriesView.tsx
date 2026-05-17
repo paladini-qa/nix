@@ -54,6 +54,7 @@ import {
 import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
 import PaymentMethodImagePicker from "@/presentation/components/ui/PaymentMethodImagePicker";
 import { extractDominantColor, hashColor } from "@/shared/utils/imageColorUtils";
+import { formatCurrency, formatDate } from "@/shared/utils/formatters";
 import TransactionTags from "@/presentation/components/ui/TransactionTags";
 import {
   getTableContainerSx,
@@ -356,18 +357,6 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
     enabled: selectedCategoryTransactions.length > CATEGORIES_VIRTUALIZE_THRESHOLD,
   });
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
-
-  const formatDate = (dateStr: string) => {
-    const [year, month, day] = dateStr.split("-");
-    return `${day}/${month}/${year}`;
-  };
-
   const handleAddCategory = () => {
     if (addCategoryName.trim()) {
       onAddCategory(addCategoryType, addCategoryName.trim());
@@ -461,7 +450,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                 lineHeight: 1.15,
               }}
             >
-              {formatCurrency(summary.total)}
+              {formatCurrency(summary.total, "pt-BR", "BRL", 2)}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: "block" }}>
               {summary.transactionCount} transaç{summary.transactionCount === 1 ? "ão" : "ões"}
@@ -657,7 +646,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                 color={accentColor}
               >
                 {isIncome ? "+" : "-"}
-                {formatCurrency(categoryTotal)}
+                {formatCurrency(categoryTotal, "pt-BR", "BRL", 2)}
               </Typography>
             </Paper>
           </Grid>
@@ -753,7 +742,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   variant="caption"
                   sx={{ color: alpha("#FFFFFF", 0.7) }}
                 >
-                  {formatCurrency(unpaidAmount)} a pagar
+                  {formatCurrency(unpaidAmount, "pt-BR", "BRL", 2)} a pagar
                 </Typography>
               )}
             </Paper>
@@ -869,7 +858,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                           sx={{ flexShrink: 0 }}
                         >
                           {isIncome ? "+" : "-"}{" "}
-                          {formatCurrency(tx.amount || 0)}
+                          {formatCurrency(tx.amount || 0, "pt-BR", "BRL", 2)}
                         </Typography>
                       </Box>
                       <Box
@@ -1039,7 +1028,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                         }}
                       >
                         {isIncome ? "+" : "-"}
-                        {formatCurrency(tx.amount || 0)}
+                        {formatCurrency(tx.amount || 0, "pt-BR", "BRL", 2)}
                       </TableCell>
                       <TableCell sx={{ textAlign: "center" }}>
                         <Tooltip title="Editar">
@@ -1096,7 +1085,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                       }}
                     >
                       {isIncome ? "+" : "-"}
-                      {formatCurrency(categoryTotal)}
+                      {formatCurrency(categoryTotal, "pt-BR", "BRL", 2)}
                     </TableCell>
                     <TableCell />
                   </TableRow>
@@ -1227,7 +1216,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               fontWeight={700}
               color="#059669"
             >
-              {formatCurrency(stats.totalIncome)}
+              {formatCurrency(stats.totalIncome, "pt-BR", "BRL", 2)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {stats.incomeWithActivity} de {stats.incomeCategories} categorias
@@ -1271,7 +1260,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               fontWeight={700}
               color="#DC2626"
             >
-              {formatCurrency(stats.totalExpense)}
+              {formatCurrency(stats.totalExpense, "pt-BR", "BRL", 2)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {stats.expenseWithActivity} de {stats.expenseCategories}{" "}
@@ -1356,7 +1345,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               fontWeight={700}
               color="#FFFFFF"
             >
-              {formatCurrency(stats.balance)}
+              {formatCurrency(stats.balance, "pt-BR", "BRL", 2)}
             </Typography>
             <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.7) }}>
               receitas - despesas
@@ -1391,7 +1380,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               </Typography>
             </Box>
             <Typography variant="h6" fontWeight={700} color="#059669" sx={{ ml: "auto" }}>
-              {formatCurrency(stats.totalIncome)}
+              {formatCurrency(stats.totalIncome, "pt-BR", "BRL", 2)}
             </Typography>
           </Box>
         </Paper>
@@ -1437,7 +1426,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               </Typography>
             </Box>
             <Typography variant="h6" fontWeight={700} color="#DC2626" sx={{ ml: "auto" }}>
-              {formatCurrency(stats.totalExpense)}
+              {formatCurrency(stats.totalExpense, "pt-BR", "BRL", 2)}
             </Typography>
           </Box>
         </Paper>

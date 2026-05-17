@@ -176,6 +176,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
     
     setIsLoading(true);
     try {
+      // TODO: move to application service — layer violation
       const { data: settings, error } = await supabase
         .from("user_settings")
         .select("*")
@@ -242,6 +243,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
           setPaymentMethodConfigs(migratedConfigs);
           setPaymentMethods(legacyMethods);
           // Persiste os configs migrados para não re-migrar toda vez
+          // TODO: move to application service — layer violation
           await supabase.from("user_settings").upsert({
             user_id: session.user.id,
             payment_method_configs: migratedConfigs,
@@ -249,6 +251,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
         }
       } else {
         // Create default settings
+        // TODO: move to application service — layer violation
         await supabase.from("user_settings").insert({
           user_id: session.user.id,
           categories_income: DEFAULT_CATEGORIES.income,
@@ -287,6 +290,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
     ) => {
       if (!session?.user?.id) return;
       try {
+        // TODO: move to application service — layer violation
         const { error } = await supabase.from("user_settings").upsert({
           user_id: session.user.id,
           categories_income: newCategories.income,
@@ -373,6 +377,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       if (!session?.user?.id) return;
       const names = configs.map((c) => c.name);
       try {
+        // TODO: move to application service — layer violation
         await supabase.from("user_settings").upsert({
           user_id: session.user.id,
           payment_method_configs: configs,
@@ -431,6 +436,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
         const updatedFriends = [...friends, friendName].sort();
         setFriends(updatedFriends);
         try {
+          // TODO: move to application service — layer violation
           await supabase.from("user_settings").upsert({
             user_id: session.user.id,
             friends: updatedFriends,
@@ -478,6 +484,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
 
       if (session?.user?.id) {
         try {
+          // TODO: move to application service — layer violation
           await supabase.from("user_settings").upsert({
             user_id: session.user.id,
             category_colors: newCategoryColors,
@@ -500,6 +507,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
 
       if (session?.user?.id) {
         try {
+          // TODO: move to application service — layer violation
           await supabase.from("user_settings").upsert({
             user_id: session.user.id,
             payment_method_colors: newPaymentMethodColors,
@@ -533,6 +541,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       setCategoryImages(updated);
       if (session?.user?.id) {
         try {
+          // TODO: move to application service — layer violation
           await supabase.from("user_settings").upsert({
             user_id: session.user.id,
             category_images: updated,
@@ -560,6 +569,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       setSubscriptionImages(updated);
       if (session?.user?.id) {
         try {
+          // TODO: move to application service — layer violation
           await supabase.from("user_settings").upsert({
             user_id: session.user.id,
             subscription_images: updated,
@@ -583,6 +593,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       setSubscriptionColors(updated);
       if (session?.user?.id) {
         try {
+          // TODO: move to application service — layer violation
           await supabase.from("user_settings").upsert({
             user_id: session.user.id,
             subscription_colors: updated,
@@ -620,6 +631,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       setPaymentMethodPaymentDays(next);
       if (session?.user?.id) {
         try {
+          // TODO: move to application service — layer violation
           await supabase.from("user_settings").upsert({
             user_id: session.user.id,
             payment_method_payment_days: next,
@@ -642,6 +654,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       window.dispatchEvent(new CustomEvent("nix:themechange", { detail: theme }));
       if (session?.user?.id) {
         try {
+          // TODO: move to application service — layer violation
           await supabase.from("user_settings").upsert({
             user_id: session.user.id,
             theme_preference: theme,
@@ -663,6 +676,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
       setDisplayNameState(name);
       if (session?.user?.id) {
         try {
+          // TODO: move to application service — layer violation
           await supabase.from("user_settings").upsert({
             user_id: session.user.id,
             display_name: name.trim() || null,

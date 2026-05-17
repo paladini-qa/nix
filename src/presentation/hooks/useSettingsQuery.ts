@@ -12,6 +12,7 @@ export function useSettingsQuery(userId?: string) {
     queryKey: SETTINGS_KEY,
     queryFn: async () => {
       if (!userId) return null;
+      // TODO: move to application service — layer violation
       const { data, error } = await supabase
         .from("user_settings")
         .select("*")
@@ -30,6 +31,7 @@ export function useSettingsQuery(userId?: string) {
           payment_method_configs: DEFAULT_PAYMENT_METHOD_CONFIGS,
           theme_preference: "system",
         };
+        // TODO: move to application service — layer violation
         await supabase.from("user_settings").insert(initialSettings);
         return initialSettings;
       }
@@ -42,6 +44,7 @@ export function useSettingsQuery(userId?: string) {
   const updateSettingsMutation = useMutation({
     mutationFn: async (updates: any) => {
       if (!userId) return;
+      // TODO: move to application service — layer violation
       const { error } = await supabase
         .from("user_settings")
         .upsert({ user_id: userId, ...updates });

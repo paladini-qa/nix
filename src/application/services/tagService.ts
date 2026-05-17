@@ -1,5 +1,15 @@
 import { supabase } from "@/infrastructure/database/supabaseClient";
 import { Tag, TagWithCount } from "@/domain/entities";
+import { tagSchema } from "@/shared/schemas";
+
+// Tipo que representa a linha retornada pelo Supabase para a tabela tags
+interface DbTag {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string | null;
+  created_at: string;
+}
 
 /**
  * Serviço para gerenciamento de tags
@@ -33,7 +43,7 @@ export const tagService = {
 
     if (error) throw error;
 
-    return (data || []).map((d: any) => ({
+    return (data || []).map((d: DbTag & { transaction_tags?: { count: number }[] }) => ({
       ...mapDbToTag(d),
       transactionCount: d.transaction_tags?.[0]?.count || 0,
     }));
@@ -50,19 +60,21 @@ export const tagService = {
 
     if (error) throw error;
 
-    return (data || []).map((d: any) => mapDbToTag(d.tag));
+    return (data || []).map((d) => mapDbToTag((d as unknown as { tag: DbTag }).tag));
   },
 
   /**
    * Cria uma nova tag
    */
   async create(userId: string, tag: Omit<Tag, "id" | "createdAt">): Promise<Tag> {
+    const validated = tagSchema.parse(tag);
+
     const { data, error } = await supabase
       .from("tags")
       .insert({
         user_id: userId,
-        name: tag.name,
-        color: tag.color,
+        name: validated.name,
+        color: validated.color,
       })
       .select()
       .single();
@@ -76,9 +88,11 @@ export const tagService = {
    * Atualiza uma tag
    */
   async update(id: string, updates: Partial<Omit<Tag, "id" | "createdAt">>): Promise<Tag> {
-    const dbUpdates: Record<string, any> = {};
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.color !== undefined) dbUpdates.color = updates.color;
+    const validated = tagSchema.partial().parse(updates);
+
+    const dbUpdates: Record<string, unknown> = {};
+    if (validated.name !== undefined) dbUpdates.name = validated.name;
+    if (validated.color !== undefined) dbUpdates.color = validated.color;
 
     const { data, error } = await supabase
       .from("tags")
@@ -178,7 +192,7 @@ export const tagService = {
 };
 
 // Helper para mapear dados do banco
-function mapDbToTag(data: any): Tag {
+function mapDbToTag(data: DbTag): Tag {
   return {
     id: data.id,
     name: data.name,

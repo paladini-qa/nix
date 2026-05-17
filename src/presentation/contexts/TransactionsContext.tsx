@@ -71,6 +71,7 @@ export const TransactionsProvider: React.FC<TransactionsProviderProps> = ({
 
     setIsLoading(true);
     try {
+      // TODO: move to application service — layer violation
       const { data: txs, error } = await supabase
         .from("transactions")
         .select("*")

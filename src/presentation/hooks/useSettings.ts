@@ -60,6 +60,7 @@ export function useSettings() {
     setError(null);
 
     try {
+      // TODO: move to application service — layer violation
       const { data: settings, error: fetchError } = await supabase
         .from("user_settings")
         .select("*")
@@ -90,6 +91,7 @@ export function useSettings() {
         }
       } else {
         // Cria configurações padrão para novo usuário
+        // TODO: move to application service — layer violation
         await supabase.from("user_settings").insert({
           user_id: userId,
           categories_income: DEFAULT_CATEGORIES.income,
@@ -114,6 +116,7 @@ export function useSettings() {
       newPaymentMethods: string[]
     ) => {
       try {
+        // TODO: move to application service — layer violation
         const { error } = await supabase.from("user_settings").upsert({
           user_id: userId,
           categories_income: newCategories.income,
@@ -201,6 +204,7 @@ export function useSettings() {
     async (userId: string, theme: ThemePreference) => {
       setThemePreferenceState(theme);
       try {
+        // TODO: move to application service — layer violation
         const { error } = await supabase.from("user_settings").upsert({
           user_id: userId,
           theme_preference: theme,
@@ -218,6 +222,7 @@ export function useSettings() {
   const setDisplayName = useCallback(async (userId: string, name: string) => {
     setDisplayNameState(name);
     try {
+      // TODO: move to application service — layer violation
       const { error } = await supabase.from("user_settings").upsert({
         user_id: userId,
         display_name: name.trim() || null,
@@ -247,6 +252,7 @@ export function useSettings() {
       setCategoryColors(newCategoryColors);
 
       try {
+        // TODO: move to application service — layer violation
         await supabase.from("user_settings").upsert({
           user_id: userId,
           category_colors: newCategoryColors,
@@ -269,6 +275,7 @@ export function useSettings() {
       setPaymentMethodColors(newPaymentMethodColors);
 
       try {
+        // TODO: move to application service — layer violation
         await supabase.from("user_settings").upsert({
           user_id: userId,
           payment_method_colors: newPaymentMethodColors,
@@ -309,6 +316,7 @@ export function useSettings() {
     setPaymentMethodColors({});
 
     try {
+      // TODO: move to application service — layer violation
       await supabase.from("user_settings").upsert({
         user_id: userId,
         categories_income: DEFAULT_CATEGORIES.income,

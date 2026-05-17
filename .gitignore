@@ -35,6 +35,8 @@ skills
 *.sln
 *.sw?
 .env
+.env.local
+.env.*.local
 
 # Capacitor - Android build files
 android/app/build/

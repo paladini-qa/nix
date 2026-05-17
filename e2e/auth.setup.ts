@@ -17,8 +17,8 @@ setup("autenticar usuário de teste", async ({ page }) => {
 
   await page.goto("/");
 
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Senha").fill(password);
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Senha", { exact: true }).fill(password);
   await page.locator('button[type="submit"]').click();
 
   await page.waitForURL("**/dashboard", { timeout: 20_000 });

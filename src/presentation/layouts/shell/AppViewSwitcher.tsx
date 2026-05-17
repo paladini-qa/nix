@@ -40,6 +40,7 @@ const InvestmentsView = lazy(() => import("@/presentation/views/InvestmentsView"
 const SubscriptionsView = lazy(() => import("@/presentation/views/SubscriptionsView"));
 const NotificationsView = lazy(() => import("@/presentation/views/NotificationsView"));
 const PaymentGuideView = lazy(() => import("@/presentation/views/PaymentGuideView"));
+const AccountsView = lazy(() => import("@/presentation/views/AccountsView"));
 
 const ViewLoadingMui: React.FC = () => (
   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 8 }}>
@@ -663,6 +664,15 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
         return (
           <Suspense fallback={<ViewLoadingMui />}>
             <NotificationsView onNavigate={handleNavigate} />
+          </Suspense>
+        );
+      case "accounts":
+        return (
+          <Suspense fallback={<ViewLoadingMui />}>
+            <AccountsView
+              userId={session.user.id}
+              transactions={transactions}
+            />
           </Suspense>
         );
       case "paymentGuide":

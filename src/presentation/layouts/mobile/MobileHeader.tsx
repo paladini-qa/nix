@@ -1,5 +1,5 @@
 import React from "react";
-import logoUrl from "../../assets/logo.png";
+import logoUrl from "../../../assets/logo.png";
 import { Box, Badge, useTheme, alpha } from "@mui/material";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Bell } from "lucide-react";
