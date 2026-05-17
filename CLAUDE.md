@@ -95,6 +95,21 @@ This project follows a "Human & Organic" design philosophy — artisan UI, never
 - Use `alpha()` helper for transparencies
 - Use `sx` prop for quick styles; define tokens in `theme.ts` and `brand.ts`
 
+## Development methodology
+
+This project follows **TDD (Test-Driven Development)** using the Red-Green-Refactor cycle:
+
+1. **Red** — write a failing test that describes the desired behavior before writing any implementation code
+2. **Green** — write the minimum production code necessary to make the test pass
+3. **Refactor** — clean up the implementation (and tests) without changing behavior; all tests must remain green
+
+Rules:
+- Never write production code without a failing test driving it
+- One failing test at a time — do not write multiple failing tests before going green
+- Run `npm run test` (watch mode) continuously while developing
+- Tests live in `tests/` mirroring the `src/` structure (e.g. `src/domain/usecases/foo.ts` → `tests/utils/foo.test.ts`)
+- Pure functions (domain/usecases, shared/utils) must have unit tests; no mocking unless external I/O is involved
+
 ## Code conventions
 
 - Functional components typed as `React.FC<Props>`, one per file in PascalCase
