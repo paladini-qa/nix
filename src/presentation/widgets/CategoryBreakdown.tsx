@@ -1,37 +1,15 @@
-import React, { useContext, useLayoutEffect, useRef, useState } from "react";
+import React from "react";
 import {
   Box,
-  Paper,
   Typography,
-  Grid,
   useTheme,
-  useMediaQuery,
   alpha,
 } from "@mui/material";
 import {
-  TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
-  CreditCard as CreditCardIcon,
 } from "@mui/icons-material";
-import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-} from "recharts";
-import { useTranslation } from "react-i18next";
 import { Transaction, TransactionType } from "@/domain/entities";
 import { useSettings } from "@/presentation/contexts";
-import { useLayoutSpacing } from "@/presentation/hooks";
-
-interface PieDataItem {
-  name: string;
-  value: number;
-  color: string;
-  secondaryColor: string;
-  imageUrl?: string;
-}
 
 interface CategoryBreakdownProps {
   transactions: Transaction[];
@@ -42,288 +20,105 @@ interface CategoryBreakdownProps {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
+const formatCompact = (value: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 }).format(value);
 
-// ─── Card reutilizável ────────────────────────────────────────────────────────
+// ─── Componente interno — barra de categoria ─────────────────────────────────
 
-interface PieChartCardProps {
-  title: string;
-  icon: React.ReactNode;
-  accentColor: string;
-  data: PieDataItem[];
+interface BarRowProps {
+  name: string;
+  amount: number;
   total: number;
-  centerLabel: string;
-  emptyMessage: string;
-  totalLabel?: string;
-  totalColor?: string;
-  onSliceClick?: (name: string) => void;
+  color: string;
+  icon?: string;
+  onClick?: () => void;
 }
 
-const PieChartCard: React.FC<PieChartCardProps> = ({
-  title,
-  icon,
-  accentColor,
-  data,
-  total,
-  centerLabel,
-  emptyMessage,
-  totalLabel = "Total",
-  totalColor = "text.primary",
-  onSliceClick,
-}) => {
+const BarRow: React.FC<BarRowProps> = ({ name, amount, total, color, onClick }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isDarkMode = theme.palette.mode === "dark";
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
-  // Medir largura real do container para passar ao PieChart diretamente
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [chartWidth, setChartWidth] = useState(0);
-  const chartHeight = isMobile ? 190 : 230;
-
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const measure = () => {
-      const w = el.getBoundingClientRect().width || el.offsetWidth;
-      if (w > 0) setChartWidth(w);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  const tooltipStyle = {
-    borderRadius: "12px",
-    border: "none",
-    backgroundColor: isDarkMode ? "rgba(15,23,42,0.95)" : "rgba(255,255,255,0.98)",
-    color: isDarkMode ? "#f1f5f9" : "#0f172a",
-    boxShadow: "0 10px 25px -5px rgba(0,0,0,0.2)",
-    fontSize: 13,
-    padding: "8px 12px",
-  };
+  const isDark = theme.palette.mode === "dark";
+  const bgSubtle = isDark ? "#1c1c22" : "#f4f4f5";
+  const pct = total > 0 ? (amount / total) * 100 : 0;
 
   return (
-    <Paper
-      elevation={0}
+    <Box
+      onClick={onClick}
       sx={{
-        p: isMobile ? 1.5 : 2.5,
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        background: isDarkMode
-          ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-          : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-        backdropFilter: "blur(16px)",
-        border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-        borderRadius: isMobile ? "16px" : "20px",
-        boxShadow: `0 6px 24px -6px ${alpha(accentColor, 0.18)}`,
+        display: "grid",
+        gridTemplateColumns: "36px 110px 1fr 80px",
+        gap: "12px",
+        alignItems: "center",
+        py: "8px",
+        cursor: onClick ? "pointer" : "default",
+        transition: "opacity 0.12s",
+        "&:hover": onClick ? { opacity: 0.8 } : {},
       }}
     >
-      {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: isMobile ? 1 : 1.5, mb: 2 }}>
-        <Box
-          sx={{
-            p: isMobile ? 0.75 : 1,
-            borderRadius: isMobile ? "12px" : "20px",
-            bgcolor: alpha(accentColor, 0.12),
-            display: "flex",
-          }}
-        >
-          {icon}
-        </Box>
-        <Typography
-          variant="subtitle1"
-          fontWeight={600}
-          sx={{ fontSize: isMobile ? 14 : undefined }}
-        >
-          {title}
-        </Typography>
-      </Box>
-
-      {/* Container do chart sempre no DOM para que o useLayoutEffect meça corretamente */}
+      {/* Ícone */}
       <Box
-        ref={containerRef}
         sx={{
-          position: "relative",
-          height: data.length === 0 ? "auto" : chartHeight,
-          minHeight: data.length === 0 ? 80 : undefined,
-          width: "100%",
-          flexShrink: 0,
-          display: data.length === 0 ? "flex" : "block",
+          width: 32,
+          height: 32,
+          borderRadius: "10px",
+          background: alpha(color, isDark ? 0.2 : 0.14),
+          color,
+          display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          py: data.length === 0 ? 3 : 0,
+          flexShrink: 0,
         }}
       >
-        {data.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" textAlign="center">
-            {emptyMessage}
-          </Typography>
-        ) : (
-          <>
-            {chartWidth > 0 && (
-              <PieChart width={chartWidth} height={chartHeight} style={{ position: "absolute", top: 0, left: 0 }}>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={isMobile ? 52 : 68}
-                  outerRadius={isMobile ? 78 : 98}
-                  paddingAngle={2}
-                  dataKey="value"
-                  stroke="none"
-                  onMouseEnter={(_entry, index) => setActiveIndex(index)}
-                  onMouseLeave={() => setActiveIndex(null)}
-                  onClick={(entry) => onSliceClick?.(entry.name as string)}
-                >
-                  {data.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.color}
-                      opacity={activeIndex === null || activeIndex === index ? 1 : 0.4}
-                      style={{ cursor: onSliceClick ? "pointer" : "default", outline: "none" }}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: unknown) => [formatCurrency(value as number), ""]}
-                  separator=""
-                  contentStyle={tooltipStyle}
-                  itemStyle={{ color: isDarkMode ? "#e2e8f0" : "#334155" }}
-                  wrapperStyle={{ zIndex: 9999 }}
-                  cursor={false}
-                />
-              </PieChart>
-            )}
-
-            {/* Total no centro do donut */}
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                textAlign: "center",
-                pointerEvents: "none",
-                userSelect: "none",
-              }}
-            >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", fontSize: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}
-              >
-                {centerLabel}
-              </Typography>
-              <Typography
-                variant="body2"
-                fontWeight={700}
-                sx={{ fontSize: isMobile ? 13 : 15, color: accentColor, lineHeight: 1.3 }}
-              >
-                {formatCurrency(total)}
-              </Typography>
-            </Box>
-          </>
-        )}
+        <TrendingDownIcon sx={{ fontSize: 14, color }} />
       </Box>
 
-      {/* Legenda interativa - só quando há dados */}
-      {data.length > 0 && (
-        <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.25, flex: 1 }}>
-          {data.map((item, index) => {
-              const pct = total > 0 ? (item.value / total) * 100 : 0;
-              const isActive = activeIndex === index;
+      {/* Label */}
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 600,
+          color: isDark ? "#fafafa" : "#18181b",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {name}
+      </Typography>
 
-              return (
-                <Box
-                  key={item.name}
-                  onClick={() => onSliceClick?.(item.name)}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  onMouseLeave={() => setActiveIndex(null)}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    py: 0.6,
-                    px: 1,
-                    borderRadius: "10px",
-                    cursor: onSliceClick ? "pointer" : "default",
-                    transition: "all 0.15s ease",
-                    bgcolor: isActive ? alpha(item.color, 0.1) : "transparent",
-                    border: `1px solid ${isActive ? alpha(item.color, 0.25) : "transparent"}`,
-                    "&:hover": onSliceClick
-                      ? { bgcolor: alpha(item.color, 0.1), border: `1px solid ${alpha(item.color, 0.25)}` }
-                      : {},
-                  }}
-                >
-                  <PaymentMethodIcon
-                    imageUrl={item.imageUrl}
-                    colors={{ primary: item.color, secondary: item.secondaryColor }}
-                    size={22}
-                    borderRadius="7px"
-                    iconSize={12}
-                    sx={{
-                      flexShrink: 0,
-                      boxShadow: isActive ? `0 0 8px ${alpha(item.color, 0.5)}` : "none",
-                      transition: "box-shadow 0.15s ease",
-                    }}
-                  />
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      variant="caption"
-                      fontWeight={isActive ? 600 : 500}
-                      noWrap
-                      sx={{ display: "block", color: isActive ? item.color : "text.primary", transition: "color 0.15s ease" }}
-                    >
-                      {item.name}
-                    </Typography>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                      <Typography
-                        variant="caption"
-                        fontWeight={600}
-                        sx={{ color: item.color, fontSize: 11 }}
-                      >
-                        {formatCurrency(item.value)}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "text.disabled", fontSize: 10 }}
-                      >
-                        {pct.toFixed(0)}%
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              );
-            })}
+      {/* Barra de progresso */}
+      <Box
+        sx={{
+          height: "8px",
+          background: bgSubtle,
+          borderRadius: "99px",
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            height: "100%",
+            borderRadius: "99px",
+            background: color,
+            width: `${pct}%`,
+            transition: "width 0.6s ease",
+          }}
+        />
+      </Box>
 
-            {/* Linha de total */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                pt: 1,
-                mt: 0.5,
-                borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              }}
-            >
-              <Typography
-                variant="caption"
-                fontWeight={500}
-                color="text.secondary"
-                sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 10 }}
-              >
-                {totalLabel}
-              </Typography>
-              <Typography variant="body2" fontWeight={700} color={totalColor}>
-                {formatCurrency(total)}
-              </Typography>
-            </Box>
-          </Box>
-        )}
-    </Paper>
+      {/* Valor */}
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 700,
+          textAlign: "right",
+          fontVariantNumeric: "tabular-nums",
+          color: isDark ? "#fafafa" : "#18181b",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {formatCompact(amount)}
+      </Typography>
+    </Box>
   );
 };
 
@@ -331,33 +126,20 @@ const PieChartCard: React.FC<PieChartCardProps> = ({
 
 const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   transactions,
-  onPaymentMethodClick,
   onCategoryClick,
 }) => {
-  const { t } = useTranslation();
-  const { getCategoryColor, getPaymentMethodColor, getCategoryImage, getPaymentMethodConfig } = useSettings();
-  const { gridSpacing } = useLayoutSpacing();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isDark = theme.palette.mode === "dark";
+  const { getCategoryColor } = useSettings();
 
-  // ── Income by category ──
-  const incomeByCategory = transactions
-    .filter((t) => t.type === "income")
-    .reduce((acc, curr) => {
-      acc[curr.category] = (acc[curr.category] || 0) + (curr.amount || 0);
-      return acc;
-    }, {} as Record<string, number>);
+  const bgElev   = isDark ? "#131317" : "#ffffff";
+  const border   = isDark ? "#27272d" : "#e4e4e7";
+  const borderSub = isDark ? "#1c1c22" : "#f1f1f4";
+  const shadowSm = isDark
+    ? "0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2)"
+    : "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)";
 
-  const incomeData: PieDataItem[] = Object.entries(incomeByCategory)
-    .sort(([, a], [, b]) => b - a)
-    .map(([name, value]) => {
-      const c = getCategoryColor("income", name);
-      return { name, value, color: c.primary, secondaryColor: c.secondary, imageUrl: getCategoryImage("income", name) };
-    });
-
-  const totalIncome = incomeData.reduce((s, d) => s + d.value, 0);
-
-  // ── Expense by category ──
+  // Despesas por categoria
   const expenseByCategory = transactions
     .filter((t) => t.type === "expense")
     .reduce((acc, curr) => {
@@ -365,102 +147,98 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
       return acc;
     }, {} as Record<string, number>);
 
-  const expenseData: PieDataItem[] = Object.entries(expenseByCategory)
+  const expenseRows = Object.entries(expenseByCategory)
     .sort(([, a], [, b]) => b - a)
-    .map(([name, value]) => {
-      const c = getCategoryColor("expense", name);
-      return { name, value, color: c.primary, secondaryColor: c.secondary, imageUrl: getCategoryImage("expense", name) };
-    });
+    .slice(0, 6)
+    .map(([name, amount]) => ({
+      name,
+      amount,
+      color: getCategoryColor("expense", name).primary,
+    }));
 
-  const totalExpense = expenseData.reduce((s, d) => s + d.value, 0);
+  const totalExpense = expenseRows.reduce((s, r) => s + r.amount, 0);
 
-  // ── Expense by payment method ──
-  const expenseByPaymentMethod = transactions
-    .filter((t) => t.type === "expense")
-    .reduce((acc, curr) => {
-      acc[curr.paymentMethod] = (acc[curr.paymentMethod] || 0) + (curr.amount || 0);
-      return acc;
-    }, {} as Record<string, number>);
-
-  const paymentData: PieDataItem[] = Object.entries(expenseByPaymentMethod)
-    .sort(([, a], [, b]) => b - a)
-    .map(([name, value]) => {
-      const c = getPaymentMethodColor(name);
-      return { name, value, color: c.primary, secondaryColor: c.secondary, imageUrl: getPaymentMethodConfig(name)?.imageUrl };
-    });
-
-  const totalPayment = paymentData.reduce((s, d) => s + d.value, 0);
+  if (expenseRows.length === 0) return null;
 
   return (
-    <Grid container spacing={gridSpacing}>
-      {/* Income by Category */}
-      <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-        <PieChartCard
-          title={t("dashboard.incomeByCategory")}
-          icon={
-            <TrendingUpIcon
-              sx={{ fontSize: isMobile ? 18 : 22, color: "#059669" }}
-            />
-          }
-          accentColor="#059669"
-          data={incomeData}
-          total={totalIncome}
-          centerLabel="Receitas"
-          emptyMessage="Nenhuma receita neste período"
-          totalLabel="Total receitas"
-          totalColor="success.main"
-          onSliceClick={
-            onCategoryClick
-              ? (name) => onCategoryClick(name, "income")
-              : undefined
-          }
-        />
-      </Grid>
+    <Box
+      sx={{
+        background: bgElev,
+        border: `1px solid ${border}`,
+        borderRadius: "14px",
+        boxShadow: shadowSm,
+        overflow: "hidden",
+      }}
+    >
+      {/* Cabeçalho */}
+      <Box
+        sx={{
+          px: "18px",
+          pt: "16px",
+          pb: "14px",
+          borderBottom: `1px solid ${borderSub}`,
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: 16,
+            fontWeight: 700,
+            letterSpacing: "-0.01em",
+            color: isDark ? "#fafafa" : "#18181b",
+          }}
+        >
+          Despesas por categoria
+        </Typography>
+      </Box>
 
-      {/* Expense by Category */}
-      <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-        <PieChartCard
-          title={t("dashboard.expensesByCategory")}
-          icon={
-            <TrendingDownIcon
-              sx={{ fontSize: isMobile ? 18 : 22, color: "#DC2626" }}
-            />
-          }
-          accentColor="#DC2626"
-          data={expenseData}
-          total={totalExpense}
-          centerLabel="Despesas"
-          emptyMessage="Nenhuma despesa neste período"
-          totalLabel="Total despesas"
-          totalColor="error.main"
-          onSliceClick={
-            onCategoryClick
-              ? (name) => onCategoryClick(name, "expense")
-              : undefined
-          }
-        />
-      </Grid>
+      {/* Linhas de barra */}
+      <Box sx={{ px: "18px", py: "6px" }}>
+        {expenseRows.map((row) => (
+          <BarRow
+            key={row.name}
+            name={row.name}
+            amount={row.amount}
+            total={totalExpense}
+            color={row.color}
+            onClick={onCategoryClick ? () => onCategoryClick(row.name, "expense") : undefined}
+          />
+        ))}
+      </Box>
 
-      {/* Expense by Payment Method */}
-      <Grid size={{ xs: 12, md: 12, xl: 4 }}>
-        <PieChartCard
-          title={t("dashboard.expensesByPaymentMethod")}
-          icon={
-            <CreditCardIcon
-              sx={{ fontSize: isMobile ? 18 : 22, color: "#6366f1" }}
-            />
-          }
-          accentColor="#6366f1"
-          data={paymentData}
-          total={totalPayment}
-          centerLabel="Pagamentos"
-          emptyMessage="Nenhuma despesa neste período"
-          totalLabel="Total pagamentos"
-          totalColor="primary.main"
-          onSliceClick={onPaymentMethodClick}
-        />
-      </Grid>
-    </Grid>
+      {/* Rodapé — total */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          px: "18px",
+          py: "12px",
+          borderTop: `1px solid ${borderSub}`,
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: isDark ? "#71717a" : "#a1a1aa",
+          }}
+        >
+          Total despesas
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: 14,
+            fontWeight: 700,
+            fontVariantNumeric: "tabular-nums",
+            color: "#ef4444",
+          }}
+        >
+          {formatCurrency(totalExpense)}
+        </Typography>
+      </Box>
+    </Box>
   );
 };
 

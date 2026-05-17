@@ -30,11 +30,11 @@ import {
   Checkbox,
   Tooltip,
   alpha,
-  Card,
-  CardContent,
   SwipeableDrawer,
   Divider,
   Stack,
+  Card,
+  CardContent,
 } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -639,417 +639,202 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
       </Box>
 
-      {/* Summary Cards - Modern Compact Style */}
+      {/* Summary Cards */}
       <Grid container spacing={gridSpacing}>
         {/* Balance Card */}
         <Grid size={{ xs: 12, sm: 4 }}>
-          <Card
+          <Paper
             elevation={0}
             sx={{
               position: "relative",
               overflow: "hidden",
+              p: isMobile ? "14px" : "18px",
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(
-                    theme.palette.background.paper,
-                    0.7
-                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
-                    "#FFFFFF",
-                    0.6
-                  )} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-              }`,
+                ? alpha(theme.palette.background.paper, 0.8)
+                : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
               boxShadow: isDarkMode
-                ? `0 6px 24px -6px ${alpha(
-                    balance >= 0 ? "#059669" : "#DC2626",
-                    0.2
-                  )}`
-                : `0 6px 24px -6px ${alpha(
-                    balance >= 0 ? "#059669" : "#DC2626",
-                    0.15
-                  )}`,
-              borderRadius: "16px",
+                ? `0 4px 16px -4px ${alpha(balance >= 0 ? "#a855f7" : "#ef4444", 0.25)}`
+                : `0 4px 16px -4px ${alpha(balance >= 0 ? "#a855f7" : "#ef4444", 0.15)}`,
+              borderRadius: "14px",
               transition: "all 0.2s ease-in-out",
-              "&:hover": {
-                transform: "translateY(-2px)",
-                boxShadow: isDarkMode
-                  ? `0 10px 32px -6px ${alpha(
-                      balance >= 0 ? "#059669" : "#DC2626",
-                      0.3
-                    )}`
-                  : `0 10px 32px -6px ${alpha(
-                      balance >= 0 ? "#059669" : "#DC2626",
-                      0.25
-                    )}`,
-              },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background:
-                  balance >= 0
-                    ? isDarkMode
-                      ? "linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%)"
-                      : "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
-                    : isDarkMode
-                    ? "linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(239, 68, 68, 0.06) 100%)"
-                    : "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
-                pointerEvents: "none",
-                zIndex: 0,
-              },
+              "&:hover": { transform: "translateY(-2px)" },
             }}
           >
-            <CardContent
+            {/* Absolute icon — top-right */}
+            <Box
               sx={{
-                position: "relative",
-                zIndex: 1,
-                p: isMobile ? 1.5 : 2,
-                "&:last-child": { pb: isMobile ? 1.5 : 2 },
+                position: "absolute",
+                top: 14,
+                right: 14,
+                width: 38,
+                height: 38,
+                borderRadius: "11px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12),
+                color: "#a855f7",
               }}
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 1.5,
-                }}
-              >
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography
-                    variant="overline"
-                    sx={{
-                      color: "text.secondary",
-                      letterSpacing: "0.08em",
-                      fontSize: isMobile ? 10 : 11,
-                      fontWeight: 600,
-                      display: "block",
-                      mb: 0.25,
-                    }}
-                  >
-                    Current Balance
-                  </Typography>
-                  <Typography
-                    variant={isMobile ? "h6" : "h5"}
-                    sx={{
-                      fontWeight: 700,
-                      color: "text.primary",
-                      letterSpacing: "-0.02em",
-                      lineHeight: 1.2,
-                      wordBreak: "break-all",
-                    }}
-                  >
-                    {formatCurrency(balance)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: isMobile ? 36 : 42,
-                    height: isMobile ? 36 : 42,
-                    borderRadius: "14px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    background: isDarkMode
-                      ? `linear-gradient(135deg, ${alpha(
-                          balance >= 0 ? "#059669" : "#DC2626",
-                          0.2
-                        )} 0%, ${alpha(
-                          balance >= 0 ? "#059669" : "#DC2626",
-                          0.1
-                        )} 100%)`
-                      : `linear-gradient(135deg, ${
-                          balance >= 0 ? "#D1FAE5" : "#FEE2E2"
-                        } 0%, ${alpha(
-                          balance >= 0 ? "#D1FAE5" : "#FEE2E2",
-                          0.6
-                        )} 100%)`,
-                    border: `1px solid ${
-                      isDarkMode
-                        ? alpha(balance >= 0 ? "#059669" : "#DC2626", 0.2)
-                        : alpha(balance >= 0 ? "#059669" : "#DC2626", 0.15)
-                    }`,
-                    boxShadow: isDarkMode
-                      ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
-                      : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
-                  }}
-                >
-                  <WalletIcon
-                    sx={{
-                      fontSize: isMobile ? 18 : 22,
-                      color: balance >= 0 ? "#059669" : "#DC2626",
-                    }}
-                  />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+              <WalletIcon sx={{ fontSize: 20 }} />
+            </Box>
+
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "text.secondary",
+                mb: "6px",
+              }}
+            >
+              Current Balance
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: isMobile ? 22 : 26,
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
+                color: "#a855f7",
+                fontVariantNumeric: "tabular-nums",
+                pr: 6,
+              }}
+            >
+              {formatCurrency(balance)}
+            </Typography>
+          </Paper>
         </Grid>
 
         {/* Income Card */}
         <Grid size={{ xs: 6, sm: 4 }}>
-          <Card
+          <Paper
             elevation={0}
             sx={{
               position: "relative",
               overflow: "hidden",
+              p: isMobile ? "14px" : "18px",
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(
-                    theme.palette.background.paper,
-                    0.7
-                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
-                    "#FFFFFF",
-                    0.6
-                  )} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-              }`,
+                ? alpha(theme.palette.background.paper, 0.8)
+                : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
               boxShadow: isDarkMode
-                ? `0 6px 24px -6px ${alpha("#059669", 0.2)}`
-                : `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
-              borderRadius: "16px",
+                ? `0 4px 16px -4px ${alpha("#10b981", 0.25)}`
+                : `0 4px 16px -4px ${alpha("#10b981", 0.15)}`,
+              borderRadius: "14px",
               transition: "all 0.2s ease-in-out",
-              "&:hover": {
-                transform: "translateY(-2px)",
-                boxShadow: isDarkMode
-                  ? `0 10px 32px -6px ${alpha("#059669", 0.3)}`
-                  : `0 10px 32px -6px ${alpha("#059669", 0.25)}`,
-              },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: isDarkMode
-                  ? "linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(16, 185, 129, 0.04) 100%)"
-                  : "linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%)",
-                pointerEvents: "none",
-                zIndex: 0,
-              },
+              "&:hover": { transform: "translateY(-2px)" },
             }}
           >
-            <CardContent
+            <Box
               sx={{
-                position: "relative",
-                zIndex: 1,
-                p: isMobile ? 1.5 : 2,
-                "&:last-child": { pb: isMobile ? 1.5 : 2 },
+                position: "absolute",
+                top: 14,
+                right: 14,
+                width: 38,
+                height: 38,
+                borderRadius: "11px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12),
+                color: "#10b981",
               }}
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography
-                    variant="overline"
-                    sx={{
-                      color: "text.secondary",
-                      letterSpacing: "0.08em",
-                      fontSize: isMobile ? 10 : 11,
-                      fontWeight: 600,
-                      display: "block",
-                      mb: 0.25,
-                    }}
-                  >
-                    Income
-                  </Typography>
-                  <Typography
-                    variant={isMobile ? "body1" : "h6"}
-                    sx={{
-                      fontWeight: 700,
-                      color: "text.primary",
-                      letterSpacing: "-0.02em",
-                      lineHeight: 1.2,
-                      wordBreak: "break-all",
-                    }}
-                  >
-                    {formatCurrency(totalIncome)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: isMobile ? 32 : 38,
-                    height: isMobile ? 32 : 38,
-                    borderRadius: "12px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    background: isDarkMode
-                      ? `linear-gradient(135deg, ${alpha(
-                          "#059669",
-                          0.2
-                        )} 0%, ${alpha("#059669", 0.1)} 100%)`
-                      : `linear-gradient(135deg, #D1FAE5 0%, ${alpha(
-                          "#D1FAE5",
-                          0.6
-                        )} 100%)`,
-                    border: `1px solid ${
-                      isDarkMode
-                        ? alpha("#059669", 0.2)
-                        : alpha("#059669", 0.15)
-                    }`,
-                    boxShadow: isDarkMode
-                      ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
-                      : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
-                  }}
-                >
-                  <TrendingUpIcon
-                    sx={{
-                      fontSize: isMobile ? 16 : 20,
-                      color: "#059669",
-                    }}
-                  />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+              <TrendingUpIcon sx={{ fontSize: 20 }} />
+            </Box>
+
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "text.secondary",
+                mb: "6px",
+              }}
+            >
+              Income
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: isMobile ? 22 : 26,
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
+                color: "#10b981",
+                fontVariantNumeric: "tabular-nums",
+                pr: 6,
+              }}
+            >
+              {formatCurrency(totalIncome)}
+            </Typography>
+          </Paper>
         </Grid>
 
         {/* Expense Card */}
         <Grid size={{ xs: 6, sm: 4 }}>
-          <Card
+          <Paper
             elevation={0}
             sx={{
               position: "relative",
               overflow: "hidden",
+              p: isMobile ? "14px" : "18px",
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(
-                    theme.palette.background.paper,
-                    0.7
-                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
-                    "#FFFFFF",
-                    0.6
-                  )} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-              }`,
+                ? alpha(theme.palette.background.paper, 0.8)
+                : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
               boxShadow: isDarkMode
-                ? `0 6px 24px -6px ${alpha("#DC2626", 0.2)}`
-                : `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
-              borderRadius: "16px",
+                ? `0 4px 16px -4px ${alpha("#ef4444", 0.25)}`
+                : `0 4px 16px -4px ${alpha("#ef4444", 0.15)}`,
+              borderRadius: "14px",
               transition: "all 0.2s ease-in-out",
-              "&:hover": {
-                transform: "translateY(-2px)",
-                boxShadow: isDarkMode
-                  ? `0 10px 32px -6px ${alpha("#DC2626", 0.3)}`
-                  : `0 10px 32px -6px ${alpha("#DC2626", 0.25)}`,
-              },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: isDarkMode
-                  ? "linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(239, 68, 68, 0.04) 100%)"
-                  : "linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%)",
-                pointerEvents: "none",
-                zIndex: 0,
-              },
+              "&:hover": { transform: "translateY(-2px)" },
             }}
           >
-            <CardContent
+            <Box
               sx={{
-                position: "relative",
-                zIndex: 1,
-                p: isMobile ? 1.5 : 2,
-                "&:last-child": { pb: isMobile ? 1.5 : 2 },
+                position: "absolute",
+                top: 14,
+                right: 14,
+                width: 38,
+                height: 38,
+                borderRadius: "11px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: alpha("#ef4444", isDarkMode ? 0.2 : 0.12),
+                color: "#ef4444",
               }}
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography
-                    variant="overline"
-                    sx={{
-                      color: "text.secondary",
-                      letterSpacing: "0.08em",
-                      fontSize: isMobile ? 10 : 11,
-                      fontWeight: 600,
-                      display: "block",
-                      mb: 0.25,
-                    }}
-                  >
-                    Expenses
-                  </Typography>
-                  <Typography
-                    variant={isMobile ? "body1" : "h6"}
-                    sx={{
-                      fontWeight: 700,
-                      color: "text.primary",
-                      letterSpacing: "-0.02em",
-                      lineHeight: 1.2,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {formatCurrency(totalExpense)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: isMobile ? 32 : 38,
-                    height: isMobile ? 32 : 38,
-                    borderRadius: "12px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    background: isDarkMode
-                      ? `linear-gradient(135deg, ${alpha(
-                          "#DC2626",
-                          0.2
-                        )} 0%, ${alpha("#DC2626", 0.1)} 100%)`
-                      : `linear-gradient(135deg, #FEE2E2 0%, ${alpha(
-                          "#FEE2E2",
-                          0.6
-                        )} 100%)`,
-                    border: `1px solid ${
-                      isDarkMode
-                        ? alpha("#DC2626", 0.2)
-                        : alpha("#DC2626", 0.15)
-                    }`,
-                    boxShadow: isDarkMode
-                      ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
-                      : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
-                  }}
-                >
-                  <TrendingDownIcon
-                    sx={{
-                      fontSize: isMobile ? 16 : 20,
-                      color: "#DC2626",
-                    }}
-                  />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+              <TrendingDownIcon sx={{ fontSize: 20 }} />
+            </Box>
+
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "text.secondary",
+                mb: "6px",
+              }}
+            >
+              Expenses
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: isMobile ? 22 : 26,
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
+                color: "#ef4444",
+                fontVariantNumeric: "tabular-nums",
+                pr: 6,
+              }}
+            >
+              {formatCurrency(totalExpense)}
+            </Typography>
+          </Paper>
         </Grid>
       </Grid>
 

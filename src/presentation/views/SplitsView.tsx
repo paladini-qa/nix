@@ -1434,170 +1434,159 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
       {/* Summary Cards */}
       <Grid container spacing={gridSpacing}>
+        {/* In Progress */}
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
-              borderRadius: "16px",
-              border: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-              }`,
-              background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(
-                    theme.palette.background.paper,
-                    0.7
-                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
-                    "#FFFFFF",
-                    0.6
-                  )} 100%)`,
-              backdropFilter: "blur(16px)",
+              position: "relative",
+              overflow: "hidden",
+              p: isMobile ? "14px" : "18px",
+              borderRadius: "14px",
+              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+              boxShadow: isDarkMode
+                ? `0 4px 16px -4px ${alpha("#f59e0b", 0.25)}`
+                : `0 4px 16px -4px ${alpha("#f59e0b", 0.15)}`,
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <ScheduleIcon sx={{ color: "#F59E0B", fontSize: 20 }} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={600}
-              >
-                Em Andamento
-              </Typography>
-            </Box>
-            <Typography
-              variant={isMobile ? "h6" : "h5"}
-              fontWeight={700}
-              color="#F59E0B"
+            <Box
+              sx={{
+                position: "absolute", top: 14, right: 14,
+                width: 38, height: 38, borderRadius: "11px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                bgcolor: alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
+                color: "#f59e0b",
+              }}
             >
+              <ScheduleIcon sx={{ fontSize: 20 }} />
+            </Box>
+            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+              Em Andamento
+            </Typography>
+            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#f59e0b", fontVariantNumeric: "tabular-nums" }}>
               {stats.inProgressCount}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              parcelamentos ativos
-            </Typography>
+            <Typography variant="caption" color="text.secondary">parcelamentos ativos</Typography>
           </Paper>
         </Grid>
 
+        {/* Completed */}
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
-              borderRadius: "16px",
-              border: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-              }`,
-              background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(
-                    theme.palette.background.paper,
-                    0.7
-                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
-                    "#FFFFFF",
-                    0.6
-                  )} 100%)`,
-              backdropFilter: "blur(16px)",
+              position: "relative",
+              overflow: "hidden",
+              p: isMobile ? "14px" : "18px",
+              borderRadius: "14px",
+              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+              boxShadow: isDarkMode
+                ? `0 4px 16px -4px ${alpha("#10b981", 0.25)}`
+                : `0 4px 16px -4px ${alpha("#10b981", 0.15)}`,
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <CheckCircleIcon sx={{ color: "#059669", fontSize: 20 }} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={600}
-              >
-                Concluídos
-              </Typography>
-            </Box>
-            <Typography
-              variant={isMobile ? "h6" : "h5"}
-              fontWeight={700}
-              color="#059669"
+            <Box
+              sx={{
+                position: "absolute", top: 14, right: 14,
+                width: 38, height: 38, borderRadius: "11px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12),
+                color: "#10b981",
+              }}
             >
+              <CheckCircleIcon sx={{ fontSize: 20 }} />
+            </Box>
+            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+              Concluídos
+            </Typography>
+            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981", fontVariantNumeric: "tabular-nums" }}>
               {stats.completedCount}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              parcelamentos quitados
-            </Typography>
+            <Typography variant="caption" color="text.secondary">parcelamentos quitados</Typography>
           </Paper>
         </Grid>
 
+        {/* To Pay */}
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
-              borderRadius: "16px",
-              border: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-              }`,
-              background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(
-                    theme.palette.background.paper,
-                    0.7
-                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
-                    "#FFFFFF",
-                    0.6
-                  )} 100%)`,
-              backdropFilter: "blur(16px)",
+              position: "relative",
+              overflow: "hidden",
+              p: isMobile ? "14px" : "18px",
+              borderRadius: "14px",
+              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+              boxShadow: isDarkMode
+                ? `0 4px 16px -4px ${alpha("#ef4444", 0.25)}`
+                : `0 4px 16px -4px ${alpha("#ef4444", 0.15)}`,
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <TrendingDownIcon sx={{ color: "#DC2626", fontSize: 20 }} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={600}
-              >
-                A Pagar
-              </Typography>
-            </Box>
-            <Typography
-              variant={isMobile ? "body1" : "h6"}
-              fontWeight={700}
-              color="#DC2626"
+            <Box
+              sx={{
+                position: "absolute", top: 14, right: 14,
+                width: 38, height: 38, borderRadius: "11px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                bgcolor: alpha("#ef4444", isDarkMode ? 0.2 : 0.12),
+                color: "#ef4444",
+              }}
             >
+              <TrendingDownIcon sx={{ fontSize: 20 }} />
+            </Box>
+            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+              A Pagar
+            </Typography>
+            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
               {formatCurrency(stats.totalRemaining)}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              restante total
-            </Typography>
+            <Typography variant="caption" color="text.secondary">restante total</Typography>
           </Paper>
         </Grid>
 
+        {/* Total Paid */}
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
-              borderRadius: "16px",
-              background: `linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)`,
-              boxShadow: `0 8px 32px -8px ${alpha("#6366f1", 0.4)}`,
+              position: "relative",
+              overflow: "hidden",
+              p: isMobile ? "14px" : "18px",
+              borderRadius: "14px",
+              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+              boxShadow: isDarkMode
+                ? `0 4px 16px -4px ${alpha("#a855f7", 0.25)}`
+                : `0 4px 16px -4px ${alpha("#a855f7", 0.15)}`,
+              transition: "all 0.2s ease-in-out",
+              "&:hover": { transform: "translateY(-2px)" },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <CheckCircleIcon
-                sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }}
-              />
-              <Typography
-                variant="caption"
-                sx={{ color: alpha("#FFFFFF", 0.8) }}
-                fontWeight={600}
-              >
-                Total Pago
-              </Typography>
-            </Box>
-            <Typography
-              variant={isMobile ? "body1" : "h6"}
-              fontWeight={700}
-              color="#FFFFFF"
+            <Box
+              sx={{
+                position: "absolute", top: 14, right: 14,
+                width: 38, height: 38, borderRadius: "11px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12),
+                color: "#a855f7",
+              }}
             >
+              <CheckCircleIcon sx={{ fontSize: 20 }} />
+            </Box>
+            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+              Total Pago
+            </Typography>
+            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7", fontVariantNumeric: "tabular-nums", pr: 6 }}>
               {formatCurrency(stats.totalPaid)}
             </Typography>
-            <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.7) }}>
-              de {formatCurrency(stats.totalAll)}
-            </Typography>
+            <Typography variant="caption" color="text.secondary">de {formatCurrency(stats.totalAll)}</Typography>
           </Paper>
         </Grid>
       </Grid>

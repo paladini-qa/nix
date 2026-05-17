@@ -21,4 +21,5 @@ export type AppCurrentView =
   | "investments"
   | "subscriptions"
   | "notifications"
-  | "paymentGuide";
+  | "paymentGuide"
+  | "goals";

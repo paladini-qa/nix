@@ -702,409 +702,119 @@ const SharedView: React.FC<SharedViewProps> = ({
 
       {/* Summary Cards */}
       <Grid container spacing={gridSpacing}>
+        {/* To Receive */}
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
               position: "relative",
               overflow: "hidden",
-              background:
-                theme.palette.mode === "dark"
-                  ? `linear-gradient(135deg, ${alpha(
-                      theme.palette.background.paper,
-                      0.7
-                    )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                  : `linear-gradient(135deg, ${alpha(
-                      "#FFFFFF",
-                      0.8
-                    )} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${
-                theme.palette.mode === "dark"
-                  ? alpha("#FFFFFF", 0.08)
-                  : alpha("#000000", 0.06)
-              }`,
-              boxShadow: `0 6px 24px -6px ${alpha("#059669", 0.15)}`,
-              borderRadius: "16px",
+              p: isMobile ? "14px" : "18px",
+              borderRadius: "14px",
+              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+              boxShadow: `0 4px 16px -4px ${alpha("#10b981", isDarkMode ? 0.25 : 0.15)}`,
               transition: "all 0.2s ease-in-out",
               "&:hover": { transform: "translateY(-2px)" },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background:
-                  "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)",
-                pointerEvents: "none",
-              },
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                mb: 0.5,
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: alpha("#059669", 0.1),
-                  border: `1px solid ${alpha("#059669", 0.2)}`,
-                }}
-              >
-                <TrendingUpIcon sx={{ fontSize: 14, color: "#059669" }} />
-              </Box>
-              <Typography
-                variant="overline"
-                sx={{
-                  color: "#059669",
-                  letterSpacing: "0.08em",
-                  fontSize: 9,
-                  fontWeight: 600,
-                }}
-              >
-                A Receber
-              </Typography>
+            <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12), color: "#10b981" }}>
+              <TrendingUpIcon sx={{ fontSize: 20 }} />
             </Box>
-            <Typography
-              variant={isMobile ? "body1" : "h6"}
-              sx={{
-                fontWeight: 700,
-                color: "#059669",
-                letterSpacing: "-0.02em",
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
+            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+              A Receber
+            </Typography>
+            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981", fontVariantNumeric: "tabular-nums", pr: 6 }}>
               {formatCurrency(stats.totalPending)}
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ position: "relative", zIndex: 1 }}
-            >
-              Amigos me devem
-            </Typography>
+            <Typography variant="caption" color="text.secondary">Amigos me devem</Typography>
           </Paper>
         </Grid>
+
+        {/* You Owe */}
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
               position: "relative",
               overflow: "hidden",
-              background:
-                theme.palette.mode === "dark"
-                  ? `linear-gradient(135deg, ${alpha(
-                      theme.palette.background.paper,
-                      0.7
-                    )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                  : `linear-gradient(135deg, ${alpha(
-                      "#FFFFFF",
-                      0.8
-                    )} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${
-                theme.palette.mode === "dark"
-                  ? alpha("#FFFFFF", 0.08)
-                  : alpha("#000000", 0.06)
-              }`,
-              boxShadow: `0 6px 24px -6px ${alpha("#DC2626", 0.15)}`,
-              borderRadius: "16px",
+              p: isMobile ? "14px" : "18px",
+              borderRadius: "14px",
+              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+              boxShadow: `0 4px 16px -4px ${alpha("#ef4444", isDarkMode ? 0.25 : 0.15)}`,
               transition: "all 0.2s ease-in-out",
               "&:hover": { transform: "translateY(-2px)" },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background:
-                  "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
-                pointerEvents: "none",
-              },
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                mb: 0.5,
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: alpha("#DC2626", 0.1),
-                  border: `1px solid ${alpha("#DC2626", 0.2)}`,
-                }}
-              >
-                <TrendingDownIcon sx={{ fontSize: 14, color: "#DC2626" }} />
-              </Box>
-              <Typography
-                variant="overline"
-                sx={{
-                  color: "#DC2626",
-                  letterSpacing: "0.08em",
-                  fontSize: 9,
-                  fontWeight: 600,
-                }}
-              >
-                A Pagar
-              </Typography>
+            <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#ef4444", isDarkMode ? 0.2 : 0.12), color: "#ef4444" }}>
+              <TrendingDownIcon sx={{ fontSize: 20 }} />
             </Box>
-            <Typography
-              variant={isMobile ? "body1" : "h6"}
-              sx={{
-                fontWeight: 700,
-                color: "#DC2626",
-                letterSpacing: "-0.02em",
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
+            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+              A Pagar
+            </Typography>
+            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
               {formatCurrency(stats.totalPendingIOwe)}
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ position: "relative", zIndex: 1 }}
-            >
-              Eu devo
-            </Typography>
+            <Typography variant="caption" color="text.secondary">Eu devo</Typography>
           </Paper>
         </Grid>
+
+        {/* Net Balance */}
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
               position: "relative",
               overflow: "hidden",
-              background:
-                theme.palette.mode === "dark"
-                  ? `linear-gradient(135deg, ${alpha(
-                      theme.palette.background.paper,
-                      0.7
-                    )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                  : `linear-gradient(135deg, ${alpha(
-                      "#FFFFFF",
-                      0.8
-                    )} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${
-                theme.palette.mode === "dark"
-                  ? alpha("#FFFFFF", 0.08)
-                  : alpha("#000000", 0.06)
-              }`,
-              boxShadow: `0 6px 24px -6px ${alpha(
-                stats.netBalance >= 0 ? "#059669" : "#DC2626",
-                0.15
-              )}`,
-              borderRadius: "16px",
+              p: isMobile ? "14px" : "18px",
+              borderRadius: "14px",
+              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+              boxShadow: `0 4px 16px -4px ${alpha(stats.netBalance >= 0 ? "#a855f7" : "#ef4444", isDarkMode ? 0.25 : 0.15)}`,
               transition: "all 0.2s ease-in-out",
               "&:hover": { transform: "translateY(-2px)" },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background:
-                  stats.netBalance >= 0
-                    ? "linear-gradient(135deg, rgba(5, 150, 105, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
-                    : "linear-gradient(135deg, rgba(220, 38, 38, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)",
-                pointerEvents: "none",
-              },
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                mb: 0.5,
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: alpha(
-                    stats.netBalance >= 0 ? "#059669" : "#DC2626",
-                    0.1
-                  ),
-                  border: `1px solid ${alpha(
-                    stats.netBalance >= 0 ? "#059669" : "#DC2626",
-                    0.2
-                  )}`,
-                }}
-              >
-                <BalanceIcon
-                  sx={{
-                    fontSize: 14,
-                    color: stats.netBalance >= 0 ? "#059669" : "#DC2626",
-                  }}
-                />
-              </Box>
-              <Typography
-                variant="overline"
-                sx={{
-                  color: stats.netBalance >= 0 ? "#059669" : "#DC2626",
-                  letterSpacing: "0.08em",
-                  fontSize: 9,
-                  fontWeight: 600,
-                }}
-              >
-                Saldo
-              </Typography>
+            <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12), color: "#a855f7" }}>
+              <BalanceIcon sx={{ fontSize: 20 }} />
             </Box>
-            <Typography
-              variant={isMobile ? "body1" : "h6"}
-              sx={{
-                fontWeight: 700,
-                color: stats.netBalance >= 0 ? "#059669" : "#DC2626",
-                letterSpacing: "-0.02em",
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
-              {stats.netBalance >= 0 ? "+" : ""}
-              {formatCurrency(stats.netBalance)}
+            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+              Saldo Líquido
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ position: "relative", zIndex: 1 }}
-            >
-              {stats.netBalance >= 0 ? "A seu favor" : "Você deve"}
+            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: stats.netBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
+              {stats.netBalance >= 0 ? "+" : ""}{formatCurrency(stats.netBalance)}
             </Typography>
+            <Typography variant="caption" color="text.secondary">{stats.netBalance >= 0 ? "A seu favor" : "Você deve"}</Typography>
           </Paper>
         </Grid>
+
+        {/* Friends Count */}
         <Grid size={{ xs: 6, sm: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
               position: "relative",
               overflow: "hidden",
-              background:
-                theme.palette.mode === "dark"
-                  ? `linear-gradient(135deg, ${alpha(
-                      theme.palette.background.paper,
-                      0.7
-                    )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                  : `linear-gradient(135deg, ${alpha(
-                      "#FFFFFF",
-                      0.8
-                    )} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${
-                theme.palette.mode === "dark"
-                  ? alpha("#FFFFFF", 0.08)
-                  : alpha("#000000", 0.06)
-              }`,
-              boxShadow: `0 6px 24px -6px ${alpha("#6366f1", 0.15)}`,
-              borderRadius: "16px",
+              p: isMobile ? "14px" : "18px",
+              borderRadius: "14px",
+              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+              boxShadow: `0 4px 16px -4px ${alpha("#a855f7", isDarkMode ? 0.25 : 0.15)}`,
               transition: "all 0.2s ease-in-out",
               "&:hover": { transform: "translateY(-2px)" },
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background:
-                  "linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.02) 100%)",
-                pointerEvents: "none",
-              },
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                mb: 0.5,
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: alpha("#6366f1", 0.1),
-                  border: `1px solid ${alpha("#6366f1", 0.2)}`,
-                }}
-              >
-                <PeopleIcon sx={{ fontSize: 14, color: "#6366f1" }} />
-              </Box>
-              <Typography
-                variant="overline"
-                sx={{
-                  color: "#6366f1",
-                  letterSpacing: "0.08em",
-                  fontSize: 9,
-                  fontWeight: 600,
-                }}
-              >
-                Amigos
-              </Typography>
+            <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12), color: "#a855f7" }}>
+              <PeopleIcon sx={{ fontSize: 20 }} />
             </Box>
-            <Typography
-              variant={isMobile ? "h6" : "h5"}
-              sx={{
-                fontWeight: 700,
-                color: "text.primary",
-                letterSpacing: "-0.02em",
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
+            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+              Amigos
+            </Typography>
+            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "text.primary", fontVariantNumeric: "tabular-nums" }}>
               {stats.friendCount}
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ position: "relative", zIndex: 1 }}
-            >
-              Com transações
-            </Typography>
+            <Typography variant="caption" color="text.secondary">Com transações</Typography>
           </Paper>
         </Grid>
       </Grid>

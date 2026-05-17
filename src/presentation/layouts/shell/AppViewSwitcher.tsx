@@ -41,6 +41,7 @@ const SubscriptionsView = lazy(() => import("@/presentation/views/SubscriptionsV
 const NotificationsView = lazy(() => import("@/presentation/views/NotificationsView"));
 const PaymentGuideView = lazy(() => import("@/presentation/views/PaymentGuideView"));
 const AccountsView = lazy(() => import("@/presentation/views/AccountsView"));
+const GoalsView = lazy(() => import("@/presentation/views/GoalsView"));
 
 const ViewLoadingMui: React.FC = () => (
   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 8 }}>
@@ -685,6 +686,12 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               selectedMonth={filters.month}
               selectedYear={filters.year}
             />
+          </Suspense>
+        );
+      case "goals":
+        return (
+          <Suspense fallback={<ViewLoadingMui />}>
+            <GoalsView />
           </Suspense>
         );
       case "dashboard":

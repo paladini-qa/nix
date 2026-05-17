@@ -341,137 +341,178 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
 
       {/* Summary Cards - Always Visible */}
       <Grid container spacing={gridSpacing}>
+        {/* Active Methods */}
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
-              borderRadius: "16px",
-              border: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-              }`,
+              p: "18px",
+              borderRadius: "14px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(
-                    theme.palette.background.paper,
-                    0.7
-                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
-                    "#FFFFFF",
-                    0.6
-                  )} 100%)`,
-              backdropFilter: "blur(16px)",
+                ? alpha(theme.palette.background.paper, 0.8)
+                : "#ffffff",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <CreditCardIcon
-                sx={{ color: theme.palette.primary.main, fontSize: 20 }}
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={600}
-              >
-                Métodos Ativos
-              </Typography>
+            <Box
+              sx={{
+                position: "absolute",
+                top: 14,
+                right: 14,
+                width: 38,
+                height: 38,
+                borderRadius: "11px",
+                display: "grid",
+                placeItems: "center",
+                bgcolor: alpha("#a855f7", 0.12),
+                color: "#a855f7",
+              }}
+            >
+              <CreditCardIcon sx={{ fontSize: 22 }} />
             </Box>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700}>
+            <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+              Métodos Ativos
+            </Typography>
+            <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7" }}>
               {stats.methodsWithActivity}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
               de {paymentMethods.length} cadastrados
             </Typography>
           </Paper>
         </Grid>
 
+        {/* Total Expenses */}
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
-              borderRadius: "16px",
-              border: `1px solid ${
-                isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-              }`,
+              p: "18px",
+              borderRadius: "14px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
               background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(
-                    theme.palette.background.paper,
-                    0.7
-                  )} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha(
-                    "#FFFFFF",
-                    0.6
-                  )} 100%)`,
-              backdropFilter: "blur(16px)",
+                ? alpha(theme.palette.background.paper, 0.8)
+                : "#ffffff",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <TrendingDownIcon sx={{ color: "#DC2626", fontSize: 20 }} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={600}
-              >
-                Total Despesas
-              </Typography>
-            </Box>
-            <Typography
-              variant={isMobile ? "body1" : "h6"}
-              fontWeight={700}
-              color="#DC2626"
+            <Box
+              sx={{
+                position: "absolute",
+                top: 14,
+                right: 14,
+                width: 38,
+                height: 38,
+                borderRadius: "11px",
+                display: "grid",
+                placeItems: "center",
+                bgcolor: alpha("#ef4444", 0.12),
+                color: "#ef4444",
+              }}
             >
+              <TrendingDownIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+              Total Despesas
+            </Typography>
+            <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444" }}>
               {formatCurrency(stats.totalExpenses)}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
               {stats.totalTransactions} transações
             </Typography>
           </Paper>
         </Grid>
 
+        {/* Pending Bills */}
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper
             elevation={0}
             sx={{
-              p: isMobile ? 1.5 : 2,
-              borderRadius: "16px",
-              background:
-                stats.totalUnpaid > 0
-                  ? `linear-gradient(135deg, #f59e0b 0%, #d97706 100%)`
-                  : `linear-gradient(135deg, #059669 0%, #047857 100%)`,
-              boxShadow: `0 8px 32px -8px ${alpha(
-                stats.totalUnpaid > 0 ? "#f59e0b" : "#059669",
-                0.4
-              )}`,
+              p: "18px",
+              borderRadius: "14px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? alpha(theme.palette.background.paper, 0.8)
+                : "#ffffff",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              {stats.totalUnpaid > 0 ? (
-                <WarningIcon
-                  sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }}
-                />
-              ) : (
-                <CheckCircleIcon
-                  sx={{ color: alpha("#FFFFFF", 0.9), fontSize: 20 }}
-                />
-              )}
-              <Typography
-                variant="caption"
-                sx={{ color: alpha("#FFFFFF", 0.8) }}
-                fontWeight={600}
-              >
-                {stats.totalUnpaid > 0 ? "A Pagar" : "Status"}
-              </Typography>
-            </Box>
-            <Typography
-              variant={isMobile ? "body1" : "h6"}
-              fontWeight={700}
-              color="#FFFFFF"
+            <Box
+              sx={{
+                position: "absolute",
+                top: 14,
+                right: 14,
+                width: 38,
+                height: 38,
+                borderRadius: "11px",
+                display: "grid",
+                placeItems: "center",
+                bgcolor: alpha("#f59e0b", 0.12),
+                color: "#f59e0b",
+              }}
             >
-              {stats.totalUnpaid > 0
-                ? formatCurrency(stats.totalUnpaid)
-                : "Tudo em dia!"}
+              <WarningIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+              Faturas Pendentes
             </Typography>
-            <Typography variant="caption" sx={{ color: alpha("#FFFFFF", 0.7) }}>
-              {stats.totalUnpaid > 0 ? "pendente" : "todas as faturas pagas"}
+            <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>
+              {paymentMethodsSummary.reduce((s, m) => s + m.unpaidCount, 0)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              cobranças em aberto
+            </Typography>
+          </Paper>
+        </Grid>
+
+        {/* To Pay */}
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: "18px",
+              borderRadius: "14px",
+              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+              background: isDarkMode
+                ? alpha(theme.palette.background.paper, 0.8)
+                : "#ffffff",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                top: 14,
+                right: 14,
+                width: 38,
+                height: 38,
+                borderRadius: "11px",
+                display: "grid",
+                placeItems: "center",
+                bgcolor: alpha("#10b981", 0.12),
+                color: "#10b981",
+              }}
+            >
+              <WalletIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+              A Pagar
+            </Typography>
+            <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981" }}>
+              {formatCurrency(stats.totalUnpaid)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              {stats.totalUnpaid > 0 ? "pendente" : "tudo em dia"}
             </Typography>
           </Paper>
         </Grid>
@@ -501,38 +542,54 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                   elevation={0}
                   onClick={() => onSelectPaymentMethod(method)}
                   sx={{
-                    p: 2.5, cursor: "pointer", display: "flex", flexDirection: "column",
-                    height: "100%", borderRadius: "16px",
-                    background: isDarkMode ? alpha(theme.palette.background.paper, 0.7) : alpha("#fff", 0.95),
-                    border: `1.5px solid ${alpha(colors.primary, isDarkMode ? 0.45 : 0.25)}`,
-                    transition: "all 0.2s ease",
-                    "&:hover": { transform: "translateY(-3px)", boxShadow: `0 10px 28px -6px ${alpha(colors.primary, 0.3)}`, border: `1.5px solid ${alpha(colors.primary, 0.65)}` },
+                    p: "16px",
+                    cursor: "pointer",
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    borderRadius: "14px",
+                    background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+                    position: "relative",
+                    overflow: "hidden",
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": { transform: "translateY(-2px)", boxShadow: `0 10px 28px -6px ${alpha(colors.primary, 0.25)}` },
                   }}
                 >
+                  {/* Top color stripe */}
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 4,
+                      background: `linear-gradient(90deg, ${colors.primary}, ${alpha(colors.primary, 0.5)})`,
+                    }}
+                  />
+
                   {/* Header */}
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
-                      <PaymentMethodIcon imageUrl={config?.imageUrl} colors={colors} type={config?.type} size={36} borderRadius="10px" iconSize={18} />
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography fontWeight={700} sx={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {method}
-                        </Typography>
-                        <Chip label={isCard ? "Cartão" : "À vista"} size="small" sx={{ height: 16, fontSize: 10, fontWeight: 600, mt: 0.25, bgcolor: isCard ? alpha(theme.palette.primary.main, 0.12) : alpha(theme.palette.success.main, 0.12), color: isCard ? "primary.main" : "success.main", "& .MuiChip-label": { px: 0.75 } }} />
-                      </Box>
-                    </Box>
-                    {hasUnpaid && (
-                      <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", whiteSpace: "nowrap", ml: 1 }}>
-                        {summary!.unpaidCount} pendente{summary!.unpaidCount > 1 ? "s" : ""}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: "10px", mt: "6px" }}>
+                    <PaymentMethodIcon imageUrl={config?.imageUrl} colors={colors} type={config?.type} size={40} borderRadius="12px" iconSize={18} />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography fontWeight={700} sx={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {method}
                       </Typography>
-                    )}
+                      {hasUnpaid && (
+                        <Typography sx={{ fontSize: 11, color: "#f59e0b" }}>
+                          {summary!.unpaidCount} pendente{summary!.unpaidCount > 1 ? "s" : ""}
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
 
                   {/* Amount */}
-                  <Box sx={{ mb: 1.5, flex: 1 }}>
-                    <Typography sx={{ fontSize: 10, fontWeight: 700, color: "text.disabled", textTransform: "uppercase", letterSpacing: "0.1em", mb: 0.5 }}>
+                  <Box sx={{ mb: "10px", flex: 1 }}>
+                    <Typography sx={{ fontSize: 11, fontWeight: 700, color: "text.disabled", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       Este mês
                     </Typography>
-                    <Typography sx={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+                    <Typography sx={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2, mt: "2px" }}>
                       {summary ? formatCurrency(summary.totalExpense) : "—"}
                     </Typography>
                     {isCard && config?.closingDay && config?.paymentDay && (
@@ -546,10 +603,12 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                   </Box>
 
                   {/* Progress bar */}
-                  <LinearProgress variant="determinate" value={Math.min(percentage, 100)} sx={{ height: 4, borderRadius: 2, mb: 2, bgcolor: alpha(colors.primary, 0.15), "& .MuiLinearProgress-bar": { borderRadius: 2, background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})` } }} />
+                  <Box sx={{ height: 6, borderRadius: "99px", bgcolor: alpha(colors.primary, 0.12), overflow: "hidden", mb: "12px" }}>
+                    <Box sx={{ height: "100%", borderRadius: "99px", width: `${Math.min(percentage, 100)}%`, bgcolor: colors.primary, transition: "width 0.3s" }} />
+                  </Box>
 
                   {/* Footer */}
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`, pt: 1.5 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
                     <Box sx={{ display: "flex", gap: 0.5 }}>
                       {useConfigSystem && config && (
                         <Tooltip title="Editar">
@@ -564,11 +623,31 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                         </IconButton>
                       </Tooltip>
                     </Box>
-                    {hasUnpaid && (
-                      <Button size="small" variant="contained" onClick={(e) => handlePayAll(method, e)} sx={{ textTransform: "none", fontWeight: 700, fontSize: 12, px: 2, py: 0.5, borderRadius: "20px", lineHeight: 1.5, background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`, boxShadow: `0 4px 12px -2px ${alpha(colors.primary, 0.4)}`, "&:hover": { background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})` } }}>
-                        Pagar
+                    <Box sx={{ display: "flex", gap: "6px" }}>
+                      <Button
+                        size="small"
+                        onClick={(e) => { e.stopPropagation(); onSelectPaymentMethod(method); }}
+                        sx={{
+                          textTransform: "none",
+                          fontWeight: 600,
+                          fontSize: 12,
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: "10px",
+                          bgcolor: alpha(colors.primary, 0.1),
+                          color: colors.primary,
+                          lineHeight: 1.5,
+                          "&:hover": { bgcolor: alpha(colors.primary, 0.18) },
+                        }}
+                      >
+                        Detalhes
                       </Button>
-                    )}
+                      {hasUnpaid && (
+                        <Button size="small" variant="contained" onClick={(e) => handlePayAll(method, e)} sx={{ textTransform: "none", fontWeight: 700, fontSize: 12, px: 1.5, py: 0.5, borderRadius: "10px", lineHeight: 1.5, background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`, boxShadow: `0 4px 12px -2px ${alpha(colors.primary, 0.4)}`, "&:hover": { background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})` } }}>
+                          Pagar
+                        </Button>
+                      )}
+                    </Box>
                   </Box>
                 </Paper>
               </Grid>

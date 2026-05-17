@@ -122,14 +122,32 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
     window.print();
   };
 
-  const cardSx = {
-    p: 2.5,
-    borderRadius: "16px",
-    border: `1px solid ${theme.palette.divider}`,
-    bgcolor: isDark ? alpha("#FFFFFF", 0.03) : alpha("#FFFFFF", 0.9),
-    flex: 1,
-    minWidth: 140,
-  };
+  const summaryCards = [
+    {
+      label: "Receitas",
+      value: formatCurrency(annualTotals.income),
+      color: "#10b981",
+      bgColor: alpha("#10b981", 0.12),
+      icon: <IncomeIcon sx={{ fontSize: 20 }} />,
+      sub: `Total em ${selectedYear}`,
+    },
+    {
+      label: "Despesas",
+      value: formatCurrency(annualTotals.expense),
+      color: "#ef4444",
+      bgColor: alpha("#ef4444", 0.12),
+      icon: <ExpenseIcon sx={{ fontSize: 20 }} />,
+      sub: `Total em ${selectedYear}`,
+    },
+    {
+      label: "Saldo",
+      value: formatCurrency(annualTotals.balance),
+      color: annualTotals.balance >= 0 ? "#a855f7" : "#f59e0b",
+      bgColor: annualTotals.balance >= 0 ? alpha("#a855f7", 0.12) : alpha("#f59e0b", 0.12),
+      icon: <BalanceIcon sx={{ fontSize: 20 }} />,
+      sub: `Resultado ${selectedYear}`,
+    },
+  ];
 
   return (
     <>
@@ -179,33 +197,47 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
         </Box>
 
         {/* Summary cards */}
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-          <Paper elevation={0} sx={{ ...cardSx, borderColor: alpha(theme.palette.success.main, 0.3) }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <IncomeIcon sx={{ fontSize: 18, color: "success.main" }} />
-              <Typography variant="caption" color="text.secondary" textTransform="uppercase" letterSpacing="0.06em">Receitas</Typography>
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "14px" }}>
+          {summaryCards.map((card) => (
+            <Box
+              key={card.label}
+              sx={{
+                position: "relative",
+                p: "18px",
+                borderRadius: "14px",
+                border: `1px solid ${theme.palette.divider}`,
+                bgcolor: isDark ? alpha("#FFFFFF", 0.03) : alpha("#FFFFFF", 0.9),
+                overflow: "hidden",
+                boxShadow: `0 4px 14px ${alpha("#000000", 0.04)}`,
+              }}
+            >
+              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+                {card.label}
+              </Typography>
+              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", color: card.color }}>
+                {card.value}
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: "text.secondary", mt: "4px" }}>{card.sub}</Typography>
+              {/* Icon badge */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "11px",
+                  bgcolor: card.bgColor,
+                  color: card.color,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {card.icon}
+              </Box>
             </Box>
-            <Typography variant="h6" fontWeight={700} color="success.main">{formatCurrency(annualTotals.income)}</Typography>
-            <Typography variant="caption" color="text.secondary">Total em {selectedYear}</Typography>
-          </Paper>
-          <Paper elevation={0} sx={{ ...cardSx, borderColor: alpha(theme.palette.error.main, 0.3) }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <ExpenseIcon sx={{ fontSize: 18, color: "error.main" }} />
-              <Typography variant="caption" color="text.secondary" textTransform="uppercase" letterSpacing="0.06em">Despesas</Typography>
-            </Box>
-            <Typography variant="h6" fontWeight={700} color="error.main">{formatCurrency(annualTotals.expense)}</Typography>
-            <Typography variant="caption" color="text.secondary">Total em {selectedYear}</Typography>
-          </Paper>
-          <Paper elevation={0} sx={{ ...cardSx, borderColor: alpha(annualTotals.balance >= 0 ? theme.palette.primary.main : theme.palette.warning.main, 0.3) }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <BalanceIcon sx={{ fontSize: 18, color: annualTotals.balance >= 0 ? "primary.main" : "warning.main" }} />
-              <Typography variant="caption" color="text.secondary" textTransform="uppercase" letterSpacing="0.06em">Saldo</Typography>
-            </Box>
-            <Typography variant="h6" fontWeight={700} color={annualTotals.balance >= 0 ? "primary.main" : "warning.main"}>
-              {formatCurrency(annualTotals.balance)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">Resultado {selectedYear}</Typography>
-          </Paper>
+          ))}
         </Box>
 
         {/* Monthly breakdown */}

@@ -859,54 +859,39 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                 <Paper
                   elevation={0}
                   sx={{
-                    p: isMobile ? 1.5 : 2,
-                    textAlign: "center",
+                    p: "18px",
                     position: "relative",
                     overflow: "hidden",
                     background: isDark
-                      ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                      : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-                    backdropFilter: "blur(16px)",
+                      ? alpha(theme.palette.background.paper, 0.8)
+                      : "#ffffff",
                     border: `1px solid ${isDark ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                    boxShadow: `0 6px 24px -6px ${alpha(card.accent, 0.15)}`,
-                    borderRadius: "16px",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+                    borderRadius: "14px",
                     transition: "all 0.2s ease-in-out",
-                    "&:hover": { transform: "translateY(-2px)" },
-                    "&::before": {
-                      content: '""',
-                      position: "absolute",
-                      top: 0, left: 0, right: 0, bottom: 0,
-                      background: `linear-gradient(135deg, ${alpha(card.accent, 0.06)} 0%, ${alpha(card.accent, 0.02)} 100%)`,
-                      pointerEvents: "none",
-                    },
+                    "&:hover": { transform: "translateY(-2px)", boxShadow: `0 10px 28px -6px ${alpha(card.accent, 0.2)}` },
                   }}
                 >
-                  <Box display="flex" alignItems="center" justifyContent="center" mb={0.5} sx={{ color: card.color }}>
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 14,
+                      right: 14,
+                      width: 38,
+                      height: 38,
+                      borderRadius: "11px",
+                      display: "grid",
+                      placeItems: "center",
+                      bgcolor: alpha(card.accent, 0.12),
+                      color: card.accent,
+                    }}
+                  >
                     {card.icon}
                   </Box>
-                  <Typography
-                    variant="overline"
-                    sx={{
-                      color: "text.secondary",
-                      letterSpacing: "0.08em",
-                      fontSize: isMobile ? 10 : 11,
-                      fontWeight: 600,
-                      position: "relative",
-                      zIndex: 1,
-                    }}
-                  >
+                  <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
                     {card.label}
                   </Typography>
-                  <Typography
-                    variant={isMobile ? "body1" : "h6"}
-                    sx={{
-                      fontWeight: 700,
-                      color: card.color,
-                      letterSpacing: "-0.02em",
-                      position: "relative",
-                      zIndex: 1,
-                    }}
-                  >
+                  <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: card.color, lineHeight: 1.15 }}>
                     {card.value}
                   </Typography>
                 </Paper>

@@ -21,6 +21,7 @@ import {
   Repeat as RepeatIcon,
   DoneAll as DoneAllIcon,
   OpenInNew as OpenInNewIcon,
+  Bolt as BoltIcon,
 } from "@mui/icons-material";
 import { useSettings } from "@/presentation/contexts";
 import { useAppStore } from "@/presentation/hooks/useAppStore";

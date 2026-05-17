@@ -144,15 +144,6 @@ const DebtCalculatorView: React.FC = () => {
 
   const displayRows = showAllRows ? activeRows : activeRows.slice(0, 12);
 
-  const cardSx = {
-    p: 2.5,
-    borderRadius: "16px",
-    border: `1px solid ${theme.palette.divider}`,
-    bgcolor: isDark ? alpha("#FFFFFF", 0.03) : alpha("#FFFFFF", 0.9),
-    flex: 1,
-    minWidth: 130,
-  };
-
   const legendDot = (color: string, label: string) => (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
       <div style={{ width: 12, height: 3, borderRadius: 2, backgroundColor: color }} />
@@ -170,98 +161,131 @@ const DebtCalculatorView: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Inputs */}
-      <Paper elevation={0} sx={{ p: 2.5, borderRadius: "20px", border: `1px solid ${theme.palette.divider}` }}>
-        <Typography variant="subtitle2" fontWeight={700} mb={2}>Parâmetros da Dívida</Typography>
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-          <TextField
-            label="Valor da dívida (R$)"
-            value={principal}
-            onChange={(e) => setPrincipal(e.target.value)}
-            size="small"
-            sx={{ flex: 1, minWidth: 160 }}
-            inputProps={{ inputMode: "decimal" }}
-          />
-          <TextField
-            label="Taxa de juros anual (%)"
-            value={annualRate}
-            onChange={(e) => setAnnualRate(e.target.value)}
-            size="small"
-            sx={{ flex: 1, minWidth: 160 }}
-            inputProps={{ inputMode: "decimal" }}
-            helperText={`≈ ${(parsedAnnualRate / 100 / 12 * 100).toFixed(3)}% ao mês`}
-          />
-          <TextField
-            label="Número de parcelas"
-            value={months}
-            onChange={(e) => setMonths(e.target.value)}
-            size="small"
-            sx={{ flex: 1, minWidth: 140 }}
-            inputProps={{ inputMode: "numeric" }}
-          />
-          <Box>
-            <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>Método</Typography>
-            <ToggleButtonGroup
-              value={amortType}
-              exclusive
-              onChange={(_, v) => v && setAmortType(v)}
+      {/* 2-col layout: inputs left, results right */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: "16px", alignItems: "start" }}>
+        {/* Left — Inputs */}
+        <Paper elevation={0} sx={{ p: "18px", borderRadius: "14px", border: `1px solid ${theme.palette.divider}`, bgcolor: isDark ? alpha("#FFFFFF", 0.03) : alpha("#FFFFFF", 0.9) }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, mb: "16px" }}>Parâmetros da Dívida</Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <TextField
+              label="Valor da dívida (R$)"
+              value={principal}
+              onChange={(e) => setPrincipal(e.target.value)}
               size="small"
-            >
-              <ToggleButton value="price" sx={{ px: 2, fontSize: 12 }}>
-                Price
-                <Tooltip title="Parcelas fixas. Maior custo total de juros.">
-                  <InfoIcon sx={{ fontSize: 14, ml: 0.5, opacity: 0.5 }} />
-                </Tooltip>
-              </ToggleButton>
-              <ToggleButton value="sac" sx={{ px: 2, fontSize: 12 }}>
-                SAC
-                <Tooltip title="Amortização constante. Parcelas decrescentes. Menor custo total.">
-                  <InfoIcon sx={{ fontSize: 14, ml: 0.5, opacity: 0.5 }} />
-                </Tooltip>
-              </ToggleButton>
-            </ToggleButtonGroup>
+              fullWidth
+              inputProps={{ inputMode: "decimal" }}
+            />
+            <TextField
+              label="Taxa de juros anual (%)"
+              value={annualRate}
+              onChange={(e) => setAnnualRate(e.target.value)}
+              size="small"
+              fullWidth
+              inputProps={{ inputMode: "decimal" }}
+              helperText={`≈ ${(parsedAnnualRate / 100 / 12 * 100).toFixed(3)}% ao mês`}
+            />
+            <TextField
+              label="Número de parcelas"
+              value={months}
+              onChange={(e) => setMonths(e.target.value)}
+              size="small"
+              fullWidth
+              inputProps={{ inputMode: "numeric" }}
+            />
+            <Box>
+              <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>Método</Typography>
+              <ToggleButtonGroup
+                value={amortType}
+                exclusive
+                onChange={(_, v) => v && setAmortType(v)}
+                size="small"
+                fullWidth
+              >
+                <ToggleButton value="price" sx={{ px: 2, fontSize: 12, flex: 1 }}>
+                  Price
+                  <Tooltip title="Parcelas fixas. Maior custo total de juros.">
+                    <InfoIcon sx={{ fontSize: 14, ml: 0.5, opacity: 0.5 }} />
+                  </Tooltip>
+                </ToggleButton>
+                <ToggleButton value="sac" sx={{ px: 2, fontSize: 12, flex: 1 }}>
+                  SAC
+                  <Tooltip title="Amortização constante. Parcelas decrescentes. Menor custo total.">
+                    <InfoIcon sx={{ fontSize: 14, ml: 0.5, opacity: 0.5 }} />
+                  </Tooltip>
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
           </Box>
-        </Box>
-      </Paper>
+        </Paper>
+
+        {/* Right — Results */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: "18px",
+            borderRadius: "14px",
+            border: `1px solid ${theme.palette.divider}`,
+            bgcolor: isDark ? alpha("#a855f7", 0.06) : alpha("#a855f7", 0.04),
+          }}
+        >
+          <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "text.secondary" }}>
+            {amortType === "sac" ? "1ª Parcela" : "Parcela Mensal"}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 38,
+              fontWeight: 700,
+              color: "#a855f7",
+              fontVariantNumeric: "tabular-nums",
+              letterSpacing: "-0.02em",
+              mt: "6px",
+              mb: "16px",
+            }}
+          >
+            {activeRows.length > 0 ? formatCurrency(firstPayment) : "—"}
+          </Typography>
+
+          {activeRows.length > 0 && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography sx={{ fontSize: 13, color: "text.secondary" }}>Total a pagar</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{formatCurrency(totalPaid)}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography sx={{ fontSize: 13, color: "text.secondary" }}>Total de juros</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: "#ef4444" }}>{formatCurrency(totalInterest)}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography sx={{ fontSize: 13, color: "text.secondary" }}>Prazo</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{parsedMonths}x</Typography>
+              </Box>
+              {amortType === "sac" && (
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography sx={{ fontSize: 13, color: "text.secondary" }}>Última parcela</Typography>
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{formatCurrency(lastPayment)}</Typography>
+                </Box>
+              )}
+              {priceRows.length > 0 && sacRows.length > 0 && (
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography sx={{ fontSize: 13, color: "text.secondary" }}>Economia SAC</Typography>
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#10b981", fontVariantNumeric: "tabular-nums" }}>
+                    {formatCurrency(priceRows.reduce((s, r) => s + r.interest, 0) - sacRows.reduce((s, r) => s + r.interest, 0))}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {activeRows.length === 0 && (
+            <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+              Preencha os campos ao lado para simular.
+            </Typography>
+          )}
+        </Paper>
+      </Box>
 
       {activeRows.length > 0 && (
         <>
-          {/* Summary */}
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-            <Paper elevation={0} sx={cardSx}>
-              <Typography variant="caption" color="text.secondary" textTransform="uppercase" letterSpacing="0.06em">1ª Parcela</Typography>
-              <Typography variant="h6" fontWeight={700} color="primary.main">{formatCurrency(firstPayment)}</Typography>
-              {amortType === "sac" && (
-                <Typography variant="caption" color="text.secondary">Última: {formatCurrency(lastPayment)}</Typography>
-              )}
-            </Paper>
-            <Paper elevation={0} sx={cardSx}>
-              <Typography variant="caption" color="text.secondary" textTransform="uppercase" letterSpacing="0.06em">Total Pago</Typography>
-              <Typography variant="h6" fontWeight={700}>{formatCurrency(totalPaid)}</Typography>
-              <Typography variant="caption" color="text.secondary">Em {parsedMonths}x</Typography>
-            </Paper>
-            <Paper elevation={0} sx={{ ...cardSx, borderColor: alpha(theme.palette.error.main, 0.25) }}>
-              <Typography variant="caption" color="text.secondary" textTransform="uppercase" letterSpacing="0.06em">Total Juros</Typography>
-              <Typography variant="h6" fontWeight={700} color="error.main">{formatCurrency(totalInterest)}</Typography>
-              <Typography variant="caption" color="text.secondary">
-                {parsedPrincipal > 0 ? ((totalInterest / parsedPrincipal) * 100).toFixed(1) : 0}% do principal
-              </Typography>
-            </Paper>
-            <Paper elevation={0} sx={{ ...cardSx, borderColor: alpha(theme.palette.success.main, 0.25) }}>
-              <Typography variant="caption" color="text.secondary" textTransform="uppercase" letterSpacing="0.06em">Economia SAC</Typography>
-              {priceRows.length > 0 && sacRows.length > 0 ? (
-                <>
-                  <Typography variant="h6" fontWeight={700} color="success.main">
-                    {formatCurrency(
-                      priceRows.reduce((s, r) => s + r.interest, 0) - sacRows.reduce((s, r) => s + r.interest, 0)
-                    )}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">vs. Price</Typography>
-                </>
-              ) : <Typography variant="body2" color="text.disabled">—</Typography>}
-            </Paper>
-          </Box>
-
           {/* Balance evolution chart */}
           <Paper elevation={0} sx={{ p: 2.5, borderRadius: "20px", border: `1px solid ${theme.palette.divider}` }}>
             <Typography variant="subtitle2" fontWeight={700} mb={1}>Evolução do Saldo Devedor</Typography>

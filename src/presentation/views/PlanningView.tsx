@@ -649,148 +649,154 @@ const PlanningView: React.FC<PlanningViewProps> = ({
         <Grid container spacing={gridSpacing}>
           <AnimatePresence mode="popLayout">
             {plannings.map((planning) => (
-              <Grid key={planning.id} size={{ xs: 12, sm: 6, md: 4 }}>
+              <Grid key={planning.id} size={{ xs: 12, sm: 6 }}>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20, scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  style={{ height: "100%" }}
                 >
-                  <Card
-                    elevation={0}
-                    onClick={() => setOpenPlanningId(planning.id)}
+                  <Box
                     sx={{
-                      position: "relative",
-                      overflow: "hidden",
-                      cursor: "pointer",
-                      background: isDarkMode
-                        ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-                        : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.8)} 0%, ${alpha("#FFFFFF", 0.6)} 100%)`,
-                      backdropFilter: "blur(16px)",
-                      border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                      boxShadow: isDarkMode
-                        ? `0 6px 24px -6px ${alpha(theme.palette.primary.main, 0.2)}`
-                        : `0 6px 24px -6px ${alpha(theme.palette.primary.main, 0.15)}`,
-                      borderRadius: "20px",
+                      p: "18px",
+                      borderRadius: "14px",
+                      border: `1px solid ${theme.palette.divider}`,
+                      bgcolor: theme.palette.background.paper,
+                      boxShadow: `0 4px 14px ${alpha("#000000", 0.04)}`,
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
                       transition: "all 0.2s ease-in-out",
                       "&:hover": {
                         transform: "translateY(-2px)",
-                        boxShadow: isDarkMode
-                          ? `0 10px 32px -6px ${alpha(theme.palette.primary.main, 0.3)}`
-                          : `0 10px 32px -6px ${alpha(theme.palette.primary.main, 0.25)}`,
+                        boxShadow: `0 8px 24px ${alpha("#a855f7", 0.12)}`,
                       },
                     }}
                   >
-                    <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                      {/* Planning Header */}
+                    {/* Card Header: icon + title/desc + action buttons */}
+                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: "12px", mb: "10px" }}>
+                      {/* Icon */}
                       <Box
                         sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                          mb: 2,
-                        }}
-                      >
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="h6"
-                            fontWeight={600}
-                            sx={{
-                              mb: 0.5,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {planning.name}
-                          </Typography>
-                          {planning.description && (
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{
-                                mb: 1,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                display: "-webkit-box",
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: "vertical",
-                              }}
-                            >
-                              {planning.description}
-                            </Typography>
-                          )}
-                          {planning.targetDate && (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
-                              <EventIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-                              <Typography variant="caption" color="text.secondary">
-                                {formatDate(planning.targetDate)}
-                              </Typography>
-                            </Box>
-                          )}
-                        </Box>
-                        <Box sx={{ display: "flex", gap: 0.5 }} onClick={(e) => e.stopPropagation()}>
-                          <Tooltip title="Editar">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleOpenPlanningForm(planning)}
-                              sx={{ color: "text.secondary" }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Excluir">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDeletePlanning(planning.id)}
-                              sx={{ color: "error.main" }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Box>
-
-                      {/* Total Amount */}
-                      <Box
-                        sx={{
-                          p: 1.5,
-                          borderRadius: "12px",
-                          bgcolor: isDarkMode
-                            ? alpha(theme.palette.primary.main, 0.1)
-                            : alpha(theme.palette.primary.main, 0.05),
-                          mb: 2,
-                        }}
-                      >
-                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-                          Total Planejado
-                        </Typography>
-                        <Typography variant="h6" fontWeight={700} color="primary.main">
-                          {formatCurrency(planning.totalAmount)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {planning.items.length} {planning.items.length === 1 ? "gasto" : "gastos"}
-                        </Typography>
-                      </Box>
-
-                      {/* Click hint */}
-                      <Box
-                        sx={{
-                          mt: 2,
-                          pt: 2,
-                          borderTop: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                          width: 48,
+                          height: 48,
+                          borderRadius: "14px",
+                          bgcolor: alpha("#a855f7", 0.12),
+                          color: "#a855f7",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: 1,
+                          flexShrink: 0,
                         }}
                       >
-                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>
-                          Clique para ver os gastos
-                        </Typography>
+                        <EventIcon sx={{ fontSize: 22 }} />
                       </Box>
-                    </CardContent>
-                  </Card>
+
+                      {/* Title + description */}
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                          sx={{
+                            fontSize: 16,
+                            fontWeight: 700,
+                            mb: "4px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {planning.name}
+                        </Typography>
+                        {planning.description && (
+                          <Typography
+                            sx={{
+                              fontSize: 13,
+                              color: "text.secondary",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                            }}
+                          >
+                            {planning.description}
+                          </Typography>
+                        )}
+                        {planning.targetDate && (
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: "4px" }}>
+                            <EventIcon sx={{ fontSize: 13, color: "text.secondary" }} />
+                            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                              {formatDate(planning.targetDate)}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+
+                      {/* Edit / Delete */}
+                      <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
+                        <Tooltip title="Editar">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenPlanningForm(planning)}
+                            sx={{ color: "text.secondary" }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Excluir">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDeletePlanning(planning.id)}
+                            sx={{ color: "error.main" }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+
+                    {/* Total amount */}
+                    <Typography
+                      sx={{
+                        fontSize: 22,
+                        fontWeight: 700,
+                        fontVariantNumeric: "tabular-nums",
+                        color: "#a855f7",
+                        letterSpacing: "-0.02em",
+                        mt: "6px",
+                        mb: "4px",
+                      }}
+                    >
+                      {formatCurrency(planning.totalAmount)}
+                    </Typography>
+                    <Typography sx={{ fontSize: 12, color: "text.secondary", mb: "14px" }}>
+                      {planning.items.length} {planning.items.length === 1 ? "gasto planejado" : "gastos planejados"}
+                    </Typography>
+
+                    {/* Actions row */}
+                    <Box sx={{ display: "flex", gap: "8px", mt: "auto" }}>
+                      <NixButton
+                        size="small"
+                        variant="soft"
+                        color="purple"
+                        onClick={() => setOpenPlanningId(planning.id)}
+                        style={{ flex: 1, justifyContent: "center" }}
+                      >
+                        Ver gastos
+                      </NixButton>
+                      {planning.items.length > 0 && (
+                        <NixButton
+                          size="small"
+                          variant="solid"
+                          color="purple"
+                          onClick={() => handleConvertPlanningToTransactions(planning)}
+                          style={{ flex: 1, justifyContent: "center" }}
+                        >
+                          Converter em transações
+                        </NixButton>
+                      )}
+                    </Box>
+                  </Box>
                 </motion.div>
               </Grid>
             ))}

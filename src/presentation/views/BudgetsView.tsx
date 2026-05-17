@@ -360,46 +360,75 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
 
       {/* Summary Cards */}
       <Grid container spacing={gridSpacing}>
-        <Grid size={{ xs: 6, md: 3 }}>
-          <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
-              Total Orçado
-            </Typography>
-            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em" }}>
-              {formatCurrency(summary.totalBudgeted)}
-            </Typography>
-          </NixCard>
-        </Grid>
-        <Grid size={{ xs: 6, md: 3 }}>
-          <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
-              Total Gasto
-            </Typography>
-            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "text.primary", letterSpacing: "-0.02em" }}>
-              {formatCurrency(summary.totalSpent)}
-            </Typography>
-          </NixCard>
-        </Grid>
-        <Grid size={{ xs: 6, md: 3 }}>
-          <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
-              Estourado
-            </Typography>
-            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.overBudgetCount > 0 ? "#DC2626" : "#059669", letterSpacing: "-0.02em" }}>
-              {summary.overBudgetCount}
-            </Typography>
-          </NixCard>
-        </Grid>
-        <Grid size={{ xs: 6, md: 3 }}>
-          <NixCard padding="medium" glass hover style={{ textAlign: "center" }}>
-            <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}>
-              Próx. Limite
-            </Typography>
-            <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: summary.warningCount > 0 ? "#F59E0B" : "text.primary", letterSpacing: "-0.02em" }}>
-              {summary.warningCount}
-            </Typography>
-          </NixCard>
-        </Grid>
+        {[
+          {
+            label: "Limite Total",
+            value: formatCurrency(summary.totalBudgeted),
+            color: "#a855f7",
+            bgColor: alpha("#a855f7", 0.12),
+            icon: <CheckCircleIcon sx={{ fontSize: 20 }} />,
+          },
+          {
+            label: "Gasto",
+            value: formatCurrency(summary.totalSpent),
+            color: "#ef4444",
+            bgColor: alpha("#ef4444", 0.12),
+            icon: <TrendingDownIcon sx={{ fontSize: 20 }} />,
+          },
+          {
+            label: "Disponível",
+            value: formatCurrency(Math.max(0, summary.totalBudgeted - summary.totalSpent)),
+            color: "#10b981",
+            bgColor: alpha("#10b981", 0.12),
+            icon: <CheckCircleIcon sx={{ fontSize: 20 }} />,
+          },
+          {
+            label: "Estourados",
+            value: String(summary.overBudgetCount),
+            color: summary.overBudgetCount > 0 ? "#ef4444" : "#a855f7",
+            bgColor: summary.overBudgetCount > 0 ? alpha("#ef4444", 0.12) : alpha("#a855f7", 0.12),
+            icon: <WarningIcon sx={{ fontSize: 20 }} />,
+          },
+        ].map((card, idx) => (
+          <Grid key={idx} size={{ xs: 6, md: 3 }}>
+            <Box
+              sx={{
+                position: "relative",
+                p: "18px",
+                borderRadius: "14px",
+                border: `1px solid ${theme.palette.divider}`,
+                bgcolor: theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.03) : alpha("#FFFFFF", 0.9),
+                overflow: "hidden",
+                boxShadow: `0 4px 14px ${alpha("#000000", 0.04)}`,
+              }}
+            >
+              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+                {card.label}
+              </Typography>
+              <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", color: card.color }}>
+                {card.value}
+              </Typography>
+              {/* Icon badge */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "11px",
+                  bgcolor: card.bgColor,
+                  color: card.color,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {card.icon}
+              </Box>
+            </Box>
+          </Grid>
+        ))}
       </Grid>
 
       {/* Budgets List */}
@@ -434,166 +463,141 @@ const BudgetsView: React.FC<BudgetsViewProps> = ({
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   style={{ height: "100%" }}
                 >
-                <NixCard
-                  padding="medium"
-                  glass
-                  hover
-                  style={{
-                    borderLeft: `3px solid ${budgetColor}`,
-                    ...(budget.isOverBudget ? { border: `2px solid ${alpha("#DC2626", 0.5)}` } : {}),
+                <Box
+                  sx={{
+                    p: "18px",
+                    borderRadius: "14px",
+                    border: `1px solid ${budget.isOverBudget ? alpha("#ef4444", 0.4) : theme.palette.divider}`,
+                    bgcolor: theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.03) : alpha("#FFFFFF", 0.9),
+                    boxShadow: `0 4px 14px ${alpha("#000000", 0.04)}`,
+                    height: "100%",
                   }}
                 >
+                  {/* Card header row */}
+                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: "12px", mb: "12px" }}>
+                    {/* Category icon */}
                     <Box
                       sx={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: "12px",
+                        bgcolor: alpha(budgetColor, 0.12),
+                        color: budgetColor,
                         display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        mb: 2,
-                      }}
-                    >
-                      <Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                          <Typography variant="subtitle1" fontWeight={600}>
-                            {budget.category}
-                          </Typography>
-                          <Chip
-                            label={budget.type === "income" ? "Receita" : "Despesa"}
-                            size="small"
-                            sx={{
-                              height: 20,
-                              fontSize: 10,
-                              bgcolor: alpha(budget.type === "income" ? "#059669" : "#DC2626", 0.1),
-                              color: budget.type === "income" ? "#059669" : "#DC2626",
-                              border: `1px solid ${alpha(budget.type === "income" ? "#059669" : "#DC2626", 0.2)}`,                            }}
-                          />
-                          {budget.isRecurring && (
-                            <Tooltip title="Repete todo mês">
-                              <Chip
-                                icon={<RepeatIcon sx={{ fontSize: 12 }} />}
-                                label="Mensal"
-                                size="small"
-                                sx={{
-                                  height: 20,
-                                  fontSize: 10,
-                                  bgcolor: alpha("#6366f1", 0.1),
-                                  color: "#6366f1",
-                                  border: `1px solid ${alpha("#6366f1", 0.2)}`,
-                                  "& .MuiChip-icon": {
-                                    color: "#6366f1",
-                                    ml: 0.5,
-                                  },
-                                }}
-                              />
-                            </Tooltip>
-                          )}
-                          {(streakByCategory[budget.category] ?? 0) >= 2 && !budget.isOverBudget && (
-                            <Tooltip title={`${streakByCategory[budget.category]} meses consecutivos dentro do orçamento`}>
-                              <Chip
-                                label={` ${streakByCategory[budget.category]}m`}
-                                size="small"
-                                sx={{
-                                  height: 20,
-                                  fontSize: 10,
-                                  bgcolor: alpha("#059669", 0.1),
-                                  color: "#059669",
-                                  border: `1px solid ${alpha("#059669", 0.2)}`,
-                                  cursor: "default",
-                                }}
-                              />
-                            </Tooltip>
-                          )}
-                        </Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                          Limite: {formatCurrency(budget.limitAmount)}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Tooltip title="Edit">
-                          <IconButton 
-                            size="small" 
-                            onClick={() => handleOpenForm(budget)}
-                            sx={{ 
-                              bgcolor: alpha(theme.palette.primary.main, 0.08),
-                              "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.15) }
-                            }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDelete(budget)}
-                            sx={{ 
-                              ml: 0.5,
-                              bgcolor: alpha(theme.palette.error.main, 0.08),
-                              "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.15) }
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </Box>
-
-                    {/* Progress Bar */}
-                    <Box sx={{ mb: 1.5 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={Math.min(budget.percentage, 100)}
-                        sx={{
-                          height: 10,
-                          borderRadius: 5,
-                          bgcolor: alpha(budgetColor, 0.1),
-                          "& .MuiLinearProgress-bar": {
-                            bgcolor: budgetColor,
-                            borderRadius: 5,
-                          },
-                        }}
-                      />
-                    </Box>
-
-                    {/* Stats */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
                         alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
                       }}
                     >
-                      <Box>
-                        <Typography variant="body2" fontWeight={500}>
-                          {formatCurrency(budget.spent)} gasto
+                      <CheckCircleIcon sx={{ fontSize: 20 }} />
+                    </Box>
+
+                    {/* Name + chips */}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: "4px" }}>
+                        <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{budget.category}</Typography>
+                        <Chip
+                          label={budget.type === "income" ? "Receita" : "Despesa"}
+                          size="small"
+                          sx={{
+                            height: 20,
+                            fontSize: 10,
+                            bgcolor: alpha(budget.type === "income" ? "#10b981" : "#ef4444", 0.1),
+                            color: budget.type === "income" ? "#10b981" : "#ef4444",
+                            border: "none",
+                          }}
+                        />
+                        {budget.isRecurring && (
+                          <Tooltip title="Repete todo mês">
+                            <Chip
+                              icon={<RepeatIcon sx={{ fontSize: 10 }} />}
+                              label="Mensal"
+                              size="small"
+                              sx={{
+                                height: 20,
+                                fontSize: 10,
+                                bgcolor: alpha("#a855f7", 0.1),
+                                color: "#a855f7",
+                                border: "none",
+                                "& .MuiChip-icon": { color: "#a855f7", ml: 0.5 },
+                              }}
+                            />
+                          </Tooltip>
+                        )}
+                        {(streakByCategory[budget.category] ?? 0) >= 2 && !budget.isOverBudget && (
+                          <Tooltip title={`${streakByCategory[budget.category]} meses consecutivos dentro do orçamento`}>
+                            <Chip
+                              label={`🔥 ${streakByCategory[budget.category]}m`}
+                              size="small"
+                              sx={{
+                                height: 20,
+                                fontSize: 10,
+                                bgcolor: alpha("#10b981", 0.1),
+                                color: "#10b981",
+                                border: "none",
+                                cursor: "default",
+                              }}
+                            />
+                          </Tooltip>
+                        )}
+                      </Box>
+                      {/* Limit / Spent / Remaining mini-labels */}
+                      <Box sx={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                        <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                          Limite: <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>{formatCurrency(budget.limitAmount)}</Box>
                         </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: budget.isOverBudget ? "#DC2626" : "text.secondary", fontWeight: 500 }}
-                        >
-                          {budget.isOverBudget
-                            ? `${formatCurrency(Math.abs(budget.remaining))} acima do limite`
-                            : `${formatCurrency(budget.remaining)} disponível`}
+                        <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                          Gasto: <Box component="span" sx={{ fontWeight: 700, color: "#ef4444" }}>{formatCurrency(budget.spent)}</Box>
+                        </Typography>
+                        <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                          Disponível: <Box component="span" sx={{ fontWeight: 700, color: "#10b981" }}>{formatCurrency(budget.remaining)}</Box>
                         </Typography>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        {budget.isOverBudget ? (
-                          <WarningIcon sx={{ color: "#DC2626", fontSize: 18 }} />
-                        ) : budget.percentage >= 80 ? (
-                          <WarningIcon sx={{ color: "#F59E0B", fontSize: 18 }} />
-                        ) : null}
-                        <Typography
-                          variant="h6"
+                    </Box>
+
+                    {/* Percentage + Edit button */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                      <Typography
+                        sx={{
+                          fontSize: 22,
+                          fontWeight: 700,
+                          fontVariantNumeric: "tabular-nums",
+                          color: budget.isOverBudget ? "#ef4444" : budgetColor,
+                          letterSpacing: "-0.02em",
+                        }}
+                      >
+                        {Math.round(budget.percentage)}%
+                      </Typography>
+                      <Tooltip title="Editar">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleOpenForm(budget)}
                           sx={{
-                            fontWeight: 700,
-                            color: budgetColor,
-                            letterSpacing: "-0.02em",
+                            bgcolor: alpha(theme.palette.primary.main, 0.08),
+                            "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.15) },
                           }}
                         >
-                          {Math.round(budget.percentage)}%
-                        </Typography>
-                      </Box>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
-                </NixCard>
+                  </Box>
+
+                  {/* Progress Bar */}
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(budget.percentage, 100)}
+                    sx={{
+                      height: 8,
+                      borderRadius: "99px",
+                      bgcolor: alpha(budgetColor, 0.1),
+                      "& .MuiLinearProgress-bar": {
+                        bgcolor: budgetColor,
+                        borderRadius: "99px",
+                      },
+                    }}
+                  />
+                </Box>
                 </motion.div>
               </Grid>
             );

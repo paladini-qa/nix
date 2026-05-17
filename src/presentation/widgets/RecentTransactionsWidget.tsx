@@ -2,20 +2,15 @@ import React from "react";
 import {
   Box,
   Typography,
-  Paper,
-  Chip,
   useTheme,
   alpha,
   Button,
 } from "@mui/material";
 import { ArrowForward as ArrowForwardIcon } from "@mui/icons-material";
-import { motion } from "framer-motion";
 import { Transaction } from "@/domain/entities";
 import { usePrivacyMode } from "@/presentation/hooks";
 import { useSettings } from "@/presentation/contexts";
 import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
-
-const MotionPaper = motion.create(Paper);
 
 interface RecentTransactionsWidgetProps {
   transactions: Transaction[];
@@ -26,7 +21,7 @@ const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
 const formatDate = (dateStr: string) => {
-  const [year, month, day] = dateStr.split("-");
+  const [, month, day] = dateStr.split("-");
   return `${day}/${month}`;
 };
 
@@ -36,139 +31,167 @@ const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> = ({
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const { isPrivacyMode, privacyStyles } = usePrivacyMode();
+  const { privacyStyles } = usePrivacyMode();
   const { getPaymentMethodConfig, getPaymentMethodColor, getCategoryColor } = useSettings();
 
-  // Pegar as 5 transações mais recentes (por createdAt, independente do filtro de data)
+  // 6 transações mais recentes
   const recentTransactions = [...transactions]
     .sort((a, b) => b.createdAt - a.createdAt)
-    .slice(0, 5);
+    .slice(0, 6);
 
   if (recentTransactions.length === 0) return null;
 
+  const bgElev   = isDark ? "#131317" : "#ffffff";
+  const border   = isDark ? "#27272d" : "#e4e4e7";
+  const borderSub = isDark ? "#1c1c22" : "#f1f1f4";
+  const text2    = isDark ? "#a1a1aa" : "#52525b";
+  const bgSubtle = isDark ? "#1c1c22" : "#f4f4f5";
+  const shadowSm = isDark
+    ? "0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2)"
+    : "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)";
+
   return (
-    <Box>
+    <Box
+      sx={{
+        background: bgElev,
+        border: `1px solid ${border}`,
+        borderRadius: "14px",
+        boxShadow: shadowSm,
+        overflow: "hidden",
+      }}
+    >
+      {/* Cabeçalho do card */}
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
           alignItems: "center",
-          mb: 1.5,
+          justifyContent: "space-between",
+          px: "18px",
+          pt: "16px",
+          pb: "12px",
+          borderBottom: `1px solid ${borderSub}`,
         }}
       >
-        <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: 11 }}>
+        <Typography
+          sx={{
+            fontSize: 16,
+            fontWeight: 700,
+            letterSpacing: "-0.01em",
+            color: isDark ? "#fafafa" : "#18181b",
+          }}
+        >
           Lançamentos Recentes
         </Typography>
-        {onViewAll && (
-          <Button
-            size="small"
-            endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
-            onClick={onViewAll}
-            sx={{ fontSize: 12, fontWeight: 600, py: 0.25, px: 1, borderRadius: "8px", textTransform: "none", color: "primary.main" }}
-          >
-            Ver todos
-          </Button>
-        )}
-      </Box>
-
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: "20px",
-          overflow: "hidden",
-          border: `1px solid ${isDark ? alpha("#FFFFFF", 0.07) : alpha("#000000", 0.06)}`,
-          background: isDark
-            ? alpha(theme.palette.background.paper, 0.7)
-            : alpha("#FFFFFF", 0.85),
-          backdropFilter: "blur(12px)",
-        }}
-      >
-        {recentTransactions.map((tx, index) => {
-          const isIncome = tx.type === "income";
-          const methodConfig = getPaymentMethodConfig(tx.paymentMethod);
-          const methodColors = getPaymentMethodColor(tx.paymentMethod);
-          const catColors = getCategoryColor(tx.type, tx.category);
-          return (
-            <MotionPaper
-              key={tx.id}
-              elevation={0}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ type: "spring", stiffness: 380, damping: 28, delay: index * 0.06 }}
-              whileHover={{ x: 4, backgroundColor: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.025)" }}
-              whileTap={{ scale: 0.99 }}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography sx={{ fontSize: 13, color: text2 }}>Últimos lançamentos</Typography>
+          {onViewAll && (
+            <Button
+              size="small"
+              endIcon={<ArrowForwardIcon sx={{ fontSize: 13 }} />}
+              onClick={onViewAll}
               sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                px: 2,
-                py: 1.25,
-                borderRadius: 0,
-                background: "transparent",
-                borderBottom: index < recentTransactions.length - 1
-                  ? `1px solid ${isDark ? alpha("#FFFFFF", 0.05) : alpha("#000000", 0.04)}`
-                  : "none",
-                "&:hover": {
-                  bgcolor: isDark ? alpha("#FFFFFF", 0.03) : alpha("#000000", 0.02),
-                },
-                transition: "background 0.15s ease",
+                fontSize: 12,
+                fontWeight: 600,
+                py: 0.25,
+                px: 1,
+                borderRadius: "8px",
+                textTransform: "none",
+                color: "#a855f7",
+                minWidth: 0,
               }}
             >
-              {/* Logo do meio de pagamento */}
-              <PaymentMethodIcon
-                imageUrl={methodConfig?.imageUrl}
-                colors={methodColors}
-                type={methodConfig?.type}
-                size={34}
-                borderRadius="10px"
-                iconSize={16}
-              />
+              Ver todos
+            </Button>
+          )}
+        </Box>
+      </Box>
 
-              {/* Descrição e categoria */}
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  variant="body2"
-                  fontWeight={500}
-                  sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                >
-                  {tx.description}
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.25 }}>
-                  <Typography variant="caption" color="text.disabled" sx={{ fontSize: 10 }}>
-                    {formatDate(tx.date)}
-                  </Typography>
-                  <Chip
-                    label={tx.category}
-                    size="small"
-                    sx={{
-                      height: 16,
-                      fontSize: 9,
-                      fontWeight: 600,
-                      bgcolor: alpha(catColors.primary, 0.12),
-                      color: catColors.primary,
-                      border: "none",
-                      "& .MuiChip-label": { px: 0.75 },
-                    }}
-                  />
-                </Box>
-              </Box>
+      {/* Lista de transações */}
+      <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", fontSize: "13.5px" }}>
+        <Box component="tbody">
+          {recentTransactions.map((tx, index) => {
+            const isIncome = tx.type === "income";
+            const methodConfig = getPaymentMethodConfig(tx.paymentMethod);
+            const methodColors = getPaymentMethodColor(tx.paymentMethod);
+            const catColors = getCategoryColor(tx.type, tx.category);
 
-              {/* Valor */}
-              <Typography
-                variant="body2"
-                fontWeight={700}
+            return (
+              <Box
+                component="tr"
+                key={tx.id}
                 sx={{
-                  flexShrink: 0,
-                  color: isIncome ? theme.palette.success.main : theme.palette.error.main,
-                  ...privacyStyles,
+                  borderBottom: index < recentTransactions.length - 1 ? `1px solid ${borderSub}` : "none",
+                  "&:hover": { background: isDark ? alpha("#ffffff", 0.03) : alpha("#000000", 0.02) },
+                  transition: "background 0.12s",
+                  cursor: "default",
                 }}
               >
-                {isIncome ? "+" : "-"}{formatCurrency(tx.amount)}
-              </Typography>
-            </MotionPaper>
-          );
-        })}
-      </Paper>
+                {/* Ícone da categoria / meio de pagamento */}
+                <Box component="td" sx={{ width: 40, pl: "14px", py: "12px", verticalAlign: "middle" }}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "12px",
+                      background: alpha(catColors.primary, isDark ? 0.18 : 0.12),
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <PaymentMethodIcon
+                      imageUrl={methodConfig?.imageUrl}
+                      colors={methodColors}
+                      type={methodConfig?.type}
+                      size={24}
+                      borderRadius="8px"
+                      iconSize={14}
+                    />
+                  </Box>
+                </Box>
+
+                {/* Descrição e meta */}
+                <Box component="td" sx={{ py: "12px", px: "14px", verticalAlign: "middle" }}>
+                  <Typography
+                    sx={{
+                      fontSize: "13.5px",
+                      fontWeight: 600,
+                      color: isDark ? "#fafafa" : "#18181b",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      maxWidth: "220px",
+                    }}
+                  >
+                    {tx.description}
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: 12, color: text2, mt: "1px" }}
+                  >
+                    {formatDate(tx.date)} · {tx.paymentMethod}
+                  </Typography>
+                </Box>
+
+                {/* Valor */}
+                <Box component="td" sx={{ pr: "18px", py: "12px", textAlign: "right", verticalAlign: "middle", whiteSpace: "nowrap" }}>
+                  <Typography
+                    sx={{
+                      fontSize: "13.5px",
+                      fontWeight: 700,
+                      fontVariantNumeric: "tabular-nums",
+                      color: isIncome ? "#10b981" : isDark ? "#fafafa" : "#18181b",
+                      ...privacyStyles,
+                    }}
+                  >
+                    {isIncome ? "+" : "−"}{formatCurrency(tx.amount)}
+                  </Typography>
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
     </Box>
   );
 };

@@ -129,6 +129,22 @@ export interface TagWithCount extends Tag {
   transactionCount: number;
 }
 
+// Sistema de Metas Financeiras
+export interface Goal {
+  id: string;
+  userId: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: string; // YYYY-MM-DD
+  category?: string;
+  color: string;
+  icon: string;
+  isCompleted: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // Smart Input - Cadastro inteligente via IA
 export type SmartInputMode = 'text' | 'audio' | 'image';
 

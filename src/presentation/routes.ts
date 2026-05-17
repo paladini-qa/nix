@@ -24,6 +24,7 @@ export const VIEW_ROUTES: Record<AppCurrentView, string> = {
   subscriptions: "/subscriptions",
   notifications: "/notifications",
   paymentGuide: "/payment-guide",
+  goals: "/goals",
 };
 
 /**

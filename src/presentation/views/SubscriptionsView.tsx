@@ -551,9 +551,9 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
   };
 
   const summaryCards = [
-    { label: "Mês atual", value: formatCurrency(currentMonthTotal), icon: <CalendarIcon fontSize="small" />, color: primary },
-    { label: "Média mensal", value: formatCurrency(monthlyAverage), icon: <PaymentsIcon fontSize="small" />, color: primary },
-    { label: "Serviços ativos", value: String(activeGroups.length), icon: <AppsIcon fontSize="small" />, color: primary },
+    { label: "Total mensal", value: formatCurrency(currentMonthTotal), icon: <SubscriptionsIcon />, color: "#ef4444", accent: "#ef4444" },
+    { label: "Projeção anual", value: formatCurrency(monthlyAverage * 12), icon: <CalendarIcon />, color: primary, accent: primary },
+    { label: "Serviços ativos", value: String(activeGroups.length), icon: <AppsIcon />, color: "#a855f7", accent: "#a855f7" },
   ];
 
   // ─── Detail view ─────────────────────────────────────────────────────────────
@@ -726,24 +726,40 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
       <Grid container spacing={gridSpacing}>
         {summaryCards.map((card) => (
           <Grid key={card.label} size={{ xs: 12, sm: 4 }}>
-            <Paper elevation={0} sx={paperSx(card.color)}>
-              <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-                <Box
-                  sx={{
-                    p: 0.75,
-                    borderRadius: "12px",
-                    bgcolor: alpha(card.color, 0.1),
-                    color: card.color,
-                    display: "flex",
-                  }}
-                >
-                  {card.icon}
-                </Box>
-                <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                  {card.label}
-                </Typography>
+            <Paper
+              elevation={0}
+              sx={{
+                p: "18px",
+                position: "relative",
+                overflow: "hidden",
+                background: isDark ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                border: `1px solid ${isDark ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+                borderRadius: "14px",
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)", boxShadow: `0 10px 28px -6px ${alpha(card.accent, 0.2)}` },
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "11px",
+                  display: "grid",
+                  placeItems: "center",
+                  bgcolor: alpha(card.accent, 0.12),
+                  color: card.accent,
+                }}
+              >
+                {card.icon}
               </Box>
-              <Typography variant="h5" fontWeight={700} color="text.primary">
+              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+                {card.label}
+              </Typography>
+              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: card.color, lineHeight: 1.15 }}>
                 {card.value}
               </Typography>
             </Paper>
