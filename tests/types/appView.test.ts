@@ -1,5 +1,5 @@
 import { describe, it, expectTypeOf } from "vitest";
-import type { AppCurrentView } from "../../types/appView";
+import type { AppCurrentView } from "@/shared/types/appView";
 
 describe("AppCurrentView", () => {
   it("accepts known view ids", () => {

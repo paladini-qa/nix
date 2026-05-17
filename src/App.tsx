@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { ThemeProvider, CssBaseline, Box, CircularProgress } from "@mui/material";
 import { Theme } from "@radix-ui/themes";
-import { lightTheme, darkTheme } from "./theme";
-import AppShell from "./components/shell/AppShell";
-import AppProviders from "./components/shell/AppProviders";
-import LoginView from "./components/views/LoginView";
-import { supabase } from "./services/supabaseClient";
+import { lightTheme, darkTheme } from "@/shared/theme";
+import AppShell from "@/presentation/layouts/shell/AppShell";
+import AppProviders from "@/presentation/layouts/shell/AppProviders";
+import LoginView from "@/presentation/views/LoginView";
+import { supabase } from "@/infrastructure/database/supabaseClient";
 import { Session } from "@supabase/supabase-js";
-import { useAppStore } from "./hooks/useAppStore";
-import { useSettingsQuery } from "./hooks/useSettingsQuery";
+import { useAppStore } from "@/presentation/hooks/useAppStore";
+import { useSettingsQuery } from "@/presentation/hooks/useSettingsQuery";
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);

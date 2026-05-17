@@ -36,23 +36,34 @@ Run a single test file: `npx vitest run tests/utils/transactionUtils.test.ts`
 
 The `TransactionsContext` wraps the authenticated shell and provides filtered transactions + summary to child views.
 
+### Folder structure (Clean Architecture)
+
+```
+src/
+├── domain/        # Pure TS — entities + use-cases (no React)
+├── application/   # Supabase-backed services (accountService, budgetService…)
+├── infrastructure/# External drivers: database/, ai/, openFinance/, export/, native/
+├── presentation/  # All React: views/, components/, layouts/, hooks/, contexts/
+└── shared/        # Cross-cutting: types/, schemas/, utils/, theme/, i18n/, constants/
+```
+
 ### Routing
 
-Navigation is view-based, not URL-based. `AppView` (union type in `src/types/appView.ts`) drives which component renders inside `AppShell`. Routes and display names are declared in `src/routes.ts`.
+Navigation is view-based, not URL-based. `AppView` (union type in `src/shared/types/appView.ts`) drives which component renders inside `AppShell`. Routes are declared in `src/presentation/routes.ts`.
 
 ### Services
 
-- `src/services/supabaseClient.ts` — Supabase client; all DB queries go through here
-- `src/services/api/` — domain-specific services: `accountService`, `budgetService`, `goalService`, `tagService`, `planningService`
-- `src/services/geminiService.ts` — Gemini AI (optional; key from `VITE_GEMINI_API_KEY`)
-- `src/services/pluggyService.ts` — Pluggy Open Finance bank connector
-- `src/services/queryClient.ts` — TanStack Query client with persistence
+- `src/infrastructure/database/supabaseClient.ts` — Supabase client; all DB queries go through here
+- `src/application/services/` — domain services: `accountService`, `budgetService`, `tagService`, `planningService`
+- `src/infrastructure/ai/geminiService.ts` — Gemini AI (optional; key from `VITE_GEMINI_API_KEY`)
+- `src/infrastructure/openFinance/pluggyService.ts` — Pluggy Open Finance bank connector
+- `src/infrastructure/database/queryClient.ts` — TanStack Query client with persistence
 
 ### Database
 
-All tables have RLS enabled. Schema source of truth: `database/setup.sql`. Tables: `transactions`, `user_settings`, `budgets`, `goals`, `accounts`, `tags`. Always map snake_case DB columns → camelCase TypeScript.
+All tables have RLS enabled. Schema source of truth: `docs/setup.sql`. Tables: `transactions`, `user_settings`, `budgets`, `goals`, `accounts`, `tags`. Always map snake_case DB columns → camelCase TypeScript.
 
-### Key types (`src/types/index.ts`)
+### Key types (`src/domain/entities/index.ts`)
 
 ```ts
 type TransactionType = "income" | "expense";
@@ -91,7 +102,7 @@ This project follows a "Human & Organic" design philosophy — artisan UI, never
 - Dates always ISO format `YYYY-MM-DD`; use Day.js for manipulation
 - Money values: `Intl.NumberFormat`
 - `useMemo` for derived calculations, clean up `useEffect` subscriptions
-- Always validate with Zod (`src/schemas/`) before sending to Supabase
+- Always validate with Zod (`src/shared/schemas/`) before sending to Supabase
 - Check session before queries; use try/catch on all Supabase calls
 
 ## Commits
@@ -110,6 +121,6 @@ Common scopes: `auth`, `transactions`, `dashboard`, `settings`, `charts`, `ai`, 
 
 After any significant change, update:
 1. `docs/design_system.md` — new UI patterns or components
-2. `CHANGELOG.md` — add entry under `[Unreleased]` with description, affected files, and impact
-3. `docs/documentacao.md` — new features, flows, or data models
-4. `database/setup.sql` — if schema changes
+2. `docs/CHANGELOG.md` — add entry under `[Unreleased]` with description, affected files, and impact
+3. `docs/requirements.md` — new features, flows, or data models
+4. `docs/setup.sql` — if schema changes

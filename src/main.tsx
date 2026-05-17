@@ -2,15 +2,15 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
-import { ErrorBoundary } from "./contexts";
-import { initializeCapacitor, hideSplashScreen } from "./services/capacitorService";
+import { ErrorBoundary } from "@/presentation/contexts";
+import { initializeCapacitor, hideSplashScreen } from "@/infrastructure/native/capacitorService";
 import "./i18n"; // Initialize i18n
 import "@radix-ui/themes/styles.css";
 import "./styles/index.css";
 import "./styles/radix-theme.css";
 
 import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./services/queryClient";
+import { queryClient } from "@/infrastructure/database/queryClient";
 
 // Inicializa o Capacitor (só executa em plataformas nativas)
 initializeCapacitor();

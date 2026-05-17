@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useFilters } from "../../hooks/useFilters";
+import { useFilters } from "@/presentation/hooks/useFilters";
 
 describe("useFilters", () => {
   it("should initialize with current month and year", () => {

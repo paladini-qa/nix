@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useCurrency } from "../../hooks/useCurrency";
+import { useCurrency } from "@/presentation/hooks/useCurrency";
 
 describe("useCurrency", () => {
   it("should format currency correctly in BRL", () => {

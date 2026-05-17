@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import EmptyState from "../../components/EmptyState";
+import EmptyState from "@/presentation/components/ui/EmptyState";
 
 describe("EmptyState", () => {
   it("renders title and description", () => {

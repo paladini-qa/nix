@@ -66,7 +66,7 @@ npm install
 
 1. Crie um novo projeto no [Supabase Dashboard](https://supabase.com/dashboard)
 
-2. Execute o script SQL para criar as tabelas. No SQL Editor do Supabase, execute o conteúdo de [`database/setup.sql`](database/setup.sql)
+2. Execute o script SQL para criar as tabelas. No SQL Editor do Supabase, execute o conteúdo de [`docs/setup.sql`](docs/setup.sql)
 
 3. Copie suas credenciais em **Project Settings > API**:
    - `Project URL` → `SUPABASE_URL`

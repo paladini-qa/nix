@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { reportErrorToEndpoint } from "../../utils/errorReporting";
+import { reportErrorToEndpoint } from "@/shared/utils/errorReporting";
 
 describe("errorReporting", () => {
   const originalFetch = globalThis.fetch;

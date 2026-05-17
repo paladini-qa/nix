@@ -24,6 +24,11 @@ skills
 .cursor/
 .claude/
 .playwright-mcp/
+
+# Playwright
+/e2e/.auth/
+/playwright-report/
+/test-results/
 *.suo
 *.ntvs*
 *.njsproj

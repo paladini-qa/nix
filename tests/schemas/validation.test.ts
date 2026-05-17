@@ -9,7 +9,7 @@ import {
   validate,
   getErrorMessages,
   getFirstError,
-} from "../../schemas";
+} from "@/shared/schemas";
 
 describe("Transaction Schema", () => {
   const validTransaction = {
