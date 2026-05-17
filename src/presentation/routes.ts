@@ -13,18 +13,10 @@ export const VIEW_ROUTES: Record<AppCurrentView, string> = {
   nixai: "/nixai",
   paymentMethods: "/payment-methods",
   categories: "/categories",
-  budgets: "/budgets",
-  analytics: "/analytics",
-  planning: "/planning",
-  accounts: "/accounts",
-  import: "/import",
-  "fiscal-report": "/fiscal-report",
-  "debt-calculator": "/debt-calculator",
   investments: "/investments",
   subscriptions: "/subscriptions",
   notifications: "/notifications",
-  paymentGuide: "/payment-guide",
-  goals: "/goals",
+  "fiscal-report": "/fiscal-report",
 };
 
 /**

@@ -16,8 +16,6 @@ import TransactionsSkeleton from "@/presentation/components/skeletons/Transactio
 import ListCardsSkeleton from "@/presentation/components/skeletons/ListCardsSkeleton";
 import PaymentMethodsSkeleton from "@/presentation/components/skeletons/PaymentMethodsSkeleton";
 import CategoriesSkeleton from "@/presentation/components/skeletons/CategoriesSkeleton";
-import BudgetsSkeleton from "@/presentation/components/skeletons/BudgetsSkeleton";
-import PlanningSkeleton from "@/presentation/components/skeletons/PlanningSkeleton";
 
 // Lazy views
 import RecurringEditForm from "@/presentation/forms/RecurringEditForm";
@@ -30,18 +28,10 @@ const RecurringView = lazy(() => import("@/presentation/views/RecurringView"));
 const NixAIView = lazy(() => import("@/presentation/views/NixAIView"));
 const PaymentMethodsView = lazy(() => import("@/presentation/views/PaymentMethodsView"));
 const CategoriesView = lazy(() => import("@/presentation/views/CategoriesView"));
-const BudgetsView = lazy(() => import("@/presentation/views/BudgetsView"));
-const AnalyticsView = lazy(() => import("@/presentation/views/AnalyticsView"));
-const PlanningView = lazy(() => import("@/presentation/views/PlanningView"));
-const ImportView = lazy(() => import("@/presentation/views/ImportView"));
 const FiscalReportView = lazy(() => import("@/presentation/views/FiscalReportView"));
-const DebtCalculatorView = lazy(() => import("@/presentation/views/DebtCalculatorView"));
 const InvestmentsView = lazy(() => import("@/presentation/views/InvestmentsView"));
 const SubscriptionsView = lazy(() => import("@/presentation/views/SubscriptionsView"));
 const NotificationsView = lazy(() => import("@/presentation/views/NotificationsView"));
-const PaymentGuideView = lazy(() => import("@/presentation/views/PaymentGuideView"));
-const AccountsView = lazy(() => import("@/presentation/views/AccountsView"));
-const GoalsView = lazy(() => import("@/presentation/views/GoalsView"));
 
 const ViewLoadingMui: React.FC = () => (
   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 8 }}>
@@ -122,8 +112,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
   };
   const SECONDARY_VIEWS = new Set<AppCurrentView>([
     "splits", "shared", "recurring", "categories", "nixai",
-    "budgets", "analytics", "planning", "import",
-    "fiscal-report", "debt-calculator", "subscriptions", "investments", "notifications", "paymentGuide",
+    "fiscal-report", "subscriptions", "investments", "notifications",
   ]);
 
   const prevViewRef = useRef<AppCurrentView>(currentView);
@@ -572,57 +561,10 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
             />
           </Suspense>
         );
-      case "budgets":
-        return (
-          <Suspense fallback={<BudgetsSkeleton />}>
-            <BudgetsView
-              transactions={transactions}
-              categories={categories}
-              userId={session.user.id}
-              selectedMonth={filters.month}
-              selectedYear={filters.year}
-              onDateChange={(month, year) => setFilters({ month, year })}
-            />
-          </Suspense>
-        );
-      case "analytics":
-        return (
-          <Suspense fallback={<ViewLoadingMui />}>
-            <AnalyticsView transactions={transactions} />
-          </Suspense>
-        );
-      case "planning":
-        return (
-          <Suspense fallback={<PlanningSkeleton />}>
-            <PlanningView
-              categories={categories}
-              paymentMethods={paymentMethods}
-              userId={session.user.id}
-            />
-          </Suspense>
-        );
-      case "import":
-        return (
-          <Suspense fallback={<ViewLoadingMui />}>
-            <ImportView
-              categories={categories}
-              paymentMethods={paymentMethods}
-              onImport={async (txs) => {
-                await Promise.all(txs.map((tx) => addTransaction(tx)));
-              }}
-            />
-          </Suspense>
-        );
       case "fiscal-report":
         return (
           <Suspense fallback={<ViewLoadingMui />}>
             <FiscalReportView transactions={transactions} />
-          </Suspense>
-        );
-      case "debt-calculator":
-        return (
-          <Suspense fallback={<ViewLoadingMui />}>
-            <DebtCalculatorView />
           </Suspense>
         );
       case "investments":
@@ -665,33 +607,6 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
         return (
           <Suspense fallback={<ViewLoadingMui />}>
             <NotificationsView onNavigate={handleNavigate} />
-          </Suspense>
-        );
-      case "accounts":
-        return (
-          <Suspense fallback={<ViewLoadingMui />}>
-            <AccountsView
-              userId={session.user.id}
-              transactions={transactions}
-            />
-          </Suspense>
-        );
-      case "paymentGuide":
-        return (
-          <Suspense fallback={<ViewLoadingMui />}>
-            <PaymentGuideView
-              transactions={transactions}
-              paymentMethodConfigs={paymentMethodConfigs}
-              onTogglePaid={handleTogglePaid}
-              selectedMonth={filters.month}
-              selectedYear={filters.year}
-            />
-          </Suspense>
-        );
-      case "goals":
-        return (
-          <Suspense fallback={<ViewLoadingMui />}>
-            <GoalsView />
           </Suspense>
         );
       case "dashboard":

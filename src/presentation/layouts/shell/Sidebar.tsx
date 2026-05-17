@@ -21,21 +21,13 @@ import {
   Category as CategoryIcon,
   Payment as PaymentIcon,
   Star as BatchRegistrationIcon,
-  AccountBalance as BudgetsIcon,
-  CalendarMonth as PlanningIcon,
-  Description as FiscalIcon,
-  Calculate as DebtCalcIcon,
   TrendingUp as InvestmentsIcon,
   Subscriptions as SubscriptionsIcon,
   NotificationsOutlined as NotificationsIcon,
-  FactCheck as PaymentGuideIcon,
-  Flag as GoalsIcon,
-  BarChart as AnalyticsIcon,
-  FileUpload as ImportIcon,
-  AccountBalanceWalletOutlined as AccountsIcon,
+  Description as FiscalIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Badge } from "@mui/material";
 import type { AppCurrentView } from "@/shared/types/appView";
 import { useNotifications } from "@/presentation/hooks";
@@ -110,29 +102,18 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: NotificationsIcon, label: "Notificações", id: "notifications" },
   ];
 
-  const reportsNavItems: NavItem[] = [
-    { icon: BudgetsIcon, label: "Orçamentos", id: "budgets" },
-    { icon: GoalsIcon, label: "Metas", id: "goals" },
-    { icon: PlanningIcon, label: "Planejamento", id: "planning" },
-    { icon: AnalyticsIcon, label: "Analytics", id: "analytics" },
-    { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },
-  ];
-
   const resourcesNavItems: NavItem[] = [
-    { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
     { icon: PaymentIcon, label: "Pagamentos", id: "paymentMethods" },
-    { icon: CategoryIcon, label: "Categorias", id: "categories" },
-    { icon: SubscriptionsIcon, label: t("nav.subscriptions"), id: "subscriptions" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
     { icon: CreditCardIcon, label: "Parcelas", id: "splits" },
-    { icon: PaymentGuideIcon, label: "Guia de Pagamento", id: "paymentGuide" },
-    { icon: AccountsIcon, label: "Contas", id: "accounts" },
+    { icon: CategoryIcon, label: "Categorias", id: "categories" },
+    { icon: SubscriptionsIcon, label: t("nav.subscriptions"), id: "subscriptions" },
+    { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
   ];
 
   const toolsNavItems: NavItem[] = [
+    { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },
     { icon: FiscalIcon, label: "Rel. Fiscal", id: "fiscal-report" },
-    { icon: DebtCalcIcon, label: "Calc. Dívidas", id: "debt-calculator" },
-    { icon: ImportIcon, label: "Importar", id: "import" },
   ];
 
   const renderNavItem = (
@@ -235,7 +216,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header */}
         <Box sx={{ px: "18px", pt: "18px", pb: "14px" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            {/* Logo: purple gradient square with "N" letter */}
             <Box
               sx={{
                 width: 36,
@@ -271,20 +251,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </Typography>
           <List disablePadding>
             {mainNavItems.map((item, idx) => (
-              <motion.div key={item.id} variants={itemVariants}>
-                {renderNavItem(item, false, idx)}
-              </motion.div>
-            ))}
-          </List>
-        </Box>
-
-        {/* Reports Section */}
-        <Box sx={{ px: "12px", pb: "4px", pt: "6px" }}>
-          <Typography sx={{ px: "10px", pb: "8px", pt: "6px", fontSize: "10.5px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "text.disabled" }}>
-            Reports
-          </Typography>
-          <List disablePadding>
-            {reportsNavItems.map((item, idx) => (
               <motion.div key={item.id} variants={itemVariants}>
                 {renderNavItem(item, false, idx)}
               </motion.div>
