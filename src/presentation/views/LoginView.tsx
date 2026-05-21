@@ -220,46 +220,31 @@ const LoginView: React.FC = () => {
       {/* Login Card */}
       <Box
         sx={{
-          width: "100%",
-          maxWidth: isMobile ? "100%" : 400,
-          px: isMobile ? 0 : 2,
+          width: "90%",
+          maxWidth: 400,
+          px: { xs: 1, sm: 2 },
           zIndex: 1,
-          ...(isMobile && {
-            position: "fixed",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            overflowY: "auto",
-          }),
         }}
       >
         <Box
           sx={{
-            borderRadius: isMobile ? 0 : "20px",
+            borderRadius: "20px",
             overflow: "hidden",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.paper, 0.85)
               : alpha("#FFFFFF", 0.90),
             backdropFilter: "blur(24px)",
             WebkitBackdropFilter: "blur(24px)",
-            border: isMobile ? "none" : `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.15) : alpha(theme.palette.primary.main, 0.2)}`,
-            boxShadow: isMobile ? "none" : (isDarkMode
+            border: `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.15) : alpha(theme.palette.primary.main, 0.2)}`,
+            boxShadow: isDarkMode
               ? `0 24px 80px -20px rgba(18, 11, 30, 0.8), inset 0 1px 0 ${alpha(theme.palette.primary.light, 0.15)}`
-              : `0 24px 80px -20px ${alpha(theme.palette.primary.main, 0.18)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`),
+              : `0 24px 80px -20px ${alpha(theme.palette.primary.main, 0.18)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
             transition: "all 0.3s ease-in-out",
-            ...(!isMobile && {
-              "&:hover": {
-                boxShadow: isDarkMode
-                  ? `0 32px 100px -24px rgba(18, 11, 30, 0.9)`
-                  : `0 32px 100px -24px ${alpha(theme.palette.primary.main, 0.25)}`,
-              },
-            }),
-            ...(isMobile && {
-              minHeight: "100%",
-              pt: "env(safe-area-inset-top, 0px)",
-              pb: "env(safe-area-inset-bottom, 0px)",
-            }),
+            "&:hover": {
+              boxShadow: isDarkMode
+                ? `0 32px 100px -24px rgba(18, 11, 30, 0.9)`
+                : `0 32px 100px -24px ${alpha(theme.palette.primary.main, 0.25)}`,
+            },
           }}
         >
           {/* Header */}
