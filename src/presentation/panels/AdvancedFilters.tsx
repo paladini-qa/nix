@@ -62,20 +62,22 @@ export const AdvancedFiltersButton: React.FC<{
   showFilters: boolean;
   onToggleFilters: () => void;
   compact?: boolean;
-}> = ({ hasActiveFilters, activeFiltersCount, showFilters, onToggleFilters, compact }) => {
+  fullWidth?: boolean;
+}> = ({ hasActiveFilters, activeFiltersCount, showFilters, onToggleFilters, compact, fullWidth }) => {
   return (
-    <Box sx={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+    <Box sx={{ position: "relative", display: fullWidth ? "flex" : "inline-flex", flexShrink: 0, width: fullWidth ? "100%" : undefined }}>
       <Button
         variant={hasActiveFilters ? "contained" : "outlined"}
         startIcon={<FilterListIcon sx={{ fontSize: compact ? 16 : 20 }} />}
         endIcon={!compact && (showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
         onClick={onToggleFilters}
         size={compact ? "small" : "medium"}
+        fullWidth={fullWidth}
         sx={{
           borderRadius: compact ? "10px" : "20px",
           textTransform: "none",
           minWidth: compact ? 32 : undefined,
-          width: compact ? 32 : undefined,
+          width: compact ? 32 : (fullWidth ? "100%" : undefined),
           height: compact ? 32 : 40,
           p: compact ? 0 : undefined,
           px: compact ? 0 : 2,

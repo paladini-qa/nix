@@ -28,6 +28,8 @@ import dayjs from "dayjs";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/infrastructure/database/supabaseClient";
 
+const AdvancedFilters = lazy(() => import("@/presentation/panels/AdvancedFilters"));
+
 interface AppShellProps {
   session: Session;
 }
@@ -50,6 +52,10 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
     setEditingTransaction,
     isProfileModalOpen,
     setIsProfileModalOpen,
+    showAdvancedFilters,
+    setShowAdvancedFilters,
+    advancedFilters,
+    setFiltersState,
   } = useAppStore();
 
   // Rascunho capturado do Google Wallet — exibido no WalletDraftBanner
@@ -180,6 +186,19 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
               overflowY: "auto",
             }}
           >
+            {!isMobile && (
+              <Box sx={{ px: "28px", pt: "24px" }}>
+                <Suspense fallback={null}>
+                  <AdvancedFilters
+                    transactions={transactions}
+                    filters={advancedFilters}
+                    onFiltersChange={setFiltersState}
+                    showFilters={showAdvancedFilters}
+                    onToggleFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  />
+                </Suspense>
+              </Box>
+            )}
             <Suspense fallback={null}>
               <AppViewSwitcher currentView={currentView} session={session} />
             </Suspense>

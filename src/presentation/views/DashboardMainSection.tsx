@@ -51,18 +51,17 @@ const DashboardMainSection: React.FC = () => {
   const { displayName } = useSettings();
   const navigate = useNavigate();
 
-  const { filters, setIsFormOpen, setEditingTransaction } = useAppStore();
+  const { 
+    filters, 
+    setIsFormOpen, 
+    setEditingTransaction,
+    showAdvancedFilters,
+    setShowAdvancedFilters,
+    advancedFilters,
+    setFiltersState,
+  } = useAppStore();
   const { data: transactions = [], refetch } = useTransactionsQuery();
   const { filteredTransactions, summary } = useFilteredTransactions();
-
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFiltersState>({
-    startDate: null,
-    endDate: null,
-    type: "all",
-    categories: [],
-    paymentMethods: [],
-  });
 
   const hasAdvancedFiltersActive =
     advancedFilters.startDate !== null ||
@@ -77,7 +76,7 @@ const DashboardMainSection: React.FC = () => {
     advancedFilters.categories.length +
     advancedFilters.paymentMethods.length;
 
-  const handleToggleFilters = useCallback(() => setShowAdvancedFilters((v) => !v), []);
+  const handleToggleFilters = useCallback(() => setShowAdvancedFilters(!showAdvancedFilters), [showAdvancedFilters, setShowAdvancedFilters]);
   const handlePaymentMethodClick = useCallback(
     () => navigate(VIEW_ROUTES.paymentMethods),
     [navigate]
@@ -208,6 +207,29 @@ const DashboardMainSection: React.FC = () => {
         </Box>
       )}
 
+      {/* Advanced filters button row — mobile only */}
+      {isMobile && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            mb: "22px",
+            flexWrap: "wrap",
+            justifyContent: "flex-start",
+            width: "100%",
+          }}
+        >
+          <AdvancedFiltersButton
+            hasActiveFilters={hasAdvancedFiltersActive}
+            activeFiltersCount={activeFiltersCount}
+            showFilters={showAdvancedFilters}
+            onToggleFilters={handleToggleFilters}
+            fullWidth={true}
+          />
+        </Box>
+      )}
+
       {/* Summary cards — desktop only */}
       {!isMobile && (
         <Box sx={{ mb: "22px" }}>
@@ -220,34 +242,18 @@ const DashboardMainSection: React.FC = () => {
         </Box>
       )}
 
-      {/* Advanced filters button row */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          mb: "22px",
-          flexWrap: "wrap",
-          justifyContent: { xs: "flex-start", md: "flex-end" },
-        }}
-      >
-        <AdvancedFiltersButton
-          hasActiveFilters={hasAdvancedFiltersActive}
-          activeFiltersCount={activeFiltersCount}
-          showFilters={showAdvancedFilters}
-          onToggleFilters={handleToggleFilters}
-        />
-      </Box>
-
-      <Suspense fallback={null}>
-        <AdvancedFilters
-          transactions={transactions}
-          filters={advancedFilters}
-          onFiltersChange={setAdvancedFilters}
-          showFilters={showAdvancedFilters}
-          onToggleFilters={handleToggleFilters}
-        />
-      </Suspense>
+      {/* Advanced filters selection drawer — mobile only */}
+      {isMobile && (
+        <Suspense fallback={null}>
+          <AdvancedFilters
+            transactions={transactions}
+            filters={advancedFilters}
+            onFiltersChange={setFiltersState}
+            showFilters={showAdvancedFilters}
+            onToggleFilters={handleToggleFilters}
+          />
+        </Suspense>
+      )}
 
       {/* Dash grid: recent transactions (left) + expenses by category (right) */}
       <Box

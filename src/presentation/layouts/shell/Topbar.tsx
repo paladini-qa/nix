@@ -27,6 +27,7 @@ import { useSettings } from "@/presentation/contexts";
 import { useAppStore } from "@/presentation/hooks/useAppStore";
 import { useNotifications } from "@/presentation/hooks";
 import DateFilter from "@/presentation/components/ui/DateFilter";
+import { AdvancedFiltersButton } from "@/presentation/panels/AdvancedFilters";
 import { NotificationType } from "@/domain/entities";
 import { AppCurrentView } from "@/shared/types/appView";
 
@@ -54,7 +55,28 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction, onN
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const { themePreference, setThemePreference } = useSettings();
-  const { filters, setFilters } = useAppStore();
+  const { 
+    filters, 
+    setFilters,
+    showAdvancedFilters,
+    setShowAdvancedFilters,
+    advancedFilters,
+  } = useAppStore();
+
+  const hasAdvancedFiltersActive =
+    advancedFilters.startDate !== null ||
+    advancedFilters.endDate !== null ||
+    advancedFilters.type !== "all" ||
+    advancedFilters.categories.length > 0 ||
+    advancedFilters.paymentMethods.length > 0;
+
+  const activeFiltersCount =
+    (advancedFilters.startDate || advancedFilters.endDate ? 1 : 0) +
+    (advancedFilters.type !== "all" ? 1 : 0) +
+    advancedFilters.categories.length +
+    advancedFilters.paymentMethods.length;
+
+  const handleToggleFilters = () => setShowAdvancedFilters(!showAdvancedFilters);
 
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(
     filters.month,
@@ -125,6 +147,14 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction, onN
         year={filters.year}
         onDateChange={(month, year) => setFilters({ month, year })}
         showIcon
+      />
+
+      {/* Advanced Filters Button */}
+      <AdvancedFiltersButton
+        hasActiveFilters={hasAdvancedFiltersActive}
+        activeFiltersCount={activeFiltersCount}
+        showFilters={showAdvancedFilters}
+        onToggleFilters={handleToggleFilters}
       />
 
       {/* Notifications bell */}

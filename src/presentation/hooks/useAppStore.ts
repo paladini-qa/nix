@@ -23,10 +23,24 @@ interface UIState {
   // Filters
   filters: FilterState;
   setFilters: (filters: FilterState | ((prev: FilterState) => FilterState)) => void;
+
+  // Advanced Filters
+  showAdvancedFilters: boolean;
+  setShowAdvancedFilters: (show: boolean) => void;
+  advancedFilters: AdvancedFiltersState;
+  setFiltersState: (filters: AdvancedFiltersState | ((prev: AdvancedFiltersState) => AdvancedFiltersState)) => void;
   
   // Search
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+}
+
+export interface AdvancedFiltersState {
+  startDate: dayjs.Dayjs | null;
+  endDate: dayjs.Dayjs | null;
+  type: "all" | "income" | "expense";
+  categories: string[];
+  paymentMethods: string[];
 }
 
 export const useAppStore = create<UIState>((set) => ({
@@ -58,6 +72,20 @@ export const useAppStore = create<UIState>((set) => ({
   })(),
   setFilters: (filters) => set((state) => ({
     filters: typeof filters === "function" ? filters(state.filters) : filters,
+  })),
+
+  // Advanced Filters
+  showAdvancedFilters: false,
+  setShowAdvancedFilters: (show) => set({ showAdvancedFilters: show }),
+  advancedFilters: {
+    startDate: null,
+    endDate: null,
+    type: "all",
+    categories: [],
+    paymentMethods: [],
+  },
+  setFiltersState: (advancedFilters) => set((state) => ({
+    advancedFilters: typeof advancedFilters === "function" ? advancedFilters(state.advancedFilters) : advancedFilters,
   })),
   
   // Search
