@@ -727,6 +727,17 @@ html, body {
 }
 
 @media (max-width: 768px) {
+  ::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
+
+  /* Ícones do header mobile: 38px para liberar espaço ao título */
+  header .rt-IconButton {
+    min-height: 38px !important;
+    min-width: 38px !important;
+    width: 38px !important;
+    height: 38px !important;
+  }
+
   html {
     font-size: 16px;
     -webkit-text-size-adjust: 100%;

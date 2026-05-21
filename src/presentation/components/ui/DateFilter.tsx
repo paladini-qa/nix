@@ -210,7 +210,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
               fontWeight={700}
               sx={{ fontSize: 12, lineHeight: 1, color: "text.primary", whiteSpace: "nowrap" }}
             >
-              {MONTH_LABELS[month]}/{year}
+              {MONTH_LABELS[month]}/{String(year).slice(-2)}
             </Typography>
           </Box>
 

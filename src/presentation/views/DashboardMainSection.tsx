@@ -124,13 +124,26 @@ const DashboardMainSection: React.FC = () => {
           </Box>
 
           {/* Shortcuts carousel */}
+          <Box sx={{ position: "relative", mx: -2 }}>
+            {/* Fade gradient → indica mais itens */}
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: 40,
+                zIndex: 1,
+                pointerEvents: "none",
+                background: `linear-gradient(to left, ${theme.palette.background.default} 0%, transparent 100%)`,
+              }}
+            />
           <Box
             sx={{
               display: "flex",
               gap: 1.5,
               overflowX: "auto",
               pb: 1.5,
-              mx: -2,
               px: 2,
               scrollbarWidth: "none",
               "&::-webkit-scrollbar": { display: "none" },
@@ -178,6 +191,7 @@ const DashboardMainSection: React.FC = () => {
                 </Typography>
               </Box>
             ))}
+          </Box>
           </Box>
         </>
       )}

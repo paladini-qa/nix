@@ -615,7 +615,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         gap: isMobile ? 2 : 3,
         px: { xs: 0, md: "28px" },
         pt: { xs: 0, md: "24px" },
-        pb: { xs: "180px", md: "60px" },
+        pb: { xs: "24px", md: "60px" },
       }}
     >
       {/* Header */}

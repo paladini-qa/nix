@@ -75,6 +75,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         transition={{ delay: 0.15, type: "spring", stiffness: 400 }}
         sx={{
           flex: 1,
+          minWidth: 0,
+          overflow: "hidden",
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-start",
@@ -85,10 +87,14 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           component="img"
           src={logoUrl}
           alt="Finance Control Logo"
-          sx={{ width: 32, height: 32, objectFit: "contain", borderRadius: "9px" }}
+          sx={{ width: 32, height: 32, flexShrink: 0, objectFit: "contain", borderRadius: "9px" }}
         />
-        <Text size="5" weight="bold" style={{ letterSpacing: "-0.02em", fontSize: 20 }}>
-          Nix Finance
+        <Text
+          size="5"
+          weight="bold"
+          style={{ letterSpacing: "-0.02em", fontSize: 18, whiteSpace: "nowrap" }}
+        >
+          Nix
         </Text>
       </MotionBox>
 
@@ -111,9 +117,9 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           onClick={togglePrivacyMode}
           aria-label={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
           title={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
-          style={{ width: 44, height: 44 }}
+          style={{ width: 38, height: 38 }}
         >
-          {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
+          {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
         </IconButton>
         <IconButton
           size="3"
@@ -122,7 +128,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           onClick={() => onNavigate?.("notifications")}
           aria-label="Notificações"
           title="Notificações"
-          style={{ width: 44, height: 44, position: "relative" }}
+          style={{ width: 38, height: 38, position: "relative" }}
         >
           <Badge
             badgeContent={unreadCount}
@@ -130,7 +136,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
             max={9}
             sx={{ "& .MuiBadge-badge": { fontSize: 9, minWidth: 14, height: 14, p: 0 } }}
           >
-            <Bell size={20} />
+            <Bell size={18} />
           </Badge>
         </IconButton>
       </MotionBox>
