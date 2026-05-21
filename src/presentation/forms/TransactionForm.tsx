@@ -391,11 +391,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     (!currentMethodConfig.closingDay || !currentMethodConfig.paymentDay);
   const isCashMethod = currentMethodConfig?.type === "cash";
 
-  // Auto-calcula data de vencimento da fatura para cartões
+  // Data efetiva da transação: quando há parcelamento, usa mês/ano do início ajustado pela parcela atual
+  const effectiveDate = useMemo(() => {
+    if (hasInstallments && installmentStartDate && date) {
+      const offset = (editTransaction?.currentInstallment ?? 1) - 1;
+      return installmentStartDate.add(offset, "month").date(date.date());
+    }
+    return date;
+  }, [hasInstallments, installmentStartDate, date, editTransaction?.currentInstallment]);
+
+  // Auto-calcula data de vencimento da fatura para cartões (usa data efetiva para refletir mês de início)
   const autoInvoiceDueDate = useMemo(() => {
-    if (!isCardMethod || !currentMethodConfig || !date) return undefined;
-    return calculateInvoiceDueDate(date.format("YYYY-MM-DD"), currentMethodConfig);
-  }, [isCardMethod, currentMethodConfig, date]);
+    if (!isCardMethod || !currentMethodConfig || !effectiveDate) return undefined;
+    return calculateInvoiceDueDate(effectiveDate.format("YYYY-MM-DD"), currentMethodConfig);
+  }, [isCardMethod, currentMethodConfig, effectiveDate]);
 
   // Fallback: lógica legada (sem config estruturada)
   const hasInvoiceDueDate = !currentMethodConfig && paymentMethodDueDay != null && paymentMethodDueDay >= 1 && paymentMethodDueDay <= 31;
@@ -815,9 +824,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         type,
         category,
         paymentMethod,
-        date: hasInstallments && installmentStartDate
-          ? installmentStartDate.date(date.date()).format("YYYY-MM-DD")
-          : date.format("YYYY-MM-DD"),
+        date: effectiveDate ? effectiveDate.format("YYYY-MM-DD") : date.format("YYYY-MM-DD"),
         ...(invoiceDueDate !== undefined && { invoiceDueDate }),
         isRecurring,
         frequency: isRecurring ? frequency : undefined,

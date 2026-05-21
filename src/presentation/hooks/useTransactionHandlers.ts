@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { Session } from "@supabase/supabase-js";
+import dayjs from "dayjs";
 import { supabase } from "@/infrastructure/database/supabaseClient";
 import { Transaction, PaymentMethodConfig } from "@/domain/entities";
 import { getReportDate, calculateInvoiceDueDate } from "@/domain/usecases/transactionUtils";
@@ -382,6 +383,36 @@ export const useTransactionHandlers = ({
             const wasShared = originalTx.isShared && originalTx.sharedWith;
             const isNowShared = newTx.isShared && newTx.sharedWith;
 
+            // Calcular novas datas por parcela quando o mês de início mudou
+            const origStartInstallment = (originalTx.currentInstallment || 1) - 1;
+            const newStartDate = dayjs(newTx.date).subtract(origStartInstallment, "month");
+            const origStartDate = dayjs(originalTx.date).subtract(origStartInstallment, "month");
+            const installmentDatesChanged =
+              (originalTx.installments || 0) > 1 &&
+              newStartDate.format("YYYY-MM") !== origStartDate.format("YYYY-MM");
+
+            const pmCfgForDates = installmentDatesChanged
+              ? paymentMethodConfigs?.find((c) => c.name === newTx.paymentMethod)
+              : undefined;
+            const isCardForInstallments =
+              pmCfgForDates?.type === "card" &&
+              !!pmCfgForDates.closingDay &&
+              !!pmCfgForDates.paymentDay;
+
+            const installmentDateMap = new Map<string, { date: string; invoiceDueDate?: string }>();
+            if (installmentDatesChanged) {
+              for (const t of relatedTxs) {
+                const installmentDate = newStartDate
+                  .add((t.currentInstallment || 1) - 1, "month")
+                  .format("YYYY-MM-DD");
+                const invoiceDue =
+                  isCardForInstallments && pmCfgForDates
+                    ? calculateInvoiceDueDate(installmentDate, pmCfgForDates)
+                    : undefined;
+                installmentDateMap.set(t.id, { date: installmentDate, invoiceDueDate: invoiceDue });
+              }
+            }
+
             // TODO: move to application service — layer violation
             const { error } = await supabase
               .from("transactions")
@@ -389,6 +420,21 @@ export const useTransactionHandlers = ({
               .in("id", idsToUpdate);
 
             if (error) throw error;
+
+            // Atualizar datas das parcelas individualmente quando o mês de início mudou
+            if (installmentDatesChanged && installmentDateMap.size > 0) {
+              await Promise.all(
+                Array.from(installmentDateMap.entries()).map(([id, { date, invoiceDueDate }]) =>
+                  supabase
+                    .from("transactions")
+                    .update({
+                      date,
+                      ...(invoiceDueDate !== undefined && { invoice_due_date: invoiceDueDate }),
+                    })
+                    .eq("id", id)
+                )
+              );
+            }
 
             // Handle shared transaction income creation
             if (isNowShared && !wasShared && newTx.type === "expense") {
@@ -486,6 +532,7 @@ export const useTransactionHandlers = ({
             setTransactions((prev) =>
               prev.map((t) => {
                 if (idsToUpdate.includes(t.id)) {
+                  const dateUpdate = installmentDateMap.get(t.id);
                   return {
                     ...t,
                     description: newTx.description,
@@ -499,6 +546,12 @@ export const useTransactionHandlers = ({
                     sharedWith: newTx.sharedWith,
                     relatedTransactionId:
                       t.id === editId ? t.relatedTransactionId : undefined,
+                    ...(dateUpdate && {
+                      date: dateUpdate.date,
+                      ...(dateUpdate.invoiceDueDate !== undefined && {
+                        invoiceDueDate: dateUpdate.invoiceDueDate,
+                      }),
+                    }),
                   };
                 }
                 return t;

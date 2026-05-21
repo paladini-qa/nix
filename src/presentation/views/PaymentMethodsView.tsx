@@ -249,7 +249,12 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
 
     return Array.from(summaryMap.values())
       .filter((s) => s.transactionCount > 0 || paymentMethods.includes(s.name))
-      .sort((a, b) => b.totalExpense - a.totalExpense);
+      .sort((a, b) => {
+        const aHasTx = a.transactionCount > 0 ? 1 : 0;
+        const bHasTx = b.transactionCount > 0 ? 1 : 0;
+        if (aHasTx !== bHasTx) return bHasTx - aHasTx;
+        return b.totalExpense - a.totalExpense;
+      });
   }, [monthTransactions, paymentMethods]);
 
   // Estatísticas gerais
@@ -527,9 +532,10 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
         </Paper>
       ) : (
         <Grid container spacing={gridSpacing}>
-          {paymentMethods.map((method) => {
+          {paymentMethodsSummary.map((summaryItem) => {
+            const method = summaryItem.name;
             const colors = getPaymentMethodColor(method);
-            const summary = paymentMethodsSummary.find((s) => s.name === method);
+            const summary = summaryItem;
             const config = getConfigForMethod(method);
             const isCard = config?.type === "card";
             const hasUnpaid = (summary?.unpaidCount ?? 0) > 0;
