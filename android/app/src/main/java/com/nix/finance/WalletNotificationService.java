@@ -34,17 +34,19 @@ public class WalletNotificationService extends NotificationListenerService {
     }
 
     private void parseAndBroadcast(String merchant, String text) {
-        // Regex to find currency and amount (e.g., R$ 12,34 or $ 10.00 or 15,00 €)
+        // Regex to find currency and amount (e.g., R$ 12,34 or $ 10.00 or 1.500,00 €)
         // This pattern looks for a number with decimals, optionally preceded or followed by a currency symbol
-        Pattern pattern = Pattern.compile("([A-Z$€£R]+)?\\s?(\\d+[.,]\\d{2})\\s?([A-Z$€£R]+)?");
+        Pattern pattern = Pattern.compile("([A-Z$€£R]+)?\\s?([\\d.,]+[.,]\\d{2})\\s?([A-Z$€£R]+)?");
         Matcher matcher = pattern.matcher(text);
 
         if (matcher.find()) {
             String amountStr = matcher.group(2);
             String currency = matcher.group(1) != null ? matcher.group(1) : (matcher.group(3) != null ? matcher.group(3) : "");
 
-            // Convert amount to numeric (handle both . and , as decimal separators)
-            double amount = Double.parseDouble(amountStr.replace(",", "."));
+            // Remove thousand separators (any dot or comma followed by 3 digits)
+            String cleanStr = amountStr.replaceAll("[.,](?=\\d{3})", "");
+            // Convert amount to numeric by replacing the decimal comma with dot
+            double amount = Double.parseDouble(cleanStr.replace(",", "."));
 
             Log.d(TAG, "Parsed transaction: " + merchant + " - " + amount + " " + currency);
 
