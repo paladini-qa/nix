@@ -158,23 +158,30 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     }
   };
 
-  const handleDeleteAware = async (id: string) => {
-    let tx = transactions.find((t) => t.id === id);
+  const handleDeleteAware = async (idOrTx: string | Transaction) => {
+    let tx: Transaction | undefined;
 
-    // Ocorrências virtuais têm ID no formato "{parentId}_recurring_YYYY-MM"
-    if (!tx) {
-      const virtualMatch = id.match(/^(.+)_recurring_(\d{4}-\d{2})$/);
-      if (virtualMatch) {
-        const parentId = virtualMatch[1];
-        const parent = transactions.find((t) => t.id === parentId);
-        if (parent) {
-          tx = {
-            ...parent,
-            id,
-            isVirtual: true,
-            originalTransactionId: parentId,
-            virtualDate: `${virtualMatch[2]}-${parent.date.split("-")[2] ?? "01"}`,
-          };
+    if (typeof idOrTx === "object" && idOrTx !== null) {
+      tx = idOrTx;
+    } else {
+      const id = idOrTx;
+      tx = transactions.find((t) => t.id === id);
+
+      // Ocorrências virtuais têm ID no formato "{parentId}_recurring_YYYY-MM"
+      if (!tx) {
+        const virtualMatch = id.match(/^(.+)_recurring_(\d{4}-\d{2})$/);
+        if (virtualMatch) {
+          const parentId = virtualMatch[1];
+          const parent = transactions.find((t) => t.id === parentId);
+          if (parent) {
+            tx = {
+              ...parent,
+              id,
+              isVirtual: true,
+              originalTransactionId: parentId,
+              virtualDate: `${virtualMatch[2]}-${parent.date.split("-")[2] ?? "01"}`,
+            };
+          }
         }
       }
     }
@@ -188,7 +195,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       setGlobalOptionsPanel({ open: true, transaction: tx, actionType: "delete" });
     } else {
       const confirmed = await confirmDelete(tx.description);
-      if (confirmed) await deleteTransaction(id);
+      if (confirmed) await deleteTransaction(tx.id);
     }
   };
 
@@ -196,7 +203,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     const { transaction, actionType } = globalOptionsPanel;
     if (!transaction) return;
     const virtualDate =
-      transaction.virtualDate ?? (transaction.isVirtual ? transaction.date : undefined);
+      transaction.virtualDate ?? transaction.date;
     setGlobalOptionsPanel({ open: false, transaction: null, actionType: "edit" });
     if (actionType === "edit") {
       handleRecurringEditWithScope(transaction, scope, virtualDate);
@@ -632,7 +639,19 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
 
   return (
     <>
-      <PageTransition transitionKey={currentView} type={isMobile ? transitionType : "slideLeft"}>
+      <PageTransition
+        transitionKey={currentView}
+        type={isMobile ? transitionType : "slideLeft"}
+        sx={{
+          ...(currentView === "nixai" && {
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            overflow: "hidden",
+          }),
+        }}
+      >
         {renderView()}
       </PageTransition>
 

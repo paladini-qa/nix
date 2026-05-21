@@ -33,6 +33,12 @@ interface UIState {
   // Search
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+
+  // Transactions View Filters
+  showTransactionsFilters: boolean;
+  setShowTransactionsFilters: (show: boolean) => void;
+  transactionsFiltersCount: number;
+  setTransactionsFiltersCount: (count: number) => void;
 }
 
 export interface AdvancedFiltersState {
@@ -91,4 +97,10 @@ export const useAppStore = create<UIState>((set) => ({
   // Search
   searchQuery: "",
   setSearchQuery: (query) => set({ searchQuery: query }),
+
+  // Transactions View Filters
+  showTransactionsFilters: false,
+  setShowTransactionsFilters: (show) => set({ showTransactionsFilters: show }),
+  transactionsFiltersCount: 0,
+  setTransactionsFiltersCount: (count) => set({ transactionsFiltersCount: count }),
 }));

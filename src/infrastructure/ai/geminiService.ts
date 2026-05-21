@@ -26,6 +26,138 @@ function throwIfGeminiNotConfigured(): void {
   }
 }
 
+export function checkAndThrowGeminiError(error: any): void {
+  if (error && typeof error === "object") {
+    const status = error.status || error.statusCode;
+    const message = error.message || "";
+    
+    if (
+      status === 429 || 
+      /429/i.test(message) || 
+      /RESOURCE_EXHAUSTED/i.test(message) || 
+      /quota exceeded/i.test(message) || 
+      /Quota excedida/i.test(message)
+    ) {
+      const err = new Error("GEMINI_QUOTA_EXCEEDED");
+      (err as any).code = "GEMINI_QUOTA_EXCEEDED";
+      (err as any).originalError = error;
+      throw err;
+    }
+    
+    if (
+      status === 403 || 
+      status === 400 || 
+      /403/i.test(message) || 
+      /400/i.test(message) || 
+      /API_KEY_INVALID/i.test(message) || 
+      /API key not valid/i.test(message) || 
+      /invalid key/i.test(message)
+    ) {
+      const err = new Error("GEMINI_INVALID_KEY");
+      (err as any).code = "GEMINI_INVALID_KEY";
+      (err as any).originalError = error;
+      throw err;
+    }
+  }
+}
+
+/**
+ * Parses and normalizes a dynamic value (string or number) into a valid float amount or null.
+ * Extremely robust to handle Brazilian and US currency formats, spaces, comma decimals, etc.
+ */
+function parseAmount(val: any): number | null {
+  if (typeof val === "number" && !isNaN(val)) {
+    return val;
+  }
+  if (typeof val !== "string") {
+    if (val && typeof val === "object" && typeof val.amount === "number") {
+      return val.amount;
+    }
+    return null;
+  }
+
+  let cleaned = val.trim();
+  // Remove currency symbols (R$, $, etc.) and spaces
+  cleaned = cleaned.replace(/[R$\s]/gi, "");
+
+  if (!cleaned) return null;
+
+  const commaCount = (cleaned.match(/,/g) || []).length;
+  const dotCount = (cleaned.match(/\./g) || []).length;
+
+  if (commaCount === 1 && dotCount === 0) {
+    cleaned = cleaned.replace(",", ".");
+  } else if (dotCount === 1 && commaCount === 0) {
+    // Already in standard dot format
+  } else if (commaCount === 1 && dotCount > 0) {
+    cleaned = cleaned.replace(/\./g, "").replace(",", ".");
+  } else if (dotCount === 1 && commaCount > 0) {
+    cleaned = cleaned.replace(/,/g, "");
+  } else {
+    // General fallback: locate decimal separator at the end
+    const lastCommaIndex = cleaned.lastIndexOf(",");
+    const lastDotIndex = cleaned.lastIndexOf(".");
+    
+    if (lastCommaIndex > lastDotIndex && lastCommaIndex > cleaned.length - 4) {
+      cleaned = cleaned.substring(0, lastCommaIndex).replace(/[\.,]/g, "") + "." + cleaned.substring(lastCommaIndex + 1);
+    } else if (lastDotIndex > lastCommaIndex && lastDotIndex > cleaned.length - 4) {
+      cleaned = cleaned.substring(0, lastDotIndex).replace(/[\.,]/g, "") + "." + cleaned.substring(lastDotIndex + 1);
+    } else {
+      cleaned = cleaned.replace(/[^\d\.,-]/g, "");
+      const comma = cleaned.lastIndexOf(",");
+      if (comma !== -1) {
+        cleaned = cleaned.substring(0, comma).replace(/[\.,]/g, "") + "." + cleaned.substring(comma + 1);
+      }
+    }
+  }
+
+  const parsedFloat = parseFloat(cleaned);
+  return isNaN(parsedFloat) ? null : parsedFloat;
+}
+
+/**
+ * Safely extracts and parses JSON array or object from an LLM response string.
+ * This is extremely robust to conversational preambles, markdown formatting, etc.
+ */
+function parseJSONSafely(text: string): any {
+  if (!text) {
+    throw new Error("Resposta vazia da IA.");
+  }
+  
+  let cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+  // Try parsing directly first
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    // Ignore direct parse failure and try regex/substring extraction
+  }
+
+  // Look for JSON array [ ... ]
+  const arrayStart = cleaned.indexOf("[");
+  const arrayEnd = cleaned.lastIndexOf("]");
+  if (arrayStart !== -1 && arrayEnd !== -1 && arrayEnd > arrayStart) {
+    try {
+      return JSON.parse(cleaned.substring(arrayStart, arrayEnd + 1));
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  // Look for JSON object { ... }
+  const objStart = cleaned.indexOf("{");
+  const objEnd = cleaned.lastIndexOf("}");
+  if (objStart !== -1 && objEnd !== -1 && objEnd > objStart) {
+    try {
+      return JSON.parse(cleaned.substring(objStart, objEnd + 1));
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  throw new Error("Não foi possível extrair um JSON válido da resposta da IA: " + text);
+}
+
 // ========================================
 // Intent Detection - Detecção de Intenção de Cadastro
 // ========================================
@@ -77,6 +209,20 @@ const TRANSACTION_PATTERNS = [
 export const detectTransactionIntent = (text: string): IntentDetectionResult => {
   const trimmedText = text.trim();
   
+  // Se contiver várias linhas e houver números em pelo menos duas linhas, é altamente provável ser um cadastro em lote!
+  const lines = trimmedText.split("\n").map(l => l.trim()).filter(Boolean);
+  if (lines.length >= 2) {
+    const linesWithNumbers = lines.filter(l => /\d+/.test(l));
+    if (linesWithNumbers.length >= 2) {
+      return {
+        isTransactionIntent: true,
+        confidence: 0.95,
+        cleanedText: trimmedText,
+        suggestedType: "expense"
+      };
+    }
+  }
+
   // Verifica cada padrão
   for (const { pattern, confidence } of TRANSACTION_PATTERNS) {
     const match = trimmedText.match(pattern);
@@ -151,16 +297,13 @@ Exemplos que NÃO são intenção de cadastro:
 - "me mostra minhas despesas" -> false (consulta)`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { responseMimeType: "application/json" },
     });
 
-    const responseText = (response.text || "")
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-
-    const parsed = JSON.parse(responseText);
+    const responseText = response.text || "";
+    const parsed = parseJSONSafely(responseText);
 
     return {
       isTransactionIntent: parsed.isTransactionIntent === true,
@@ -169,6 +312,7 @@ Exemplos que NÃO são intenção de cadastro:
       suggestedType: parsed.suggestedType || undefined,
     };
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error detecting intent with AI:", error);
     // Fallback para resultado dos padrões
     return patternResult;
@@ -264,24 +408,18 @@ export const parseTransactionFromText = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nINPUT DO USUÁRIO:\n"${text}"` }] }],
+      config: { responseMimeType: "application/json" },
     });
 
     const responseText = response.text || "";
-    
-    // Limpa possíveis marcadores de código markdown
-    const cleanedResponse = responseText
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-
-    const parsed = JSON.parse(cleanedResponse);
+    const parsed = parseJSONSafely(responseText);
 
     // Valida e normaliza os campos
     const result: ParsedTransaction = {
       description: parsed.description || text.slice(0, 50),
-      amount: typeof parsed.amount === "number" ? parsed.amount : null,
+      amount: parseAmount(parsed.amount),
       type: (parsed.type === "income" || parsed.type === "expense"
         ? parsed.type
         : "expense") as TransactionType,
@@ -315,6 +453,7 @@ export const parseTransactionFromText = async (
 
     return result;
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error parsing transaction from text:", error);
 
     // Retorna um resultado padrão em caso de erro
@@ -367,7 +506,7 @@ export const parseTransactionFromAudio = async (
     const mimeType = audioBlob.type || "audio/webm";
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [
         {
           role: "user",
@@ -384,22 +523,16 @@ export const parseTransactionFromAudio = async (
           ],
         },
       ],
+      config: { responseMimeType: "application/json" },
     });
 
     const responseText = response.text || "";
-
-    // Limpa possíveis marcadores de código markdown
-    const cleanedResponse = responseText
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-
-    const parsed = JSON.parse(cleanedResponse);
+    const parsed = parseJSONSafely(responseText);
 
     // Valida e normaliza os campos
     const result: ParsedTransaction = {
       description: parsed.description || "Transação por áudio",
-      amount: typeof parsed.amount === "number" ? parsed.amount : null,
+      amount: parseAmount(parsed.amount),
       type: (parsed.type === "income" || parsed.type === "expense"
         ? parsed.type
         : "expense") as TransactionType,
@@ -433,6 +566,7 @@ export const parseTransactionFromAudio = async (
 
     return result;
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error parsing transaction from audio:", error);
 
     return {
@@ -508,7 +642,7 @@ IMPORTANTE: Responda APENAS com um objeto JSON válido.
       : imageBase64;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [
         {
           role: "user",
@@ -523,22 +657,16 @@ IMPORTANTE: Responda APENAS com um objeto JSON válido.
           ],
         },
       ],
+      config: { responseMimeType: "application/json" },
     });
 
     const responseText = response.text || "";
-
-    // Limpa possíveis marcadores de código markdown
-    const cleanedResponse = responseText
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-
-    const parsed = JSON.parse(cleanedResponse);
+    const parsed = parseJSONSafely(responseText);
 
     // Valida e normaliza os campos
     const result: ParsedTransaction = {
       description: parsed.description || "Compra (recibo)",
-      amount: typeof parsed.amount === "number" ? parsed.amount : null,
+      amount: parseAmount(parsed.amount),
       type: (parsed.type === "income" || parsed.type === "expense"
         ? parsed.type
         : "expense") as TransactionType,
@@ -572,6 +700,7 @@ IMPORTANTE: Responda APENAS com um objeto JSON válido.
 
     return result;
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error parsing transaction from image:", error);
 
     return {
@@ -630,6 +759,7 @@ REGRAS:
 3. Se o usuário listar várias compras/gastos/receitas, retorne um objeto para cada uma.
 4. Em recibos ou listas com múltiplos itens, cada linha/item pode ser uma transação.
 5. Sempre retorne um ARRAY de objetos, mesmo que seja apenas uma transação.
+6. Se o input/imagem for um print de fatura de cartão de crédito, extrato bancário ou lista de lançamentos de conta, identifique e extraia CADA UMA das compras ou movimentações listadas individualmente. NÃO as agrupe ou resuma todas em uma única transação (como "fatura" ou "total"). Cada lançamento individual listado deve virar um objeto diferente no array.
 
 Responda APENAS com um JSON válido: um array de objetos.
 Formato: [ { "description": "...", "amount": number ou null, "type": "income" ou "expense", "category": "...", "paymentMethod": "...", "date": "YYYY-MM-DD", "confidence": number }, ... ]`;
@@ -659,7 +789,7 @@ function normalizeBatchResult(
 
     return {
       description: typeof item?.description === "string" ? item.description.slice(0, 100) : `Transação ${index + 1}`,
-      amount: typeof item?.amount === "number" ? item.amount : null,
+      amount: parseAmount(item?.amount),
       type: (item?.type === "income" || item?.type === "expense" ? item.type : "expense") as TransactionType,
       category: cat,
       paymentMethod: pm,
@@ -683,15 +813,16 @@ export const parseBatchFromText = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [{ role: "user", parts: [{ text: `${prompt}\n\nINPUT DO USUÁRIO:\n"${text}"` }] }],
+      config: { responseMimeType: "application/json" },
     });
 
     const responseText = response.text || "";
-    const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseJSONSafely(responseText);
     return normalizeBatchResult(parsed, categories, paymentMethods, text);
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error parsing batch from text:", error);
     const single = await parseTransactionFromText(text, categories, paymentMethods);
     return [single];
@@ -714,7 +845,7 @@ export const parseBatchFromAudio = async (
     const mimeType = audioBlob.type || "audio/webm";
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [
         {
           role: "user",
@@ -726,13 +857,14 @@ export const parseBatchFromAudio = async (
           ],
         },
       ],
+      config: { responseMimeType: "application/json" },
     });
 
     const responseText = response.text || "";
-    const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseJSONSafely(responseText);
     return normalizeBatchResult(parsed, categories, paymentMethods, "[áudio]");
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error parsing batch from audio:", error);
     const single = await parseTransactionFromAudio(audioBlob, categories, paymentMethods);
     return [single];
@@ -761,7 +893,7 @@ Responda APENAS com um array JSON de objetos (mesmo que seja só um).`;
     const cleanBase64 = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [
         {
           role: "user",
@@ -771,13 +903,16 @@ Responda APENAS com um array JSON de objetos (mesmo que seja só um).`;
           ],
         },
       ],
+      config: {
+        responseMimeType: "application/json",
+      },
     });
 
     const responseText = response.text || "";
-    const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseJSONSafely(responseText);
     return normalizeBatchResult(parsed, categories, paymentMethods, "[imagem]");
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error parsing batch from image:", error);
     const single = await parseTransactionFromImage(imageBase64, mimeType, categories, paymentMethods);
     return [single];
@@ -884,11 +1019,12 @@ Now respond to the user's message:`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nUser: ${userMessage}` }] }],
     });
     return response.text || "I'm sorry, I couldn't process that request.";
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error in NixAI chat:", error);
     throw error;
   }
@@ -945,16 +1081,13 @@ Responda APENAS com JSON:
 }`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { responseMimeType: "application/json" },
     });
 
-    const responseText = (response.text || "")
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-
-    const parsed = JSON.parse(responseText);
+    const responseText = response.text || "";
+    const parsed = parseJSONSafely(responseText);
 
     // Valida se a categoria está na lista
     if (availableCategories.includes(parsed.category)) {
@@ -967,6 +1100,7 @@ Responda APENAS com JSON:
     // Se a IA retornou uma categoria inválida, usa a sugestão local
     return localSuggestion;
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error suggesting category with AI:", error);
     // Fallback para sugestão local
     return localSuggestion;
@@ -1092,11 +1226,12 @@ export const getFinancialInsights = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
     return response.text || "Unable to generate insights at this time.";
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error fetching Gemini insights:", error);
     return "An error occurred while connecting to the AI. Please try again later.";
   }
@@ -1111,12 +1246,13 @@ export const generateChatTitle = async (firstMessage: string): Promise<string> =
     const prompt = `Gere um título curto e criativo (máximo 4 palavras) em português para uma conversa que começa com o seguinte input: "${firstMessage}". Responda apenas o título, sem aspas ou pontuação final. Se for um áudio ou imagem, gere algo genérico relacionado a finanças.`;
     
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
     return (response.text || "Nova Conversa").trim();
   } catch (error) {
+    checkAndThrowGeminiError(error);
     console.error("Error generating chat title:", error);
     return "Nova Conversa";
   }

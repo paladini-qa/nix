@@ -607,12 +607,15 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
       }}
     >
       <Box
+        onClick={() => setUseBatchInvoice(!useBatchInvoice)}
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexWrap: "wrap",
           gap: 1,
+          cursor: "pointer",
+          userSelect: "none",
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -628,7 +631,11 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
         </Box>
         <Switch
           checked={useBatchInvoice}
-          onChange={(e) => setUseBatchInvoice(e.target.checked)}
+          onChange={() => {}}
+          onClick={(e) => {
+            e.stopPropagation();
+            setUseBatchInvoice(!useBatchInvoice);
+          }}
           size="small"
           sx={{
             "& .MuiSwitch-thumb": { bgcolor: useBatchInvoice ? NIX_PURPLE : undefined },

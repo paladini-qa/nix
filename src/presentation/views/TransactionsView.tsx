@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -66,6 +66,7 @@ import { Transaction, PaymentMethodConfig } from "@/domain/entities";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "@/shared/constants";
 import { useNotification } from "@/presentation/contexts";
 import { usePullToRefresh, useLayoutSpacing } from "@/presentation/hooks";
+import { useAppStore } from "@/presentation/hooks/useAppStore";
 import EmptyState from "@/presentation/components/ui/EmptyState";
 import NixButton from "@/presentation/components/radix/Button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -76,7 +77,7 @@ interface TransactionsViewProps {
   transactions: Transaction[];
   onNewTransaction: () => void;
   onEdit: (transaction: Transaction) => void;
-  onDelete: (id: string) => void;
+  onDelete: (idOrTx: string | Transaction) => void;
   onTogglePaid: (id: string, isPaid: boolean) => void;
   selectedMonth: number;
   selectedYear: number;
@@ -116,6 +117,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   const isDarkMode = theme.palette.mode === "dark";
   const { gridSpacing } = useLayoutSpacing();
   const { showWarning, showError } = useNotification();
+  const { showTransactionsFilters, setTransactionsFiltersCount } = useAppStore();
 
   // Estados de busca e filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -192,6 +194,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     if (filterPaymentStatus !== "all") count++;
     return count;
   }, [filterType, filterCategory, filterShared, filterPaymentStatus]);
+
+  useEffect(() => {
+    setTransactionsFiltersCount(activeFiltersCount);
+  }, [activeFiltersCount, setTransactionsFiltersCount]);
 
   // Filtra e ordena dados
   const filteredData = useMemo(() => {
@@ -967,34 +973,6 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             ) : (
               /* ── Desktop: botões separados ── */
               <>
-                {/* Botão de filtros */}
-                <Box sx={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
-                  <Button
-                    variant={activeFiltersCount > 0 ? "contained" : "outlined"}
-                    size="small"
-                    onClick={() => setShowFilters(!showFilters)}
-                    startIcon={<FilterIcon sx={{ fontSize: 18 }} />}
-                    sx={{
-                      borderRadius: "20px",
-                      minWidth: 100,
-                      height: 40,
-                      px: 2,
-                      "& .MuiButton-startIcon": { mr: 1 },
-                      ...(activeFiltersCount > 0 && {
-                        background: `linear-gradient(135deg, ${alpha("#6366f1", 0.9)} 0%, ${alpha("#8b5cf6", 0.9)} 100%)`,
-                      }),
-                    }}
-                  >
-                    Filters
-                    {activeFiltersCount > 0 && (
-                      <Chip
-                        label={activeFiltersCount}
-                        size="small"
-                        sx={{ ml: 1, height: 18, minWidth: 18, fontSize: 10, bgcolor: "rgba(255,255,255,0.2)", color: "inherit", "& .MuiChip-label": { px: 0.5 } }}
-                      />
-                    )}
-                  </Button>
-                </Box>
 
                 {/* Export Button */}
                 <IconButton
@@ -1264,7 +1242,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           </SwipeableDrawer>
         ) : (
           /* ── Desktop: filtros inline ── */
-          showFilters && (
+          showTransactionsFilters && (
             <Box
               sx={{
                 p: 2,
@@ -1585,7 +1563,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             <MenuItem
               onClick={() => {
                 if (mobileActionAnchor.transaction) {
-                  onDelete(mobileActionAnchor.transaction.id);
+                  onDelete(mobileActionAnchor.transaction);
                 }
                 setMobileActionAnchor({ element: null, transaction: null });
               }}
@@ -1685,7 +1663,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                               <IconButton size="small" onClick={() => onEdit(t)} color="primary"><EditIcon fontSize="small" /></IconButton>
                             </Tooltip>
                             <Tooltip title={t.isVirtual ? "Delete recurring transaction" : "Delete"}>
-                              <IconButton size="small" onClick={() => onDelete(t.id)} color="error"><DeleteIcon fontSize="small" /></IconButton>
+                              <IconButton size="small" onClick={() => onDelete(t)} color="error"><DeleteIcon fontSize="small" /></IconButton>
                             </Tooltip>
                           </Box>
                         </TableCell>
@@ -1828,7 +1806,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                           >
                             <IconButton
                               size="small"
-                              onClick={() => onDelete(t.id)}
+                              onClick={() => onDelete(t)}
                               color="error"
                             >
                               <DeleteIcon fontSize="small" />

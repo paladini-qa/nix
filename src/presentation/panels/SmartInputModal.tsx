@@ -309,9 +309,17 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
       }
 
       setParsedResult(result);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error processing input:", err);
-      if (err instanceof Error && err.message === "GEMINI_NOT_CONFIGURED") {
+      if (err?.code === "GEMINI_QUOTA_EXCEEDED") {
+        setError(
+          "Limite de uso do Gemini excedido (Erro 429). Por favor, aguarde alguns instantes antes de tentar novamente ou verifique seus limites."
+        );
+      } else if (err?.code === "GEMINI_INVALID_KEY") {
+        setError(
+          "Chave de API do Gemini inválida ou não autorizada. Verifique se a variável GEMINI_API_KEY no seu arquivo .env está correta e ativa."
+        );
+      } else if (err instanceof Error && err.message === "GEMINI_NOT_CONFIGURED") {
         setError(GEMINI_NOT_CONFIGURED_MESSAGE);
       } else {
         setError(err instanceof Error ? err.message : "Erro ao processar. Tente novamente.");

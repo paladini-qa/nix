@@ -171,6 +171,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
       {!isMobile && (
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
           <Topbar
+            currentView={currentView}
             onOpenSearch={() => setIsSearchOpen(true)}
             onOpenNewTransaction={() => {
               setEditingTransaction(null);
@@ -183,7 +184,10 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
             sx={{
               flexGrow: 1,
               overflowX: "hidden",
-              overflowY: "auto",
+              overflowY: currentView === "nixai" ? "hidden" : "auto",
+              display: currentView === "nixai" ? "flex" : "block",
+              flexDirection: "column",
+              height: currentView === "nixai" ? "calc(100vh - 60px)" : "auto",
             }}
           >
             {!isMobile && (
@@ -229,11 +233,21 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
             component="main"
             sx={{
               flexGrow: 1,
-              px: 2,
-              pt: "calc(64px + env(safe-area-inset-top, 0px) + 16px)",
-              pb: "calc(80px + env(safe-area-inset-bottom, 0px))",
+              px: currentView === "nixai" ? 0 : 2,
+              pt: currentView === "nixai"
+                ? "calc(64px + env(safe-area-inset-top, 0px))"
+                : "calc(64px + env(safe-area-inset-top, 0px) + 16px)",
+              pb: currentView === "nixai"
+                ? "calc(80px + env(safe-area-inset-bottom, 0px))"
+                : "calc(80px + env(safe-area-inset-bottom, 0px))",
               width: "100%",
               overflowX: "hidden",
+              overflowY: currentView === "nixai" ? "hidden" : "auto",
+              display: currentView === "nixai" ? "flex" : "block",
+              flexDirection: "column",
+              height: currentView === "nixai"
+                ? "calc(100vh - 64px - 80px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))"
+                : "auto",
             }}
           >
             <PullToRefreshIndicator isRefreshing={isRefreshing} pullOffset={pullOffset} />

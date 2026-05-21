@@ -72,7 +72,7 @@ interface PaymentMethodDetailViewProps {
   onPayAll?: (ids: string[]) => void;
   onTogglePaid?: (id: string, isPaid: boolean) => void;
   onEdit?: (transaction: Transaction) => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (idOrTx: string | Transaction) => void;
 }
 
 const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
@@ -270,8 +270,8 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
   };
 
   const handleDelete = (tx: Transaction) => {
-    if (onDelete && !tx.isVirtual) {
-      onDelete(tx.id);
+    if (onDelete) {
+      onDelete(tx);
     }
   };
 
@@ -908,8 +908,8 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                                 </IconButton>
                               </Tooltip>
                             )}
-                            {onDelete && !t.isVirtual && (
-                              <Tooltip title="Excluir">
+                            {onDelete && (
+                              <Tooltip title={t.isVirtual ? "Excluir ocorrência" : "Excluir"}>
                                 <IconButton
                                   size="small"
                                   onClick={() => handleDelete(t)}
@@ -1009,7 +1009,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             </ListItemText>
           </MenuItem>
         )}
-        {onDelete && !mobileActionAnchor.transaction?.isVirtual && (
+        {onDelete && (
           <MenuItem
             onClick={() => {
               if (mobileActionAnchor.transaction) {
@@ -1021,7 +1021,9 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             <ListItemIcon>
               <DeleteIcon fontSize="small" color="error" />
             </ListItemIcon>
-            <ListItemText>Excluir</ListItemText>
+            <ListItemText>
+              {mobileActionAnchor.transaction?.isVirtual ? "Excluir Ocorrência" : "Excluir"}
+            </ListItemText>
           </MenuItem>
         )}
       </Menu>

@@ -699,11 +699,19 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     { icon: <ReceiptIcon fontSize="small" />, label: "Ler recibo ou nota", action: () => fileInputRef.current?.click() },
     { icon: <MicIcon fontSize="small" />, label: "Descrever por áudio", action: () => startRecording() },
     { icon: <AttachFileIcon fontSize="small" />, label: "Importar arquivo", action: () => fileInputRef.current?.click() },
-    { icon: <TextFieldsIcon fontSize="small" />, label: "Digitar gastos", action: () => inputRef.current?.focus() },
+    { 
+      icon: <TextFieldsIcon fontSize="small" />, 
+      label: "Digitar gastos", 
+      action: () => {
+        setIsBatchMode(true);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      } 
+    },
   ];
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [isBatchMode, setIsBatchMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -805,13 +813,23 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           setPendingBatch(batch);
           setPendingTransaction(null);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error parsing text:", error);
+        
+        let content = "Ops, não consegui entender os detalhes. \n\nTenta algo como: \"Gastei 50 reais no mercado com Pix\"";
+        
+        if (error?.code === "GEMINI_QUOTA_EXCEEDED") {
+          content = "⚠️ **Limite de Cota do Gemini Excedido**\n\nA cota de requisições gratuita do Gemini foi temporariamente esgotada (Erro 429). Por favor, aguarde alguns minutos antes de tentar novamente.\n\nSe você usa uma chave própria, verifique seus limites no [Google AI Studio](https://aistudio.google.com/).";
+        } else if (error?.code === "GEMINI_INVALID_KEY") {
+          content = "🔑 **Chave de API do Gemini Inválida**\n\nA chave de API configurada no arquivo `.env` é inválida ou foi revogada (Erro 400/403).\n\nPor favor, verifique se a variável `GEMINI_API_KEY` no seu arquivo `.env` está correta e ativa.";
+        } else if (error?.code === "GEMINI_NOT_CONFIGURED" || error?.message === "GEMINI_NOT_CONFIGURED") {
+          content = `⚙️ **Chave de API do Gemini não configurada**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
+        }
+        
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content:
-            "Ops, não consegui entender os detalhes. \n\nTenta algo como: \"Gastei 50 reais no mercado com Pix\"",
+          content,
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -972,9 +990,27 @@ const NixAIView: React.FC<NixAIViewProps> = ({
             setPendingBatch(batch);
             setPendingTransaction(null);
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error(err);
-          setSmartInputError("Não foi possível ler a imagem. Tente outra foto com boa iluminação.");
+          
+          let content = "Não foi possível ler a imagem. Tente outra foto com boa iluminação.";
+          
+          if (err?.code === "GEMINI_QUOTA_EXCEEDED") {
+            content = "⚠️ **Limite de Cota do Gemini Excedido**\n\nA cota de requisições gratuita do Gemini foi temporariamente esgotada (Erro 429). Por favor, aguarde alguns minutos antes de tentar novamente.\n\nSe você usa uma chave própria, verifique seus limites no [Google AI Studio](https://aistudio.google.com/).";
+          } else if (err?.code === "GEMINI_INVALID_KEY") {
+            content = "🔑 **Chave de API do Gemini Inválida**\n\nA chave de API configurada no arquivo `.env` é inválida ou foi revogada (Erro 400/403).\n\nPor favor, verifique se a variável `GEMINI_API_KEY` no seu arquivo `.env` está correta e ativa.";
+          } else if (err?.code === "GEMINI_NOT_CONFIGURED" || err?.message === "GEMINI_NOT_CONFIGURED") {
+            content = `⚙️ **Chave de API do Gemini não configurada**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
+          }
+
+          const errorMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+          setSmartInputError(content);
         } finally {
           setIsLoading(false);
         }
@@ -1055,16 +1091,23 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         setPendingBatch(batch);
         setPendingTransaction(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error parsing audio:", error);
-      const notConfigured =
-        error instanceof Error && error.message === "GEMINI_NOT_CONFIGURED";
+      
+      let content = "Não consegui entender o áudio. \n\nTenta falar mais devagar: \"Gastei cinquenta reais no Uber\"";
+      
+      if (error?.code === "GEMINI_QUOTA_EXCEEDED") {
+        content = "⚠️ **Limite de Cota do Gemini Excedido**\n\nA cota de requisições gratuita do Gemini foi temporariamente esgotada (Erro 429). Por favor, aguarde alguns minutos antes de tentar novamente.\n\nSe você usa uma chave própria, verifique seus limites no [Google AI Studio](https://aistudio.google.com/).";
+      } else if (error?.code === "GEMINI_INVALID_KEY") {
+        content = "🔑 **Chave de API do Gemini Inválida**\n\nA chave de API configurada no arquivo `.env` é inválida ou foi revogada (Erro 400/403).\n\nPor favor, verifique se a variável `GEMINI_API_KEY` no seu arquivo `.env` está correta e ativa.";
+      } else if (error?.code === "GEMINI_NOT_CONFIGURED" || error?.message === "GEMINI_NOT_CONFIGURED") {
+        content = `⚙️ **Chave de API do Gemini não configurada**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
+      }
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: notConfigured
-          ? GEMINI_NOT_CONFIGURED_MESSAGE
-          : "Não consegui entender o áudio. \n\nTenta falar mais devagar: \"Gastei cinquenta reais no Uber\"",
+        content,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -1165,6 +1208,12 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const trimmedInput = inputValue.trim();
     setInputValue("");
 
+    // Se o Modo Lote estiver ativo, ignora a detecção automática e força o processamento
+    if (isBatchMode) {
+      await processTextInput(trimmedInput, true);
+      return;
+    }
+
     // Detecta se é uma intenção de cadastro usando a função do serviço
     const intentResult = detectTransactionIntent(trimmedInput);
     if (intentResult.isTransactionIntent && intentResult.confidence >= 0.6) {
@@ -1198,12 +1247,23 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending message:", error);
+      
+      let content = "Ops, tive um probleminha.  Tenta de novo?";
+      
+      if (error?.code === "GEMINI_QUOTA_EXCEEDED") {
+        content = "⚠️ **Limite de Cota do Gemini Excedido**\n\nA cota de requisições gratuita do Gemini foi temporariamente esgotada (Erro 429). Por favor, aguarde alguns minutos antes de tentar novamente.\n\nSe você usa uma chave própria, verifique seus limites no [Google AI Studio](https://aistudio.google.com/).";
+      } else if (error?.code === "GEMINI_INVALID_KEY") {
+        content = "🔑 **Chave de API do Gemini Inválida**\n\nA chave de API configurada no arquivo `.env` é inválida ou foi revogada (Erro 400/403).\n\nPor favor, verifique se a variável `GEMINI_API_KEY` no seu arquivo `.env` está correta e ativa.";
+      } else if (error?.code === "GEMINI_NOT_CONFIGURED" || error?.message === "GEMINI_NOT_CONFIGURED") {
+        content = `⚙️ **Chave de API do Gemini não configurada**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
+      }
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Ops, tive um probleminha.  Tenta de novo?",
+        content,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -1232,6 +1292,74 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         margin: "0 auto",
       }}
     >
+      {/* Seletor de Modo: Conversar vs Cadastro em Lote */}
+      <Box 
+        sx={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          mb: 2, 
+          gap: 1.5,
+          flexWrap: "wrap"
+        }}
+      >
+        <Chip
+          icon={<SparklesIcon sx={{ fontSize: 16 }} />}
+          label="Conversar com IA"
+          onClick={() => setIsBatchMode(false)}
+          sx={{
+            borderRadius: "20px",
+            px: 1.5,
+            py: 2.2,
+            fontWeight: 600,
+            fontSize: "0.85rem",
+            bgcolor: !isBatchMode 
+              ? alpha(NIX_BRAND.purple, 0.15) 
+              : isDarkMode ? alpha("#FFFFFF", 0.03) : alpha("#000000", 0.02),
+            color: !isBatchMode 
+              ? (isDarkMode ? "#E2E8F0" : NIX_BRAND.purple) 
+              : "text.secondary",
+            border: `1px solid ${!isBatchMode ? alpha(NIX_BRAND.purple, 0.4) : isDarkMode ? alpha("#FFFFFF", 0.05) : alpha("#000000", 0.05)}`,
+            boxShadow: !isBatchMode ? `0 4px 12px ${alpha(NIX_BRAND.purple, 0.15)}` : "none",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            cursor: "pointer",
+            "&:hover": {
+              bgcolor: !isBatchMode 
+                ? alpha(NIX_BRAND.purple, 0.22) 
+                : isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.05),
+              transform: "translateY(-1px)",
+            }
+          }}
+        />
+        <Chip
+          icon={<ReceiptIcon sx={{ fontSize: 16 }} />}
+          label="Cadastro em Lote (Sem Bugs)"
+          onClick={() => setIsBatchMode(true)}
+          sx={{
+            borderRadius: "20px",
+            px: 1.5,
+            py: 2.2,
+            fontWeight: 600,
+            fontSize: "0.85rem",
+            bgcolor: isBatchMode 
+              ? alpha(NIX_BRAND.purple, 0.18) 
+              : isDarkMode ? alpha("#FFFFFF", 0.03) : alpha("#000000", 0.02),
+            color: isBatchMode 
+              ? (isDarkMode ? "#FFFFFF" : NIX_BRAND.purple) 
+              : "text.secondary",
+            border: `1px solid ${isBatchMode ? alpha(NIX_BRAND.purple, 0.55) : isDarkMode ? alpha("#FFFFFF", 0.05) : alpha("#000000", 0.05)}`,
+            boxShadow: isBatchMode ? `0 4px 16px ${alpha(NIX_BRAND.purple, 0.35)}` : "none",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            cursor: "pointer",
+            "&:hover": {
+              bgcolor: isBatchMode 
+                ? alpha(NIX_BRAND.purple, 0.25) 
+                : isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.05),
+              transform: "translateY(-1px)",
+            }
+          }}
+        />
+      </Box>
+
       <AnimatePresence>
         {isRecording && (
           <MotionPaper
@@ -1283,15 +1411,21 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           alignItems: "center",
           bgcolor: isDarkMode ? "#1E1F20" : "#F0F4F9",
           borderRadius: "28px",
-          border: isDarkMode ? `1px solid ${alpha("#FFFFFF", 0.05)}` : `1px solid ${alpha("#000000", 0.05)}`,
-          boxShadow: isDarkMode ? "0 4px 20px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.05)",
+          border: isBatchMode
+            ? `1.5px solid ${alpha(NIX_BRAND.purple, 0.6)}`
+            : isDarkMode ? `1px solid ${alpha("#FFFFFF", 0.05)}` : `1px solid ${alpha("#000000", 0.05)}`,
+          boxShadow: isBatchMode
+            ? `0 4px 20px ${alpha(NIX_BRAND.purple, 0.25)}`
+            : isDarkMode ? "0 4px 20px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.05)",
           py: 1.25,
           px: 2.5,
           transition: "all 0.3s ease",
           "&:focus-within": {
-            boxShadow: isDarkMode 
-              ? `0 8px 32px ${alpha(NIX_BRAND.purple, 0.2)}` 
-              : `0 8px 32px ${alpha(NIX_BRAND.purple, 0.1)}`,
+            boxShadow: isBatchMode
+              ? `0 8px 32px ${alpha(NIX_BRAND.purple, 0.35)}`
+              : isDarkMode 
+                ? `0 8px 32px ${alpha(NIX_BRAND.purple, 0.2)}` 
+                : `0 8px 32px ${alpha(NIX_BRAND.purple, 0.1)}`,
             bgcolor: isDarkMode ? "#1E1F20" : "#F0F4F9",
           }
         }}
@@ -1312,7 +1446,11 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           multiline
           maxRows={8}
           placeholder={
-            isRecording ? "Gravando áudio..." : "Pergunte à IA ou descreva seus gastos..."
+            isRecording 
+              ? "Gravando áudio..." 
+              : isBatchMode
+                ? "Modo Lote: Cole ou digite seus vários gastos aqui..."
+                : "Pergunte à IA ou descreva seus gastos..."
           }
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}

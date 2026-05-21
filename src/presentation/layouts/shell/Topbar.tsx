@@ -35,6 +35,7 @@ interface TopbarProps {
   onOpenSearch: () => void;
   onOpenNewTransaction: () => void;
   onNavigate?: (view: AppCurrentView) => void;
+  currentView?: AppCurrentView;
 }
 
 const TYPE_ICON: Record<NotificationType, React.ReactNode> = {
@@ -51,7 +52,7 @@ const TYPE_COLOR: Record<NotificationType, string> = {
   recurring_due: "#2563EB",
 };
 
-const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction, onNavigate }) => {
+const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction, onNavigate, currentView }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const { themePreference, setThemePreference } = useSettings();
@@ -61,22 +62,52 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction, onN
     showAdvancedFilters,
     setShowAdvancedFilters,
     advancedFilters,
+    showTransactionsFilters,
+    setShowTransactionsFilters,
+    transactionsFiltersCount,
   } = useAppStore();
 
-  const hasAdvancedFiltersActive =
+  const hasDashboardFiltersActive =
     advancedFilters.startDate !== null ||
     advancedFilters.endDate !== null ||
     advancedFilters.type !== "all" ||
     advancedFilters.categories.length > 0 ||
     advancedFilters.paymentMethods.length > 0;
 
-  const activeFiltersCount =
+  const dashboardFiltersCount =
     (advancedFilters.startDate || advancedFilters.endDate ? 1 : 0) +
     (advancedFilters.type !== "all" ? 1 : 0) +
     advancedFilters.categories.length +
     advancedFilters.paymentMethods.length;
 
-  const handleToggleFilters = () => setShowAdvancedFilters(!showAdvancedFilters);
+  const isDashboardView = currentView === "dashboard";
+  const isTransactionsView = currentView === "transactions";
+
+  const hasActiveFilters = isDashboardView
+    ? hasDashboardFiltersActive
+    : isTransactionsView
+    ? transactionsFiltersCount > 0
+    : false;
+
+  const activeFiltersCount = isDashboardView
+    ? dashboardFiltersCount
+    : isTransactionsView
+    ? transactionsFiltersCount
+    : 0;
+
+  const showFilters = isDashboardView
+    ? showAdvancedFilters
+    : isTransactionsView
+    ? showTransactionsFilters
+    : false;
+
+  const handleToggleFilters = () => {
+    if (isDashboardView) {
+      setShowAdvancedFilters(!showAdvancedFilters);
+    } else if (isTransactionsView) {
+      setShowTransactionsFilters(!showTransactionsFilters);
+    }
+  };
 
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(
     filters.month,
@@ -150,12 +181,14 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction, onN
       />
 
       {/* Advanced Filters Button */}
-      <AdvancedFiltersButton
-        hasActiveFilters={hasAdvancedFiltersActive}
-        activeFiltersCount={activeFiltersCount}
-        showFilters={showAdvancedFilters}
-        onToggleFilters={handleToggleFilters}
-      />
+      {(currentView === "dashboard" || currentView === "transactions") && (
+        <AdvancedFiltersButton
+          hasActiveFilters={hasActiveFilters}
+          activeFiltersCount={activeFiltersCount}
+          showFilters={showFilters}
+          onToggleFilters={handleToggleFilters}
+        />
+      )}
 
       {/* Notifications bell */}
       <Box sx={{ position: "relative" }}>

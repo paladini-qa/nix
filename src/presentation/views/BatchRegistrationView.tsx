@@ -151,11 +151,21 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
       try {
         const batch = await parseBatchFromText(text, categories, paymentMethods);
         await processBatch(batch);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error parsing batch text:", error);
-        setSmartInputError(
-          "Não foi possível analisar o texto. Tente descrever cada gasto em uma linha ou frase clara."
-        );
+        if (error.code === "GEMINI_QUOTA_EXCEEDED") {
+          setSmartInputError(
+            "Limite de uso da Inteligência Artificial excedido (Cota Excedida / 429). Por favor, aguarde alguns instantes ou atualize sua chave de API."
+          );
+        } else if (error.code === "GEMINI_INVALID_KEY") {
+          setSmartInputError(
+            "Chave de API do Gemini inválida ou não autorizada. Verifique suas configurações no arquivo .env."
+          );
+        } else {
+          setSmartInputError(
+            "Não foi possível analisar o texto. Tente descrever cada gasto em uma linha ou frase clara."
+          );
+        }
       } finally {
         setIsLoading(false);
       }
@@ -182,9 +192,19 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
         try {
           const batch = await parseBatchFromAudio(blob, categories, paymentMethods);
           await processBatch(batch);
-        } catch (e) {
+        } catch (e: any) {
           console.error(e);
-          setSmartInputError("Não foi possível entender o áudio. Tente novamente.");
+          if (e.code === "GEMINI_QUOTA_EXCEEDED") {
+            setSmartInputError(
+              "Limite de uso da Inteligência Artificial excedido (Cota Excedida / 429). Por favor, aguarde alguns instantes ou atualize sua chave de API."
+            );
+          } else if (e.code === "GEMINI_INVALID_KEY") {
+            setSmartInputError(
+              "Chave de API do Gemini inválida ou não autorizada. Verifique suas configurações no arquivo .env."
+            );
+          } else {
+            setSmartInputError("Não foi possível entender o áudio. Tente novamente.");
+          }
         } finally {
           setIsLoading(false);
           setRecordingTime(0);
@@ -259,9 +279,19 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
         try {
           const batch = await parseBatchFromImage(imageBase64, file.type, categories, paymentMethods);
           await processBatch(batch);
-        } catch (err) {
+        } catch (err: any) {
           console.error(err);
-          setSmartInputError("Não foi possível ler a imagem. Tente outra foto com boa iluminação.");
+          if (err.code === "GEMINI_QUOTA_EXCEEDED") {
+            setSmartInputError(
+              "Limite de uso da Inteligência Artificial excedido (Cota Excedida / 429). Por favor, aguarde alguns instantes ou atualize sua chave de API."
+            );
+          } else if (err.code === "GEMINI_INVALID_KEY") {
+            setSmartInputError(
+              "Chave de API do Gemini inválida ou não autorizada. Verifique suas configurações no arquivo .env."
+            );
+          } else {
+            setSmartInputError("Não foi possível ler a imagem. Tente outra foto com boa iluminação.");
+          }
         } finally {
           setIsLoading(false);
         }
