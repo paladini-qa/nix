@@ -163,10 +163,10 @@ const LoginView: React.FC = () => {
         top: 0,
         left: 0,
         overflow: "hidden",
-        // Gradiente de fundo aconchegante — Cozy Coffee
+        // Gradiente de fundo premium — Nix Purple
         background: isDarkMode
-          ? `linear-gradient(135deg, ${theme.palette.background.default} 0%, #2C1A10 60%, ${alpha(theme.palette.primary.dark, 0.25)} 100%)`
-          : `linear-gradient(135deg, #FDF8F0 0%, #FEF3E2 55%, #F5E6D0 100%)`,
+          ? `linear-gradient(135deg, ${theme.palette.background.default} 0%, #170d29 60%, ${alpha(theme.palette.primary.dark, 0.25)} 100%)`
+          : `linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 55%, #E9D5FF 100%)`,
       }}
     >
       {/* Mesh Gradient Blobs */}
@@ -240,19 +240,19 @@ const LoginView: React.FC = () => {
             overflow: "hidden",
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.paper, 0.85)
-              : alpha("#FEF8F0", 0.90),
+              : alpha("#FFFFFF", 0.90),
             backdropFilter: "blur(24px)",
             WebkitBackdropFilter: "blur(24px)",
-            border: isMobile ? "none" : `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.15) : alpha("#C4885F", 0.2)}`,
+            border: isMobile ? "none" : `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.15) : alpha(theme.palette.primary.main, 0.2)}`,
             boxShadow: isMobile ? "none" : (isDarkMode
-              ? `0 24px 80px -20px rgba(28, 16, 8, 0.7), inset 0 1px 0 ${alpha("#F0D9C0", 0.05)}`
-              : `0 24px 80px -20px ${alpha("#7B4226", 0.18)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`),
+              ? `0 24px 80px -20px rgba(18, 11, 30, 0.8), inset 0 1px 0 ${alpha(theme.palette.primary.light, 0.15)}`
+              : `0 24px 80px -20px ${alpha(theme.palette.primary.main, 0.18)}, inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`),
             transition: "all 0.3s ease-in-out",
             ...(!isMobile && {
               "&:hover": {
                 boxShadow: isDarkMode
-                  ? `0 32px 100px -24px rgba(28, 16, 8, 0.8)`
-                  : `0 32px 100px -24px ${alpha("#7B4226", 0.25)}`,
+                  ? `0 32px 100px -24px rgba(18, 11, 30, 0.9)`
+                  : `0 32px 100px -24px ${alpha(theme.palette.primary.main, 0.25)}`,
               },
             }),
             ...(isMobile && {
@@ -286,8 +286,8 @@ const LoginView: React.FC = () => {
                   ? alpha(theme.palette.primary.main, 0.15)
                   : alpha(theme.palette.primary.main, 0.08),
                 boxShadow: isDarkMode
-                  ? `inset 0 1px 0 ${alpha("#F0D9C0", 0.1)}, 0 6px 24px -6px rgba(28, 16, 8, 0.4)`
-                  : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 6px 24px -6px ${alpha("#7B4226", 0.2)}`,
+                  ? `inset 0 1px 0 ${alpha(theme.palette.primary.light, 0.2)}, 0 6px 24px -6px rgba(18, 11, 30, 0.4)`
+                  : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 6px 24px -6px ${alpha(theme.palette.primary.main, 0.2)}`,
                 transition: "all 0.3s ease-in-out",
                 "&:hover": {
                   transform: "scale(1.05) rotate(-2deg)",
@@ -310,7 +310,7 @@ const LoginView: React.FC = () => {
                 mb: 0.5,
                 background: isDarkMode
                   ? `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${alpha(theme.palette.primary.main, 0.9)} 100%)`
-                  : `linear-gradient(135deg, #2C1A11 0%, #7B4226 100%)`,
+                  : `linear-gradient(135deg, #3B0764 0%, #7C3AED 100%)`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -325,7 +325,7 @@ const LoginView: React.FC = () => {
             >
               {isSignUp
                 ? "Comece a cuidar das suas finanças com carinho"
-                : "Seu café financeiro está prontinho"}
+                : "Seu controle financeiro inteligente"}
             </Typography>
           </Box>
 
@@ -606,10 +606,10 @@ const LoginView: React.FC = () => {
               px: 3.5,
               py: 1.5,
               textAlign: "center",
-              borderTop: `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.12) : alpha("#C4885F", 0.15)}`,
+              borderTop: `1px solid ${isDarkMode ? alpha(theme.palette.primary.main, 0.12) : alpha(theme.palette.primary.main, 0.15)}`,
               bgcolor: isDarkMode
                 ? alpha(theme.palette.background.default, 0.3)
-                : alpha("#FEF3E2", 0.6),
+                : alpha("#FAF5FF", 0.6),
             }}
           >
             <Box
