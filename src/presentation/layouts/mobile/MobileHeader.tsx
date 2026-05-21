@@ -74,9 +74,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15, type: "spring", stiffness: 400 }}
         sx={{
-          flex: 1,
-          minWidth: 0,
-          overflow: "hidden",
+          flexShrink: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-start",
@@ -89,13 +87,6 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           alt="Finance Control Logo"
           sx={{ width: 32, height: 32, flexShrink: 0, objectFit: "contain", borderRadius: "9px" }}
         />
-        <Text
-          size="5"
-          weight="bold"
-          style={{ letterSpacing: "-0.02em", fontSize: 18, whiteSpace: "nowrap" }}
-        >
-          Nix
-        </Text>
       </MotionBox>
 
       <MotionBox
