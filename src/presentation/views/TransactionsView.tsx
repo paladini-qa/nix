@@ -646,35 +646,57 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={gridSpacing}>
-        {/* Balance Card */}
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              background: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.8)
-                : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha(balance >= 0 ? "#a855f7" : "#ef4444", 0.25)}`
-                : `0 4px 16px -4px ${alpha(balance >= 0 ? "#a855f7" : "#ef4444", 0.15)}`,
-              borderRadius: "14px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            {/* Absolute icon — top-right */}
+      {isMobile ? (
+        <Paper
+          elevation={0}
+          sx={{
+            position: "relative",
+            overflow: "hidden",
+            p: "16px",
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.75)} 100%)`
+              : "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+            boxShadow: isDarkMode
+              ? `0 10px 30px -10px ${alpha(balance >= 0 ? "#a855f7" : "#ef4444", 0.2)}`
+              : `0 10px 30px -10px ${alpha(balance >= 0 ? "#a855f7" : "#ef4444", 0.1)}`,
+            borderRadius: "20px",
+            transition: "all 0.2s ease-in-out",
+            "&:hover": { transform: "translateY(-2px)" },
+            mb: 2,
+          }}
+        >
+          {/* Top row: Current Balance */}
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "text.secondary",
+                  mb: "2px",
+                }}
+              >
+                Current Balance
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 24,
+                  fontWeight: 800,
+                  letterSpacing: "-0.02em",
+                  color: "#a855f7",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {formatCurrency(balance)}
+              </Typography>
+            </Box>
             <Box
               sx={{
-                position: "absolute",
-                top: 14,
-                right: 14,
-                width: 38,
-                height: 38,
+                width: 40,
+                height: 40,
                 borderRadius: "11px",
                 display: "flex",
                 alignItems: "center",
@@ -685,164 +707,304 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             >
               <WalletIcon sx={{ fontSize: 20 }} />
             </Box>
+          </Stack>
 
-            <Typography
+          <Divider sx={{ borderStyle: "dashed", my: 1.5, borderColor: isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06) }} />
+
+          {/* Bottom row: Income and Expenses side by side */}
+          <Grid container spacing={2}>
+            {/* Income Section */}
+            <Grid size={{ xs: 6 }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12),
+                    color: "#10b981",
+                    flexShrink: 0,
+                  }}
+                >
+                  <TrendingUpIcon sx={{ fontSize: 16 }} />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                      color: "text.secondary",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    Income
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 14.5,
+                      fontWeight: 700,
+                      color: "#10b981",
+                      fontVariantNumeric: "tabular-nums",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {formatCurrency(totalIncome)}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Grid>
+
+            {/* Expense Section */}
+            <Grid size={{ xs: 6 }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#ef4444", isDarkMode ? 0.2 : 0.12),
+                    color: "#ef4444",
+                    flexShrink: 0,
+                  }}
+                >
+                  <TrendingDownIcon sx={{ fontSize: 16 }} />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                      color: "text.secondary",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    Expenses
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 14.5,
+                      fontWeight: 700,
+                      color: "#ef4444",
+                      fontVariantNumeric: "tabular-nums",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {formatCurrency(totalExpense)}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Grid>
+          </Grid>
+        </Paper>
+      ) : (
+        <Grid container spacing={gridSpacing}>
+          {/* Balance Card */}
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Paper
+              elevation={0}
               sx={{
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: "text.secondary",
-                mb: "6px",
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                background: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.8)
+                  : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: isDarkMode
+                  ? `0 4px 16px -4px ${alpha(balance >= 0 ? "#a855f7" : "#ef4444", 0.25)}`
+                  : `0 4px 16px -4px ${alpha(balance >= 0 ? "#a855f7" : "#ef4444", 0.15)}`,
+                borderRadius: "14px",
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
-              Current Balance
-            </Typography>
-            <Typography
+              {/* Absolute icon — top-right */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "11px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12),
+                  color: "#a855f7",
+                }}
+              >
+                <WalletIcon sx={{ fontSize: 20 }} />
+              </Box>
+
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "text.secondary",
+                  mb: "6px",
+                }}
+              >
+                Current Balance
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: isMobile ? 22 : 26,
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                  color: "#a855f7",
+                  fontVariantNumeric: "tabular-nums",
+                  pr: 6,
+                }}
+              >
+                {formatCurrency(balance)}
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* Income Card */}
+          <Grid size={{ xs: 6, sm: 4 }}>
+            <Paper
+              elevation={0}
               sx={{
-                fontSize: isMobile ? 22 : 26,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                color: "#a855f7",
-                fontVariantNumeric: "tabular-nums",
-                pr: 6,
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                background: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.8)
+                  : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: isDarkMode
+                  ? `0 4px 16px -4px ${alpha("#10b981", 0.25)}`
+                  : `0 4px 16px -4px ${alpha("#10b981", 0.15)}`,
+                borderRadius: "14px",
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
-              {formatCurrency(balance)}
-            </Typography>
-          </Paper>
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "11px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12),
+                  color: "#10b981",
+                }}
+              >
+                <TrendingUpIcon sx={{ fontSize: 20 }} />
+              </Box>
+
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "text.secondary",
+                  mb: "6px",
+                }}
+              >
+                Income
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: isMobile ? 22 : 26,
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                  color: "#10b981",
+                  fontVariantNumeric: "tabular-nums",
+                  pr: 6,
+                }}
+              >
+                {formatCurrency(totalIncome)}
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* Expense Card */}
+          <Grid size={{ xs: 6, sm: 4 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                background: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.8)
+                  : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: isDarkMode
+                  ? `0 4px 16px -4px ${alpha("#ef4444", 0.25)}`
+                  : `0 4px 16px -4px ${alpha("#ef4444", 0.15)}`,
+                borderRadius: "14px",
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "11px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: alpha("#ef4444", isDarkMode ? 0.2 : 0.12),
+                  color: "#ef4444",
+                }}
+              >
+                <TrendingDownIcon sx={{ fontSize: 20 }} />
+              </Box>
+
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "text.secondary",
+                  mb: "6px",
+                }}
+              >
+                Expenses
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: isMobile ? 22 : 26,
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                  color: "#ef4444",
+                  fontVariantNumeric: "tabular-nums",
+                  pr: 6,
+                }}
+              >
+                {formatCurrency(totalExpense)}
+              </Typography>
+            </Paper>
+          </Grid>
         </Grid>
-
-        {/* Income Card */}
-        <Grid size={{ xs: 6, sm: 4 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              background: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.8)
-                : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha("#10b981", 0.25)}`
-                : `0 4px 16px -4px ${alpha("#10b981", 0.15)}`,
-              borderRadius: "14px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: 14,
-                right: 14,
-                width: 38,
-                height: 38,
-                borderRadius: "11px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12),
-                color: "#10b981",
-              }}
-            >
-              <TrendingUpIcon sx={{ fontSize: 20 }} />
-            </Box>
-
-            <Typography
-              sx={{
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: "text.secondary",
-                mb: "6px",
-              }}
-            >
-              Income
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: isMobile ? 22 : 26,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                color: "#10b981",
-                fontVariantNumeric: "tabular-nums",
-                pr: 6,
-              }}
-            >
-              {formatCurrency(totalIncome)}
-            </Typography>
-          </Paper>
-        </Grid>
-
-        {/* Expense Card */}
-        <Grid size={{ xs: 6, sm: 4 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              background: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.8)
-                : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha("#ef4444", 0.25)}`
-                : `0 4px 16px -4px ${alpha("#ef4444", 0.15)}`,
-              borderRadius: "14px",
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: 14,
-                right: 14,
-                width: 38,
-                height: 38,
-                borderRadius: "11px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                bgcolor: alpha("#ef4444", isDarkMode ? 0.2 : 0.12),
-                color: "#ef4444",
-              }}
-            >
-              <TrendingDownIcon sx={{ fontSize: 20 }} />
-            </Box>
-
-            <Typography
-              sx={{
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: "text.secondary",
-                mb: "6px",
-              }}
-            >
-              Expenses
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: isMobile ? 22 : 26,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                color: "#ef4444",
-                fontVariantNumeric: "tabular-nums",
-                pr: 6,
-              }}
-            >
-              {formatCurrency(totalExpense)}
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+      )}
 
       {/* Search & Filters Toolbar */}
       <Paper
@@ -862,21 +1024,22 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         {/* Toolbar principal */}
         <Box
           sx={{
-            p: isMobile ? 1.25 : 2,
+            p: isMobile ? 1 : 2,
             display: "flex",
-            flexWrap: "wrap",
+            flexWrap: isMobile ? "nowrap" : "wrap",
             alignItems: "center",
             gap: isMobile ? 1 : 2,
           }}
         >
-          {/* Campo de busca - full width no mobile */}
+          {/* Campo de busca - flex-grow no mobile para ocupar espaço restante */}
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
             placeholder="Search transactions..."
             minWidth={isMobile ? 0 : 200}
-            maxWidth={isMobile ? undefined : 320}
-            fullWidth={isMobile}
+            maxWidth={isMobile ? 9999 : 320}
+            fullWidth={false}
+            flex={1}
           />
 
           <Box
@@ -885,7 +1048,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               alignItems: "center",
               gap: isMobile ? 0.75 : 1,
               minWidth: 0,
-              flex: isMobile ? 1 : "0 0 auto",
+              flex: "0 0 auto",
               justifyContent: isMobile ? "flex-end" : undefined,
             }}
           >
@@ -1369,9 +1532,19 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           {paginatedData.length > 0 ? (
             <>
               {isMobile && paginatedData.length > 30 ? (
-                <Box
+                <Paper
                   ref={mobileListParentRef}
-                  sx={{ maxHeight: "70vh", overflow: "auto" }}
+                  elevation={0}
+                  sx={{
+                    maxHeight: "70vh",
+                    overflow: "auto",
+                    borderRadius: "20px",
+                    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                    bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.4) : "#ffffff",
+                    boxShadow: isDarkMode 
+                      ? "0 4px 20px -4px rgba(0,0,0,0.3)" 
+                      : "0 4px 20px -4px rgba(99,102,241,0.05)",
+                  }}
                 >
                   <Box
                     sx={{
@@ -1393,7 +1566,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                             left: 0,
                             width: "100%",
                             transform: `translateY(${virtualRow.start}px)`,
-                            pb: 1,
+                            pb: 0,
                           }}
                         >
                           <SwipeableTransactionCard
@@ -1405,41 +1578,56 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                               setMobileActionAnchor({ element, transaction })
                             }
                             formatDateShort={formatDateShort}
+                            isLast={virtualRow.index === paginatedData.length - 1}
                           />
                         </Box>
                       );
                     })}
                   </Box>
-                </Box>
+                </Paper>
               ) : (
-              <AnimatePresence mode="popLayout">
-                {paginatedData.map((t, index) => (
-                  <motion.div
-                    key={t.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 30,
-                      delay: index * 0.05,
-                    }}
-                    style={{ marginBottom: 8 }}
-                  >
-                    <SwipeableTransactionCard
-                      transaction={t}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      onTogglePaid={onTogglePaid}
-                      onOpenMenu={(element, transaction) =>
-                        setMobileActionAnchor({ element, transaction })
-                      }
-                      formatDateShort={formatDateShort}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    borderRadius: "20px",
+                    overflow: "hidden",
+                    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                    bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.4) : "#ffffff",
+                    boxShadow: isDarkMode 
+                      ? "0 4px 20px -4px rgba(0,0,0,0.3)" 
+                      : "0 4px 20px -4px rgba(99,102,241,0.05)",
+                  }}
+                >
+                  <AnimatePresence mode="popLayout">
+                    {paginatedData.map((t, index) => (
+                      <motion.div
+                        key={t.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 30,
+                          delay: index * 0.05,
+                        }}
+                        style={{ marginBottom: 0 }}
+                      >
+                        <SwipeableTransactionCard
+                          transaction={t}
+                          onEdit={onEdit}
+                          onDelete={onDelete}
+                          onTogglePaid={onTogglePaid}
+                          onOpenMenu={(element, transaction) =>
+                            setMobileActionAnchor({ element, transaction })
+                          }
+                          formatDateShort={formatDateShort}
+                          isLast={index === paginatedData.length - 1}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </Paper>
               )}
 
               {/* Summary Footer */}

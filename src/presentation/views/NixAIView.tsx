@@ -1555,6 +1555,10 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           flexDirection: "column",
           position: 'relative',
           scrollBehavior: "smooth",
+          ...(isCentered && {
+            height: "100%",
+            justifyContent: "center",
+          }),
           "&::-webkit-scrollbar": { width: 6 },
           "&::-webkit-scrollbar-thumb": {
             background: alpha(NIX_BRAND.purple, 0.2),

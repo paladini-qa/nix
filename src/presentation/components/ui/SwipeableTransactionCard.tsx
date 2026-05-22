@@ -35,6 +35,7 @@ interface SwipeableTransactionCardProps {
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onOpenMenu?: (element: HTMLElement, transaction: Transaction) => void;
   formatDateShort: (date: string) => string;
+  isLast?: boolean;
 }
 
 /**
@@ -52,6 +53,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
   onTogglePaid,
   onOpenMenu,
   formatDateShort,
+  isLast = false,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -86,7 +88,8 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
       sx={{
         position: "relative",
         overflow: "hidden",
-        borderRadius: "14px",
+        borderRadius: isDragging ? "14px" : "0px",
+        transition: "border-radius 0.15s ease-in-out",
       }}
     >
       {/* Botão de Editar (revelado com swipe para direita) */}
@@ -105,7 +108,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
           alignItems: "center",
           justifyContent: "center",
           background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.9)} 0%, ${alpha(theme.palette.primary.main, 0.7)} 100%)`,
-          borderRadius: "14px 0 0 14px",
+          borderRadius: isDragging ? "14px 0 0 14px" : "0px",
           zIndex: 0,
         }}
       >
@@ -128,7 +131,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
           alignItems: "center",
           justifyContent: "center",
           background: `linear-gradient(270deg, ${alpha(theme.palette.error.main, 0.9)} 0%, ${alpha(theme.palette.error.main, 0.7)} 100%)`,
-          borderRadius: "0 14px 14px 0",
+          borderRadius: isDragging ? "0 14px 14px 0" : "0px",
           zIndex: 0,
         }}
       >
@@ -151,35 +154,32 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
           position: "relative",
           overflow: "hidden",
           p: 0,
-          opacity: t.isPaid !== false ? 0.6 : 1,
+          opacity: t.isPaid !== false ? 0.65 : 1,
           background: isDarkMode
-            ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.7)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`
-            : `linear-gradient(135deg, ${alpha("#FFFFFF", 0.85)} 0%, ${alpha("#FFFFFF", 0.65)} 100%)`,
-          backdropFilter: "blur(12px)",
-          border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.05)}`,
-          borderLeft: `3px solid ${accentColor}`,
-          borderRadius: "14px",
+            ? alpha(theme.palette.background.paper, 0.8)
+            : "#ffffff",
+          borderBottom: isLast
+            ? "none"
+            : `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.05) : alpha("#000000", 0.04)}`,
+          borderRadius: isDragging ? "14px" : "0px",
           boxShadow: isDragging
             ? `0 8px 24px -4px ${alpha(accentColor, 0.25)}`
-            : isDarkMode
-              ? `0 4px 16px -4px ${alpha(accentColor, 0.15)}`
-              : `0 4px 16px -4px ${alpha(accentColor, 0.1)}`,
+            : "none",
           transition: isDragging ? "none" : "all 0.15s ease-in-out",
-          transform: isDragging ? "scale(1.02)" : undefined,
+          transform: isDragging ? "scale(1.01)" : undefined,
           zIndex: isDragging ? 10 : 1,
           ...(t.isVirtual && {
-            borderStyle: "dashed",
-            borderLeftStyle: "solid",
+            borderBottomStyle: "dashed",
           }),
         }}
       >
         <CardContent
           sx={{
-            p: 1.75,
-            "&:last-child": { pb: 1.75 },
+            p: 1.25,
+            "&:last-child": { pb: 1.25 },
             display: "flex",
             alignItems: "center",
-            gap: 1.5,
+            gap: 1.25,
           }}
         >
           {/* Checkbox */}
@@ -197,16 +197,16 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
               onChange={(e) => onTogglePaid(t.id, e.target.checked)}
               size="small"
               color={t.isVirtual ? "info" : "success"}
-              sx={{ mt: -0.5, ml: -1 }}
+              sx={{ mt: -0.25, ml: -0.5 }}
             />
           </Tooltip>
 
           {/* Icon */}
           <Box
             sx={{
-              width: 32,
-              height: 32,
-              borderRadius: "10px",
+              width: 28,
+              height: 28,
+              borderRadius: "8px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -221,9 +221,9 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
             }}
           >
             {isIncome ? (
-              <ArrowUpIcon sx={{ fontSize: 16, color: accentColor }} />
+              <ArrowUpIcon sx={{ fontSize: 14, color: accentColor }} />
             ) : (
-              <ArrowDownIcon sx={{ fontSize: 16, color: accentColor }} />
+              <ArrowDownIcon sx={{ fontSize: 14, color: accentColor }} />
             )}
           </Box>
 
@@ -233,7 +233,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
               sx={{
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "flex-start",
+                alignItems: "center",
                 gap: 1,
               }}
             >
@@ -244,7 +244,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
-                  fontSize: "0.925rem",
+                  fontSize: "0.875rem",
                   color: "text.primary",
                 }}
               >
@@ -256,7 +256,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
                 color={isIncome ? "success.main" : "error.main"}
                 sx={{ 
                   flexShrink: 0, 
-                  fontSize: "0.95rem",
+                  fontSize: "0.9rem",
                   ...privacyStyles, 
                   ...noWrapStyle 
                 }}
@@ -269,32 +269,32 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
-                mt: 0.5,
+                gap: 0.75,
+                mt: 0.25,
                 flexWrap: "wrap",
               }}
             >
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.725rem" }}>
                 {formatDateShort(t.date)}
               </Typography>
-              <Typography variant="caption" color="text.disabled">
+              <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.725rem" }}>
                 •
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.725rem" }}>
                 {t.category}
               </Typography>
-              <Typography variant="caption" color="text.disabled">
+              <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.725rem" }}>
                 •
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <PaymentMethodIcon
                   imageUrl={getPaymentMethodConfig(t.paymentMethod)?.imageUrl}
                   colors={getPaymentMethodColor(t.paymentMethod)}
-                  size={16}
-                  borderRadius="4px"
-                  iconSize={9}
+                  size={14}
+                  borderRadius="3px"
+                  iconSize={8}
                 />
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.725rem" }}>
                   {t.paymentMethod}
                 </Typography>
               </Box>
@@ -310,6 +310,8 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
               size="small"
               onClick={(e) => onOpenMenu(e.currentTarget, t)}
               sx={{
+                width: 26,
+                height: 26,
                 bgcolor: isDarkMode
                   ? alpha(theme.palette.action.hover, 0.3)
                   : alpha(theme.palette.action.hover, 0.5),
@@ -320,7 +322,7 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
                 },
               }}
             >
-              <MoreVertIcon fontSize="small" />
+              <MoreVertIcon sx={{ fontSize: 16 }} />
             </IconButton>
           )}
         </CardContent>

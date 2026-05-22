@@ -74,11 +74,10 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15, type: "spring", stiffness: 400 }}
         sx={{
-          flexShrink: 0,
+          flex: "1 1 0%",
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-start",
-          gap: 1,
         }}
       >
         <Box
@@ -90,10 +89,15 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
       </MotionBox>
 
       <MotionBox
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.18, type: "spring", stiffness: 400 }}
-        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.16, type: "spring", stiffness: 400 }}
+        sx={{
+          flex: "0 0 auto",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
         <DateFilter
           month={filters.month}
@@ -101,6 +105,20 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           onDateChange={(month, year) => setFilters({ month, year })}
           compact
         />
+      </MotionBox>
+
+      <MotionBox
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.18, type: "spring", stiffness: 400 }}
+        sx={{
+          flex: "1 1 0%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 0.5,
+        }}
+      >
         <IconButton
           size="3"
           variant={isPrivacyMode ? "soft" : "ghost"}
