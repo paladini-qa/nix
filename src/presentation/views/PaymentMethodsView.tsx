@@ -345,183 +345,329 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       </Box>
 
       {/* Summary Cards - Always Visible */}
-      <Grid container spacing={gridSpacing}>
-        {/* Active Methods */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: "18px",
-              borderRadius: "14px",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              background: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.8)
-                : "#ffffff",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: 14,
-                right: 14,
-                width: 38,
-                height: 38,
-                borderRadius: "11px",
-                display: "grid",
-                placeItems: "center",
-                bgcolor: alpha("#a855f7", 0.12),
-                color: "#a855f7",
-              }}
-            >
-              <CreditCardIcon sx={{ fontSize: 22 }} />
+      {isMobile ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.25,
+            position: "relative",
+            overflow: "hidden",
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.75)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#ffffff", 0.95)} 0%, ${alpha("#f8fafc", 0.95)} 100%)`,
+            backdropFilter: "blur(12px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+            borderRadius: "20px",
+            boxShadow: isDarkMode
+              ? "0 4px 20px -4px rgba(0,0,0,0.3)"
+              : `0 4px 20px -4px ${alpha(stats.totalUnpaid > 0 ? "#ef4444" : "#10b981", 0.15)}`,
+          }}
+        >
+          {/* A Pagar */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box>
+              <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Total A Pagar
+              </Typography>
+              <Typography sx={{ fontSize: 28, fontWeight: 800, color: stats.totalUnpaid > 0 ? "#ef4444" : "#10b981", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+                {formatCurrency(stats.totalUnpaid)}
+              </Typography>
             </Box>
-            <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-              Métodos Ativos
-            </Typography>
-            <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7" }}>
-              {stats.methodsWithActivity}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              de {paymentMethods.length} cadastrados
-            </Typography>
-          </Paper>
-        </Grid>
-
-        {/* Total Expenses */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: "18px",
-              borderRadius: "14px",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              background: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.8)
-                : "#ffffff",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
             <Box
               sx={{
-                position: "absolute",
-                top: 14,
-                right: 14,
-                width: 38,
-                height: 38,
-                borderRadius: "11px",
+                width: 42,
+                height: 42,
+                borderRadius: "12px",
                 display: "grid",
                 placeItems: "center",
-                bgcolor: alpha("#ef4444", 0.12),
-                color: "#ef4444",
-              }}
-            >
-              <TrendingDownIcon sx={{ fontSize: 22 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-              Total Despesas
-            </Typography>
-            <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444" }}>
-              {formatCurrency(stats.totalExpenses)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              {stats.totalTransactions} transações
-            </Typography>
-          </Paper>
-        </Grid>
-
-        {/* Pending Bills */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: "18px",
-              borderRadius: "14px",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              background: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.8)
-                : "#ffffff",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: 14,
-                right: 14,
-                width: 38,
-                height: 38,
-                borderRadius: "11px",
-                display: "grid",
-                placeItems: "center",
-                bgcolor: alpha("#f59e0b", 0.12),
-                color: "#f59e0b",
-              }}
-            >
-              <WarningIcon sx={{ fontSize: 22 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-              Faturas Pendentes
-            </Typography>
-            <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>
-              {paymentMethodsSummary.reduce((s, m) => s + m.unpaidCount, 0)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              cobranças em aberto
-            </Typography>
-          </Paper>
-        </Grid>
-
-        {/* To Pay */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: "18px",
-              borderRadius: "14px",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-              background: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.8)
-                : "#ffffff",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                top: 14,
-                right: 14,
-                width: 38,
-                height: 38,
-                borderRadius: "11px",
-                display: "grid",
-                placeItems: "center",
-                bgcolor: alpha("#10b981", 0.12),
-                color: "#10b981",
+                bgcolor: alpha(stats.totalUnpaid > 0 ? "#ef4444" : "#10b981", 0.12),
+                color: stats.totalUnpaid > 0 ? "#ef4444" : "#10b981",
               }}
             >
               <WalletIcon sx={{ fontSize: 22 }} />
             </Box>
-            <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-              A Pagar
-            </Typography>
-            <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981" }}>
-              {formatCurrency(stats.totalUnpaid)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              {stats.totalUnpaid > 0 ? "pendente" : "tudo em dia"}
-            </Typography>
-          </Paper>
+          </Box>
+
+          <Divider sx={{ borderStyle: "dashed", my: 1.75, opacity: 0.6 }} />
+
+          {/* Breakdown Section */}
+          <Grid container spacing={2}>
+            {/* Total Despesas */}
+            <Grid size={{ xs: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#ef4444", 0.1),
+                    color: "#ef4444",
+                    flexShrink: 0,
+                  }}
+                >
+                  <TrendingDownIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                    Despesas
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
+                    {formatCurrency(stats.totalExpenses)}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
+                    {stats.totalTransactions} trans.
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Faturas Pendentes */}
+            <Grid size={{ xs: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#f59e0b", 0.1),
+                    color: "#f59e0b",
+                    flexShrink: 0,
+                  }}
+                >
+                  <WarningIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                    Pendentes
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
+                    {paymentMethodsSummary.reduce((s, m) => s + m.unpaidCount, 0)} fat.
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
+                    em aberto
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Métodos Ativos */}
+            <Grid size={{ xs: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#a855f7", 0.1),
+                    color: "#a855f7",
+                    flexShrink: 0,
+                  }}
+                >
+                  <CreditCardIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                    Ativos
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
+                    {stats.methodsWithActivity} ativos
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
+                    de {paymentMethods.length} cad.
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      ) : (
+        <Grid container spacing={gridSpacing}>
+          {/* Active Methods */}
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: "18px",
+                borderRadius: "14px",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                background: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.8)
+                  : "#ffffff",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "11px",
+                  display: "grid",
+                  placeItems: "center",
+                  bgcolor: alpha("#a855f7", 0.12),
+                  color: "#a855f7",
+                }}
+              >
+                <CreditCardIcon sx={{ fontSize: 22 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+                Métodos Ativos
+              </Typography>
+              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7" }}>
+                {stats.methodsWithActivity}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                de {paymentMethods.length} cadastrados
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* Total Expenses */}
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: "18px",
+                borderRadius: "14px",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                background: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.8)
+                  : "#ffffff",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "11px",
+                  display: "grid",
+                  placeItems: "center",
+                  bgcolor: alpha("#ef4444", 0.12),
+                  color: "#ef4444",
+                }}
+              >
+                <TrendingDownIcon sx={{ fontSize: 22 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+                Total Despesas
+              </Typography>
+              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444" }}>
+                {formatCurrency(stats.totalExpenses)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                {stats.totalTransactions} transações
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* Pending Bills */}
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: "18px",
+                borderRadius: "14px",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                background: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.8)
+                  : "#ffffff",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "11px",
+                  display: "grid",
+                  placeItems: "center",
+                  bgcolor: alpha("#f59e0b", 0.12),
+                  color: "#f59e0b",
+                }}
+              >
+                <WarningIcon sx={{ fontSize: 22 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+                Faturas Pendentes
+              </Typography>
+              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>
+                {paymentMethodsSummary.reduce((s, m) => s + m.unpaidCount, 0)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                cobranças em aberto
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* To Pay */}
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: "18px",
+                borderRadius: "14px",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                background: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.8)
+                  : "#ffffff",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "11px",
+                  display: "grid",
+                  placeItems: "center",
+                  bgcolor: alpha("#10b981", 0.12),
+                  color: "#10b981",
+                }}
+              >
+                <WalletIcon sx={{ fontSize: 22 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+                A Pagar
+              </Typography>
+              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981" }}>
+                {formatCurrency(stats.totalUnpaid)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                {stats.totalUnpaid > 0 ? "pendente" : "tudo em dia"}
+              </Typography>
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      )}
 
       {/* Unified Payment Methods Grid */}
       {paymentMethods.length === 0 ? (
