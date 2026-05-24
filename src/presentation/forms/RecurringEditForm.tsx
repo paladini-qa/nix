@@ -158,41 +158,41 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
         if (isVirtual) {
           return {
             icon: <TodayIcon color="info" />,
-            title: "Editar Esta Ocorrência",
-            description: "As alterações serão aplicadas apenas para esta data. A recorrência original continuará normalmente.",
+            title: "Edit This Occurrence",
+            description: "Changes will only be applied to this date. The original recurrence will continue normally.",
             color: theme.palette.info.main,
           };
         }
         return {
           icon: <TodayIcon color="info" />,
-          title: "Editar Apenas Esta",
+          title: "Edit Only This One",
           description: isInstallment 
-            ? `Apenas a parcela ${transaction?.currentInstallment}/${transaction?.installments} será alterada.`
-            : "Apenas esta ocorrência será alterada.",
+            ? `Only installment ${transaction?.currentInstallment}/${transaction?.installments} will be changed.`
+            : "Only this occurrence will be changed.",
           color: theme.palette.info.main,
         };
       case "all_future":
         return {
           icon: <DateRangeIcon color="warning" />,
-          title: "Editar Esta e Futuras",
+          title: "Edit This and Future Ones",
           description: isRecurring || isVirtual
-            ? `As mudanças serão aplicadas a partir de ${date?.format("DD/MM/YYYY")}. Ocorrências anteriores serão preservadas com os valores originais.`
-            : `Parcelas a partir da ${transaction?.currentInstallment}ª serão alteradas.`,
+            ? `Changes will be applied starting from ${date?.format("MM/DD/YYYY")}. Previous occurrences will be preserved with their original values.`
+            : `Installments from ${transaction?.currentInstallment} onwards will be changed.`,
           color: theme.palette.warning.main,
         };
       case "all":
         return {
           icon: <AllIcon color="error" />,
-          title: "Editar Todas",
+          title: "Edit All",
           description: isRecurring || isVirtual
-            ? "Todas as ocorrências (passadas e futuras) serão alteradas."
-            : `Todas as ${transaction?.installments} parcelas serão alteradas.`,
+            ? "All occurrences (past and future) will be changed."
+            : `All ${transaction?.installments} installments will be changed.`,
           color: theme.palette.error.main,
         };
       default:
         return {
           icon: <RepeatIcon color="primary" />,
-          title: "Editar Transação",
+          title: "Edit Transaction",
           description: "",
           color: theme.palette.primary.main,
         };
@@ -319,7 +319,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
                 color: "text.primary",
               }}
             >
-              Editar
+              Edit
             </Typography>
           </Box>
 
@@ -466,13 +466,13 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
           <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
             <Chip
               icon={transaction.isRecurring ? <RepeatIcon /> : <CreditCardIcon />}
-              label={transaction.isRecurring ? "Recorrente" : `Parcela ${transaction.currentInstallment}/${transaction.installments}`}
+              label={transaction.isRecurring ? "Recurring" : `Installment ${transaction.currentInstallment}/${transaction.installments}`}
               color={transaction.isRecurring ? "primary" : "warning"}
               variant="outlined"
               sx={{ borderRadius: "12px" }}
             />
             <Chip
-              label={transaction.type === "income" ? "Receita" : "Despesa"}
+              label={transaction.type === "income" ? "Income" : "Expense"}
               color={transaction.type === "income" ? "success" : "error"}
               size="small"
               sx={{ borderRadius: "12px" }}
@@ -483,7 +483,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
 
           {/* Description */}
           <TextField
-            label="Descrição"
+            label="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             fullWidth
@@ -492,7 +492,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
 
           {/* Amount */}
           <TextField
-            label="Valor"
+            label="Amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             fullWidth
@@ -501,7 +501,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Typography fontWeight={600} color="text.secondary">R$</Typography>
+                  <Typography fontWeight={600} color="text.secondary">$</Typography>
                 </InputAdornment>
               ),
             }}
@@ -510,10 +510,10 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
 
           {/* Category */}
           <FormControl fullWidth sx={inputSx}>
-            <InputLabel>Categoria</InputLabel>
+            <InputLabel>Category</InputLabel>
             <Select
               value={category}
-              label="Categoria"
+              label="Category"
               onChange={(e) => setCategory(e.target.value)}
             >
               {categoryList.map((cat) => (
@@ -526,10 +526,10 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
 
           {/* Payment Method */}
           <FormControl fullWidth sx={inputSx}>
-            <InputLabel>Método de Pagamento</InputLabel>
+            <InputLabel>Payment Method</InputLabel>
             <Select
               value={paymentMethod}
-              label="Método de Pagamento"
+              label="Payment Method"
               onChange={(e) => setPaymentMethod(e.target.value)}
             >
               {paymentMethods.map((pm) => (
@@ -543,10 +543,10 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
           {/* Date - Only show for single or all_future */}
           {(editMode === "single" || editMode === "all_future") && (
             <DatePicker
-              label={editMode === "all_future" ? "Aplicar a partir de" : "Data"}
+              label={editMode === "all_future" ? "Apply starting from" : "Date"}
               value={date}
               onChange={(newDate) => setDate(newDate)}
-              format="DD/MM/YYYY"
+              format="MM/DD/YYYY"
               slotProps={{
                 textField: {
                   fullWidth: true,
@@ -559,14 +559,14 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
           {/* Frequency - Only for recurring and not single */}
           {transaction.isRecurring && editMode !== "single" && (
             <FormControl fullWidth sx={inputSx}>
-              <InputLabel>Frequência</InputLabel>
+              <InputLabel>Frequency</InputLabel>
               <Select
                 value={frequency}
-                label="Frequência"
+                label="Frequency"
                 onChange={(e) => setFrequency(e.target.value as "monthly" | "yearly")}
               >
-                <MenuItem value="monthly">Mensal</MenuItem>
-                <MenuItem value="yearly">Anual</MenuItem>
+                <MenuItem value="monthly">Monthly</MenuItem>
+                <MenuItem value="yearly">Yearly</MenuItem>
               </Select>
             </FormControl>
           )}
@@ -574,7 +574,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
           {/* Warning for all_future */}
           {editMode === "all_future" && (transaction.isRecurring || transaction.isVirtual) && (
             <Alert severity="info" sx={{ borderRadius: "16px" }}>
-              As ocorrências anteriores a {date?.format("DD/MM/YYYY")} serão preservadas como transações independentes com os valores originais.
+              Occurrences prior to {date?.format("MM/DD/YYYY")} will be preserved as independent transactions with original values.
             </Alert>
           )}
         </Box>
@@ -602,7 +602,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
       >
         {!isMobile && (
           <NixButton size="medium" variant="soft" color="gray" onClick={onClose}>
-            Cancelar
+            Cancel
           </NixButton>
         )}
         <NixButton
@@ -613,7 +613,7 @@ const RecurringEditForm: React.FC<RecurringEditFormProps> = ({
           disabled={isSaving}
           style={{ flex: 1, opacity: isSaving ? 0.7 : 1 }}
         >
-          <SaveIcon /> {isSaving ? "Salvando..." : transaction ? "Atualizar" : "Salvar Alterações"}
+          <SaveIcon /> {isSaving ? "Saving..." : transaction ? "Update" : "Save Changes"}
         </NixButton>
       </Box>
     </Drawer>

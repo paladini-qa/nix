@@ -36,7 +36,7 @@ import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { Dayjs } from "dayjs";
-import "dayjs/locale/pt-br";
+import "dayjs/locale/en";
 import { Transaction, TransactionType } from "@/domain/entities";
 
 export interface AdvancedFiltersState {
@@ -88,7 +88,7 @@ export const AdvancedFiltersButton: React.FC<{
           }),
         }}
       >
-        {compact ? "" : "Filtros"}
+        {compact ? "" : "Filters"}
         {!compact && hasActiveFilters && (
           <Chip
             size="small"
@@ -206,10 +206,10 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           {isMobile ? (
             <MobileDatePicker
-              label="Data inicial"
+              label="Start date"
               value={filters.startDate}
               onChange={(newValue) => onFiltersChange({ ...filters, startDate: newValue })}
-              format="DD/MM/YYYY"
+              format="MM/DD/YYYY"
               slotProps={{
                 textField: { size: "small", fullWidth: true, InputProps: { sx: { borderRadius: "12px" } } },
                 dialog: { PaperProps: { sx: { borderRadius: "20px" } } },
@@ -217,7 +217,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             />
           ) : (
             <DatePicker
-              label="Data inicial"
+              label="Start date"
               value={filters.startDate}
               onChange={(newValue) => onFiltersChange({ ...filters, startDate: newValue })}
               slotProps={{
@@ -229,11 +229,11 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           {isMobile ? (
             <MobileDatePicker
-              label="Data final"
+              label="End date"
               value={filters.endDate}
               onChange={(newValue) => onFiltersChange({ ...filters, endDate: newValue })}
               minDate={filters.startDate || undefined}
-              format="DD/MM/YYYY"
+              format="MM/DD/YYYY"
               slotProps={{
                 textField: { size: "small", fullWidth: true, InputProps: { sx: { borderRadius: "12px" } } },
                 dialog: { PaperProps: { sx: { borderRadius: "20px" } } },
@@ -241,7 +241,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             />
           ) : (
             <DatePicker
-              label="Data final"
+              label="End date"
               value={filters.endDate}
               onChange={(newValue) => onFiltersChange({ ...filters, endDate: newValue })}
               minDate={filters.startDate || undefined}
@@ -255,10 +255,10 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         {/* Tipo */}
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Tipo</InputLabel>
+            <InputLabel>Type</InputLabel>
             <Select
               value={filters.type}
-              label="Tipo"
+              label="Type"
               onChange={(e) =>
                 onFiltersChange({
                   ...filters,
@@ -267,17 +267,17 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
               }
               sx={{ borderRadius: "20px" }}
             >
-              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="all">All</MenuItem>
               <MenuItem value="income">
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#10b981" }} />
-                  Receitas
+                  Income
                 </Box>
               </MenuItem>
               <MenuItem value="expense">
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#ef4444" }} />
-                  Despesas
+                  Expenses
                 </Box>
               </MenuItem>
             </Select>
@@ -287,16 +287,16 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         {/* Categorias */}
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Categorias</InputLabel>
+            <InputLabel>Categories</InputLabel>
             <Select<string[]>
               multiple
               value={filters.categories}
               onChange={handleCategoryChange}
-              input={<OutlinedInput label="Categorias" />}
+              input={<OutlinedInput label="Categories" />}
               renderValue={(selected) =>
                 selected.length === 0
                   ? ""
-                  : `${selected.length} selecionada${selected.length > 1 ? "s" : ""}`
+                  : `${selected.length} selected`
               }
               sx={{ borderRadius: "20px" }}
               MenuProps={{ PaperProps: { style: { maxHeight: 300 } } }}
@@ -314,16 +314,16 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         {/* Métodos de pagamento */}
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Pagamento</InputLabel>
+            <InputLabel>Payment</InputLabel>
             <Select<string[]>
               multiple
               value={filters.paymentMethods}
               onChange={handlePaymentMethodChange}
-              input={<OutlinedInput label="Pagamento" />}
+              input={<OutlinedInput label="Payment" />}
               renderValue={(selected) =>
                 selected.length === 0
                   ? ""
-                  : `${selected.length} selecionado${selected.length > 1 ? "s" : ""}`
+                  : `${selected.length} selected`
               }
               sx={{ borderRadius: "20px" }}
               MenuProps={{ PaperProps: { style: { maxHeight: 300 } } }}
@@ -350,7 +350,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
           {(filters.startDate || filters.endDate) && (
             <Chip
               icon={<DateRangeIcon />}
-              label={`${filters.startDate?.format("DD/MM/YY") || "..."} → ${filters.endDate?.format("DD/MM/YY") || "..."}`}
+              label={`${filters.startDate?.format("MM/DD/YY") || "..."} → ${filters.endDate?.format("MM/DD/YY") || "..."}`}
               onDelete={() => onFiltersChange({ ...filters, startDate: null, endDate: null })}
               size="small"
               sx={{ bgcolor: alpha("#6366f1", 0.1), "& .MuiChip-deleteIcon": { color: "primary.main" } }}
@@ -358,7 +358,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
           )}
           {filters.type !== "all" && (
             <Chip
-              label={filters.type === "income" ? "Receitas" : "Despesas"}
+              label={filters.type === "income" ? "Income" : "Expenses"}
               onDelete={() => onFiltersChange({ ...filters, type: "all" })}
               size="small"
               sx={{
@@ -392,7 +392,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   );
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
       {isMobile ? (
         /* ── Mobile: bottom sheet ── */
         <SwipeableDrawer
@@ -437,7 +437,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <FilterListIcon fontSize="small" color="primary" />
               <Typography variant="subtitle1" fontWeight={700}>
-                Filtrar dados
+                Filter data
               </Typography>
               {activeFiltersCount > 0 && (
                 <Chip
@@ -456,7 +456,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                   onClick={handleClearFilters}
                   sx={{ textTransform: "none", fontSize: 12, color: "error.main", minWidth: "auto" }}
                 >
-                  Limpar
+                  Clear
                 </Button>
               )}
               <IconButton size="small" onClick={onToggleFilters} sx={{ color: "text.secondary" }}>
@@ -490,7 +490,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
               onClick={handleClearFilters}
               sx={{ textTransform: "none" }}
             >
-              Limpar filtros
+              Clear filters
             </Button>
             <Button
               variant="contained"
@@ -499,7 +499,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
               onClick={onToggleFilters}
               sx={{ textTransform: "none" }}
             >
-              Aplicar
+              Apply
             </Button>
           </Box>
         </SwipeableDrawer>
@@ -527,7 +527,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <FilterListIcon fontSize="small" color="primary" />
                 <Typography variant="subtitle1" fontWeight={600}>
-                  Filtrar dados
+                  Filter data
                 </Typography>
               </Box>
               {hasActiveFilters && (
@@ -537,13 +537,13 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                   onClick={handleClearFilters}
                   sx={{ textTransform: "none" }}
                 >
-                  Limpar filtros
+                  Clear filters
                 </Button>
               )}
             </Box>
             {filterContent}
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
-              Exibindo dados filtrados
+              Displaying filtered data
             </Typography>
           </Paper>
         </Collapse>

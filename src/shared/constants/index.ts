@@ -290,6 +290,6 @@ export const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500];
 
 // Botão "Nova Transação" — mesmo tamanho e estilo em todas as telas
 export const CREATE_TRANSACTION_BUTTON = {
-  label: "Nova Transação",
+  label: "New Transaction",
   sx: { height: 40, borderRadius: "20px", px: 2.5, whiteSpace: "nowrap", flexShrink: 0 },
 } as const;

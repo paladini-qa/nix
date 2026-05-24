@@ -1,16 +1,16 @@
 import dayjs from "dayjs";
 
 /**
- * Formata um valor numérico como moeda.
- * @param value - Valor a ser formatado
- * @param locale - Locale para formatação (padrão: "pt-BR")
- * @param currency - Código da moeda (padrão: "BRL")
- * @param maximumFractionDigits - Número máximo de casas decimais (padrão: 0)
+ * Formats a numeric value as currency.
+ * @param value - Value to be formatted
+ * @param locale - Locale for formatting (default: "en-US")
+ * @param currency - Currency code (default: "USD")
+ * @param maximumFractionDigits - Maximum number of decimal places (default: 0)
  */
 export const formatCurrency = (
   value: number,
-  locale: string = "pt-BR",
-  currency: string = "BRL",
+  locale: string = "en-US",
+  currency: string = "USD",
   maximumFractionDigits: number = 0
 ): string =>
   new Intl.NumberFormat(locale, {
@@ -20,17 +20,18 @@ export const formatCurrency = (
   }).format(value);
 
 /**
- * Formata uma data como string no formato especificado.
- * @param date - Data em formato ISO (YYYY-MM-DD) ou objeto Date
- * @param format - Formato de saída (padrão: "DD/MM/YYYY")
+ * Formats a date as a string in the specified format.
+ * @param date - Date in ISO format (YYYY-MM-DD) or Date object
+ * @param format - Output format (default: "MM/DD/YYYY")
  */
-export const formatDate = (date: string | Date, format: string = "DD/MM/YYYY"): string =>
+export const formatDate = (date: string | Date, format: string = "MM/DD/YYYY"): string =>
   dayjs(date).format(format);
 
 /**
- * Retorna um rótulo localizado para o mês e ano informados.
- * @param month - Número do mês (1–12)
- * @param year - Ano com quatro dígitos
+ * Returns a localized label for the given month and year.
+ * @param month - Month number (1–12)
+ * @param year - Four-digit year
  */
 export const getMonthLabel = (month: number, year: number): string =>
   dayjs(`${year}-${String(month).padStart(2, "0")}-01`).format("MMM/YY");
+

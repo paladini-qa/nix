@@ -3,7 +3,7 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import { Theme } from "@radix-ui/themes";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import "dayjs/locale/pt-br";
+import "dayjs/locale/en";
 import { Theme as MuiTheme } from "@mui/material/styles";
 import { Session } from "@supabase/supabase-js";
 import {
@@ -36,7 +36,7 @@ const AppProviders: React.FC<AppProvidersProps> = ({
   <Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large">
     <ThemeProvider theme={muiTheme}>
       <CssBaseline />
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
         <SettingsProvider session={session}>
           <NotificationProvider>
             <ConfirmDialogProvider>

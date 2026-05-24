@@ -240,6 +240,77 @@ export function useTransactionsQuery() {
     },
   });
 
+  // ─── BULK ADD (installments) ──────────────────────────────────────────────
+
+  const bulkAddMutation = useMutation({
+    mutationFn: async (transactions: Partial<Transaction>[]) => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) throw userError;
+      if (!user) throw new Error("User not authenticated");
+
+      const payloads = transactions.map((tx) => ({
+        ...mapTransactionToDb(tx),
+        user_id: user.id,
+      }));
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert(payloads)
+        .select();
+      if (error) throw error;
+      return (data || []).map(mapTransactionFromDb);
+    },
+
+    onMutate: async (newTransactions) => {
+      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
+      const previous = queryClient.getQueryData<Transaction[]>(TRANSACTIONS_KEY);
+
+      const optimistics: Transaction[] = newTransactions.map((tx) => ({
+        id: `optimistic_${crypto.randomUUID()}`,
+        description: tx.description ?? "",
+        amount: tx.amount ?? 0,
+        type: tx.type ?? "expense",
+        category: tx.category ?? "",
+        paymentMethod: tx.paymentMethod ?? "",
+        date: tx.date ?? dayjs().format("YYYY-MM-DD"),
+        createdAt: Date.now(),
+        isPaid: tx.isPaid ?? false,
+        isRecurring: tx.isRecurring,
+        frequency: tx.frequency,
+        installments: tx.installments,
+        currentInstallment: tx.currentInstallment,
+        isShared: tx.isShared,
+        sharedWith: tx.sharedWith,
+        iOwe: tx.iOwe,
+        excludedDates: tx.excludedDates ?? [],
+        notes: tx.notes,
+        installmentGroupId: tx.installmentGroupId,
+        relatedTransactionId: tx.relatedTransactionId,
+      }));
+
+      queryClient.setQueryData<Transaction[]>(
+        TRANSACTIONS_KEY,
+        (old) => [...optimistics, ...(old ?? [])]
+      );
+
+      return { previous };
+    },
+
+    onError: (_error, _txs, context: any) => {
+      if (context?.previous) {
+        queryClient.setQueryData(TRANSACTIONS_KEY, context.previous);
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+    },
+  });
+
   // ─── UPDATE INSTALLMENT DATES ─────────────────────────────────────────────
 
   const updateInstallmentDatesMutation = useMutation({
@@ -266,6 +337,7 @@ export function useTransactionsQuery() {
   return {
     ...query,
     addTransaction: addMutation.mutateAsync,
+    bulkAddTransactions: bulkAddMutation.mutateAsync,
     updateTransaction: updateMutation.mutateAsync,
     deleteTransaction: deleteMutation.mutateAsync,
     updateInstallmentDates: updateInstallmentDatesMutation.mutateAsync,

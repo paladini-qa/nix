@@ -34,12 +34,12 @@ const AdvancedFilters = lazy(() => import("@/presentation/panels/AdvancedFilters
 const AnalyticsView = lazy(() => import("./AnalyticsView"));
 
 const MOBILE_SHORTCUTS = [
-  { view: "splits" as const,         icon: <SplitsIcon sx={{ fontSize: 20 }} />,        label: "Divisões",     color: "#6366f1" },
-  { view: "shared" as const,         icon: <SharedIcon sx={{ fontSize: 20 }} />,         label: "Partilhas",    color: "#10b981" },
-  { view: "recurring" as const,      icon: <RecurringIcon sx={{ fontSize: 20 }} />,      label: "Recorrentes",  color: "#f59e0b" },
-  { view: "investments" as const,    icon: <InvestmentsIcon sx={{ fontSize: 20 }} />,    label: "Investimentos",color: "#22c55e" },
-  { view: "subscriptions" as const,  icon: <SubscriptionsIcon sx={{ fontSize: 20 }} />,  label: "Assinaturas",  color: "#ec4899" },
-  { view: "paymentMethods" as const, icon: <PaymentMethodsIcon sx={{ fontSize: 20 }} />, label: "Pagamentos",   color: "#0ea5e9" },
+  { view: "splits" as const,         icon: <SplitsIcon sx={{ fontSize: 20 }} />,        label: "Splits",       color: "#6366f1" },
+  { view: "shared" as const,         icon: <SharedIcon sx={{ fontSize: 20 }} />,         label: "Shared",       color: "#10b981" },
+  { view: "recurring" as const,      icon: <RecurringIcon sx={{ fontSize: 20 }} />,      label: "Recurring",    color: "#f59e0b" },
+  { view: "investments" as const,    icon: <InvestmentsIcon sx={{ fontSize: 20 }} />,    label: "Investments",  color: "#22c55e" },
+  { view: "subscriptions" as const,  icon: <SubscriptionsIcon sx={{ fontSize: 20 }} />,  label: "Subscriptions",color: "#ec4899" },
+  { view: "paymentMethods" as const, icon: <PaymentMethodsIcon sx={{ fontSize: 20 }} />, label: "Payments",     color: "#0ea5e9" },
   { view: "fiscal-report" as const,  icon: <FiscalIcon sx={{ fontSize: 20 }} />,         label: "Fiscal",       color: "#ef4444" },
 ];
 
@@ -84,7 +84,7 @@ const DashboardMainSection: React.FC = () => {
   const NOOP = useCallback(() => {}, []);
 
   const firstName = displayName ? displayName.split(" ")[0] : t("dashboard.title");
-  const monthLabel = new Date(filters.year, filters.month - 1).toLocaleDateString("pt-BR", {
+  const monthLabel = new Date(filters.year, filters.month - 1).toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
@@ -112,11 +112,11 @@ const DashboardMainSection: React.FC = () => {
             </Typography>
             <Stack direction="row" spacing={3} mt={1.5} alignItems="center">
               <Box>
-                <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Receitas</Typography>
+                <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Income</Typography>
                 <Typography sx={{ fontWeight: 700, fontSize: 13 }}>+{formatCompact(summary.totalIncome)}</Typography>
               </Box>
               <Box>
-                <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Despesas</Typography>
+                <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Expenses</Typography>
                 <Typography sx={{ fontWeight: 700, fontSize: 13 }}>−{formatCompact(summary.totalExpense)}</Typography>
               </Box>
             </Stack>

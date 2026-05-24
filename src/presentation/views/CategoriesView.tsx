@@ -447,7 +447,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                 />
               </Box>
               <Typography sx={{ fontSize: 10.5, color: "text.secondary", mt: "1px" }}>
-                {summary.transactionCount === 1 ? "transação" : "transações"}
+                {summary.transactionCount === 1 ? "transaction" : "transactions"}
               </Typography>
             </Box>
           </Box>
@@ -455,11 +455,11 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           {/* Amount & Percentage Horizontally on Mobile */}
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", mb: isMobile ? "6px" : "10px" }}>
             <Typography sx={{ fontSize: isMobile ? 15.5 : 18, fontWeight: 700, letterSpacing: "-0.02em" }}>
-              {formatCurrency(summary.total, "pt-BR", "BRL", 2)}
+              {formatCurrency(summary.total, "en-US", "USD", 2)}
             </Typography>
             {isMobile && (
               <Typography sx={{ fontSize: 11, color: "text.secondary" }}>
-                {percentage.toFixed(0)}% do total
+                {percentage.toFixed(0)}% of total
               </Typography>
             )}
           </Box>
@@ -473,12 +473,12 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             {!isMobile && (
               <Typography sx={{ fontSize: 11.5, color: "text.secondary" }}>
-                {percentage.toFixed(0)}% do total
+                {percentage.toFixed(0)}% of total
               </Typography>
             )}
             {isMobile && <Box />}
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-              <Tooltip title="Editar imagem">
+              <Tooltip title="Edit image">
                 <IconButton
                   size="small"
                   onClick={(e) => { e.stopPropagation(); setImagePickerTarget({ type: summary.type, name: summary.name }); setImagePickerOpen(true); }}
@@ -487,7 +487,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   <EditIcon sx={{ fontSize: 13 }} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Excluir categoria">
+              <Tooltip title="Delete category">
                 <IconButton
                   size="small"
                   onClick={(e) => { e.stopPropagation(); onRemoveCategory(summary.type, summary.name); }}
@@ -511,7 +511,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   "&:hover": { bgcolor: alpha(colors.primary, 0.08), color: colors.primary },
                 }}
               >
-                Detalhes
+                Details
               </Button>
             </Box>
           </Box>
@@ -587,7 +587,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                 {selectedCategory.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {isIncome ? "Categoria de Receita" : "Categoria de Despesa"}
+                {isIncome ? "Income Category" : "Expense Category"}
               </Typography>
             </Box>
           </Box>
@@ -892,8 +892,8 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             ) : (
               <EmptyState
                 type="transactions"
-                title="Nenhuma transação nesta categoria"
-                description="Não há transações registradas para esta categoria"
+                title="No transactions in this category"
+                description="There are no registered transactions for this category"
                 compact
               />
             )}
@@ -1034,7 +1034,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                           </IconButton>
                         </Tooltip>
                         {!tx.isVirtual && (
-                          <Tooltip title="Excluir">
+                          <Tooltip title="Delete">
                             <IconButton
                               size="small"
                               onClick={() => onDeleteTransaction(tx.id)}
@@ -1052,8 +1052,8 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                     <TableCell colSpan={6} sx={{ textAlign: "center", py: 6 }}>
                       <EmptyState
                         type="transactions"
-                        title="Nenhuma transação nesta categoria"
-                        description="Não há transações registradas para esta categoria"
+                        title="No transactions in this category"
+                        description="There are no registered transactions for this category"
                         compact
                       />
                     </TableCell>
@@ -1120,7 +1120,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <ListItemIcon>
                 <DeleteIcon fontSize="small" color="error" />
               </ListItemIcon>
-              <ListItemText>Excluir</ListItemText>
+              <ListItemText>Delete</ListItemText>
             </MenuItem>
           )}
         </Menu>
@@ -1155,10 +1155,10 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       >
         <Box>
           <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            Categorias
+            Categories
           </Typography>
           <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
-            Gerencie suas categorias de receita e despesa
+            Manage your income and expense categories
           </Typography>
         </Box>
         <Button
@@ -1167,7 +1167,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           onClick={() => setAddCategoryDialogOpen(true)}
           sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
         >
-          Nova categoria
+          Nova Category
         </Button>
       </Box>
 
@@ -1204,13 +1204,13 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               </Box>
               <Box>
                 <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                  Receitas
+                  Income
                 </Typography>
                 <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981" }}>
-                  {formatCurrency(stats.totalIncome, "pt-BR", "BRL", 2)}
+                  {formatCurrency(stats.totalIncome, "en-US", "USD", 2)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? 10.5 : 12 }}>
-                  {stats.incomeWithActivity} de {stats.incomeCategories} categorias · {categorySummaries.income.reduce((s, c) => s + c.transactionCount, 0)} transações
+                  {stats.incomeWithActivity} of {stats.incomeCategories} categories · {categorySummaries.income.reduce((s, c) => s + c.transactionCount, 0)} transactions
                 </Typography>
               </Box>
             </Box>
@@ -1248,13 +1248,13 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               </Box>
               <Box>
                 <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                  Despesas
+                  Expenses
                 </Typography>
                 <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444" }}>
-                  {formatCurrency(stats.totalExpense, "pt-BR", "BRL", 2)}
+                  {formatCurrency(stats.totalExpense, "en-US", "USD", 2)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? 10.5 : 12 }}>
-                  {stats.expenseWithActivity} de {stats.expenseCategories} categorias · {categorySummaries.expense.reduce((s, c) => s + c.transactionCount, 0)} transações
+                  {stats.expenseWithActivity} of {stats.expenseCategories} categories · {categorySummaries.expense.reduce((s, c) => s + c.transactionCount, 0)} transactions
                 </Typography>
               </Box>
             </Box>
@@ -1282,13 +1282,13 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <TrendingUpIcon sx={{ color: "#fff" }} />
             </Box>
             <Box>
-              <Typography variant="subtitle1" fontWeight={600} color="#059669">Receitas</Typography>
+              <Typography variant="subtitle1" fontWeight={600} color="#059669">Income</Typography>
               <Typography variant="body2" color="text.secondary">
-                {categorySummaries.income.filter((s) => s.transactionCount > 0).length} ativas de {categorySummaries.income.length}
+                {categorySummaries.income.filter((s) => s.transactionCount > 0).length} active of {categorySummaries.income.length}
               </Typography>
             </Box>
             <Typography variant="h6" fontWeight={700} color="#059669" sx={{ ml: "auto" }}>
-              {formatCurrency(stats.totalIncome, "pt-BR", "BRL", 2)}
+              {formatCurrency(stats.totalIncome, "en-US", "USD", 2)}
             </Typography>
           </Box>
         </Paper>
@@ -1296,8 +1296,8 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         {categorySummaries.income.length === 0 ? (
           <EmptyState
             type="transactions"
-            title="Nenhuma categoria de receita"
-            description="Clique em '+ Nova categoria' para adicionar"
+            title="No income categories"
+            description="Click on '+ New category' to add"
             compact
           />
         ) : (
@@ -1328,13 +1328,13 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <TrendingDownIcon sx={{ color: "#fff" }} />
             </Box>
             <Box>
-              <Typography variant="subtitle1" fontWeight={600} color="#DC2626">Despesas</Typography>
+              <Typography variant="subtitle1" fontWeight={600} color="#DC2626">Expenses</Typography>
               <Typography variant="body2" color="text.secondary">
-                {categorySummaries.expense.filter((s) => s.transactionCount > 0).length} ativas de {categorySummaries.expense.length}
+                {categorySummaries.expense.filter((s) => s.transactionCount > 0).length} active of {categorySummaries.expense.length}
               </Typography>
             </Box>
             <Typography variant="h6" fontWeight={700} color="#DC2626" sx={{ ml: "auto" }}>
-              {formatCurrency(stats.totalExpense, "pt-BR", "BRL", 2)}
+              {formatCurrency(stats.totalExpense, "en-US", "USD", 2)}
             </Typography>
           </Box>
         </Paper>
@@ -1342,8 +1342,8 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         {categorySummaries.expense.length === 0 ? (
           <EmptyState
             type="transactions"
-            title="Nenhuma categoria de despesa"
-            description="Clique em '+ Nova categoria' para adicionar"
+            title="No expense categories"
+            description="Click on '+ New category' to add"
             compact
           />
         ) : (
@@ -1375,7 +1375,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         onClose={() => { setAddCategoryDialogOpen(false); setAddCategoryName(""); }}
         PaperProps={{ sx: { borderRadius: "20px", minWidth: 340 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>Nova categoria</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>New Category</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
             <ToggleButtonGroup
@@ -1387,18 +1387,18 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             >
               <ToggleButton value="income" sx={{ borderRadius: "10px 0 0 10px", fontWeight: 600, textTransform: "none" }}>
                 <TrendingUpIcon sx={{ mr: 1, fontSize: 18, color: addCategoryType === "income" ? "#059669" : "text.secondary" }} />
-                Receita
+                Income
               </ToggleButton>
               <ToggleButton value="expense" sx={{ borderRadius: "0 10px 10px 0", fontWeight: 600, textTransform: "none" }}>
                 <TrendingDownIcon sx={{ mr: 1, fontSize: 18, color: addCategoryType === "expense" ? "#DC2626" : "text.secondary" }} />
-                Despesa
+                Expense
               </ToggleButton>
             </ToggleButtonGroup>
             <TextField
               autoFocus
               fullWidth
               size="small"
-              label="Nome da categoria"
+              label="Category name"
               value={addCategoryName}
               onChange={(e) => setAddCategoryName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
@@ -1408,7 +1408,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
           <Button onClick={() => { setAddCategoryDialogOpen(false); setAddCategoryName(""); }} sx={{ borderRadius: "10px", textTransform: "none" }}>
-            Cancelar
+            Cancel
           </Button>
           <Button
             variant="contained"
@@ -1416,7 +1416,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             disabled={!addCategoryName.trim()}
             sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
           >
-            Adicionar
+            Add
           </Button>
         </DialogActions>
       </Dialog>

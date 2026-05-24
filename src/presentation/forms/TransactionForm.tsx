@@ -523,8 +523,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         showWarning(
           `"${duplicate.description}" - ${formatCurrency(
             duplicate.amount
-          )} cadastrada recentemente`,
-          "Possível duplicata detectada!"
+          )} was recently registered`,
+          "Possible duplicate detected!"
         );
       }
     }
@@ -1077,7 +1077,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               "& .MuiTabs-indicator": { borderRadius: "10px 10px 0 0" },
             }}
           >
-            <Tab value="manual" label="Formulário" />
+            <Tab value="manual" label="Form" />
             <Tab value="nixai" label="Nix AI" />
           </Tabs>
         </Box>
@@ -1182,7 +1182,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   },
                 }}
               >
-                 Receita
+                 Income
               </ToggleButton>
               <ToggleButton
                 value="expense"
@@ -1206,7 +1206,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   },
                 }}
               >
-                 Despesa
+                 Expense
               </ToggleButton>
             </ToggleButtonGroup>
 
@@ -1225,7 +1225,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Descrição"
+                    label="Description"
                     name="transaction-description"
                     id="transaction-description"
                     required
@@ -1274,7 +1274,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               {/* Sugestão de Categoria (Local) */}
               <Collapse in={!!suggestedCategory}>
                 <Chip
-                  label={` Sugestão: ${suggestedCategory}`}
+                  label={` Suggestion: ${suggestedCategory}`}
                   onClick={applySuggestedCategory}
                   onDelete={applySuggestedCategory}
                   deleteIcon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
@@ -1311,8 +1311,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   }
                   label={
                     isLoadingAiSuggestion
-                      ? " Analisando..."
-                      : ` IA sugere: ${aiSuggestion?.category}`
+                      ? " Analyzing..."
+                      : ` AI suggests: ${aiSuggestion?.category}`
                   }
                   onClick={() => {
                     if (aiSuggestion) {
@@ -1359,7 +1359,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             {/* Valor com Quick Amounts */}
             <Box>
               <TextField
-                label="Valor (R$)"
+                label="Amount ($)"
                 name="transaction-amount"
                 id="transaction-amount"
                 fullWidth
@@ -1369,19 +1369,19 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 onBlur={() =>
                   setTimeout(() => setAmountFieldFocused(false), 200)
                 }
-                placeholder="Ex: 150, 1.5k, 100+50"
+                placeholder="E.g.: 150, 1.5k, 100+50"
                 helperText={
                   parsedAmount && parsedAmount !== parseFloat(amount)
                     ? `= ${formatCurrency(parsedAmount)}`
                     : !amount
-                    ? "Você pode adicionar o valor depois"
+                    ? "You can add the amount later"
                     : undefined
                 }
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
                       <Typography fontWeight={600} color="text.secondary">
-                        R$
+                        $
                       </Typography>
                     </InputAdornment>
                   ),
@@ -1397,7 +1397,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   {QUICK_AMOUNTS.map((value) => (
                     <Chip
                       key={value}
-                      label={`R$${value}`}
+                      label={`$${value}`}
                       onClick={() => applyQuickAmount(value)}
                       size="small"
                       variant={parsedAmount === value ? "filled" : "outlined"}
@@ -1431,13 +1431,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             <Grid container spacing={2.5}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth required sx={inputSx}>
-                  <InputLabel id="category-label">Categoria</InputLabel>
+                  <InputLabel id="category-label">Category</InputLabel>
                   <Select
                     labelId="category-label"
                     id="transaction-category-select"
                     name="transaction-category"
                     value={category}
-                    label="Categoria"
+                    label="Category"
                     onChange={(e) => {
                       setCategory(e.target.value);
                       setSuggestedCategory(null);
@@ -1453,13 +1453,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth required sx={inputSx}>
-                  <InputLabel id="payment-method-label">Forma de Pagamento</InputLabel>
+                  <InputLabel id="payment-method-label">Payment Method</InputLabel>
                   <Select
                     labelId="payment-method-label"
                     id="transaction-payment-method-select"
                     name="transaction-payment-method"
                     value={paymentMethod}
-                    label="Forma de Pagamento"
+                    label="Payment Method"
                     onChange={(e) => {
                       const method = e.target.value;
                       setPaymentMethod(method);
@@ -1510,13 +1510,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}
               >
                 <TodayIcon sx={{ fontSize: 16 }} />
-                DATA
+                DATE
               </Typography>
 
               {/* Quick Date Picks */}
               <Box sx={{ display: "flex", gap: 1, mb: 1.5 }}>
                 <Chip
-                  label="Hoje"
+                  label="Today"
                   onClick={() => applyQuickDate("today")}
                   size="small"
                   variant={date?.isSame(dayjs(), "day") ? "filled" : "outlined"}
@@ -1536,7 +1536,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   }}
                 />
                 <Chip
-                  label="Ontem"
+                  label="Yesterday"
                   onClick={() => applyQuickDate("yesterday")}
                   size="small"
                   variant={
@@ -1560,7 +1560,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   }}
                 />
                 <Chip
-                  label="Semana passada"
+                  label="Last week"
                   onClick={() => applyQuickDate("lastWeek")}
                   size="small"
                   variant="outlined"
@@ -1575,7 +1575,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </Box>
 
               <DatePicker
-                label="Personalizar data"
+                label="Customize date"
                 value={date}
                 onChange={(newValue) => setDate(newValue)}
                 slotProps={{
@@ -1608,7 +1608,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 <ReceiptIcon sx={{ fontSize: 18, color: "primary.main" }} />
                 <Box>
                   <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
-                    Fatura calculada automaticamente
+                    Automatically calculated invoice
                   </Typography>
                   <Typography variant="body2" fontWeight={700} color="primary.main">
                     {formatInvoiceMonth(autoInvoiceDueDate)}
@@ -1635,7 +1635,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               >
                 <ReceiptIcon sx={{ fontSize: 18, color: "warning.main" }} />
                 <Typography variant="caption" color="warning.main">
-                  Configure os dias de fechamento e pagamento deste cartão em Configurações → Métodos de Pagamento.
+                  Configure the closing and payment days for this card in Settings → Payment Methods.
                 </Typography>
               </Box>
             )}
@@ -1650,15 +1650,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}
                 >
                   <ReceiptIcon sx={{ fontSize: 16 }} />
-                  Vencimento da fatura
+                  Invoice due date
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 6 }}>
                     <FormControl fullWidth size="small" sx={inputSx}>
-                      <InputLabel>Mês</InputLabel>
+                      <InputLabel>Month</InputLabel>
                       <Select
                         value={invoiceDueMonth}
-                        label="Mês"
+                        label="Month"
                         onChange={(e) =>
                           setInvoiceDueMonth(Number(e.target.value))
                         }
@@ -1673,10 +1673,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   </Grid>
                   <Grid size={{ xs: 6 }}>
                     <FormControl fullWidth size="small" sx={inputSx}>
-                      <InputLabel>Ano</InputLabel>
+                      <InputLabel>Year</InputLabel>
                       <Select
                         value={invoiceDueYear}
-                        label="Ano"
+                        label="Year"
                         onChange={(e) =>
                           setInvoiceDueYear(Number(e.target.value))
                         }
@@ -1691,7 +1691,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   </Grid>
                 </Grid>
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                  Dia {paymentMethodDueDay} (fixo pelo método de pagamento)
+                  Day {paymentMethodDueDay} (fixed by payment method)
                 </Typography>
               </Box>
             )}
@@ -1706,24 +1706,24 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}
                 >
                   <ReceiptIcon sx={{ fontSize: 16 }} />
-                  Incluir na fatura de (mês/ano)
+                  Include in the invoice of (month/year)
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-                  Define em qual mês esta transação aparece no dashboard e relatórios (ex.: fatura de abril).
+                  Defines which month this transaction appears in the dashboard and reports (e.g. April invoice).
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 6 }}>
                     <FormControl fullWidth size="small" sx={inputSx}>
-                      <InputLabel>Mês</InputLabel>
+                      <InputLabel>Month</InputLabel>
                       <Select
                         value={optionalInvoiceReportMonth ?? ""}
-                        label="Mês"
+                        label="Month"
                         displayEmpty
                         onChange={(e) =>
                           setOptionalInvoiceReportMonth(e.target.value === "" ? null : Number(e.target.value))
                         }
                       >
-                        <MenuItem value="">— Não definir</MenuItem>
+                        <MenuItem value="">— Do not set</MenuItem>
                         {MONTHS.map((name, i) => (
                           <MenuItem key={name} value={i + 1}>
                             {name}
@@ -1734,10 +1734,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   </Grid>
                   <Grid size={{ xs: 6 }}>
                     <FormControl fullWidth size="small" sx={inputSx}>
-                      <InputLabel>Ano</InputLabel>
+                      <InputLabel>Year</InputLabel>
                       <Select
                         value={optionalInvoiceReportYear ?? ""}
-                        label="Ano"
+                        label="Year"
                         displayEmpty
                         onChange={(e) =>
                           setOptionalInvoiceReportYear(e.target.value === "" ? null : Number(e.target.value))
@@ -1817,9 +1817,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="body2" fontWeight={500}>
-                      Opções Avançadas
+                      Advanced Options
                     </Typography>
-                    {/* Chips mostrando opções ativas quando colapsado */}
+                    {/* Chips showing active options when collapsed */}
                     {!showAdvanced &&
                       (isRecurring || hasInstallments || isShared) && (
                         <Box
@@ -1832,8 +1832,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         >
                           {isRecurring && (
                             <Chip
-                              label={`Recorrente (${
-                                frequency === "monthly" ? "Mensal" : "Anual"
+                              label={`Recurring (${
+                                frequency === "monthly" ? "Monthly" : "Yearly"
                               })`}
                               size="small"
                               sx={{
@@ -1846,7 +1846,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           )}
                           {hasInstallments && (
                             <Chip
-                              label={`${installments}x Parcelado`}
+                              label={`${installments}x Installments`}
                               size="small"
                               sx={{
                                 height: 20,
@@ -1858,7 +1858,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           )}
                           {isShared && sharedWith && (
                             <Chip
-                              label={`Com ${sharedWith}`}
+                              label={`With ${sharedWith}`}
                               size="small"
                               sx={{
                                 height: 20,
@@ -1939,7 +1939,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           />
                         </Box>
                         <Typography variant="body2" fontWeight={500}>
-                          Recorrente?
+                          Recurring?
                         </Typography>
                       </Box>
                       <Switch
@@ -2007,7 +2007,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             />
                           </Box>
                           <Typography variant="body2" fontWeight={500}>
-                            Parcelado?
+                            Installment?
                           </Typography>
                         </Box>
                         <Switch
@@ -2023,16 +2023,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* Frequência para Recorrente */}
                 {isRecurring && (
                   <FormControl fullWidth sx={inputSx}>
-                    <InputLabel>Frequência</InputLabel>
+                    <InputLabel>Frequency</InputLabel>
                     <Select
                       value={frequency}
-                      label="Frequência"
+                      label="Frequency"
                       onChange={(e) =>
                         setFrequency(e.target.value as "monthly" | "yearly")
                       }
                     >
-                      <MenuItem value="monthly">Mensal</MenuItem>
-                      <MenuItem value="yearly">Anual</MenuItem>
+                      <MenuItem value="monthly">Monthly</MenuItem>
+                      <MenuItem value="yearly">Yearly</MenuItem>
                     </Select>
                   </FormControl>
                 )}
@@ -2040,7 +2040,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* Número de Parcelas */}
                 {hasInstallments && (
                   <TextField
-                    label="Nº de Parcelas"
+                    label="No. of Installments"
                     type="number"
                     fullWidth
                     value={installments}
@@ -2053,7 +2053,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* Mês de início do parcelamento */}
                 {hasInstallments && (
                   <DatePicker
-                    label="Mês de início"
+                    label="Start month"
                     value={installmentStartDate ?? date}
                     onChange={(v) => setInstallmentStartDate(v)}
                     views={["year", "month"]}
@@ -2112,11 +2112,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       </Box>
                       <Box>
                         <Typography variant="body2" fontWeight={500}>
-                          Vincular a amigo
+                          Link to a friend
                         </Typography>
                         {isShared && (
                           <Typography variant="caption" color="text.secondary">
-                            Afeta o saldo com o amigo
+                            Affects balance with friend
                           </Typography>
                         )}
                       </Box>
@@ -2137,7 +2137,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           fontWeight={600}
                           sx={{ display: "block", mb: 1 }}
                         >
-                          TIPO DE CONTA
+                          BILL TYPE
                         </Typography>
                         <ToggleButtonGroup
                           value={iOwe ? "single" : "split"}
@@ -2192,7 +2192,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                               },
                             }}
                           >
-                            ️ Conta Dividida (50%)
+                            ️ Split Bill (50%)
                           </ToggleButton>
                           <ToggleButton
                             value="single"
@@ -2216,16 +2216,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                               },
                             }}
                           >
-                             Conta Única (100%)
+                             Single Bill (100%)
                           </ToggleButton>
                         </ToggleButtonGroup>
                       </Box>
 
                       <FormControl fullWidth size="small" sx={inputSx}>
-                        <InputLabel>Selecionar Amigo</InputLabel>
+                        <InputLabel>Select Friend</InputLabel>
                         <Select
                           value={sharedWith}
-                          label="Selecionar Amigo"
+                          label="Select Friend"
                           onChange={(e) => {
                             if (e.target.value === "__add_new__") {
                               setShowAddFriend(true);
@@ -2235,7 +2235,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           }}
                         >
                           {friends.length > 0 && (
-                            <ListSubheader>Amigos</ListSubheader>
+                            <ListSubheader>Friends</ListSubheader>
                           )}
                           {friends.map((friend) => (
                             <MenuItem key={friend} value={friend}>
@@ -2253,7 +2253,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             >
                               <PersonAddIcon fontSize="small" color="primary" />
                               <Typography color="primary" fontWeight={500}>
-                                Adicionar novo amigo...
+                                Add new friend...
                               </Typography>
                             </Box>
                           </MenuItem>
@@ -2281,12 +2281,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             fontWeight={600}
                             gutterBottom
                           >
-                            Novo Amigo
+                            New Friend
                           </Typography>
                           <Box sx={{ display: "flex", gap: 1.5 }}>
                             <TextField
                               size="small"
-                              placeholder="Nome do amigo"
+                              placeholder="Friend's name"
                               value={newFriendName}
                               onChange={(e) => setNewFriendName(e.target.value)}
                               onKeyDown={(e) => {
@@ -2317,7 +2317,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                               }}
                               sx={{ borderRadius: "20px" }}
                             >
-                              Cancelar
+                              Cancel
                             </Button>
                           </Box>
                         </Paper>

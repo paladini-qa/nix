@@ -279,7 +279,7 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="h6" fontWeight={600}>
-                      {isEdit ? "Editar Transação" : "Excluir Transação"}
+                      {isEdit ? "Edit Transaction" : "Delete Transaction"}
                     </Typography>
                     {/* Mostrar qual mês está sendo editado - usa virtualDate para recorrentes */}
                     {(transaction.virtualDate || transaction.date) && (
@@ -295,9 +295,8 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                       >
                         <TodayIcon sx={{ fontSize: 14 }} />
                         {dayjs(transaction.virtualDate || transaction.date)
-                          .locale("pt-br")
-                          .format("MMMM [de] YYYY")
-                          .replace(/^\w/, (c) => c.toUpperCase())}
+                          .locale("en")
+                          .format("MMMM YYYY")}
                       </Typography>
                     )}
                   </Box>

@@ -90,11 +90,11 @@ const MONTH_LABELS = [
 ];
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 
 const formatDate = (dateStr: string) => {
   const [year, month, day] = dateStr.split("-");
-  return `${day}/${month}/${year}`;
+  return `${month}/${day}/${year}`;
 };
 
 const normalizeDesc = (desc: string) => desc.trim().toLowerCase();
@@ -207,7 +207,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             </Box>
             {isCancelled ? (
               <Chip
-                label="Encerrada"
+                label="Cancelled"
                 size="small"
                 sx={{
                   height: 22,
@@ -250,7 +250,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                   display: { xs: "none", sm: "block" },
                 }}
               >
-                Último valor
+                Last amount
               </Typography>
               <Typography
                 sx={{
@@ -266,7 +266,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               </Typography>
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ mt: { xs: 0, sm: 0.5 }, display: "block" }}>
-              {group.monthsActive} {group.monthsActive === 1 ? "mês" : "meses"} ativo{group.monthsActive !== 1 ? "s" : ""}
+              {group.monthsActive} {group.monthsActive === 1 ? "month" : "months"} active
             </Typography>
           </Box>
 
@@ -286,12 +286,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               disabled={isCancelled}
               sx={{ color: primary, textTransform: "none", fontWeight: 600, fontSize: 13, p: 0, minWidth: 0, "&:hover": { background: "none", opacity: 0.75 } }}
             >
-              Detalhes
+              Details
             </Button>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               {!isCancelled && (
-                <Tooltip title="Ver detalhes / editar">
+                <Tooltip title="View details / edit">
                   <IconButton
                     size="small"
                     onClick={(e) => { e.stopPropagation(); onOpenDetail(group); }}
@@ -301,7 +301,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                   </IconButton>
                 </Tooltip>
               )}
-              <Tooltip title="Excluir assinatura">
+              <Tooltip title="Delete subscription">
                 <IconButton
                   size="small"
                   onClick={(e) => { e.stopPropagation(); onDeleteGroup(group); }}
@@ -329,12 +329,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 {isCancelled ? (
                   <MuiMenuItem onClick={() => { onReactivate(group.name); setMenuAnchor(null); }}>
                     <ListItemIcon><ReactivateIcon fontSize="small" color="primary" /></ListItemIcon>
-                    <ListItemText>Reativar assinatura</ListItemText>
+                    <ListItemText>Reactivate subscription</ListItemText>
                   </MuiMenuItem>
                 ) : (
                   <MuiMenuItem onClick={() => { onCancel(group.name); setMenuAnchor(null); }}>
                     <ListItemIcon><CancelIcon fontSize="small" color="error" /></ListItemIcon>
-                    <ListItemText sx={{ color: "error.main" }}>Encerrar assinatura</ListItemText>
+                    <ListItemText sx={{ color: "error.main" }}>End subscription</ListItemText>
                   </MuiMenuItem>
                 )}
               </Menu>
@@ -596,7 +596,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
             />
             <Box>
               <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">{displayedGroup.name}</Typography>
-              <Typography variant="body2" color="text.secondary">Assinatura</Typography>
+              <Typography variant="body2" color="text.secondary">Subscription</Typography>
             </Box>
           </Box>
         </Box>
@@ -605,7 +605,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
         <Grid container spacing={gridSpacing}>
           <Grid size={{ xs: 6, md: 4 }}>
             <Paper elevation={0} sx={{ p: isMobile ? 1.5 : 2, borderRadius: "16px", border: `1px solid ${alpha(detailColors.primary, 0.15)}`, backdropFilter: "blur(16px)" }}>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Total gasto</Typography>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>Total spent</Typography>
               <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} color={detailColors.primary} sx={{ mt: 0.5 }}>
                 {formatCurrency(totalSpent)}
               </Typography>
@@ -613,7 +613,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
           </Grid>
           <Grid size={{ xs: 6, md: 4 }}>
             <Paper elevation={0} sx={{ p: isMobile ? 1.5 : 2, borderRadius: "16px", border: `1px solid ${alpha(detailColors.primary, 0.15)}`, backdropFilter: "blur(16px)" }}>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Meses ativos</Typography>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>Months active</Typography>
               <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700} sx={{ mt: 0.5 }}>
                 {displayedGroup.monthsActive}
               </Typography>
@@ -621,11 +621,11 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper elevation={0} sx={{ p: isMobile ? 1.5 : 2, borderRadius: "16px", border: `1px solid ${alpha(detailColors.primary, 0.15)}`, backdropFilter: "blur(16px)" }}>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Tendência</Typography>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>Trend</Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
                 <TrendIcon />
                 <Typography variant={isMobile ? "body1" : "h6"} fontWeight={700}>
-                  {displayedGroup.trend === "up" ? "Subindo" : displayedGroup.trend === "down" ? "Caindo" : "Estável"}
+                  {displayedGroup.trend === "up" ? "Increasing" : displayedGroup.trend === "down" ? "Decreasing" : "Stable"}
                 </Typography>
               </Box>
             </Paper>
@@ -635,7 +635,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
         {/* Transaction history */}
         <Paper elevation={0} sx={{ borderRadius: "16px", border: `1px solid ${isDark ? alpha("#fff", 0.08) : alpha("#000", 0.06)}`, overflow: "hidden" }}>
           <Box sx={{ px: 2.5, py: 2, borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
-            <Typography fontWeight={700} fontSize={14}>Histórico de cobranças</Typography>
+            <Typography fontWeight={700} fontSize={14}>Billing history</Typography>
           </Box>
           {displayedGroup.transactions.map((tx, idx) => (
             <Box key={tx.id}>
@@ -701,10 +701,10 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
 
         <Stack direction="row" gap={1} alignItems="center">
           <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>Ano</InputLabel>
+            <InputLabel>Year</InputLabel>
             <Select
               value={selectedYear}
-              label="Ano"
+              label="Year"
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               sx={{ borderRadius: "12px" }}
             >
@@ -729,7 +729,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
               boxShadow: `0 4px 14px -4px ${alpha(primary, 0.4)}`,
             }}
           >
-            {isMobile ? "Nova" : "Nova assinatura"}
+            {isMobile ? "New" : "New Subscription"}
           </Button>
         </Stack>
         </Box>
@@ -758,7 +758,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Box>
               <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Total mensal
+                Monthly total
               </Typography>
               <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#ef4444", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
                 {formatCurrency(currentMonthTotal)}
@@ -803,7 +803,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", textTransform: "uppercase", fontWeight: 600 }}>
-                    Projeção anual
+                    Annual projection
                   </Typography>
                   <Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
                     {formatCurrency(monthlyAverage * 12)}
@@ -832,7 +832,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", textTransform: "uppercase", fontWeight: 600 }}>
-                    Ativas
+                    Active
                   </Typography>
                   <Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
                     {activeGroups.length}
@@ -891,9 +891,9 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
       {isEmpty ? (
         <EmptyState
           type="generic"
-          title={`Nenhuma assinatura em ${selectedYear}`}
-          description='Registre despesas com a categoria "Subscriptions" para acompanhar seus gastos aqui.'
-          actionLabel="Nova assinatura"
+          title={`No subscriptions in ${selectedYear}`}
+          description='Register expenses under the "Subscriptions" category to track your spending here.'
+          actionLabel="New Subscription"
           onAction={onNewTransaction}
         />
       ) : (
@@ -913,7 +913,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                 <CalendarIcon />
               </Box>
               <Typography variant="h6" fontWeight={600}>
-                Gasto por mês — {selectedYear}
+                Spending by month — {selectedYear}
               </Typography>
             </Box>
 
@@ -937,9 +937,9 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                 />
                 <YAxis
                   tickFormatter={(v: number) => {
-                    if (v === 0) return "R$0";
-                    if (v >= 1000) return `R$${(v / 1000).toFixed(1)}k`;
-                    return `R$${v}`;
+                    if (v === 0) return "$0";
+                    if (v >= 1000) return `$${(v / 1000).toFixed(1)}k`;
+                    return `$${v}`;
                   }}
                   tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
                   axisLine={false}
@@ -990,18 +990,18 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                   <AppsIcon />
                 </Box>
                 <Typography variant="h6" fontWeight={600}>
-                  Serviços ativos
+                  Active services
                 </Typography>
               </Box>
               <Typography variant="caption" color="text.secondary">
-                {activeGroups.length} ativo{activeGroups.length !== 1 ? "s" : ""}
+                {activeGroups.length} active
               </Typography>
             </Box>
 
             {activeGroups.length === 0 ? (
               <Box py={4} textAlign="center">
                 <Typography variant="body2" color="text.secondary">
-                  Nenhum serviço ativo em {selectedYear}
+                  No active services in {selectedYear}
                 </Typography>
               </Box>
             ) : (
@@ -1055,7 +1055,7 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                     <CancelIcon />
                   </Box>
                   <Typography variant="h6" fontWeight={600} color="error.main">
-                    Encerradas
+                    Cancelled
                   </Typography>
                   <Chip
                     label={cancelledGroups.length}
@@ -1110,15 +1110,15 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
         onClose={() => setDeleteConfirmGroup(null)}
         PaperProps={{ sx: { borderRadius: "20px", minWidth: 340 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Excluir assinatura</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>Delete subscription</DialogTitle>
         <DialogContent>
           <Typography>
-            Deseja excluir todas as {deleteConfirmGroup?.transactions.length} cobranças de <strong>{deleteConfirmGroup?.name}</strong>? Esta ação não pode ser desfeita.
+            Do you want to delete all {deleteConfirmGroup?.transactions.length} charges for <strong>{deleteConfirmGroup?.name}</strong>? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
           <Button onClick={() => setDeleteConfirmGroup(null)} sx={{ borderRadius: "10px", textTransform: "none" }}>
-            Cancelar
+            Cancel
           </Button>
           <Button
             variant="contained"
@@ -1127,16 +1127,16 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
               if (!deleteConfirmGroup) return;
               try {
                 await Promise.all(deleteConfirmGroup.transactions.map((tx) => onDelete(tx)));
-                showSuccess(`Assinatura "${deleteConfirmGroup.name}" excluída`);
+                showSuccess(`Subscription "${deleteConfirmGroup.name}" deleted`);
               } catch {
-                showError("Erro ao excluir algumas cobranças");
+                showError("Error deleting some charges");
               } finally {
                 setDeleteConfirmGroup(null);
               }
             }}
             sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
           >
-            Excluir tudo
+            Delete all
           </Button>
         </DialogActions>
       </Dialog>

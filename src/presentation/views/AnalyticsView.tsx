@@ -575,7 +575,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             }}
           >
             <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600, position: "relative", zIndex: 1 }}>
-              Média Mensal (Receita)
+              Monthly Average (Income)
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {formatCurrency(stats.avgMonthlyIncome)}
@@ -609,7 +609,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             }}
           >
             <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600, position: "relative", zIndex: 1 }}>
-              Média Mensal (Despesa)
+              Monthly Average (Expense)
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {formatCurrency(stats.avgMonthlyExpense)}
@@ -747,7 +747,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               <Tooltip
                 formatter={(value: number, name: string) => [
                   formatCurrency(value),
-                  <span style={{ color: name === "Despesas" ? "#ef4444" : "#10b981" }}>{name}</span>
+                  <span style={{ color: name === "Expenses" ? "#ef4444" : "#10b981" }}>{name}</span>
                 ]}
                 contentStyle={{
                   backgroundColor: isDarkMode ? alpha("#1e1e2e", 0.95) : alpha("#ffffff", 0.95),
@@ -765,16 +765,16 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                   <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{ width: 12, height: 12, backgroundColor: "#ef4444", borderRadius: 2 }} />
-                      <span style={{ color: "#ef4444", fontSize: 12 }}>Despesas</span>
+                      <span style={{ color: "#ef4444", fontSize: 12 }}>Expenses</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{ width: 12, height: 12, backgroundColor: "#10b981", borderRadius: 2 }} />
-                      <span style={{ color: "#10b981", fontSize: 12 }}>Receitas</span>
+                      <span style={{ color: "#10b981", fontSize: 12 }}>Income</span>
                     </div>
                   </div>
                 )}
               />
-              <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="expense" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]}>
                 {monthlyData.map((entry, index) => (
                   <Cell 
                     key={`expense-${index}`} 
@@ -784,7 +784,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                   />
                 ))}
               </Bar>
-              <Bar dataKey="income" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]}>
                 {monthlyData.map((entry, index) => (
                   <Cell 
                     key={`income-${index}`} 
@@ -869,14 +869,14 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                       boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
                     }}>
                       <div style={{ fontWeight: 600, marginBottom: 8, color: theme.palette.text.primary }}>
-                        {label} {data.isCurrentMonth && "• Mês Atual"}
+                        {label} {data.isCurrentMonth && "• Current Month"}
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13 }}>
                         <div style={{ color: "#10b981" }}>
-                          Receitas: {formatCurrency(data.income)}
+                          Income: {formatCurrency(data.income)}
                         </div>
                         <div style={{ color: "#ef4444" }}>
-                          Despesas: {formatCurrency(data.expense)}
+                          Expenses: {formatCurrency(data.expense)}
                         </div>
                         <div style={{ 
                           color: data.monthBalance >= 0 ? "#10b981" : "#ef4444",
@@ -884,13 +884,13 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                           paddingTop: 4,
                           marginTop: 4,
                         }}>
-                          Saldo do Mês: {formatCurrency(data.monthBalance)}
+                          Monthly Balance: {formatCurrency(data.monthBalance)}
                         </div>
                         <div style={{ 
                           color: data.balance >= 0 ? "#6366f1" : "#ef4444",
                           fontWeight: 600,
                         }}>
-                          Saldo Acumulado: {formatCurrency(data.balance)}
+                          Accumulated Balance: {formatCurrency(data.balance)}
                         </div>
                       </div>
                     </div>
@@ -1032,7 +1032,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           >
             <SectionHeader
               icon={<PieChartIcon />}
-              title="Despesas por Categoria"
+              title="Expenses by Category"
             />
             {categoryData.length > 0 ? (
               <Box sx={{ width: "100%", height: 280, display: "flex", justifyContent: "center" }}>
@@ -1091,7 +1091,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             ) : (
               <Box sx={{ py: 4, textAlign: "center" }}>
                 <Typography color="text.secondary">
-                  Sem despesas no período
+                  No expenses in the period
                 </Typography>
               </Box>
             )}
@@ -1118,7 +1118,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           >
             <SectionHeader
               icon={<TrendingUpIcon />}
-              title="Receitas por Categoria"
+              title="Income by Category"
             />
             {incomeByCategory.length > 0 ? (
               <Box sx={{ width: "100%", height: 280, display: "flex", justifyContent: "center" }}>
@@ -1177,7 +1177,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             ) : (
               <Box sx={{ py: 4, textAlign: "center" }}>
                 <Typography color="text.secondary">
-                  Sem receitas no período
+                  No income in the period
                 </Typography>
               </Box>
             )}
@@ -1241,8 +1241,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             <Box sx={{ py: 2 }}>
               <EmptyState
                 type="transactions"
-                title="Nenhuma despesa registrada"
-                description="Não há despesas para exibir no gráfico"
+                title="No expenses registered"
+                description="There are no expenses to display in the chart"
                 compact
               />
             </Box>
@@ -1267,7 +1267,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         >
           <SectionHeader
             icon={<BarChartIcon />}
-            title="Despesas: Ano Atual vs. Ano Anterior"
+            title="Expenses: Current Year vs. Previous Year"
           />
           <Box sx={{ width: "100%", overflowX: "auto" }}>
             <BarChart
@@ -1296,8 +1296,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="thisYear" name="Ano atual" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={32} />
-              <Bar dataKey="lastYear" name="Ano anterior" fill={alpha("#6366f1", 0.35)} radius={[4, 4, 0, 0]} maxBarSize={32} />
+              <Bar dataKey="thisYear" name="Current year" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={32} />
+              <Bar dataKey="lastYear" name="Previous year" fill={alpha("#6366f1", 0.35)} radius={[4, 4, 0, 0]} maxBarSize={32} />
             </BarChart>
           </Box>
         </Paper>

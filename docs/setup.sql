@@ -1,13 +1,13 @@
 -- =============================================
--- NIX - Script de Criação do Banco de Dados Supabase
+-- NIX - Supabase Database Creation Script
 -- =============================================
--- Execute este script no SQL Editor do Supabase Dashboard
--- https://supabase.com/dashboard/project/[seu-projeto]/sql
+-- Execute this script in the Supabase Dashboard SQL Editor
+-- https://supabase.com/dashboard/project/[your-project]/sql
 
 -- =============================================
--- 1. TABELA: transactions
+-- 1. TABLE: transactions
 -- =============================================
--- Armazena todas as transações financeiras dos usuários
+-- Stores all financial transactions of users
 
 CREATE TABLE IF NOT EXISTS public.transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -29,74 +29,41 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     related_transaction_id UUID,
     installment_group_id UUID,
     excluded_dates JSONB DEFAULT '[]'::jsonb,
-    recurring_group_id UUID, -- ID da recorrência original (para manter vínculo após edição "single")
-    invoice_due_date DATE, -- Data de vencimento da fatura (quando forma de pagamento tem dia cadastrado)
-    notes TEXT, -- Observações livres adicionadas pelo usuário
+    recurring_group_id UUID, -- Original recurrence ID (to maintain link after single-edit)
+    invoice_due_date DATE, -- Invoice due date (when payment method has a closing day)
+    notes TEXT, -- User observations and free text notes
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Para bancos existentes, adicione a coluna is_paid:
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS is_paid BOOLEAN DEFAULT TRUE;
-
--- Para bancos existentes, adicione a coluna is_shared (gastos compartilhados 50/50):
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS is_shared BOOLEAN DEFAULT FALSE;
-
--- Para bancos existentes, adicione a coluna shared_with (nome do amigo com quem dividiu):
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS shared_with TEXT;
-
--- Para bancos existentes, adicione a coluna related_transaction_id (link entre expense e income compartilhada):
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS related_transaction_id UUID;
-
--- Para bancos existentes, adicione a coluna i_owe (true = amigo pagou e eu devo, false = eu paguei e amigo deve):
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS i_owe BOOLEAN DEFAULT FALSE;
-
--- Para bancos existentes, adicione a coluna installment_group_id (agrupa parcelas de um mesmo parcelamento):
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS installment_group_id UUID;
-
--- Para bancos existentes, adicione a coluna excluded_dates (datas excluídas de recorrências):
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS excluded_dates JSONB DEFAULT '[]'::jsonb;
-
--- Para bancos existentes, adicione a coluna recurring_group_id (vincula transações modificadas à recorrência original):
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS recurring_group_id UUID;
-
--- Para bancos existentes, adicione a coluna notes (observações livres):
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS notes TEXT;
-
--- Para bancos existentes, adicione a coluna invoice_due_date (vencimento da fatura quando método tem dia cadastrado):
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS invoice_due_date DATE;
-
--- Para bancos existentes, crie o índice para lookups bidirecionais de transações compartilhadas:
--- CREATE INDEX IF NOT EXISTS idx_transactions_related ON public.transactions(related_transaction_id) WHERE related_transaction_id IS NOT NULL;
-
--- Índices para melhor performance
+-- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.transactions(date DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_type ON public.transactions(type);
 CREATE INDEX IF NOT EXISTS idx_transactions_installment_group ON public.transactions(installment_group_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_recurring_group ON public.transactions(recurring_group_id);
--- Índice parcial para lookups bidirecionais de transações compartilhadas (related_transaction_id)
+-- Partial index for bidirectional lookups of shared transactions (related_transaction_id)
 CREATE INDEX IF NOT EXISTS idx_transactions_related ON public.transactions(related_transaction_id)
   WHERE related_transaction_id IS NOT NULL;
 
--- Comentários na tabela
-COMMENT ON TABLE public.transactions IS 'Transações financeiras dos usuários';
-COMMENT ON COLUMN public.transactions.type IS 'Tipo: income (receita) ou expense (despesa)';
-COMMENT ON COLUMN public.transactions.frequency IS 'Frequência de recorrência: monthly ou yearly';
-COMMENT ON COLUMN public.transactions.installments IS 'Número total de parcelas';
-COMMENT ON COLUMN public.transactions.current_installment IS 'Número da parcela atual';
-COMMENT ON COLUMN public.transactions.is_shared IS 'Gasto compartilhado 50/50 com outra pessoa';
-COMMENT ON COLUMN public.transactions.shared_with IS 'Nome do amigo com quem o gasto foi dividido';
-COMMENT ON COLUMN public.transactions.i_owe IS 'Se true, amigo pagou e eu devo. Se false, eu paguei e amigo me deve';
-COMMENT ON COLUMN public.transactions.related_transaction_id IS 'ID da transação relacionada (link entre expense e income de shared expense)';
-COMMENT ON COLUMN public.transactions.installment_group_id IS 'UUID que agrupa todas as parcelas de um mesmo parcelamento';
-COMMENT ON COLUMN public.transactions.excluded_dates IS 'Array JSON de datas (YYYY-MM-DD) excluídas de recorrências';
-COMMENT ON COLUMN public.transactions.recurring_group_id IS 'ID da transação recorrente original (para manter vínculo após edição single)';
-COMMENT ON COLUMN public.transactions.invoice_due_date IS 'Data de vencimento da fatura (quando forma de pagamento tem dia cadastrado); usuário edita só mês/ano';
+-- Table Comments
+COMMENT ON TABLE public.transactions IS 'User financial transactions';
+COMMENT ON COLUMN public.transactions.type IS 'Type: income or expense';
+COMMENT ON COLUMN public.transactions.frequency IS 'Recurrence frequency: monthly or yearly';
+COMMENT ON COLUMN public.transactions.installments IS 'Total number of installments';
+COMMENT ON COLUMN public.transactions.current_installment IS 'Current installment number';
+COMMENT ON COLUMN public.transactions.is_shared IS 'Shared 50/50 expense with another user';
+COMMENT ON COLUMN public.transactions.shared_with IS 'Name of the friend with whom the expense was divided';
+COMMENT ON COLUMN public.transactions.i_owe IS 'If true, friend paid and I owe. If false, I paid and friend owes me';
+COMMENT ON COLUMN public.transactions.related_transaction_id IS 'Related transaction ID (link between counterpart income and expense in split)';
+COMMENT ON COLUMN public.transactions.installment_group_id IS 'UUID grouping all installments of the same purchase';
+COMMENT ON COLUMN public.transactions.excluded_dates IS 'JSON array of dates (YYYY-MM-DD) excluded from recurrence cycles';
+COMMENT ON COLUMN public.transactions.recurring_group_id IS 'Original recurring transaction ID (links single-edited items to parent recurrence)';
+COMMENT ON COLUMN public.transactions.invoice_due_date IS 'Invoice due date (when payment method has payment day set)';
 
 -- =============================================
--- 2. TABELA: user_settings
+-- 2. TABLE: user_settings
 -- =============================================
--- Armazena configurações personalizadas de cada usuário
+-- Stores customized configurations for each user
 
 CREATE TABLE IF NOT EXISTS public.user_settings (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -110,96 +77,81 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     payment_method_colors JSONB DEFAULT '{}'::jsonb,
     payment_method_payment_days JSONB DEFAULT '{}'::jsonb,
     payment_method_configs JSONB DEFAULT NULL,
+    category_images JSONB DEFAULT '{}'::jsonb,
+    subscription_images JSONB DEFAULT '{}'::jsonb,
+    subscription_colors JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Para bancos existentes, adicione a coluna payment_method_payment_days (dia opcional 1-31 por método):
--- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS payment_method_payment_days JSONB DEFAULT '{}'::jsonb;
-
--- Para usuários existentes, adicione as colunas de cores:
--- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS category_colors JSONB DEFAULT '{}'::jsonb;
--- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS payment_method_colors JSONB DEFAULT '{}'::jsonb;
-
--- Para usuários existentes, adicione a coluna friends (lista de amigos para shared expenses):
--- ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS friends TEXT[] DEFAULT ARRAY[]::TEXT[];
-
--- Para usuários existentes, adicione a coluna payment_method_configs (configurações estruturadas de métodos de pagamento):
-ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS payment_method_configs JSONB DEFAULT NULL;
-
--- Imagens por categoria e por assinatura:
-ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS category_images JSONB DEFAULT '{}'::jsonb;
-ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS subscription_images JSONB DEFAULT '{}'::jsonb;
-ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS subscription_colors JSONB DEFAULT '{}'::jsonb;
-
--- Comentários na tabela
-COMMENT ON TABLE public.user_settings IS 'Configurações personalizadas do usuário';
-COMMENT ON COLUMN public.user_settings.display_name IS 'Nome de exibição do usuário';
-COMMENT ON COLUMN public.user_settings.categories_income IS 'Lista de categorias de receita personalizadas';
-COMMENT ON COLUMN public.user_settings.categories_expense IS 'Lista de categorias de despesa personalizadas';
-COMMENT ON COLUMN public.user_settings.payment_methods IS 'Lista de métodos de pagamento personalizados';
-COMMENT ON COLUMN public.user_settings.theme_preference IS 'Preferência de tema: light, dark ou system';
-COMMENT ON COLUMN public.user_settings.category_colors IS 'Cores personalizadas para categorias (JSONB com primary e secondary)';
-COMMENT ON COLUMN public.user_settings.payment_method_colors IS 'Cores personalizadas para métodos de pagamento (JSONB com primary e secondary)';
-COMMENT ON COLUMN public.user_settings.payment_method_payment_days IS 'Dia opcional (1-31) por método de pagamento, ex: {"Credit Card": 15}';
-COMMENT ON COLUMN public.user_settings.friends IS 'Lista de amigos para shared expenses';
-COMMENT ON COLUMN public.user_settings.payment_method_configs IS 'Configurações estruturadas de métodos de pagamento: [{id, name, type, closingDay?, paymentDay?}]';
+-- Table Comments
+COMMENT ON TABLE public.user_settings IS 'Customized configurations of users';
+COMMENT ON COLUMN public.user_settings.display_name IS 'User display name';
+COMMENT ON COLUMN public.user_settings.categories_income IS 'List of customized income categories';
+COMMENT ON COLUMN public.user_settings.categories_expense IS 'List of customized expense categories';
+COMMENT ON COLUMN public.user_settings.payment_methods IS 'List of customized payment methods';
+COMMENT ON COLUMN public.user_settings.theme_preference IS 'Theme preference: light, dark, or system';
+COMMENT ON COLUMN public.user_settings.category_colors IS 'Custom colors for categories (JSONB with primary and secondary values)';
+COMMENT ON COLUMN public.user_settings.payment_method_colors IS 'Custom colors for payment methods (JSONB with primary and secondary values)';
+COMMENT ON COLUMN public.user_settings.payment_method_payment_days IS 'Optional invoice day (1-31) by payment method, e.g., {"Credit Card": 15}';
+COMMENT ON COLUMN public.user_settings.friends IS 'List of friends for shared expenses';
+COMMENT ON COLUMN public.user_settings.payment_method_configs IS 'Structured configurations of payment methods: [{id, name, type, closingDay?, paymentDay?}]';
 
 -- =============================================
 -- 3. ROW LEVEL SECURITY (RLS)
 -- =============================================
--- Garante que cada usuário só acesse seus próprios dados
+-- Ensures users can only access their own data
 
--- Habilitar RLS nas tabelas
+-- Enable RLS on tables
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
 
--- Políticas para transactions
-CREATE POLICY "Usuários podem ver apenas suas próprias transações"
+-- Policies for transactions
+CREATE POLICY "Users can only view their own transactions"
     ON public.transactions
     FOR SELECT
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem inserir suas próprias transações"
+CREATE POLICY "Users can insert their own transactions"
     ON public.transactions
     FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem atualizar suas próprias transações"
+CREATE POLICY "Users can update their own transactions"
     ON public.transactions
     FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem deletar suas próprias transações"
+CREATE POLICY "Users can delete their own transactions"
     ON public.transactions
     FOR DELETE
     USING (auth.uid() = user_id);
 
--- Políticas para user_settings
-CREATE POLICY "Usuários podem ver apenas suas próprias configurações"
+-- Policies for user_settings
+CREATE POLICY "Users can only view their own settings"
     ON public.user_settings
     FOR SELECT
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem inserir suas próprias configurações"
+CREATE POLICY "Users can insert their own settings"
     ON public.user_settings
     FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem atualizar suas próprias configurações"
+CREATE POLICY "Users can update their own settings"
     ON public.user_settings
     FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem deletar suas próprias configurações"
+CREATE POLICY "Users can delete their own settings"
     ON public.user_settings
     FOR DELETE
     USING (auth.uid() = user_id);
 
 -- =============================================
--- 4. TRIGGER: Atualizar updated_at automaticamente
+-- 4. TRIGGER: Automatically update updated_at
 -- =============================================
 
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
@@ -216,28 +168,28 @@ CREATE TRIGGER on_user_settings_updated
     EXECUTE FUNCTION public.handle_updated_at();
 
 -- =============================================
--- 5. CONFIGURAÇÕES DO SUPABASE AUTH (Manual)
+-- 5. SUPABASE AUTH CONFIGURATION (Manual)
 -- =============================================
--- 
--- No Dashboard do Supabase, configure:
+--
+-- In the Supabase Dashboard, configure:
 --
 -- 1. Authentication > Providers
---    - Habilite Email provider
---    - (Opcional) Configure provedores OAuth como Google, GitHub, etc.
+--    - Enable Email provider
+--    - (Optional) Configure OAuth providers like Google, GitHub, etc.
 --
 -- 2. Authentication > URL Configuration
---    - Site URL: URL do seu app em produção
---    - Redirect URLs: URLs permitidas para redirecionamento após login
+--    - Site URL: Your production app URL
+--    - Redirect URLs: Permitted redirect URLs after authentication
 --
--- 3. Authentication > Email Templates (opcional)
---    - Personalize os templates de email de confirmação e recuperação de senha
+-- 3. Authentication > Email Templates (optional)
+--    - Customize confirmation and password recovery email templates
 --
 -- =============================================
 
 -- =============================================
--- 6. TABELA: budgets
+-- 6. TABLE: budgets
 -- =============================================
--- Armazena orçamentos mensais por categoria
+-- Stores monthly limits per category
 
 CREATE TABLE IF NOT EXISTS public.budgets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -247,48 +199,45 @@ CREATE TABLE IF NOT EXISTS public.budgets (
     limit_amount NUMERIC(12, 2) NOT NULL CHECK (limit_amount > 0),
     month INTEGER NOT NULL CHECK (month >= 1 AND month <= 12),
     year INTEGER NOT NULL CHECK (year >= 2000),
-    is_recurring BOOLEAN DEFAULT TRUE, -- Se true, o orçamento se repete automaticamente nos próximos meses
+    is_recurring BOOLEAN DEFAULT TRUE, -- If true, the budget copies forward to future months
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id, category, type, month, year)
 );
 
--- Para bancos existentes, adicione a coluna is_recurring:
--- ALTER TABLE public.budgets ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN DEFAULT TRUE;
-
--- Índices para performance
+-- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_budgets_user_id ON public.budgets(user_id);
 CREATE INDEX IF NOT EXISTS idx_budgets_period ON public.budgets(year, month);
 
--- Comentários
-COMMENT ON TABLE public.budgets IS 'Orçamentos mensais por categoria';
-COMMENT ON COLUMN public.budgets.limit_amount IS 'Limite de gastos para a categoria no mês';
+-- Comments
+COMMENT ON TABLE public.budgets IS 'Monthly limits per category';
+COMMENT ON COLUMN public.budgets.limit_amount IS 'Spending limit for the category in the month';
 
--- RLS para budgets
+-- RLS for budgets
 ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Usuários podem ver apenas seus próprios orçamentos"
+CREATE POLICY "Users can only view their own budgets"
     ON public.budgets FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem inserir seus próprios orçamentos"
+CREATE POLICY "Users can insert their own budgets"
     ON public.budgets FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem atualizar seus próprios orçamentos"
+CREATE POLICY "Users can update their own budgets"
     ON public.budgets FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem deletar seus próprios orçamentos"
+CREATE POLICY "Users can delete their own budgets"
     ON public.budgets FOR DELETE USING (auth.uid() = user_id);
 
--- Trigger para updated_at
+-- Trigger for updated_at
 CREATE TRIGGER on_budgets_updated
     BEFORE UPDATE ON public.budgets
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
 -- =============================================
--- 7. TABELA: goals
+-- 7. TABLE: goals
 -- =============================================
--- Armazena metas financeiras dos usuários
+-- Stores financial savings goals
 
 CREATE TABLE IF NOT EXISTS public.goals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -305,40 +254,40 @@ CREATE TABLE IF NOT EXISTS public.goals (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Índices para performance
+-- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_goals_user_id ON public.goals(user_id);
 CREATE INDEX IF NOT EXISTS idx_goals_completed ON public.goals(is_completed);
 
--- Comentários
-COMMENT ON TABLE public.goals IS 'Metas financeiras dos usuários';
-COMMENT ON COLUMN public.goals.target_amount IS 'Valor alvo da meta';
-COMMENT ON COLUMN public.goals.current_amount IS 'Valor atual economizado';
+-- Comments
+COMMENT ON TABLE public.goals IS 'Financial savings goals';
+COMMENT ON COLUMN public.goals.target_amount IS 'Savings target value';
+COMMENT ON COLUMN public.goals.current_amount IS 'Current amount saved';
 
--- RLS para goals
+-- RLS for goals
 ALTER TABLE public.goals ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Usuários podem ver apenas suas próprias metas"
+CREATE POLICY "Users can only view their own goals"
     ON public.goals FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem inserir suas próprias metas"
+CREATE POLICY "Users can insert their own goals"
     ON public.goals FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem atualizar suas próprias metas"
+CREATE POLICY "Users can update their own goals"
     ON public.goals FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem deletar suas próprias metas"
+CREATE POLICY "Users can delete their own goals"
     ON public.goals FOR DELETE USING (auth.uid() = user_id);
 
--- Trigger para updated_at
+-- Trigger for updated_at
 CREATE TRIGGER on_goals_updated
     BEFORE UPDATE ON public.goals
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
 -- =============================================
--- 8. TABELA: accounts
+-- 8. TABLE: accounts
 -- =============================================
--- Armazena contas/carteiras do usuário
+-- Stores user accounts and wallets
 
 CREATE TABLE IF NOT EXISTS public.accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -353,27 +302,27 @@ CREATE TABLE IF NOT EXISTS public.accounts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Índices
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON public.accounts(user_id);
 
--- Comentários
-COMMENT ON TABLE public.accounts IS 'Contas e carteiras do usuário';
-COMMENT ON COLUMN public.accounts.type IS 'Tipo: checking, savings, credit_card, cash, investment, other';
-COMMENT ON COLUMN public.accounts.initial_balance IS 'Saldo inicial da conta';
+-- Comments
+COMMENT ON TABLE public.accounts IS 'User bank accounts and wallets';
+COMMENT ON COLUMN public.accounts.type IS 'Type: checking, savings, credit_card, cash, investment, other';
+COMMENT ON COLUMN public.accounts.initial_balance IS 'Initial account balance';
 
 -- RLS
 ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Usuários podem ver apenas suas próprias contas"
+CREATE POLICY "Users can only view their own accounts"
     ON public.accounts FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem inserir suas próprias contas"
+CREATE POLICY "Users can insert their own accounts"
     ON public.accounts FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem atualizar suas próprias contas"
+CREATE POLICY "Users can update their own accounts"
     ON public.accounts FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem deletar suas próprias contas"
+CREATE POLICY "Users can delete their own accounts"
     ON public.accounts FOR DELETE USING (auth.uid() = user_id);
 
 -- Trigger
@@ -382,13 +331,10 @@ CREATE TRIGGER on_accounts_updated
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
--- Adicionar coluna account_id na tabela transactions (para bancos existentes)
--- ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES public.accounts(id) ON DELETE SET NULL;
-
 -- =============================================
--- 9. TABELA: tags
+-- 9. TABLE: tags
 -- =============================================
--- Tags personalizadas para transações
+-- Customized tags for transactions
 
 CREATE TABLE IF NOT EXISTS public.tags (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -399,247 +345,169 @@ CREATE TABLE IF NOT EXISTS public.tags (
     UNIQUE(user_id, name)
 );
 
--- Tabela de junção para tags de transações
+-- Junction table for transaction tags
 CREATE TABLE IF NOT EXISTS public.transaction_tags (
     transaction_id UUID NOT NULL REFERENCES public.transactions(id) ON DELETE CASCADE,
     tag_id UUID NOT NULL REFERENCES public.tags(id) ON DELETE CASCADE,
     PRIMARY KEY (transaction_id, tag_id)
 );
 
--- Índices
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_tags_user_id ON public.tags(user_id);
 CREATE INDEX IF NOT EXISTS idx_transaction_tags_transaction ON public.transaction_tags(transaction_id);
 CREATE INDEX IF NOT EXISTS idx_transaction_tags_tag ON public.transaction_tags(tag_id);
 
--- Comentários
-COMMENT ON TABLE public.tags IS 'Tags personalizadas do usuário';
-COMMENT ON TABLE public.transaction_tags IS 'Relacionamento many-to-many entre transações e tags';
+-- Comments
+COMMENT ON TABLE public.tags IS 'User customized tags';
+COMMENT ON TABLE public.transaction_tags IS 'Many-to-many relationship between transactions and tags';
 
--- RLS para tags
+-- RLS for tags
 ALTER TABLE public.tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transaction_tags ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Usuários podem ver apenas suas próprias tags"
+CREATE POLICY "Users can only view their own tags"
     ON public.tags FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem inserir suas próprias tags"
+CREATE POLICY "Users can insert their own tags"
     ON public.tags FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem atualizar suas próprias tags"
+CREATE POLICY "Users can update their own tags"
     ON public.tags FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem deletar suas próprias tags"
+CREATE POLICY "Users can delete their own tags"
     ON public.tags FOR DELETE USING (auth.uid() = user_id);
 
--- RLS para transaction_tags (baseado na transação)
-CREATE POLICY "Usuários podem ver tags de suas transações"
+-- RLS for transaction_tags (based on transactions permissions)
+CREATE POLICY "Users can view tags of their own transactions"
     ON public.transaction_tags FOR SELECT
     USING (EXISTS (SELECT 1 FROM public.transactions t WHERE t.id = transaction_id AND t.user_id = auth.uid()));
 
-CREATE POLICY "Usuários podem adicionar tags às suas transações"
+CREATE POLICY "Users can add tags to their own transactions"
     ON public.transaction_tags FOR INSERT
     WITH CHECK (EXISTS (SELECT 1 FROM public.transactions t WHERE t.id = transaction_id AND t.user_id = auth.uid()));
 
-CREATE POLICY "Usuários podem remover tags de suas transações"
+CREATE POLICY "Users can remove tags from their own transactions"
     ON public.transaction_tags FOR DELETE
     USING (EXISTS (SELECT 1 FROM public.transactions t WHERE t.id = transaction_id AND t.user_id = auth.uid()));
 
 -- =============================================
--- 10. MIGRAÇÃO: installment_group_id para parcelamentos existentes
+-- 10. TABLE: open_finance_connections
 -- =============================================
--- Este script agrupa parcelas existentes que compartilham as mesmas características
--- Execute APENAS UMA VEZ após adicionar a coluna installment_group_id
-
--- Passo 1: Criar uma função para gerar UUIDs únicos por grupo
--- (Agrupa por user_id, description, category, payment_method, type, installments)
-
--- Migração de parcelamentos existentes:
--- Esta query identifica grupos de parcelas e atribui o mesmo installment_group_id
-/*
-DO $$
-DECLARE
-    rec RECORD;
-    new_group_id UUID;
-BEGIN
-    -- Para cada grupo único de parcelas (sem installment_group_id)
-    FOR rec IN 
-        SELECT DISTINCT 
-            user_id, 
-            description, 
-            category, 
-            payment_method, 
-            type, 
-            installments
-        FROM public.transactions
-        WHERE installments > 1 
-          AND installment_group_id IS NULL
-    LOOP
-        -- Gerar um novo UUID para este grupo
-        new_group_id := gen_random_uuid();
-        
-        -- Atualizar todas as parcelas deste grupo
-        UPDATE public.transactions
-        SET installment_group_id = new_group_id
-        WHERE user_id = rec.user_id
-          AND description = rec.description
-          AND category = rec.category
-          AND payment_method = rec.payment_method
-          AND type = rec.type
-          AND installments = rec.installments
-          AND installment_group_id IS NULL;
-    END LOOP;
-END $$;
-*/
-
--- Alternativa mais simples (SQL puro):
--- UPDATE public.transactions t1
--- SET installment_group_id = (
---     SELECT MIN(t2.id)::uuid  -- Usa o menor ID como grupo (não ideal, mas funciona)
---     FROM public.transactions t2
---     WHERE t2.description = t1.description
---       AND t2.category = t1.category
---       AND t2.payment_method = t1.payment_method
---       AND t2.type = t1.type
---       AND t2.installments = t1.installments
---       AND t2.user_id = t1.user_id
--- )
--- WHERE t1.installments > 1 AND t1.installment_group_id IS NULL;
-
--- =============================================
--- VERIFICAÇÃO (Execute após criar as tabelas)
--- =============================================
--- SELECT * FROM information_schema.tables WHERE table_schema = 'public';
--- SELECT * FROM information_schema.columns WHERE table_name = 'transactions';
--- SELECT * FROM information_schema.columns WHERE table_name = 'user_settings';
--- SELECT * FROM information_schema.columns WHERE table_name = 'budgets';
--- SELECT * FROM information_schema.columns WHERE table_name = 'goals';
-
--- Verificar se a migração funcionou:
--- SELECT installment_group_id, COUNT(*) as parcelas, description, installments
--- FROM public.transactions
--- WHERE installments > 1
--- GROUP BY installment_group_id, description, installments
--- ORDER BY parcelas DESC;
-
--- =============================================
--- 11. TABELA: open_finance_connections
--- =============================================
--- Armazena as conexões do usuário com instituições financeiras via Pluggy
+-- Stores user bank integrations via Pluggy
 
 CREATE TABLE IF NOT EXISTS public.open_finance_connections (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    pluggy_item_id TEXT NOT NULL UNIQUE, -- ID do item no Pluggy
-    pluggy_connector_id TEXT NOT NULL, -- ID do conector (banco)
-    institution_name TEXT NOT NULL, -- Nome da instituição
-    payment_method_id TEXT, -- ID do payment method vinculado (nullable)
+    pluggy_item_id TEXT NOT NULL UNIQUE, -- Item ID on Pluggy
+    pluggy_connector_id TEXT NOT NULL, -- Connector ID on Pluggy
+    institution_name TEXT NOT NULL, -- Bank name
+    payment_method_id TEXT, -- Associated payment method ID (nullable)
     is_active BOOLEAN DEFAULT TRUE,
     last_sync_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Índices para performance
+-- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_open_finance_connections_user_id ON public.open_finance_connections(user_id);
 CREATE INDEX IF NOT EXISTS idx_open_finance_connections_pluggy_item_id ON public.open_finance_connections(pluggy_item_id);
 CREATE INDEX IF NOT EXISTS idx_open_finance_connections_is_active ON public.open_finance_connections(is_active);
 
--- Comentários
-COMMENT ON TABLE public.open_finance_connections IS 'Conexões do usuário com instituições financeiras via Pluggy';
-COMMENT ON COLUMN public.open_finance_connections.pluggy_item_id IS 'ID único do item no Pluggy';
-COMMENT ON COLUMN public.open_finance_connections.pluggy_connector_id IS 'ID do conector (banco) no Pluggy';
-COMMENT ON COLUMN public.open_finance_connections.payment_method_id IS 'ID do payment method vinculado (pode ser null)';
-COMMENT ON COLUMN public.open_finance_connections.is_active IS 'Se a conexão está ativa';
+-- Comments
+COMMENT ON TABLE public.open_finance_connections IS 'User integrations with financial institutions via Pluggy';
+COMMENT ON COLUMN public.open_finance_connections.pluggy_item_id IS 'Unique item ID in Pluggy';
+COMMENT ON COLUMN public.open_finance_connections.pluggy_connector_id IS 'Connector bank ID in Pluggy';
+COMMENT ON COLUMN public.open_finance_connections.payment_method_id IS 'Linked payment method ID (can be null)';
+COMMENT ON COLUMN public.open_finance_connections.is_active IS 'True if connection is active';
 
 -- =============================================
--- 12. TABELA: pending_transactions
+-- 11. TABLE: pending_transactions
 -- =============================================
--- Armazena transações sincronizadas do Open Finance que aguardam confirmação
+-- Stores synced Open Finance transactions awaiting verification
 
 CREATE TABLE IF NOT EXISTS public.pending_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     connection_id UUID NOT NULL REFERENCES public.open_finance_connections(id) ON DELETE CASCADE,
-    pluggy_transaction_id TEXT NOT NULL UNIQUE, -- ID da transação no Pluggy
-    raw_description TEXT NOT NULL, -- Descrição original da transação
+    pluggy_transaction_id TEXT NOT NULL UNIQUE, -- Transaction ID on Pluggy
+    raw_description TEXT NOT NULL, -- Original transaction description
     raw_amount NUMERIC(12, 2) NOT NULL,
-    raw_date DATE NOT NULL, -- Data original da transação
+    raw_date DATE NOT NULL, -- Original transaction date
     raw_type TEXT NOT NULL CHECK (raw_type IN ('DEBIT', 'CREDIT')),
-    -- Campos editáveis pelo usuário antes de confirmar
-    description TEXT, -- Pode ser editado
-    amount NUMERIC(12, 2), -- Pode ser editado
-    date DATE, -- Pode ser editado
-    type TEXT CHECK (type IN ('income', 'expense')), -- Pode ser editado
-    category TEXT, -- Pode ser editado
-    payment_method TEXT, -- Pode ser editado
-    -- Status
+    -- Customizable details before confirmation
+    description TEXT, -- User editable
+    amount NUMERIC(12, 2), -- User editable
+    date DATE, -- User editable
+    type TEXT CHECK (type IN ('income', 'expense')), -- User editable
+    category TEXT, -- User editable
+    payment_method TEXT, -- User editable
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Índices para performance
+-- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_pending_transactions_user_id ON public.pending_transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_pending_transactions_connection_id ON public.pending_transactions(connection_id);
 CREATE INDEX IF NOT EXISTS idx_pending_transactions_pluggy_transaction_id ON public.pending_transactions(pluggy_transaction_id);
 CREATE INDEX IF NOT EXISTS idx_pending_transactions_status ON public.pending_transactions(status);
 
--- Comentários
-COMMENT ON TABLE public.pending_transactions IS 'Transações sincronizadas do Open Finance que aguardam confirmação';
-COMMENT ON COLUMN public.pending_transactions.pluggy_transaction_id IS 'ID único da transação no Pluggy';
-COMMENT ON COLUMN public.pending_transactions.raw_description IS 'Descrição original da transação (não editada)';
-COMMENT ON COLUMN public.pending_transactions.raw_type IS 'Tipo original: DEBIT ou CREDIT';
-COMMENT ON COLUMN public.pending_transactions.status IS 'Status: pending, confirmed ou cancelled';
+-- Comments
+COMMENT ON TABLE public.pending_transactions IS 'Synced Open Finance transactions awaiting user verification';
+COMMENT ON COLUMN public.pending_transactions.pluggy_transaction_id IS 'Unique transaction ID in Pluggy';
+COMMENT ON COLUMN public.pending_transactions.raw_description IS 'Original unedited description';
+COMMENT ON COLUMN public.pending_transactions.raw_type IS 'Original transaction type: DEBIT or CREDIT';
+COMMENT ON COLUMN public.pending_transactions.status IS 'Status: pending, confirmed or cancelled';
 
--- RLS para open_finance_connections e pending_transactions
+-- Enable RLS for Open Finance tables
 ALTER TABLE public.open_finance_connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pending_transactions ENABLE ROW LEVEL SECURITY;
 
--- Políticas para open_finance_connections
-CREATE POLICY "Usuários podem ver apenas suas próprias conexões"
+-- Policies for open_finance_connections
+CREATE POLICY "Users can only view their own connections"
     ON public.open_finance_connections
     FOR SELECT
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem inserir suas próprias conexões"
+CREATE POLICY "Users can insert their own connections"
     ON public.open_finance_connections
     FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem atualizar suas próprias conexões"
+CREATE POLICY "Users can update their own connections"
     ON public.open_finance_connections
     FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem deletar suas próprias conexões"
+CREATE POLICY "Users can delete their own connections"
     ON public.open_finance_connections
     FOR DELETE
     USING (auth.uid() = user_id);
 
--- Políticas para pending_transactions
-CREATE POLICY "Usuários podem ver apenas suas próprias transações pendentes"
+-- Policies for pending_transactions
+CREATE POLICY "Users can only view their own pending transactions"
     ON public.pending_transactions
     FOR SELECT
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem inserir suas próprias transações pendentes"
+CREATE POLICY "Users can insert their own pending transactions"
     ON public.pending_transactions
     FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem atualizar suas próprias transações pendentes"
+CREATE POLICY "Users can update their own pending transactions"
     ON public.pending_transactions
     FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem deletar suas próprias transações pendentes"
+CREATE POLICY "Users can delete their own pending transactions"
     ON public.pending_transactions
     FOR DELETE
     USING (auth.uid() = user_id);
 
--- Triggers para updated_at
+-- Triggers for updated_at
 CREATE TRIGGER on_open_finance_connections_updated
     BEFORE UPDATE ON public.open_finance_connections
     FOR EACH ROW
@@ -651,55 +519,55 @@ CREATE TRIGGER on_pending_transactions_updated
     EXECUTE FUNCTION public.handle_updated_at();
 
 -- =============================================
--- 13. TABELA: plannings
+-- 12. TABLE: plannings
 -- =============================================
--- Armazena planejamentos financeiros (gastos planejados que ainda não são transações)
+-- Stores planned expenditures that are not yet transactions
 
 CREATE TABLE IF NOT EXISTS public.plannings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
-    target_date DATE, -- Data alvo do planejamento (opcional)
+    target_date DATE, -- Optional target date
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Índices para performance
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_plannings_user_id ON public.plannings(user_id);
 CREATE INDEX IF NOT EXISTS idx_plannings_target_date ON public.plannings(target_date);
 
--- Comentários
-COMMENT ON TABLE public.plannings IS 'Planejamentos financeiros (gastos planejados que ainda não são transações)';
-COMMENT ON COLUMN public.plannings.name IS 'Nome do planejamento';
-COMMENT ON COLUMN public.plannings.description IS 'Descrição opcional do planejamento';
-COMMENT ON COLUMN public.plannings.target_date IS 'Data alvo do planejamento (opcional)';
+-- Comments
+COMMENT ON TABLE public.plannings IS 'Planned expenditures that are not yet transactions';
+COMMENT ON COLUMN public.plannings.name IS 'Name of planning';
+COMMENT ON COLUMN public.plannings.description IS 'Optional description';
+COMMENT ON COLUMN public.plannings.target_date IS 'Target date (optional)';
 
--- RLS para plannings
+-- RLS for plannings
 ALTER TABLE public.plannings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Usuários podem ver apenas seus próprios planejamentos"
+CREATE POLICY "Users can only view their own plannings"
     ON public.plannings FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem inserir seus próprios planejamentos"
+CREATE POLICY "Users can insert their own plannings"
     ON public.plannings FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem atualizar seus próprios planejamentos"
+CREATE POLICY "Users can update their own plannings"
     ON public.plannings FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Usuários podem deletar seus próprios planejamentos"
+CREATE POLICY "Users can delete their own plannings"
     ON public.plannings FOR DELETE USING (auth.uid() = user_id);
 
--- Trigger para updated_at
+-- Trigger
 CREATE TRIGGER on_plannings_updated
     BEFORE UPDATE ON public.plannings
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
 -- =============================================
--- 14. TABELA: planning_items
+-- 13. TABLE: planning_items
 -- =============================================
--- Armazena os gastos individuais dentro de um planejamento
+-- Stores individual planned line items inside a planning budget
 
 CREATE TABLE IF NOT EXISTS public.planning_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -708,49 +576,48 @@ CREATE TABLE IF NOT EXISTS public.planning_items (
     amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
     category TEXT NOT NULL,
     payment_method TEXT NOT NULL,
-    date DATE, -- Data do gasto (opcional, se não informado usa a data do planejamento)
-    notes TEXT, -- Notas adicionais sobre o gasto
+    date DATE, -- Optional date of specific expenditure
+    notes TEXT, -- Optional free-text notes
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Índices para performance
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_planning_items_planning_id ON public.planning_items(planning_id);
 CREATE INDEX IF NOT EXISTS idx_planning_items_date ON public.planning_items(date);
 
--- Comentários
-COMMENT ON TABLE public.planning_items IS 'Gastos individuais dentro de um planejamento';
-COMMENT ON COLUMN public.planning_items.planning_id IS 'ID do planejamento ao qual este gasto pertence';
-COMMENT ON COLUMN public.planning_items.description IS 'Descrição do gasto';
-COMMENT ON COLUMN public.planning_items.amount IS 'Valor do gasto';
-COMMENT ON COLUMN public.planning_items.category IS 'Categoria do gasto';
-COMMENT ON COLUMN public.planning_items.payment_method IS 'Método de pagamento planejado';
-COMMENT ON COLUMN public.planning_items.date IS 'Data do gasto (opcional, se não informado usa a data do planejamento)';
-COMMENT ON COLUMN public.planning_items.notes IS 'Notas adicionais sobre o gasto';
+-- Comments
+COMMENT ON TABLE public.planning_items IS 'Individual planned line items inside a planning';
+COMMENT ON COLUMN public.planning_items.planning_id IS 'ID of parent planning budget';
+COMMENT ON COLUMN public.planning_items.description IS 'Description of planned expense';
+COMMENT ON COLUMN public.planning_items.amount IS 'Amount of planned expense';
+COMMENT ON COLUMN public.planning_items.category IS 'Category of planned expense';
+COMMENT ON COLUMN public.planning_items.payment_method IS 'Planned payment method';
+COMMENT ON COLUMN public.planning_items.date IS 'Date of specific expense (optional)';
+COMMENT ON COLUMN public.planning_items.notes IS 'Optional notes';
 
--- RLS para planning_items (baseado no planejamento)
+-- RLS for planning_items (based on planning parent permissions)
 ALTER TABLE public.planning_items ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Usuários podem ver itens de seus próprios planejamentos"
+CREATE POLICY "Users can view items of their own plannings"
     ON public.planning_items FOR SELECT
     USING (EXISTS (SELECT 1 FROM public.plannings p WHERE p.id = planning_id AND p.user_id = auth.uid()));
 
-CREATE POLICY "Usuários podem inserir itens em seus próprios planejamentos"
+CREATE POLICY "Users can insert items into their own plannings"
     ON public.planning_items FOR INSERT
     WITH CHECK (EXISTS (SELECT 1 FROM public.plannings p WHERE p.id = planning_id AND p.user_id = auth.uid()));
 
-CREATE POLICY "Usuários podem atualizar itens de seus próprios planejamentos"
+CREATE POLICY "Users can update items in their own plannings"
     ON public.planning_items FOR UPDATE
     USING (EXISTS (SELECT 1 FROM public.plannings p WHERE p.id = planning_id AND p.user_id = auth.uid()))
     WITH CHECK (EXISTS (SELECT 1 FROM public.plannings p WHERE p.id = planning_id AND p.user_id = auth.uid()));
 
-CREATE POLICY "Usuários podem deletar itens de seus próprios planejamentos"
+CREATE POLICY "Users can delete items from their own plannings"
     ON public.planning_items FOR DELETE
     USING (EXISTS (SELECT 1 FROM public.plannings p WHERE p.id = planning_id AND p.user_id = auth.uid()));
 
--- Trigger para updated_at
+-- Trigger
 CREATE TRIGGER on_planning_items_updated
     BEFORE UPDATE ON public.planning_items
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
-

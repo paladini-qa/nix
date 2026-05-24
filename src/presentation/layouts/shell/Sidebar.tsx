@@ -99,21 +99,21 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
     { icon: BatchRegistrationIcon, label: t("nav.nixai"), id: "nixai" },
-    { icon: NotificationsIcon, label: "Notificações", id: "notifications" },
+    { icon: NotificationsIcon, label: "Notifications", id: "notifications" },
   ];
 
   const resourcesNavItems: NavItem[] = [
-    { icon: PaymentIcon, label: "Pagamentos", id: "paymentMethods" },
+    { icon: PaymentIcon, label: "Payments", id: "paymentMethods" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
-    { icon: CreditCardIcon, label: "Parcelas", id: "splits" },
-    { icon: CategoryIcon, label: "Categorias", id: "categories" },
+    { icon: CreditCardIcon, label: "Splits", id: "splits" },
+    { icon: CategoryIcon, label: "Categories", id: "categories" },
     { icon: SubscriptionsIcon, label: t("nav.subscriptions"), id: "subscriptions" },
     { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
   ];
 
   const toolsNavItems: NavItem[] = [
     { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },
-    { icon: FiscalIcon, label: "Rel. Fiscal", id: "fiscal-report" },
+    { icon: FiscalIcon, label: "Fiscal Report", id: "fiscal-report" },
   ];
 
   const renderNavItem = (
@@ -238,7 +238,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 Nix Finance
               </Typography>
               <Typography sx={{ fontSize: 11, color: "text.disabled", fontWeight: 500 }}>
-                {new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </Typography>
             </Box>
           </Box>

@@ -336,17 +336,17 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             </Box>
             <Box>
               <Typography variant="subtitle1" fontWeight={600}>
-                Fatura: {formatCurrency(invoiceTotal)}
+                Bill: {formatCurrency(invoiceTotal)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {unpaidCount === 1
-                  ? "1 transação pendente"
-                  : `${unpaidCount} transações pendentes`}{" "}
+                  ? "1 pending transaction"
+                  : `${unpaidCount} pending transactions`}{" "}
                 ·{" "}
                 <strong style={{ color: "#f59e0b" }}>
                   {formatCurrency(unpaidExpenseAmount)}
                 </strong>{" "}
-                a pagar
+                to pay
               </Typography>
             </Box>
           </Box>
@@ -364,7 +364,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               },
             }}
           >
-            Pagar Fatura Completa
+            Pay Full Bill
           </Button>
         </Paper>
       )}
@@ -403,10 +403,10 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             </Box>
             <Box>
               <Typography variant="subtitle1" fontWeight={600} color="#10b981">
-                Fatura paga · {formatCurrency(invoiceTotal)}
+                Bill paid · {formatCurrency(invoiceTotal)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Todas as transações deste mês estão pagas!
+                All transactions for this month are paid!
               </Typography>
             </Box>
           </Box>
@@ -909,7 +909,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                               </Tooltip>
                             )}
                             {onDelete && (
-                              <Tooltip title={t.isVirtual ? "Excluir ocorrência" : "Excluir"}>
+                              <Tooltip title={t.isVirtual ? "Delete occurrence" : "Delete"}>
                                 <IconButton
                                   size="small"
                                   onClick={() => handleDelete(t)}
@@ -999,13 +999,13 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             </ListItemIcon>
             <ListItemText>
               {mobileActionAnchor.transaction?.isVirtual
-                ? "Editar Recorrência"
+                ? "Edit Occurrence"
                 : mobileActionAnchor.transaction?.isRecurring
-                ? "Editar Recorrente"
+                ? "Edit Recurring"
                 : mobileActionAnchor.transaction?.installments &&
                   mobileActionAnchor.transaction.installments > 1
-                ? "Editar Parcelas"
-                : "Editar"}
+                ? "Edit Splits"
+                : "Edit"}
             </ListItemText>
           </MenuItem>
         )}
@@ -1022,7 +1022,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               <DeleteIcon fontSize="small" color="error" />
             </ListItemIcon>
             <ListItemText>
-              {mobileActionAnchor.transaction?.isVirtual ? "Excluir Ocorrência" : "Excluir"}
+              {mobileActionAnchor.transaction?.isVirtual ? "Delete Occurrence" : "Delete"}
             </ListItemText>
           </MenuItem>
         )}

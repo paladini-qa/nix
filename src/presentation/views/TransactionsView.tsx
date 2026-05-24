@@ -1304,24 +1304,24 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     <Chip label={filterCategory} onDelete={() => setFilterCategory("all")} size="small" sx={{ bgcolor: alpha("#8b5cf6", 0.1) }} />
                   )}
                   {filterShared !== "all" && (
-                    <Chip label={filterShared === "shared" ? "Compartilhado" : "Não compartilhado"} onDelete={() => setFilterShared("all")} size="small" sx={{ bgcolor: alpha("#06b6d4", 0.1) }} />
+                    <Chip label={filterShared === "shared" ? "Shared" : "Not shared"} onDelete={() => setFilterShared("all")} size="small" sx={{ bgcolor: alpha("#06b6d4", 0.1) }} />
                   )}
                   {filterPaymentStatus !== "all" && (
-                    <Chip label={filterPaymentStatus === "paid" ? "Pago" : "Pendente"} onDelete={() => setFilterPaymentStatus("all")} size="small" sx={{ bgcolor: alpha("#f59e0b", 0.1), color: "#f59e0b" }} />
+                    <Chip label={filterPaymentStatus === "paid" ? "Paid" : "Pending"} onDelete={() => setFilterPaymentStatus("all")} size="small" sx={{ bgcolor: alpha("#f59e0b", 0.1), color: "#f59e0b" }} />
                   )}
                 </Stack>
               )}
 
-              {/* Tipo */}
+              {/* Type */}
               <Box>
                 <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 }}>
-                  Tipo
+                  Type
                 </Typography>
                 <Stack direction="row" gap={1}>
                   {(["all", "income", "expense"] as const).map((val) => (
                     <Chip
                       key={val}
-                      label={val === "all" ? "Todos" : val === "income" ? "Receitas" : "Despesas"}
+                      label={val === "all" ? "All" : val === "income" ? "Income" : "Expenses"}
                       onClick={() => setFilterType(val)}
                       variant={filterType === val ? "filled" : "outlined"}
                       size="medium"
@@ -1348,7 +1348,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   {(["all", "paid", "pending"] as const).map((val) => (
                     <Chip
                       key={val}
-                      label={val === "all" ? "Todos" : val === "paid" ? "Pago" : "Pendente"}
+                      label={val === "all" ? "All" : val === "paid" ? "Paid" : "Pending"}
                       onClick={() => setFilterPaymentStatus(val)}
                       variant={filterPaymentStatus === val ? "filled" : "outlined"}
                       size="medium"
@@ -1366,39 +1366,39 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                 </Stack>
               </Box>
 
-              {/* Categoria */}
+              {/* Category */}
               <FormControl fullWidth size="small">
-                <InputLabel>Categoria</InputLabel>
+                <InputLabel>Category</InputLabel>
                 <Select
                   value={filterCategory}
-                  label="Categoria"
+                  label="Category"
                   onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}
                   sx={{ borderRadius: "12px" }}
                 >
-                  <MenuItem value="all">Todas as categorias</MenuItem>
+                  <MenuItem value="all">All categories</MenuItem>
                   {availableCategories.map((cat) => (
                     <MenuItem key={cat} value={cat}>{cat}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
 
-              {/* Compartilhado */}
+              {/* Shared */}
               <FormControl fullWidth size="small">
-                <InputLabel>Compartilhado</InputLabel>
+                <InputLabel>Shared</InputLabel>
                 <Select
                   value={filterShared}
-                  label="Compartilhado"
+                  label="Shared"
                   onChange={(e: SelectChangeEvent) => setFilterShared(e.target.value as "all" | "shared" | "not_shared")}
                   sx={{ borderRadius: "12px" }}
                 >
-                  <MenuItem value="all">Todos</MenuItem>
+                  <MenuItem value="all">All</MenuItem>
                   <MenuItem value="shared">
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <GroupIcon fontSize="small" color="info" />
-                      Compartilhado
+                      Shared
                     </Box>
                   </MenuItem>
-                  <MenuItem value="not_shared">Não compartilhado</MenuItem>
+                  <MenuItem value="not_shared">Not shared</MenuItem>
                 </Select>
               </FormControl>
             </Stack>
@@ -1717,8 +1717,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           ) : (
             <EmptyState
               type="transactions"
-              title="Nenhuma transação encontrada"
-              description="Nenhuma transação encontrada com os filtros atuais."
+              title="No transactions found"
+              description="No transactions found with the current filters."
               compact
             />
           )}

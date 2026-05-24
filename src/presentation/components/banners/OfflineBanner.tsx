@@ -54,22 +54,22 @@ const OfflineBanner: React.FC<OfflineBannerProps> = ({ isOnline, pendingCount })
       color:  "#fca5a5",
       icon: <WifiOff size={14} />,
       text: pendingCount > 0
-        ? `Offline — ${pendingCount} alteraç${pendingCount === 1 ? "ão" : "ões"} pendente${pendingCount === 1 ? "" : "s"}`
-        : "Sem conexão",
+        ? `Offline — ${pendingCount} pending change${pendingCount === 1 ? "" : "s"}`
+        : "No connection",
     },
     syncing: {
       bg:     alpha("#fcd34d", 0.12),
       border: alpha("#fcd34d", 0.25),
       color:  "#fcd34d",
       icon: <CloudUpload size={14} />,
-      text: "Sincronizando...",
+      text: "Syncing...",
     },
     synced: {
       bg:     alpha("#4ade80", 0.12),
       border: alpha("#4ade80", 0.22),
       color:  "#4ade80",
       icon: <CheckCircle size={14} />,
-      text: "Sincronizado",
+      text: "Synced",
     },
   };
 

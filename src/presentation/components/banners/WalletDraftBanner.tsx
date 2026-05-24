@@ -34,7 +34,7 @@ const WalletDraftBanner: React.FC<WalletDraftBannerProps> = ({
   }, [draft, onDismiss]);
 
   const formattedAmount = draft
-    ? new Intl.NumberFormat("pt-BR", {
+    ? new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: draft.currency || "BRL",
         minimumFractionDigits: 2,
@@ -117,7 +117,7 @@ const WalletDraftBanner: React.FC<WalletDraftBannerProps> = ({
                     mb: 0.25,
                   }}
                 >
-                  Google Wallet detectou
+                  Google Wallet detected
                 </Box>
                 <Box
                   sx={{
@@ -173,7 +173,7 @@ const WalletDraftBanner: React.FC<WalletDraftBannerProps> = ({
                     "&:active": { transform: "scale(0.95)" },
                   }}
                 >
-                  Registrar
+                  Register
                   <ArrowRight size={13} />
                 </Box>
 

@@ -1,6 +1,8 @@
 import React, { Suspense, lazy, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
+import { calculateInvoiceDueDate } from "@/domain/usecases/transactionUtils";
+import type { Transaction } from "@/domain/entities";
 import { useAppStore } from "@/presentation/hooks/useAppStore";
 import { useTransactionsQuery } from "@/presentation/hooks/useTransactionsQuery";
 import { useWalletSync } from "@/presentation/hooks/useWalletSync";
@@ -85,12 +87,13 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
     await supabase.auth.signOut();
   };
 
-  const { 
-    data: transactions = [], 
-    isLoading, 
+  const {
+    data: transactions = [],
+    isLoading,
     refetch,
     addTransaction,
-    updateTransaction 
+    bulkAddTransactions,
+    updateTransaction
   } = useTransactionsQuery();
 
   const currentBalance = transactions.reduce((acc, t) => {
@@ -102,6 +105,79 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
       if (editId) {
         await updateTransaction({ id: editId, ...txData });
         showSuccess("Transação atualizada com sucesso!");
+      } else if (txData.installments && txData.installments > 1) {
+        const totalInstallments = txData.installments;
+        const txAmount = txData.amount || 0;
+        const installmentAmount = Math.round((txAmount / totalInstallments) * 100) / 100;
+        const totalFromInstallments = installmentAmount * totalInstallments;
+        const remainder = Math.round((txAmount - totalFromInstallments) * 100) / 100;
+        const installmentGroupId = crypto.randomUUID();
+
+        const pmConfig = getPaymentMethodConfig(txData.paymentMethod);
+        const isCardMethod =
+          pmConfig?.type === "card" && !!pmConfig.closingDay && !!pmConfig.paymentDay;
+        const baseDate = isCardMethod
+          ? txData.date
+          : (txData.invoiceDueDate ?? txData.date);
+
+        const installmentPayloads: Partial<Transaction>[] = [];
+        for (let i = 0; i < totalInstallments; i++) {
+          const amount = i === 0 ? installmentAmount + remainder : installmentAmount;
+          const installmentDate = dayjs(baseDate).add(i, "month").format("YYYY-MM-DD");
+
+          let invoiceDueDate: string | undefined;
+          if (isCardMethod && pmConfig) {
+            invoiceDueDate = calculateInvoiceDueDate(installmentDate, pmConfig) ?? undefined;
+          } else if (txData.invoiceDueDate) {
+            invoiceDueDate = dayjs(baseDate).add(i, "month").format("YYYY-MM-DD");
+          }
+
+          installmentPayloads.push({
+            description: txData.description,
+            amount,
+            type: txData.type,
+            category: txData.category,
+            paymentMethod: txData.paymentMethod,
+            date: installmentDate,
+            invoiceDueDate,
+            isRecurring: false,
+            installments: totalInstallments,
+            currentInstallment: i + 1,
+            isPaid: false,
+            isShared: txData.isShared,
+            sharedWith: txData.sharedWith,
+            iOwe: txData.iOwe,
+            notes: txData.notes,
+            installmentGroupId,
+          });
+        }
+
+        const createdInstallments = await bulkAddTransactions(installmentPayloads);
+
+        // Create income reimbursement transactions for split expenses (iOwe=false)
+        if (
+          txData.isShared &&
+          txData.sharedWith &&
+          txData.type === "expense" &&
+          !txData.iOwe
+        ) {
+          const incomePayloads: Partial<Transaction>[] = createdInstallments.map((inst) => ({
+            description: `${inst.description} - ${txData.sharedWith}`,
+            amount: Math.round((inst.amount / 2) * 100) / 100,
+            type: "income" as const,
+            category: "Other",
+            paymentMethod: inst.paymentMethod,
+            date: inst.date,
+            isRecurring: false,
+            isPaid: false,
+            installments: totalInstallments,
+            currentInstallment: inst.currentInstallment,
+            relatedTransactionId: inst.id,
+          }));
+          await bulkAddTransactions(incomePayloads);
+        }
+
+        showSuccess("Transação criada com sucesso!");
       } else {
         await addTransaction(txData);
         showSuccess("Transação salva com sucesso!");

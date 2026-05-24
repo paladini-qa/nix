@@ -102,7 +102,7 @@ interface FriendBalance {
 const SharedView: React.FC<SharedViewProps> = ({
   transactions,
   friends,
-  userName = "Usuário",
+  userName = "User",
   selectedMonth: controlledSelectedMonth,
   selectedYear: controlledSelectedYear,
   onDateChange,
@@ -589,15 +589,15 @@ const SharedView: React.FC<SharedViewProps> = ({
   }, [selectedFriend, friendBalances, allFriends]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "BRL",
+      currency: "USD",
     }).format(value);
   };
 
   const formatDate = (dateString: string) => {
     const [year, month, day] = dateString.split("-");
-    return `${day}/${month}/${year}`;
+    return `${month}/${day}/${year}`;
   };
 
   const getInitials = (name: string) => {
@@ -719,11 +719,11 @@ const SharedView: React.FC<SharedViewProps> = ({
               : `0 4px 20px -4px ${alpha(stats.netBalance >= 0 ? "#10b981" : "#ef4444", 0.15)}`,
           }}
         >
-          {/* Saldo Líquido */}
+          {/* Net Balance */}
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Box>
               <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Saldo Líquido
+                Net Balance
               </Typography>
               <Typography sx={{ fontSize: 28, fontWeight: 800, color: stats.netBalance >= 0 ? "#10b981" : "#ef4444", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
                 {stats.netBalance >= 0 ? "+" : ""}{formatCurrency(stats.netBalance)}
@@ -748,7 +748,7 @@ const SharedView: React.FC<SharedViewProps> = ({
 
           {/* Breakdown Section */}
           <Grid container spacing={2}>
-            {/* A Receber */}
+            {/* To Receive */}
             <Grid size={{ xs: 4 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Box
@@ -768,7 +768,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    A Receber
+                    To Receive
                   </Typography>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
                     {formatCurrency(stats.totalPending)}
@@ -777,7 +777,7 @@ const SharedView: React.FC<SharedViewProps> = ({
               </Box>
             </Grid>
 
-            {/* A Pagar */}
+            {/* To Pay */}
             <Grid size={{ xs: 4 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Box
@@ -797,7 +797,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    A Pagar
+                    To Pay
                   </Typography>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
                     {formatCurrency(stats.totalPendingIOwe)}
@@ -806,7 +806,7 @@ const SharedView: React.FC<SharedViewProps> = ({
               </Box>
             </Grid>
 
-            {/* Amigos */}
+            {/* Friends */}
             <Grid size={{ xs: 4 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Box
@@ -826,7 +826,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Amigos
+                    Friends
                   </Typography>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
                     {stats.friendCount}
@@ -858,12 +858,12 @@ const SharedView: React.FC<SharedViewProps> = ({
                 <TrendingUpIcon sx={{ fontSize: 20 }} />
               </Box>
               <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                A Receber
+                To Receive
               </Typography>
               <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981", fontVariantNumeric: "tabular-nums", pr: 6 }}>
                 {formatCurrency(stats.totalPending)}
               </Typography>
-              <Typography variant="caption" color="text.secondary">Amigos me devem</Typography>
+              <Typography variant="caption" color="text.secondary">Friends owe me</Typography>
             </Paper>
           </Grid>
 
@@ -887,12 +887,12 @@ const SharedView: React.FC<SharedViewProps> = ({
                 <TrendingDownIcon sx={{ fontSize: 20 }} />
               </Box>
               <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                A Pagar
+                To Pay
               </Typography>
               <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
                 {formatCurrency(stats.totalPendingIOwe)}
               </Typography>
-              <Typography variant="caption" color="text.secondary">Eu devo</Typography>
+              <Typography variant="caption" color="text.secondary">I owe</Typography>
             </Paper>
           </Grid>
 
@@ -916,12 +916,12 @@ const SharedView: React.FC<SharedViewProps> = ({
                 <BalanceIcon sx={{ fontSize: 20 }} />
               </Box>
               <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                Saldo Líquido
+                Net Balance
               </Typography>
               <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: stats.netBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
                 {stats.netBalance >= 0 ? "+" : ""}{formatCurrency(stats.netBalance)}
               </Typography>
-              <Typography variant="caption" color="text.secondary">{stats.netBalance >= 0 ? "A seu favor" : "Você deve"}</Typography>
+              <Typography variant="caption" color="text.secondary">{stats.netBalance >= 0 ? "In your favor" : "You owe"}</Typography>
             </Paper>
           </Grid>
 
@@ -945,12 +945,12 @@ const SharedView: React.FC<SharedViewProps> = ({
                 <PeopleIcon sx={{ fontSize: 20 }} />
               </Box>
               <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                Amigos
+                Friends
               </Typography>
               <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "text.primary", fontVariantNumeric: "tabular-nums" }}>
                 {stats.friendCount}
               </Typography>
-              <Typography variant="caption" color="text.secondary">Com transações</Typography>
+              <Typography variant="caption" color="text.secondary">With transactions</Typography>
             </Paper>
           </Grid>
         </Grid>
@@ -960,15 +960,15 @@ const SharedView: React.FC<SharedViewProps> = ({
       {friendBalances.length === 0 ? (
         <EmptyState
           type="shared"
-          title="Nenhum gasto compartilhado ainda"
-          description="Crie um gasto compartilhado para acompanhar saldos com amigos!"
-          actionLabel="Criar Gasto Compartilhado"
+          title="No shared expenses yet"
+          description="Create a shared expense to track balances with friends!"
+          actionLabel="Create Shared Expense"
           onAction={onNewTransaction}
         />
       ) : (
         <>
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-            Saldo por Amigo
+            Balance per Friend
           </Typography>
           <Grid container spacing={gridSpacing}>
             {friendBalances.map((friend) => (
@@ -1059,14 +1059,14 @@ const SharedView: React.FC<SharedViewProps> = ({
                         </Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? 11 : 12 }}>
                           {isMobile ? (
-                            `${friend.expenses.length} desp. compartilhada${friend.expenses.length !== 1 ? "s" : ""}`
+                            `${friend.expenses.length} shared expens${friend.expenses.length !== 1 ? "es" : "e"}`
                           ) : (
-                            `${friend.expenses.length} despesa${friend.expenses.length !== 1 ? "s" : ""} compartilhada${friend.expenses.length !== 1 ? "s" : ""}`
+                            `${friend.expenses.length} shared expens${friend.expenses.length !== 1 ? "es" : "e"}`
                           )}
                         </Typography>
                       </Box>
-                      {/* Botão de gerar relatório PDF */}
-                      <Tooltip title="Gerar relatório PDF" arrow>
+                      {/* PDF Report Generation Button */}
+                      <Tooltip title="Generate PDF report" arrow>
                         <IconButton
                           size="small"
                           onClick={(e) => handleGeneratePdf(friend.name, e)}
@@ -1099,7 +1099,7 @@ const SharedView: React.FC<SharedViewProps> = ({
 
                     <Divider sx={{ mb: isMobile ? 1 : 2 }} />
 
-                    {/* A receber / Você deve: soma das transações EXIBIDAS na aba */}
+                    {/* To receive / You owe: sum of displayed transactions */}
                     {(() => {
                       const displayed =
                         friendDisplayedTotals.get(friend.name) ?? {
@@ -1114,7 +1114,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                             {displayed.toReceive > 0 && (
                               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography sx={{ fontSize: 12.5, fontWeight: 500, color: "text.secondary" }}>
-                                  A receber:
+                                  To receive:
                                 </Typography>
                                 <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: "success.main" }}>
                                   {formatCurrency(displayed.toReceive)}
@@ -1124,7 +1124,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                             {displayed.toPay > 0 && (
                               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <Typography sx={{ fontSize: 12.5, fontWeight: 500, color: "text.secondary" }}>
-                                  Você deve:
+                                  You owe:
                                 </Typography>
                                 <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: "error.main" }}>
                                   {formatCurrency(displayed.toPay)}
@@ -1134,14 +1134,14 @@ const SharedView: React.FC<SharedViewProps> = ({
                             {displayed.toReceive === 0 && displayed.toPay === 0 && (
                               <Box sx={{ py: 0.5, display: "flex", justifyContent: "center" }}>
                                 <Typography sx={{ fontSize: 12, fontWeight: 600, color: "text.secondary", opacity: 0.7 }}>
-                                  Sem pendências
+                                  No pending balances
                                 </Typography>
                               </Box>
                             )}
                             {(friend.totalPaid > 0 || friend.totalIPaid > 0) && (
                               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.25 }}>
                                 <Typography sx={{ fontSize: 11, color: "text.secondary", opacity: 0.8 }}>
-                                  Já acertado:
+                                  Settled:
                                 </Typography>
                                 <Typography sx={{ fontSize: 11, color: "text.secondary", fontWeight: 500 }}>
                                   {formatCurrency(friend.totalPaid + friend.totalIPaid)}
@@ -1160,7 +1160,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                                 }}
                               >
                                 <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: "text.primary" }}>
-                                  Saldo líquido:
+                                  Net balance:
                                 </Typography>
                                 <Typography
                                   sx={{
@@ -1183,149 +1183,149 @@ const SharedView: React.FC<SharedViewProps> = ({
                           {displayed.toReceive > 0 && (
                             <Box
                               sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: 2,
-                                p: 1.5,
-                                borderRadius: "20px",
-                                bgcolor: alpha(
-                                  theme.palette.success.main,
-                                  0.1
-                                ),
-                              }}
-                            >
-                              <Typography variant="body2" fontWeight={600}>
-                                A receber:
-                              </Typography>
-                              <Typography
-                                variant="h6"
-                                fontWeight={700}
-                                color="success.main"
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  mb: 2,
+                                  p: 1.5,
+                                  borderRadius: "20px",
+                                  bgcolor: alpha(
+                                    theme.palette.success.main,
+                                    0.1
+                                  ),
+                                }}
                               >
-                                {formatCurrency(displayed.toReceive)}
-                              </Typography>
-                            </Box>
-                          )}
-                          {displayed.toPay > 0 && (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: 2,
-                                p: 1.5,
-                                borderRadius: "20px",
-                                bgcolor: alpha(
-                                  theme.palette.error.main,
-                                  0.1
-                                ),
-                              }}
-                            >
-                              <Typography variant="body2" fontWeight={600}>
-                                Você deve:
-                              </Typography>
-                              <Typography
-                                variant="h6"
-                                fontWeight={700}
-                                color="error.main"
+                                <Typography variant="body2" fontWeight={600}>
+                                  To receive:
+                                </Typography>
+                                <Typography
+                                  variant="h6"
+                                  fontWeight={700}
+                                  color="success.main"
+                                >
+                                  {formatCurrency(displayed.toReceive)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {displayed.toPay > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  mb: 2,
+                                  p: 1.5,
+                                  borderRadius: "20px",
+                                  bgcolor: alpha(
+                                    theme.palette.error.main,
+                                    0.1
+                                  ),
+                                }}
                               >
-                                {formatCurrency(displayed.toPay)}
-                              </Typography>
-                            </Box>
-                          )}
-                          {displayed.toReceive === 0 && displayed.toPay === 0 && (
-                            <Box sx={{ mb: 2 }} />
-                          )}
+                                <Typography variant="body2" fontWeight={600}>
+                                  You owe:
+                                </Typography>
+                                <Typography
+                                  variant="h6"
+                                  fontWeight={700}
+                                  color="error.main"
+                                >
+                                  {formatCurrency(displayed.toPay)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {displayed.toReceive === 0 && displayed.toPay === 0 && (
+                              <Box sx={{ mb: 2 }} />
+                            )}
 
-                          {/* Detalhes */}
-                          {displayed.toReceive > 0 && (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                mb: 0.5,
-                              }}
-                            >
-                              <Typography variant="caption" color="text.secondary">
-                                {friend.name} me deve:
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                fontWeight={600}
-                                color="success.main"
+                            {/* Details */}
+                            {displayed.toReceive > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  mb: 0.5,
+                                }}
                               >
-                                {formatCurrency(displayed.toReceive)}
-                              </Typography>
-                            </Box>
-                          )}
-                          {displayed.toPay > 0 && (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                mb: 0.5,
-                              }}
-                            >
-                              <Typography variant="caption" color="text.secondary">
-                                Eu devo a {friend.name}:
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                fontWeight={600}
-                                color="error.main"
+                                <Typography variant="caption" color="text.secondary">
+                                  {friend.name} owes me:
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  fontWeight={600}
+                                  color="success.main"
+                                >
+                                  {formatCurrency(displayed.toReceive)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {displayed.toPay > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  mb: 0.5,
+                                }}
                               >
-                                {formatCurrency(displayed.toPay)}
-                              </Typography>
-                            </Box>
-                          )}
-                          {(friend.totalPaid > 0 || friend.totalIPaid > 0) && (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                mb: 0.5,
-                              }}
-                            >
-                              <Typography variant="caption" color="text.secondary">
-                                Já acertado:
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {formatCurrency(friend.totalPaid + friend.totalIPaid)}
-                              </Typography>
-                            </Box>
-                          )}
-                          {displayed.toReceive > 0 && displayed.toPay > 0 && (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                mt: 1,
-                                pt: 1,
-                                borderTop: 1,
-                                borderColor: "divider",
-                              }}
-                            >
-                              <Typography variant="caption" color="text.secondary">
-                                Saldo líquido:
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                fontWeight={600}
-                                color={
-                                  displayed.netBalance >= 0
-                                    ? "success.main"
-                                    : "error.main"
-                                }
+                                <Typography variant="caption" color="text.secondary">
+                                  I owe {friend.name}:
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  fontWeight={600}
+                                  color="error.main"
+                                >
+                                  {formatCurrency(displayed.toPay)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {(friend.totalPaid > 0 || friend.totalIPaid > 0) && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  mb: 0.5,
+                                }}
                               >
-                                {displayed.netBalance >= 0 ? "+" : ""}
-                                {formatCurrency(displayed.netBalance)}
-                              </Typography>
-                            </Box>
-                          )}
-                        </>
-                      );
-                    })()}
+                                <Typography variant="caption" color="text.secondary">
+                                  Settled:
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {formatCurrency(friend.totalPaid + friend.totalIPaid)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {displayed.toReceive > 0 && displayed.toPay > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  mt: 1,
+                                  pt: 1,
+                                  borderTop: 1,
+                                  borderColor: "divider",
+                                }}
+                              >
+                                <Typography variant="caption" color="text.secondary">
+                                  Net balance:
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  fontWeight={600}
+                                  color={
+                                    displayed.netBalance >= 0
+                                      ? "success.main"
+                                      : "error.main"
+                                  }
+                                >
+                                  {displayed.netBalance >= 0 ? "+" : ""}
+                                  {formatCurrency(displayed.netBalance)}
+                                </Typography>
+                              </Box>
+                            )}
+                          </>
+                        );
+                      })()}
                   </CardContent>
                 </Card>
               </Grid>
@@ -1375,10 +1375,10 @@ const SharedView: React.FC<SharedViewProps> = ({
 
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Amigo</InputLabel>
+            <InputLabel>Friend</InputLabel>
             <Select
               value={selectedFriend}
-              label="Amigo"
+              label="Friend"
               onChange={(e: SelectChangeEvent) =>
                 setSelectedFriend(e.target.value)
               }
@@ -1386,7 +1386,7 @@ const SharedView: React.FC<SharedViewProps> = ({
               <MenuItem value="all">
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <PeopleIcon fontSize="small" />
-                  Todos os Amigos
+                  All Friends
                 </Box>
               </MenuItem>
               {allFriends.map((friendName) => {
@@ -1435,17 +1435,17 @@ const SharedView: React.FC<SharedViewProps> = ({
                 setFilterStatus(e.target.value as PaymentStatus)
               }
             >
-              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="all">All</MenuItem>
               <MenuItem value="pending">
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <ScheduleIcon fontSize="small" color="warning" />
-                  Pendentes
+                  Pending
                 </Box>
               </MenuItem>
               <MenuItem value="paid">
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <CheckCircleIcon fontSize="small" color="success" />
-                  Quitados
+                  Paid
                 </Box>
               </MenuItem>
             </Select>
@@ -1453,7 +1453,7 @@ const SharedView: React.FC<SharedViewProps> = ({
 
           {/* Refresh Button */}
           {onRefreshData && (
-            <Tooltip title="Atualizar dados">
+            <Tooltip title="Refresh data">
               <IconButton
                 onClick={handleRefresh}
                 disabled={isRefreshing}
@@ -1524,8 +1524,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                 {selectedFriendStats.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {selectedFriendStats.expenses.length} despesa
-                {selectedFriendStats.expenses.length !== 1 ? "s" : ""} • Saldo:{" "}
+                {selectedFriendStats.expenses.length} shared expens{selectedFriendStats.expenses.length !== 1 ? "es" : "e"} • Balance:{" "}
                 <Typography
                   component="span"
                   fontWeight={600}
@@ -1539,8 +1538,8 @@ const SharedView: React.FC<SharedViewProps> = ({
                   {formatCurrency(selectedFriendStats.netBalance)}
                 </Typography>
                 {selectedFriendStats.netBalance >= 0
-                  ? " (a receber)"
-                  : " (você deve)"}
+                  ? " (to receive)"
+                  : " (you owe)"}
               </Typography>
             </Box>
             <Box sx={{ display: "flex", gap: 1 }}>
@@ -1563,14 +1562,14 @@ const SharedView: React.FC<SharedViewProps> = ({
                   },
                 }}
               >
-                {isMobile ? "PDF" : "Gerar Relatório PDF"}
+                {isMobile ? "PDF" : "Generate PDF Report"}
               </Button>
               <Button
                 variant="outlined"
                 size="small"
                 onClick={() => setSelectedFriend("all")}
               >
-                Limpar Filtro
+                Clear Filter
               </Button>
             </Box>
           </Box>
@@ -1604,15 +1603,15 @@ const SharedView: React.FC<SharedViewProps> = ({
                     ? transactionAmount
                     : transactionAmount / 2;
                   isPositive = true;
-                  typeLabel = "Receber";
+                  typeLabel = "To Receive";
                 } else if (t.iOwe) {
                   displayAmount = transactionAmount;
                   isPositive = false;
-                  typeLabel = "Devo";
+                  typeLabel = "I Owe";
                 } else {
                   displayAmount = transactionAmount / 2;
                   isPositive = true;
-                  typeLabel = "Receber";
+                  typeLabel = "To Receive";
                 }
 
                 return (
@@ -1650,7 +1649,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                           {t.description}
                           {t.type === "income" && (
                             <Chip
-                              label="Receita"
+                              label="Income"
                               size="small"
                               color="success"
                               variant="outlined"
@@ -1701,11 +1700,11 @@ const SharedView: React.FC<SharedViewProps> = ({
                             label={
                               isPaid
                                 ? isPositive
-                                  ? "Recebido"
-                                  : "Pago"
+                                  ? "Received"
+                                  : "Paid"
                                 : isPositive
-                                ? "A receber"
-                                : "A pagar"
+                                ? "To receive"
+                                : "To pay"
                             }
                             size="small"
                             color={
@@ -1758,19 +1757,19 @@ const SharedView: React.FC<SharedViewProps> = ({
                   <TableCell
                     sx={{ ...getHeaderCellSx(theme, isDarkMode), width: 50 }}
                   >
-                    Pago
+                    Paid
                   </TableCell>
                   <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                    Descrição
+                    Description
                   </TableCell>
                   <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                    Amigo
+                    Friend
                   </TableCell>
                   <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                    Categoria
+                    Category
                   </TableCell>
                   <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                    Data
+                    Date
                   </TableCell>
                   <TableCell
                     sx={{
@@ -1778,7 +1777,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                       textAlign: "right",
                     }}
                   >
-                    Valor
+                    Amount
                   </TableCell>
                   <TableCell
                     sx={{
@@ -1796,7 +1795,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                       width: 100,
                     }}
                   >
-                    Ações
+                    Actions
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -1822,20 +1821,20 @@ const SharedView: React.FC<SharedViewProps> = ({
                       : transactionAmount / 2;
                     isPositive = true;
                     typeLabel = t.iOwe
-                      ? "Pagamento"
+                      ? "Payment"
                       : hasRelatedExpense
-                      ? "Pagamento (50%)"
-                      : "Pagamento (50%)";
+                      ? "Payment (50%)"
+                      : "Payment (50%)";
                   } else if (t.iOwe) {
-                    // EXPENSE + Conta Única: eu devo ao amigo
+                    // EXPENSE + Conta Única: I owe the friend
                     displayAmount = transactionAmount;
                     isPositive = false;
-                    typeLabel = "Eu devo";
+                    typeLabel = "I owe";
                   } else {
-                    // EXPENSE + Conta Dividida: amigo me deve 50%
+                    // EXPENSE + Conta Dividida: friend owes me 50%
                     displayAmount = transactionAmount / 2;
                     isPositive = true;
-                    typeLabel = "Me devem (50%)";
+                    typeLabel = "They owe me (50%)";
                   }
 
                   const rowIndex = filteredTransactions.indexOf(t);
@@ -1867,7 +1866,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                         </Typography>
                         {t.type === "income" && (
                           <Chip
-                            label="Receita"
+                            label="Income"
                             size="small"
                             color="success"
                             variant="outlined"
@@ -1923,11 +1922,11 @@ const SharedView: React.FC<SharedViewProps> = ({
                           label={
                             isPaid
                               ? isPositive
-                                ? "Recebido"
-                                : "Pago"
+                                ? "Received"
+                                : "Paid"
                               : isPositive
-                              ? "A receber"
-                              : "A pagar"
+                              ? "To receive"
+                              : "To pay"
                           }
                           size="small"
                           color={

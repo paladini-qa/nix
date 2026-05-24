@@ -134,16 +134,16 @@ const mobileCardVariants = {
 // ─── Funções puras hoistadas — não recriadas em cada render ───────────────────
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 
 const formatDate = (dateString: string) => {
   const [, month, day] = dateString.split("-");
-  return `${day}/${month}`;
+  return `${month}/${day}`;
 };
 
 const formatDateFull = (dateString: string) => {
   const [year, month, day] = dateString.split("-");
-  return `${day}/${month}/${year}`;
+  return `${month}/${day}/${year}`;
 };
 
 const getModernChipSx = (color: string, isDarkMode: boolean) => ({
@@ -294,8 +294,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       >
         <EmptyState
           type="transactions"
-          title="Nenhuma transação encontrada"
-          description="Adicione sua primeira transação para começar a acompanhar suas finanças."
+          title="No transactions found"
+          description="Add your first transaction to start tracking your finances."
           compact
         />
       </MotionPaper>
@@ -408,11 +408,11 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                   "& th": { borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}` },
                 }}
               >
-                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>DATA</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>DESCRIÇÃO</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>CATEGORIA</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>PAGAMENTO</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5, width: 200 }}>VALOR</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>DATE</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>DESCRIPTION</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>CATEGORY</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>PAYMENT</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5, width: 200 }}>AMOUNT</TableCell>
               </TableRow>
             </TableHead>
           </Table>
@@ -505,19 +505,19 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             }}
           >
             <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>
-              DATA
+              DATE
             </TableCell>
             <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>
-              DESCRIÇÃO
+              DESCRIPTION
             </TableCell>
             <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>
-              CATEGORIA
+              CATEGORY
             </TableCell>
             <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>
-              PAGAMENTO
+              PAYMENT
             </TableCell>
             <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5, width: 200 }}>
-              VALOR
+              AMOUNT
             </TableCell>
           </TableRow>
         </TableHead>

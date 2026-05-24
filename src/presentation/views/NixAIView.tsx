@@ -135,7 +135,7 @@ interface NixAIViewProps {
 // Componente de Timestamp formatado
 const MessageTimestamp: React.FC<{ date: Date }> = ({ date }) => {
   const formatTime = (d: Date) => {
-    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
@@ -275,12 +275,12 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <SparklesIcon sx={{ color: NIX_BRAND.purple, fontSize: 20 }} />
           <Typography variant="subtitle2" fontWeight={700}>
-            Transação Identificada
+            Identified Transaction
           </Typography>
         </Box>
         <Chip
           size="small"
-          label={`${Math.round(transaction.confidence * 100)}% confiança`}
+          label={`${Math.round(transaction.confidence * 100)}% confidence`}
           sx={{
             bgcolor: alpha(getConfidenceColor(transaction.confidence), 0.15),
             color: getConfidenceColor(transaction.confidence),
@@ -324,7 +324,7 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
             },
           }}
         >
-           Despesa
+            Expense
         </ToggleButton>
         <ToggleButton
           value="income"
@@ -335,7 +335,7 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
             },
           }}
         >
-           Receita
+            Income
         </ToggleButton>
       </ToggleButtonGroup>
 
@@ -400,7 +400,7 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
               fontWeight={700}
               color={type === "income" ? NIX_BRAND.success : NIX_BRAND.error}
             >
-              {amount ? `R$ ${parseFloat(amount).toFixed(2)}` : "Valor não identificado"}
+              {amount ? `R$ ${parseFloat(amount).toFixed(2)}` : "Value not identified"}
             </Typography>
           )}
         </Box>
@@ -447,7 +447,7 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <DateIcon sx={{ color: "text.secondary", fontSize: 18 }} />
           <Typography variant="caption" color="text.secondary">
-            {new Date(date + "T12:00:00").toLocaleDateString("pt-BR", {
+            {new Date(date + "T12:00:00").toLocaleDateString("en-US", {
               weekday: "long",
               day: "numeric",
               month: "long",
@@ -472,7 +472,7 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
             color: "text.secondary",
           }}
         >
-          Cancelar
+          Cancel
         </Button>
         <Button
           variant="contained"
@@ -491,7 +491,7 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
             },
           }}
         >
-          Confirmar
+          Confirm
         </Button>
       </Box>
 
@@ -501,7 +501,7 @@ const TransactionPreviewCard: React.FC<TransactionPreviewCardProps> = ({
         color="text.disabled"
         sx={{ display: "block", textAlign: "center", mt: 1.5 }}
       >
-         Clique nos campos para ajustar antes de confirmar
+         Click on fields to edit before confirming
       </Typography>
     </MotionPaper>
   );
@@ -698,10 +698,10 @@ const NixAIView: React.FC<NixAIViewProps> = ({
   const SUGGESTIONS = [
     { icon: <ReceiptIcon fontSize="small" />, label: "Ler recibo ou nota", action: () => fileInputRef.current?.click() },
     { icon: <MicIcon fontSize="small" />, label: "Descrever por áudio", action: () => startRecording() },
-    { icon: <AttachFileIcon fontSize="small" />, label: "Importar arquivo", action: () => fileInputRef.current?.click() },
+    { icon: <AttachFileIcon fontSize="small" />, label: "Import file", action: () => fileInputRef.current?.click() },
     { 
       icon: <TextFieldsIcon fontSize="small" />, 
-      label: "Digitar gastos", 
+      label: "Type transactions", 
       action: () => {
         setIsBatchMode(true);
         setTimeout(() => inputRef.current?.focus(), 50);
@@ -795,7 +795,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: "assistant",
-            content: "Entendi! Dá uma conferida nos dados abaixo e confirma pra eu salvar:",
+            content: "Understood! Please check the details below and confirm to save:",
             timestamp: new Date(),
             parsedTransaction: batch[0],
           };
@@ -806,7 +806,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: "assistant",
-            content: `Identifiquei **${batch.length} transações**. Confira a tabela, edite se precisar e confirme para salvar todas:`,
+            content: `I identified **${batch.length} transactions**. Check the table, edit if needed, and confirm to save them all:`,
             timestamp: new Date(),
           };
           setMessages((prev) => [...prev, assistantMessage]);
@@ -816,14 +816,14 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       } catch (error: any) {
         console.error("Error parsing text:", error);
         
-        let content = "Ops, não consegui entender os detalhes. \n\nTenta algo como: \"Gastei 50 reais no mercado com Pix\"";
+        let content = "Oops, I couldn't understand the details. \n\nTry something like: \"Spent 50 dollars at the supermarket with Debit Card\"";
         
         if (error?.code === "GEMINI_QUOTA_EXCEEDED") {
-          content = "⚠️ **Limite de Cota do Gemini Excedido**\n\nA cota de requisições gratuita do Gemini foi temporariamente esgotada (Erro 429). Por favor, aguarde alguns minutos antes de tentar novamente.\n\nSe você usa uma chave própria, verifique seus limites no [Google AI Studio](https://aistudio.google.com/).";
+          content = "⚠️ **Gemini Quota Exceeded**\n\nThe free requests quota for Gemini was temporarily exhausted (Error 429). Please wait a few minutes before trying again.\n\nIf you use your own key, check your limits on [Google AI Studio](https://aistudio.google.com/).";
         } else if (error?.code === "GEMINI_INVALID_KEY") {
-          content = "🔑 **Chave de API do Gemini Inválida**\n\nA chave de API configurada no arquivo `.env` é inválida ou foi revogada (Erro 400/403).\n\nPor favor, verifique se a variável `GEMINI_API_KEY` no seu arquivo `.env` está correta e ativa.";
+          content = "🔑 **Invalid Gemini API Key**\n\nThe API key configured in the `.env` file is invalid or has been revoked (Error 400/403).\n\nPlease verify that the `GEMINI_API_KEY` variable in your `.env` file is correct and active.";
         } else if (error?.code === "GEMINI_NOT_CONFIGURED" || error?.message === "GEMINI_NOT_CONFIGURED") {
-          content = `⚙️ **Chave de API do Gemini não configurada**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
+          content = `⚙️ **Gemini API Key not configured**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
         }
         
         const errorMessage: Message = {
@@ -872,7 +872,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       }, 1000);
     } catch (err) {
       console.error("Error starting recording:", err);
-      setSmartInputError("Não foi possível acessar o microfone. Verifique as permissões.");
+      setSmartInputError("Could not access the microphone. Check your permissions.");
     }
   };
 
@@ -895,7 +895,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       const userMessage: Message = {
         id: Date.now().toString(),
         role: "user",
-        content: `Arquivo importado: ${file.name}`,
+        content: `File imported: ${file.name}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, userMessage]);
@@ -909,7 +909,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: "assistant",
-            content: "Nenhuma transação encontrada no arquivo. Verifique o formato.",
+            content: "No transactions found in the file. Check the format.",
             timestamp: new Date(),
           };
           setMessages((prev) => [...prev, assistantMessage]);
@@ -918,7 +918,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
             description: row.description,
             amount: row.amount,
             type: row.type,
-            category: row.type === "income" ? (categories.income[0] || "Outros") : (categories.expense[0] || "Outros"),
+            category: row.type === "income" ? (categories.income[0] || "Other") : (categories.expense[0] || "Other"),
             paymentMethod: paymentMethods[0] || "",
             date: row.date || new Date().toISOString().split("T")[0],
             confidence: 1,
@@ -928,7 +928,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: "assistant",
-            content: `Identifiquei **${batch.length} transações** no arquivo. Confira a tabela e confirme:`,
+            content: `I identified **${batch.length} transactions** in the file. Check the table and confirm:`,
             timestamp: new Date(),
           };
           setMessages((prev) => [...prev, assistantMessage]);
@@ -937,7 +937,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         }
       } catch (err) {
         console.error(err);
-        setSmartInputError("Erro ao processar o arquivo. Verifique o formato.");
+        setSmartInputError("Error processing the file. Check the format.");
       } finally {
         setIsLoading(false);
       }
@@ -947,7 +947,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
 
     // Image logic
     if (file.size > 4 * 1024 * 1024) {
-      setSmartInputError("Imagem muito grande. Máximo 4MB.");
+      setSmartInputError("Image too large. Maximum 4MB.");
       return;
     }
     setIsLoading(true);
@@ -956,7 +956,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: `Foto enviada: ${file.name}`,
+      content: `Photo sent: ${file.name}`,
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMessage]);
@@ -972,7 +972,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
             const assistantMessage: Message = {
               id: (Date.now() + 1).toString(),
               role: "assistant",
-              content: "Li o recibo! Confere os dados:",
+              content: "I read the receipt! Check the details:",
               timestamp: new Date(),
               parsedTransaction: batch[0],
             };
@@ -983,7 +983,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
             const assistantMessage: Message = {
               id: (Date.now() + 1).toString(),
               role: "assistant",
-              content: `Li **${batch.length} transações** na foto. Confira e confirme:`,
+              content: `I read **${batch.length} transactions** from the photo. Check and confirm:`,
               timestamp: new Date(),
             };
             setMessages((prev) => [...prev, assistantMessage]);
@@ -993,14 +993,14 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         } catch (err: any) {
           console.error(err);
           
-          let content = "Não foi possível ler a imagem. Tente outra foto com boa iluminação.";
+          let content = "Could not read the image. Try another photo with good lighting.";
           
           if (err?.code === "GEMINI_QUOTA_EXCEEDED") {
-            content = "⚠️ **Limite de Cota do Gemini Excedido**\n\nA cota de requisições gratuita do Gemini foi temporariamente esgotada (Erro 429). Por favor, aguarde alguns minutos antes de tentar novamente.\n\nSe você usa uma chave própria, verifique seus limites no [Google AI Studio](https://aistudio.google.com/).";
+            content = "⚠️ **Gemini Quota Exceeded**\n\nThe free requests quota for Gemini was temporarily exhausted (Error 429). Please wait a few minutes before trying again.\n\nIf you use your own key, check your limits on [Google AI Studio](https://aistudio.google.com/).";
           } else if (err?.code === "GEMINI_INVALID_KEY") {
-            content = "🔑 **Chave de API do Gemini Inválida**\n\nA chave de API configurada no arquivo `.env` é inválida ou foi revogada (Erro 400/403).\n\nPor favor, verifique se a variável `GEMINI_API_KEY` no seu arquivo `.env` está correta e ativa.";
+            content = "🔑 **Invalid Gemini API Key**\n\nThe API key configured in the `.env` file is invalid or has been revoked (Error 400/403).\n\nPlease verify that the `GEMINI_API_KEY` variable in your `.env` file is correct and active.";
           } else if (err?.code === "GEMINI_NOT_CONFIGURED" || err?.message === "GEMINI_NOT_CONFIGURED") {
-            content = `⚙️ **Chave de API do Gemini não configurada**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
+            content = `⚙️ **Gemini API Key not configured**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
           }
 
           const errorMessage: Message = {
@@ -1019,7 +1019,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     } catch (error) {
       console.error(error);
       setIsLoading(false);
-      setSmartInputError("Erro ao processar a imagem.");
+      setSmartInputError("Error processing the image.");
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -1061,7 +1061,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: ` Mensagem de voz (${formatTime(recordingTime)})`,
+      content: ` Voice message (${formatTime(recordingTime)})`,
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMessage]);
@@ -1073,7 +1073,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "Entendi o áudio! Confere se tá tudo certo:",
+          content: "I understood the audio! Check if everything is correct:",
           timestamp: new Date(),
           parsedTransaction: batch[0],
         };
@@ -1084,7 +1084,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: `Identifiquei **${batch.length} transações** no áudio. Confira a tabela, edite se precisar e confirme:`,
+          content: `I identified **${batch.length} transactions** in the audio. Check the table, edit if needed, and confirm:`,
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, assistantMessage]);
@@ -1094,14 +1094,14 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     } catch (error: any) {
       console.error("Error parsing audio:", error);
       
-      let content = "Não consegui entender o áudio. \n\nTenta falar mais devagar: \"Gastei cinquenta reais no Uber\"";
+      let content = "I couldn't understand the audio. \n\nTry speaking slower: \"Spent fifty dollars on Uber\"";
       
       if (error?.code === "GEMINI_QUOTA_EXCEEDED") {
-        content = "⚠️ **Limite de Cota do Gemini Excedido**\n\nA cota de requisições gratuita do Gemini foi temporariamente esgotada (Erro 429). Por favor, aguarde alguns minutos antes de tentar novamente.\n\nSe você usa uma chave própria, verifique seus limites no [Google AI Studio](https://aistudio.google.com/).";
+        content = "⚠️ **Gemini Quota Exceeded**\n\nThe free requests quota for Gemini was temporarily exhausted (Error 429). Please wait a few minutes before trying again.\n\nIf you use your own key, check your limits on [Google AI Studio](https://aistudio.google.com/).";
       } else if (error?.code === "GEMINI_INVALID_KEY") {
-        content = "🔑 **Chave de API do Gemini Inválida**\n\nA chave de API configurada no arquivo `.env` é inválida ou foi revogada (Erro 400/403).\n\nPor favor, verifique se a variável `GEMINI_API_KEY` no seu arquivo `.env` está correta e ativa.";
+        content = "🔑 **Invalid Gemini API Key**\n\nThe API key configured in the `.env` file is invalid or has been revoked (Error 400/403).\n\nPlease verify that the `GEMINI_API_KEY` variable in your `.env` file is correct and active.";
       } else if (error?.code === "GEMINI_NOT_CONFIGURED" || error?.message === "GEMINI_NOT_CONFIGURED") {
-        content = `⚙️ **Chave de API do Gemini não configurada**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
+        content = `⚙️ **Gemini API Key not configured**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
       }
 
       const errorMessage: Message = {
@@ -1126,7 +1126,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const confirmMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
-      content: " **Pronto!** Transação salva. Posso ajudar com mais alguma coisa?",
+      content: " **Done!** Transaction saved. Can I help you with anything else?",
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, confirmMessage]);
@@ -1137,7 +1137,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const cancelMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
-      content: "Sem problemas! Cancelei essa. Me avisa se precisar de algo. ",
+      content: "No problem! I cancelled this one. Let me know if you need anything. ",
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, cancelMessage]);
@@ -1160,7 +1160,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const confirmMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
-      content: ` **Pronto!** ${rows.length} transação(ões) salva(s). Posso ajudar com mais alguma coisa?`,
+      content: ` **Done!** ${rows.length} transaction(s) saved. Can I help with anything else?`,
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, confirmMessage]);
@@ -1170,10 +1170,10 @@ const NixAIView: React.FC<NixAIViewProps> = ({
   const handleCancelBatch = async () => {
     const count = pendingBatch?.length ?? 0;
     const confirmed = await confirm({
-      title: "Descartar lote",
-      message: `Tem certeza que deseja descartar ${count} transaç${count === 1 ? "ão" : "ões"} pendentes? Elas não serão salvas.`,
-      confirmText: "Descartar",
-      cancelText: "Continuar editando",
+      title: "Discard batch",
+      message: `Are you sure you want to discard ${count} pending transaction(s)? They will not be saved.`,
+      confirmText: "Discard",
+      cancelText: "Continue editing",
       variant: "warning",
     });
     if (!confirmed) return;
@@ -1181,7 +1181,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     const cancelMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
-      content: "Sem problemas! Cancelei o lote. Me avisa se precisar de algo. ",
+      content: "No problem! I cancelled the batch. Let me know if you need anything. ",
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, cancelMessage]);
@@ -1250,14 +1250,14 @@ const NixAIView: React.FC<NixAIViewProps> = ({
     } catch (error: any) {
       console.error("Error sending message:", error);
       
-      let content = "Ops, tive um probleminha.  Tenta de novo?";
+      let content = "Oops, I had a little problem. Try again?";
       
       if (error?.code === "GEMINI_QUOTA_EXCEEDED") {
-        content = "⚠️ **Limite de Cota do Gemini Excedido**\n\nA cota de requisições gratuita do Gemini foi temporariamente esgotada (Erro 429). Por favor, aguarde alguns minutos antes de tentar novamente.\n\nSe você usa uma chave própria, verifique seus limites no [Google AI Studio](https://aistudio.google.com/).";
+        content = "⚠️ **Gemini Quota Exceeded**\n\nThe free requests quota for Gemini was temporarily exhausted (Error 429). Please wait a few minutes before trying again.\n\nIf you use your own key, check your limits on [Google AI Studio](https://aistudio.google.com/).";
       } else if (error?.code === "GEMINI_INVALID_KEY") {
-        content = "🔑 **Chave de API do Gemini Inválida**\n\nA chave de API configurada no arquivo `.env` é inválida ou foi revogada (Erro 400/403).\n\nPor favor, verifique se a variável `GEMINI_API_KEY` no seu arquivo `.env` está correta e ativa.";
+        content = "🔑 **Invalid Gemini API Key**\n\nThe API key configured in the `.env` file is invalid or has been revoked (Error 400/403).\n\nPlease verify that the `GEMINI_API_KEY` variable in your `.env` file is correct and active.";
       } else if (error?.code === "GEMINI_NOT_CONFIGURED" || error?.message === "GEMINI_NOT_CONFIGURED") {
-        content = `⚙️ **Chave de API do Gemini não configurada**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
+        content = `⚙️ **Gemini API Key not configured**\n\n${GEMINI_NOT_CONFIGURED_MESSAGE}`;
       }
 
       const errorMessage: Message = {
@@ -1304,7 +1304,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
       >
         <Chip
           icon={<SparklesIcon sx={{ fontSize: 16 }} />}
-          label="Conversar com IA"
+          label="Chat with AI"
           onClick={() => setIsBatchMode(false)}
           sx={{
             borderRadius: "20px",
@@ -1332,7 +1332,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
         />
         <Chip
           icon={<ReceiptIcon sx={{ fontSize: 16 }} />}
-          label="Cadastro em Lote (Sem Bugs)"
+          label="Batch Registration"
           onClick={() => setIsBatchMode(true)}
           sx={{
             borderRadius: "20px",
@@ -1389,7 +1389,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
               }}
             />
             <Typography variant="body1" fontWeight={600} color="error.main">
-              Gravando {formatTime(recordingTime)}
+              Recording {formatTime(recordingTime)}
             </Typography>
             <Button
               variant="contained"
@@ -1399,7 +1399,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
               onClick={stopRecording}
               sx={{ borderRadius: "12px", fontWeight: 600, textTransform: "none", px: 2 }}
             >
-              Parar
+              Stop
             </Button>
           </MotionPaper>
         )}
@@ -1430,7 +1430,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           }
         }}
       >
-        <Tooltip title="Anexar arquivo ou foto">
+        <Tooltip title="Attach file or photo">
           <IconButton
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading || isRecording}
@@ -1447,10 +1447,10 @@ const NixAIView: React.FC<NixAIViewProps> = ({
           maxRows={8}
           placeholder={
             isRecording 
-              ? "Gravando áudio..." 
+              ? "Recording audio..." 
               : isBatchMode
-                ? "Modo Lote: Cole ou digite seus vários gastos aqui..."
-                : "Pergunte à IA ou descreva seus gastos..."
+                ? "Batch Mode: Paste or type your multiple transactions here..."
+                : "Ask the AI or describe your transactions..."
           }
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
@@ -1469,7 +1469,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
 
         <Stack direction="row" spacing={0.5} sx={{ ml: 1, alignItems: 'center' }}>
           {!inputValue.trim() && (
-            <Tooltip title="Gravar áudio">
+            <Tooltip title="Record audio">
               <IconButton
                 onClick={() => (isRecording ? stopRecording() : startRecording())}
                 disabled={isLoading}
@@ -1608,7 +1608,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                       letterSpacing: '-0.02em',
                     }}
                   >
-                    Olá{firstName ? `, ${firstName}` : ','}
+                    Hello{firstName ? `, ${firstName}` : ','}
                   </Typography>
                   <Typography 
                     variant={isMobile ? "h4" : "h3"}
@@ -1622,7 +1622,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                       letterSpacing: '-0.02em',
                     }}
                   >
-                    Como posso ajudar hoje?
+                    How can I help today?
                   </Typography>
                 </Box>
 
@@ -1719,7 +1719,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
                       {chatTitle}
                     </Typography>
                     <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 500 }}>
-                      Sessão de Inteligência Artificial
+                      Artificial Intelligence Session
                     </Typography>
                   </MotionBox>
                 )}
@@ -1801,7 +1801,7 @@ const NixAIView: React.FC<NixAIViewProps> = ({
               color="text.disabled"
               sx={{ display: "block", textAlign: "center", mt: 1.5, fontSize: 11 }}
             >
-              O Finance Control pode cometer erros. Considere verificar informações importantes.
+              Finance Control may make mistakes. Consider checking important info.
             </Typography>
           </MotionBox>
         )}

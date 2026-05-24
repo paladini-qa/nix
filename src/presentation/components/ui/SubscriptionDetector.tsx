@@ -29,7 +29,7 @@ interface SubscriptionDetectorProps {
 }
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 
 const SubscriptionDetector: React.FC<SubscriptionDetectorProps> = ({
   transactions,
@@ -99,10 +99,10 @@ const SubscriptionDetector: React.FC<SubscriptionDetectorProps> = ({
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography variant="body2" fontWeight={700} color="text.primary">
-              Possíveis assinaturas detectadas
+              Possible subscriptions detected
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {subscriptions.length} serviço{subscriptions.length > 1 ? "s" : ""} com padrão recorrente
+              {subscriptions.length} service{subscriptions.length > 1 ? "s" : ""} with recurring pattern
             </Typography>
           </Box>
           <Chip
@@ -153,16 +153,16 @@ const SubscriptionDetector: React.FC<SubscriptionDetectorProps> = ({
                         {sub.description}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {sub.occurrences}x detectada · {sub.category}
-                        {sub.monthlyPattern && " · mensal"}
+                        {sub.occurrences}x detected · {sub.category}
+                        {sub.monthlyPattern && " · monthly"}
                       </Typography>
                     </Box>
                     <Typography variant="body2" fontWeight={700} sx={{ color: theme.palette.error.main, flexShrink: 0, ...privacyStyles }}>
-                      {formatCurrency(sub.amount)}/mês
+                      {formatCurrency(sub.amount)}/month
                     </Typography>
                     <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
                       {onMarkAsRecurring && (
-                        <Tooltip title="Marcar como recorrente">
+                        <Tooltip title="Mark as recurring">
                           <Button
                             size="small"
                             variant="outlined"
@@ -179,7 +179,7 @@ const SubscriptionDetector: React.FC<SubscriptionDetectorProps> = ({
                         onClick={() => handleDismiss(sub.description)}
                         sx={{ minWidth: 0, px: 1, py: 0.25, fontSize: 10, borderRadius: "8px", height: 24, color: "text.disabled" }}
                       >
-                        Ignorar
+                        Dismiss
                       </Button>
                     </Box>
                   </Box>

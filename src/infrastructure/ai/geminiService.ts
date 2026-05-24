@@ -273,28 +273,28 @@ export const detectTransactionIntentWithAI = async (
     return patternResult;
   }
   try {
-    const prompt = `Analise se o texto a seguir indica uma intenção do usuário de REGISTRAR/CADASTRAR uma transação financeira (gasto ou receita).
+    const prompt = `Analyze if the following text indicates a user's intention to REGISTER/RECORD a financial transaction (expense or income).
 
 Texto: "${text}"
 
-Responda APENAS com JSON:
+Respond ONLY with JSON:
 {
   "isTransactionIntent": boolean,
-  "confidence": number (0 a 1),
-  "suggestedType": "income" ou "expense" ou null,
-  "reason": "explicação curta"
+  "confidence": number (0 to 1),
+  "suggestedType": "income" or "expense" or null,
+  "reason": "short explanation"
 }
 
-Exemplos de intenção de cadastro:
-- "gastei 50 no uber" -> true, expense
-- "recebi 3000 de salário" -> true, income  
-- "paguei 200 de luz" -> true, expense
-- "50 reais no mercado com pix" -> true, expense
+Examples of registration intent:
+- "spent 50 on uber" -> true, expense
+- "received 3000 salary" -> true, income  
+- "paid 200 light bill" -> true, expense
+- "50 dollars at the supermarket with cash" -> true, expense
 
-Exemplos que NÃO são intenção de cadastro:
-- "quanto gastei esse mês?" -> false (pergunta)
-- "como economizar?" -> false (pergunta)
-- "me mostra minhas despesas" -> false (consulta)`;
+Examples that are NOT registration intent:
+- "how much did I spend this month?" -> false (question)
+- "how to save money?" -> false (question)
+- "show me my expenses" -> false (query)`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-pro",
@@ -333,61 +333,61 @@ const getTransactionParsingPrompt = (
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
-  return `Você é um assistente especializado em extrair informações de transações financeiras.
-Analise o input do usuário e extraia os seguintes campos para cadastrar uma transação:
+  return `You are an assistant specialized in extracting information from financial transactions.
+Analyze the user input and extract the following fields to register a transaction:
 
-CAMPOS OBRIGATÓRIOS:
-- description: Descrição breve da transação (ex: "Mercado Extra", "Salário")
-- amount: Valor numérico (apenas o número, sem símbolos). Se não conseguir extrair, retorne null
-- type: "income" para receitas/entradas ou "expense" para despesas/gastos
-- category: Escolha a categoria mais apropriada da lista abaixo
-- paymentMethod: Método de pagamento da lista abaixo
-- date: Data no formato YYYY-MM-DD
-- confidence: Número de 0 a 1 indicando sua confiança na extração
+REQUIRED FIELDS:
+- description: Brief description of the transaction (e.g. "Walmart", "Salary")
+- amount: Numeric value (number only, no symbols). If unable to extract, return null
+- type: "income" for income/revenues or "expense" for expenses/spendings
+- category: Choose the most appropriate category from the list below
+- paymentMethod: Payment method from the list below
+- date: Date in YYYY-MM-DD format
+- confidence: Number from 0 to 1 indicating your confidence in the extraction
 
-CATEGORIAS DE RECEITA DISPONÍVEIS:
+AVAILABLE INCOME CATEGORIES:
 ${categories.income.map((c) => `- ${c}`).join("\n")}
 
-CATEGORIAS DE DESPESA DISPONÍVEIS:
+AVAILABLE EXPENSE CATEGORIES:
 ${categories.expense.map((c) => `- ${c}`).join("\n")}
 
-MÉTODOS DE PAGAMENTO DISPONÍVEIS:
+AVAILABLE PAYMENT METHODS:
 ${paymentMethods.map((m) => `- ${m}`).join("\n")}
 
-REGRAS DE INTERPRETAÇÃO:
-1. Para datas relativas, considere que HOJE é ${todayStr}:
-   - "hoje" = ${todayStr}
-   - "ontem" = data de ontem
-   - "semana passada" = 7 dias atrás
-   - "mês passado" = mesmo dia do mês anterior
-   - Se não mencionar data, use ${todayStr}
+INTERPRETATION RULES:
+1. For relative dates, consider TODAY is ${todayStr}:
+   - "today" = ${todayStr}
+   - "yesterday" = yesterday's date
+   - "last week" = 7 days ago
+   - "last month" = same day of previous month
+   - If no date is mentioned, use ${todayStr}
 
-2. Inferências de tipo:
-   - Palavras como "gastei", "paguei", "comprei", "despesa" = expense
-   - Palavras como "recebi", "ganhei", "salário", "venda" = income
-   - Na dúvida, assuma "expense" (mais comum)
+2. Type inferences:
+   - Words like "spent", "paid", "bought", "expense", "purchase", "gastei", "paguei" = expense
+   - Words like "received", "earned", "salary", "sale", "recebi", "ganhei" = income
+   - If in doubt, assume "expense" (most common)
 
-3. Inferências de categoria:
-   - "mercado", "supermercado", "feira" = Alimentação ou Mercado
-   - "uber", "99", "taxi", "ônibus", "metrô" = Transporte
-   - "aluguel", "condomínio" = Moradia
-   - "netflix", "spotify", "cinema" = Lazer/Entretenimento
-   - Use a categoria mais próxima disponível na lista
+3. Category inferences:
+   - "market", "grocery", "supermarket", "food", "mercado", "supermercado" = Food
+   - "uber", "99", "taxi", "bus", "subway", "gasoline", "gas", "transporte" = Transportation
+   - "rent", "condo", "aluguel" = Housing
+   - "netflix", "spotify", "cinema", "movies" = Entertainment
+   - Use the closest available category from the list
 
-4. Inferências de método de pagamento:
+4. Payment method inferences:
    - "pix" = Pix
-   - "cartão", "crédito", "débito" = Cartão correspondente
-   - "dinheiro", "espécie" = Dinheiro
-   - Se não mencionar, escolha o mais provável pelo contexto
+   - "card", "credit", "debit", "cartão", "crédito", "débito" = Corresponding Card
+   - "cash", "money", "dinheiro" = Cash
+   - If not mentioned, choose the most probable from context
 
-IMPORTANTE: Responda APENAS com um objeto JSON válido, sem markdown, sem explicações.
-Se não conseguir extrair algum campo, use valores padrão sensatos.
+IMPORTANT: Respond ONLY with a valid JSON object, no markdown, no explanations.
+If unable to extract a field, use sensible default values.
 
-Formato de resposta esperado:
+Expected response format:
 {
   "description": "string",
-  "amount": number ou null,
-  "type": "income" ou "expense",
+  "amount": number or null,
+  "type": "income" or "expense",
   "category": "string",
   "paymentMethod": "string",
   "date": "YYYY-MM-DD",
@@ -409,7 +409,7 @@ export const parseTransactionFromText = async (
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-pro",
-      contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nINPUT DO USUÁRIO:\n"${text}"` }] }],
+      contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nUSER INPUT:\n"${text}"` }] }],
       config: { responseMimeType: "application/json" },
     });
 
@@ -512,7 +512,7 @@ export const parseTransactionFromAudio = async (
           role: "user",
           parts: [
             {
-              text: `${systemPrompt}\n\nO usuário gravou um áudio descrevendo uma transação financeira. Transcreva o áudio e extraia as informações da transação.\n\nResponda APENAS com o JSON, sem transcrição separada.`,
+              text: `${systemPrompt}\n\nThe user recorded an audio describing a financial transaction. Transcribe the audio and extract the transaction details.\n\nRespond ONLY with the JSON, without separate transcription.`,
             },
             {
               inlineData: {
@@ -595,40 +595,40 @@ export const parseTransactionFromImage = async (
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
-  const imagePrompt = `Você é um assistente especializado em extrair informações de recibos e comprovantes financeiros.
-Analise a imagem do recibo/comprovante e extraia as seguintes informações:
+  const imagePrompt = `You are an assistant specialized in extracting information from receipts and financial statements.
+Analyze the receipt/statement image and extract the following details:
 
-CAMPOS A EXTRAIR:
-- description: Nome do estabelecimento ou descrição da compra
-- amount: Valor TOTAL da compra (número, sem símbolos de moeda)
-- type: "expense" para compras/gastos, "income" para recebimentos
-- category: Categoria mais apropriada (veja lista abaixo)
-- paymentMethod: Método de pagamento identificado
-- date: Data do comprovante no formato YYYY-MM-DD (se não encontrar, use ${todayStr})
-- confidence: Número de 0 a 1 indicando confiança na extração
+FIELDS TO EXTRACT:
+- description: Name of the establishment or purchase description
+- amount: TOTAL value of the purchase (number, no currency symbols)
+- type: "expense" for purchases/spendings, "income" for revenues/receipts
+- category: Most appropriate category (see list below)
+- paymentMethod: Identified payment method
+- date: Date on the receipt in YYYY-MM-DD format (if not found, use ${todayStr})
+- confidence: Number from 0 to 1 indicating confidence in the extraction
 
-CATEGORIAS DE RECEITA:
+INCOME CATEGORIES:
 ${categories.income.map((c) => `- ${c}`).join("\n")}
 
-CATEGORIAS DE DESPESA:
+EXPENSE CATEGORIES:
 ${categories.expense.map((c) => `- ${c}`).join("\n")}
 
-MÉTODOS DE PAGAMENTO:
+PAYMENT METHODS:
 ${paymentMethods.map((m) => `- ${m}`).join("\n")}
 
-DICAS PARA RECIBOS BRASILEIROS:
-- Procure por "VALOR TOTAL", "TOTAL", "TOTAL A PAGAR"
-- CPF/CNPJ na nota indica o estabelecimento
-- "CRÉDITO", "DÉBITO", "PIX" indicam forma de pagamento
-- Datas em formato DD/MM/YYYY devem ser convertidas para YYYY-MM-DD
-- Se for cupom fiscal, procure a data/hora de emissão
+TIPS FOR BRAZILIAN RECEIPTS:
+- Look for "VALOR TOTAL", "TOTAL", "TOTAL A PAGAR"
+- CNPJ/CPF on the note indicates the merchant name
+- "CRÉDITO", "DÉBITO", "PIX" indicate the payment form
+- Dates in DD/MM/YYYY format must be converted to YYYY-MM-DD
+- For retail coupons, look for issuance date/time
 
-IMPORTANTE: Responda APENAS com um objeto JSON válido.
+IMPORTANT: Respond ONLY with a valid JSON object.
 
 {
   "description": "string",
-  "amount": number ou null,
-  "type": "income" ou "expense",
+  "amount": number or null,
+  "type": "income" or "expense",
   "category": "string",
   "paymentMethod": "string",
   "date": "YYYY-MM-DD",
@@ -731,38 +731,38 @@ const getBatchTransactionParsingPrompt = (
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
-  return `Você é um assistente especializado em extrair informações de transações financeiras.
-O usuário pode descrever UMA ou VÁRIAS transações no mesmo texto/áudio/imagem.
-Sua tarefa é identificar TODAS as transações mencionadas e extrair os dados de cada uma.
+  return `You are an assistant specialized in extracting information from financial transactions.
+The user may describe ONE or MULTIPLE transactions in the same text/audio/image.
+Your task is to identify ALL transactions mentioned and extract details for each one.
 
-Para CADA transação extraia:
-- description: Descrição breve (ex: "Mercado Extra", "Uber")
-- amount: Valor numérico (apenas número). Se não conseguir, retorne null
-- type: "income" (receita) ou "expense" (despesa)
-- category: Categoria mais apropriada da lista abaixo
-- paymentMethod: Método de pagamento da lista abaixo
-- date: Data no formato YYYY-MM-DD
-- confidence: Número de 0 a 1 indicando confiança na extração
+For EACH transaction extract:
+- description: Brief description (e.g. "Walmart", "Uber")
+- amount: Numeric value (number only). If unable to extract, return null
+- type: "income" or "expense"
+- category: Most appropriate category from the list below
+- paymentMethod: Payment method from the list below
+- date: Date in YYYY-MM-DD format
+- confidence: Number from 0 to 1 indicating confidence in the extraction
 
-CATEGORIAS DE RECEITA:
+INCOME CATEGORIES:
 ${categories.income.map((c) => `- ${c}`).join("\n")}
 
-CATEGORIAS DE DESPESA:
+EXPENSE CATEGORIES:
 ${categories.expense.map((c) => `- ${c}`).join("\n")}
 
-MÉTODOS DE PAGAMENTO:
+PAYMENT METHODS:
 ${paymentMethods.map((m) => `- ${m}`).join("\n")}
 
-REGRAS:
-1. HOJE = ${todayStr}. Use para "hoje", "ontem", "semana passada", "mês passado" quando aplicável.
-2. Se não houver data, use ${todayStr}.
-3. Se o usuário listar várias compras/gastos/receitas, retorne um objeto para cada uma.
-4. Em recibos ou listas com múltiplos itens, cada linha/item pode ser uma transação.
-5. Sempre retorne um ARRAY de objetos, mesmo que seja apenas uma transação.
-6. Se o input/imagem for um print de fatura de cartão de crédito, extrato bancário ou lista de lançamentos de conta, identifique e extraia CADA UMA das compras ou movimentações listadas individualmente. NÃO as agrupe ou resuma todas em uma única transação (como "fatura" ou "total"). Cada lançamento individual listado deve virar um objeto diferente no array.
+RULES:
+1. TODAY = ${todayStr}. Use for relative date expressions ("today", "yesterday", etc.) when applicable.
+2. If there is no date, use ${todayStr}.
+3. If the user lists multiple spendings/purchases/revenues, return an object for each one.
+4. In list printouts or receipts, each line item can be a transaction.
+5. Always return a JSON ARRAY of objects, even if there is only one transaction.
+6. If the input/image is a credit card invoice screenshot, bank statement, or account logs list, identify and extract EACH purchase or movement listed individually. DO NOT group or summarize them into a single transaction (like "credit card bill" or "total"). Each line item listed must become a separate object in the array.
 
-Responda APENAS com um JSON válido: um array de objetos.
-Formato: [ { "description": "...", "amount": number ou null, "type": "income" ou "expense", "category": "...", "paymentMethod": "...", "date": "YYYY-MM-DD", "confidence": number }, ... ]`;
+Respond ONLY with a valid JSON: an array of objects.
+Format: [ { "description": "...", "amount": number or null, "type": "income" or "expense", "category": "...", "paymentMethod": "...", "date": "YYYY-MM-DD", "confidence": number }, ... ]`;
 };
 
 /**
@@ -814,7 +814,7 @@ export const parseBatchFromText = async (
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-pro",
-      contents: [{ role: "user", parts: [{ text: `${prompt}\n\nINPUT DO USUÁRIO:\n"${text}"` }] }],
+      contents: [{ role: "user", parts: [{ text: `${prompt}\n\nUSER INPUT:\n"${text}"` }] }],
       config: { responseMimeType: "application/json" },
     });
 
@@ -851,7 +851,7 @@ export const parseBatchFromAudio = async (
           role: "user",
           parts: [
             {
-              text: `${prompt}\n\nO usuário gravou um áudio descrevendo uma ou várias transações. Transcreva e extraia TODAS as transações. Responda APENAS com o array JSON.`,
+              text: `${prompt}\n\nThe user recorded an audio describing one or multiple transactions. Transcribe and extract ALL transactions. Respond ONLY with the JSON array.`,
             },
             { inlineData: { mimeType, data: audioBase64 } },
           ],
@@ -884,10 +884,10 @@ export const parseBatchFromImage = async (
   const todayStr = new Date().toISOString().split("T")[0];
   const prompt = getBatchTransactionParsingPrompt(categories, paymentMethods);
 
-  const imageInstruction = `Analise a imagem (recibo, comprovante, lista de compras ou extrato).
-Ela pode conter UMA ou VÁRIAS transações. Extraia TODAS que conseguir identificar.
-Cada item de uma lista, cada linha de um extrato ou cada compra no recibo pode ser uma transação.
-Responda APENAS com um array JSON de objetos (mesmo que seja só um).`;
+  const imageInstruction = `Analyze the image (receipt, invoice, shopping list, or bank statement).
+It may contain ONE or MULTIPLE transactions. Extract ALL you can identify.
+Each item in a list, each row of a statement, or each purchase on a receipt can be a transaction.
+Respond ONLY with a JSON array of objects (even if it is only one).`;
 
   try {
     const cleanBase64 = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
@@ -1061,23 +1061,23 @@ export const suggestCategoryWithAI = async (
   try {
     const availableCategories = type === "income" ? categories.income : categories.expense;
 
-    const prompt = `Analise a descrição de uma transação financeira e sugira a categoria mais apropriada.
+    const prompt = `Analyze the description of a financial transaction and suggest the most appropriate category.
 
-DESCRIÇÃO: "${description}"
-TIPO: ${type === "income" ? "Receita" : "Despesa"}
+DESCRIPTION: "${description}"
+TYPE: ${type === "income" ? "Income" : "Expense"}
 
-CATEGORIAS DISPONÍVEIS:
+AVAILABLE CATEGORIES:
 ${availableCategories.map((c, i) => `${i + 1}. ${c}`).join("\n")}
 
-INSTRUÇÕES:
-1. Escolha APENAS uma categoria da lista acima
-2. Baseie-se em padrões comuns de nomenclatura
-3. Se a descrição for muito vaga, escolha a mais provável
+INSTRUCTIONS:
+1. Choose ONLY one category from the list above
+2. Base your suggestion on common naming conventions
+3. If description is very vague, choose the most probable category
 
-Responda APENAS com JSON:
+Respond ONLY with JSON:
 {
-  "category": "nome exato da categoria da lista",
-  "confidence": número de 0 a 1
+  "category": "exact category name from the list",
+  "confidence": number from 0 to 1
 }`;
 
     const response = await ai.models.generateContent({
@@ -1240,20 +1240,20 @@ export const getFinancialInsights = async (
  * Gera um título curto e criativo para a conversa baseado na primeira mensagem
  */
 export const generateChatTitle = async (firstMessage: string): Promise<string> => {
-  if (!isGeminiConfigured()) return "Nova Conversa";
+  if (!isGeminiConfigured()) return "New Conversation";
   
   try {
-    const prompt = `Gere um título curto e criativo (máximo 4 palavras) em português para uma conversa que começa com o seguinte input: "${firstMessage}". Responda apenas o título, sem aspas ou pontuação final. Se for um áudio ou imagem, gere algo genérico relacionado a finanças.`;
+    const prompt = `Generate a short and creative title (maximum 4 words) in English for a conversation that starts with the following input: "${firstMessage}". Respond with only the title, without quotes or ending punctuation. If it is audio or an image, generate something generic related to finance.`;
     
     const response = await ai.models.generateContent({
       model: "gemini-2.5-pro",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
-    return (response.text || "Nova Conversa").trim();
+    return (response.text || "New Conversation").trim();
   } catch (error) {
     checkAndThrowGeminiError(error);
     console.error("Error generating chat title:", error);
-    return "Nova Conversa";
+    return "New Conversation";
   }
 };

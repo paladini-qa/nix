@@ -98,7 +98,7 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
       PaperProps={{ sx: { borderRadius: "20px", maxHeight: "90vh" } }}
     >
       <DialogTitle sx={{ fontWeight: 700, pb: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        Imagem do método de pagamento
+        Payment Method Image
         <IconButton size="small" onClick={onClose}>
           <CloseIcon fontSize="small" />
         </IconButton>
@@ -111,9 +111,9 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
           sx={{ mb: 2, "& .MuiTab-root": { textTransform: "none", fontWeight: 600 } }}
         >
           {isImageSearchConfigured() && (
-            <Tab label="Buscar no Google Images" value={0} />
+            <Tab label="Search on Google Images" value={0} />
           )}
-          <Tab label="Inserir URL direta" value={1} />
+          <Tab label="Insert Direct URL" value={1} />
         </Tabs>
 
         {/* ── SEARCH TAB ── */}
@@ -143,7 +143,7 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
                 disabled={loading || !query.trim()}
                 sx={{ borderRadius: "10px", px: 3, textTransform: "none", whiteSpace: "nowrap" }}
               >
-                {loading ? <CircularProgress size={18} color="inherit" /> : "Buscar"}
+                {loading ? <CircularProgress size={18} color="inherit" /> : "Search"}
               </Button>
             </Box>
 
@@ -236,7 +236,7 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
               >
                 <SearchIcon sx={{ fontSize: 40, opacity: 0.3 }} />
                 <Typography sx={{ fontSize: 13 }}>
-                  Busque pelo nome do banco ou bandeira para encontrar o logo
+                  Search by bank name or credit card brand to find the logo
                 </Typography>
               </Box>
             )}
@@ -257,17 +257,17 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
                 }}
               >
                 <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: "warning.main", mb: 0.5 }}>
-                  Busca via Google não configurada
+                  Google Search not configured
                 </Typography>
                 <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                  Defina <code>VITE_GOOGLE_CSE_API_KEY</code> e <code>VITE_GOOGLE_CSE_CX</code> no{" "}
-                  <code>.env</code> para habilitar a busca. Por enquanto, cole a URL da imagem abaixo.
+                  Define <code>VITE_GOOGLE_CSE_API_KEY</code> and <code>VITE_GOOGLE_CSE_CX</code> in the{" "}
+                  <code>.env</code> to enable search. For now, paste the image URL below.
                 </Typography>
               </Box>
             )}
 
             <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 1.5 }}>
-              Abra o Google Images, clique com botão direito na imagem desejada → "Copiar endereço da imagem" e cole abaixo.
+              Open Google Images, right-click the desired image → "Copy image address" and paste it below.
             </Typography>
 
             <TextField
@@ -326,11 +326,11 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
             onClick={handleRemove}
             sx={{ borderRadius: "10px", textTransform: "none", mr: "auto" }}
           >
-            Remover imagem
+            Remove Image
           </Button>
         )}
         <Button onClick={onClose} sx={{ borderRadius: "10px", textTransform: "none" }}>
-          Cancelar
+          Cancel
         </Button>
         <Button
           variant="contained"
@@ -338,7 +338,7 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
           disabled={!canConfirm}
           sx={{ borderRadius: "10px", textTransform: "none" }}
         >
-          Usar esta imagem
+          Use this image
         </Button>
       </DialogActions>
     </Dialog>

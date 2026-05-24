@@ -172,24 +172,24 @@ export const useCountUp = (
 };
 
 /**
- * Currency formatter for Brazilian Real
+ * Currency formatter for US Dollars
  */
 export const formatBRL = (value: number): string => {
-  return new Intl.NumberFormat("pt-BR", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "BRL",
+    currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
 };
 
 /**
- * Currency formatter with decimals for Brazilian Real
+ * Currency formatter with decimals for US Dollars
  */
 export const formatBRLFull = (value: number): string => {
-  return new Intl.NumberFormat("pt-BR", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "BRL",
+    currency: "USD",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);

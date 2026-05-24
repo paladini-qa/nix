@@ -234,7 +234,7 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
         }}
       >
         <DialogTitle sx={{ pt: 2.5, px: 2.5, pb: 1, fontWeight: 700, fontSize: "1rem" }}>
-          {editingTag ? "Editar tag" : "Nova tag"}
+          {editingTag ? "Edit Tag" : "New Tag"}
         </DialogTitle>
         <DialogContent sx={{ px: 2.5 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
@@ -293,7 +293,7 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
         </DialogContent>
         <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
           <NixButton size="medium" variant="soft" color="gray" onClick={handleCloseForm}>
-            Cancelar
+            Cancel
           </NixButton>
           <NixButton
             size="medium"
@@ -302,7 +302,7 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
             onClick={handleSave}
             disabled={!formName.trim()}
           >
-            {editingTag ? "Salvar" : "Criar"}
+            {editingTag ? "Save" : "Create"}
           </NixButton>
         </DialogActions>
       </Dialog>

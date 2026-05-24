@@ -45,22 +45,22 @@ interface GridItem {
 
 const mainGridItems: GridItem[] = [
   { id: "splits", label: "Splits", icon: CreditCardIcon },
-  { id: "shared", label: "Divididos", icon: PeopleIcon },
-  { id: "recurring", label: "Recorrentes", icon: RepeatIcon },
-  { id: "categories", label: "Categorias", icon: CategoryIcon },
-  { id: "subscriptions", label: "Assinaturas", icon: SubscriptionsIcon },
+  { id: "shared", label: "Shared", icon: PeopleIcon },
+  { id: "recurring", label: "Recurring", icon: RepeatIcon },
+  { id: "categories", label: "Categories", icon: CategoryIcon },
+  { id: "subscriptions", label: "Subscriptions", icon: SubscriptionsIcon },
 ];
 
 const planningGridItems: GridItem[] = [
-  { id: "budgets", label: "Orçamentos", icon: BudgetsIcon },
+  { id: "budgets", label: "Budgets", icon: BudgetsIcon },
   { id: "analytics", label: "Analytics", icon: AnalyticsIcon },
-  { id: "planning", label: "Planejamento", icon: PlanningIcon },
+  { id: "planning", label: "Planning", icon: PlanningIcon },
 ];
 
 const toolsGridItems: GridItem[] = [
-  { id: "import", label: "Importar", icon: ImportIcon },
-  { id: "fiscal-report", label: "Rel. Fiscal", icon: FiscalIcon },
-  { id: "debt-calculator", label: "Calc. Dívidas", icon: DebtCalcIcon },
+  { id: "import", label: "Import", icon: ImportIcon },
+  { id: "fiscal-report", label: "Fiscal Report", icon: FiscalIcon },
+  { id: "debt-calculator", label: "Debt Calculator", icon: DebtCalcIcon },
 ];
 
 /**
@@ -210,7 +210,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                   letterSpacing: "-0.02em",
                 }}
               >
-                Outras Telas
+                More Screens
               </Typography>
               <IconButton
                 onClick={onClose}
@@ -240,14 +240,14 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
             {/* Planejamento */}
             <Box sx={{ mt: 2.5 }}>
               <Divider sx={{ mb: 1.5, opacity: 0.4 }} />
-              <Typography variant="caption" sx={sectionLabelSx}>Planejamento</Typography>
+              <Typography variant="caption" sx={sectionLabelSx}>Planning</Typography>
               {renderGrid(planningGridItems, mainGridItems.length)}
             </Box>
 
             {/* Ferramentas */}
             <Box sx={{ mt: 2, mb: 2 }}>
               <Divider sx={{ mb: 1.5, opacity: 0.4 }} />
-              <Typography variant="caption" sx={sectionLabelSx}>Ferramentas</Typography>
+              <Typography variant="caption" sx={sectionLabelSx}>Tools</Typography>
               {renderGrid(toolsGridItems, mainGridItems.length + planningGridItems.length)}
             </Box>
 
@@ -283,7 +283,7 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
                   },
                 }}
               >
-                Finance Control AI — Análise Inteligente
+                Finance Control AI — Smart Analysis
               </Button>
             </MotionBox>
           </MotionBox>

@@ -8,8 +8,8 @@ export interface CurrencyOptions {
 }
 
 const DEFAULT_OPTIONS: CurrencyOptions = {
-  locale: "pt-BR",
-  currency: "BRL",
+  locale: "en-US",
+  currency: "USD",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 };
@@ -69,13 +69,11 @@ export function useCurrency(options: CurrencyOptions = {}) {
     [mergedOptions]
   );
 
-  // Parse string para número (remove formatação)
+  // Parse string to number (remove formatting)
   const parse = useCallback((value: string): number => {
-    // Remove tudo exceto números, vírgula e ponto
-    const cleaned = value.replace(/[^\d,.-]/g, "");
-    // Converte formato brasileiro (1.234,56) para número
-    const normalized = cleaned.replace(/\./g, "").replace(",", ".");
-    const parsed = parseFloat(normalized);
+    // Remove commas first, then remove everything except digits, minus sign, and decimal point
+    const cleaned = value.replace(/,/g, "").replace(/[^\d.-]/g, "");
+    const parsed = parseFloat(cleaned);
     return isNaN(parsed) ? 0 : parsed;
   }, []);
 

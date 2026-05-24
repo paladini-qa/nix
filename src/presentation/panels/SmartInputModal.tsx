@@ -239,7 +239,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
       }, 1000);
     } catch (err) {
       console.error("Error starting recording:", err);
-      setError("Não foi possível acessar o microfone. Verifique as permissões.");
+      setError("Unable to access microphone. Please check permissions.");
     }
   };
 
@@ -258,7 +258,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 4 * 1024 * 1024) {
-        setError("Imagem muito grande. Máximo 4MB.");
+        setError("Image too large. Maximum 4MB.");
         return;
       }
 
@@ -285,27 +285,27 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
       switch (mode) {
         case "text":
           if (!textInput.trim()) {
-            throw new Error("Digite uma descrição da transação.");
+            throw new Error("Please enter a description of the transaction.");
           }
           result = await parseTransactionFromText(textInput, categories, paymentMethods);
           break;
 
         case "audio":
           if (!audioBlob) {
-            throw new Error("Grave um áudio primeiro.");
+            throw new Error("Please record an audio first.");
           }
           result = await parseTransactionFromAudio(audioBlob, categories, paymentMethods);
           break;
 
         case "image":
           if (!imagePreview) {
-            throw new Error("Selecione uma imagem primeiro.");
+            throw new Error("Please select an image first.");
           }
           result = await parseTransactionFromImage(imagePreview, imageMimeType, categories, paymentMethods);
           break;
 
         default:
-          throw new Error("Modo inválido");
+          throw new Error("Invalid mode");
       }
 
       setParsedResult(result);
@@ -313,16 +313,16 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
       console.error("Error processing input:", err);
       if (err?.code === "GEMINI_QUOTA_EXCEEDED") {
         setError(
-          "Limite de uso do Gemini excedido (Erro 429). Por favor, aguarde alguns instantes antes de tentar novamente ou verifique seus limites."
+          "Gemini usage limit exceeded (Error 429). Please wait a moment before trying again or verify your limits."
         );
       } else if (err?.code === "GEMINI_INVALID_KEY") {
         setError(
-          "Chave de API do Gemini inválida ou não autorizada. Verifique se a variável GEMINI_API_KEY no seu arquivo .env está correta e ativa."
+          "Invalid or unauthorized Gemini API Key. Please verify if the GEMINI_API_KEY variable in your .env file is correct and active."
         );
       } else if (err instanceof Error && err.message === "GEMINI_NOT_CONFIGURED") {
         setError(GEMINI_NOT_CONFIGURED_MESSAGE);
       } else {
-        setError(err instanceof Error ? err.message : "Erro ao processar. Tente novamente.");
+        setError(err instanceof Error ? err.message : "Error processing. Please try again.");
       }
     } finally {
       setIsProcessing(false);
@@ -373,9 +373,9 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
   };
 
   const getConfidenceLabel = (confidence: number) => {
-    if (confidence >= 0.8) return "Alta confiança";
-    if (confidence >= 0.5) return "Média confiança";
-    return "Baixa confiança";
+    if (confidence >= 0.8) return "High confidence";
+    if (confidence >= 0.5) return "Medium confidence";
+    return "Low confidence";
   };
 
   // ========================================
@@ -421,7 +421,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         }}
       >
         <TextIcon fontSize="small" />
-        Texto
+        Text
       </ToggleButton>
       <ToggleButton
         value="audio"
@@ -434,7 +434,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         }}
       >
         <MicIcon fontSize="small" />
-        Áudio
+        Audio
       </ToggleButton>
       <ToggleButton
         value="image"
@@ -447,7 +447,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         }}
       >
         <CameraIcon fontSize="small" />
-        Imagem
+        Image
       </ToggleButton>
     </ToggleButtonGroup>
   );
@@ -458,7 +458,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         multiline
         rows={3}
         fullWidth
-        placeholder="Ex: Gastei 150 reais no mercado ontem com pix"
+        placeholder="E.g. Spent 150 dollars at the market yesterday with pix"
         id="smart-input-text"
         name="smart-input-text"
         value={textInput}
@@ -474,7 +474,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         }}
       />
       <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-         Dica: Inclua valor, local, data e forma de pagamento para melhor precisão
+         Tip: Include value, location, date, and payment method for better accuracy
       </Typography>
     </Box>
   );
@@ -533,10 +533,10 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
           color={isRecording ? "error.main" : audioBlob ? "success.main" : "text.secondary"}
         >
           {isRecording
-            ? `Gravando... ${formatTime(recordingTime)}`
+            ? `Recording... ${formatTime(recordingTime)}`
             : audioBlob
-            ? "Áudio gravado!"
-            : "Toque para gravar"}
+            ? "Audio recorded!"
+            : "Tap to record"}
         </Typography>
       </Box>
 
@@ -552,12 +552,12 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
           }}
           sx={{ borderRadius: "20px" }}
         >
-          Gravar novamente
+          Record again
         </Button>
       )}
 
       <Typography variant="caption" color="text.secondary" textAlign="center">
-         Fale claramente o valor, descrição e forma de pagamento
+         Speak clearly: value, description, and payment method
       </Typography>
     </Box>
   );
@@ -638,16 +638,16 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         >
           <UploadIcon sx={{ fontSize: 48, color: theme.palette.info.main }} />
           <Typography variant="body1" fontWeight={600} color="text.primary">
-            Clique para enviar imagem
+            Click to upload image
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            JPEG, PNG ou WebP (máx. 4MB)
+            JPEG, PNG or WebP (max 4MB)
           </Typography>
         </Paper>
       )}
 
       <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-         Envie foto de cupom fiscal, comprovante de Pix ou extrato
+         Upload a photo of a receipt, transfer confirmation, or bank statement
       </Typography>
     </Box>
   );
@@ -721,7 +721,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 },
               }}
             >
-               Receita
+               Income
             </ToggleButton>
             <ToggleButton
               value="expense"
@@ -732,12 +732,12 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 },
               }}
             >
-               Despesa
+               Expense
             </ToggleButton>
           </ToggleButtonGroup>
 
           <TextField
-            label="Descrição"
+            label="Description"
             id="edit-description"
             name="description"
             fullWidth
@@ -748,7 +748,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
           />
 
           <TextField
-            label="Valor (R$)"
+            label="Amount ($)"
             id="edit-amount"
             name="amount"
             type="number"
@@ -759,7 +759,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Typography fontWeight={600} color="text.secondary">R$</Typography>
+                  <Typography fontWeight={600} color="text.secondary">$</Typography>
                 </InputAdornment>
               ),
             }}
@@ -768,10 +768,10 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
 
           <Box sx={{ display: "flex", gap: 2 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Categoria</InputLabel>
+              <InputLabel>Category</InputLabel>
               <Select
                 value={editCategory}
-                label="Categoria"
+                label="Category"
                 onChange={(e) => setEditCategory(e.target.value)}
                 sx={{ borderRadius: "20px" }}
               >
@@ -784,10 +784,10 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
             </FormControl>
 
             <FormControl fullWidth size="small">
-              <InputLabel>Pagamento</InputLabel>
+              <InputLabel>Payment Method</InputLabel>
               <Select
                 value={editPaymentMethod}
-                label="Pagamento"
+                label="Payment Method"
                 onChange={(e) => setEditPaymentMethod(e.target.value)}
                 sx={{ borderRadius: "20px" }}
               >
@@ -801,7 +801,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
           </Box>
 
           <DatePicker
-            label="Data"
+            label="Date"
             value={editDate}
             onChange={(newValue) => setEditDate(newValue)}
             slotProps={{
@@ -893,10 +893,10 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
           </Box>
           <Box>
             <Typography variant="h6" fontWeight={700} letterSpacing="-0.02em">
-              Cadastro Inteligente
+              Smart Registration
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Descreva a transação de qualquer forma
+              Describe the transaction in any way
             </Typography>
           </Box>
         </Box>
@@ -968,7 +968,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 color: "text.secondary",
               }}
             >
-              Cancelar
+              Cancel
             </Button>
             <Button
               onClick={processInput}
@@ -987,7 +987,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 },
               }}
             >
-              {isProcessing ? "Processando..." : "Analisar com IA"}
+              {isProcessing ? "Processing..." : "Analyze with AI"}
             </Button>
           </>
         ) : (
@@ -1003,7 +1003,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 color: "text.secondary",
               }}
             >
-              Recomeçar
+              Restart
             </Button>
             <Button
               onClick={handleConfirm}
@@ -1019,7 +1019,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
                 boxShadow: `0 8px 24px -8px ${alpha(theme.palette.success.main, 0.4)}`,
               }}
             >
-              Confirmar Transação
+              Confirm Transaction
             </Button>
           </>
         )}

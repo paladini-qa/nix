@@ -89,10 +89,10 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
   const confirmDelete = useCallback(
     (itemName: string): Promise<boolean> => {
       return confirm({
-        title: "Confirmar exclusão",
-        message: `Tem certeza que deseja excluir "${itemName}"? Essa ação não pode ser desfeita.`,
-        confirmText: "Excluir",
-        cancelText: "Cancelar",
+        title: "Confirm Deletion",
+        message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
         variant: "danger",
       });
     },
@@ -205,7 +205,7 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
           </DialogContent>
           <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
             <NixButton size="medium" variant="soft" color="gray" onClick={() => handleClose(false)}>
-              {confirmOpts.cancelText || "Cancelar"}
+              {confirmOpts.cancelText || "Cancel"}
             </NixButton>
             <NixButton
               size="medium"
@@ -213,7 +213,7 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
               color={variantStyles.confirmColor === "error" ? "red" : "purple"}
               onClick={() => handleClose(true)}
             >
-              {confirmOpts.confirmText || "Confirmar"}
+              {confirmOpts.confirmText || "Confirm"}
             </NixButton>
           </DialogActions>
         </>
@@ -277,7 +277,7 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
                 onClick={() => handleClose(null)}
                 style={{ width: "100%" }}
               >
-                Cancelar
+                Cancel
               </NixButton>
             </Stack>
           </DialogActions>

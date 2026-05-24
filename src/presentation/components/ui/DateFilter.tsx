@@ -33,8 +33,8 @@ interface DateFilterProps {
 }
 
 const MONTH_LABELS = [
-  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
 const DateFilter: React.FC<DateFilterProps> = ({
@@ -43,7 +43,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
   onDateChange,
   compact = false,
   disabled = false,
-  disabledMessage = "Filtros avançados ativos",
+  disabledMessage = "Advanced filters active",
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));

@@ -1,262 +1,271 @@
 # Changelog - Nix Finance
 
-Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
+All notable changes to this project will be documented in this file.
 
-O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
-e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
 ## [Unreleased]
 
-### Added - Abril 2026
+### Added - May 2026
 
-#### Nix Full Feature Sprint — 7 Fases de Melhorias
+#### AI Agent Guidelines
+- **AI agent guidelines** — Created `docs/AGENTS.md` with clear guidelines on workflow, mandatory reading, design system compliance, and changelog updates for AI agents interacting with the repository.
+  - **Created files**: `docs/AGENTS.md`
 
-##### Fase 1: Correção de Bugs Críticos
-- **Rotas faltando** — Adicionados tipos `"goals" | "budgets" | "analytics" | "planning" | "accounts" | "import" | "fiscal-report" | "debt-calculator"` em `AppCurrentView` e mapeados em `VIEW_ROUTES`/`ROUTE_VIEWS`
-  - **Arquivos modificados**: `types/appView.ts`, `routes.ts`
-- **Onboarding goals nav** — Passo "Definir meta financeira" agora navega para a view `goals` corretamente
-  - **Arquivos modificados**: `components/Onboarding.tsx`
-- **Dead code em NixAIView** — Removida função `handleSuggestionClick` e bloco de código morto
-  - **Arquivos modificados**: `components/NixAIView.tsx`
-- **PlanningView EmptyState** — Corrigido `type` para `"planning"` e adicionado SVG ilustrativo no `EmptyState`
-  - **Arquivos modificados**: `components/PlanningView.tsx`, `components/EmptyState.tsx`
-- **BudgetsView labels PT-BR** — Traduzidas todas as strings de inglês para português
-  - **Arquivos modificados**: `components/BudgetsView.tsx`
-- **Goals reopen button** — Adicionado botão "Reativar" para metas concluídas com `handleReopen`
-  - **Arquivos modificados**: `components/GoalsView.tsx`
+### Changed - May 2026
 
-##### Fase 2: Campo `notes` em Transações
-- **Campo observações** — Adicionado campo opcional `notes: string` na interface `Transaction`; validado com Zod (max 500 chars); persistido no Supabase via `notes TEXT`
-- **Formulário** — `TransactionForm` exibe `TextField` multi-linha "Observações (opcional)" ao criar/editar
-- **Listagem** — `TransactionTable` mostra ícone `NotesIcon` com tooltip do conteúdo em cards mobile e linhas desktop
+#### Documentation Standardization
+- **CAPSLOCK naming convention** — Renamed all markdown files under the `docs/` folder to follow the all-caps naming convention initiated by `CHANGELOG.md`. Internal references have been updated.
+  - **Modified files**: `docs/AGENTS.md`, `docs/CHANGELOG.md`
+  - **Renamed files**: `docs/design_system.md` → `docs/DESIGN_SYSTEM.md`, `docs/requirements.md` → `docs/REQUIREMENTS.md`
+
+### Added - April 2026
+
+#### Nix Full Feature Sprint — 7 Improvement Phases
+
+##### Phase 1: Critical Bug Fixes
+- **Missing routes** — Added types `"goals" | "budgets" | "analytics" | "planning" | "accounts" | "import" | "fiscal-report" | "debt-calculator"` in `AppCurrentView` and mapped in `VIEW_ROUTES`/`ROUTE_VIEWS`.
+  - **Modified files**: `types/appView.ts`, `routes.ts`
+- **Onboarding goals nav** — "Define financial goal" onboarding step now correctly navigates to the `goals` view.
+  - **Modified files**: `components/Onboarding.tsx`
+- **Dead code in NixAIView** — Removed `handleSuggestionClick` function and unused/dead code blocks.
+  - **Modified files**: `components/NixAIView.tsx`
+- **PlanningView EmptyState** — Corrected `type` to `"planning"` and added illustrative SVG to the `EmptyState` component.
+  - **Modified files**: `components/PlanningView.tsx`, `components/EmptyState.tsx`
+- **BudgetsView labels PT-BR** — Translated all strings from English to Portuguese (previously PT-BR in Brazilian sprint).
+  - **Modified files**: `components/BudgetsView.tsx`
+- **Goals reopen button** — Added a "Reopen" button for completed goals using `handleReopen`.
+  - **Modified files**: `components/GoalsView.tsx`
+
+##### Phase 2: `notes` Field in Transactions
+- **Observations field** — Added optional `notes: string` field in `Transaction` interface; validated with Zod (max 500 chars); persisted in Supabase via `notes TEXT`.
+- **Form** — `TransactionForm` displays multi-line `TextField` "Notes (optional)" during creation/editing.
+- **Listings** — `TransactionTable` displays `NotesIcon` with tooltip content in mobile cards and desktop rows.
 - **Migration SQL** — `ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS notes TEXT;`
-  - **Arquivos modificados**: `types.ts`, `schemas/index.ts`, `docs/supabase-setup.sql`, `components/TransactionForm.tsx`, `components/TransactionTable.tsx`, `contexts/TransactionsContext.tsx`, `App.tsx`
+  - **Modified files**: `types.ts`, `schemas/index.ts`, `docs/supabase-setup.sql`, `components/TransactionForm.tsx`, `components/TransactionTable.tsx`, `contexts/TransactionsContext.tsx`, `App.tsx`
 
-##### Fase 3: Novos Widgets no Dashboard
-- **RecentTransactionsWidget** — Exibe as 5 transações mais recentes com botão "Ver todos"; navega para a view transactions
-- **NetWorthWidget** — Exibe "Balanço Total" (receitas − despesas acumuladas) e tendência do mês atual vs. anterior
-  - **Arquivos criados**: `components/RecentTransactionsWidget.tsx`, `components/NetWorthWidget.tsx`
-  - **Arquivos modificados**: `components/DashboardMainSection.tsx`, `components/AppViewSwitcher.tsx`
+##### Phase 3: New Dashboard Widgets
+- **RecentTransactionsWidget** — Displays the 5 most recent transactions with a "See all" button; navigates to the transactions view.
+- **NetWorthWidget** — Displays "Total Balance" (accumulated income − expenses) and the trend of the current month vs. the previous month.
+  - **Created files**: `components/RecentTransactionsWidget.tsx`, `components/NetWorthWidget.tsx`
+  - **Modified files**: `components/DashboardMainSection.tsx`, `components/AppViewSwitcher.tsx`
 
-##### Fase 4: Melhorias em Analytics
-- **Drill-down por categoria** — Clique em fatia do PieChart navega para a view de categorias filtrada
-- **Comparação YoY** — Novo `BarChart` "Despesas: Ano Atual vs. Ano Anterior" com `useMemo` `yoyData`
-  - **Arquivos modificados**: `components/AnalyticsView.tsx`
+##### Phase 4: Analytics Enhancements
+- **Category drill-down** — Clicking on a PieChart slice navigates to the categories view with active filters.
+- **YoY Comparison** — New `BarChart` "Expenses: Current Year vs. Previous Year" using `useMemo` for `yoyData`.
+  - **Modified files**: `components/AnalyticsView.tsx`
 
-##### Fase 5: Melhorias em Budgets e Goals
-- **Alertas toast de orçamento** — `BudgetsView` emite `showWarning` uma vez por sessão quando budget > 80% ou estourado; usa `alertShownRef` para evitar duplicatas
-- **Streak de meses no verde** — Badge " Xm" em `BudgetCard` para categorias com streak ≥ 2 meses consecutivos dentro do orçamento
-- **Contribuição automática para metas** — Campo "Contribuição mensal (opcional)" no formulário de nova meta; ao salvar cria transação recorrente de poupança via `onCreateTransaction`
-  - **Arquivos modificados**: `components/BudgetsView.tsx`, `components/GoalsView.tsx`
+##### Phase 5: Budgets and Goals Enhancements
+- **Budget toast alerts** — `BudgetsView` triggers `showWarning` once per session when a budget exceeds 80% or is blown; uses `alertShownRef` to prevent duplicates.
+- **Green streak count** — "Xm" streak badge in `BudgetCard` for categories with consecutive months within budget (streak ≥ 2).
+- **Auto-contribution to goals** — Added "Monthly contribution (optional)" field to new goals form; saving creates a recurring savings transaction via `onCreateTransaction`.
+  - **Modified files**: `components/BudgetsView.tsx`, `components/GoalsView.tsx`
 
-##### Fase 6: Features Inteligentes
-- **Detector de assinaturas** — `subscriptionService.detectSubscriptions` analisa padrões mensais de despesas; `SubscriptionDetector` exibe painel colapsável com botões "Marcar como recorrente" e "Ignorar"
-- **Previsão de saldo fim do mês** — `BalanceForecastWidget` calcula saldo previsto considerando saldo atual + recorrentes pendentes no mês
-- **Regras de auto-categorização** — `autoCategorizationService` com CRUD via `localStorage`; `AutoCategorizationRules` UI integrada em `CategoriesView`; `TransactionForm` aplica regras antes de sugerir via AI
-  - **Arquivos criados**: `services/subscriptionService.ts`, `components/SubscriptionDetector.tsx`, `components/BalanceForecastWidget.tsx`, `services/autoCategorizationService.ts`, `components/AutoCategorizationRules.tsx`
-  - **Arquivos modificados**: `components/DashboardMainSection.tsx`, `components/CategoriesView.tsx`, `components/TransactionForm.tsx`
+##### Phase 6: Smart Features
+- **Subscription detector** — `subscriptionService.detectSubscriptions` analyzes monthly transaction patterns; `SubscriptionDetector` displays a collapsible panel with "Mark as recurring" and "Ignore" actions.
+- **End-of-month balance forecast** — `BalanceForecastWidget` predicts end-of-month balance considering current balance + pending recurring items.
+- **Auto-categorization rules** — `autoCategorizationService` with CRUD stored via `localStorage`; `AutoCategorizationRules` UI integrated in `CategoriesView`; `TransactionForm` applies matching rules before AI suggestions.
+  - **Created files**: `services/subscriptionService.ts`, `components/SubscriptionDetector.tsx`, `components/BalanceForecastWidget.tsx`, `services/autoCategorizationService.ts`, `components/AutoCategorizationRules.tsx`
+  - **Modified files**: `components/DashboardMainSection.tsx`, `components/CategoriesView.tsx`, `components/TransactionForm.tsx`
 
-##### Fase 7: Features de Alto Esforço
-- **Importação CSV/OFX** — `importService.parseImportFile` detecta formato por extensão; parser CSV genérico (detecta separador, mapeia colunas por nome) e parser OFX (SGML subset); `ImportView` com drag-and-drop, preview tabular com checkboxes, seleção de forma de pagamento e confirmação em lote
-  - **Arquivos criados**: `services/importService.ts`, `components/ImportView.tsx`
-- **Relatório Fiscal Anual** — `FiscalReportView` com filtro por ano, cards de resumo (receitas/despesas/saldo), tabela de resumo mensal com totais, tabelas de breakdown por categoria; exportação CSV (com BOM UTF-8) e PDF via `window.print()` com print CSS
-  - **Arquivos criados**: `components/FiscalReportView.tsx`
-- **Calculadora de Dívidas** — `DebtCalculatorView` com inputs (principal, taxa anual, parcelas, método); cálculo Price (parcelas fixas) e SAC (amortização constante); gráfico de evolução de saldo devedor comparativo Price vs SAC (`LineChart`); gráfico de composição de parcela juros/amortização (`BarChart` stacked); tabela de amortização completa com toggle "ver mais"
-  - **Arquivos criados**: `components/DebtCalculatorView.tsx`
-- **AppViewSwitcher ampliado** — Adicionados lazy imports e rendering para todas as novas views: `GoalsView`, `BudgetsView`, `AnalyticsView`, `PlanningView`, `ImportView`, `FiscalReportView`, `DebtCalculatorView`; novos props `userId` e `handleCreateTransaction` passados de `App.tsx`
-  - **Arquivos modificados**: `components/AppViewSwitcher.tsx`, `App.tsx`
-
----
-
-### Fixed - Abril 2026
-
-#### Integridade de Transações — 5 Correções de Dados
-
-- **Bug 1 — Sync isPaid em transações compartilhadas** — Ao marcar uma transação compartilhada como paga, o par relacionado (`relatedTransactionId`) agora também é atualizado atomicamente. Antes, apenas a transação clicada era marcada; o par permanecia inalterado.
-  - **Arquivos modificados**: `App.tsx` (`handleTogglePaid`, bloco não-virtual)
-  - **Impacto**: Testes C3 e C4 agora passam corretamente; saldo na tela Shared fica consistente
-
-- **Bug 2 — Materialização completa de virtual+shared ao marcar como pago** — `handleTogglePaid` em ocorrências virtuais compartilhadas agora cria a income materializada correspondente, vincula os dois novos registros entre si e exclui a data de ambas as sequências originais (`excluded_dates`). Antes, criava apenas a despesa materializada, deixando a income original gerando duplicata virtual e com `isPaid` dessincronizado.
-  - **Arquivos modificados**: `App.tsx` (`handleTogglePaid`, bloco virtual)
-  - **Impacto**: Teste E3 e E10 cobertos; sem duplicatas na UI após marcar pago
-
-- **Bug 3 — `relatedTransactionId` ausente nas despesas de parcelas compartilhadas** — Ao criar parcelas compartilhadas, cada income recebia `related_transaction_id` apontando para a despesa par, mas as despesas não recebiam o link inverso. Isso impedia o `SharedOptionsDialog` de abrir ao editar/deletar parcelas compartilhadas e impedia o sync de `isPaid`. Fix: após inserir as incomes, cada despesa é atualizada com `related_transaction_id = income.id` correspondente.
-  - **Arquivos modificados**: `App.tsx` (`handleAddTransaction`, bloco installments + shared)
-  - **Impacto**: Testes D1–D10 agora funcionam; SharedOptionsDialog abre para parcelas compartilhadas
-
-- **Bug 4 — Edit all/all_future de parcelas shared não atualizava incomes** — Nos modos de edição "Esta e futuras" e "Todas" para parcelamentos compartilhados, apenas as despesas eram atualizadas no banco. As incomes correspondentes mantinham dados antigos. Fix: coleta os `relatedTransactionId` das despesas afetadas e faz UPDATE em batch nas incomes quando `pendingSharedEditOption === "both"`.
-  - **Arquivos modificados**: `App.tsx` (`handleRecurringEditSave`, modos `all_future` e `all` com `isInstallment`)
-  - **Impacto**: Testes D7 e D8 agora passam; valores na SharedView ficam consistentes
-
-- **Bug 5 — Delete de parcelas shared não removia as incomes** — Ao deletar parcelas compartilhadas (single, all_future ou all) com a opção "Nós dois", somente as despesas eram removidas. As incomes correspondentes permaneciam órfãs. Fix: coleta os `relatedTransactionId` das despesas e deleta as incomes em batch quando `pendingSharedEditOption === "both"`.
-  - **Arquivos modificados**: `App.tsx` (`handleDeleteOptionSelect`, os 3 escopos de delete para `isInstallment`)
-  - **Impacto**: Testes D3–D6 agora passam; sem incomes órfãs após delete de parcelas shared
-
-#### DB — Índice de Performance
-- **Índice `idx_transactions_related`** — Índice parcial em `related_transaction_id` (apenas linhas não-nulas) para otimizar lookups bidirecionais de transações compartilhadas.
-  - **Arquivos modificados**: `docs/supabase-setup.sql`
-  - **SQL de migração**: `CREATE INDEX IF NOT EXISTS idx_transactions_related ON public.transactions(related_transaction_id) WHERE related_transaction_id IS NOT NULL;`
-
-#### Documentação
-- **TESTE-DE-SISTEMA.md** — Adicionada Seção 6 com matriz completa de testes: Grupos A (Installment), B (Recurring), C (Shared), D (Shared+Installment), E (Shared+Recurring) e F (Corner Cases), totalizando 40 casos de teste.
-  - **Arquivos modificados**: `docs/TESTE-DE-SISTEMA.md`
+##### Phase 7: High-Effort Features
+- **CSV/OFX Import** — `importService.parseImportFile` detects file type by extension; generic CSV parser (detects separator, maps columns by name) and OFX parser (SGML subset); `ImportView` with drag-and-drop, tabular preview with checkboxes, payment method selection, and batch confirmation.
+  - **Created files**: `services/importService.ts`, `components/ImportView.tsx`
+- **Annual Fiscal Report** — `FiscalReportView` with year filtering, summary cards (income/expenses/balance), monthly tabular summary with totals, and category breakdown; CSV export (with UTF-8 BOM) and PDF export via `window.print()` with custom print CSS.
+  - **Created files**: `components/FiscalReportView.tsx`
+- **Debt Calculator** — `DebtCalculatorView` with user inputs (principal, annual rate, terms, method); price amortization (fixed payments) and SAC amortization (constant amortization) calculation; comparative `LineChart` for remaining balance (Price vs SAC); stacked `BarChart` for payment composition (interest vs principal); full amortization schedule with "see more" toggle.
+  - **Created files**: `components/DebtCalculatorView.tsx`
+- **Extended AppViewSwitcher** — Added lazy imports and rendering for all new views: `GoalsView`, `BudgetsView`, `AnalyticsView`, `PlanningView`, `ImportView`, `FiscalReportView`, `DebtCalculatorView`; passed down `userId` and `handleCreateTransaction` props from `App.tsx`.
+  - **Modified files**: `components/AppViewSwitcher.tsx`, `App.tsx`
 
 ---
 
-### Added - Abril 2026
+### Fixed - April 2026
 
-#### UI/UX Overhaul — 4 Fases de Modernização
+#### Transaction Integrity — 5 Data Synchronization Fixes
 
-##### Fase 1: Padronização do Design System
-- **NixInput enriquecido** — Suporte a `startAdornment`, `endAdornment` (ReactNode/ícone) e `errorMessage` com exibição inline abaixo do campo
-- **NixButton padronizado** — Aliases canônicos `sm/md/lg` além dos legados (`small/medium/large`); prop `loading` que desabilita o botão e aplica `cursor: wait`; estados hover (lift), active (sink) e disabled (opacidade 0.45) uniformes
-- **Tokens CSS ampliados em `index.css`** — Novos tokens de raio (`--radius-card`, `--radius-input`, `--radius-button-*`) e sombra (`--shadow-soft`, `--shadow-card`, `--shadow-elevated`, `--shadow-teal-soft`) disponíveis para MUI (`sx`) e Radix
-- **Arquivos modificados**: `components/radix/Input.tsx`, `components/radix/Button.tsx`, `index.css`
+- **Bug 1 — Shared transaction sync isPaid** — When marking a shared transaction as paid, the related counterpart (`relatedTransactionId`) is now atomically updated. Previously, only the clicked transaction was modified, leaving the pair out-of-sync.
+  - **Modified files**: `App.tsx` (`handleTogglePaid`, non-virtual block)
+  - **Impact**: Tests C3 and C4 now pass successfully; balances in Shared view are consistent.
+- **Bug 2 — Complete materialization of virtual+shared when marking paid** — `handleTogglePaid` on shared virtual occurrences now creates the corresponding materialized income, links the two new database records, and excludes the date from both original recurrence patterns (`excluded_dates`). Previously, it only created the materialized expense, leading to virtual duplicates and un-synchronized paid status.
+  - **Modified files**: `App.tsx` (`handleTogglePaid`, virtual block)
+  - **Impact**: Tests E3 and E10 covered; no duplicate transactions in UI after marking paid.
+- **Bug 3 — Missing `relatedTransactionId` in shared installments** — When creating shared installments, each income was created with `related_transaction_id` pointing to the expense pair, but the expenses did not receive the inverse link. This prevented the `SharedOptionsDialog` from opening on edit/delete and blocked `isPaid` sync. Fixed: after inserting incomes, each expense is updated with its respective `related_transaction_id = income.id`.
+  - **Modified files**: `App.tsx` (`handleAddTransaction`, installments + shared block)
+  - **Impact**: Tests D1–D10 now pass; SharedOptionsDialog opens for shared installments.
+- **Bug 4 — Edit all/all_future of shared installments did not update incomes** — In "This and future" and "All" edit modes for shared installments, only the expenses were updated in the database. Counterpart incomes retained old data. Fixed: collects the `relatedTransactionId` from affected expenses and batch updates the incomes when `pendingSharedEditOption === "both"`.
+  - **Modified files**: `App.tsx` (`handleRecurringEditSave`, `all_future` and `all` scopes with `isInstallment`)
+  - **Impact**: Tests D7 and D8 now pass; values in SharedView are synchronized.
+- **Bug 5 — Delete of shared installments left orphaned incomes** — When deleting shared installments (single, all_future, or all) with the "Both of us" option, only the expenses were removed. Fixed: collects the `relatedTransactionId` of the expenses and batch deletes the matching incomes when `pendingSharedEditOption === "both"`.
+  - **Modified files**: `App.tsx` (`handleDeleteOptionSelect`, all 3 scopes of delete for `isInstallment`)
+  - **Impact**: Tests D3–D6 now pass; no orphaned incomes left after deleting shared installments.
 
-##### Fase 2: Estilização Moderna e Fluida
-- **SmartInputFAB** — Overlay com `backdrop-filter: blur(4px)` + fundo semi-transparente quando o SpeedDial abre; fechar clicando no overlay
-- **MobileHeader** — Glassmorphism migrado para variáveis CSS (`--nix-glass-bg`, `--nix-glass-border`, `--nix-glass-blur`); `paddingTop: env(safe-area-inset-top)` para safe area nativa
-- **AppViewSwitcher** — Transição de navegação trocada de `slideUp` para `slideLeft` (efeito lateral app-like)
-- **Modo Privacidade** — Blur animado com curva `cubic-bezier(0.4, 0, 0.2, 1)` e duração 0.3s; transição usa `filter: blur(0px)` → `blur(8px)` em vez de `filter: none` para interpolação suave
-- **TransactionsSkeleton** — Reescrito para espelhar exatamente o layout do `TransactionTable`: mobile (cards 44px + linha dupla de texto + chip) e desktop (grid 5 colunas + barra de progresso)
-- **Arquivos modificados**: `components/SmartInputFAB.tsx`, `components/layout/MobileHeader.tsx`, `components/AppViewSwitcher.tsx`, `hooks/usePrivacyMode.ts`, `components/skeletons/TransactionsSkeleton.tsx`
+#### DB — Performance Index
+- **Index `idx_transactions_related`** — Added a partial index on `related_transaction_id` (only non-null rows) to optimize bidirectional lookups of shared transactions.
+  - **Modified files**: `docs/setup.sql`
+  - **Migration SQL**: `CREATE INDEX IF NOT EXISTS idx_transactions_related ON public.transactions(related_transaction_id) WHERE related_transaction_id IS NOT NULL;`
 
-##### Fase 3: Apresentação de Dados
-- **DataTable** — Auto-cards expansíveis em mobile quando `renderMobileCard` não é fornecido: mostra coluna primária + secundária sempre visíveis, demais colunas colapsáveis com ícone expand
-- **AnalyticsView** — Tooltips Recharts com `wrapperStyle={{ zIndex: 9999 }}`, `allowEscapeViewBox={{ x: true, y: true }}` e `cursor` touch-friendly; tooltips inline também atualizados
-- **useCurrency** — Novo retorno `noWrapStyle: { whiteSpace: "nowrap" }` para aplicar onde valores são exibidos; `SwipeableTransactionCard` atualizado para usá-lo
-- **Arquivos modificados**: `components/DataTable.tsx`, `components/AnalyticsView.tsx`, `hooks/useCurrency.ts`, `components/SwipeableTransactionCard.tsx`
-
-##### Fase 4: Correções Técnicas
-- **TransactionTable** — Wrapper `<Box position="relative">` + `TableContainer` com `overflowX: "auto"` e gradientes `::before`/`::after` nas bordas para indicar scroll horizontal
-- **Anti-flash de tema** — Script inline no `<head>` do `index.html` que lê `localStorage.themePreference` antes do React hidratar e aplica `data-theme`/classe `dark`; `body` agora transiciona `background-color` e `color` em 0.3s
-- **SmartInputModal** — `window.visualViewport` listener (`resize` + `scroll`) detecta teclado virtual e ajusta `marginBottom` do `PaperProps` dinamicamente com transição suave
-- **useTransactions** — Adicionados `transactionsById` (Map para O(1) lookup), `incomeTransactions` e `expenseTransactions` como valores memoizados para evitar re-filtragem nos consumidores
-- **Arquivos modificados**: `components/TransactionTable.tsx`, `index.html`, `index.css`, `components/SmartInputModal.tsx`, `hooks/useTransactions.ts`
+#### Documentation
+- **TESTE-DE-SISTEMA.md** — Added Section 6 with a complete test matrix: Groups A (Installment), B (Recurring), C (Shared), D (Shared+Installment), E (Shared+Recurring), and F (Corner Cases), totaling 40 test cases.
+  - **Modified files**: `docs/TESTE-DE-SISTEMA.md`
 
 ---
 
-### Added - Janeiro 2026
+### Added - April 2026
 
-#### Open Finance com Pluggy
-- **Integração completa com Pluggy API** para sincronização automática de transações
-- **Menu Open Finance** adicionado na navegação principal
-- **Gerenciamento de conexões bancárias**:
-  - Adicionar novas conexões (apenas cartões de crédito)
-  - Editar conexões existentes
-  - Excluir conexões
-  - Vincular conexões a métodos de pagamento
-  - Sincronização manual de transações
-- **Sistema de transações pendentes**:
-  - Listagem de transações sincronizadas aguardando confirmação
-  - Edição completa de transações pendentes (descrição, valor, data, tipo, categoria, payment method)
-  - Confirmação de transações pendentes (cria transação normal)
-  - Cancelamento de transações pendentes
-  - Exclusão de transações pendentes
-- **Tabelas no banco de dados**:
-  - `open_finance_connections` - Armazena conexões com instituições financeiras
-  - `pending_transactions` - Armazena transações aguardando confirmação
-- **Serviços criados**:
-  - `services/pluggyService.ts` - Integração com API Pluggy
-  - `services/api/openFinanceService.ts` - CRUD de conexões e transações pendentes
+#### UI/UX Overhaul — 4 Modernization Phases
+
+##### Phase 1: Design System Standardization
+- **Enriched NixInput** — Support for `startAdornment`, `endAdornment` (ReactNode/icon), and inline `errorMessage` display beneath the field.
+- **Standardized NixButton** — Canonical sizes `sm/md/lg` along with legacy ones (`small/medium/large`); `loading` prop that disables the button and applies `cursor: wait`; uniform hover (lift), active (sink), and disabled (0.45 opacity) states.
+- **Expanded CSS Tokens in `index.css`** — New border-radii (`--radius-card`, `--radius-input`, `--radius-button-*`) and shadows (`--shadow-soft`, `--shadow-card`, `--shadow-elevated`, `--shadow-teal-soft`) available for MUI (`sx`) and Radix UI.
+  - **Modified files**: `components/radix/Input.tsx`, `components/radix/Button.tsx`, `index.css`
+
+##### Phase 2: Modern and Fluid Styling
+- **SmartInputFAB** — Overlay with `backdrop-filter: blur(4px)` + semi-transparent background when SpeedDial opens; overlay click-to-close behavior.
+- **MobileHeader** — Glassmorphism moved to clean CSS variables (`--nix-glass-bg`, `--nix-glass-border`, `--nix-glass-blur`); `paddingTop: env(safe-area-inset-top)` for native mobile safe area support.
+- **AppViewSwitcher** — Navigation transition switched from `slideUp` to `slideLeft` for a native app-like side effect.
+- **Privacy Mode** — Animated blur with custom easing `cubic-bezier(0.4, 0, 0.2, 1)` and 0.3s duration; transition uses `filter: blur(0px)` → `blur(8px)` instead of `filter: none` for fluid interpolation.
+- **TransactionsSkeleton** — Rewritten to mirror the exact layout of the `TransactionTable`: mobile (44px cards + dual text lines + chip) and desktop (5-column grid + progress bar).
+  - **Modified files**: `components/SmartInputFAB.tsx`, `components/layout/MobileHeader.tsx`, `components/AppViewSwitcher.tsx`, `hooks/usePrivacyMode.ts`, `components/skeletons/TransactionsSkeleton.tsx`
+
+##### Phase 3: Data Presentation
+- **DataTable** — Auto-expanding cards in mobile views when `renderMobileCard` is absent: primary and secondary columns are always visible, other columns are collapsible with an expand icon.
+- **AnalyticsView** — Recharts tooltips with custom `wrapperStyle={{ zIndex: 9999 }}`, `allowEscapeViewBox={{ x: true, y: true }}` and touch-friendly hover cursor; inline tooltips updated.
+- **useCurrency** — Added new `noWrapStyle: { whiteSpace: "nowrap" }` utility to prevent currency line breaks; `SwipeableTransactionCard` updated to use it.
+  - **Modified files**: `components/DataTable.tsx`, `components/AnalyticsView.tsx`, `hooks/useCurrency.ts`, `components/SwipeableTransactionCard.tsx`
+
+##### Phase 4: Technical Fixes
+- **TransactionTable** — Enclosed inside `<Box position="relative">` + `TableContainer` with `overflowX: "auto"` and edge scroll indicators (`::before`/`::after` gradients) to show horizontal scroll.
+- **Theme Anti-flash** — Inline script injected into `index.html` `<head>` to read `localStorage.themePreference` before React hydration and apply `data-theme` / `dark` class; `body` background-color and color now transition in 0.3s.
+- **SmartInputModal** — Custom `window.visualViewport` listener (`resize` + `scroll`) dynamically adjusts Paper dialog `marginBottom` to accommodate virtual keyboards with smooth transitions.
+- **useTransactions** — Added memoized lookups `transactionsById` (Map for O(1) searches), `incomeTransactions`, and `expenseTransactions` to prevent repetitive array filtering.
+  - **Modified files**: `components/TransactionTable.tsx`, `index.html`, `index.css`, `components/SmartInputModal.tsx`, `hooks/useTransactions.ts`
 
 ---
 
-## [2.0.0] - Dezembro 2025
+### Added - January 2026
+
+#### Open Finance with Pluggy
+- **Full Pluggy API Integration** for automated transaction syncing.
+- **Open Finance Menu** added in the main navigation.
+- **Bank Connection Management**:
+  - Add new connections (credit cards only)
+  - Edit existing connections
+  - Delete connections
+  - Link connections to payment methods
+  - Manual transaction syncing
+- **Pending Transactions System**:
+  - Lists synchronized transactions awaiting verification.
+  - Full editing of pending transactions (description, amount, date, type, category, payment method).
+  - Pending transaction confirmation (creates regular transaction records).
+  - Reject pending transactions.
+  - Delete pending transactions.
+- **Database Tables**:
+  - `open_finance_connections` - Stores connections with financial institutions.
+  - `pending_transactions` - Stores transactions awaiting confirmation.
+- **New Services**:
+  - `services/pluggyService.ts` - Pluggy API wrapper and integration.
+  - `services/api/openFinanceService.ts` - CRUD operations for connections and pending transactions.
+
+---
+
+## [2.0.0] - December 2025
 
 ### Added
 
 #### UI/UX Improvements
-- **Sistema de espaçamento documentado** - Padronização de espaçamentos baseados em múltiplos de 8px
-- **Design System consolidado** - Documentação completa em `docs/design_system.md`
+- **Documented Spacing System** - Standardized spacing based on multiples of 8px.
+- **Consolidated Design System** - Full guidelines in `docs/DESIGN_SYSTEM.md`.
 
-#### Features de Transações
-- **Transações com status de pagamento** - Campo `isPaid` para controlar se a transação foi paga
-- **Gastos compartilhados 50/50** - Divida despesas com amigos e acompanhe quem deve o quê
-- **Transações recorrentes avançadas** - Suporte para exclusão de datas específicas e edição inteligente
-- **Parcelamentos agrupados** - Sistema de `installment_group_id` para agrupar parcelas relacionadas
+#### Transaction Features
+- **Paid Status on Transactions** - `isPaid` field to track payments.
+- **Shared 50/50 Expenses** - Split expenses with friends and track outstanding balances.
+- **Advanced Recurring Transactions** - Support for excluding dates and intelligent recurrent updates.
+- **Grouped Installments** - `installment_group_id` linking related installment transactions.
 
-#### Organização
-- **Cores personalizadas** - Sistema de cores customizadas para categorias e métodos de pagamento
-- **Tags personalizadas** - Sistema de tags para classificação extra de transações
-- **Contas/Carteiras** - Múltiplas contas (corrente, poupança, cartão, investimentos)
+#### Organization
+- **Custom Colors** - Custom color schemes for categories and payment methods.
+- **Custom Tags** - Extra tagging categorization for transactions.
+- **Accounts & Wallets** - Multiple accounts (checking, savings, credit card, investments).
 
-#### Planejamento
-- **Orçamentos recorrentes** - Orçamentos que se repetem automaticamente nos próximos meses
-- **Metas financeiras** - Criação de objetivos com prazo e acompanhamento visual
+#### Planning
+- **Recurring Budgets** - Budgets that replicate monthly.
+- **Financial Goals** - Target values, deadlines, and visual tracking.
 
 ### Changed
 
-#### UI/UX Simplificações
-- **Border Radius Unificado** - Padronizado para 20px (2.5) em todos os componentes grandes
-- **Font Sizes** - Removidos todos os valores hardcoded, componentes herdam do tema MUI
-- **Contraste de Acessibilidade** - Overline text mínimo de 12px (WCAG AA compliant)
-- **SummaryCards Simplificados** - Removido glassmorphism e gradientes decorativos
-- **Glassmorphism Eliminado** - Removido de componentes onde não era necessário
-- **Sidebar com Navegação Flat** - Removidos menus dropdown, navegação direta em 1 clique
-- **TransactionForm UX Condicional** - Seções mostradas apenas quando relevantes
-- **Previews Unificados** - 3 cards separados consolidados em 1 card com tabs
-- **Animações Reduzidas** - De 4 para 2 animações simultâneas no SummaryCards
+#### UI/UX Simplification
+- **Unified Border Radius** - Standardized to 20px (large) on all major components.
+- **Font Sizes** - Hardcoded typography removed in favor of MUI Theme scaling.
+- **Accessibility Contrast** - Minimum overline text height set to 12px (WCAG AA compliant).
+- **Simplified SummaryCards** - Glassmorphism and complex decorative gradients removed.
+- **Reduced Glassmorphism** - Removed unnecessary blurs across containers.
+- **Flat Navigation Sidebar** - Dropdowns removed in favor of direct 1-click navigations.
+- **Conditional TransactionForm UX** - Sections are only visible when relevant.
+- **Unified Previews** - Consolidated 3 separate cards into one single card with clean tabs.
+- **Optimized Animations** - Animated count configurations reduced from 4 to 2 in SummaryCards.
 
 ### Performance
 
-- **+40% FPS** em animações (remoção de glassmorphism)
-- **-200ms** tempo de primeira renderização (redução de animações)
-- **-31% CSS** no SummaryCards (simplificação)
-- **-20% código** no Sidebar (navegação flat)
+- **+40% FPS** in animations (due to glassmorphism removal).
+- **-200ms** first render time (due to reduced animations).
+- **-31% CSS** codebase size in SummaryCards.
+- **-20% code** size in Sidebar navigation logic.
 
 ---
 
-## [1.0.0] - Versão Inicial
+## [1.0.0] - Initial Release
 
 ### Added
 
-#### Funcionalidades Core
-- **Dashboard Financeiro** - Visualização de receitas, despesas e saldo mensal
-- **Gestão de Transações** - CRUD completo de transações financeiras
-- **Transações Recorrentes** - Suporte para lançamentos mensais/anuais
-- **Parcelamentos** - Controle de compras parceladas
-- **Categorias Personalizadas** - Sistema de categorias customizáveis
-- **Métodos de Pagamento** - Gerenciamento de formas de pagamento
+#### Core Features
+- **Financial Dashboard** - Monthly overview of income, expenses, and current balances.
+- **Transaction Management** - Full CRUD for financial transactions.
+- **Recurring Transactions** - Monthly/yearly recurrence generation.
+- **Installment tracking** - Installments and credit purchase flows.
+- **Custom Categories** - Fully custom categories.
+- **Payment Methods** - Custom payment methods.
 
-#### Autenticação e Segurança
-- **Autenticação Supabase** - Login e cadastro com email/senha
-- **Row Level Security (RLS)** - Políticas de segurança no banco de dados
+#### Auth & Security
+- **Supabase Authentication** - Secure logins and registration.
+- **Row Level Security (RLS)** - Secure database access policies.
 
-#### Interface
-- **Dark/Light Mode** - Suporte completo a temas claro e escuro
-- **Responsividade** - Layout adaptativo para mobile e desktop
-- **Animações Suaves** - Transições e micro-interações com Framer Motion
+#### User Interface
+- **Dark/Light Mode** - Complete support for dark/light themes.
+- **Responsiveness** - Fully adaptive mobile and desktop views.
+- **Fluid Animations** - Micro-interactions with Framer Motion.
 
-#### Inteligência Artificial
-- **Nix AI** - Chat com IA para insights financeiros (Gemini AI)
-- **Smart Input** - Input inteligente com suporte a texto, áudio e imagem
+#### Artificial Intelligence
+- **Nix AI Assistant** - Chat interface for insights with Gemini AI.
+- **Smart Input** - Rich input with support for text, voice, and images.
 
-#### Relatórios
-- **Gráficos Interativos** - Visualizações com Recharts
-- **Filtros Avançados** - Sistema de filtros por data, tipo, categoria, etc.
-- **Busca Global** - Busca rápida de transações (Ctrl+K / Cmd+K)
+#### Reports & Visualizations
+- **Interactive Charts** - Visual data analysis via Recharts.
+- **Advanced Filters** - Search by date, category, type, and more.
+- **Global Search** - Command palette search via Ctrl+K / Cmd+K.
 
-#### Mobile
-- **Capacitor Integration** - Suporte para builds Android/iOS
-- **Mobile Navigation** - Navegação otimizada para mobile
-- **Pull to Refresh** - Atualização por gesto
-
----
-
-## Tipos de Mudanças
-
-- **Added** - Novas funcionalidades
-- **Changed** - Mudanças em funcionalidades existentes
-- **Deprecated** - Funcionalidades que serão removidas
-- **Removed** - Funcionalidades removidas
-- **Fixed** - Correções de bugs
-- **Security** - Correções de segurança
-- **Performance** - Melhorias de performance
+#### Mobile Native
+- **Capacitor Integration** - Out-of-the-box build setup for Android and iOS.
+- **Mobile Navigation** - Native-like navigation bar.
+- **Pull to Refresh** - Standard scroll pull updates.
 
 ---
 
-**Mantido por**: Equipe Nix  
-**Formato**: Baseado em [Keep a Changelog](https://keepachangelog.com/)
+## Types of Changes
+
+- **Added** - New features
+- **Changed** - Changes in existing features
+- **Deprecated** - Features to be removed in future releases
+- **Removed** - Removed features
+- **Fixed** - Bug fixes
+- **Security** - Security improvements
+- **Performance** - Performance improvements
+
+---
+
+**Maintained by**: Nix Team  
+**Format**: Based on [Keep a Changelog](https://keepachangelog.com/)

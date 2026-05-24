@@ -119,7 +119,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
 
   const handleChangeEmail = async () => {
     if (!newEmail.trim() || !newEmail.includes("@")) {
-      setErrorMessage("Por favor, insira um email válido.");
+      setErrorMessage("Please enter a valid email address.");
       setEmailStatus("error");
       return;
     }
@@ -131,17 +131,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
       setEmailStatus("sent");
       setNewEmail("");
     } catch (err: any) {
-      setErrorMessage(err.message || "Erro ao atualizar email.");
+      setErrorMessage(err.message || "Error updating email address.");
       setEmailStatus("error");
     }
   };
 
   const handleResetPassword = async () => {
     const confirmed = await confirm({
-      title: "Redefinir senha",
-      message: `Um email de redefinição de senha será enviado para ${userEmail}. Deseja continuar?`,
-      confirmText: "Enviar email",
-      cancelText: "Cancelar",
+      title: "Reset Password",
+      message: `A password reset email will be sent to ${userEmail}. Do you want to continue?`,
+      confirmText: "Send email",
+      cancelText: "Cancel",
       variant: "warning",
     });
     if (!confirmed) return;
@@ -152,7 +152,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
       if (error) throw error;
       setPasswordStatus("sent");
     } catch (err: any) {
-      setErrorMessage(err.message || "Erro ao enviar email de recuperação.");
+      setErrorMessage(err.message || "Error sending recovery email.");
       setPasswordStatus("error");
     }
   };
@@ -242,7 +242,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
         </Avatar>
 
         <Typography variant="h4" fontWeight={700} sx={{ letterSpacing: "-0.02em", mb: 0.5 }}>
-          {displayName || "Usuário"}
+          {displayName || "User"}
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
           {userEmail}
@@ -292,7 +292,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                   variant="subtitle1"
                   sx={{ fontWeight: 600, color: isPrivacyMode ? "primary.main" : "text.secondary" }}
                 >
-                  Modo Privado
+                  Privacy Mode
                 </Typography>
               </Box>
               <Button
@@ -309,7 +309,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                   }),
                 }}
               >
-                {isPrivacyMode ? "Ativado" : "Desativado"}
+                {isPrivacyMode ? "Enabled" : "Disabled"}
               </Button>
             </Box>
             <ThemeSwitch value={themePreference} onChange={setThemePreference} />
@@ -334,8 +334,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                 <EditIcon fontSize="small" color="primary" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={600}>Nome de Exibição</Typography>
-                <Typography variant="caption" color="text.secondary">Como você quer ser chamado</Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Display Name</Typography>
+                <Typography variant="caption" color="text.secondary">What you want to be called</Typography>
               </Box>
             </Box>
             <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -346,7 +346,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                 autoComplete="name"
                 value={localDisplayName}
                 onChange={(e) => setLocalDisplayName(e.target.value)}
-                placeholder="Digite seu nome..."
+                placeholder="Type your name..."
                 onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
                 sx={inputSx}
               />
@@ -371,7 +371,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                     : `0 4px 14px -4px ${alpha(theme.palette.primary.main, 0.4)}`,
                 }}
               >
-                {nameStatus === "saved" ? "Salvo!" : "Salvar"}
+                {nameStatus === "saved" ? "Saved!" : "Save"}
               </Button>
             </Box>
           </Box>
@@ -395,11 +395,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                 <MailIcon fontSize="small" color="info" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={600}>Alterar Email</Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Change Email</Typography>
               </Box>
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2, ml: 6.5 }}>
-              Confirmação será enviada para ambos os emails.
+              Confirmation will be sent to both email addresses.
             </Typography>
             <Box sx={{ display: "flex", gap: 1.5 }}>
               <TextField
@@ -410,7 +410,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                 type="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="novo@email.com"
+                placeholder="new@email.com"
                 onKeyDown={(e) => e.key === "Enter" && handleChangeEmail()}
                 sx={inputSx}
               />
@@ -436,7 +436,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                   )}`,
                 }}
               >
-                {emailStatus === "sent" ? "Enviado!" : "Alterar"}
+                {emailStatus === "sent" ? "Sent!" : "Change"}
               </Button>
             </Box>
           </Box>
@@ -460,11 +460,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                 <KeyIcon fontSize="small" color="warning" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={600}>Redefinir Senha</Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Reset Password</Typography>
               </Box>
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2, ml: 6.5 }}>
-              Link de recuperação será enviado para {userEmail}
+              Recovery link will be sent to {userEmail}
             </Typography>
             <Button
               fullWidth
@@ -499,7 +499,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                 },
               }}
             >
-              {passwordStatus === "sent" ? "Email Enviado!" : "Enviar Link de Recuperação"}
+              {passwordStatus === "sent" ? "Email Sent!" : "Send Recovery Link"}
             </Button>
           </Box>
 
@@ -528,7 +528,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                 <Typography variant="subtitle1" fontWeight={600}>Google Wallet Sync</Typography>
               </Box>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, mb: 2, ml: 6.5 }}>
-                Rastreia notificações para registro automático de transações.
+                Tracks notifications for automatic transaction registration.
               </Typography>
             </Box>
           )}
