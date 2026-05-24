@@ -853,51 +853,188 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
       ) : (
         <>
           {/* Summary cards */}
-          <Grid container spacing={gridSpacing}>
-            {summaryCards.map((card) => (
-              <Grid key={card.label} size={{ xs: 6, md: 3 }}>
-                <Paper
-                  elevation={0}
+          {isMobile ? (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2.25,
+                position: "relative",
+                overflow: "hidden",
+                background: isDark
+                  ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.75)} 100%)`
+                  : `linear-gradient(135deg, ${alpha("#ffffff", 0.95)} 0%, ${alpha("#f8fafc", 0.95)} 100%)`,
+                backdropFilter: "blur(12px)",
+                border: `1px solid ${isDark ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                borderRadius: "20px",
+                boxShadow: isDark
+                  ? "0 4px 20px -4px rgba(0,0,0,0.3)"
+                  : `0 4px 20px -4px ${alpha(netBalance >= 0 ? "#10b981" : "#ef4444", 0.15)}`,
+              }}
+            >
+              {/* Saldo Líquido */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Box>
+                  <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    Saldo Líquido
+                  </Typography>
+                  <Typography sx={{ fontSize: 28, fontWeight: 800, color: netBalance >= 0 ? "#10b981" : "#ef4444", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+                    {netBalance >= 0 ? "+" : ""}{formatCurrency(netBalance)}
+                  </Typography>
+                </Box>
+                <Box
                   sx={{
-                    p: "18px",
-                    position: "relative",
-                    overflow: "hidden",
-                    background: isDark
-                      ? alpha(theme.palette.background.paper, 0.8)
-                      : "#ffffff",
-                    border: `1px solid ${isDark ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-                    borderRadius: "14px",
-                    transition: "all 0.2s ease-in-out",
-                    "&:hover": { transform: "translateY(-2px)", boxShadow: `0 10px 28px -6px ${alpha(card.accent, 0.2)}` },
+                    width: 42,
+                    height: 42,
+                    borderRadius: "12px",
+                    display: "grid",
+                    placeItems: "center",
+                    bgcolor: alpha(netBalance >= 0 ? "#10b981" : "#ef4444", 0.12),
+                    color: netBalance >= 0 ? "#10b981" : "#ef4444",
                   }}
                 >
-                  <Box
+                  <BalanceIcon sx={{ fontSize: 22 }} />
+                </Box>
+              </Box>
+
+              <Divider sx={{ borderStyle: "dashed", my: 1.75, opacity: 0.6 }} />
+
+              {/* Breakdown Section */}
+              <Grid container spacing={2}>
+                {/* Total Aportado */}
+                <Grid size={{ xs: 4 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: alpha("#10b981", 0.1),
+                        color: "#10b981",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <TrendingUpIcon sx={{ fontSize: 14 }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                        Aportado
+                      </Typography>
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
+                        {formatCurrency(totalDeposited)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                {/* Total Rendimentos */}
+                <Grid size={{ xs: 4 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: alpha("#6366f1", 0.1),
+                        color: "#6366f1",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <TrendingUpIcon sx={{ fontSize: 14 }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                        Rendimento
+                      </Typography>
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
+                        {formatCurrency(totalReturns)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                {/* ROI */}
+                <Grid size={{ xs: 4 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: alpha(roi >= 0 ? "#10b981" : "#ef4444", 0.1),
+                        color: roi >= 0 ? "#10b981" : "#ef4444",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <PercentIcon sx={{ fontSize: 14 }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                        ROI
+                      </Typography>
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: roi >= 0 ? "#10b981" : "#ef4444", mt: 0.1 }}>
+                        {roi >= 0 ? "+" : ""}{roi.toFixed(2)}%
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
+          ) : (
+            <Grid container spacing={gridSpacing}>
+              {summaryCards.map((card) => (
+                <Grid key={card.label} size={{ xs: 6, md: 3 }}>
+                  <Paper
+                    elevation={0}
                     sx={{
-                      position: "absolute",
-                      top: 14,
-                      right: 14,
-                      width: 38,
-                      height: 38,
-                      borderRadius: "11px",
-                      display: "grid",
-                      placeItems: "center",
-                      bgcolor: alpha(card.accent, 0.12),
-                      color: card.accent,
+                      p: "18px",
+                      position: "relative",
+                      overflow: "hidden",
+                      background: isDark
+                        ? alpha(theme.palette.background.paper, 0.8)
+                        : "#ffffff",
+                      border: `1px solid ${isDark ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+                      borderRadius: "14px",
+                      transition: "all 0.2s ease-in-out",
+                      "&:hover": { transform: "translateY(-2px)", boxShadow: `0 10px 28px -6px ${alpha(card.accent, 0.2)}` },
                     }}
                   >
-                    {card.icon}
-                  </Box>
-                  <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-                    {card.label}
-                  </Typography>
-                  <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: card.color, lineHeight: 1.15 }}>
-                    {card.value}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 14,
+                        right: 14,
+                        width: 38,
+                        height: 38,
+                        borderRadius: "11px",
+                        display: "grid",
+                        placeItems: "center",
+                        bgcolor: alpha(card.accent, 0.12),
+                        color: card.accent,
+                      }}
+                    >
+                      {card.icon}
+                    </Box>
+                    <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+                      {card.label}
+                    </Typography>
+                    <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: card.color, lineHeight: 1.15 }}>
+                      {card.value}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          )}
 
           {/* Charts */}
           <Grid container spacing={gridSpacing}>

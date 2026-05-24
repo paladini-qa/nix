@@ -701,123 +701,260 @@ const SharedView: React.FC<SharedViewProps> = ({
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={gridSpacing}>
-        {/* To Receive */}
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: `0 4px 16px -4px ${alpha("#10b981", isDarkMode ? 0.25 : 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12), color: "#10b981" }}>
-              <TrendingUpIcon sx={{ fontSize: 20 }} />
+      {isMobile ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.25,
+            position: "relative",
+            overflow: "hidden",
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.75)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#ffffff", 0.95)} 0%, ${alpha("#f8fafc", 0.95)} 100%)`,
+            backdropFilter: "blur(12px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+            borderRadius: "20px",
+            boxShadow: isDarkMode
+              ? "0 4px 20px -4px rgba(0,0,0,0.3)"
+              : `0 4px 20px -4px ${alpha(stats.netBalance >= 0 ? "#10b981" : "#ef4444", 0.15)}`,
+          }}
+        >
+          {/* Saldo Líquido */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box>
+              <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Saldo Líquido
+              </Typography>
+              <Typography sx={{ fontSize: 28, fontWeight: 800, color: stats.netBalance >= 0 ? "#10b981" : "#ef4444", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+                {stats.netBalance >= 0 ? "+" : ""}{formatCurrency(stats.netBalance)}
+              </Typography>
             </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              A Receber
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-              {formatCurrency(stats.totalPending)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">Amigos me devem</Typography>
-          </Paper>
-        </Grid>
+            <Box
+              sx={{
+                width: 42,
+                height: 42,
+                borderRadius: "12px",
+                display: "grid",
+                placeItems: "center",
+                bgcolor: alpha(stats.netBalance >= 0 ? "#10b981" : "#ef4444", 0.12),
+                color: stats.netBalance >= 0 ? "#10b981" : "#ef4444",
+              }}
+            >
+              <BalanceIcon sx={{ fontSize: 22 }} />
+            </Box>
+          </Box>
 
-        {/* You Owe */}
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: `0 4px 16px -4px ${alpha("#ef4444", isDarkMode ? 0.25 : 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#ef4444", isDarkMode ? 0.2 : 0.12), color: "#ef4444" }}>
-              <TrendingDownIcon sx={{ fontSize: 20 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              A Pagar
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-              {formatCurrency(stats.totalPendingIOwe)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">Eu devo</Typography>
-          </Paper>
-        </Grid>
+          <Divider sx={{ borderStyle: "dashed", my: 1.75, opacity: 0.6 }} />
 
-        {/* Net Balance */}
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: `0 4px 16px -4px ${alpha(stats.netBalance >= 0 ? "#a855f7" : "#ef4444", isDarkMode ? 0.25 : 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12), color: "#a855f7" }}>
-              <BalanceIcon sx={{ fontSize: 20 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Saldo Líquido
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: stats.netBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-              {stats.netBalance >= 0 ? "+" : ""}{formatCurrency(stats.netBalance)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">{stats.netBalance >= 0 ? "A seu favor" : "Você deve"}</Typography>
-          </Paper>
-        </Grid>
+          {/* Breakdown Section */}
+          <Grid container spacing={2}>
+            {/* A Receber */}
+            <Grid size={{ xs: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#10b981", 0.1),
+                    color: "#10b981",
+                    flexShrink: 0,
+                  }}
+                >
+                  <TrendingUpIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                    A Receber
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
+                    {formatCurrency(stats.totalPending)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
 
-        {/* Friends Count */}
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: `0 4px 16px -4px ${alpha("#a855f7", isDarkMode ? 0.25 : 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12), color: "#a855f7" }}>
-              <PeopleIcon sx={{ fontSize: 20 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Amigos
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "text.primary", fontVariantNumeric: "tabular-nums" }}>
-              {stats.friendCount}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">Com transações</Typography>
-          </Paper>
+            {/* A Pagar */}
+            <Grid size={{ xs: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#ef4444", 0.1),
+                    color: "#ef4444",
+                    flexShrink: 0,
+                  }}
+                >
+                  <TrendingDownIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                    A Pagar
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
+                    {formatCurrency(stats.totalPendingIOwe)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Amigos */}
+            <Grid size={{ xs: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#a855f7", 0.1),
+                    color: "#a855f7",
+                    flexShrink: 0,
+                  }}
+                >
+                  <PeopleIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                    Amigos
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
+                    {stats.friendCount}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      ) : (
+        <Grid container spacing={gridSpacing}>
+          {/* To Receive */}
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                borderRadius: "14px",
+                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: `0 4px 16px -4px ${alpha("#10b981", isDarkMode ? 0.25 : 0.15)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
+              }}
+            >
+              <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12), color: "#10b981" }}>
+                <TrendingUpIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+                A Receber
+              </Typography>
+              <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981", fontVariantNumeric: "tabular-nums", pr: 6 }}>
+                {formatCurrency(stats.totalPending)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">Amigos me devem</Typography>
+            </Paper>
+          </Grid>
+
+          {/* You Owe */}
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                borderRadius: "14px",
+                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: `0 4px 16px -4px ${alpha("#ef4444", isDarkMode ? 0.25 : 0.15)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
+              }}
+            >
+              <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#ef4444", isDarkMode ? 0.2 : 0.12), color: "#ef4444" }}>
+                <TrendingDownIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+                A Pagar
+              </Typography>
+              <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
+                {formatCurrency(stats.totalPendingIOwe)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">Eu devo</Typography>
+            </Paper>
+          </Grid>
+
+          {/* Net Balance */}
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                borderRadius: "14px",
+                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: `0 4px 16px -4px ${alpha(stats.netBalance >= 0 ? "#a855f7" : "#ef4444", isDarkMode ? 0.25 : 0.15)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
+              }}
+            >
+              <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12), color: "#a855f7" }}>
+                <BalanceIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+                Saldo Líquido
+              </Typography>
+              <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: stats.netBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
+                {stats.netBalance >= 0 ? "+" : ""}{formatCurrency(stats.netBalance)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">{stats.netBalance >= 0 ? "A seu favor" : "Você deve"}</Typography>
+            </Paper>
+          </Grid>
+
+          {/* Friends Count */}
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                borderRadius: "14px",
+                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: `0 4px 16px -4px ${alpha("#a855f7", isDarkMode ? 0.25 : 0.15)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
+              }}
+            >
+              <Box sx={{ position: "absolute", top: 14, right: 14, width: 38, height: 38, borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12), color: "#a855f7" }}>
+                <PeopleIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+                Amigos
+              </Typography>
+              <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "text.primary", fontVariantNumeric: "tabular-nums" }}>
+                {stats.friendCount}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">Com transações</Typography>
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      )}
 
       {/* Friend Balance Cards */}
       {friendBalances.length === 0 ? (
@@ -897,33 +1034,35 @@ const SharedView: React.FC<SharedViewProps> = ({
                     )
                   }
                 >
-                  <CardContent>
+                  <CardContent sx={{ p: isMobile ? 1.5 : 2.5, "&:last-child": { pb: isMobile ? 1.5 : 2.5 } }}>
                     <Box
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 2,
-                        mb: 2,
+                        gap: isMobile ? 1.25 : 2,
+                        mb: isMobile ? 1 : 2,
                       }}
                     >
                       <Avatar
                         sx={{
                           bgcolor: getAvatarColor(friend.name),
-                          width: 48,
-                          height: 48,
+                          width: isMobile ? 36 : 48,
+                          height: isMobile ? 36 : 48,
+                          fontSize: isMobile ? 14 : 18,
                         }}
                       >
                         {getInitials(friend.name)}
                       </Avatar>
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" fontWeight={600}>
+                        <Typography variant={isMobile ? "subtitle2" : "subtitle1"} fontWeight={600}>
                           {friend.name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {friend.expenses.length} despesa
-                          {friend.expenses.length !== 1 ? "s" : ""}{" "}
-                          compartilhada
-                          {friend.expenses.length !== 1 ? "s" : ""}
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? 11 : 12 }}>
+                          {isMobile ? (
+                            `${friend.expenses.length} desp. compartilhada${friend.expenses.length !== 1 ? "s" : ""}`
+                          ) : (
+                            `${friend.expenses.length} despesa${friend.expenses.length !== 1 ? "s" : ""} compartilhada${friend.expenses.length !== 1 ? "s" : ""}`
+                          )}
                         </Typography>
                       </Box>
                       {/* Botão de gerar relatório PDF */}
@@ -936,6 +1075,7 @@ const SharedView: React.FC<SharedViewProps> = ({
                             bgcolor: alpha(theme.palette.primary.main, 0.1),
                             color: "primary.main",
                             transition: "all 0.2s ease-in-out",
+                            p: isMobile ? 0.5 : 1,
                             "&:hover": {
                               bgcolor: alpha(theme.palette.primary.main, 0.2),
                               transform: "translateY(-2px)",
@@ -949,17 +1089,17 @@ const SharedView: React.FC<SharedViewProps> = ({
                           }}
                         >
                           {generatingPdf === friend.name ? (
-                            <CircularProgress size={18} color="inherit" />
+                            <CircularProgress size={isMobile ? 14 : 18} color="inherit" />
                           ) : (
-                            <PdfIcon fontSize="small" />
+                            <PdfIcon sx={{ fontSize: isMobile ? 16 : 20 }} />
                           )}
                         </IconButton>
                       </Tooltip>
                     </Box>
 
-                    <Divider sx={{ mb: 2 }} />
+                    <Divider sx={{ mb: isMobile ? 1 : 2 }} />
 
-                    {/* A receber / Você deve: soma das transações EXIBIDAS na aba (mesmo critério do resumo) */}
+                    {/* A receber / Você deve: soma das transações EXIBIDAS na aba */}
                     {(() => {
                       const displayed =
                         friendDisplayedTotals.get(friend.name) ?? {
@@ -967,6 +1107,77 @@ const SharedView: React.FC<SharedViewProps> = ({
                           toPay: 0,
                           netBalance: 0,
                         };
+
+                      if (isMobile) {
+                        return (
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                            {displayed.toReceive > 0 && (
+                              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <Typography sx={{ fontSize: 12.5, fontWeight: 500, color: "text.secondary" }}>
+                                  A receber:
+                                </Typography>
+                                <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: "success.main" }}>
+                                  {formatCurrency(displayed.toReceive)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {displayed.toPay > 0 && (
+                              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <Typography sx={{ fontSize: 12.5, fontWeight: 500, color: "text.secondary" }}>
+                                  Você deve:
+                                </Typography>
+                                <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: "error.main" }}>
+                                  {formatCurrency(displayed.toPay)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {displayed.toReceive === 0 && displayed.toPay === 0 && (
+                              <Box sx={{ py: 0.5, display: "flex", justifyContent: "center" }}>
+                                <Typography sx={{ fontSize: 12, fontWeight: 600, color: "text.secondary", opacity: 0.7 }}>
+                                  Sem pendências
+                                </Typography>
+                              </Box>
+                            )}
+                            {(friend.totalPaid > 0 || friend.totalIPaid > 0) && (
+                              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.25 }}>
+                                <Typography sx={{ fontSize: 11, color: "text.secondary", opacity: 0.8 }}>
+                                  Já acertado:
+                                </Typography>
+                                <Typography sx={{ fontSize: 11, color: "text.secondary", fontWeight: 500 }}>
+                                  {formatCurrency(friend.totalPaid + friend.totalIPaid)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {displayed.toReceive > 0 && displayed.toPay > 0 && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  mt: 0.5,
+                                  pt: 0.5,
+                                  borderTop: `1px dashed ${theme.palette.divider}`,
+                                }}
+                              >
+                                <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: "text.primary" }}>
+                                  Saldo líquido:
+                                </Typography>
+                                <Typography
+                                  sx={{
+                                    fontSize: 12.5,
+                                    fontWeight: 700,
+                                    color: displayed.netBalance >= 0 ? "success.main" : "error.main",
+                                  }}
+                                >
+                                  {displayed.netBalance >= 0 ? "+" : ""}
+                                  {formatCurrency(displayed.netBalance)}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+                        );
+                      }
+
                       return (
                         <>
                           {displayed.toReceive > 0 && (

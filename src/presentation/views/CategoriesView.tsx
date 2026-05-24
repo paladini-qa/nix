@@ -379,7 +379,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           elevation={0}
           onClick={() => setSelectedCategory({ name: summary.name, type: summary.type })}
           sx={{
-            p: "16px",
+            p: isMobile ? "12px" : "16px",
             cursor: "pointer",
             display: "flex",
             flexDirection: "column",
@@ -396,12 +396,12 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           }}
         >
           {/* Header */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: "10px" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: isMobile ? 1 : 1.25, mb: isMobile ? "6px" : "10px" }}>
             <Box
               sx={{
-                width: 40,
-                height: 40,
-                borderRadius: "12px",
+                width: isMobile ? 32 : 40,
+                height: isMobile ? 32 : 40,
+                borderRadius: "10px",
                 display: "grid",
                 placeItems: "center",
                 bgcolor: alpha(colors.primary, 0.15),
@@ -413,9 +413,9 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               <PaymentMethodIcon
                 imageUrl={getCategoryImage(isIncome ? "income" : "expense", summary.name)}
                 colors={colors}
-                size={40}
-                borderRadius="12px"
-                iconSize={18}
+                size={isMobile ? 32 : 40}
+                borderRadius={isMobile ? "10px" : "12px"}
+                iconSize={isMobile ? 15 : 18}
               />
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -423,7 +423,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                 <Typography
                   fontWeight={700}
                   sx={{
-                    fontSize: 14,
+                    fontSize: isMobile ? 13 : 14,
                     lineHeight: 1.2,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -436,37 +436,47 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   label={`${summary.transactionCount}`}
                   size="small"
                   sx={{
-                    height: 18,
-                    fontSize: 10,
+                    height: 16,
+                    fontSize: 9.5,
                     fontWeight: 700,
-                    borderRadius: "6px",
+                    borderRadius: "5px",
                     bgcolor: alpha(colors.primary, 0.12),
                     color: colors.primary,
-                    "& .MuiChip-label": { px: 0.75 },
+                    "& .MuiChip-label": { px: 0.5 },
                   }}
                 />
               </Box>
-              <Typography sx={{ fontSize: 11, color: "text.secondary", mt: "2px" }}>
+              <Typography sx={{ fontSize: 10.5, color: "text.secondary", mt: "1px" }}>
                 {summary.transactionCount === 1 ? "transação" : "transações"}
               </Typography>
             </Box>
           </Box>
 
-          {/* Amount */}
-          <Typography sx={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em", mb: "10px" }}>
-            {formatCurrency(summary.total, "pt-BR", "BRL", 2)}
-          </Typography>
+          {/* Amount & Percentage Horizontally on Mobile */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", mb: isMobile ? "6px" : "10px" }}>
+            <Typography sx={{ fontSize: isMobile ? 15.5 : 18, fontWeight: 700, letterSpacing: "-0.02em" }}>
+              {formatCurrency(summary.total, "pt-BR", "BRL", 2)}
+            </Typography>
+            {isMobile && (
+              <Typography sx={{ fontSize: 11, color: "text.secondary" }}>
+                {percentage.toFixed(0)}% do total
+              </Typography>
+            )}
+          </Box>
 
           {/* Progress bar */}
-          <Box sx={{ height: 6, borderRadius: "99px", bgcolor: alpha(colors.primary, 0.12), overflow: "hidden", mb: "8px" }}>
+          <Box sx={{ height: isMobile ? 4 : 6, borderRadius: "99px", bgcolor: alpha(colors.primary, 0.12), overflow: "hidden", mb: "8px" }}>
             <Box sx={{ height: "100%", borderRadius: "99px", width: `${Math.min(percentage, 100)}%`, bgcolor: colors.primary, transition: "width 0.3s" }} />
           </Box>
 
           {/* Footer */}
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Typography sx={{ fontSize: 11.5, color: "text.secondary" }}>
-              {percentage.toFixed(0)}% do total
-            </Typography>
+            {!isMobile && (
+              <Typography sx={{ fontSize: 11.5, color: "text.secondary" }}>
+                {percentage.toFixed(0)}% do total
+              </Typography>
+            )}
+            {isMobile && <Box />}
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Tooltip title="Editar imagem">
                 <IconButton
@@ -474,7 +484,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   onClick={(e) => { e.stopPropagation(); setImagePickerTarget({ type: summary.type, name: summary.name }); setImagePickerOpen(true); }}
                   sx={{ color: "text.secondary", "&:hover": { color: "primary.main", bgcolor: alpha(theme.palette.primary.main, 0.08) } }}
                 >
-                  <EditIcon sx={{ fontSize: 15 }} />
+                  <EditIcon sx={{ fontSize: 13 }} />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Excluir categoria">
@@ -483,7 +493,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   onClick={(e) => { e.stopPropagation(); onRemoveCategory(summary.type, summary.name); }}
                   sx={{ color: "text.secondary", "&:hover": { color: "error.main", bgcolor: alpha(theme.palette.error.main, 0.08) } }}
                 >
-                  <DeleteIcon sx={{ fontSize: 15 }} />
+                  <DeleteIcon sx={{ fontSize: 13 }} />
                 </IconButton>
               </Tooltip>
               <Button
@@ -493,10 +503,10 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   color: "text.secondary",
                   textTransform: "none",
                   fontWeight: 600,
-                  fontSize: 12,
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: "8px",
+                  fontSize: 11.5,
+                  px: 0.75,
+                  py: 0.25,
+                  borderRadius: "6px",
                   minWidth: 0,
                   "&:hover": { bgcolor: alpha(colors.primary, 0.08), color: colors.primary },
                 }}
@@ -1168,7 +1178,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           <Paper
             elevation={0}
             sx={{
-              p: "18px",
+              p: isMobile ? "12px" : "18px",
               borderRadius: "14px",
               border: `1px solid ${alpha("#10b981", 0.2)}`,
               background: isDarkMode
@@ -1177,12 +1187,12 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: isMobile ? 1.25 : 1.5 }}>
               <Box
                 sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: "12px",
+                  width: isMobile ? 34 : 40,
+                  height: isMobile ? 34 : 40,
+                  borderRadius: "10px",
                   display: "grid",
                   placeItems: "center",
                   bgcolor: alpha("#10b981", 0.18),
@@ -1190,16 +1200,16 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   flexShrink: 0,
                 }}
               >
-                <TrendingUpIcon sx={{ fontSize: 18 }} />
+                <TrendingUpIcon sx={{ fontSize: isMobile ? 15 : 18 }} />
               </Box>
               <Box>
-                <Typography sx={{ fontSize: 11, fontWeight: 700, color: "text.secondary", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                   Receitas
                 </Typography>
-                <Typography sx={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981" }}>
+                <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981" }}>
                   {formatCurrency(stats.totalIncome, "pt-BR", "BRL", 2)}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? 10.5 : 12 }}>
                   {stats.incomeWithActivity} de {stats.incomeCategories} categorias · {categorySummaries.income.reduce((s, c) => s + c.transactionCount, 0)} transações
                 </Typography>
               </Box>
@@ -1212,7 +1222,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
           <Paper
             elevation={0}
             sx={{
-              p: "18px",
+              p: isMobile ? "12px" : "18px",
               borderRadius: "14px",
               border: `1px solid ${alpha("#ef4444", 0.2)}`,
               background: isDarkMode
@@ -1221,12 +1231,12 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
               boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: isMobile ? 1.25 : 1.5 }}>
               <Box
                 sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: "12px",
+                  width: isMobile ? 34 : 40,
+                  height: isMobile ? 34 : 40,
+                  borderRadius: "10px",
                   display: "grid",
                   placeItems: "center",
                   bgcolor: alpha("#ef4444", 0.18),
@@ -1234,16 +1244,16 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                   flexShrink: 0,
                 }}
               >
-                <TrendingDownIcon sx={{ fontSize: 18 }} />
+                <TrendingDownIcon sx={{ fontSize: isMobile ? 15 : 18 }} />
               </Box>
               <Box>
-                <Typography sx={{ fontSize: 11, fontWeight: 700, color: "text.secondary", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                   Despesas
                 </Typography>
-                <Typography sx={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444" }}>
+                <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444" }}>
                   {formatCurrency(stats.totalExpense, "pt-BR", "BRL", 2)}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? 10.5 : 12 }}>
                   {stats.expenseWithActivity} de {stats.expenseCategories} categorias · {categorySummaries.expense.reduce((s, c) => s + c.transactionCount, 0)} transações
                 </Typography>
               </Box>

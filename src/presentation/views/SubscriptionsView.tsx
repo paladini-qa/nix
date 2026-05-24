@@ -125,6 +125,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+  const { isMobile } = useLayoutSpacing();
+  const { format: formatCurrency } = useSettings();
   const primary = isCancelled
     ? theme.palette.error.main
     : (subscriptionColor?.primary ?? theme.palette.primary.main);
@@ -147,10 +149,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           elevation={0}
           onClick={() => !isCancelled && onOpenDetail(group)}
           sx={{
-            p: 2.5,
+            p: { xs: 1.5, sm: 2.5 },
             display: "flex",
             flexDirection: "column",
-            borderRadius: "16px",
+            borderRadius: { xs: "12px", sm: "16px" },
             cursor: isCancelled ? "default" : "pointer",
             background: isDark
               ? alpha(theme.palette.background.paper, 0.7)
@@ -168,7 +170,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           }}
         >
           {/* Header */}
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: { xs: 1.25, sm: 2 } }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
               <Box
                 sx={{ position: "relative", cursor: isCancelled ? "default" : "pointer", flexShrink: 0 }}
@@ -177,9 +179,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 <PaymentMethodIcon
                   imageUrl={isCancelled ? undefined : imageUrl}
                   colors={{ primary, secondary }}
-                  size={36}
-                  borderRadius="10px"
-                  iconSize={18}
+                  size={isMobile ? 30 : 36}
+                  borderRadius={isMobile ? "8px" : "10px"}
+                  iconSize={isMobile ? 15 : 18}
                 />
                 {!isCancelled && !imageUrl && (
                   <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, borderRadius: "10px", bgcolor: "rgba(0,0,0,0.35)", transition: "opacity 0.15s", "&:hover": { opacity: 1 } }}>
@@ -191,7 +193,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 <Typography
                   fontWeight={700}
                   sx={{
-                    fontSize: 14,
+                    fontSize: { xs: 13, sm: 14 },
                     lineHeight: 1.2,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -227,32 +229,43 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           </Box>
 
           {/* Amount section */}
-          <Box sx={{ mb: 1.5, flex: 1 }}>
-            <Typography
-              sx={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: "text.disabled",
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-                mb: 0.5,
-              }}
-            >
-              Último valor
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 800,
-                letterSpacing: "-0.02em",
-                lineHeight: 1.15,
-                color: isCancelled ? "text.disabled" : "text.primary",
-                ...(isCancelled && { textDecoration: "line-through" }),
-              }}
-            >
-              {formatCurrency(group.lastAmount)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+          <Box
+            sx={{
+              mb: { xs: 1.25, sm: 1.5 },
+              flex: 1,
+              display: isMobile ? "flex" : "block",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: "text.disabled",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  mb: 0.5,
+                  display: { xs: "none", sm: "block" },
+                }}
+              >
+                Último valor
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: { xs: 17, sm: 20 },
+                  fontWeight: 800,
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.15,
+                  color: isCancelled ? "text.disabled" : "text.primary",
+                  ...(isCancelled && { textDecoration: "line-through" }),
+                }}
+              >
+                {formatCurrency(group.lastAmount)}
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: { xs: 0, sm: 0.5 }, display: "block" }}>
               {group.monthsActive} {group.monthsActive === 1 ? "mês" : "meses"} ativo{group.monthsActive !== 1 ? "s" : ""}
             </Typography>
           </Box>
@@ -264,7 +277,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               alignItems: "center",
               justifyContent: "space-between",
               borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-              pt: 1.5,
+              pt: { xs: 1.25, sm: 1.5 },
             }}
           >
             <Button
@@ -723,49 +736,157 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
       </Box>
 
       {/* Cards de resumo */}
-      <Grid container spacing={gridSpacing}>
-        {summaryCards.map((card) => (
-          <Grid key={card.label} size={{ xs: 12, sm: 4 }}>
-            <Paper
-              elevation={0}
+      {isMobile ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.25,
+            position: "relative",
+            overflow: "hidden",
+            background: isDark
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.75)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#ffffff", 0.95)} 0%, ${alpha("#f8fafc", 0.95)} 100%)`,
+            backdropFilter: "blur(12px)",
+            border: `1px solid ${isDark ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+            borderRadius: "20px",
+            boxShadow: isDark
+              ? "0 4px 20px -4px rgba(0,0,0,0.3)"
+              : "0 4px 20px -4px rgba(99,102,241,0.05)",
+          }}
+        >
+          {/* Total Mensal */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box>
+              <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Total mensal
+              </Typography>
+              <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#ef4444", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+                {formatCurrency(currentMonthTotal)}
+              </Typography>
+            </Box>
+            <Box
               sx={{
-                p: "18px",
-                position: "relative",
-                overflow: "hidden",
-                background: isDark ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-                border: `1px solid ${isDark ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-                borderRadius: "14px",
-                transition: "all 0.2s ease-in-out",
-                "&:hover": { transform: "translateY(-2px)", boxShadow: `0 10px 28px -6px ${alpha(card.accent, 0.2)}` },
+                width: 42,
+                height: 42,
+                borderRadius: "12px",
+                display: "grid",
+                placeItems: "center",
+                bgcolor: alpha("#ef4444", 0.12),
+                color: "#ef4444",
               }}
             >
-              <Box
+              <SubscriptionsIcon sx={{ fontSize: 22 }} />
+            </Box>
+          </Box>
+
+          <Divider sx={{ borderStyle: "dashed", my: 1.75, opacity: 0.6 }} />
+
+          {/* Breakdown Section */}
+          <Grid container spacing={2}>
+            {/* Projeção Anual */}
+            <Grid size={{ xs: 6 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha(primary, 0.1),
+                    color: primary,
+                    flexShrink: 0,
+                  }}
+                >
+                  <CalendarIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", textTransform: "uppercase", fontWeight: 600 }}>
+                    Projeção anual
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
+                    {formatCurrency(monthlyAverage * 12)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Serviços Ativos */}
+            <Grid size={{ xs: 6 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#a855f7", 0.1),
+                    color: "#a855f7",
+                    flexShrink: 0,
+                  }}
+                >
+                  <AppsIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", textTransform: "uppercase", fontWeight: 600 }}>
+                    Ativas
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
+                    {activeGroups.length}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      ) : (
+        <Grid container spacing={gridSpacing}>
+          {summaryCards.map((card) => (
+            <Grid key={card.label} size={{ xs: 12, sm: 4 }}>
+              <Paper
+                elevation={0}
                 sx={{
-                  position: "absolute",
-                  top: 14,
-                  right: 14,
-                  width: 38,
-                  height: 38,
-                  borderRadius: "11px",
-                  display: "grid",
-                  placeItems: "center",
-                  bgcolor: alpha(card.accent, 0.12),
-                  color: card.accent,
+                  p: "18px",
+                  position: "relative",
+                  overflow: "hidden",
+                  background: isDark ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                  border: `1px solid ${isDark ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+                  borderRadius: "14px",
+                  transition: "all 0.2s ease-in-out",
+                  "&:hover": { transform: "translateY(-2px)", boxShadow: `0 10px 28px -6px ${alpha(card.accent, 0.2)}` },
                 }}
               >
-                {card.icon}
-              </Box>
-              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-                {card.label}
-              </Typography>
-              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: card.color, lineHeight: 1.15 }}>
-                {card.value}
-              </Typography>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 14,
+                    right: 14,
+                    width: 38,
+                    height: 38,
+                    borderRadius: "11px",
+                    display: "grid",
+                    placeItems: "center",
+                    bgcolor: alpha(card.accent, 0.12),
+                    color: card.accent,
+                  }}
+                >
+                  {card.icon}
+                </Box>
+                <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
+                  {card.label}
+                </Typography>
+                <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: card.color, lineHeight: 1.15 }}>
+                  {card.value}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       {isEmpty ? (
         <EmptyState

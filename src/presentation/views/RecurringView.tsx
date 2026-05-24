@@ -733,51 +733,51 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
     return (
       <Grid key={t.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-        <Paper
-          elevation={0}
-          onClick={() => setSelectedRecurringId(t.id)}
-          sx={{
-            p: 2.5,
-            display: "flex",
-            flexDirection: "column",
-            height: "100%",
-            borderRadius: "16px",
-            cursor: "pointer",
-            background: isDarkMode
-              ? alpha(theme.palette.background.paper, 0.7)
-              : alpha("#fff", 0.95),
-            border: `1.5px solid ${alpha(palette.primary, isDarkMode ? 0.45 : 0.25)}`,
-            transition: "all 0.2s ease-in-out",
-            "&:hover": {
-              transform: "translateY(-3px)",
-              boxShadow: `0 10px 28px -6px ${alpha(palette.primary, 0.3)}`,
-              border: `1.5px solid ${alpha(palette.primary, 0.65)}`,
-            },
-          }}
-        >
-          {/* Header */}
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
-              <Box
-                sx={{ position: "relative", cursor: "pointer", flexShrink: 0 }}
-                onClick={(e) => { e.stopPropagation(); setImgPickerTarget(t.description); setImgPickerOpen(true); }}
-              >
-                <PaymentMethodIcon
-                  imageUrl={getSubscriptionImage(t.description)}
-                  colors={palette}
-                  size={36}
-                  borderRadius="10px"
-                  iconSize={18}
-                />
-                <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, borderRadius: "10px", bgcolor: "rgba(0,0,0,0.35)", transition: "opacity 0.15s", "&:hover": { opacity: 1 } }}>
-                  <ImageIcon sx={{ color: "#fff", fontSize: 14 }} />
-                </Box>
+        {isMobile ? (
+          <Paper
+            elevation={0}
+            onClick={() => setSelectedRecurringId(t.id)}
+            sx={{
+              p: 1.25,
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              borderRadius: "12px",
+              cursor: "pointer",
+              background: isDarkMode
+                ? alpha(theme.palette.background.paper, 0.7)
+                : alpha("#fff", 0.95),
+              border: `1px solid ${alpha(palette.primary, isDarkMode ? 0.35 : 0.15)}`,
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                border: `1px solid ${alpha(palette.primary, 0.5)}`,
+              },
+            }}
+          >
+            {/* Left: Icon */}
+            <Box
+              sx={{ position: "relative", cursor: "pointer", flexShrink: 0 }}
+              onClick={(e) => { e.stopPropagation(); setImgPickerTarget(t.description); setImgPickerOpen(true); }}
+            >
+              <PaymentMethodIcon
+                imageUrl={getSubscriptionImage(t.description)}
+                colors={palette}
+                size={34}
+                borderRadius="8px"
+                iconSize={16}
+              />
+              <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, borderRadius: "8px", bgcolor: "rgba(0,0,0,0.35)", transition: "opacity 0.15s", "&:hover": { opacity: 1 } }}>
+                <ImageIcon sx={{ color: "#fff", fontSize: 12 }} />
               </Box>
-              <Tooltip title={t.description}>
+            </Box>
+
+            {/* Middle: Title, Category, Next Occurrence */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography
                   fontWeight={700}
                   sx={{
-                    fontSize: 14,
+                    fontSize: 13.5,
                     lineHeight: 1.2,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -786,127 +786,254 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 >
                   {t.description}
                 </Typography>
-              </Tooltip>
+                <Chip
+                  label={t.frequency === "monthly" ? "M" : "A"}
+                  size="small"
+                  sx={{
+                    height: 16,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    borderRadius: "4px",
+                    bgcolor: alpha(palette.primary, isDarkMode ? 0.2 : 0.1),
+                    color: palette.primary,
+                    "& .MuiChip-label": { px: 0.75 },
+                  }}
+                />
+              </Box>
+              <Typography sx={{ fontSize: 10, fontWeight: 500, color: "text.secondary", mt: 0.25 }}>
+                {t.category}
+              </Typography>
+              <Typography sx={{ fontSize: 10, color: "text.disabled", mt: 0.25 }}>
+                Próx: {getNextOccurrence(t)}
+              </Typography>
             </Box>
-            <Chip
-              label={t.frequency === "monthly" ? "Mensal" : "Anual"}
-              size="small"
-              sx={{
-                height: 22,
-                fontSize: 11,
-                fontWeight: 600,
-                borderRadius: "8px",
-                flexShrink: 0,
-                ml: 1,
-                bgcolor: alpha(palette.primary, isDarkMode ? 0.2 : 0.1),
-                color: palette.primary,
-                "& .MuiChip-label": { px: 1.25 },
-              }}
-            />
-          </Box>
 
-          {/* Amount section */}
-          <Box sx={{ mb: 1.5, flex: 1 }}>
-            <Typography
-              sx={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: "text.disabled",
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-                mb: 0.5,
-              }}
-            >
-              {t.category}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 800,
-                letterSpacing: "-0.02em",
-                lineHeight: 1.15,
-                color: isIncome ? "#10b981" : "text.primary",
-              }}
-            >
-              {isIncome ? "+" : ""}{formatCurrency(t.amount || 0)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-              Próx: {getNextOccurrence(t)} · {calculateOccurrences(t)} ocorrências
-            </Typography>
-          </Box>
+            {/* Right: Amount & Status/Actions */}
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0, gap: 0.5 }}>
+              <Typography
+                sx={{
+                  fontSize: 14.5,
+                  fontWeight: 800,
+                  letterSpacing: "-0.01em",
+                  color: isIncome ? "#10b981" : "text.primary",
+                }}
+              >
+                {isIncome ? "+" : ""}{formatCurrency(t.amount || 0)}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Chip
+                  label={t.isPaid ? "Pago" : "Pend"}
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); onTogglePaid(t.id, !t.isPaid); }}
+                  sx={{
+                    height: 18,
+                    fontSize: 9.5,
+                    fontWeight: 700,
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    border: "none",
+                    bgcolor: t.isPaid
+                      ? alpha("#10b981", isDarkMode ? 0.2 : 0.12)
+                      : alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
+                    color: t.isPaid ? "#10b981" : "#f59e0b",
+                    "& .MuiChip-label": { px: 0.75 },
+                    "&:hover": { opacity: 0.8 },
+                  }}
+                />
 
-          {/* Footer */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-              pt: 1.5,
-            }}
-          >
-            {/* Paid/Pending chip */}
-            <Chip
-              label={t.isPaid ? "Pago" : "Pendente"}
-              size="small"
-              onClick={(e) => { e.stopPropagation(); onTogglePaid(t.id, !t.isPaid); }}
-              sx={{
-                height: 24,
-                fontSize: 11,
-                fontWeight: 700,
-                borderRadius: "8px",
-                cursor: "pointer",
-                border: "none",
-                bgcolor: t.isPaid
-                  ? alpha("#10b981", isDarkMode ? 0.2 : 0.12)
-                  : alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
-                color: t.isPaid ? "#10b981" : "#f59e0b",
-                "& .MuiChip-label": { px: 1.25 },
-                "&:hover": { opacity: 0.8 },
-              }}
-            />
-
-            {/* Edit + Delete */}
-            <Box sx={{ display: "flex", gap: 0.5 }}>
-              <Tooltip title="Editar série">
                 <IconButton
                   size="small"
                   onClick={(e) => { e.stopPropagation(); onEditSeries(t); }}
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "8px",
-                    color: "text.secondary",
-                    "&:hover": {
-                      bgcolor: alpha(theme.palette.primary.main, 0.1),
-                      color: "primary.main",
-                    },
-                  }}
+                  sx={{ width: 22, height: 22, color: "text.secondary", p: 0 }}
                 >
-                  <EditIcon sx={{ fontSize: 15 }} />
+                  <EditIcon sx={{ fontSize: 12 }} />
                 </IconButton>
-              </Tooltip>
-              <Tooltip title="Excluir">
                 <IconButton
                   size="small"
                   onClick={(e) => { e.stopPropagation(); openDeleteOptions(t); }}
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "8px",
-                    color: "text.secondary",
-                    "&:hover": {
-                      bgcolor: alpha(theme.palette.error.main, 0.1),
-                      color: "error.main",
-                    },
-                  }}
+                  sx={{ width: 22, height: 22, color: "text.secondary", p: 0 }}
                 >
-                  <DeleteIcon sx={{ fontSize: 15 }} />
+                  <DeleteIcon sx={{ fontSize: 12 }} />
                 </IconButton>
-              </Tooltip>
+              </Box>
             </Box>
-          </Box>
-        </Paper>
+          </Paper>
+        ) : (
+          <Paper
+            elevation={0}
+            onClick={() => setSelectedRecurringId(t.id)}
+            sx={{
+              p: 2.5,
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              borderRadius: "16px",
+              cursor: "pointer",
+              background: isDarkMode
+                ? alpha(theme.palette.background.paper, 0.7)
+                : alpha("#fff", 0.95),
+              border: `1.5px solid ${alpha(palette.primary, isDarkMode ? 0.45 : 0.25)}`,
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                transform: "translateY(-3px)",
+                boxShadow: `0 10px 28px -6px ${alpha(palette.primary, 0.3)}`,
+                border: `1.5px solid ${alpha(palette.primary, 0.65)}`,
+              },
+            }}
+          >
+            {/* Header */}
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
+                <Box
+                  sx={{ position: "relative", cursor: "pointer", flexShrink: 0 }}
+                  onClick={(e) => { e.stopPropagation(); setImgPickerTarget(t.description); setImgPickerOpen(true); }}
+                >
+                  <PaymentMethodIcon
+                    imageUrl={getSubscriptionImage(t.description)}
+                    colors={palette}
+                    size={36}
+                    borderRadius="10px"
+                    iconSize={18}
+                  />
+                  <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, borderRadius: "10px", bgcolor: "rgba(0,0,0,0.35)", transition: "opacity 0.15s", "&:hover": { opacity: 1 } }}>
+                    <ImageIcon sx={{ color: "#fff", fontSize: 14 }} />
+                  </Box>
+                </Box>
+                <Tooltip title={t.description}>
+                  <Typography
+                    fontWeight={700}
+                    sx={{
+                      fontSize: 14,
+                      lineHeight: 1.2,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {t.description}
+                  </Typography>
+                </Tooltip>
+              </Box>
+              <Chip
+                label={t.frequency === "monthly" ? "Mensal" : "Anual"}
+                size="small"
+                sx={{
+                  height: 22,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  borderRadius: "8px",
+                  flexShrink: 0,
+                  ml: 1,
+                  bgcolor: alpha(palette.primary, isDarkMode ? 0.2 : 0.1),
+                  color: palette.primary,
+                  "& .MuiChip-label": { px: 1.25 },
+                }}
+              />
+            </Box>
+
+            {/* Amount section */}
+            <Box sx={{ mb: 1.5, flex: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: "text.disabled",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  mb: 0.5,
+                }}
+              >
+                {t.category}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 20,
+                  fontWeight: 800,
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.15,
+                  color: isIncome ? "#10b981" : "text.primary",
+                }}
+              >
+                {isIncome ? "+" : ""}{formatCurrency(t.amount || 0)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                Próx: {getNextOccurrence(t)} · {calculateOccurrences(t)} ocorrências
+              </Typography>
+            </Box>
+
+            {/* Footer */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                pt: 1.5,
+              }}
+            >
+              {/* Paid/Pending chip */}
+              <Chip
+                label={t.isPaid ? "Pago" : "Pendente"}
+                size="small"
+                onClick={(e) => { e.stopPropagation(); onTogglePaid(t.id, !t.isPaid); }}
+                sx={{
+                  height: 24,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  border: "none",
+                  bgcolor: t.isPaid
+                    ? alpha("#10b981", isDarkMode ? 0.2 : 0.12)
+                    : alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
+                  color: t.isPaid ? "#10b981" : "#f59e0b",
+                  "& .MuiChip-label": { px: 1.25 },
+                  "&:hover": { opacity: 0.8 },
+                }}
+              />
+
+              {/* Edit + Delete */}
+              <Box sx={{ display: "flex", gap: 0.5 }}>
+                <Tooltip title="Editar série">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); onEditSeries(t); }}
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "8px",
+                      color: "text.secondary",
+                      "&:hover": {
+                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                        color: "primary.main",
+                      },
+                    }}
+                  >
+                    <EditIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Excluir">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); openDeleteOptions(t); }}
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "8px",
+                      color: "text.secondary",
+                      "&:hover": {
+                        bgcolor: alpha(theme.palette.error.main, 0.1),
+                        color: "error.main",
+                      },
+                    }}
+                  >
+                    <DeleteIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
+          </Paper>
+        )}
       </Grid>
     );
   };
@@ -1283,187 +1410,332 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         </Box>
       </Box>
 
-      {/* Summary Cards */}
-      <Grid container spacing={gridSpacing}>
-        {/* Total */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha("#a855f7", 0.25)}`
-                : `0 4px 16px -4px ${alpha("#a855f7", 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
+      {isMobile ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.25,
+            position: "relative",
+            overflow: "hidden",
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.75)} 100%)`
+              : `linear-gradient(135deg, ${alpha("#ffffff", 0.95)} 0%, ${alpha("#f8fafc", 0.95)} 100%)`,
+            backdropFilter: "blur(12px)",
+            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+            borderRadius: "20px",
+            boxShadow: isDarkMode
+              ? "0 4px 20px -4px rgba(0,0,0,0.3)"
+              : `0 4px 20px -4px ${alpha(stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", 0.15)}`,
+          }}
+        >
+          {/* Saldo Mensal */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box>
+              <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Saldo Mensal Estimado
+              </Typography>
+              <Typography sx={{ fontSize: 28, fontWeight: 800, color: stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+                {stats.monthlyBalance >= 0 ? "+" : ""}{formatCurrency(stats.monthlyBalance)}
+              </Typography>
+            </Box>
             <Box
               sx={{
-                position: "absolute", top: 14, right: 14,
-                width: 38, height: 38, borderRadius: "11px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12),
-                color: "#a855f7",
+                width: 42,
+                height: 42,
+                borderRadius: "12px",
+                display: "grid",
+                placeItems: "center",
+                bgcolor: alpha(stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", 0.12),
+                color: stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444",
               }}
             >
-              <RepeatIcon sx={{ fontSize: 20 }} />
+              <RepeatIcon sx={{ fontSize: 22 }} />
             </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Total
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7", fontVariantNumeric: "tabular-nums" }}>
-              {stats.total}
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1.5, mt: 0.5 }}>
-              <Typography variant="caption" sx={{ color: "#10b981" }}>
-                {stats.incomeCount} receitas
-              </Typography>
-              <Typography variant="caption" sx={{ color: "#ef4444" }}>
-                {stats.expenseCount} despesas
-              </Typography>
-            </Box>
-          </Paper>
-        </Grid>
+          </Box>
 
-        {/* Mensal */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha(stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", 0.25)}`
-                : `0 4px 16px -4px ${alpha(stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute", top: 14, right: 14,
-                width: 38, height: 38, borderRadius: "11px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12),
-                color: "#10b981",
-              }}
-            >
-              <TrendingUpIcon sx={{ fontSize: 20 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Mensal
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-              {formatCurrency(stats.monthlyBalance)}
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 0.5 }}>
-              <Typography variant="caption" sx={{ color: "#10b981" }}>
-                +{formatCurrency(stats.monthlyIncome)}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "#ef4444" }}>
-                -{formatCurrency(stats.monthlyExpense)}
-              </Typography>
-            </Box>
-          </Paper>
-        </Grid>
+          <Divider sx={{ borderStyle: "dashed", my: 1.75, opacity: 0.6 }} />
 
-        {/* Anual */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha("#f59e0b", 0.25)}`
-                : `0 4px 16px -4px ${alpha("#f59e0b", 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute", top: 14, right: 14,
-                width: 38, height: 38, borderRadius: "11px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                bgcolor: alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
-                color: "#f59e0b",
-              }}
-            >
-              <InfiniteIcon sx={{ fontSize: 20 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Anual
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: stats.annualizedBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-              {formatCurrency(stats.annualizedBalance)}
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 0.5 }}>
-              <Typography variant="caption" sx={{ color: "#10b981" }}>
-                +{formatCurrency(stats.annualizedIncome)}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "#ef4444" }}>
-                -{formatCurrency(stats.annualizedExpense)}
-              </Typography>
-            </Box>
-          </Paper>
-        </Grid>
+          {/* Breakdown Section */}
+          <Grid container spacing={2}>
+            {/* Fluxo Mensal */}
+            <Grid size={{ xs: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#10b981", 0.1),
+                    color: "#10b981",
+                    flexShrink: 0,
+                  }}
+                >
+                  <TrendingUpIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                    Fluxo Mensal
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "success.main", mt: 0.1, display: "block", lineHeight: 1.15 }}>
+                    +{formatCurrency(stats.monthlyIncome)}
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "error.main", display: "block" }}>
+                    -{formatCurrency(stats.monthlyExpense)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
 
-        {/* Impacto Total */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha("#a855f7", 0.25)}`
-                : `0 4px 16px -4px ${alpha("#a855f7", 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box
+            {/* Impacto Anual */}
+            <Grid size={{ xs: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#f59e0b", 0.1),
+                    color: "#f59e0b",
+                    flexShrink: 0,
+                  }}
+                >
+                  <CalendarIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                    Impacto Anual
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
+                    {formatCurrency(stats.annualizedBalance)}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
+                    (Mensal×12)+Anuais
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Cadastradas */}
+            <Grid size={{ xs: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: alpha("#a855f7", 0.1),
+                    color: "#a855f7",
+                    flexShrink: 0,
+                  }}
+                >
+                  <RepeatIcon sx={{ fontSize: 14 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
+                    Transações
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
+                    {stats.total} total
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem" }}>
+                    {stats.incomeCount}R | {stats.expenseCount}D
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      ) : (
+        <Grid container spacing={gridSpacing}>
+          {/* Total */}
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Paper
+              elevation={0}
               sx={{
-                position: "absolute", top: 14, right: 14,
-                width: 38, height: 38, borderRadius: "11px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12),
-                color: "#a855f7",
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                borderRadius: "14px",
+                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: isDarkMode
+                  ? `0 4px 16px -4px ${alpha("#a855f7", 0.25)}`
+                  : `0 4px 16px -4px ${alpha("#a855f7", 0.15)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
-              <CalendarIcon sx={{ fontSize: 20 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Impacto Total
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-              {formatCurrency(stats.annualizedBalance)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              (Mensal × 12) + Anuais
-            </Typography>
-          </Paper>
+              <Box
+                sx={{
+                  position: "absolute", top: 14, right: 14,
+                  width: 38, height: 38, borderRadius: "11px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12),
+                  color: "#a855f7",
+                }}
+              >
+                <RepeatIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+                Total
+              </Typography>
+              <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7", fontVariantNumeric: "tabular-nums" }}>
+                {stats.total}
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1.5, mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: "#10b981" }}>
+                  {stats.incomeCount} receitas
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#ef4444" }}>
+                  {stats.expenseCount} despesas
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Mensal */}
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                borderRadius: "14px",
+                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: isDarkMode
+                  ? `0 4px 16px -4px ${alpha(stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", 0.25)}`
+                  : `0 4px 16px -4px ${alpha(stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", 0.15)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute", top: 14, right: 14,
+                  width: 38, height: 38, borderRadius: "11px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12),
+                  color: "#10b981",
+                }}
+              >
+                <TrendingUpIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+                Mensal
+              </Typography>
+              <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
+                {formatCurrency(stats.monthlyBalance)}
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: "#10b981" }}>
+                  +{formatCurrency(stats.monthlyIncome)}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#ef4444" }}>
+                  -{formatCurrency(stats.monthlyExpense)}
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Anual */}
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                borderRadius: "14px",
+                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: isDarkMode
+                  ? `0 4px 16px -4px ${alpha("#f59e0b", 0.25)}`
+                  : `0 4px 16px -4px ${alpha("#f59e0b", 0.15)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute", top: 14, right: 14,
+                  width: 38, height: 38, borderRadius: "11px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  bgcolor: alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
+                  color: "#f59e0b",
+                }}
+              >
+                <InfiniteIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+                Anual
+              </Typography>
+              <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: stats.annualizedBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
+                {formatCurrency(stats.annualizedBalance)}
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: "#10b981" }}>
+                  +{formatCurrency(stats.annualizedIncome)}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#ef4444" }}>
+                  -{formatCurrency(stats.annualizedExpense)}
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Impacto Total */}
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                position: "relative",
+                overflow: "hidden",
+                p: isMobile ? "14px" : "18px",
+                borderRadius: "14px",
+                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
+                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
+                boxShadow: isDarkMode
+                  ? `0 4px 16px -4px ${alpha("#a855f7", 0.25)}`
+                  : `0 4px 16px -4px ${alpha("#a855f7", 0.15)}`,
+                transition: "all 0.2s ease-in-out",
+                "&:hover": { transform: "translateY(-2px)" },
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute", top: 14, right: 14,
+                  width: 38, height: 38, borderRadius: "11px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12),
+                  color: "#a855f7",
+                }}
+              >
+                <CalendarIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
+                Impacto Total
+              </Typography>
+              <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7", fontVariantNumeric: "tabular-nums", pr: 6 }}>
+                {formatCurrency(stats.annualizedBalance)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                (Mensal × 12) + Anuais
+              </Typography>
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      )}
 
       {/* Filters */}
       <Paper
