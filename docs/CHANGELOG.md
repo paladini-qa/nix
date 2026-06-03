@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed - June 2026
+
+#### PRD Rebuild and Restructure
+- **Documentation Overhaul** — Completely rewrote `PRD.md` to reflect the new React Native/Expo architecture, new Epics (AI, Automated Capture), and Nubank-inspired design system. Adapted provided Lumis specification to the Nix Finance project.
+  - **Modified files**: `docs/PRD.md`
+
+### Changed - June 2026
+
+#### Removed Open Finance
+- **Open Finance Support** — Removed all Open Finance integrations, Pluggy APIs, and pending transaction tables from the codebase and documentation per new requirements.
+
+
+### Changed - June 2026
+
+#### AI Agent Guidelines Update
+- **Supabase MCP database validations** — Updated AI agent guidelines to document access to the Supabase MCP server tools for database validations.
+  - **Modified files**: [AGENTS.md](file:///home/paladiini/projects/nix/docs/AGENTS.md), [CHANGELOG.md](file:///home/paladiini/projects/nix/docs/CHANGELOG.md)
+
 ### Added - May 2026
 
 #### AI Agent Guidelines
@@ -144,32 +162,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SmartInputModal** — Custom `window.visualViewport` listener (`resize` + `scroll`) dynamically adjusts Paper dialog `marginBottom` to accommodate virtual keyboards with smooth transitions.
 - **useTransactions** — Added memoized lookups `transactionsById` (Map for O(1) searches), `incomeTransactions`, and `expenseTransactions` to prevent repetitive array filtering.
   - **Modified files**: `components/TransactionTable.tsx`, `index.html`, `index.css`, `components/SmartInputModal.tsx`, `hooks/useTransactions.ts`
-
----
-
-### Added - January 2026
-
-#### Open Finance with Pluggy
-- **Full Pluggy API Integration** for automated transaction syncing.
-- **Open Finance Menu** added in the main navigation.
-- **Bank Connection Management**:
-  - Add new connections (credit cards only)
-  - Edit existing connections
-  - Delete connections
-  - Link connections to payment methods
-  - Manual transaction syncing
-- **Pending Transactions System**:
-  - Lists synchronized transactions awaiting verification.
-  - Full editing of pending transactions (description, amount, date, type, category, payment method).
-  - Pending transaction confirmation (creates regular transaction records).
-  - Reject pending transactions.
-  - Delete pending transactions.
-- **Database Tables**:
-  - `open_finance_connections` - Stores connections with financial institutions.
-  - `pending_transactions` - Stores transactions awaiting confirmation.
-- **New Services**:
-  - `services/pluggyService.ts` - Pluggy API wrapper and integration.
-  - `services/api/openFinanceService.ts` - CRUD operations for connections and pending transactions.
 
 ---
 
