@@ -185,6 +185,16 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     return Array.from(categories).sort();
   }, [allTransactions]);
 
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    years.add(selectedYear);
+    transactions.forEach((t) => {
+      const year = parseInt(t.date.split("-")[0]);
+      if (!isNaN(year)) years.add(year);
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [transactions, selectedYear]);
+
   // Conta filtros ativos
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -283,7 +293,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     return filteredData.slice(start, start + rowsPerPage);
   }, [filteredData, page, rowsPerPage, isMobile]);
 
-  const DESKTOP_ROW_HEIGHT = 56;
+  const DESKTOP_ROW_HEIGHT = 44;
   const VIRTUALIZE_THRESHOLD = 40;
   const desktopTableParentRef = useRef<HTMLDivElement>(null);
   const desktopRowVirtualizer = useVirtualizer({
@@ -594,6 +604,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   // Estilos de linha - transações recorrentes/auto usam apenas tags para identificação
   const getRowSx = (_t: Transaction, index: number) => ({
     transition: "all 0.15s ease",
+    cursor: "pointer",
     bgcolor:
       index % 2 === 0
         ? "transparent"
@@ -609,7 +620,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       borderBottom: `1px solid ${
         isDarkMode ? alpha("#FFFFFF", 0.04) : alpha("#000000", 0.04)
       }`,
-      py: 1.5,
+      py: 0.75,
     },
   });
 
@@ -1021,6 +1032,79 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           }`,
         }}
       >
+        {/* Date Filter Toolbar */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            px: isMobile ? 1.5 : 2,
+            py: 1.5,
+            borderBottom: `1px solid ${
+              isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
+            }`,
+          }}
+        >
+          {/* Year Dropdown */}
+          <FormControl size="small" sx={{ minWidth: 100 }}>
+            <Select
+              value={selectedYear}
+              onChange={(e) => onDateChange(selectedMonth, Number(e.target.value))}
+              sx={{
+                bgcolor: isDarkMode ? alpha(theme.palette.primary.main, 0.15) : alpha(theme.palette.primary.main, 0.1),
+                color: theme.palette.primary.main,
+                fontWeight: 700,
+                "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+                borderRadius: "10px",
+              }}
+            >
+              {availableYears.map((year) => (
+                <MenuItem key={year} value={year}>{year}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Month Buttons */}
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              overflowX: "auto",
+              pb: 0.5,
+              "&::-webkit-scrollbar": { height: "4px" },
+              "&::-webkit-scrollbar-track": { background: "transparent" },
+              "&::-webkit-scrollbar-thumb": { background: alpha(theme.palette.primary.main, 0.2), borderRadius: "4px" },
+            }}
+          >
+            {MONTHS.map((month, index) => {
+              const isSelected = selectedMonth === index;
+              return (
+                <Button
+                  key={month}
+                  onClick={() => onDateChange(index, selectedYear)}
+                  variant={isSelected ? "contained" : "text"}
+                  disableElevation
+                  sx={{
+                    minWidth: "auto",
+                    px: 2,
+                    py: 0.5,
+                    borderRadius: "10px",
+                    fontWeight: isSelected ? 700 : 500,
+                    color: isSelected ? "#fff" : "text.secondary",
+                    bgcolor: isSelected ? "primary.main" : "transparent",
+                    textTransform: "capitalize",
+                    "&:hover": {
+                      bgcolor: isSelected ? "primary.dark" : isDarkMode ? alpha("#fff", 0.05) : alpha("#000", 0.05),
+                    },
+                  }}
+                >
+                  {month.slice(0, 3)}
+                </Button>
+              );
+            })}
+          </Box>
+        </Box>
+
         {/* Toolbar principal */}
         <Box
           sx={{
@@ -1811,6 +1895,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       <Box
                         key={t.id}
                         component="div"
+                        onClick={() => onEdit(t)}
                         sx={{
                           ...getRowSx(t, virtualRow.index),
                           position: "absolute",
@@ -1825,7 +1910,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                           borderBottom: `1px solid ${isDarkMode ? alpha("#FFF", 0.06) : alpha("#000", 0.06)}`,
                         }}
                       >
-                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 50px" }}>
+                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 50px" }} onClick={(e) => e.stopPropagation()}>
                           <Tooltip title={t.isVirtual ? "Mark recurring occurrence" : t.isPaid !== false ? "Paid" : "Not paid"}>
                             <Checkbox checked={t.isPaid !== false} onChange={(e) => onTogglePaid(t.id, e.target.checked)} size="small" color={t.isVirtual ? "info" : "success"} />
                           </Tooltip>
@@ -1845,13 +1930,13 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                         <TableCell component="div" sx={{ textAlign: "right", fontFamily: "monospace", fontWeight: 600, color: t.type === "income" ? "success.main" : "error.main", flex: "0 0 130px" }}>
                           {t.type === "expense" && "- "}{formatCurrency(t.amount || 0)}
                         </TableCell>
-                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 100px" }}>
+                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 100px" }} onClick={(e) => e.stopPropagation()}>
                           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
                             <Tooltip title={t.isVirtual ? "Edit recurring transaction" : "Edit"}>
-                              <IconButton size="small" onClick={() => onEdit(t)} color="primary"><EditIcon fontSize="small" /></IconButton>
+                              <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEdit(t); }} color="primary"><EditIcon fontSize="small" /></IconButton>
                             </Tooltip>
                             <Tooltip title={t.isVirtual ? "Delete recurring transaction" : "Delete"}>
-                              <IconButton size="small" onClick={() => onDelete(t)} color="error"><DeleteIcon fontSize="small" /></IconButton>
+                              <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(t); }} color="error"><DeleteIcon fontSize="small" /></IconButton>
                             </Tooltip>
                           </Box>
                         </TableCell>
@@ -1881,6 +1966,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   paginatedData.map((t, index) => (
                     <TableRow
                       key={t.id}
+                      onClick={() => onEdit(t)}
                       sx={{
                         ...getRowSx(t, index),
                         animation: `fadeInUp 0.4s ease-out ${
@@ -1898,7 +1984,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                         },
                       }}
                     >
-                      <TableCell sx={{ textAlign: "center" }}>
+                      <TableCell sx={{ textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
                         <Tooltip
                           title={
                             t.isVirtual
@@ -1961,7 +2047,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                         {t.type === "expense" && "- "}
                         {formatCurrency(t.amount || 0)}
                       </TableCell>
-                      <TableCell sx={{ textAlign: "center" }}>
+                      <TableCell sx={{ textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
                         <Box
                           sx={{
                             display: "flex",
@@ -1979,7 +2065,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                           >
                             <IconButton
                               size="small"
-                              onClick={() => onEdit(t)}
+                              onClick={(e) => { e.stopPropagation(); onEdit(t); }}
                               color="primary"
                             >
                               <EditIcon fontSize="small" />
@@ -1994,7 +2080,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                           >
                             <IconButton
                               size="small"
-                              onClick={() => onDelete(t)}
+                              onClick={(e) => { e.stopPropagation(); onDelete(t); }}
                               color="error"
                             >
                               <DeleteIcon fontSize="small" />
