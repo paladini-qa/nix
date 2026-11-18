@@ -249,21 +249,3 @@ export interface PlanningWithItems extends Planning {
   items: PlanningItem[];
   totalAmount: number;
 }
-
-// Sistema de Notificações
-export type NotificationType =
-  | "budget_warning"
-  | "budget_exceeded"
-  | "unpaid_overdue"
-  | "recurring_due";
-
-export interface AppNotification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  body: string;
-  amount?: number;
-  isRead: boolean;
-  createdAt: string; // YYYY-MM-DD
-  link?: string; // AppCurrentView destino ao clicar
-}

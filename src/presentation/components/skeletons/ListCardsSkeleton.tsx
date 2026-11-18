@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Skeleton, Paper, useTheme, alpha } from "@mui/material";
 
 /**
- * Reusable list-of-cards skeleton for SplitsView, SharedView, RecurringView.
+ * Reusable list-of-cards skeleton for SplitsView and RecurringView.
  */
 const ListCardsSkeleton: React.FC = () => {
   const theme = useTheme();

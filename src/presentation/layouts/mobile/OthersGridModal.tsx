@@ -13,7 +13,6 @@ import {
 import {
   Close as CloseIcon,
   CreditCard as CreditCardIcon,
-  People as PeopleIcon,
   Repeat as RepeatIcon,
   Category as CategoryIcon,
   AutoAwesome as SparklesIcon,
@@ -45,7 +44,6 @@ interface GridItem {
 
 const mainGridItems: GridItem[] = [
   { id: "splits", label: "Splits", icon: CreditCardIcon },
-  { id: "shared", label: "Shared", icon: PeopleIcon },
   { id: "recurring", label: "Recurring", icon: RepeatIcon },
   { id: "categories", label: "Categories", icon: CategoryIcon },
   { id: "subscriptions", label: "Subscriptions", icon: SubscriptionsIcon },

@@ -8,14 +8,12 @@ export const VIEW_ROUTES: Record<AppCurrentView, string> = {
   dashboard: "/dashboard",
   transactions: "/transactions",
   splits: "/splits",
-  shared: "/shared",
   recurring: "/recurring",
   nixai: "/nixai",
   paymentMethods: "/payment-methods",
   categories: "/categories",
   investments: "/investments",
   subscriptions: "/subscriptions",
-  notifications: "/notifications",
   "fiscal-report": "/fiscal-report",
 };
 

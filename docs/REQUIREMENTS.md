@@ -48,12 +48,8 @@ Nix Finance is a modern personal finance management application with intelligent
 - **Progress Tracking**: View paid and pending installment counts
 - **Group Editing**: Edit all installment payments at once
 
-#### Shared Expenses
-- **50/50 Split**: Split expenses evenly with friends
-- **Debt Tracking**: Track outstanding balances (who owes what)
-- **Auto-Generation**: Automatic income generation when friend pays
-- **Dedicated View**: Visual tracker for shared transactions
-- **Friend Management**: Manage list of friends for division
+#### Legacy Shared Transactions
+- Existing linked transactions remain editable from transaction and installment views.
 
 ### Organization
 
@@ -429,17 +425,6 @@ Reference index of views mapped with their main components and elements.
   - Summary cards: **In Progress** (count), **Completed** (count), **Remaining** (amount), **Total Paid** (amount)
   - Installment rows: title, category/vendor subtitles, date range, total amount, "X/Yx" progress indicator, "See X installments", and "Edit due dates" options
 
-### 4. Shared / Shared Expenses (`currentView: "shared"`)
-- **Component**: `SharedView`
-- **File**: `components/SharedView.tsx`
-- **Title**: Shared Expenses | "Manage split balances with friends"
-- **Main elements**:
-  - **+ Transaction**, **Generate PDF report**
-  - Month/year selector, search bar, active friend filters, and status toggles
-  - Summary cards: **To Receive** (amount), **To Pay** (amount), **Net Balance** (amount), **Active Friends** (count)
-  - **Balance by Friend** grid: friend cards (avatar, name, net balance)
-  - Split transaction table showing shared transaction details, counterpart, split amount, and sync statuses
-
 ### 5. Recurring / Recurring Payments (`currentView: "recurring"`)
 - **Component**: `RecurringView`
 - **File**: `components/RecurringView.tsx`
@@ -512,7 +497,7 @@ Reference index of views mapped with their main components and elements.
 - **Component**: `Sidebar` (switches to `MobileDrawer` on mobile viewports)
 - **File**: `components/Sidebar.tsx`
 - **Items**:
-  - **Main Menu**: Nix AI, Dashboard, Transactions, Splits, Shared, Recurring, Payment Methods, Categories
+  - **Main Menu**: Nix AI, Dashboard, Transactions, Splits, Recurring, Payment Methods, Categories
   - **Planning**: Budgets, Goals, Planning
   - **Controls**: Privacy Mode toggle (`Alt+P`), Theme Selector (Light/Dark/System), User profile, and Logout trigger
 

@@ -9,7 +9,6 @@ export type EmptyStateType =
   | "transactions"
   | "budgets"
   | "accounts"
-  | "shared"
   | "recurring"
   | "search"
   | "planning"
@@ -120,23 +119,6 @@ const illustrations: Record<EmptyStateType, React.ReactNode> = {
       <rect x="42" y="84" width="28" height="6" rx="3" fill={COFFEE_MOCHA} opacity="0.12" />
       {/* Chip do cartão */}
       <rect x="42" y="52" width="20" height="14" rx="4" fill={COFFEE_CARAMEL} opacity="0.3" />
-    </svg>
-  ),
-  shared: (
-    <svg width="160" height="120" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Duas xícaras juntas */}
-      <path d="M35 65 Q35 82 55 84 Q75 82 75 65 Z" fill={COFFEE_LATTE} opacity="0.3" />
-      <rect x="35" y="56" width="40" height="10" rx="5" fill={COFFEE_CAPPUCCINO} opacity="0.2" />
-      <path d="M75 62 Q86 62 86 70 Q86 78 75 78" stroke={COFFEE_CAPPUCCINO} strokeWidth="3" fill="none" opacity="0.25" />
-      
-      <path d="M85 65 Q85 82 105 84 Q125 82 125 65 Z" fill={COFFEE_LATTE} opacity="0.25" />
-      <rect x="85" y="56" width="40" height="10" rx="5" fill={COFFEE_CAPPUCCINO} opacity="0.18" />
-      <path d="M125 62 Q136 62 136 70 Q136 78 125 78" stroke={COFFEE_CAPPUCCINO} strokeWidth="3" fill="none" opacity="0.2" />
-
-      {/* Prato compartilhado */}
-      <ellipse cx="80" cy="87" rx="55" ry="7" fill={COFFEE_LATTE} opacity="0.15" />
-      {/* Coraçãozinho */}
-      <text x="72" y="48" fontSize="18" opacity="0.4"></text>
     </svg>
   ),
   recurring: (

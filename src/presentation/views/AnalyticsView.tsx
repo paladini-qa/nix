@@ -539,9 +539,6 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         display: "flex",
         flexDirection: "column",
         gap: isMobile ? 2 : 3,
-        px: { xs: 0, md: "28px" },
-        pt: { xs: 0, md: "24px" },
-        pb: { xs: "140px", md: "60px" },
         width: "100%",
         minWidth: 0,
       }}

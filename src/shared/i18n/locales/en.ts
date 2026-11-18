@@ -40,7 +40,6 @@ export default {
     accounts: "Accounts",
     recurring: "Recurring",
     splits: "Splits",
-    shared: "Shared",
     settings: "Settings",
     nixai: "Artificial Intelligence",
     logout: "Logout",
@@ -182,27 +181,6 @@ export default {
     thinking: "Thinking...",
     welcome:
       "Hello! I'm Finance Control AI, your personal financial assistant. I can help you analyze spending patterns, provide budget recommendations, and answer questions about your finances.",
-  },
-
-  // Shared Expenses
-  shared: {
-    title: "Shared Expenses",
-    subtitle: "Track expenses shared with friends",
-    newSharedExpense: "New Shared Expense",
-    friends: "Friends",
-    totalOwed: "Total Owed",
-    received: "Received",
-    pending: "Pending",
-    balanceByFriend: "Balance by Friend",
-    allFriends: "All Friends",
-    sharedExpenses: "shared expenses",
-    friendOwes: "Friend Owes",
-    noSharedExpenses: "No shared expenses yet. Create a shared expense to track balances with friends!",
-    noResults: "No shared expenses found with the current filters.",
-    createSharedExpense: "Create Shared Expense",
-    clearFilter: "Clear Filter",
-    total: "Total",
-    owes: "Owes",
   },
 
   // Errors

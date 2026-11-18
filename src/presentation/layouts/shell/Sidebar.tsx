@@ -17,21 +17,16 @@ import {
   ChevronRight as ChevronRightIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
-  People as PeopleIcon,
   Category as CategoryIcon,
   Payment as PaymentIcon,
   Star as BatchRegistrationIcon,
   TrendingUp as InvestmentsIcon,
   Subscriptions as SubscriptionsIcon,
-  NotificationsOutlined as NotificationsIcon,
   Description as FiscalIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Badge } from "@mui/material";
 import type { AppCurrentView } from "@/shared/types/appView";
-import { useNotifications } from "@/presentation/hooks";
-import { useAppStore } from "@/presentation/hooks/useAppStore";
 
 // Motion-enabled components
 const MotionBox = motion.create(Box);
@@ -92,14 +87,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
-  const { filters } = useAppStore();
-  const { unreadCount } = useNotifications(filters.month, filters.year);
 
   const mainNavItems: NavItem[] = [
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
     { icon: BatchRegistrationIcon, label: t("nav.nixai"), id: "nixai" },
-    { icon: NotificationsIcon, label: "Notifications", id: "notifications" },
   ];
 
   const resourcesNavItems: NavItem[] = [
@@ -108,7 +100,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: CreditCardIcon, label: "Splits", id: "splits" },
     { icon: CategoryIcon, label: "Categories", id: "categories" },
     { icon: SubscriptionsIcon, label: t("nav.subscriptions"), id: "subscriptions" },
-    { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
   ];
 
   const toolsNavItems: NavItem[] = [
@@ -166,14 +157,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               alignItems: "center",
             }}
           >
-            <Badge
-              badgeContent={item.id === "notifications" ? unreadCount : 0}
-              color="error"
-              max={9}
-              sx={{ "& .MuiBadge-badge": { fontSize: 9, minWidth: 14, height: 14, p: 0 } }}
-            >
-              <item.icon sx={{ fontSize: 17 }} />
-            </Badge>
+            <item.icon sx={{ fontSize: 17 }} />
           </ListItemIcon>
           <ListItemText
             primary={item.label}
