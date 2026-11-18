@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Manual transaction form** — Kept scrolling inside the drawer, added decimal amount validation and formatting, removed amount and date shortcuts, and made advanced options always visible. Removed the notes and friend controls from the form while preserving saved values on edit.
+  - **Created files** — `src/domain/usecases/transactionAmount.ts`, `tests/utils/transactionAmount.test.ts`
+  - **Modified files** — `docs/CHANGELOG.md`, `docs/REQUIREMENTS.md`, `src/presentation/forms/TransactionForm.tsx`, `src/presentation/layouts/shell/AppShell.tsx`, `src/styles/index.css`
+
 ### Fixed
 
 - **Dialog consistency and accessibility** — Shared the responsive dialog surface, backdrop and footer styles, standardized common actions, and fixed queued confirmations and keyboard focus.

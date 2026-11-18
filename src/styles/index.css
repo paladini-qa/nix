@@ -116,6 +116,10 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html:has(.transaction-form-drawer) {
+  overflow: hidden;
+}
+
 /* Elimina o delay de 300ms em todos os elementos interativos */
 a, button, [role="button"], [role="tab"], [role="menuitem"], [role="option"],
 input[type="checkbox"], input[type="radio"], select,

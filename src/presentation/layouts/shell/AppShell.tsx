@@ -72,8 +72,6 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
   const {
     categories,
     paymentMethods,
-    friends,
-    addFriend,
     getPaymentMethodPaymentDay,
     getPaymentMethodConfig,
     displayName,
@@ -225,6 +223,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
   const { isOnline, pendingCount } = useNetworkStatus();
 
   const { isRefreshing, pullOffset } = usePullToRefresh({
+    enabled: !isFormOpen,
     onRefresh: async () => {
       await refetch();
     },
@@ -260,7 +259,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
             sx={{
               flexGrow: 1,
               overflowX: "hidden",
-              overflowY: currentView === "nixai" ? "hidden" : "auto",
+              overflowY: isFormOpen || currentView === "nixai" ? "hidden" : "auto",
               display: currentView === "nixai" ? "flex" : "block",
               flexDirection: "column",
               height: currentView === "nixai" ? "calc(100vh - 60px)" : "auto",
@@ -318,7 +317,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
                 : "calc(80px + env(safe-area-inset-bottom, 0px))",
               width: "100%",
               overflowX: "hidden",
-              overflowY: currentView === "nixai" ? "hidden" : "auto",
+              overflowY: isFormOpen || currentView === "nixai" ? "hidden" : "auto",
               display: currentView === "nixai" ? "flex" : "block",
               flexDirection: "column",
               height: currentView === "nixai"
@@ -364,8 +363,6 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
         paymentMethods={paymentMethods}
         editTransaction={editingTransaction}
         initialContext={walletInitialContext}
-        friends={friends}
-        onAddFriend={addFriend}
         transactions={transactions}
         currentBalance={currentBalance}
         getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
