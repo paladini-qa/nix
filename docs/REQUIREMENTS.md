@@ -29,7 +29,7 @@ Nix Finance is a modern personal finance management application with intelligent
 #### Transactions
 - **Full CRUD**: Add, edit, delete, and view transactions
 - **Payment Status**: Track whether a transaction has been paid (`isPaid`)
-- **Notes**: Optional `notes` field (up to 500 characters) for custom observations, complete with `NotesIcon` tooltips in listings
+- **Manual form**: The drawer scrolls independently and accepts a comma or period for decimal amounts. It formats valid amounts to two decimal places when the field loses focus. Recurrence and installment controls are always visible under Advanced Options. Existing notes and friend links are preserved when editing.
 - **Advanced Filters**: Filter by date, type, category, and payment method
 - **Global Search**: Quick command-palette search using `Ctrl+K` / `Cmd+K`
 - **Views**: Table listings and swipeable cards
