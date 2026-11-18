@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **GitHub Pages deployment** — Updated the Actions runtimes and wait for the uploaded Pages artifact to appear in the workflow run before publishing.
+  - **Modified files** — `.github/workflows/deploy-pages.yml`
+
+### Fixed
+
 - **Transaction balance preview** — Use the balance through the effective transaction date and apply the first installment amount for new installment purchases.
   - **Modified files** — `docs/REQUIREMENTS.md`, `src/domain/usecases/transactionUtils.ts`, `src/presentation/forms/TransactionForm.tsx`, `src/presentation/layouts/shell/AppShell.tsx`, `tests/utils/transactionUtils.test.ts`
 
