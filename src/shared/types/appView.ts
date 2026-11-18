@@ -6,12 +6,10 @@ export type AppCurrentView =
   | "dashboard"
   | "transactions"
   | "splits"
-  | "shared"
   | "recurring"
   | "nixai"
   | "paymentMethods"
   | "categories"
   | "investments"
   | "subscriptions"
-  | "notifications"
   | "fiscal-report";

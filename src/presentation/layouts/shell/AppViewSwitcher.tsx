@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useState, useRef } from "react";
 import dayjs from "dayjs";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import DashboardMainSection from "@/presentation/views/DashboardMainSection";
 import PageTransition, { TransitionType } from "@/presentation/components/motion/PageTransition";
 import { useAppStore } from "@/presentation/hooks/useAppStore";
@@ -23,7 +23,6 @@ import TransactionOptionsPanel, { OptionType, ActionType } from "@/presentation/
 const PaymentMethodDetailView = lazy(() => import("@/presentation/views/PaymentMethodDetailView"));
 const TransactionsView = lazy(() => import("@/presentation/views/TransactionsView"));
 const SplitsView = lazy(() => import("@/presentation/views/SplitsView"));
-const SharedView = lazy(() => import("@/presentation/views/SharedView"));
 const RecurringView = lazy(() => import("@/presentation/views/RecurringView"));
 const NixAIView = lazy(() => import("@/presentation/views/NixAIView"));
 const PaymentMethodsView = lazy(() => import("@/presentation/views/PaymentMethodsView"));
@@ -31,7 +30,6 @@ const CategoriesView = lazy(() => import("@/presentation/views/CategoriesView"))
 const FiscalReportView = lazy(() => import("@/presentation/views/FiscalReportView"));
 const InvestmentsView = lazy(() => import("@/presentation/views/InvestmentsView"));
 const SubscriptionsView = lazy(() => import("@/presentation/views/SubscriptionsView"));
-const NotificationsView = lazy(() => import("@/presentation/views/NotificationsView"));
 
 const ViewLoadingMui: React.FC = () => (
   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 8 }}>
@@ -39,7 +37,7 @@ const ViewLoadingMui: React.FC = () => (
   </Box>
 );
 
-import { ROUTE_VIEWS, VIEW_ROUTES } from "@/presentation/routes";
+import { ROUTE_VIEWS } from "@/presentation/routes";
 import { AppCurrentView } from "@/shared/types/appView";
 import { Transaction } from "@/domain/entities";
 
@@ -51,8 +49,6 @@ interface AppViewSwitcherProps {
 const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView, session }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const navigate = useNavigate();
-  const handleNavigate = (view: AppCurrentView) => navigate(VIEW_ROUTES[view] || VIEW_ROUTES.dashboard);
   const { filters, setFilters, setIsFormOpen, setEditingTransaction } = useAppStore();
   const {
     data: transactions = [],
@@ -79,7 +75,6 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     addPaymentMethodConfig,
     updatePaymentMethodConfig,
     removePaymentMethodConfig,
-    friends,
     displayName
   } = useSettings();
   const { showSuccess, showError } = useNotification();
@@ -111,8 +106,8 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     paymentMethods: 1,
   };
   const SECONDARY_VIEWS = new Set<AppCurrentView>([
-    "splits", "shared", "recurring", "categories", "nixai",
-    "fiscal-report", "subscriptions", "investments", "notifications",
+    "splits", "recurring", "categories", "nixai",
+    "fiscal-report", "subscriptions", "investments",
   ]);
 
   const prevViewRef = useRef<AppCurrentView>(currentView);
@@ -590,30 +585,6 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               onDelete={(t) => handleDeleteAware(t.id)}
               userId={session.user.id}
             />
-          </Suspense>
-        );
-      case "shared":
-        return (
-          <Suspense fallback={<ListCardsSkeleton />}>
-            <SharedView 
-              transactions={transactions}
-              friends={friends}
-              userName={displayName}
-              selectedMonth={filters.month}
-              selectedYear={filters.year}
-              onDateChange={(month, year) => setFilters({ month, year })}
-              onNewTransaction={handleNewTransaction}
-              onEdit={handleEditAware}
-              onDelete={handleDeleteAware}
-              onTogglePaid={handleTogglePaid}
-              onRefreshData={async () => { await refetchTransactions(); }}
-            />
-          </Suspense>
-        );
-      case "notifications":
-        return (
-          <Suspense fallback={<ViewLoadingMui />}>
-            <NotificationsView onNavigate={handleNavigate} />
           </Suspense>
         );
       case "dashboard":

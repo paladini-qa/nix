@@ -26,7 +26,6 @@ import {
   AutoAwesome as SparklesIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
-  People as PeopleIcon,
   PieChart as BudgetIcon,
   AccountBalance as AccountIcon,
   Analytics as AnalyticsIcon,
@@ -48,7 +47,6 @@ type ViewId =
   | "dashboard"
   | "transactions"
   | "splits"
-  | "shared"
   | "recurring"
   | "budgets"
   | "accounts"
@@ -82,7 +80,6 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       { id: "dashboard", label: t("nav.dashboard"), icon: <DashboardIcon />, keywords: ["home", "inicio", "painel"] },
       { id: "transactions", label: t("nav.transactions"), icon: <WalletIcon />, keywords: ["transacao", "pagamento", "gasto"] },
       { id: "splits", label: t("nav.splits"), icon: <CreditCardIcon />, keywords: ["parcela", "credito", "cartao"] },
-      { id: "shared", label: t("nav.shared"), icon: <PeopleIcon />, keywords: ["compartilhado", "amigo", "dividir"] },
       { id: "recurring", label: t("nav.recurring"), icon: <RepeatIcon />, keywords: ["recorrente", "mensal", "fixo"] },
       { id: "budgets", label: t("nav.budgets"), icon: <BudgetIcon />, keywords: ["orcamento", "limite", "budget"] },
       { id: "accounts", label: t("nav.accounts"), icon: <AccountIcon />, keywords: ["conta", "banco", "carteira"] },

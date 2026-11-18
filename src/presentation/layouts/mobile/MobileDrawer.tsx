@@ -24,7 +24,6 @@ import {
   AutoAwesome as SparklesIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
-  People as PeopleIcon,
   Category as CategoryIcon,
   Payment as PaymentIcon,
   TrendingUp as InvestmentsIcon,
@@ -100,7 +99,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
     { icon: CreditCardIcon, label: t("nav.splits"), id: "splits" },
-    { icon: PeopleIcon, label: t("nav.shared"), id: "shared" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
     { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },
   ];

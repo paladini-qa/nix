@@ -1,22 +1,15 @@
-import { describe, it, expectTypeOf } from "vitest";
-import type { AppCurrentView } from "@/shared/types/appView";
+import { describe, expect, it } from "vitest";
+import { ROUTE_VIEWS, VIEW_ROUTES } from "@/presentation/routes";
 
-describe("AppCurrentView", () => {
-  it("accepts known view ids", () => {
-    const views: AppCurrentView[] = [
-      "dashboard",
-      "transactions",
-      "nixai",
-      "budgets",
-      "goals",
-      "planning",
-      "paymentMethods",
-      "categories",
-      "splits",
-      "shared",
-      "recurring",
-    ];
-    expectTypeOf(views).toEqualTypeOf<AppCurrentView[]>();
-    expect(views).toHaveLength(11);
+describe("App routes", () => {
+  it("maps each view to its path and back", () => {
+    for (const [view, path] of Object.entries(VIEW_ROUTES)) {
+      expect(ROUTE_VIEWS[path]).toBe(view);
+    }
+  });
+
+  it("does not register the retired notification and shared screens", () => {
+    expect(ROUTE_VIEWS).not.toHaveProperty("/notifications");
+    expect(ROUTE_VIEWS).not.toHaveProperty("/shared");
   });
 });

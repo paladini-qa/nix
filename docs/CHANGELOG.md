@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dashboard alignment** — The recent transactions, summary cards and charts now use the same content edges. Recent transactions span the full width when the expense breakdown is empty.
+  - **Modified files** — `src/presentation/views/DashboardMainSection.tsx`, `src/presentation/views/AnalyticsView.tsx`
+
+### Removed
+
+- **Notification center and Shared navigation** — Removed the dedicated screens, bell, shortcuts, notification generation, and friend report export. Existing linked transactions remain supported.
+  - **Removed files** — `src/presentation/views/NotificationsView.tsx`, `src/presentation/hooks/useNotifications.ts`, `src/presentation/views/SharedView.tsx`, `src/infrastructure/export/pdfService.ts`
+  - **Modified files** — `docs/REQUIREMENTS.md`, `src/domain/entities/index.ts`, `src/presentation/routes.ts`, `src/presentation/hooks/index.ts`, `src/presentation/layouts/shell/{AppShell,AppViewSwitcher,Sidebar,Topbar}.tsx`, `src/presentation/layouts/mobile/{MobileDrawer,MobileHeader,OthersGridModal}.tsx`, `src/presentation/views/DashboardMainSection.tsx`, `src/presentation/panels/GlobalSearch.tsx`, `src/presentation/components/ui/EmptyState.tsx`, `src/presentation/components/skeletons/ListCardsSkeleton.tsx`, `src/shared/types/appView.ts`, `src/shared/i18n/locales/{en,pt-BR}.ts`, `tests/types/appView.test.ts`
+
 ### Changed
 
 - **Manual transaction form** — Kept scrolling inside the drawer, added decimal amount validation and formatting, removed amount and date shortcuts, and made advanced options always visible. Removed the notes and friend controls from the form while preserving saved values on edit.

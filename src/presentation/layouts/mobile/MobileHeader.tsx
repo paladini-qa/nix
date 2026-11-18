@@ -1,14 +1,12 @@
 import React from "react";
 import logoUrl from "../../../assets/logo.png";
-import { Box, Badge, useTheme, alpha } from "@mui/material";
+import { Box, useTheme, alpha } from "@mui/material";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Bell } from "lucide-react";
-import { IconButton, Text } from "@radix-ui/themes";
+import { Eye, EyeOff } from "lucide-react";
+import { IconButton } from "@radix-ui/themes";
 import { usePrivacy } from "@/presentation/contexts";
 import { useAppStore } from "@/presentation/hooks/useAppStore";
-import { useNotifications } from "@/presentation/hooks";
 import DateFilter from "@/presentation/components/ui/DateFilter";
-import { AppCurrentView } from "@/shared/types/appView";
 
 const MotionBox = motion.create(Box);
 
@@ -16,7 +14,6 @@ interface MobileHeaderProps {
   onOpenDrawer?: () => void;
   onOpenSearch?: () => void;
   onOpenProfile?: () => void;
-  onNavigate?: (view: AppCurrentView) => void;
 }
 
 /**
@@ -33,13 +30,11 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   onOpenDrawer,
   onOpenSearch,
   onOpenProfile,
-  onNavigate,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
   const { filters, setFilters } = useAppStore();
-  const { unreadCount } = useNotifications(filters.month, filters.year);
 
   return (
     <MotionBox
@@ -129,24 +124,6 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           style={{ width: 38, height: 38 }}
         >
           {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
-        </IconButton>
-        <IconButton
-          size="3"
-          variant="ghost"
-          color="gray"
-          onClick={() => onNavigate?.("notifications")}
-          aria-label="Notificações"
-          title="Notificações"
-          style={{ width: 38, height: 38, position: "relative" }}
-        >
-          <Badge
-            badgeContent={unreadCount}
-            color="error"
-            max={9}
-            sx={{ "& .MuiBadge-badge": { fontSize: 9, minWidth: 14, height: 14, p: 0 } }}
-          >
-            <Bell size={18} />
-          </Badge>
         </IconButton>
       </MotionBox>
 

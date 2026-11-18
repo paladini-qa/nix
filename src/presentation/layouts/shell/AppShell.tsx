@@ -192,8 +192,8 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
   const currentView: AppCurrentView = (ROUTE_VIEWS[normalizedPath] as AppCurrentView) ?? "dashboard";
 
   React.useEffect(() => {
-    if (normalizedPath === "/") {
-      navigate(VIEW_ROUTES.dashboard);
+    if (!Object.hasOwn(ROUTE_VIEWS, normalizedPath)) {
+      navigate(VIEW_ROUTES.dashboard, { replace: true });
     }
   }, [normalizedPath, navigate]);
 
@@ -252,7 +252,6 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
               setEditingTransaction(null);
               setIsFormOpen(true);
             }}
-            onNavigate={handleNavigate}
           />
           <Box
             component="main"
@@ -291,7 +290,6 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
             onOpenDrawer={() => setIsMobileDrawerOpen(true)}
             onOpenSearch={() => setIsSearchOpen(true)}
             onOpenProfile={() => setIsProfileModalOpen(true)}
-            onNavigate={handleNavigate}
           />
           <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
           <MobileDrawer

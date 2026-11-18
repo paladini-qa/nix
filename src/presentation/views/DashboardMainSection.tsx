@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import {
   CallSplit as SplitsIcon,
-  Group as SharedIcon,
   Repeat as RecurringIcon,
   TrendingUp as InvestmentsIcon,
   Star as SubscriptionsIcon,
@@ -35,7 +34,6 @@ const AnalyticsView = lazy(() => import("./AnalyticsView"));
 
 const MOBILE_SHORTCUTS = [
   { view: "splits" as const,         icon: <SplitsIcon sx={{ fontSize: 20 }} />,        label: "Splits",       color: "#6366f1" },
-  { view: "shared" as const,         icon: <SharedIcon sx={{ fontSize: 20 }} />,         label: "Shared",       color: "#10b981" },
   { view: "recurring" as const,      icon: <RecurringIcon sx={{ fontSize: 20 }} />,      label: "Recurring",    color: "#f59e0b" },
   { view: "investments" as const,    icon: <InvestmentsIcon sx={{ fontSize: 20 }} />,    label: "Investments",  color: "#22c55e" },
   { view: "subscriptions" as const,  icon: <SubscriptionsIcon sx={{ fontSize: 20 }} />,  label: "Subscriptions",color: "#ec4899" },
@@ -82,6 +80,7 @@ const DashboardMainSection: React.FC = () => {
     [navigate]
   );
   const NOOP = useCallback(() => {}, []);
+  const hasExpenses = filteredTransactions.some(({ type }) => type === "expense");
 
   const firstName = displayName ? displayName.split(" ")[0] : t("dashboard.title");
   const monthLabel = new Date(filters.year, filters.month - 1).toLocaleDateString("en-US", {
@@ -260,7 +259,9 @@ const DashboardMainSection: React.FC = () => {
         sx={{
           mt: "24px",
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "1.4fr 1fr" },
+          gridTemplateColumns: hasExpenses
+            ? { xs: "minmax(0, 1fr)", lg: "minmax(0, 1.4fr) minmax(0, 1fr)" }
+            : "minmax(0, 1fr)",
           gap: "18px",
           alignItems: "start",
         }}
@@ -274,7 +275,7 @@ const DashboardMainSection: React.FC = () => {
       </Box>
 
       {/* Analytics section */}
-      <Box sx={{ mt: "18px" }}>
+      <Box sx={{ mt: "24px" }}>
         <Suspense fallback={<DashboardSkeleton />}>
           <AnalyticsView
             transactions={filteredTransactions}

@@ -12,5 +12,4 @@ export { usePullToRefresh, type PullToRefreshConfig, type PullToRefreshReturn } 
 export { usePrivacyMode } from "@/presentation/hooks/usePrivacyMode";
 export { useLayoutSpacing, type LayoutSpacing } from "@/presentation/hooks/useLayoutSpacing";
 export { useCancelledSubscriptions } from "@/presentation/hooks/useCancelledSubscriptions";
-export { useNotifications } from "@/presentation/hooks/useNotifications";
 
