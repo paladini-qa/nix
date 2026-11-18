@@ -152,9 +152,6 @@ const Onboarding: React.FC<OnboardingProps> = ({
       maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
-      PaperProps={{
-        sx: { borderRadius: isMobile ? 0 : "20px" },
-      }}
     >
       <DialogTitle
         sx={{
@@ -325,7 +322,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2.5, pt: 1 }}>
+      <DialogActions>
         <Button onClick={handleSkip} color="inherit">
           Skip for now
         </Button>

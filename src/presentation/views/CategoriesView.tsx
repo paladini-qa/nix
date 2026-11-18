@@ -1,3 +1,4 @@
+import NixButton from "@/presentation/components/radix/Button";
 import React, { useState, useMemo, useContext, useEffect, useRef } from "react";
 import {
   Box,
@@ -1376,7 +1377,8 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
       <Dialog
         open={addCategoryDialogOpen}
         onClose={() => { setAddCategoryDialogOpen(false); setAddCategoryName(""); }}
-        PaperProps={{ sx: { borderRadius: "20px", minWidth: 340 } }}
+        maxWidth="xs"
+        fullWidth
       >
         <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>New Category</DialogTitle>
         <DialogContent>
@@ -1409,18 +1411,17 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => { setAddCategoryDialogOpen(false); setAddCategoryName(""); }} sx={{ borderRadius: "10px", textTransform: "none" }}>
+        <DialogActions>
+          <NixButton variant="soft" color="gray" onClick={() => { setAddCategoryDialogOpen(false); setAddCategoryName(""); }}>
             Cancel
-          </Button>
-          <Button
-            variant="contained"
+          </NixButton>
+          <NixButton
+            variant="solid"
             onClick={handleAddCategory}
             disabled={!addCategoryName.trim()}
-            sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
           >
             Add
-          </Button>
+          </NixButton>
         </DialogActions>
       </Dialog>
 

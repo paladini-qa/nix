@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dialog consistency and accessibility** — Shared the responsive dialog surface, backdrop and footer styles, standardized common actions, and fixed queued confirmations and keyboard focus.
+  - **Created files** — `tests/components/ConfirmDialog.test.tsx`
+  - **Modified files** — `docs/CHANGELOG.md`, `docs/DESIGN_SYSTEM.md`, `src/shared/theme/index.ts`, `src/shared/theme/spacing.ts`, `src/presentation/layouts/shell/AppProviders.tsx`, `src/presentation/layouts/shell/ProfileModal.tsx`, `src/presentation/contexts/ConfirmDialog.tsx`, `src/presentation/components/ui/PaymentMethodImagePicker.tsx`, `src/presentation/components/ui/TagsManager.tsx`, `src/presentation/panels/GlobalSearch.tsx`, `src/presentation/panels/SmartInputModal.tsx`, `src/presentation/views/CategoriesView.tsx`, `src/presentation/views/Onboarding.tsx`, `src/presentation/views/PaymentMethodsView.tsx`, `src/presentation/views/RecurringView.tsx`, `src/presentation/views/SubscriptionsView.tsx`
+
 - **Contribution workflow** — Documented the feature branch, commit, push, pull request, and merge workflow in `docs/AGENTS.md`.
 
 ### Changed

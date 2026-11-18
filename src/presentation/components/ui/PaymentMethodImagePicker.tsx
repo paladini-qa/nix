@@ -1,3 +1,4 @@
+import NixButton from "@/presentation/components/radix/Button";
 import React, { useState, useRef } from "react";
 import {
   Box,
@@ -95,11 +96,10 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{ sx: { borderRadius: "20px", maxHeight: "90vh" } }}
     >
       <DialogTitle sx={{ fontWeight: 700, pb: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         Payment Method Image
-        <IconButton size="small" onClick={onClose}>
+        <IconButton size="small" aria-label="Close image picker" onClick={onClose}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
@@ -319,27 +319,27 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+      <DialogActions>
         {currentUrl && (
-          <Button
-            color="error"
+          <NixButton
+            color="red"
             onClick={handleRemove}
-            sx={{ borderRadius: "10px", textTransform: "none", mr: "auto" }}
+            variant="soft"
+            style={{ marginInlineEnd: "auto" }}
           >
             Remove Image
-          </Button>
+          </NixButton>
         )}
-        <Button onClick={onClose} sx={{ borderRadius: "10px", textTransform: "none" }}>
+        <NixButton variant="soft" color="gray" onClick={onClose}>
           Cancel
-        </Button>
-        <Button
-          variant="contained"
+        </NixButton>
+        <NixButton
+          variant="solid"
           onClick={handleConfirm}
           disabled={!canConfirm}
-          sx={{ borderRadius: "10px", textTransform: "none" }}
         >
           Use this image
-        </Button>
+        </NixButton>
       </DialogActions>
     </Dialog>
   );

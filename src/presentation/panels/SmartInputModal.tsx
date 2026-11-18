@@ -836,35 +836,12 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
       fullWidth
       fullScreen={isMobile}
       TransitionComponent={isMobile ? SlideTransition : undefined}
-      PaperProps={{
-        sx: {
-          borderRadius: isMobile ? 0 : "20px",
-          bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.95)
-            : alpha("#FFFFFF", 0.98),
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          border: isMobile
-            ? "none"
-            : `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
-          boxShadow: isDarkMode
-            ? `0 24px 80px -20px ${alpha("#000000", 0.6)}`
-            : `0 24px 80px -20px ${alpha(theme.palette.primary.main, 0.2)}`,
-          // Empurra o Paper para cima quando o teclado virtual estiver visível
-          ...(isMobile && keyboardOffset > 0 && {
-            marginBottom: `${keyboardOffset}px`,
-            transition: "margin-bottom 0.2s ease",
-          }),
-        },
-      }}
       slotProps={{
-        backdrop: {
-          sx: {
-            bgcolor: isDarkMode
-              ? alpha("#0F172A", 0.8)
-              : alpha("#64748B", 0.4),
-            backdropFilter: "blur(8px)",
-          },
+        paper: {
+          sx: isMobile && keyboardOffset > 0 ? {
+            height: `calc(100dvh - ${keyboardOffset}px)`,
+            transition: "height 0.2s ease",
+          } : undefined,
         },
       }}
     >
@@ -901,6 +878,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
           </Box>
         </Box>
         <IconButton
+          aria-label="Close smart input"
           onClick={onClose}
           sx={{
             bgcolor: isDarkMode
@@ -955,7 +933,7 @@ const SmartInputModal: React.FC<SmartInputModalProps> = ({
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
+      <DialogActions>
         {!parsedResult ? (
           <>
             <Button

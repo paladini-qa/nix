@@ -1,3 +1,4 @@
+import NixButton from "@/presentation/components/radix/Button";
 import React, { useMemo, useContext, useState } from "react";
 import {
   Box,
@@ -20,6 +21,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Divider,
   ToggleButtonGroup,
   ToggleButton,
   InputLabel,
@@ -814,7 +816,6 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
         onClose={() => setAddDialogOpen(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: "20px" } }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>New Payment Method</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: "12px !important" }}>
@@ -913,18 +914,17 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setAddDialogOpen(false)} sx={{ borderRadius: "10px", textTransform: "none" }}>
+        <DialogActions>
+          <NixButton variant="soft" color="gray" onClick={() => setAddDialogOpen(false)}>
             Cancel
-          </Button>
-          <Button
-            variant="contained"
+          </NixButton>
+          <NixButton
+            variant="solid"
             onClick={handleAddMethod}
             disabled={!formConfig.name.trim() || (formConfig.type === "card" && (!formConfig.closingDay || !formConfig.paymentDay))}
-            sx={{ borderRadius: "10px", textTransform: "none" }}
           >
             Add
-          </Button>
+          </NixButton>
         </DialogActions>
       </Dialog>
 
@@ -934,7 +934,6 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
         onClose={() => setEditDialogOpen(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: "20px" } }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>Edit Payment Method</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: "12px !important" }}>
@@ -1031,18 +1030,17 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
             </>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setEditDialogOpen(false)} sx={{ borderRadius: "10px", textTransform: "none" }}>
+        <DialogActions>
+          <NixButton variant="soft" color="gray" onClick={() => setEditDialogOpen(false)}>
             Cancel
-          </Button>
-          <Button
-            variant="contained"
+          </NixButton>
+          <NixButton
+            variant="solid"
             onClick={handleUpdateMethod}
             disabled={!editingConfig?.name.trim() || (editingConfig?.type === "card" && (!editingConfig?.closingDay || !editingConfig?.paymentDay))}
-            sx={{ borderRadius: "10px", textTransform: "none" }}
           >
             Save
-          </Button>
+          </NixButton>
         </DialogActions>
       </Dialog>
 
