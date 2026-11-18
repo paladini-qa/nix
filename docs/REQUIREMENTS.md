@@ -17,7 +17,7 @@ Nix Finance is a modern personal finance management application with intelligent
 
 #### Financial Dashboard
 - Overview of monthly income, expenses, and net balances
-- Interactive financial charts
+- Interactive financial charts. Monthly Comparison, Balance Evolution and Cash Flow share a fixed seven-month window centered on the current calendar month, including months without activity. Dashboard date filters do not change this chart window.
 - Summary cards with CountUp count animations
 - **RecentTransactionsWidget**: The 5 most recent transactions with a "See all" button
 - **NetWorthWidget**: Accumulated total balance and monthly trend vs. the previous month

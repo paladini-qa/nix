@@ -35,10 +35,11 @@ import {
   Cell,
   ReferenceLine,
 } from "recharts";
-import { Transaction } from "@/domain/entities";
+import { PaymentMethodConfig, Transaction } from "@/domain/entities";
 import { useLayoutSpacing } from "@/presentation/hooks";
 import { getReportDate } from "@/domain/usecases/transactionUtils";
-import type { Dayjs } from "dayjs";
+import dayjs, { type Dayjs } from "dayjs";
+import { buildDashboardMonthlySeries } from "@/domain/usecases/dashboardMonthlySeries";
 import EmptyState from "@/presentation/components/ui/EmptyState";
 import { formatCurrency } from "@/shared/utils/formatters";
 
@@ -52,8 +53,9 @@ interface AdvancedFiltersInfo {
 
 interface AnalyticsViewProps {
   transactions: Transaction[];
-  hasAdvancedFilters?: boolean;
-  advancedFilters?: AdvancedFiltersInfo;
+  allTransactions: Transaction[];
+  paymentMethodConfigs: PaymentMethodConfig[];
+  advancedFilters: AdvancedFiltersInfo;
   onCategoryClick?: (category: string, type: "income" | "expense") => void;
 }
 
@@ -70,7 +72,8 @@ const COLORS = [
 
 const AnalyticsView: React.FC<AnalyticsViewProps> = ({ 
   transactions, 
-  hasAdvancedFilters = false,
+  allTransactions,
+  paymentMethodConfigs,
   advancedFilters,
   onCategoryClick,
 }) => {
@@ -113,294 +116,11 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
     };
   }, [isMobile]);
   
-  // Calcula o "mês atual" baseado na regra do dia 10
-  // Até dia 10: mês corrente | Após dia 10: próximo mês
-  const currentReferenceMonth = useMemo(() => {
-    const now = new Date();
-    const day = now.getDate();
-    const month = now.getMonth();
-    const year = now.getFullYear();
-    
-    if (day <= 10) {
-      return { month, year };
-    } else {
-      // Próximo mês
-      const nextMonth = month === 11 ? 0 : month + 1;
-      const nextYear = month === 11 ? year + 1 : year;
-      return { month: nextMonth, year: nextYear };
-    }
-  }, []);
-  
-  // Gera a chave do mês no formato YYYY-MM
-  const getMonthKey = (year: number, month: number) => {
-    return `${year}-${String(month + 1).padStart(2, "0")}`;
-  };
-  
-  // Chave do mês atual de referência
-  const currentMonthKey = getMonthKey(currentReferenceMonth.year, currentReferenceMonth.month);
-
-  // Dados para gráfico de barras mensal
-  // Sem filtro avançado: 3 meses antes + atual + 3 meses depois
-  // Com filtro avançado: todos os meses com dados no período filtrado
-  const monthlyData = useMemo(() => {
-    const months: {
-      month: string;
-      monthKey: string;
-      income: number;
-      expense: number;
-      balance: number;
-      isCurrentMonth: boolean;
-    }[] = [];
-
-    // Agrupa por mês as transações (usa data de relatório: vencimento da fatura quando existir)
-    const monthlyMap = new Map<string, { income: number; expense: number }>();
-
-    transactions.forEach((tx) => {
-      const [year, month] = getReportDate(tx).split("-");
-      const key = `${year}-${month}`;
-      const current = monthlyMap.get(key) || { income: 0, expense: 0 };
-
-      if (tx.type === "income") {
-        current.income += tx.amount || 0;
-      } else {
-        current.expense += tx.amount || 0;
-      }
-
-      monthlyMap.set(key, current);
-    });
-
-    let keysToShow: string[] = [];
-    
-    if (!hasAdvancedFilters) {
-      // Sem filtro: gera 7 meses (3 antes + atual + 3 depois)
-      const { month: refMonth, year: refYear } = currentReferenceMonth;
-      
-      for (let offset = -3; offset <= 3; offset++) {
-        let targetMonth = refMonth + offset;
-        let targetYear = refYear;
-
-        // Ajusta o ano se necessário
-        while (targetMonth < 0) {
-          targetMonth += 12;
-          targetYear -= 1;
-        }
-        while (targetMonth > 11) {
-          targetMonth -= 12;
-          targetYear += 1;
-        }
-
-        keysToShow.push(getMonthKey(targetYear, targetMonth));
-      }
-      // Remove meses anteriores a janeiro de 2026
-      keysToShow = keysToShow.filter((k) => k >= "2026-01");
-    } else if (advancedFilters?.startDate && advancedFilters?.endDate) {
-      // Com filtro avançado com datas: gera meses entre as datas
-      const startYear = advancedFilters.startDate.year();
-      const startMonth = advancedFilters.startDate.month();
-      const endYear = advancedFilters.endDate.year();
-      const endMonth = advancedFilters.endDate.month();
-      
-      let currentYear = startYear;
-      let currentMonth = startMonth;
-      
-      while (
-        currentYear < endYear ||
-        (currentYear === endYear && currentMonth <= endMonth)
-      ) {
-        keysToShow.push(getMonthKey(currentYear, currentMonth));
-        currentMonth++;
-        if (currentMonth > 11) {
-          currentMonth = 0;
-          currentYear++;
-        }
-      }
-    } else {
-      // Com filtro avançado sem datas: mostra todos os meses com dados, ordenados
-      keysToShow = Array.from(monthlyMap.keys()).sort();
-    }
-    
-    keysToShow.forEach((key) => {
-      const [year, month] = key.split("-");
-      const d = new Date(parseInt(year), parseInt(month) - 1, 1);
-      const monthStr = d
-        .toLocaleDateString("pt-BR", { month: "short" })
-        .replace(".", "");
-      const data = monthlyMap.get(key) || { income: 0, expense: 0 };
-      const isCurrentMonth = key === currentMonthKey;
-
-      months.push({
-        month: monthStr.charAt(0).toUpperCase() + monthStr.slice(1),
-        monthKey: key,
-        income: data.income,
-        expense: data.expense,
-        balance: data.income - data.expense,
-        isCurrentMonth,
-      });
-    });
-
-    return months;
-  }, [transactions, hasAdvancedFilters, advancedFilters, currentReferenceMonth, currentMonthKey, getMonthKey]);
-
-  // Evolução do saldo ao longo do tempo
-  // Sem filtro avançado: 3 meses antes + atual + 3 meses depois
-  // Com filtro avançado: todos os meses com dados
-  const balanceEvolution = useMemo(() => {
-    const data: { 
-      date: string; 
-      monthKey: string; 
-      balance: number; 
-      income: number;
-      expense: number;
-      monthBalance: number;
-      isCurrentMonth: boolean 
-    }[] = [];
-
-    // Ordena transações por data
-    const sortedTxs = [...transactions].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-
-    // Agrupa por mês com detalhes de receita e despesa (usa data de relatório)
-    const monthlyData = new Map<string, { income: number; expense: number }>();
-
-    sortedTxs.forEach((tx) => {
-      const [year, month] = getReportDate(tx).split("-");
-      const key = `${year}-${month}`;
-      const current = monthlyData.get(key) || { income: 0, expense: 0 };
-      
-      if (tx.type === "income") {
-        current.income += tx.amount || 0;
-      } else {
-        current.expense += tx.amount || 0;
-      }
-      
-      monthlyData.set(key, current);
-    });
-
-    let keysToShow: string[] = [];
-    
-    if (!hasAdvancedFilters) {
-      // Sem filtro: gera 7 meses (3 antes + atual + 3 depois)
-      const { month: refMonth, year: refYear } = currentReferenceMonth;
-      
-      for (let offset = -3; offset <= 3; offset++) {
-        let targetMonth = refMonth + offset;
-        let targetYear = refYear;
-        
-        while (targetMonth < 0) {
-          targetMonth += 12;
-          targetYear -= 1;
-        }
-        while (targetMonth > 11) {
-          targetMonth -= 12;
-          targetYear += 1;
-        }
-        
-        keysToShow.push(getMonthKey(targetYear, targetMonth));
-      }
-    } else if (advancedFilters?.startDate && advancedFilters?.endDate) {
-      // Com filtro avançado com datas: gera meses entre as datas
-      const startYear = advancedFilters.startDate.year();
-      const startMonth = advancedFilters.startDate.month();
-      const endYear = advancedFilters.endDate.year();
-      const endMonth = advancedFilters.endDate.month();
-      
-      let currentYear = startYear;
-      let currentMonth = startMonth;
-      
-      while (
-        currentYear < endYear ||
-        (currentYear === endYear && currentMonth <= endMonth)
-      ) {
-        keysToShow.push(getMonthKey(currentYear, currentMonth));
-        currentMonth++;
-        if (currentMonth > 11) {
-          currentMonth = 0;
-          currentYear++;
-        }
-      }
-    } else {
-      // Com filtro avançado sem datas: mostra todos os meses com dados
-      keysToShow = Array.from(monthlyData.keys()).sort();
-    }
-
-    // Calcula o saldo acumulado até o primeiro mês exibido
-    const allKeys = Array.from(monthlyData.keys()).sort();
-    let runningBalance = 0;
-    
-    // Soma os saldos dos meses anteriores ao primeiro mês exibido
-    for (const key of allKeys) {
-      if (keysToShow.includes(key)) break;
-      const monthData = monthlyData.get(key);
-      if (monthData) {
-        runningBalance += monthData.income - monthData.expense;
-      }
-    }
-    
-    keysToShow.forEach((key) => {
-      const [year, month] = key.split("-");
-      const d = new Date(parseInt(year), parseInt(month) - 1, 1);
-      const monthLabel = d.toLocaleDateString("pt-BR", {
-        month: "short",
-        year: "2-digit",
-      });
-
-      const monthData = monthlyData.get(key) || { income: 0, expense: 0 };
-      const monthBalance = monthData.income - monthData.expense;
-      runningBalance += monthBalance;
-      
-      data.push({
-        date: monthLabel,
-        monthKey: key,
-        balance: runningBalance,
-        income: monthData.income,
-        expense: monthData.expense,
-        monthBalance,
-        isCurrentMonth: key === currentMonthKey,
-      });
-    });
-
-    return data;
-  }, [transactions, hasAdvancedFilters, advancedFilters, currentReferenceMonth, currentMonthKey, getMonthKey]);
-
-  // Fluxo de caixa diário (últimos 30 dias; usa data de relatório para agrupar por dia)
-  const cashFlow = useMemo(() => {
-    const data: { day: string; inflow: number; outflow: number }[] = [];
-    const dailyMap = new Map<string, { inflow: number; outflow: number }>();
-
-    transactions.forEach((tx) => {
-      const dateStr = getReportDate(tx);
-      const current = dailyMap.get(dateStr) || { inflow: 0, outflow: 0 };
-
-      if (tx.type === "income") {
-        current.inflow += tx.amount || 0;
-      } else {
-        current.outflow += tx.amount || 0;
-      }
-
-      dailyMap.set(dateStr, current);
-    });
-
-    const sortedDates = Array.from(dailyMap.keys()).sort();
-    // Pega os últimos 30 dias com dados
-    const recentDates = sortedDates.slice(-30);
-    
-    recentDates.forEach((dateStr) => {
-      const d = new Date(dateStr + "T00:00:00");
-      const dayLabel = d.toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-      });
-      const values = dailyMap.get(dateStr)!;
-      data.push({
-        day: dayLabel,
-        inflow: values.inflow,
-        outflow: values.outflow,
-      });
-    });
-
-    return data;
-  }, [transactions]);
+  const currentMonth = dayjs().format("YYYY-MM");
+  const monthlySeries = useMemo(
+    () => buildDashboardMonthlySeries(allTransactions, paymentMethodConfigs, dayjs(currentMonth), advancedFilters),
+    [allTransactions, paymentMethodConfigs, currentMonth, advancedFilters],
+  );
 
   // Gastos por categoria
   const categoryData = useMemo(() => {
@@ -472,11 +192,16 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       .filter((t) => t.type === "expense")
       .reduce((acc, t) => acc + (t.amount || 0), 0);
 
-    const monthCount = monthlyData.length || 1;
-    const avgMonthlyIncome =
-      monthlyData.reduce((acc, m) => acc + m.income, 0) / monthCount;
-    const avgMonthlyExpense =
-      monthlyData.reduce((acc, m) => acc + m.expense, 0) / monthCount;
+    const hasDateRange = advancedFilters.startDate && advancedFilters.endDate;
+    const hasTransactionFilters = advancedFilters.type !== "all" ||
+      advancedFilters.categories.length > 0 || advancedFilters.paymentMethods.length > 0;
+    const monthCount = hasDateRange
+      ? Math.max(1, advancedFilters.endDate!.startOf("month").diff(advancedFilters.startDate!.startOf("month"), "month") + 1)
+      : hasTransactionFilters
+      ? new Set(transactions.map((tx) => getReportDate(tx).slice(0, 7))).size || 1
+      : monthlySeries.length;
+    const avgMonthlyIncome = totalIncome / monthCount;
+    const avgMonthlyExpense = totalExpense / monthCount;
     const savingsRate =
       totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
 
@@ -488,7 +213,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       savingsRate,
       transactionCount: transactions.length,
     };
-  }, [transactions, monthlyData]);
+  }, [transactions, advancedFilters, monthlySeries.length]);
 
   const tooltipStyle = {
     contentStyle: {
@@ -702,17 +427,18 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       >
         <SectionHeader icon={<BarChartIcon />} title="Comparativo Mensal" />
         <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
-          <BarChart data={monthlyData} barGap={4} width={chartWidth} height={isMobile ? 250 : 300}>
+          <BarChart data={monthlySeries} barGap={4} width={chartWidth} height={isMobile ? 250 : 300}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}
               />
               <XAxis
                 dataKey="month"
+                interval={0}
                 tick={(props) => {
                   const { x, y, payload } = props;
-                  const dataIndex = monthlyData.findIndex(d => d.month === payload.value);
-                  const isCurrentMonth = dataIndex >= 0 && monthlyData[dataIndex]?.isCurrentMonth;
+                  const dataIndex = monthlySeries.findIndex(d => d.month === payload.value);
+                  const isCurrentMonth = dataIndex >= 0 && monthlySeries[dataIndex]?.isCurrentMonth;
                   return (
                     <g transform={`translate(${x},${y})`}>
                       <text
@@ -772,7 +498,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 )}
               />
               <Bar dataKey="expense" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]}>
-                {monthlyData.map((entry, index) => (
+                {monthlySeries.map((entry, index) => (
                   <Cell 
                     key={`expense-${index}`} 
                     fill={entry.isCurrentMonth ? "#dc2626" : "#ef4444"}
@@ -782,7 +508,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 ))}
               </Bar>
               <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]}>
-                {monthlyData.map((entry, index) => (
+                {monthlySeries.map((entry, index) => (
                   <Cell 
                     key={`income-${index}`} 
                     fill={entry.isCurrentMonth ? "#059669" : "#10b981"}
@@ -814,17 +540,18 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       >
         <SectionHeader icon={<LineChartIcon />} title="Evolução do Saldo" />
         <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
-          <LineChart data={balanceEvolution} width={chartWidth} height={isMobile ? 250 : 300}>
+          <LineChart data={monthlySeries} width={chartWidth} height={isMobile ? 250 : 300}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}
               />
               <XAxis
-                dataKey="date"
+                dataKey="month"
+                interval={0}
                 tick={(props) => {
                   const { x, y, payload } = props;
-                  const dataIndex = balanceEvolution.findIndex(d => d.date === payload.value);
-                  const isCurrentMonth = dataIndex >= 0 && balanceEvolution[dataIndex]?.isCurrentMonth;
+                  const dataIndex = monthlySeries.findIndex(d => d.month === payload.value);
+                  const isCurrentMonth = dataIndex >= 0 && monthlySeries[dataIndex]?.isCurrentMonth;
                   return (
                     <g transform={`translate(${x},${y})`}>
                       <text
@@ -897,9 +624,9 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 allowEscapeViewBox={{ x: true, y: true }}
               />
               {/* Linha de referência vertical para o mês atual */}
-              {balanceEvolution.find(d => d.isCurrentMonth) && (
+              {monthlySeries.find(d => d.isCurrentMonth) && (
                 <ReferenceLine
-                  x={balanceEvolution.find(d => d.isCurrentMonth)?.date}
+                  x={monthlySeries.find(d => d.isCurrentMonth)?.month}
                   stroke="#6366f1"
                   strokeDasharray="5 5"
                   strokeWidth={2}
@@ -960,18 +687,18 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           title="Fluxo de Caixa"
         />
         <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
-          <AreaChart data={cashFlow} width={chartWidth} height={isMobile ? 250 : 300}>
+          <AreaChart data={monthlySeries} width={chartWidth} height={isMobile ? 250 : 300}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={isDarkMode ? alpha("#fff", 0.1) : alpha("#000", 0.1)}
               />
               <XAxis
-                dataKey="day"
+                dataKey="month"
                 tick={{ fill: theme.palette.text.secondary, fontSize: 10 }}
                 axisLine={{
                   stroke: alpha(theme.palette.text.secondary, 0.2),
                 }}
-                interval="preserveStartEnd"
+                interval={0}
               />
               <YAxis
                 tickFormatter={(value) =>
@@ -989,7 +716,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               <Legend />
               <Area
                 type="monotone"
-                dataKey="inflow"
+                dataKey="income"
                 name="Entradas"
                 stroke="#10b981"
                 fill={alpha("#10b981", 0.3)}
@@ -997,7 +724,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               />
               <Area
                 type="monotone"
-                dataKey="outflow"
+                dataKey="expense"
                 name="Saídas"
                 stroke="#ef4444"
                 fill={alpha("#ef4444", 0.3)}

@@ -46,7 +46,7 @@ const DashboardMainSection: React.FC = () => {
   const { t } = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { format: formatCurrency, formatCompact } = useCurrency();
-  const { displayName } = useSettings();
+  const { displayName, paymentMethodConfigs } = useSettings();
   const navigate = useNavigate();
 
   const { 
@@ -279,7 +279,8 @@ const DashboardMainSection: React.FC = () => {
         <Suspense fallback={<DashboardSkeleton />}>
           <AnalyticsView
             transactions={filteredTransactions}
-            hasAdvancedFilters={hasAdvancedFiltersActive}
+            allTransactions={transactions}
+            paymentMethodConfigs={paymentMethodConfigs}
             advancedFilters={advancedFilters}
             onCategoryClick={NOOP}
           />
