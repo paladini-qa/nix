@@ -5,24 +5,24 @@
 
 /* Accent (purple) - align with Nix brand in light/dark */
 .radix-themes:where(.light, .light-theme) {
-  --accent-9: #7B2CBF;
+  --accent-9: var(--nix-orbit-primary, #7548F8);
   --accent-10: #6A27A8;
   --accent-11: #5A189A;
   --accent-12: #3D1266;
-  --purple-9: #7B2CBF;
+  --purple-9: var(--nix-orbit-primary, #7548F8);
   --purple-10: #6A27A8;
   --purple-11: #5A189A;
   --purple-12: #3D1266;
 }
 
 .radix-themes:where(.dark, .dark-theme) {
-  --accent-9: #9D4EDD;
+  --accent-9: var(--nix-orbit-primary, #7548F8);
   --accent-10: #B47AEA;
-  --accent-11: #7B2CBF;
+  --accent-11: var(--nix-orbit-lavender, #A78BFA);
   --accent-12: #E8D5F9;
-  --purple-9: #9D4EDD;
+  --purple-9: var(--nix-orbit-primary, #7548F8);
   --purple-10: #B47AEA;
-  --purple-11: #7B2CBF;
+  --purple-11: var(--nix-orbit-lavender, #A78BFA);
   --purple-12: #E8D5F9;
 }
 

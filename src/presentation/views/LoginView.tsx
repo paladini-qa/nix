@@ -1,3 +1,4 @@
+import NixLogo from "@/presentation/components/ui/NixLogo";
 import React, { useState } from "react";
 import {
   Box,
@@ -294,12 +295,7 @@ const LoginView: React.FC = () => {
                 },
               }}
             >
-              <Box
-                component="img"
-                src={`${import.meta.env.BASE_URL}logo.png`}
-                alt="Finance Control Logo"
-                sx={{ width: 36, height: 36, borderRadius: "10px" }}
-              />
+              <NixLogo size={50} />
             </Box>
 
             <Typography

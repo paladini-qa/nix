@@ -1,3 +1,4 @@
+import NixLogo from "@/presentation/components/ui/NixLogo";
 import React from "react";
 import {
   Box,
@@ -200,23 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header */}
         <Box sx={{ px: "18px", pt: "18px", pb: "14px" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: "11px",
-                background: "linear-gradient(135deg, #a855f7 0%, #c084fc 100%)",
-                display: "grid",
-                placeItems: "center",
-                fontWeight: 800,
-                color: "white",
-                fontSize: 17,
-                flexShrink: 0,
-                boxShadow: "0 6px 16px -6px rgba(168,85,247,0.6)",
-              }}
-            >
-              N
-            </Box>
+            <NixLogo size={44} decorative />
             <Box>
               <Typography sx={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.01em", lineHeight: 1.2, color: "text.primary" }}>
                 Nix Finance

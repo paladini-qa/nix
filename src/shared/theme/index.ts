@@ -1,5 +1,5 @@
 import { createTheme, ThemeOptions, alpha } from "@mui/material/styles";
-import { colors } from "@/shared/theme/colors";
+import { colors, orbitColors } from "@/shared/theme/colors";
 import { radius as r, spacing } from "@/shared/theme/spacing";
 
 // ─── Radius ──────────────────────────────────────────────────────────────────
@@ -10,6 +10,10 @@ const BRS = r.md;  // 10 — small
 const baseComponents: ThemeOptions["components"] = {
   MuiCssBaseline: {
     styleOverrides: {
+      ":root": {
+        "--nix-orbit-primary": orbitColors.primary,
+        "--nix-orbit-lavender": orbitColors.lavender,
+      },
       body: { scrollBehavior: "smooth" },
       "*:focus-visible": {
         outline: `2px solid ${alpha(colors.primary, 0.5)}`,
@@ -381,7 +385,7 @@ export const lightTheme = createTheme({
       contrastText: "#ffffff",
     },
     background: {
-      default: "#fafafa",
+      default: orbitColors.cloud,
       paper:   "#ffffff",
     },
     text: {

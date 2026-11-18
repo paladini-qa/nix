@@ -1,5 +1,5 @@
+import NixLogo from "@/presentation/components/ui/NixLogo";
 import React from "react";
-import logoUrl from "../../../assets/logo.png";
 import {
   Drawer,
   Box,
@@ -368,16 +368,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
               : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}, 0 2px 8px -2px ${alpha(theme.palette.primary.main, 0.15)}`,
           }}
         >
-          <Box
-            component="img"
-            src={logoUrl}
-            alt="Finance Control Logo"
-            sx={{
-              width: 36,
-              height: 36,
-              objectFit: "contain",
-            }}
-          />
+          <NixLogo size={48} decorative />
         </Box>
         <Box sx={{ flex: 1 }}>
           <Typography
@@ -388,7 +379,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
               letterSpacing: "-0.02em",
             }}
           >
-            Finance Control
+            Nix Finance
           </Typography>
           <Typography
             variant="caption"

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Nix Orbit identity** — Replaced the product marks, favicon, PWA and Android launcher and splash artwork. Integrated the Orbit palette and heading typography into the existing themes.
+  - **Created files** — `public/brand/nix-orbit-{gradient,purple}.svg`, `public/pwa-maskable-512x512.png`, `src/presentation/components/ui/NixLogo.tsx`
+  - **Modified files** — `docs/CHANGELOG.md`, `docs/DESIGN_SYSTEM.md`, `index.html`, `vite.config.ts`, `capacitor.config.ts`, browser icons and preview in `public/`, Android launcher and splash PNGs in `android/app/src/main/res/`, `src/styles/{index,radix-theme}.css`, `src/shared/theme/{colors,index}.ts`, `src/presentation/layouts/mobile/{MobileDrawer,MobileHeader}.tsx`, `src/presentation/layouts/shell/Sidebar.tsx`, `src/presentation/views/LoginView.tsx`
+  - **Removed files** — Obsolete marks in `public/logo*.{png,svg}` and `src/assets/logo.{png,svg}`
+
 ### Fixed
 
 - **Dashboard alignment** — The recent transactions, summary cards and charts now use the same content edges. Recent transactions span the full width when the expense breakdown is empty.
