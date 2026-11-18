@@ -200,6 +200,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         );
         if (hasRealInTargetMonth) return;
 
+        const occurrence = t.occurrences?.find((item) => item.dueDate === virtualDate);
         virtualTransactions.push({
           ...t,
           id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
@@ -207,6 +208,8 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
             "0"
           )}`,
           date: virtualDate,
+          amount: occurrence?.amount ?? t.amount,
+          isPaid: occurrence?.isPaid ?? false,
           isVirtual: true,
           originalTransactionId: t.id,
         });

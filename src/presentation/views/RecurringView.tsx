@@ -490,6 +490,12 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
     const pastOccurrencesCount = occurrences.length;
     let nextOccurrence = new Date(startDate);
+    const offsetOccurrence = (date: Date, months: number): Date => {
+      const year = date.getFullYear();
+      const month = date.getMonth() + months;
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      return new Date(year, month, Math.min(startDate.getDate(), lastDay));
+    };
 
     const formatLocalDate = (d: Date): string => {
       const year = d.getFullYear();
@@ -500,7 +506,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
     if (transaction.frequency === "monthly") {
       while (nextOccurrence < today) {
-        nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
+        nextOccurrence = offsetOccurrence(nextOccurrence, 1);
       }
 
       const currentMonthOcc = new Date(nextOccurrence);
@@ -508,13 +514,13 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         currentMonthOcc.getMonth() !== today.getMonth() ||
         currentMonthOcc.getFullYear() !== today.getFullYear()
       ) {
-        const thisMonthOcc = new Date(startDate);
+        let thisMonthOcc = new Date(startDate);
         while (
           thisMonthOcc.getFullYear() < today.getFullYear() ||
           (thisMonthOcc.getFullYear() === today.getFullYear() &&
             thisMonthOcc.getMonth() < today.getMonth())
         ) {
-          thisMonthOcc.setMonth(thisMonthOcc.getMonth() + 1);
+          thisMonthOcc = offsetOccurrence(thisMonthOcc, 1);
         }
         if (
           thisMonthOcc.getMonth() === today.getMonth() &&
@@ -530,8 +536,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       let monthOffset = 0;
 
       while (occurrenceCount < 12) {
-        const occDate = new Date(nextOccurrence);
-        occDate.setMonth(nextOccurrence.getMonth() + monthOffset);
+        const occDate = offsetOccurrence(nextOccurrence, monthOffset);
 
         const occDateString = formatLocalDate(occDate);
         const monthYearKey = `${occDate.getFullYear()}-${String(
@@ -602,7 +607,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       });
 
       while (nextOccurrence < today) {
-        nextOccurrence.setFullYear(nextOccurrence.getFullYear() + 1);
+        nextOccurrence = offsetOccurrence(nextOccurrence, 12);
       }
 
       const startOccurrenceNumber = pastOccurrencesCount + 1;
@@ -611,8 +616,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       let yearOffset = 0;
 
       while (yearlyCount < 12) {
-        const occDate = new Date(nextOccurrence);
-        occDate.setFullYear(nextOccurrence.getFullYear() + yearOffset);
+        const occDate = offsetOccurrence(nextOccurrence, yearOffset * 12);
 
         const occDateString = formatLocalDate(occDate);
         const yearKey = occDate.getFullYear();
@@ -704,11 +708,14 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   ): Transaction => {
     const [year, month] = occurrence.date.split("-");
     const virtualId = `${baseTransaction.id}_recurring_${year}-${month}`;
+    const stored = baseTransaction.occurrences?.find((item) => item.dueDate === occurrence.date);
 
     return {
       ...baseTransaction,
       id: virtualId,
       date: occurrence.date,
+      amount: stored?.amount ?? baseTransaction.amount,
+      isPaid: stored?.isPaid ?? baseTransaction.isPaid,
       isVirtual: true,
       originalTransactionId: baseTransaction.id,
       currentInstallment: occurrence.occurrenceNumber,
@@ -1135,10 +1142,11 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             </Box>
           ) : (
             occurrencesList.map((occ, index) => {
+              const stored = selectedRecurring.occurrences?.find((item) => item.dueDate === occ.date);
               const isPaid = occ.isModified
                 ? !!occ.modifiedTransaction?.isPaid
-                : occ.isCurrent && selectedRecurring.isPaid;
-              const amount = occ.modifiedTransaction?.amount ?? selectedRecurring.amount ?? 0;
+                : stored?.isPaid ?? (occ.isCurrent && selectedRecurring.isPaid);
+              const amount = occ.modifiedTransaction?.amount ?? stored?.amount ?? selectedRecurring.amount ?? 0;
               const isLast = index === occurrencesList.length - 1;
 
               return (

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Contribution workflow** — Documented the feature branch, commit, push, pull request, and merge workflow in `docs/AGENTS.md`.
+
+### Changed
+
+- **Transaction payments and occurrences** — Documented the Supabase schema and connected transaction reads to the stored recurrence frequency, occurrence amount, and payment state.
+  - **Created files**: `docs/migrations/20261118131256_normalize_transaction_payments_and_occurrences.sql`
+  - **Modified files**: `README.md`, `docs/setup.sql`, `docs/REQUIREMENTS.md`, `docs/CHANGELOG.md`, `src/domain/entities/index.ts`, `src/domain/usecases/recurringUtils.ts`, `src/presentation/hooks/useTransactionsQuery.ts`, `src/presentation/views/CategoriesView.tsx`, `src/presentation/views/RecurringView.tsx`, `tests/utils/recurringUtils.test.ts`
+
 ### Changed - June 2026
 
 #### PRD Rebuild and Restructure
