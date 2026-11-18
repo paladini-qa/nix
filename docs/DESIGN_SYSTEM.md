@@ -13,6 +13,12 @@ The Nix Finance Design System follows the **"Human & Organic"** philosophy - int
 
 ---
 
+## Nix Orbit
+
+Use `NixLogo` for the product symbol. It selects the purple SVG in light theme and the gradient SVG in dark theme. Use an empty alternate text when the Nix wordmark is visible beside the symbol. The two source SVGs live under `public/brand`.
+
+The Orbit palette uses primary violet `#7548F8`, lavender `#A78BFA`, midnight `#171324`, and cloud `#F5F3FF`. Use Sora for headings and Inter for interface text. The web manifest includes a separate opaque maskable icon. Launcher and splash artwork for Android is packaged in `android/app/src/main/res`.
+
 ## Radix UI Components
 
 ### Imports

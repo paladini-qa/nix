@@ -1,5 +1,5 @@
+import NixLogo from "@/presentation/components/ui/NixLogo";
 import React from "react";
-import logoUrl from "../../../assets/logo.png";
 import { Box, useTheme, alpha } from "@mui/material";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
@@ -75,12 +75,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           justifyContent: "flex-start",
         }}
       >
-        <Box
-          component="img"
-          src={logoUrl}
-          alt="Finance Control Logo"
-          sx={{ width: 32, height: 32, flexShrink: 0, objectFit: "contain", borderRadius: "9px" }}
-        />
+        <NixLogo size={40} />
       </MotionBox>
 
       <MotionBox

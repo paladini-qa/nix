@@ -59,13 +59,13 @@ export default defineConfig(({ mode }) => {
       react(),
       VitePWA({
         registerType: "autoUpdate",
-        includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "apple-touch-icon.png", "og.png"],
+        includeAssets: ["favicon.svg", "favicon.ico", "favicon.png", "favicon-16x16.png", "apple-touch-icon.png", "og.png", "brand/*.svg"],
         manifest: {
           name: "Nix Finance",
           short_name: "Nix",
           description: "Smart Personal Finance Manager",
-          theme_color: "#7C3AED",
-          background_color: "#ffffff",
+          theme_color: "#7548F8",
+          background_color: "#F5F3FF",
           display: "standalone",
           icons: [
             {
@@ -77,7 +77,12 @@ export default defineConfig(({ mode }) => {
               src: "pwa-512x512.png",
               sizes: "512x512",
               type: "image/png",
-              purpose: "any maskable",
+            },
+            {
+              src: "pwa-maskable-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable",
             },
           ],
         },

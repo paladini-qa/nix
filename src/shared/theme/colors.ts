@@ -1,6 +1,13 @@
+export const orbitColors = {
+  primary: "#7548F8",
+  lavender: "#A78BFA",
+  midnight: "#171324",
+  cloud: "#F5F3FF",
+} as const;
+
 export const colors = {
   bg: {
-    app:      '#12141c',
+    app:      orbitColors.midnight,
     card:     '#1a1d2e',
     elevated: '#252840',
     input:    '#1e2035',
@@ -9,7 +16,7 @@ export const colors = {
     default: '#2a2d45',
     subtle:  '#1e2030',
   },
-  primary: '#a855f7',
+  primary: orbitColors.primary,
   income:  '#4ade80',
   expense: '#f87171',
   warning: '#fcd34d',

@@ -131,6 +131,7 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', 'Roboto', sans-serif;
+  font-variant-numeric: tabular-nums;
   background-color: var(--coffee-bg-base);
   min-height: 100vh;
   position: relative;
@@ -138,7 +139,7 @@ body {
   overflow-x: clip;
 }
 
-/* Títulos usam Playfair Display */
+/* Titulação da marca Nix */
 h1, h2, h3, h4, h5, h6,
 .MuiTypography-h1,
 .MuiTypography-h2,
@@ -146,7 +147,7 @@ h1, h2, h3, h4, h5, h6,
 .MuiTypography-h4,
 .MuiTypography-h5,
 .MuiTypography-h6 {
-  font-family: 'Inter', 'Roboto', sans-serif !important;
+  font-family: 'Sora', 'Inter', 'Roboto', sans-serif !important;
 }
 
 /* ============================================

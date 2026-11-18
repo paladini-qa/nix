@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.nix.finance",
-  appName: "Finance Control",
+  appName: "Nix",
   webDir: "dist",
   server: {
     // Para desenvolvimento: descomente a linha abaixo e use seu IP local
@@ -15,7 +15,7 @@ const config: CapacitorConfig = {
       launchShowDuration: 2000,
       launchAutoHide: true,
       launchFadeOutDuration: 500,
-      backgroundColor: "#0F172A", // Slate-900 (dark theme)
+      backgroundColor: "#171324",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
       showSpinner: false,
