@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
-import { calculateInvoiceDueDate } from "@/domain/usecases/transactionUtils";
+import { calculateInvoiceDueDate, getInstallmentAmounts } from "@/domain/usecases/transactionUtils";
 import type { Transaction } from "@/domain/entities";
 import { useAppStore } from "@/presentation/hooks/useAppStore";
 import { useTransactionsQuery } from "@/presentation/hooks/useTransactionsQuery";
@@ -94,10 +94,6 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
     updateTransaction
   } = useTransactionsQuery();
 
-  const currentBalance = transactions.reduce((acc, t) => {
-    return t.type === "income" ? acc + t.amount : acc - t.amount;
-  }, 0);
-
   const handleSave = async (txData: any, editId?: string) => {
     try {
       if (editId) {
@@ -105,10 +101,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
         showSuccess("Transação atualizada com sucesso!");
       } else if (txData.installments && txData.installments > 1) {
         const totalInstallments = txData.installments;
-        const txAmount = txData.amount || 0;
-        const installmentAmount = Math.round((txAmount / totalInstallments) * 100) / 100;
-        const totalFromInstallments = installmentAmount * totalInstallments;
-        const remainder = Math.round((txAmount - totalFromInstallments) * 100) / 100;
+        const { first, regular } = getInstallmentAmounts(txData.amount || 0, totalInstallments);
         const installmentGroupId = crypto.randomUUID();
 
         const pmConfig = getPaymentMethodConfig(txData.paymentMethod);
@@ -120,7 +113,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
 
         const installmentPayloads: Partial<Transaction>[] = [];
         for (let i = 0; i < totalInstallments; i++) {
-          const amount = i === 0 ? installmentAmount + remainder : installmentAmount;
+          const amount = i === 0 ? first : regular;
           const installmentDate = dayjs(baseDate).add(i, "month").format("YYYY-MM-DD");
 
           let invoiceDueDate: string | undefined;
@@ -362,7 +355,6 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
         editTransaction={editingTransaction}
         initialContext={walletInitialContext}
         transactions={transactions}
-        currentBalance={currentBalance}
         getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
         getPaymentMethodConfig={getPaymentMethodConfig}
       />

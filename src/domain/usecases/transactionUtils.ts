@@ -1,5 +1,22 @@
 import type { Transaction, PaymentMethodConfig } from "@/domain/entities";
 
+export function getBalanceOnDate(
+  transactions: readonly Transaction[],
+  date: string,
+  excludedId?: string,
+): number {
+  return transactions.reduce((balance, transaction) => {
+    if (transaction.date > date || transaction.id === excludedId) return balance;
+    return balance + (transaction.type === "income" ? transaction.amount : -transaction.amount);
+  }, 0);
+}
+
+export function getInstallmentAmounts(total: number, count: number) {
+  const regular = Math.round((total / count) * 100) / 100;
+  const remainder = Math.round((total - regular * count) * 100) / 100;
+  return { first: Math.round((regular + remainder) * 100) / 100, regular };
+}
+
 /**
  * Data usada para relatórios (filtro/agrupamento por mês).
  * Quando a transação tem vencimento de fatura (invoiceDueDate), usa essa data;
