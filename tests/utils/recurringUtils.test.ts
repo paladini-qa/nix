@@ -36,6 +36,18 @@ const noPmConfigs: PaymentMethodConfig[] = [];
 // ---------------------------------------------------------------------------
 
 describe("generateRecurringTransactions — monthly", () => {
+  it("uses the stored amount and payment state for the matching occurrence", () => {
+    const t = makeRecurring({
+      occurrences: [
+        { number: 2, dueDate: "2024-02-15", amount: 950, isPaid: true },
+        { number: 3, dueDate: "2024-03-15", amount: 1020, isPaid: false },
+      ],
+    });
+
+    expect(generateRecurringTransactions([t], makeFilter(1, 2024), noPmConfigs))
+      .toMatchObject([{ date: "2024-02-15", amount: 950, isPaid: true }]);
+  });
+
   it("generates a virtual transaction for a future month", () => {
     // origin: Jan 2024 → filter: Feb 2024 (month=1 in 0-indexed)
     const t = makeRecurring({ date: "2024-01-15" });

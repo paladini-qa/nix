@@ -3,6 +3,7 @@
 -- =============================================
 -- Execute this script in the Supabase Dashboard SQL Editor
 -- https://supabase.com/dashboard/project/[your-project]/sql
+-- After this base script, run migrations/20261118131256_normalize_transaction_payments_and_occurrences.sql.
 
 -- =============================================
 -- 1. TABLE: transactions
@@ -621,3 +622,26 @@ CREATE TRIGGER on_planning_items_updated
     BEFORE UPDATE ON public.planning_items
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
+
+-- Recurrence exceptions are needed by the transaction occurrence migration.
+CREATE TABLE IF NOT EXISTS public.recurring_overrides (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    transaction_id UUID NOT NULL REFERENCES public.transactions(id) ON DELETE CASCADE,
+    override_date DATE NOT NULL,
+    amount NUMERIC,
+    is_paid BOOLEAN,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (transaction_id, override_date)
+);
+ALTER TABLE public.recurring_overrides ENABLE ROW LEVEL SECURITY;
+CREATE POLICY recurring_overrides_owner ON public.recurring_overrides
+    FOR ALL TO authenticated
+    USING (user_id = (SELECT auth.uid()))
+    WITH CHECK (
+        user_id = (SELECT auth.uid()) AND EXISTS (
+            SELECT 1 FROM public.transactions t
+            WHERE t.id = transaction_id AND t.user_id = (SELECT auth.uid())
+        )
+    );

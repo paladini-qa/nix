@@ -82,6 +82,8 @@ export const generateRecurringTransactions = (
     );
     if (hasRealInSourceMonth) return;
 
+    const occurrence = t.occurrences?.find((item) => item.dueDate === virtualDate);
+
     // Calcula invoiceDueDate para a transação virtual
     let virtualInvoiceDueDate: string | undefined;
     if (hasInvoiceConfig) {
@@ -97,10 +99,11 @@ export const generateRecurringTransactions = (
       ...t,
       id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(2, "0")}`,
       date: virtualDate,
+      amount: occurrence?.amount ?? t.amount,
       invoiceDueDate: virtualInvoiceDueDate,
       isVirtual: true,
       originalTransactionId: t.id,
-      isPaid: false,
+      isPaid: occurrence?.isPaid ?? false,
     });
   });
 

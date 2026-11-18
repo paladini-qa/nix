@@ -1,4 +1,12 @@
 export type TransactionType = "income" | "expense";
+export type TransactionStatus = "a_vista" | "splitted" | "recurring";
+
+export interface TransactionOccurrence {
+  number: number;
+  dueDate: string;
+  amount: number;
+  isPaid: boolean | null;
+}
 export type ThemePreference = "light" | "dark" | "system";
 export type PaymentMethodType = "card" | "cash";
 
@@ -24,6 +32,9 @@ export interface Transaction {
   type: TransactionType;
   category: string;
   paymentMethod: string;
+  paymentMethodId?: string;
+  status?: TransactionStatus;
+  occurrences?: TransactionOccurrence[];
   date: string; // ISO String YYYY-MM-DD - data em que a transação ocorreu
   /** Data de vencimento da fatura (quando a forma de pagamento tem dia cadastrado); só mês/ano editável na UI */
   invoiceDueDate?: string; // YYYY-MM-DD

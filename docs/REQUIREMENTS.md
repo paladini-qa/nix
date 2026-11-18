@@ -40,7 +40,7 @@ Nix Finance is a modern personal finance management application with intelligent
 - **Smart Editing**: Edit single occurrences, all occurrences, or all future occurrences
 - **Date Exclusions**: Exclude specific dates from recurring patterns
 - **Management View**: Dedicated view to track and manage active recurrences
-- **Auto-Generation**: Automatic generation of virtual transactions for future periods
+- **Auto-Generation**: PostgreSQL materializes recurring occurrences through a rolling 12-month horizon. The client displays them as virtual rows and can project periods beyond that horizon.
 
 #### Installments
 - **Installments Tracking**: Full system for installment purchases and credit payments
@@ -177,11 +177,21 @@ Nix Finance is a modern personal finance management application with intelligent
 #### `transactions`
 Stores all financial transactions:
 - Core details (description, amount, type, category, payment method, date)
+- Generated payment status (`a_vista`, `splitted`, or `recurring`) and tenant-scoped payment method FK (`payment_method_id`)
 - Recurrence configuration (isRecurring, frequency)
 - Installment details (installments, currentInstallment, installmentGroupId)
 - Paid status (isPaid)
 - Shared expenses (isShared, sharedWith, iOwe, relatedTransactionId)
 - Date exclusions (excludedDates, recurringGroupId)
+
+#### `payment_methods`
+User-owned payment method names. The database resolves the FK from the existing text field for callers that write a name. Card preferences and visuals are stored in `user_settings`.
+
+#### `recurring_transactions`
+One row per recurring transaction, linked by `transaction_id`. The frequency is monthly or yearly for a schedule and null for a standalone occurrence already recorded in `transactions`.
+
+#### `splited_transactions`
+One row per scheduled occurrence or installment, linked by `transaction_id`. Numbered installments written by the app carry their `installment_group_id` so the app can edit individual installments and their dates. For a purchase written as a single transaction with an installment count, the database generates the monthly rows and distributes the amount to the cent. Recurring occurrences honor `excluded_dates` and `recurring_overrides`.
 
 #### `user_settings`
 Personalized user preferences:

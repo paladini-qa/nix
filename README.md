@@ -66,7 +66,7 @@ npm install
 
 1. Crie um novo projeto no [Supabase Dashboard](https://supabase.com/dashboard)
 
-2. Execute o script SQL para criar as tabelas. No SQL Editor do Supabase, execute o conteúdo de [`docs/setup.sql`](docs/setup.sql)
+2. No SQL Editor de um banco novo, execute [`docs/setup.sql`](docs/setup.sql) e depois a [migração de pagamentos e ocorrências](docs/migrations/20261118131256_normalize_transaction_payments_and_occurrences.sql). No projeto `nix`, essa migração já consta no histórico.
 
 3. Copie suas credenciais em **Project Settings > API**:
    - `Project URL` → `SUPABASE_URL`
@@ -193,8 +193,11 @@ nix/
 
 ### Tabelas
 
-- **transactions** - Transações financeiras do usuário
-- **user_settings** - Configurações personalizadas (categorias, métodos de pagamento, cores)
+- **transactions** - Lançamentos com status calculado (`a_vista`, `splitted` ou `recurring`) e FK `payment_method_id`
+- **payment_methods** - Meios de pagamento por usuário
+- **recurring_transactions** - Data inicial e frequência vinculadas ao lançamento
+- **splited_transactions** - Uma linha por parcela ou ocorrência, com FK `transaction_id`, vencimento, valor e situação de pagamento
+- **user_settings** - Preferências de exibição, categorias e configurações de cartão
 - **budgets** - Orçamentos mensais por categoria
 - **goals** - Metas financeiras
 - **accounts** - Contas/carteiras do usuário
@@ -202,7 +205,9 @@ nix/
 
 ### Row Level Security (RLS)
 
-O banco está configurado com RLS para garantir que cada usuário acesse apenas seus próprios dados.
+As tabelas de recorrências e ocorrências seguem as permissões da transação associada, inclusive para transações compartilhadas. Os meios de pagamento são restritos ao titular.
+
+O banco gera as parcelas e ocorrências ao gravar a transação. Para recorrências, um job diário mantém uma janela de 12 meses à frente. O app usa os valores e a situação de pagamento do banco para as ocorrências disponíveis e calcula projeções fora da janela.
 
 ##  Scripts Disponíveis
 

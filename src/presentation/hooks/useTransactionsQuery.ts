@@ -14,11 +14,21 @@ function mapTransactionFromDb(t: any): Transaction {
     type: t.type,
     category: t.category,
     paymentMethod: t.payment_method,
+    paymentMethodId: t.payment_method_id ?? undefined,
+    status: t.status ?? undefined,
+    occurrences: t.splited_transactions?.map(
+      (row: { occurrence_number: number; due_date: string; amount: number; is_paid: boolean | null }) => ({
+        number: row.occurrence_number,
+        dueDate: row.due_date,
+        amount: row.amount,
+        isPaid: row.is_paid,
+      })
+    ),
     date: t.date,
     invoiceDueDate: t.invoice_due_date ?? undefined,
     createdAt: new Date(t.created_at).getTime(),
     isRecurring: t.is_recurring,
-    frequency: t.frequency,
+    frequency: t.recurring_transactions?.frequency ?? t.frequency,
     installments: t.installments,
     currentInstallment: t.current_installment,
     isPaid: t.is_paid ?? false,
@@ -41,6 +51,7 @@ function mapTransactionToDb(tx: Partial<Transaction>) {
   if (tx.type !== undefined) payload.type = tx.type;
   if (tx.category !== undefined) payload.category = tx.category;
   if (tx.paymentMethod !== undefined) payload.payment_method = tx.paymentMethod;
+  if (tx.paymentMethodId !== undefined) payload.payment_method_id = tx.paymentMethodId;
   if (tx.date !== undefined) payload.date = tx.date;
   if (tx.invoiceDueDate !== undefined) payload.invoice_due_date = tx.invoiceDueDate;
   if (tx.isRecurring !== undefined) payload.is_recurring = tx.isRecurring;
@@ -79,7 +90,7 @@ export function useTransactionsQuery() {
       // TODO: move to application service — layer violation
       const { data, error } = await supabase
         .from("transactions")
-        .select("*")
+        .select("*, recurring_transactions(frequency), splited_transactions(occurrence_number, due_date, amount, is_paid)")
         .gte("date", "2026-01-01")
         .order("date", { ascending: false });
 
