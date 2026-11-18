@@ -11,6 +11,8 @@ Welcome to the **Nix Finance** repository. As an AI Agent or developer working o
 
 ## 📋 Mandatory Workflow
 
+Start each change on a dedicated feature branch from the default branch. Commit and push the changes, open a pull request against the default branch, and merge it once GitHub's required checks and reviews pass.
+
 Before starting any task, make sure to follow this development workflow:
 
 ```mermaid

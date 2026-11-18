@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Contribution workflow** — Documented the feature branch, commit, push, pull request, and merge workflow in `docs/AGENTS.md`.
+
 ### Changed
 
 - **Transaction payments and occurrences** — Documented the Supabase schema and connected transaction reads to the stored recurrence frequency, occurrence amount, and payment state.
