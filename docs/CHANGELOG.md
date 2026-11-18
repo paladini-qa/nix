@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **New transaction status** — Default newly created income and expenses to pending in the app and database.
+  - **Created file** — `docs/migrations/20261118151556_default_new_transactions_to_pending.sql`
+  - **Modified files** — `docs/REQUIREMENTS.md`, `docs/setup.sql`, `src/presentation/hooks/useTransactionsQuery.ts`
+
 ### Changed
 
 - **Nix Orbit identity** — Replaced the product marks, favicon, PWA and Android launcher and splash artwork. Integrated the Orbit palette and heading typography into the existing themes.
