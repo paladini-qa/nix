@@ -413,40 +413,18 @@ gap: 2.5  // 20px
 
 ### Dialogs/Modals
 
-```typescript
-<Dialog
-  open={open}
-  onClose={onClose}
-  maxWidth="sm"
-  fullWidth
-  PaperProps={{
-    sx: {
-      borderRadius: isMobile ? 0 : "20px",
-      bgcolor: isDarkMode
-        ? alpha(theme.palette.background.paper, 0.95)
-        : alpha("#FFFFFF", 0.98),
-      backdropFilter: "blur(20px)",
-      WebkitBackdropFilter: "blur(20px)",
-      border: isMobile
-        ? "none"
-        : `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
-      boxShadow: isDarkMode
-        ? `0 24px 80px -20px ${alpha("#000000", 0.6)}`
-        : `0 24px 80px -20px ${alpha(theme.palette.primary.main, 0.2)}`,
-    },
-  }}
-  slotProps={{
-    backdrop: {
-      sx: {
-        bgcolor: isDarkMode
-          ? alpha("#0F172A", 0.8)
-          : alpha("#64748B", 0.4),
-        backdropFilter: "blur(8px)",
-      },
-    },
-  }}
->
-  {/* Content */}
+Material UI dialogs inherit their surface, backdrop, mobile insets and footer spacing from the shared theme. Their portal applies the current Radix theme to the dialog surface, so Nix buttons keep the same colors in the app and inside dialogs.
+
+Use a contained dialog for confirmations and short forms. Use fullscreen on mobile for longer flows such as onboarding and profile. Give every dialog an accessible name and label any icon-only close button. Keep destructive actions red and put initial focus on Cancel.
+
+```tsx
+<Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+  <DialogTitle>New payment method</DialogTitle>
+  <DialogContent>{/* Fields */}</DialogContent>
+  <DialogActions>
+    <NixButton variant="soft" color="gray" onClick={onClose}>Cancel</NixButton>
+    <NixButton onClick={onSave}>Save</NixButton>
+  </DialogActions>
 </Dialog>
 ```
 

@@ -72,7 +72,6 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const isDarkMode = theme.palette.mode === "dark";
 
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -196,23 +195,8 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: "20px",
-          bgcolor: isDarkMode ? "grey.900" : "background.paper",
-          backgroundImage: "none",
-          overflow: "hidden",
-          mt: -10,
-        },
-      }}
-      slotProps={{
-        backdrop: {
-          sx: {
-            bgcolor: alpha("#000", 0.5),
-            backdropFilter: "blur(4px)",
-          },
-        },
-      }}
+      aria-label="Busca global"
+      slotProps={{ paper: { sx: { overflow: "hidden", mt: { sm: -10 } } } }}
     >
       <DialogContent sx={{ p: 0 }}>
         {/* Search Input */}
@@ -225,6 +209,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
           <TextField
             autoFocus
             fullWidth
+            inputProps={{ "aria-label": "Buscar transações ou páginas" }}
             placeholder="Buscar transações, navegar para..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}

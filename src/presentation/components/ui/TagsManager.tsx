@@ -210,28 +210,6 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
         onClose={handleCloseForm}
         maxWidth="xs"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: "20px",
-            bgcolor: theme.palette.mode === "dark"
-              ? alpha(theme.palette.background.paper, 0.95)
-              : alpha("#FFFFFF", 0.98),
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            border: `1px solid ${theme.palette.mode === "dark" ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            boxShadow: theme.palette.mode === "dark"
-              ? `0 24px 60px -12px ${alpha("#000000", 0.6)}`
-              : `0 24px 60px -12px ${alpha(theme.palette.primary.main, 0.18)}`,
-          },
-        }}
-        slotProps={{
-          backdrop: {
-            sx: {
-              bgcolor: theme.palette.mode === "dark" ? alpha("#0F172A", 0.7) : alpha("#64748B", 0.35),
-              backdropFilter: "blur(6px)",
-            },
-          },
-        }}
       >
         <DialogTitle sx={{ pt: 2.5, px: 2.5, pb: 1, fontWeight: 700, fontSize: "1rem" }}>
           {editingTag ? "Edit Tag" : "New Tag"}
@@ -291,7 +269,7 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
+        <DialogActions>
           <NixButton size="medium" variant="soft" color="gray" onClick={handleCloseForm}>
             Cancel
           </NixButton>

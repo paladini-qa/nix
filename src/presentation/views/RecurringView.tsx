@@ -1,3 +1,4 @@
+import NixButton from "@/presentation/components/radix/Button";
 import React, { useState, useMemo, useCallback, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -1273,26 +1274,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         onClose={() => !deleteConfirm.isLoading && setDeleteConfirm((prev) => ({ ...prev, open: false }))}
         maxWidth="xs"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: "20px",
-            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.95) : alpha("#FFFFFF", 0.98),
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            boxShadow: isDarkMode
-              ? `0 24px 60px -12px ${alpha("#000000", 0.6)}`
-              : `0 24px 60px -12px ${alpha(theme.palette.error.main, 0.18)}`,
-          },
-        }}
-        slotProps={{
-          backdrop: {
-            sx: {
-              bgcolor: isDarkMode ? alpha("#0F172A", 0.7) : alpha("#64748B", 0.35),
-              backdropFilter: "blur(6px)",
-            },
-          },
-        }}
       >
         <DialogTitle sx={{ pb: 1, pt: 2.5, px: 2.5 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -1322,38 +1303,24 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             {getDeleteConfirmText()}
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
-          <Button
+        <DialogActions>
+          <NixButton
+            autoFocus
+            variant="soft"
+            color="gray"
             onClick={() => setDeleteConfirm((prev) => ({ ...prev, open: false }))}
             disabled={deleteConfirm.isLoading}
-            sx={{
-              borderRadius: "10px",
-              textTransform: "none",
-              fontWeight: 600,
-              color: "text.secondary",
-              bgcolor: alpha(theme.palette.text.secondary, 0.08),
-              "&:hover": { bgcolor: alpha(theme.palette.text.secondary, 0.14) },
-              px: 2.5,
-            }}
           >
             Cancel
-          </Button>
-          <Button
+          </NixButton>
+          <NixButton
             onClick={handleDeleteConfirm}
-            color="error"
-            variant="contained"
+            color="red"
+            variant="solid"
             disabled={deleteConfirm.isLoading}
-            sx={{
-              borderRadius: "10px",
-              textTransform: "none",
-              fontWeight: 600,
-              boxShadow: `0 4px 12px -2px ${alpha(theme.palette.error.main, 0.4)}`,
-              "&:hover": { boxShadow: `0 6px 16px -2px ${alpha(theme.palette.error.main, 0.5)}`, transform: "translateY(-1px)" },
-              px: 2.5,
-            }}
           >
             {deleteConfirm.isLoading ? "Deleting..." : "Delete"}
-          </Button>
+          </NixButton>
         </DialogActions>
       </Dialog>
       </>
@@ -2012,26 +1979,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         onClose={() => !deleteConfirm.isLoading && setDeleteConfirm((prev) => ({ ...prev, open: false }))}
         maxWidth="xs"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: "20px",
-            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.95) : alpha("#FFFFFF", 0.98),
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            boxShadow: isDarkMode
-              ? `0 24px 60px -12px ${alpha("#000000", 0.6)}`
-              : `0 24px 60px -12px ${alpha(theme.palette.error.main, 0.18)}`,
-          },
-        }}
-        slotProps={{
-          backdrop: {
-            sx: {
-              bgcolor: isDarkMode ? alpha("#0F172A", 0.7) : alpha("#64748B", 0.35),
-              backdropFilter: "blur(6px)",
-            },
-          },
-        }}
       >
         <DialogTitle sx={{ pb: 1, pt: 2.5, px: 2.5 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -2061,38 +2008,24 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             {getDeleteConfirmText()}
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
-          <Button
+        <DialogActions>
+          <NixButton
+            autoFocus
+            variant="soft"
+            color="gray"
             onClick={() => setDeleteConfirm((prev) => ({ ...prev, open: false }))}
             disabled={deleteConfirm.isLoading}
-            sx={{
-              borderRadius: "10px",
-              textTransform: "none",
-              fontWeight: 600,
-              color: "text.secondary",
-              bgcolor: alpha(theme.palette.text.secondary, 0.08),
-              "&:hover": { bgcolor: alpha(theme.palette.text.secondary, 0.14) },
-              px: 2.5,
-            }}
           >
             Cancel
-          </Button>
-          <Button
+          </NixButton>
+          <NixButton
             onClick={handleDeleteConfirm}
-            color="error"
-            variant="contained"
+            color="red"
+            variant="solid"
             disabled={deleteConfirm.isLoading}
-            sx={{
-              borderRadius: "10px",
-              textTransform: "none",
-              fontWeight: 600,
-              boxShadow: `0 4px 12px -2px ${alpha(theme.palette.error.main, 0.4)}`,
-              "&:hover": { boxShadow: `0 6px 16px -2px ${alpha(theme.palette.error.main, 0.5)}`, transform: "translateY(-1px)" },
-              px: 2.5,
-            }}
           >
             {deleteConfirm.isLoading ? "Deleting..." : "Delete"}
-          </Button>
+          </NixButton>
         </DialogActions>
       </Dialog>
     </Box>

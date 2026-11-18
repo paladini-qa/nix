@@ -1,6 +1,6 @@
 import { createTheme, ThemeOptions, alpha } from "@mui/material/styles";
 import { colors } from "@/shared/theme/colors";
-import { radius as r } from "@/shared/theme/spacing";
+import { radius as r, spacing } from "@/shared/theme/spacing";
 
 // ─── Radius ──────────────────────────────────────────────────────────────────
 const BR  = r.xl;  // 16 — default
@@ -96,7 +96,69 @@ const baseComponents: ThemeOptions["components"] = {
   },
   MuiDialog: {
     styleOverrides: {
-      paper: { borderRadius: BR },
+      root: ({ theme }) => ({
+        "& > .MuiBackdrop-root": {
+          backgroundColor: alpha(theme.palette.common.black, theme.palette.mode === "dark" ? 0.68 : 0.42),
+          backdropFilter: "blur(6px)",
+        },
+      }),
+      paper: ({ theme, ownerState }) => {
+        const dark = theme.palette.mode === "dark";
+        return {
+          borderRadius: ownerState.fullScreen ? 0 : r.dialog,
+          border: ownerState.fullScreen ? 0 : `1px solid ${theme.palette.divider}`,
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: "none",
+          boxShadow: ownerState.fullScreen ? "none" : `0 24px 60px -16px ${alpha(
+            dark ? theme.palette.common.black : theme.palette.primary.main,
+            dark ? 0.65 : 0.24
+          )}`,
+          ...(ownerState.fullScreen ? {
+            height: "100dvh",
+            maxHeight: "100dvh",
+          } : {
+            maxHeight: "calc(100dvh - 32px)",
+            [theme.breakpoints.down("sm")]: {
+              margin: spacing.lg,
+              maxWidth: "calc(100% - 32px)",
+              width: ownerState.fullWidth ? "calc(100% - 32px)" : undefined,
+            },
+          }),
+        };
+      },
+    },
+  },
+  MuiDialogTitle: {
+    styleOverrides: {
+      root: ({ theme }) => ({
+        fontWeight: 700,
+        padding: `${spacing.xl}px ${spacing.xxl}px ${spacing.sm}px`,
+        [theme.breakpoints.down("sm")]: { paddingInline: spacing.lg },
+      }),
+    },
+  },
+  MuiDialogContent: {
+    styleOverrides: {
+      root: ({ theme }) => ({
+        minHeight: 0,
+        overflowWrap: "anywhere",
+        overscrollBehavior: "contain",
+        [theme.breakpoints.down("sm")]: { paddingInline: spacing.lg },
+      }),
+    },
+  },
+  MuiDialogActions: {
+    defaultProps: { disableSpacing: true },
+    styleOverrides: {
+      root: ({ theme }) => ({
+        flexWrap: "wrap",
+        gap: spacing.sm,
+        padding: `${spacing.md}px ${spacing.xxl}px ${spacing.xl}px`,
+        [theme.breakpoints.down("sm")]: {
+          paddingInline: spacing.lg,
+          paddingBottom: `max(${spacing.lg}px, env(safe-area-inset-bottom))`,
+        },
+      }),
     },
   },
   MuiTextField: {

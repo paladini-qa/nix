@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useId, useRef, ReactNode } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -67,24 +67,30 @@ interface ConfirmDialogProviderProps {
 
 type DialogMode = "confirm" | "alert" | "choice";
 
-interface DialogState {
+type DialogResult = boolean | string | null | undefined;
+
+interface DialogRequest {
   mode: DialogMode;
-  options: ConfirmOptions | AlertOptions | ChoiceOptions | null;
+  options: ConfirmOptions | AlertOptions | ChoiceOptions;
+  resolve: (value: DialogResult) => void;
 }
 
 export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ children }) => {
   const theme = useTheme();
-  const [open, setOpen] = useState(false);
-  const [dialogState, setDialogState] = useState<DialogState>({ mode: "confirm", options: null });
-  const [resolveRef, setResolveRef] = useState<((value: any) => void) | null>(null);
+  const messageId = useId();
+  const requests = useRef<DialogRequest[]>([]);
+  const [request, setRequest] = useState<DialogRequest>();
 
-  const confirm = useCallback((opts: ConfirmOptions): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setDialogState({ mode: "confirm", options: opts });
-      setResolveRef(() => resolve);
-      setOpen(true);
-    });
+  const enqueue = useCallback((next: DialogRequest) => {
+    requests.current.push(next);
+    if (requests.current.length === 1) setRequest(next);
   }, []);
+
+  const confirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
+    return new Promise((resolve) => {
+      enqueue({ mode: "confirm", options, resolve: (value) => resolve(value === true) });
+    });
+  }, [enqueue]);
 
   const confirmDelete = useCallback(
     (itemName: string): Promise<boolean> => {
@@ -99,30 +105,23 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
     [confirm]
   );
 
-  const alert = useCallback((opts: AlertOptions): Promise<void> => {
+  const alert = useCallback((options: AlertOptions): Promise<void> => {
     return new Promise((resolve) => {
-      setDialogState({ mode: "alert", options: opts });
-      setResolveRef(() => resolve);
-      setOpen(true);
+      enqueue({ mode: "alert", options, resolve: () => resolve() });
     });
-  }, []);
+  }, [enqueue]);
 
-  const choice = useCallback((opts: ChoiceOptions): Promise<string | null> => {
+  const choice = useCallback((options: ChoiceOptions): Promise<string | null> => {
     return new Promise((resolve) => {
-      setDialogState({ mode: "choice", options: opts });
-      setResolveRef(() => resolve);
-      setOpen(true);
+      enqueue({ mode: "choice", options, resolve: (value) => resolve(typeof value === "string" ? value : null) });
     });
-  }, []);
+  }, [enqueue]);
 
-  const handleClose = (value: any) => {
-    setOpen(false);
-    if (resolveRef) {
-      resolveRef(value);
-      setResolveRef(null);
-    }
-    // Limpa options após animação de fechamento
-    setTimeout(() => setDialogState({ mode: "confirm", options: null }), 200);
+  const handleClose = (value: DialogResult) => {
+    if (!request || requests.current[0] !== request) return;
+    requests.current.shift();
+    request.resolve(value);
+    setRequest(requests.current[0]);
   };
 
   const getVariantStyles = (variant: DialogVariant = "info") => {
@@ -160,13 +159,13 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
     }
   };
 
-  const { mode, options } = dialogState;
+  const mode = request?.mode;
+  const options = request?.options;
   const variantStyles = options ? getVariantStyles(options.variant) : getVariantStyles("info");
-  const isDark = theme.palette.mode === "dark";
 
   // Cabeçalho padronizado para todos os modos
   const renderDialogHeader = (title: string) => (
-    <DialogTitle sx={{ pb: 1, pt: 2.5, px: 2.5 }}>
+    <DialogTitle>
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         <Box
           sx={{
@@ -198,17 +197,17 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
       return (
         <>
           {renderDialogHeader(confirmOpts.title)}
-          <DialogContent sx={{ px: 2.5, pb: 1 }}>
-            <DialogContentText sx={{ color: "text.secondary", whiteSpace: "pre-line", fontSize: "0.9rem" }}>
+          <DialogContent sx={{ pb: 1 }}>
+            <DialogContentText id={messageId} sx={{ color: "text.secondary", whiteSpace: "pre-line", fontSize: "0.9rem" }}>
               {confirmOpts.message}
             </DialogContentText>
           </DialogContent>
-          <DialogActions sx={{ p: 2.5, pt: 1.5, gap: 1.5 }}>
-            <NixButton size="medium" variant="soft" color="gray" onClick={() => handleClose(false)}>
+          <DialogActions>
+            <NixButton autoFocus size="md" variant="soft" color="gray" onClick={() => handleClose(false)}>
               {confirmOpts.cancelText || "Cancel"}
             </NixButton>
             <NixButton
-              size="medium"
+              size="md"
               variant="solid"
               color={variantStyles.confirmColor === "error" ? "red" : "purple"}
               onClick={() => handleClose(true)}
@@ -226,14 +225,14 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
       return (
         <>
           {renderDialogHeader(alertOpts.title)}
-          <DialogContent sx={{ px: 2.5, pb: 1 }}>
-            <DialogContentText sx={{ color: "text.secondary", whiteSpace: "pre-line", fontSize: "0.9rem" }}>
+          <DialogContent sx={{ pb: 1 }}>
+            <DialogContentText id={messageId} sx={{ color: "text.secondary", whiteSpace: "pre-line", fontSize: "0.9rem" }}>
               {alertOpts.message}
             </DialogContentText>
           </DialogContent>
-          <DialogActions sx={{ p: 2.5, pt: 1.5 }}>
+          <DialogActions>
             <NixButton
-              size="medium"
+              size="md"
               variant="solid"
               color={variantStyles.confirmColor === "error" ? "red" : "purple"}
               onClick={() => handleClose(undefined)}
@@ -251,17 +250,17 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
       return (
         <>
           {renderDialogHeader(choiceOpts.title)}
-          <DialogContent sx={{ px: 2.5, pb: 1 }}>
-            <DialogContentText sx={{ color: "text.secondary", whiteSpace: "pre-line", fontSize: "0.9rem" }}>
+          <DialogContent sx={{ pb: 1 }}>
+            <DialogContentText id={messageId} sx={{ color: "text.secondary", whiteSpace: "pre-line", fontSize: "0.9rem" }}>
               {choiceOpts.message}
             </DialogContentText>
           </DialogContent>
-          <DialogActions sx={{ p: 2.5, pt: 1.5, flexDirection: "column", gap: 1 }}>
+          <DialogActions>
             <Stack direction="column" spacing={1} sx={{ width: "100%" }}>
               {choiceOpts.choices.map((choiceItem) => (
                 <NixButton
                   key={choiceItem.value}
-                  size="medium"
+                  size="md"
                   variant={choiceItem.variant === "outlined" ? "soft" : "solid"}
                   color="purple"
                   onClick={() => handleClose(choiceItem.value)}
@@ -271,7 +270,7 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
                 </NixButton>
               ))}
               <NixButton
-                size="medium"
+                size="md"
                 variant="soft"
                 color="gray"
                 onClick={() => handleClose(null)}
@@ -292,32 +291,11 @@ export const ConfirmDialogProvider: React.FC<ConfirmDialogProviderProps> = ({ ch
     <ConfirmDialogContext.Provider value={{ confirm, confirmDelete, alert, choice }}>
       {children}
       <Dialog
-        open={open}
+        open={Boolean(request)}
         onClose={() => handleClose(mode === "confirm" ? false : mode === "alert" ? undefined : null)}
+        aria-describedby={messageId}
         maxWidth="xs"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: "20px",
-            bgcolor: isDark
-              ? alpha(theme.palette.background.paper, 0.95)
-              : alpha("#FFFFFF", 0.98),
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            border: `1px solid ${isDark ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-            boxShadow: isDark
-              ? `0 24px 60px -12px ${alpha("#000000", 0.6)}`
-              : `0 24px 60px -12px ${alpha(theme.palette.primary.main, 0.18)}`,
-          },
-        }}
-        slotProps={{
-          backdrop: {
-            sx: {
-              bgcolor: isDark ? alpha("#0F172A", 0.7) : alpha("#64748B", 0.35),
-              backdropFilter: "blur(6px)",
-            },
-          },
-        }}
       >
         {renderDialogContent()}
       </Dialog>

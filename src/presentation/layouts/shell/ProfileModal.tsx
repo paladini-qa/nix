@@ -164,33 +164,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
       maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
-      PaperProps={{
-        sx: {
-          borderRadius: isMobile ? 0 : "20px",
-          overflow: "hidden",
-          bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.95)
-            : alpha("#FFFFFF", 0.97),
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: isMobile
-            ? "none"
-            : `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.1) : alpha("#000000", 0.06)}`,
-          boxShadow: isDarkMode
-            ? `0 32px 100px -24px ${alpha("#000000", 0.7)}`
-            : `0 32px 100px -24px ${alpha(theme.palette.primary.main, 0.25)}`,
-        },
-      }}
-      slotProps={{
-        backdrop: {
-          sx: {
-            bgcolor: isDarkMode
-              ? alpha("#0F172A", 0.85)
-              : alpha("#64748B", 0.5),
-            backdropFilter: "blur(12px)",
-          },
-        },
-      }}
+      aria-label="Profile"
     >
       {/* Header */}
       <Box
@@ -206,6 +180,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
         }}
       >
         <IconButton
+          aria-label="Close profile"
           onClick={onClose}
           sx={{
             position: "absolute",

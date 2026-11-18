@@ -12,6 +12,7 @@ export const radius = {
   md:   10,
   lg:   14,
   xl:   16,
+  dialog: 20,
   full: 999,
 } as const;
 

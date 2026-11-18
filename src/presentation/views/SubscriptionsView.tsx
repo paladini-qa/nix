@@ -1,3 +1,4 @@
+import NixButton from "@/presentation/components/radix/Button";
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import {
   Box,
@@ -126,7 +127,6 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const { isMobile } = useLayoutSpacing();
-  const { format: formatCurrency } = useSettings();
   const primary = isCancelled
     ? theme.palette.error.main
     : (subscriptionColor?.primary ?? theme.palette.primary.main);
@@ -1108,7 +1108,8 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
       <Dialog
         open={Boolean(deleteConfirmGroup)}
         onClose={() => setDeleteConfirmGroup(null)}
-        PaperProps={{ sx: { borderRadius: "20px", minWidth: 340 } }}
+        maxWidth="xs"
+        fullWidth
       >
         <DialogTitle sx={{ fontWeight: 700 }}>Delete subscription</DialogTitle>
         <DialogContent>
@@ -1116,13 +1117,13 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
             Do you want to delete all {deleteConfirmGroup?.transactions.length} charges for <strong>{deleteConfirmGroup?.name}</strong>? This action cannot be undone.
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setDeleteConfirmGroup(null)} sx={{ borderRadius: "10px", textTransform: "none" }}>
+        <DialogActions>
+          <NixButton autoFocus variant="soft" color="gray" onClick={() => setDeleteConfirmGroup(null)}>
             Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
+          </NixButton>
+          <NixButton
+            variant="solid"
+            color="red"
             onClick={async () => {
               if (!deleteConfirmGroup) return;
               try {
@@ -1134,10 +1135,9 @@ const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                 setDeleteConfirmGroup(null);
               }
             }}
-            sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
           >
             Delete all
-          </Button>
+          </NixButton>
         </DialogActions>
       </Dialog>
     </Box>
