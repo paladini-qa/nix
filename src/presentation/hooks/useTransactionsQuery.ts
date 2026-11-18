@@ -75,6 +75,10 @@ function mapTransactionToDb(tx: Partial<Transaction>) {
   return payload;
 }
 
+function mapNewTransactionToDb(tx: Partial<Transaction>) {
+  return { ...mapTransactionToDb(tx), is_paid: tx.isPaid ?? false };
+}
+
 function isNetworkError(error: unknown): boolean {
   if (!navigator.onLine) return true;
   if (error instanceof TypeError && error.message.toLowerCase().includes("fetch")) return true;
@@ -113,7 +117,7 @@ export function useTransactionsQuery() {
       if (userError) throw userError;
       if (!user) throw new Error("User not authenticated");
 
-      const payload = { ...mapTransactionToDb(tx), user_id: user.id };
+      const payload = { ...mapNewTransactionToDb(tx), user_id: user.id };
 
       // TODO: move to application service — layer violation
       const { data, error } = await supabase
@@ -163,7 +167,7 @@ export function useTransactionsQuery() {
         queryClient.setQueryData(TRANSACTIONS_KEY, context.previous);
       }
       if (isNetworkError(error)) {
-        enqueueSyncOp({ type: "add", payload: mapTransactionToDb(tx) as Record<string, unknown> });
+        enqueueSyncOp({ type: "add", payload: mapNewTransactionToDb(tx) });
       }
     },
 
@@ -264,7 +268,7 @@ export function useTransactionsQuery() {
       if (!user) throw new Error("User not authenticated");
 
       const payloads = transactions.map((tx) => ({
-        ...mapTransactionToDb(tx),
+        ...mapNewTransactionToDb(tx),
         user_id: user.id,
       }));
 
