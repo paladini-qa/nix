@@ -4,6 +4,8 @@ import {
   getEffectiveReportDate,
   calculateInvoiceDueDate,
   formatInvoiceMonth,
+  getBalanceOnDate,
+  getInstallmentAmounts,
 } from "@/domain/usecases/transactionUtils";
 import type { Transaction, PaymentMethodConfig } from "@/domain/entities";
 
@@ -38,6 +40,39 @@ function makeCardConfig(
     paymentDay,
   };
 }
+
+describe("getBalanceOnDate", () => {
+  it("includes transactions on the selected date and excludes later income", () => {
+    const transactions = [
+      makeTransaction({ id: "salary", type: "income", amount: 10697, date: "2026-12-01" }),
+      makeTransaction({ id: "income", type: "income", amount: 500, date: "2026-06-01" }),
+      makeTransaction({ id: "expense", amount: 75, date: "2026-06-10" }),
+    ];
+
+    expect(getBalanceOnDate(transactions, "2026-06-10")).toBe(425);
+    expect(getBalanceOnDate(transactions, "2026-12-01")).toBe(11122);
+  });
+
+  it("excludes the old value of the transaction being edited", () => {
+    const transactions = [
+      makeTransaction({ id: "edit", amount: 100 }),
+      makeTransaction({ id: "keep", amount: 25 }),
+    ];
+
+    expect(getBalanceOnDate(transactions, "2024-01-15", "edit")).toBe(-25);
+  });
+});
+
+describe("getInstallmentAmounts", () => {
+  it("uses one installment of 250 for a purchase of 2500 split ten ways", () => {
+    expect(getInstallmentAmounts(2500, 10)).toEqual({ first: 250, regular: 250 });
+  });
+
+  it("keeps the cent adjustment on the first installment", () => {
+    expect(getInstallmentAmounts(100, 3)).toEqual({ first: 33.34, regular: 33.33 });
+    expect(getInstallmentAmounts(50, 3)).toEqual({ first: 16.66, regular: 16.67 });
+  });
+});
 
 // ---------------------------------------------------------------------------
 // getReportDate

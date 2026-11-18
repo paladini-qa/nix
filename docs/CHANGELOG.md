@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Transaction balance preview** — Use the balance through the effective transaction date and apply the first installment amount for new installment purchases.
+  - **Modified files** — `docs/REQUIREMENTS.md`, `src/domain/usecases/transactionUtils.ts`, `src/presentation/forms/TransactionForm.tsx`, `src/presentation/layouts/shell/AppShell.tsx`, `tests/utils/transactionUtils.test.ts`
+
+### Fixed
+
 - **New transaction status** — Default newly created income and expenses to pending in the app and database.
   - **Created file** — `docs/migrations/20261118151556_default_new_transactions_to_pending.sql`
   - **Modified files** — `docs/REQUIREMENTS.md`, `docs/setup.sql`, `src/presentation/hooks/useTransactionsQuery.ts`

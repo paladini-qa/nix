@@ -50,7 +50,7 @@ import NixButton from "@/presentation/components/radix/Button";
 import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
 import NixAIView from "@/presentation/views/NixAIView";
 import { Transaction, TransactionType, FinancialSummary, ParsedTransaction, PaymentMethodConfig } from "@/domain/entities";
-import { calculateInvoiceDueDate, formatInvoiceMonth } from "@/domain/usecases/transactionUtils";
+import { calculateInvoiceDueDate, formatInvoiceMonth, getBalanceOnDate, getInstallmentAmounts } from "@/domain/usecases/transactionUtils";
 import { formatTransactionAmount, parseTransactionAmount } from "@/domain/usecases/transactionAmount";
 import { CATEGORY_KEYWORDS, MONTHS } from "@/shared/constants";
 import { SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH_MOBILE, TOUCH_TARGET_MIN } from "@/shared/constants/layout";
@@ -84,7 +84,6 @@ interface TransactionFormProps {
   editTransaction?: Transaction | null;
   // Novas props para UX melhorada
   transactions?: Transaction[];
-  currentBalance?: number;
   /** Contexto inicial ao abrir a partir de uma aba (ex.: método de pagamento, categoria, compartilhada, etc.) */
   initialContext?: {
     paymentMethod?: string;
@@ -269,7 +268,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   paymentMethods,
   editTransaction,
   transactions = [],
-  currentBalance = 0,
   initialContext = null,
   getPaymentMethodPaymentDay,
   getPaymentMethodConfig,
@@ -337,7 +335,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const effectiveDate = useMemo(() => {
     if (hasInstallments && installmentStartDate && date) {
       const offset = (editTransaction?.currentInstallment ?? 1) - 1;
-      return installmentStartDate.add(offset, "month").date(date.date());
+      const installmentMonth = installmentStartDate.add(offset, "month");
+      return installmentMonth.date(Math.min(date.date(), installmentMonth.daysInMonth()));
     }
     return date;
   }, [hasInstallments, installmentStartDate, date, editTransaction?.currentInstallment]);
@@ -381,12 +380,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const invalidAmount = amount.trim() !== "" && parsedAmount === null;
 
   // Calcular saldo após transação
-  const balanceAfter = useMemo(() => {
-    if (parsedAmount === null) return currentBalance;
-    return type === "expense"
-      ? currentBalance - parsedAmount
-      : currentBalance + parsedAmount;
-  }, [currentBalance, parsedAmount, type]);
+  const installmentCount = parseInt(installments, 10);
+  const splitAmounts = !editTransaction && hasInstallments && installmentCount >= 2 && parsedAmount !== null
+    ? getInstallmentAmounts(parsedAmount, installmentCount)
+    : null;
+  const balanceImpact = splitAmounts?.first ?? parsedAmount ?? 0;
+  const balanceDate = effectiveDate?.isValid() ? effectiveDate.format("YYYY-MM-DD") : null;
+  const balanceBefore = useMemo(
+    () => balanceDate ? getBalanceOnDate(transactions, balanceDate, editTransaction?.id) : 0,
+    [transactions, balanceDate, editTransaction?.id]
+  );
+  const balanceAfter = balanceBefore + (type === "expense" ? -balanceImpact : balanceImpact);
 
   // Efeito para sugerir categoria quando descrição muda (local primeiro, depois regras de auto-categorização)
   useEffect(() => {
@@ -483,17 +487,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
   // ========== LÓGICAS CONDICIONAIS (após todas as definições) ==========
 
-  // Lógica para mostrar preview de impacto no saldo apenas para valores significativos
-  const shouldShowBalanceImpact =
-    parsedAmount !== null && parsedAmount > 100 && currentBalance !== undefined;
-
-  // Decidir qual preview mostrar (unificado)
-  const hasInstallmentsPreview =
-    type === "expense" &&
-    hasInstallments &&
-    parsedAmount &&
-    parseInt(installments) >= 2;
-  const hasBalancePreview = shouldShowBalanceImpact;
+  const hasInstallmentsPreview = splitAmounts !== null && parsedAmount !== 0;
+  const hasBalancePreview = balanceDate !== null && parsedAmount !== null && parsedAmount > 0 &&
+    (!hasInstallments || installmentCount >= 2);
 
   // Mostrar preview unificado se pelo menos um preview estiver ativo
   const shouldShowUnifiedPreview =
@@ -1747,7 +1743,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 {/* Conteúdo do preview */}
                 <Box sx={{ p: 2.5 }}>
                   {/* Preview de Parcelas */}
-                  {previewTab === "installments" && hasInstallmentsPreview && (
+                  {previewTab === "installments" && hasInstallmentsPreview && splitAmounts && (
                     <Box>
                       <Box
                         sx={{
@@ -1769,14 +1765,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           fontWeight={700}
                           color="warning.main"
                         >
-                          {formatCurrency(
-                            parsedAmount! / parseInt(installments)
-                          )}
+                          {formatCurrency(splitAmounts.regular)}
                         </Typography>
                       </Box>
                       <Typography variant="caption" color="text.secondary">
                         Total: {formatCurrency(parsedAmount!)}
                       </Typography>
+                      {splitAmounts.first !== splitAmounts.regular && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Primeira parcela: {formatCurrency(splitAmounts.first)}
+                        </Typography>
+                      )}
                     </Box>
                   )}
 
@@ -1807,10 +1806,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           }}
                         >
                           <Typography variant="body2" color="text.secondary">
-                            Saldo atual
+                            Saldo em {effectiveDate?.format("DD/MM/YYYY")}
                           </Typography>
                           <Typography variant="body2" fontWeight={600}>
-                            {formatCurrency(currentBalance!)}
+                            {formatCurrency(balanceBefore)}
                           </Typography>
                         </Box>
 
@@ -1838,7 +1837,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                               />
                             )}
                             <Typography variant="body2" color="text.secondary">
-                              Esta transação
+                              {hasInstallments ? "Esta parcela" : "Esta transação"}
                             </Typography>
                           </Box>
                           <Typography
@@ -1849,7 +1848,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             }
                           >
                             {type === "expense" ? "-" : "+"}
-                            {formatCurrency(parsedAmount!)}
+                            {formatCurrency(balanceImpact)}
                           </Typography>
                         </Box>
 
