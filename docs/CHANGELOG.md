@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dashboard chart period** — Monthly Comparison, Balance Evolution and Cash Flow share the same seven-month window centered on the current calendar month.
+  - **Created files** — `src/domain/usecases/dashboardMonthlySeries.ts`, `tests/utils/dashboardMonthlySeries.test.ts`
+  - **Modified files** — `docs/REQUIREMENTS.md`, `src/presentation/views/AnalyticsView.tsx`, `src/presentation/views/DashboardMainSection.tsx`
+
+### Changed
+
 - **Transaction drawer** — Open directly in the form and show the payment method image before its name in the selected value and options.
   - **Modified file** — `src/presentation/forms/TransactionForm.tsx`
 
