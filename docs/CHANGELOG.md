@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Transaction drawer** — Open directly in the form and show the payment method image before its name in the selected value and options.
+  - **Modified file** — `src/presentation/forms/TransactionForm.tsx`
+
 ### Fixed
 
 - **GitHub Pages deployment** — Updated the Actions runtimes and wait for the uploaded Pages artifact to appear in the workflow run before publishing.

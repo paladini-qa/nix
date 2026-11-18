@@ -48,8 +48,7 @@ import {
 } from "@mui/icons-material";
 import NixButton from "@/presentation/components/radix/Button";
 import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
-import NixAIView from "@/presentation/views/NixAIView";
-import { Transaction, TransactionType, FinancialSummary, ParsedTransaction, PaymentMethodConfig } from "@/domain/entities";
+import { Transaction, TransactionType, PaymentMethodConfig } from "@/domain/entities";
 import { calculateInvoiceDueDate, formatInvoiceMonth, getBalanceOnDate, getInstallmentAmounts } from "@/domain/usecases/transactionUtils";
 import { formatTransactionAmount, parseTransactionAmount } from "@/domain/usecases/transactionAmount";
 import { CATEGORY_KEYWORDS, MONTHS } from "@/shared/constants";
@@ -304,9 +303,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [previewTab, setPreviewTab] = useState<
     "installments" | "balance"
   >("balance");
-
-  // Aba do drawer: formulário manual ou Nix AI (só para nova transação)
-  const [formTab, setFormTab] = useState<"manual" | "nixai">("manual");
 
   // Vencimento da fatura (só quando forma de pagamento tem dia cadastrado); usuário edita apenas mês/ano
   const [invoiceDueMonth, setInvoiceDueMonth] = useState<number>(dayjs().month() + 1); // 1-12
@@ -598,30 +594,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   }, [editTransaction, isOpen, initialContext, getPaymentMethodPaymentDay, getSuggestedInvoiceDueMonthYear]);
 
-  // Em modo edição, mostrar apenas a aba Formulário
-  useEffect(() => {
-    if (editTransaction) setFormTab("manual");
-  }, [editTransaction]);
-
-  // Handler para transação criada via Nix AI (aba Nix AI)
-  const handleNixAITransactionCreate = useCallback(
-    (parsedTx: Omit<ParsedTransaction, "confidence" | "rawInput">) => {
-      const transaction: Omit<Transaction, "id" | "createdAt"> = {
-        description: parsedTx.description,
-        amount: parsedTx.amount ?? 0,
-        type: parsedTx.type,
-        category: parsedTx.category,
-        paymentMethod: parsedTx.paymentMethod,
-        date: parsedTx.date,
-        isRecurring: false,
-        isPaid: false,
-      };
-      onSave(transaction);
-      onClose();
-    },
-    [onSave, onClose]
-  );
-
   // Handler para aplicar sugestão de categoria
   const applySuggestedCategory = useCallback(() => {
     if (suggestedCategory) {
@@ -733,6 +705,26 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       style: "currency",
       currency: "BRL",
     }).format(value);
+  };
+
+  const renderPaymentMethod = (method: string) => {
+    const config = getPaymentMethodConfig?.(method);
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+        <PaymentMethodIcon
+          key={config?.imageUrl ?? method}
+          imageUrl={config?.imageUrl}
+          colors={getPaymentMethodColor(method)}
+          type={config?.type}
+          size={22}
+          borderRadius="6px"
+          iconSize={12}
+        />
+        <Box component="span" sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {method}
+        </Box>
+      </Box>
+    );
   };
 
   return (
@@ -939,25 +931,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         </Box>
       </Box>
 
-      {/* Abas: Formulário manual ou Nix AI (apenas para nova transação) */}
-      {!editTransaction && (
-        <Box sx={{ px: 3, pt: 1, pb: 0, flexShrink: 0 }}>
-          <Tabs
-            value={formTab}
-            onChange={(_, v) => v && setFormTab(v)}
-            sx={{
-              minHeight: TOUCH_TARGET_MIN,
-              "& .MuiTab-root": { minHeight: TOUCH_TARGET_MIN, py: 1, textTransform: "none", fontWeight: 600 },
-              "& .MuiTabs-indicator": { borderRadius: "10px 10px 0 0" },
-            }}
-          >
-            <Tab value="manual" label="Form" />
-            <Tab value="nixai" label="Nix AI" />
-          </Tabs>
-        </Box>
-      )}
-
-      {formTab === "manual" && (
       <form
         id="transaction-form"
         name="transaction-form"
@@ -1294,6 +1267,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     name="transaction-payment-method"
                     value={paymentMethod}
                     label="Payment Method"
+                    renderValue={renderPaymentMethod}
                     onChange={(e) => {
                       const method = e.target.value;
                       setPaymentMethod(method);
@@ -1313,23 +1287,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       }
                     }}
                   >
-                    {paymentMethods.map((method) => {
-                      const methodColors = getPaymentMethodColor(method);
-                      const methodCfg = getPaymentMethodConfig?.(method);
-                      return (
-                        <MenuItem key={method} value={method} sx={{ gap: 1.25 }}>
-                          <PaymentMethodIcon
-                            imageUrl={methodCfg?.imageUrl}
-                            colors={methodColors}
-                            type={methodCfg?.type}
-                            size={22}
-                            borderRadius="6px"
-                            iconSize={12}
-                          />
-                          {method}
-                        </MenuItem>
-                      );
-                    })}
+                    {paymentMethods.map((method) => (
+                      <MenuItem key={method} value={method}>
+                        {renderPaymentMethod(method)}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -1945,26 +1907,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           </NixButton>
         </Box>
       </form>
-      )}
-
-      {formTab === "nixai" && (
-        <Box
-          sx={{
-            flex: 1,
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-          }}
-        >
-          <NixAIView
-            transactions={transactions}
-            categories={categories}
-            paymentMethods={paymentMethods}
-            onTransactionCreate={handleNixAITransactionCreate}
-          />
-        </Box>
-      )}
     </Drawer>
   );
 };
