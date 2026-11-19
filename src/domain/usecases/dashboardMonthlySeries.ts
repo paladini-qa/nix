@@ -11,17 +11,18 @@ interface SeriesFilters {
 
 export function buildDashboardMonthlySeries(
   transactions: Transaction[],
-  paymentMethodConfigs: PaymentMethodConfig[],
+  paymentMethodConfigs: PaymentMethodConfig[] | null | undefined,
   reference: Dayjs,
   filters: SeriesFilters,
 ) {
   const start = reference.startOf("month").subtract(3, "month");
+  const configs = paymentMethodConfigs ?? [];
   const months = Array.from({ length: 7 }, (_, index) => start.add(index, "month"));
   const projected = months.flatMap((month) =>
     generateRecurringTransactions(
       transactions,
       { year: month.year(), month: month.month() },
-      paymentMethodConfigs,
+      configs,
     ),
   );
   const totals = new Map<string, { income: number; expense: number }>();
@@ -32,7 +33,7 @@ export function buildDashboardMonthlySeries(
     if (filters.categories.length && !filters.categories.includes(transaction.category)) continue;
     if (filters.paymentMethods.length && !filters.paymentMethods.includes(transaction.paymentMethod)) continue;
 
-    const key = getEffectiveReportDate(transaction, paymentMethodConfigs).slice(0, 7);
+    const key = getEffectiveReportDate(transaction, configs).slice(0, 7);
     const values = totals.get(key) ?? { income: 0, expense: 0 };
     values[transaction.type] += transaction.amount || 0;
     totals.set(key, values);
