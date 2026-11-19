@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Recurring payment duplicates** — Store payment status per occurrence and use its transaction date when the invoice falls in a later month.
+  - **Modified files** — `docs/REQUIREMENTS.md`, `src/domain/entities/index.ts`, `src/domain/usecases/recurringUtils.ts`, `src/presentation/hooks/useTransactionsQuery.ts`, `src/presentation/layouts/shell/AppViewSwitcher.tsx`, `src/presentation/views/{CategoriesView,PaymentMethodsView,RecurringView}.tsx`, `tests/utils/recurringUtils.test.ts`
+
 ### Changed
 
 - **Dashboard chart period** — Monthly Comparison, Balance Evolution and Cash Flow share the same seven-month window centered on the current calendar month.

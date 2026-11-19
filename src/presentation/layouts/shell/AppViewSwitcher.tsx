@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import DashboardMainSection from "@/presentation/views/DashboardMainSection";
 import PageTransition, { TransitionType } from "@/presentation/components/motion/PageTransition";
 import { useAppStore } from "@/presentation/hooks/useAppStore";
+import { readRecurringOccurrenceId } from "@/domain/usecases/recurringUtils";
 import { calculateInvoiceDueDate } from "@/domain/usecases/transactionUtils";
 import { useTransactionsQuery } from "@/presentation/hooks/useTransactionsQuery";
 import { useSettingsQuery } from "@/presentation/hooks/useSettingsQuery";
@@ -54,6 +55,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     data: transactions = [],
     addTransaction,
     updateTransaction,
+    setRecurringOccurrencePaid,
     deleteTransaction,
     refetch: refetchTransactions,
     updateInstallmentDates
@@ -162,21 +164,18 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       const id = idOrTx;
       tx = transactions.find((t) => t.id === id);
 
-      // Ocorrências virtuais têm ID no formato "{parentId}_recurring_YYYY-MM"
       if (!tx) {
-        const virtualMatch = id.match(/^(.+)_recurring_(\d{4}-\d{2})$/);
-        if (virtualMatch) {
-          const parentId = virtualMatch[1];
-          const parent = transactions.find((t) => t.id === parentId);
-          if (parent) {
-            tx = {
-              ...parent,
-              id,
-              isVirtual: true,
-              originalTransactionId: parentId,
-              virtualDate: `${virtualMatch[2]}-${parent.date.split("-")[2] ?? "01"}`,
-            };
-          }
+        const occurrence = readRecurringOccurrenceId(id);
+        const parent = occurrence && transactions.find((t) => t.id === occurrence.transactionId);
+        if (parent && occurrence) {
+          tx = {
+            ...parent,
+            id,
+            date: occurrence.date,
+            isVirtual: true,
+            originalTransactionId: parent.id,
+            virtualDate: occurrence.date,
+          };
         }
       }
     }
@@ -226,7 +225,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "single": {
         if (editId === undefined) {
           // Cria transação avulsa + adiciona data às exclusões da recorrência pai
-          await addTransaction({ ...newTx, isRecurring: false, frequency: undefined });
+          await addTransaction({ ...newTx, isRecurring: false, frequency: undefined, isPaid: formTx?.isPaid });
           if (virtualDate && recurringId) {
             const parent = transactions.find((t) => t.id === recurringId);
             if (parent) {
@@ -360,50 +359,17 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     }
   };
 
-  // Ao marcar pago em ocorrência virtual de recorrência, materializa um registro real no DB
-  // para que apenas aquele mês seja afetado — sem alterar a transação original nem outras ocorrências.
   const handleTogglePaid = async (id: string, isPaid: boolean) => {
-    const recurringMatch = id.match(/^(.+)_recurring_(\d{4})-(\d{2})$/);
-    if (recurringMatch) {
-      if (!isPaid) return; // ocorrências virtuais já aparecem como não pagas; desmarcar não faz nada
-      const [, originalId, yearStr, monthStr] = recurringMatch;
-      const year = Number(yearStr);
-      const month = Number(monthStr);
-      const original = transactions.find((t) => t.id === originalId);
-      if (!original) return;
-
-      const origDay = Number(original.date.split("-")[2]);
-      const daysInMonth = new Date(year, month, 0).getDate();
-      const adjustedDay = Math.min(origDay, daysInMonth);
-      const virtualDate = `${yearStr}-${monthStr}-${String(adjustedDay).padStart(2, "0")}`;
-
-      let invoiceDueDate: string | undefined;
-      const pmConfig = paymentMethodConfigs.find((c) => c.name === original.paymentMethod);
-      if (pmConfig?.type === "card" && pmConfig.closingDay && pmConfig.paymentDay) {
-        invoiceDueDate = calculateInvoiceDueDate(virtualDate, pmConfig) ?? undefined;
-      } else if (original.invoiceDueDate) {
-        const origInvDay = Number(original.invoiceDueDate.split("-")[2]);
-        const daysInInvMonth = new Date(year, month, 0).getDate();
-        const adjustedInvDay = Math.min(origInvDay, daysInInvMonth);
-        invoiceDueDate = `${yearStr}-${monthStr}-${String(adjustedInvDay).padStart(2, "0")}`;
+    const occurrence = readRecurringOccurrenceId(id);
+    if (occurrence) {
+      const existing = transactions.find((t) =>
+        t.recurringGroupId === occurrence.transactionId && t.date === occurrence.date,
+      );
+      if (!existing) {
+        await setRecurringOccurrencePaid({ ...occurrence, isPaid });
+        return;
       }
-
-      await addTransaction({
-        description: original.description,
-        amount: original.amount,
-        type: original.type,
-        category: original.category,
-        paymentMethod: original.paymentMethod,
-        date: virtualDate,
-        ...(invoiceDueDate ? { invoiceDueDate } : {}),
-        isRecurring: false,
-        recurringGroupId: originalId,
-        isPaid: true,
-        isShared: original.isShared,
-        sharedWith: original.sharedWith,
-        iOwe: original.iOwe,
-        notes: original.notes,
-      });
+      await updateTransaction({ id: existing.id, isPaid });
       return;
     }
     await updateTransaction({ id, isPaid });
@@ -412,7 +378,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
   const handlePayAll = async (ids: string[]) => {
     if (ids.length === 0) return;
     try {
-      await Promise.all(ids.map((id) => handleTogglePaid(id, true)));
+      await Promise.all([...new Set(ids)].map((id) => handleTogglePaid(id, true)));
       showSuccess("Todas as transações marcadas como pagas!");
     } catch (error) {
       showError("Erro ao pagar transações");

@@ -1,3 +1,4 @@
+import { getRecurringOccurrenceId, getRecurringOccurrenceValue } from "@/domain/usecases/recurringUtils";
 import NixButton from "@/presentation/components/radix/Button";
 import React, { useState, useMemo, useCallback, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -707,16 +708,14 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     baseTransaction: Transaction,
     occurrence: RecurringOccurrence
   ): Transaction => {
-    const [year, month] = occurrence.date.split("-");
-    const virtualId = `${baseTransaction.id}_recurring_${year}-${month}`;
-    const stored = baseTransaction.occurrences?.find((item) => item.dueDate === occurrence.date);
+    const stored = getRecurringOccurrenceValue(baseTransaction, occurrence.date);
 
     return {
       ...baseTransaction,
-      id: virtualId,
+      id: getRecurringOccurrenceId(baseTransaction.id, occurrence.date),
       date: occurrence.date,
-      amount: stored?.amount ?? baseTransaction.amount,
-      isPaid: stored?.isPaid ?? baseTransaction.isPaid,
+      amount: stored.amount,
+      isPaid: stored.isPaid,
       isVirtual: true,
       originalTransactionId: baseTransaction.id,
       currentInstallment: occurrence.occurrenceNumber,
@@ -1143,11 +1142,11 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             </Box>
           ) : (
             occurrencesList.map((occ, index) => {
-              const stored = selectedRecurring.occurrences?.find((item) => item.dueDate === occ.date);
+              const stored = getRecurringOccurrenceValue(selectedRecurring, occ.date);
               const isPaid = occ.isModified
                 ? !!occ.modifiedTransaction?.isPaid
-                : stored?.isPaid ?? (occ.isCurrent && selectedRecurring.isPaid);
-              const amount = occ.modifiedTransaction?.amount ?? stored?.amount ?? selectedRecurring.amount ?? 0;
+                : stored.isPaid;
+              const amount = occ.modifiedTransaction?.amount ?? stored.amount;
               const isLast = index === occurrencesList.length - 1;
 
               return (
@@ -1199,8 +1198,11 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                       onClick={() => {
                         if (occ.isModified && occ.modifiedTransaction) {
                           onTogglePaid(occ.modifiedTransaction.id, !occ.modifiedTransaction.isPaid);
-                        } else if (occ.isCurrent) {
-                          onTogglePaid(selectedRecurring.id, !selectedRecurring.isPaid);
+                        } else {
+                          const id = occ.date === selectedRecurring.date
+                            ? selectedRecurring.id
+                            : getRecurringOccurrenceId(selectedRecurring.id, occ.date);
+                          onTogglePaid(id, !isPaid);
                         }
                       }}
                       sx={{
@@ -1208,7 +1210,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                         fontSize: 11,
                         fontWeight: 700,
                         borderRadius: "8px",
-                        cursor: occ.isCurrent || occ.isModified ? "pointer" : "default",
+                        cursor: "pointer",
                         border: "none",
                         bgcolor: isPaid
                           ? alpha("#10b981", isDarkMode ? 0.2 : 0.12)

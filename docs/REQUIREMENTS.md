@@ -40,6 +40,7 @@ Nix Finance is a modern personal finance management application with intelligent
 - **Complete Support**: Support for monthly and yearly recurring transactions
 - **Smart Editing**: Edit single occurrences, all occurrences, or all future occurrences
 - **Date Exclusions**: Exclude specific dates from recurring patterns
+- **Occurrence payment**: Marking a recurring occurrence paid or pending updates its status by transaction date, including when its invoice falls in a different month.
 - **Management View**: Dedicated view to track and manage active recurrences
 - **Auto-Generation**: PostgreSQL materializes recurring occurrences through a rolling 12-month horizon. The client displays them as virtual rows and can project periods beyond that horizon.
 

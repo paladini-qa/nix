@@ -24,6 +24,13 @@ function mapTransactionFromDb(t: any): Transaction {
         isPaid: row.is_paid,
       })
     ),
+    recurringOverrides: t.recurring_overrides?.map(
+      (row: { override_date: string; amount: number | null; is_paid: boolean | null }) => ({
+        date: row.override_date,
+        amount: row.amount,
+        isPaid: row.is_paid,
+      })
+    ),
     date: t.date,
     invoiceDueDate: t.invoice_due_date ?? undefined,
     createdAt: new Date(t.created_at).getTime(),
@@ -94,7 +101,7 @@ export function useTransactionsQuery() {
       // TODO: move to application service — layer violation
       const { data, error } = await supabase
         .from("transactions")
-        .select("*, recurring_transactions(frequency), splited_transactions(occurrence_number, due_date, amount, is_paid)")
+        .select("*, recurring_transactions(frequency), splited_transactions(occurrence_number, due_date, amount, is_paid), recurring_overrides(override_date, amount, is_paid)")
         .gte("date", "2026-01-01")
         .order("date", { ascending: false });
 
@@ -349,8 +356,24 @@ export function useTransactionsQuery() {
     },
   });
 
+  const recurringPaymentMutation = useMutation({
+    mutationFn: async ({ transactionId, date, isPaid }: { transactionId: string; date: string; isPaid: boolean }) => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error("User not authenticated");
+
+      const { error } = await supabase.from("recurring_overrides").upsert(
+        { transaction_id: transactionId, user_id: user.id, override_date: date, is_paid: isPaid },
+        { onConflict: "transaction_id,override_date" }
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY }),
+  });
+
   return {
     ...query,
+    setRecurringOccurrencePaid: recurringPaymentMutation.mutateAsync,
     addTransaction: addMutation.mutateAsync,
     bulkAddTransactions: bulkAddMutation.mutateAsync,
     updateTransaction: updateMutation.mutateAsync,
