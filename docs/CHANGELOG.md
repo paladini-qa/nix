@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Duplicate recurring rows from older clients** — Enforce one materialized occurrence per user, series, and transaction date in PostgreSQL.
+  - **Created file** — `docs/migrations/20261119110730_prevent_duplicate_recurring_occurrences.sql`
+  - **Modified files** — `docs/setup.sql`, `docs/REQUIREMENTS.md`
+
+### Fixed
+
 - **Recurring payment duplicates** — Store payment status per occurrence and use its transaction date when the invoice falls in a later month.
   - **Modified files** — `docs/REQUIREMENTS.md`, `src/domain/entities/index.ts`, `src/domain/usecases/recurringUtils.ts`, `src/presentation/hooks/useTransactionsQuery.ts`, `src/presentation/layouts/shell/AppViewSwitcher.tsx`, `src/presentation/views/{CategoriesView,PaymentMethodsView,RecurringView}.tsx`, `tests/utils/recurringUtils.test.ts`
 
