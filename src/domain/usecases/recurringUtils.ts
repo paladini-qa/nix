@@ -1,6 +1,24 @@
 import { Transaction, FilterState, PaymentMethodConfig } from "@/domain/entities";
 import { calculateInvoiceDueDate } from "@/domain/usecases/transactionUtils";
 
+export function getRecurringOccurrenceId(transactionId: string, date: string): string {
+  return `${transactionId}_recurring_${date}`;
+}
+
+export function readRecurringOccurrenceId(id: string) {
+  const match = /^(.+)_recurring_(\d{4}-\d{2}-\d{2})$/.exec(id);
+  return match ? { transactionId: match[1], date: match[2] } : null;
+}
+
+export function getRecurringOccurrenceValue(transaction: Transaction, date: string) {
+  const override = transaction.recurringOverrides?.find((entry) => entry.date === date);
+  const occurrence = transaction.occurrences?.find((entry) => entry.dueDate === date);
+  return {
+    amount: override?.amount ?? occurrence?.amount ?? transaction.amount,
+    isPaid: override?.isPaid ?? occurrence?.isPaid ?? (date === transaction.date && !!transaction.isPaid),
+  };
+}
+
 export const generateRecurringTransactions = (
   transactions: Transaction[],
   filters: FilterState,
@@ -82,7 +100,7 @@ export const generateRecurringTransactions = (
     );
     if (hasRealInSourceMonth) return;
 
-    const occurrence = t.occurrences?.find((item) => item.dueDate === virtualDate);
+    const occurrence = getRecurringOccurrenceValue(t, virtualDate);
 
     // Calcula invoiceDueDate para a transação virtual
     let virtualInvoiceDueDate: string | undefined;
@@ -97,13 +115,13 @@ export const generateRecurringTransactions = (
 
     virtualTransactions.push({
       ...t,
-      id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(2, "0")}`,
+      id: getRecurringOccurrenceId(t.id, virtualDate),
       date: virtualDate,
-      amount: occurrence?.amount ?? t.amount,
+      amount: occurrence.amount,
       invoiceDueDate: virtualInvoiceDueDate,
       isVirtual: true,
       originalTransactionId: t.id,
-      isPaid: occurrence?.isPaid ?? false,
+      isPaid: occurrence.isPaid,
     });
   });
 

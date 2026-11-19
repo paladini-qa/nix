@@ -1,3 +1,4 @@
+import { getRecurringOccurrenceId, getRecurringOccurrenceValue } from "@/domain/usecases/recurringUtils";
 import NixButton from "@/presentation/components/radix/Button";
 import React, { useState, useMemo, useContext, useEffect, useRef } from "react";
 import {
@@ -201,16 +202,13 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
         );
         if (hasRealInTargetMonth) return;
 
-        const occurrence = t.occurrences?.find((item) => item.dueDate === virtualDate);
+        const occurrence = getRecurringOccurrenceValue(t, virtualDate);
         virtualTransactions.push({
           ...t,
-          id: `${t.id}_recurring_${targetYear}-${String(targetMonth).padStart(
-            2,
-            "0"
-          )}`,
+          id: getRecurringOccurrenceId(t.id, virtualDate),
           date: virtualDate,
-          amount: occurrence?.amount ?? t.amount,
-          isPaid: occurrence?.isPaid ?? false,
+          amount: occurrence.amount,
+          isPaid: occurrence.isPaid,
           isVirtual: true,
           originalTransactionId: t.id,
         });
@@ -793,9 +791,7 @@ const CategoriesView: React.FC<CategoriesViewProps> = ({
                       checked={tx.isPaid !== false}
                       onChange={(e) =>
                         onTogglePaid(
-                          tx.isVirtual && tx.originalTransactionId
-                            ? tx.originalTransactionId
-                            : tx.id,
+                          tx.id,
                           e.target.checked
                         )
                       }

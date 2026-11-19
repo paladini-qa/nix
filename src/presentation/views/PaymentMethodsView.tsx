@@ -302,7 +302,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
     e.stopPropagation();
     const ids = monthTransactions
       .filter((t) => !t.isPaid && t.paymentMethod === method)
-      .map((t) => (t.isVirtual && t.originalTransactionId ? t.originalTransactionId : t.id));
+      .map((t) => t.id);
     onPayAll(ids);
   };
 

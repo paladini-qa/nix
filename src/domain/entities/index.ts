@@ -35,6 +35,7 @@ export interface Transaction {
   paymentMethodId?: string;
   status?: TransactionStatus;
   occurrences?: TransactionOccurrence[];
+  recurringOverrides?: Array<{ date: string; amount: number | null; isPaid: boolean | null }>;
   date: string; // ISO String YYYY-MM-DD - data em que a transação ocorreu
   /** Data de vencimento da fatura (quando a forma de pagamento tem dia cadastrado); só mês/ano editável na UI */
   invoiceDueDate?: string; // YYYY-MM-DD

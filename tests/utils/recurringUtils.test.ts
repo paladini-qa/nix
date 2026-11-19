@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateRecurringTransactions } from "@/domain/usecases/recurringUtils";
+import { generateRecurringTransactions, readRecurringOccurrenceId } from "@/domain/usecases/recurringUtils";
 import type { Transaction, FilterState, PaymentMethodConfig } from "@/domain/entities";
 
 // ---------------------------------------------------------------------------
@@ -65,7 +65,23 @@ describe("generateRecurringTransactions — monthly", () => {
     const t = makeRecurring({ id: "abc123", date: "2024-01-15" });
     // filter month=2 → March (0-indexed)
     const results = generateRecurringTransactions([t], makeFilter(2, 2024), noPmConfigs);
-    expect(results[0].id).toBe("abc123_recurring_2024-03");
+    expect(results[0].id).toBe("abc123_recurring_2024-03-15");
+  });
+
+  it("identifies a card occurrence by transaction date even if its invoice is in the next month", () => {
+    const transaction = makeRecurring({
+      id: "viarnet",
+      date: "2026-06-10",
+      paymentMethod: "Azul",
+      recurringOverrides: [{ date: "2026-08-10", amount: null, isPaid: true }],
+    });
+    const config: PaymentMethodConfig = {
+      id: "azul", name: "Azul", type: "card", closingDay: 24, paymentDay: 5,
+    };
+    const [occurrence] = generateRecurringTransactions([transaction], makeFilter(8, 2026), [config]);
+
+    expect(occurrence).toMatchObject({ date: "2026-08-10", invoiceDueDate: "2026-09-05", isPaid: true });
+    expect(readRecurringOccurrenceId(occurrence.id)).toEqual({ transactionId: "viarnet", date: "2026-08-10" });
   });
 
   it("does NOT generate a virtual for the same month as the original date", () => {
