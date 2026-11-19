@@ -11,8 +11,6 @@ import {
   alpha,
 } from "@mui/material";
 import {
-  ArrowUpward as ArrowUpIcon,
-  ArrowDownward as ArrowDownIcon,
   MoreVert as MoreVertIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
@@ -175,11 +173,13 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
       >
         <CardContent
           sx={{
-            p: 1.25,
-            "&:last-child": { pb: 1.25 },
+            p: 0,
+            pr: onOpenMenu ? 0 : 1,
+            "&:last-child": { pb: 0 },
+            minHeight: 44,
             display: "flex",
             alignItems: "center",
-            gap: 1.25,
+            gap: 0.5,
           }}
         >
           {/* Checkbox */}
@@ -197,130 +197,50 @@ const SwipeableTransactionCard: React.FC<SwipeableTransactionCardProps> = ({
               onChange={(e) => onTogglePaid(t.id, e.target.checked)}
               size="small"
               color={t.isVirtual ? "info" : "success"}
-              sx={{ mt: -0.25, ml: -0.5 }}
+              inputProps={{ "aria-label": `Payment status for ${t.description}` }}
+              sx={{ width: 44, height: 44, p: 0, flexShrink: 0 }}
             />
           </Tooltip>
 
-          {/* Icon */}
-          <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              background: isDarkMode
-                ? `linear-gradient(135deg, ${alpha(accentColor, 0.2)} 0%, ${alpha(accentColor, 0.1)} 100%)`
-                : `linear-gradient(135deg, ${isIncome ? "#D1FAE5" : "#FEE2E2"} 0%, ${alpha(isIncome ? "#D1FAE5" : "#FEE2E2", 0.6)} 100%)`,
-              border: `1px solid ${isDarkMode ? alpha(accentColor, 0.2) : alpha(accentColor, 0.15)}`,
-              boxShadow: isDarkMode
-                ? `inset 0 1px 0 ${alpha("#FFFFFF", 0.1)}`
-                : `inset 0 1px 0 ${alpha("#FFFFFF", 0.8)}`,
-            }}
+          <Box sx={{ flex: 2, minWidth: 0, display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Typography variant="body2" fontWeight={600} noWrap title={t.description} sx={{ fontSize: 12 }}>
+              {t.description}
+            </Typography>
+            <TransactionTags transaction={t} compact />
+          </Box>
+          <Typography component="time" dateTime={t.date} variant="caption" color="text.secondary" noWrap sx={{ fontSize: 10 }}>
+            {formatDateShort(t.date)}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" noWrap title={t.category} sx={{ flex: 1, minWidth: 0, fontSize: 10 }}>
+            {t.category}
+          </Typography>
+          <Box sx={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 0.25 }}>
+            <PaymentMethodIcon
+              imageUrl={getPaymentMethodConfig(t.paymentMethod)?.imageUrl}
+              colors={getPaymentMethodColor(t.paymentMethod)}
+              size={12}
+              borderRadius="3px"
+              iconSize={8}
+            />
+            <Typography variant="caption" color="text.secondary" noWrap title={t.paymentMethod} sx={{ fontSize: 10 }}>
+              {t.paymentMethod}
+            </Typography>
+          </Box>
+          <Typography
+            variant="body2"
+            fontWeight={700}
+            color={isIncome ? "success.main" : "error.main"}
+            sx={{ flexShrink: 0, fontSize: 12, ...privacyStyles, ...noWrapStyle }}
           >
-            {isIncome ? (
-              <ArrowUpIcon sx={{ fontSize: 14, color: accentColor }} />
-            ) : (
-              <ArrowDownIcon sx={{ fontSize: 14, color: accentColor }} />
-            )}
-          </Box>
+            {isIncome ? "+" : "-"} {format(t.amount || 0)}
+          </Typography>
 
-          {/* Content */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <Typography
-                variant="body2"
-                fontWeight={600}
-                sx={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  fontSize: "0.875rem",
-                  color: "text.primary",
-                }}
-              >
-                {t.description}
-              </Typography>
-              <Typography
-                variant="body2"
-                fontWeight={700}
-                color={isIncome ? "success.main" : "error.main"}
-                sx={{ 
-                  flexShrink: 0, 
-                  fontSize: "0.9rem",
-                  ...privacyStyles, 
-                  ...noWrapStyle 
-                }}
-              >
-                {isIncome ? "+" : "-"} {format(t.amount || 0)}
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.75,
-                mt: 0.25,
-                flexWrap: "wrap",
-              }}
-            >
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.725rem" }}>
-                {formatDateShort(t.date)}
-              </Typography>
-              <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.725rem" }}>
-                •
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.725rem" }}>
-                {t.category}
-              </Typography>
-              <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.725rem" }}>
-                •
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <PaymentMethodIcon
-                  imageUrl={getPaymentMethodConfig(t.paymentMethod)?.imageUrl}
-                  colors={getPaymentMethodColor(t.paymentMethod)}
-                  size={14}
-                  borderRadius="3px"
-                  iconSize={8}
-                />
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.725rem" }}>
-                  {t.paymentMethod}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Tags */}
-            <TransactionTags transaction={t} />
-          </Box>
-
-          {/* Actions Menu Button */}
           {onOpenMenu && (
             <IconButton
               size="small"
-              onClick={(e) => onOpenMenu(e.currentTarget, t)}
-              sx={{
-                width: 26,
-                height: 26,
-                bgcolor: isDarkMode
-                  ? alpha(theme.palette.action.hover, 0.3)
-                  : alpha(theme.palette.action.hover, 0.5),
-                "&:hover": {
-                  bgcolor: isDarkMode
-                    ? alpha(theme.palette.action.hover, 0.5)
-                    : alpha(theme.palette.action.hover, 0.8),
-                },
-              }}
+              aria-label={`Actions for ${t.description}`}
+              onClick={(event) => onOpenMenu(event.currentTarget, t)}
+              sx={{ width: 44, height: 44, p: 0, flexShrink: 0 }}
             >
               <MoreVertIcon sx={{ fontSize: 16 }} />
             </IconButton>

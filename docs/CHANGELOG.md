@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Compact transaction rows** — Keep transaction details and actions on a single line on desktop and mobile, including the virtualized list.
+  - **Modified files** — `src/presentation/views/TransactionsView.tsx`, `src/presentation/components/ui/SwipeableTransactionCard.tsx`, `src/presentation/components/ui/TransactionTags.tsx`
+
 ### Fixed
 
 - **Duplicate recurring rows from older clients** — Enforce one materialized occurrence per user, series, and transaction date in PostgreSQL.

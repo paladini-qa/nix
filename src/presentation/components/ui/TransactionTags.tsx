@@ -32,6 +32,8 @@ interface TransactionTagsProps {
   showRecurring?: boolean;
   /** Exibe a tag de compartilhado */
   showShared?: boolean;
+  /** Keep badges on the same line as the description. */
+  compact?: boolean;
 }
 
 /**
@@ -44,13 +46,14 @@ const TransactionTags: React.FC<TransactionTagsProps> = ({
   showInstallments = true,
   showRecurring = true,
   showShared = true,
+  compact = false,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
   // Estilo base do Chip - formato pílula moderno
   const getPillChipSx = (color: string) => ({
-    height: 22,
+    height: compact ? 18 : 22,
     fontSize: "0.625rem",
     fontWeight: 600,
     borderRadius: "11px",
@@ -92,8 +95,14 @@ const TransactionTags: React.FC<TransactionTagsProps> = ({
       sx={{
         display: "flex",
         gap: 0.75,
-        mt: 0.75,
-        flexWrap: "wrap",
+        mt: compact ? 0 : 0.75,
+        flexWrap: compact ? "nowrap" : "wrap",
+        ...(compact && {
+          minWidth: 0,
+          overflow: "hidden",
+          flexShrink: 0,
+          maxWidth: "55%",
+        }),
         alignItems: "center",
       }}
     >

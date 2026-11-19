@@ -293,19 +293,20 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     return filteredData.slice(start, start + rowsPerPage);
   }, [filteredData, page, rowsPerPage, isMobile]);
 
-  const DESKTOP_ROW_HEIGHT = 44;
+  const DESKTOP_ROW_HEIGHT = 34;
   const VIRTUALIZE_THRESHOLD = 40;
+  const isDesktopVirtualized = !isMobile && paginatedData.length > VIRTUALIZE_THRESHOLD;
   const desktopTableParentRef = useRef<HTMLDivElement>(null);
   const desktopRowVirtualizer = useVirtualizer({
     count: paginatedData.length,
     getScrollElement: () => desktopTableParentRef.current,
     estimateSize: () => DESKTOP_ROW_HEIGHT,
     overscan: 5,
-    enabled: !isMobile && paginatedData.length > VIRTUALIZE_THRESHOLD,
+    enabled: isDesktopVirtualized,
   });
 
   const mobileListParentRef = useRef<HTMLDivElement>(null);
-  const CARD_ESTIMATE_HEIGHT = 120;
+  const CARD_ESTIMATE_HEIGHT = 49;
   const mobileListVirtualizer = useVirtualizer({
     count: paginatedData.length,
     getScrollElement: () => mobileListParentRef.current,
@@ -314,6 +315,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     overscan: 3,
     enabled: isMobile && paginatedData.length > 30,
   });
+
+  const desktopRows = desktopRowVirtualizer.getVirtualItems();
+  const desktopTopSpace = desktopRows[0]?.start ?? 0;
+  const desktopBottomSpace = Math.max(0, desktopRowVirtualizer.getTotalSize() - (desktopRows.at(-1)?.end ?? 0));
 
   // Handler de ordenação
   const handleSort = useCallback((column: SortColumn) => {
@@ -563,7 +568,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     letterSpacing: "0.08em",
     textTransform: "uppercase" as const,
     color: "text.secondary",
-    py: 2,
+    py: 0.75,
+    px: 1,
     bgcolor: isDarkMode
       ? alpha(theme.palette.background.default, 0.5)
       : alpha(theme.palette.grey[50], 0.95),
@@ -602,7 +608,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   );
 
   // Estilos de linha - transações recorrentes/auto usam apenas tags para identificação
-  const getRowSx = (_t: Transaction, index: number) => ({
+  const getRowSx = (index: number) => ({
     transition: "all 0.15s ease",
     cursor: "pointer",
     bgcolor:
@@ -620,9 +626,68 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       borderBottom: `1px solid ${
         isDarkMode ? alpha("#FFFFFF", 0.04) : alpha("#000000", 0.04)
       }`,
-      py: 0.75,
+      py: 0,
+      px: 1,
+      height: DESKTOP_ROW_HEIGHT,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
     },
   });
+
+  const renderDesktopRow = (t: Transaction, index: number) => (
+    <TableRow key={t.id} onClick={() => onEdit(t)} sx={getRowSx(index)}>
+      <TableCell align="center" onClick={(event) => event.stopPropagation()}>
+        <Tooltip title={t.isVirtual ? "Mark recurring occurrence" : t.isPaid !== false ? "Paid" : "Not paid"}>
+          <Checkbox
+            checked={t.isPaid !== false}
+            onChange={(event) => onTogglePaid(t.id, event.target.checked)}
+            inputProps={{ "aria-label": `Payment status for ${t.description}` }}
+            size="small"
+            color={t.isVirtual ? "info" : "success"}
+            sx={{ p: 0.5 }}
+          />
+        </Tooltip>
+      </TableCell>
+      <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>{formatDate(t.date)}</TableCell>
+      <TableCell>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}>
+          <Typography variant="body2" fontWeight={500} noWrap title={t.description}>
+            {t.description}
+          </Typography>
+          <TransactionTags transaction={t} compact />
+        </Box>
+      </TableCell>
+      <TableCell>
+        <Chip label={t.category} title={t.category} size="small" variant="outlined" sx={{ height: 20 }} />
+      </TableCell>
+      <TableCell>
+        <Typography variant="caption" color="text.secondary" display="block" noWrap title={t.paymentMethod}>
+          {t.paymentMethod}
+        </Typography>
+      </TableCell>
+      <TableCell align="center">
+        {t.type === "income" ? <ArrowUpIcon titleAccess="Income" sx={{ fontSize: 16, color: "success.main" }} /> : <ArrowDownIcon titleAccess="Expense" sx={{ fontSize: 16, color: "error.main" }} />}
+      </TableCell>
+      <TableCell align="right" sx={{ fontFamily: "monospace", fontWeight: 600, color: t.type === "income" ? "success.main" : "error.main" }}>
+        {t.type === "expense" && "- "}{formatCurrency(t.amount || 0)}
+      </TableCell>
+      <TableCell align="center" onClick={(event) => event.stopPropagation()}>
+        <Box sx={{ display: "flex", justifyContent: "center", gap: 0.5 }}>
+          <Tooltip title={t.isVirtual ? "Edit recurring transaction" : "Edit"}>
+            <IconButton size="small" aria-label={`Edit ${t.description}`} onClick={() => onEdit(t)} color="primary">
+              <EditIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t.isVirtual ? "Delete recurring transaction" : "Delete"}>
+            <IconButton size="small" aria-label={`Delete ${t.description}`} onClick={() => onDelete(t)} color="error">
+              <DeleteIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </TableCell>
+    </TableRow>
+  );
 
   return (
     <Box
@@ -1868,240 +1933,37 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             }`,
           }}
         >
-          {!isMobile && paginatedData.length > VIRTUALIZE_THRESHOLD ? (
-            <>
-              <Table size="small" stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ ...headerCellSx, width: 50, textAlign: "center" }}>Paid</TableCell>
-                    {renderSortableHeader("date", "Date", 100)}
-                    {renderSortableHeader("description", "Description")}
-                    {renderSortableHeader("category", "Category", 140)}
-                    {renderSortableHeader("paymentMethod", "Method", 140)}
-                    {renderSortableHeader("type", "Type", 80)}
-                    {renderSortableHeader("amount", "Amount", 130)}
-                    <TableCell sx={{ ...headerCellSx, width: 100, textAlign: "center" }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-              </Table>
-              <Box
-                ref={desktopTableParentRef}
-                sx={{ maxHeight: 520, overflow: "auto" }}
-              >
-                <Box sx={{ height: desktopRowVirtualizer.getTotalSize(), position: "relative" }}>
-                  {desktopRowVirtualizer.getVirtualItems().map((virtualRow) => {
-                    const t = paginatedData[virtualRow.index];
-                    return (
-                      <Box
-                        key={t.id}
-                        component="div"
-                        onClick={() => onEdit(t)}
-                        sx={{
-                          ...getRowSx(t, virtualRow.index),
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          height: `${virtualRow.size}px`,
-                          transform: `translateY(${virtualRow.start}px)`,
-                          display: "flex",
-                          alignItems: "stretch",
-                          boxSizing: "border-box",
-                          borderBottom: `1px solid ${isDarkMode ? alpha("#FFF", 0.06) : alpha("#000", 0.06)}`,
-                        }}
-                      >
-                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 50px" }} onClick={(e) => e.stopPropagation()}>
-                          <Tooltip title={t.isVirtual ? "Mark recurring occurrence" : t.isPaid !== false ? "Paid" : "Not paid"}>
-                            <Checkbox checked={t.isPaid !== false} onChange={(e) => onTogglePaid(t.id, e.target.checked)} size="small" color={t.isVirtual ? "info" : "success"} />
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell component="div" sx={{ fontFamily: "monospace", fontSize: 12, flex: "0 0 100px" }}>{formatDate(t.date)}</TableCell>
-                        <TableCell component="div" sx={{ flex: 1, minWidth: 0 }}>
-                          <Box sx={{ display: "flex", flexDirection: "column" }}>
-                            <Typography variant="body2" fontWeight={500}>{t.description}</Typography>
-                            <TransactionTags transaction={t} />
-                          </Box>
-                        </TableCell>
-                        <TableCell component="div" sx={{ flex: "0 0 140px" }}><Chip label={t.category} size="small" variant="outlined" /></TableCell>
-                        <TableCell component="div" sx={{ flex: "0 0 140px" }}><Typography variant="caption" color="text.secondary">{t.paymentMethod}</Typography></TableCell>
-                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 80px" }}>
-                          {t.type === "income" ? <ArrowUpIcon fontSize="small" color="success" /> : <ArrowDownIcon fontSize="small" color="error" />}
-                        </TableCell>
-                        <TableCell component="div" sx={{ textAlign: "right", fontFamily: "monospace", fontWeight: 600, color: t.type === "income" ? "success.main" : "error.main", flex: "0 0 130px" }}>
-                          {t.type === "expense" && "- "}{formatCurrency(t.amount || 0)}
-                        </TableCell>
-                        <TableCell component="div" sx={{ textAlign: "center", flex: "0 0 100px" }} onClick={(e) => e.stopPropagation()}>
-                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
-                            <Tooltip title={t.isVirtual ? "Edit recurring transaction" : "Edit"}>
-                              <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEdit(t); }} color="primary"><EditIcon fontSize="small" /></IconButton>
-                            </Tooltip>
-                            <Tooltip title={t.isVirtual ? "Delete recurring transaction" : "Delete"}>
-                              <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(t); }} color="error"><DeleteIcon fontSize="small" /></IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      </Box>
-                    );
-                  })}
-                </Box>
-              </Box>
-            </>
-          ) : (
-          <TableContainer>
-            <Table size="small">
+          <TableContainer ref={desktopTableParentRef} sx={{ maxHeight: isDesktopVirtualized ? 552 : undefined }}>
+            <Table size="small" stickyHeader={isDesktopVirtualized} sx={{ tableLayout: "fixed", minWidth: 720 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ ...headerCellSx, width: 50, textAlign: "center" }}>Paid</TableCell>
-                  {renderSortableHeader("date", "Date", 100)}
+                  <TableCell sx={{ ...headerCellSx, width: 48, textAlign: "center" }}>Paid</TableCell>
+                  {renderSortableHeader("date", "Date", 86)}
                   {renderSortableHeader("description", "Description")}
-                  {renderSortableHeader("category", "Category", 140)}
-                  {renderSortableHeader("paymentMethod", "Method", 140)}
-                  {renderSortableHeader("type", "Type", 80)}
-                  {renderSortableHeader("amount", "Amount", 130)}
-                  <TableCell sx={{ ...headerCellSx, width: 100, textAlign: "center" }}>Actions</TableCell>
+                  {renderSortableHeader("category", "Category", 108)}
+                  {renderSortableHeader("paymentMethod", "Method", 100)}
+                  {renderSortableHeader("type", "Type", 64)}
+                  {renderSortableHeader("amount", "Amount", 110)}
+                  <TableCell sx={{ ...headerCellSx, width: 78, textAlign: "center" }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedData.length > 0 ? (
-                  paginatedData.map((t, index) => (
-                    <TableRow
-                      key={t.id}
-                      onClick={() => onEdit(t)}
-                      sx={{
-                        ...getRowSx(t, index),
-                        animation: `fadeInUp 0.4s ease-out ${
-                          index * 0.03
-                        }s both`,
-                        "@keyframes fadeInUp": {
-                          from: {
-                            opacity: 0,
-                            transform: "translateY(10px)",
-                          },
-                          to: {
-                            opacity: 1,
-                            transform: "translateY(0)",
-                          },
-                        },
-                      }}
-                    >
-                      <TableCell sx={{ textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
-                        <Tooltip
-                          title={
-                            t.isVirtual
-                              ? "Mark recurring occurrence"
-                              : t.isPaid !== false
-                              ? "Paid"
-                              : "Not paid"
-                          }
-                        >
-                          <Checkbox
-                            checked={t.isPaid !== false}
-                            onChange={(e) =>
-                              onTogglePaid(t.id, e.target.checked)
-                            }
-                            size="small"
-                            color={t.isVirtual ? "info" : "success"}
-                          />
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>
-                        {formatDate(t.date)}
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: "flex", flexDirection: "column" }}>
-                          <Typography variant="body2" fontWeight={500}>
-                            {t.description}
-                          </Typography>
-                          {/* Tags - Componente padronizado em formato pílula */}
-                          <TransactionTags transaction={t} />
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={t.category}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="caption" color="text.secondary">
-                          {t.paymentMethod}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ textAlign: "center" }}>
-                        {t.type === "income" ? (
-                          <ArrowUpIcon fontSize="small" color="success" />
-                        ) : (
-                          <ArrowDownIcon fontSize="small" color="error" />
-                        )}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          textAlign: "right",
-                          fontFamily: "monospace",
-                          fontWeight: 600,
-                          color:
-                            t.type === "income" ? "success.main" : "error.main",
-                        }}
-                      >
-                        {t.type === "expense" && "- "}
-                        {formatCurrency(t.amount || 0)}
-                      </TableCell>
-                      <TableCell sx={{ textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <Tooltip
-                            title={
-                              t.isVirtual
-                                ? "Edit recurring transaction"
-                                : "Edit"
-                            }
-                          >
-                            <IconButton
-                              size="small"
-                              onClick={(e) => { e.stopPropagation(); onEdit(t); }}
-                              color="primary"
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip
-                            title={
-                              t.isVirtual
-                                ? "Delete recurring transaction"
-                                : "Delete"
-                            }
-                          >
-                            <IconButton
-                              size="small"
-                              onClick={(e) => { e.stopPropagation(); onDelete(t); }}
-                              color="error"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                {isDesktopVirtualized ? (
+                  <>
+                    {desktopTopSpace > 0 && (
+                      <TableRow aria-hidden><TableCell colSpan={8} sx={{ height: desktopTopSpace, p: 0, border: 0 }} /></TableRow>
+                    )}
+                    {desktopRows.map(({ index }) => renderDesktopRow(paginatedData[index], index))}
+                    {desktopBottomSpace > 0 && (
+                      <TableRow aria-hidden><TableCell colSpan={8} sx={{ height: desktopBottomSpace, p: 0, border: 0 }} /></TableRow>
+                    )}
+                  </>
+                ) : paginatedData.length ? (
+                  paginatedData.map(renderDesktopRow)
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} sx={{ textAlign: "center", py: 6 }}>
-                      <WalletIcon
-                        sx={{
-                          fontSize: 48,
-                          color: "text.disabled",
-                          mb: 2,
-                          display: "block",
-                          mx: "auto",
-                        }}
-                      />
+                      <WalletIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2, display: "block", mx: "auto" }} />
                       <Typography color="text.secondary" fontStyle="italic">
                         No transactions found with the current filters.
                       </Typography>
@@ -2109,29 +1971,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   </TableRow>
                 )}
               </TableBody>
-              {filteredData.length > 0 && (
+              {!isDesktopVirtualized && filteredData.length > 0 && (
                 <TableFooter>
-                  <TableRow
-                    sx={{
-                      bgcolor: isDarkMode
-                        ? alpha(theme.palette.background.default, 0.3)
-                        : alpha(theme.palette.grey[50], 0.5),
-                    }}
-                  >
-                    <TableCell
-                      colSpan={6}
-                      sx={{ textAlign: "right", fontWeight: 600 }}
-                    >
-                      Filtered Total:
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        textAlign: "right",
-                        fontFamily: "monospace",
-                        fontWeight: 600,
-                        color: balance >= 0 ? "success.main" : "error.main",
-                      }}
-                    >
+                  <TableRow sx={{ bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.3) : alpha(theme.palette.grey[50], 0.5) }}>
+                    <TableCell colSpan={6} align="right" sx={{ fontWeight: 600 }}>Filtered Total:</TableCell>
+                    <TableCell align="right" sx={{ fontFamily: "monospace", fontWeight: 600, color: balance >= 0 ? "success.main" : "error.main" }}>
                       {formatCurrency(balance)}
                     </TableCell>
                     <TableCell />
@@ -2140,7 +1984,6 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               )}
             </Table>
           </TableContainer>
-          )}
 
           {/* Paginação */}
           {filteredData.length > 0 && (
