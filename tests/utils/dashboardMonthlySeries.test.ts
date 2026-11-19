@@ -20,6 +20,16 @@ function entry(id: string, date: string, overrides: Partial<Transaction> = {}): 
 }
 
 describe("buildDashboardMonthlySeries", () => {
+  it.each([undefined, null])("projects recurring entries with missing payment configuration (%s)", (configs) => {
+    const transactions = [
+      entry("subscription", "2026-11-05", { type: "expense", amount: 20, isRecurring: true, frequency: "monthly" }),
+    ];
+
+    const months = buildDashboardMonthlySeries(transactions, configs, dayjs("2026-11-18"), noFilters);
+
+    expect(months.map((month) => month.expense)).toEqual([0, 0, 0, 20, 20, 20, 20]);
+  });
+
   it("centers the calendar month even after the tenth and includes empty months across the year boundary", () => {
     const months = buildDashboardMonthlySeries([], [], dayjs("2026-11-18"), noFilters);
 

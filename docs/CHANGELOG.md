@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dashboard recurrence crash** — Read payment configurations from the settings context and handle missing configurations when building monthly charts.
+  - **Modified files** — `src/presentation/views/DashboardMainSection.tsx`, `src/domain/usecases/dashboardMonthlySeries.ts`, `tests/utils/dashboardMonthlySeries.test.ts`
+
 ### Changed
 
 - **Compact transaction rows** — Keep transaction details and actions on a single line on desktop and mobile, including the virtualized list.

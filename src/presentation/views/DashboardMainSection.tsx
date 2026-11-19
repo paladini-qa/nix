@@ -26,7 +26,8 @@ import RecentTransactionsWidget from "@/presentation/widgets/RecentTransactionsW
 import { useAppStore } from "@/presentation/hooks/useAppStore";
 import { useTransactionsQuery } from "@/presentation/hooks/useTransactionsQuery";
 import { useFilteredTransactions } from "@/presentation/hooks/useFilteredTransactions";
-import { useCurrency, useSettings } from "@/presentation/hooks";
+import { useCurrency } from "@/presentation/hooks";
+import { useSettings } from "@/presentation/contexts";
 import { VIEW_ROUTES } from "@/presentation/routes";
 
 const AdvancedFilters = lazy(() => import("@/presentation/panels/AdvancedFilters"));
