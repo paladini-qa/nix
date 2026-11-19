@@ -42,6 +42,10 @@ CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.transactions(date DES
 CREATE INDEX IF NOT EXISTS idx_transactions_type ON public.transactions(type);
 CREATE INDEX IF NOT EXISTS idx_transactions_installment_group ON public.transactions(installment_group_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_recurring_group ON public.transactions(recurring_group_id);
+-- One materialized occurrence per user, series, and transaction date.
+CREATE UNIQUE INDEX IF NOT EXISTS transactions_unique_recurring_occurrence
+    ON public.transactions(user_id, recurring_group_id, date)
+    WHERE recurring_group_id IS NOT NULL;
 -- Partial index for bidirectional lookups of shared transactions (related_transaction_id)
 CREATE INDEX IF NOT EXISTS idx_transactions_related ON public.transactions(related_transaction_id)
   WHERE related_transaction_id IS NOT NULL;
