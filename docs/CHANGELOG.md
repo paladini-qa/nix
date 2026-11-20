@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Pages deployment retries** — Give each attempt its own artifact name and allow time for the Pages artifact service to see the upload.
+  - **Modified file** — `.github/workflows/deploy-pages.yml`
+
+### Fixed
+
 - **Installment rescheduling** — Save the selected dates in one database operation and reject conflicting or inaccessible rows as a batch. Retrying a completed request preserves its result.
   - **Created files** — `docs/migrations/20261120154452_reschedule_installments_atomically.sql`, `tests/sql/reschedule_installments.sql`
   - **Modified files** — `docs/setup.sql`, `docs/REQUIREMENTS.md`, `src/domain/usecases/transactionUtils.ts`, `src/presentation/hooks/useTransactionsQuery.ts`, `src/presentation/layouts/shell/AppViewSwitcher.tsx`, `src/presentation/views/SplitsView.tsx`, `tests/hooks/useTransactionsQuery.test.tsx`, `e2e/audit/transactions.spec.ts`
