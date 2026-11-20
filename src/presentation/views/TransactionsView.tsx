@@ -719,6 +719,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           </Typography>
         </Box>
 
+        {isMobile && (
+          <NixButton size="md" onClick={onNewTransaction} style={{ marginInlineStart: "auto" }}>
+            <AddIcon fontSize="small" /> New
+          </NixButton>
+        )}
       </Box>
 
       {/* Summary Cards */}

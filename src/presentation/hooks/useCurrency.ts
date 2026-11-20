@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react";
+import { parseTransactionAmount } from "@/domain/usecases/transactionAmount";
 
 export interface CurrencyOptions {
   locale?: string;
@@ -71,10 +72,10 @@ export function useCurrency(options: CurrencyOptions = {}) {
 
   // Parse string to number (remove formatting)
   const parse = useCallback((value: string): number => {
-    // Remove commas first, then remove everything except digits, minus sign, and decimal point
-    const cleaned = value.replace(/,/g, "").replace(/[^\d.-]/g, "");
-    const parsed = parseFloat(cleaned);
-    return isNaN(parsed) ? 0 : parsed;
+    const text = value.trim();
+    const isNegative = text.startsWith("-");
+    const amount = parseTransactionAmount(text.replace(/^[+-]\s*/, "")) ?? 0;
+    return isNegative && amount ? -amount : amount;
   }, []);
 
   // Retorna símbolo da moeda

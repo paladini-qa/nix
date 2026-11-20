@@ -56,6 +56,16 @@ describe("buildDashboardMonthlySeries", () => {
     ]);
   });
 
+  it("includes recurring occurrences from before the visible window in the opening balance", () => {
+    const transactions = [
+      entry("opening", "2026-01-01", { amount: 100 }),
+      entry("subscription", "2026-01-05", { type: "expense", amount: 0.1, isRecurring: true, frequency: "monthly" }),
+    ];
+    const [august] = buildDashboardMonthlySeries(transactions, [], dayjs("2026-11-18"), noFilters);
+    expect(august.monthKey).toBe("2026-08");
+    expect(august.balance).toBe(99.2);
+  });
+
   it("applies category filters without removing months from the axis", () => {
     const transactions = [entry("matching", "2026-11-01", { category: "Salary" }), entry("other", "2026-11-01")];
     const months = buildDashboardMonthlySeries(transactions, [], dayjs("2026-11-18"), { ...noFilters, categories: ["Salary"] });

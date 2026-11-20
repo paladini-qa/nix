@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Box, useMediaQuery, useTheme } from "@mui/material";
+import { Alert, Box, useMediaQuery, useTheme } from "@mui/material";
 import { calculateInvoiceDueDate, getInstallmentAmounts } from "@/domain/usecases/transactionUtils";
 import type { Transaction } from "@/domain/entities";
 import { useAppStore } from "@/presentation/hooks/useAppStore";
@@ -26,6 +26,8 @@ import { usePullToRefresh } from "@/presentation/hooks";
 import { useNetworkStatus } from "@/presentation/hooks/useNetworkStatus";
 import { WalletTransaction } from "@/presentation/hooks/useWalletSync";
 import dayjs from "dayjs";
+import { motion } from "framer-motion";
+import NixButton from "@/presentation/components/radix/Button";
 
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/infrastructure/database/supabaseClient";
@@ -39,7 +41,7 @@ interface AppShellProps {
 const AppShell: React.FC<AppShellProps> = ({ session }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { showSuccess, showError } = useNotification();
+  const { showSuccess } = useNotification();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -87,97 +89,91 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
 
   const {
     data: transactions = [],
-    isLoading,
+    isError,
+    isFetching,
     refetch,
     addTransaction,
     bulkAddTransactions,
     updateTransaction
-  } = useTransactionsQuery();
+  } = useTransactionsQuery(session.user.id);
 
-  const handleSave = async (txData: any, editId?: string) => {
-    try {
-      if (editId) {
-        await updateTransaction({ id: editId, ...txData });
-        showSuccess("Transação atualizada com sucesso!");
-      } else if (txData.installments && txData.installments > 1) {
-        const totalInstallments = txData.installments;
-        const { first, regular } = getInstallmentAmounts(txData.amount || 0, totalInstallments);
-        const installmentGroupId = crypto.randomUUID();
+  const handleSave = async (txData: Omit<Transaction, "id" | "createdAt">, editId?: string) => {
+    if (editId) {
+      await updateTransaction({ id: editId, ...txData });
+      showSuccess("Transação atualizada com sucesso!");
+    } else if (txData.installments && txData.installments > 1) {
+      const totalInstallments = txData.installments;
+      const amounts = getInstallmentAmounts(txData.amount, totalInstallments);
+      const installmentGroupId = crypto.randomUUID();
 
-        const pmConfig = getPaymentMethodConfig(txData.paymentMethod);
-        const isCardMethod =
-          pmConfig?.type === "card" && !!pmConfig.closingDay && !!pmConfig.paymentDay;
-        const baseDate = isCardMethod
-          ? txData.date
-          : (txData.invoiceDueDate ?? txData.date);
+      const pmConfig = getPaymentMethodConfig(txData.paymentMethod);
+      const isCardMethod =
+        pmConfig?.type === "card" && !!pmConfig.closingDay && !!pmConfig.paymentDay;
+      const baseDate = isCardMethod
+        ? txData.date
+        : (txData.invoiceDueDate ?? txData.date);
 
-        const installmentPayloads: Partial<Transaction>[] = [];
-        for (let i = 0; i < totalInstallments; i++) {
-          const amount = i === 0 ? first : regular;
-          const installmentDate = dayjs(baseDate).add(i, "month").format("YYYY-MM-DD");
+      const installmentPayloads: Partial<Transaction>[] = [];
+      for (let i = 0; i < totalInstallments; i++) {
+        const amount = amounts[i];
+        const installmentDate = dayjs(baseDate).add(i, "month").format("YYYY-MM-DD");
 
-          let invoiceDueDate: string | undefined;
-          if (isCardMethod && pmConfig) {
-            invoiceDueDate = calculateInvoiceDueDate(installmentDate, pmConfig) ?? undefined;
-          } else if (txData.invoiceDueDate) {
-            invoiceDueDate = dayjs(baseDate).add(i, "month").format("YYYY-MM-DD");
-          }
-
-          installmentPayloads.push({
-            description: txData.description,
-            amount,
-            type: txData.type,
-            category: txData.category,
-            paymentMethod: txData.paymentMethod,
-            date: installmentDate,
-            invoiceDueDate,
-            isRecurring: false,
-            installments: totalInstallments,
-            currentInstallment: i + 1,
-            isPaid: false,
-            isShared: txData.isShared,
-            sharedWith: txData.sharedWith,
-            iOwe: txData.iOwe,
-            notes: txData.notes,
-            installmentGroupId,
-          });
+        let invoiceDueDate: string | undefined;
+        if (isCardMethod && pmConfig) {
+          invoiceDueDate = calculateInvoiceDueDate(installmentDate, pmConfig) ?? undefined;
+        } else if (txData.invoiceDueDate) {
+          invoiceDueDate = dayjs(baseDate).add(i, "month").format("YYYY-MM-DD");
         }
 
-        const createdInstallments = await bulkAddTransactions(installmentPayloads);
-
-        // Create income reimbursement transactions for split expenses (iOwe=false)
-        if (
-          txData.isShared &&
-          txData.sharedWith &&
-          txData.type === "expense" &&
-          !txData.iOwe
-        ) {
-          const incomePayloads: Partial<Transaction>[] = createdInstallments.map((inst) => ({
-            description: `${inst.description} - ${txData.sharedWith}`,
-            amount: Math.round((inst.amount / 2) * 100) / 100,
-            type: "income" as const,
-            category: "Other",
-            paymentMethod: inst.paymentMethod,
-            date: inst.date,
-            isRecurring: false,
-            isPaid: false,
-            installments: totalInstallments,
-            currentInstallment: inst.currentInstallment,
-            relatedTransactionId: inst.id,
-          }));
-          await bulkAddTransactions(incomePayloads);
-        }
-
-        showSuccess("Transação criada com sucesso!");
-      } else {
-        await addTransaction(txData);
-        showSuccess("Transação salva com sucesso!");
+        installmentPayloads.push({
+          description: txData.description,
+          amount,
+          type: txData.type,
+          category: txData.category,
+          paymentMethod: txData.paymentMethod,
+          date: installmentDate,
+          invoiceDueDate,
+          isRecurring: false,
+          installments: totalInstallments,
+          currentInstallment: i + 1,
+          isPaid: false,
+          isShared: txData.isShared,
+          sharedWith: txData.sharedWith,
+          iOwe: txData.iOwe,
+          notes: txData.notes,
+          installmentGroupId,
+        });
       }
-      setIsFormOpen(false);
-      setEditingTransaction(null);
-    } catch (error) {
-      console.error("Error saving transaction:", error);
-      showError("Erro ao salvar transação. Tente novamente.");
+
+      const createdInstallments = await bulkAddTransactions(installmentPayloads);
+
+      // Create income reimbursement transactions for split expenses (iOwe=false)
+      if (
+        txData.isShared &&
+        txData.sharedWith &&
+        txData.type === "expense" &&
+        !txData.iOwe
+      ) {
+        const incomePayloads: Partial<Transaction>[] = createdInstallments.map((inst) => ({
+          description: `${inst.description} - ${txData.sharedWith}`,
+          amount: Math.round((inst.amount / 2) * 100) / 100,
+          type: "income" as const,
+          category: "Other",
+          paymentMethod: inst.paymentMethod,
+          date: inst.date,
+          isRecurring: false,
+          isPaid: false,
+          installments: totalInstallments,
+          currentInstallment: inst.currentInstallment,
+          relatedTransactionId: inst.id,
+        }));
+        await bulkAddTransactions(incomePayloads);
+      }
+
+      showSuccess("Transação criada com sucesso!");
+    } else {
+      await addTransaction(txData);
+      showSuccess("Transação salva com sucesso!");
     }
   };
 
@@ -213,14 +209,22 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
 
   useWalletSync(handleWalletTransaction);
 
-  const { isOnline, pendingCount } = useNetworkStatus();
+  const { isOnline, pendingCount } = useNetworkStatus(session.user.id);
 
-  const { isRefreshing, pullOffset } = usePullToRefresh({
+  const { isRefreshing, isPulling, y, onPanStart, onPan, onPanEnd, indicatorOpacity, indicatorScale, indicatorRotation } = usePullToRefresh({
     enabled: !isFormOpen,
     onRefresh: async () => {
       await refetch();
     },
   });
+
+  const transactionLoadError = isError && (
+    <Alert severity="error" sx={{ mx: { xs: 0, md: 3.5 }, mt: 2 }}
+      action={<NixButton size="sm" variant="soft" loading={isFetching} onClick={() => void refetch()}>Tentar novamente</NixButton>}
+    >
+      Falha ao carregar as transações. Os valores exibidos podem estar incompletos ou desatualizados.
+    </Alert>
+  );
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
@@ -270,6 +274,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
                 </Suspense>
               </Box>
             )}
+            {transactionLoadError}
             <Suspense fallback={null}>
               <AppViewSwitcher currentView={currentView} session={session} />
             </Suspense>
@@ -297,6 +302,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
           />
           <Box
             component="main"
+            data-pull-to-refresh-container
             sx={{
               flexGrow: 1,
               px: currentView === "nixai" ? 0 : 2,
@@ -316,10 +322,20 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
                 : "auto",
             }}
           >
-            <PullToRefreshIndicator isRefreshing={isRefreshing} pullOffset={pullOffset} />
-            <Suspense fallback={null}>
-              <AppViewSwitcher currentView={currentView} session={session} />
-            </Suspense>
+            <motion.div onPanStart={onPanStart} onPan={onPan} onPanEnd={onPanEnd} style={{ touchAction: "pan-y" }}>
+              <PullToRefreshIndicator
+                isRefreshing={isRefreshing}
+                isPulling={isPulling}
+                y={y}
+                opacity={indicatorOpacity}
+                scale={indicatorScale}
+                rotation={indicatorRotation}
+              />
+              {transactionLoadError}
+              <Suspense fallback={null}>
+                <AppViewSwitcher currentView={currentView} session={session} />
+              </Suspense>
+            </motion.div>
           </Box>
         </>
       )}

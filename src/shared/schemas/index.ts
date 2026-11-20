@@ -14,7 +14,7 @@ export const transactionSchema = z.object({
     .min(1, "Description is required")
     .max(200, "Description must be less than 200 characters"),
   amount: z
-    .number({ invalid_type_error: "Amount must be a number" })
+    .number({ error: "Amount must be a number" })
     .positive("Amount must be greater than 0")
     .max(999999999.99, "Amount is too large"),
   type: transactionTypeSchema,
@@ -62,7 +62,7 @@ export const budgetSchema = z.object({
   category: z.string().min(1, "Category is required"),
   type: transactionTypeSchema,
   limitAmount: z
-    .number({ invalid_type_error: "Limit must be a number" })
+    .number({ error: "Limit must be a number" })
     .positive("Limit must be greater than 0")
     .max(999999999.99, "Amount is too large"),
   month: z.number().int().min(1).max(12),
@@ -81,11 +81,11 @@ export const goalSchema = z.object({
     .min(1, "Goal name is required")
     .max(100, "Name must be less than 100 characters"),
   targetAmount: z
-    .number({ invalid_type_error: "Target must be a number" })
+    .number({ error: "Target must be a number" })
     .positive("Target must be greater than 0")
     .max(999999999.99, "Amount is too large"),
   currentAmount: z
-    .number({ invalid_type_error: "Amount must be a number" })
+    .number({ error: "Amount must be a number" })
     .min(0, "Current amount cannot be negative")
     .default(0),
   color: z
@@ -120,7 +120,7 @@ export const accountSchema = z.object({
     .min(1, "Account name is required")
     .max(50, "Name must be less than 50 characters"),
   type: accountTypeSchema,
-  initialBalance: z.number({ invalid_type_error: "Balance must be a number" }),
+  initialBalance: z.number({ error: "Balance must be a number" }),
   color: z
     .string()
     .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format")
@@ -204,7 +204,7 @@ export function validate<T extends z.ZodSchema>(
  */
 export function getErrorMessages(error: z.ZodError): Record<string, string> {
   const messages: Record<string, string> = {};
-  const issues = error.issues || error.errors || [];
+  const issues = error.issues;
   issues.forEach((err: any) => {
     const path = err.path?.join(".") || "root";
     if (!messages[path]) {
@@ -218,7 +218,7 @@ export function getErrorMessages(error: z.ZodError): Record<string, string> {
  * Retorna primeira mensagem de erro
  */
 export function getFirstError(error: z.ZodError): string {
-  const issues = error.issues || error.errors || [];
+  const issues = error.issues;
   return issues[0]?.message || "Validation error";
 }
 

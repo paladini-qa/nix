@@ -3,13 +3,12 @@ import { supabase } from "@/infrastructure/database/supabaseClient";
 import { ThemePreference, CategoryColors, PaymentMethodColors, PaymentMethodConfig } from "@/domain/entities";
 import { DEFAULT_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_PAYMENT_METHOD_CONFIGS } from "@/shared/constants";
 
-export const SETTINGS_KEY = ["user_settings"];
-
 export function useSettingsQuery(userId?: string) {
   const queryClient = useQueryClient();
+  const settingsKey = ["user_settings", userId];
 
   const query = useQuery({
-    queryKey: SETTINGS_KEY,
+    queryKey: settingsKey,
     queryFn: async () => {
       if (!userId) return null;
       // TODO: move to application service — layer violation
@@ -51,7 +50,7 @@ export function useSettingsQuery(userId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: SETTINGS_KEY });
+      queryClient.invalidateQueries({ queryKey: settingsKey });
     },
   });
 

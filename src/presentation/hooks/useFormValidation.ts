@@ -29,7 +29,7 @@ export function useFormValidation<T extends z.ZodSchema>(
     (field: string, value: unknown): FieldError => {
       try {
         // Cria um schema parcial para o campo
-        const fieldSchema = (schema as z.ZodObject<any>).shape?.[field];
+        const fieldSchema = schema instanceof z.ZodObject ? schema.shape[field] : undefined;
         if (fieldSchema) {
           fieldSchema.parse(value);
           // Remove erro se válido
@@ -43,7 +43,7 @@ export function useFormValidation<T extends z.ZodSchema>(
         return { message: "", hasError: false };
       } catch (error) {
         if (error instanceof z.ZodError) {
-          const message = error.errors[0]?.message || "Invalid value";
+          const message = error.issues[0]?.message || "Invalid value";
           setErrors((prev) => ({ ...prev, [field]: message }));
           return { message, hasError: true };
         }

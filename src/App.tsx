@@ -13,16 +13,25 @@ import { useSettingsQuery } from "@/presentation/hooks/useSettingsQuery";
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loadingInitial, setLoadingInitial] = useState(true);
-  const { filters } = useAppStore();
 
   useEffect(() => {
+    let currentUserId: string | undefined;
+    const applySession = (nextSession: Session | null) => {
+      const nextUserId = nextSession?.user.id;
+      if (currentUserId !== nextUserId) {
+        useAppStore.setState(useAppStore.getInitialState());
+        currentUserId = nextUserId;
+      }
+      setSession(nextSession);
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+      applySession(session);
       setLoadingInitial(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+      applySession(session);
     });
 
     return () => subscription.unsubscribe();
@@ -74,7 +83,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <AppProviders session={session} darkMode={darkMode} muiTheme={theme}>
+    <AppProviders key={session.user.id} session={session} darkMode={darkMode} muiTheme={theme}>
       <AppShell session={session} />
     </AppProviders>
   );

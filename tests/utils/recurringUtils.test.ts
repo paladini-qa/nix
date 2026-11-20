@@ -470,3 +470,14 @@ describe("generateRecurringTransactions — installments guard", () => {
     expect(generateRecurringTransactions([t], makeFilter(1, 2024), noPmConfigs)).toHaveLength(1);
   });
 });
+
+it("keeps both purchases when a short month moves two occurrences into one invoice", () => {
+  const series = makeRecurring({ date: "2025-12-31", paymentMethod: "Card" });
+  const results = generateRecurringTransactions([series], makeFilter(1, 2026), [
+    { id: "card", name: "Card", type: "card", closingDay: 30, paymentDay: 31 },
+  ]);
+  expect(results.map((row) => [row.date, row.invoiceDueDate])).toEqual([
+    ["2026-01-31", "2026-02-28"],
+    ["2026-02-28", "2026-02-28"],
+  ]);
+});

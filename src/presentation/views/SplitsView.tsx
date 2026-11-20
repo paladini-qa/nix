@@ -66,6 +66,7 @@ import NixButton from "@/presentation/components/radix/Button";
 import { CREATE_TRANSACTION_BUTTON } from "@/shared/constants";
 import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
 import { useSettings } from "@/presentation/contexts";
+import type { InstallmentDateChange } from "@/domain/usecases/transactionUtils";
 import { hashColor } from "@/shared/utils/imageColorUtils";
 
 interface SplitsViewProps {
@@ -76,9 +77,8 @@ interface SplitsViewProps {
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onRefreshData?: () => Promise<void>;
   onUpdateInstallmentDates?: (
-    installmentIds: string[],
-    newDates: { id: string; date: string }[]
-  ) => Promise<boolean>;
+    newDates: InstallmentDateChange[]
+  ) => Promise<void>;
 }
 
 type SplitStatus = "all" | "in_progress" | "completed";
@@ -147,6 +147,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     new Date().getFullYear()
   );
   const [isUpdatingDates, setIsUpdatingDates] = useState(false);
+  const pendingDateUpdate = useRef(false);
 
   const handleRefresh = useCallback(async () => {
     if (!onRefreshData || isRefreshing) return;
@@ -172,11 +173,14 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     setDateDialogOpen(true);
   }, []);
 
+  const [dateUpdateError, setDateUpdateError] = useState(false);
+
   // Fecha o Dialog
   const handleCloseDateDialog = useCallback(() => {
     setDateDialogOpen(false);
     setSelectedGroupForDateChange(null);
     setIsUpdatingDates(false);
+    setDateUpdateError(false);
   }, []);
 
   // Calcula as novas datas das parcelas
@@ -186,7 +190,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       dueDay: number,
       startMonth: number,
       startYear: number
-    ): { id: string; date: string }[] => {
+    ): InstallmentDateChange[] => {
       const sortedInstallments = [...installments].sort(
         (a, b) => (a.currentInstallment || 1) - (b.currentInstallment || 1)
       );
@@ -210,7 +214,12 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           "0"
         )}-${String(adjustedDay).padStart(2, "0")}`;
 
-        return { id: inst.id, date: newDate };
+        return {
+          id: inst.id,
+          date: newDate,
+          previousDate: inst.date,
+          previousInvoiceDueDate: inst.invoiceDueDate,
+        };
       });
     },
     []
@@ -218,8 +227,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
   // Salva as novas datas
   const handleSaveDates = useCallback(async () => {
-    if (!selectedGroupForDateChange || !onUpdateInstallmentDates) return;
+    if (pendingDateUpdate.current || !selectedGroupForDateChange || !onUpdateInstallmentDates) return;
+    pendingDateUpdate.current = true;
 
+    setDateUpdateError(false);
     setIsUpdatingDates(true);
     try {
       const newDates = calculateNewDates(
@@ -229,20 +240,13 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         newStartYear
       );
 
-      const installmentIds = selectedGroupForDateChange.installments.map(
-        (i) => i.id
-      );
-      await onUpdateInstallmentDates(installmentIds, newDates);
+      await onUpdateInstallmentDates(newDates);
 
       handleCloseDateDialog();
-
-      // Refresh data após atualização
-      if (onRefreshData) {
-        await onRefreshData();
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar datas:", error);
+    } catch {
+      setDateUpdateError(true);
     } finally {
+      pendingDateUpdate.current = false;
       setIsUpdatingDates(false);
     }
   }, [
@@ -253,7 +257,6 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     newStartYear,
     calculateNewDates,
     handleCloseDateDialog,
-    onRefreshData,
   ]);
 
   // Preview das novas datas
@@ -1735,8 +1738,11 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       <Drawer
         anchor="right"
         open={dateDialogOpen}
-        onClose={handleCloseDateDialog}
+        onClose={isUpdatingDates ? undefined : handleCloseDateDialog}
         PaperProps={{
+          role: "dialog",
+          "aria-modal": true,
+          "aria-labelledby": "installment-dates-title",
           sx: {
             width: isMobile ? "100vw" : 520,
             maxWidth: "100vw",
@@ -1792,7 +1798,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 <EventRepeatIcon />
               </Box>
               <Box>
-                <Typography variant="h6" fontWeight={600}>
+                <Typography id="installment-dates-title" variant="h6" fontWeight={600}>
                   Change Due Dates
                 </Typography>
                 <Typography
@@ -1806,6 +1812,8 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               </Box>
             </Box>
             <IconButton
+              aria-label="Close due dates"
+              disabled={isUpdatingDates}
               onClick={handleCloseDateDialog}
               size="small"
               sx={{
@@ -1852,8 +1860,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           <Stack spacing={3}>
             {/* Dia de vencimento */}
             <FormControl fullWidth>
-              <InputLabel>Due Day</InputLabel>
+              <InputLabel id="installment-due-day">Due Day</InputLabel>
               <Select
+                labelId="installment-due-day"
                 value={newDueDay}
                 label="Due Day"
                 onChange={(e) => setNewDueDay(Number(e.target.value))}
@@ -1869,8 +1878,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
             {/* Mês de início */}
             <FormControl fullWidth>
-              <InputLabel>Start Month</InputLabel>
+              <InputLabel id="installment-start-month">Start Month</InputLabel>
               <Select
+                labelId="installment-start-month"
                 value={newStartMonth}
                 label="Start Month"
                 onChange={(e) => setNewStartMonth(Number(e.target.value))}
@@ -1893,8 +1903,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
             {/* Ano de início */}
             <FormControl fullWidth>
-              <InputLabel>Start Year</InputLabel>
+              <InputLabel id="installment-start-year">Start Year</InputLabel>
               <Select
+                labelId="installment-start-year"
                 value={newStartYear}
                 label="Start Year"
                 onChange={(e) => setNewStartYear(Number(e.target.value))}
@@ -2014,6 +2025,11 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           </Stack>
         </Box>
 
+        {dateUpdateError && (
+          <Box role="alert" sx={{ px: 3, pb: 1, color: "error.main" }}>
+            Não foi possível confirmar o reagendamento. Atualize a lista e confira as datas antes de tentar novamente.
+          </Box>
+        )}
         {/* Footer */}
         <Divider />
         <Box

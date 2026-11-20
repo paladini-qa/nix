@@ -65,12 +65,27 @@ describe("getBalanceOnDate", () => {
 
 describe("getInstallmentAmounts", () => {
   it("uses one installment of 250 for a purchase of 2500 split ten ways", () => {
-    expect(getInstallmentAmounts(2500, 10)).toEqual({ first: 250, regular: 250 });
+    expect(getInstallmentAmounts(2500, 10)).toEqual(Array(10).fill(250));
+  });
+
+  it("never creates a negative installment for small amounts", () => {
+    const amounts = getInstallmentAmounts(0.05, 10);
+    expect(amounts).toHaveLength(10);
+    expect(amounts.every((amount) => amount >= 0)).toBe(true);
+    expect(amounts.reduce((sum, amount) => sum + Math.round(amount * 100), 0)).toBe(5);
+  });
+
+  it("bounds new installment counts and preserves the full amount across 48 payments", () => {
+    expect(() => getInstallmentAmounts(100, 2.5)).toThrow(RangeError);
+    expect(() => getInstallmentAmounts(100, 49)).toThrow(RangeError);
+    const amounts = getInstallmentAmounts(2500.01, 48);
+    expect(amounts).toHaveLength(48);
+    expect(amounts.reduce((sum, amount) => sum + Math.round(amount * 100), 0)).toBe(250001);
   });
 
   it("keeps the cent adjustment on the first installment", () => {
-    expect(getInstallmentAmounts(100, 3)).toEqual({ first: 33.34, regular: 33.33 });
-    expect(getInstallmentAmounts(50, 3)).toEqual({ first: 16.66, regular: 16.67 });
+    expect(getInstallmentAmounts(100, 3)).toEqual([33.34, 33.33, 33.33]);
+    expect(getInstallmentAmounts(50, 3)).toEqual([16.66, 16.67, 16.67]);
   });
 });
 
@@ -170,6 +185,14 @@ describe("calculateInvoiceDueDate", () => {
       // Dec 20 → closes Dec → paid Jan 5 next year
       expect(calculateInvoiceDueDate("2024-12-20", config)).toBe("2025-01-05");
     });
+  });
+
+  it.each([
+    ["2024-01-31", "2024-02-29"],
+    ["2025-01-31", "2025-02-28"],
+    ["2025-03-31", "2025-04-30"],
+  ])("clamps the invoice due date for %s", (purchaseDate, dueDate) => {
+    expect(calculateInvoiceDueDate(purchaseDate, makeCardConfig("Card", 30, 31))).toBe(dueDate);
   });
 
   describe("day padding", () => {

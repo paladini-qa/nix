@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient, onlineManager } from "@tanstack/react-query";
 import { supabase } from "@/infrastructure/database/supabaseClient";
 import { Transaction } from "@/domain/entities";
+import type { InstallmentDateChange } from "@/domain/usecases/transactionUtils";
 import { enqueueSyncOp } from "@/presentation/hooks/useNetworkStatus";
 import dayjs from "dayjs";
 
-export const TRANSACTIONS_KEY = ["transactions"];
+const TRANSACTION_COLUMNS = "*, recurring_transactions(frequency), splited_transactions(occurrence_number, due_date, amount, is_paid), recurring_overrides(override_date, amount, is_paid)";
 
 function mapTransactionFromDb(t: any): Transaction {
   return {
@@ -92,22 +93,40 @@ function isNetworkError(error: unknown): boolean {
   return false;
 }
 
-export function useTransactionsQuery() {
+export function useTransactionsQuery(userId: string) {
+  const transactionsKey = ["transactions", userId];
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: TRANSACTIONS_KEY,
-    queryFn: async () => {
-      // TODO: move to application service — layer violation
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("*, recurring_transactions(frequency), splited_transactions(occurrence_number, due_date, amount, is_paid), recurring_overrides(override_date, amount, is_paid)")
-        .gte("date", "2026-01-01")
-        .order("date", { ascending: false });
+    queryKey: transactionsKey,
+    queryFn: async ({ signal }) => {
+      const transactions: Transaction[] = [];
+      const pageSize = 500;
+      let cursor: { date: string; id: string } | undefined;
 
-      if (error) throw error;
+      for (;;) {
+        let page = supabase
+          .from("transactions")
+          .select(TRANSACTION_COLUMNS)
+          .eq("user_id", userId)
+          .gte("date", "2026-01-01")
+          .order("date", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(pageSize)
+          .abortSignal(signal);
 
-      return (data || []).map(mapTransactionFromDb);
+        if (cursor) {
+          page = page.or(`date.lt.${cursor.date},and(date.eq.${cursor.date},id.lt.${cursor.id})`);
+        }
+
+        const { data, error } = await page;
+        if (error) throw error;
+        if (!data?.length) return transactions;
+
+        transactions.push(...data.map(mapTransactionFromDb));
+        const last = data[data.length - 1];
+        cursor = { date: last.date, id: last.id };
+      }
     },
   });
 
@@ -122,7 +141,7 @@ export function useTransactionsQuery() {
       } = await supabase.auth.getUser();
 
       if (userError) throw userError;
-      if (!user) throw new Error("User not authenticated");
+      if (user?.id !== userId) throw new Error("Session changed");
 
       const payload = { ...mapNewTransactionToDb(tx), user_id: user.id };
 
@@ -137,8 +156,8 @@ export function useTransactionsQuery() {
     },
 
     onMutate: async (newTx) => {
-      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
-      const previous = queryClient.getQueryData<Transaction[]>(TRANSACTIONS_KEY);
+      await queryClient.cancelQueries({ queryKey: transactionsKey });
+      const previous = queryClient.getQueryData<Transaction[]>(transactionsKey);
 
       const optimistic: Transaction = {
         id: `optimistic_${crypto.randomUUID()}`,
@@ -162,7 +181,7 @@ export function useTransactionsQuery() {
       };
 
       queryClient.setQueryData<Transaction[]>(
-        TRANSACTIONS_KEY,
+        transactionsKey,
         (old) => [optimistic, ...(old ?? [])]
       );
 
@@ -170,16 +189,16 @@ export function useTransactionsQuery() {
     },
 
     onError: (error, tx, context: any) => {
-      if (context?.previous) {
-        queryClient.setQueryData(TRANSACTIONS_KEY, context.previous);
+      if (context) {
+        queryClient.setQueryData(transactionsKey, context.previous ?? []);
       }
       if (isNetworkError(error)) {
-        enqueueSyncOp({ type: "add", payload: mapNewTransactionToDb(tx) });
+        void enqueueSyncOp(userId, { type: "add", payload: mapNewTransactionToDb(tx) }).catch(() => {});
       }
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: transactionsKey });
     },
   });
 
@@ -193,7 +212,7 @@ export function useTransactionsQuery() {
       const { data, error } = await supabase
         .from("transactions")
         .update(payload)
-        .eq("id", id)
+        .eq("id", id).eq("user_id", userId)
         .select()
         .single();
       if (error) throw error;
@@ -201,10 +220,10 @@ export function useTransactionsQuery() {
     },
 
     onMutate: async ({ id, ...tx }) => {
-      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
-      const previous = queryClient.getQueryData<Transaction[]>(TRANSACTIONS_KEY);
+      await queryClient.cancelQueries({ queryKey: transactionsKey });
+      const previous = queryClient.getQueryData<Transaction[]>(transactionsKey);
 
-      queryClient.setQueryData<Transaction[]>(TRANSACTIONS_KEY, (old) =>
+      queryClient.setQueryData<Transaction[]>(transactionsKey, (old) =>
         (old ?? []).map((t) => (t.id === id ? { ...t, ...tx } : t))
       );
 
@@ -212,19 +231,19 @@ export function useTransactionsQuery() {
     },
 
     onError: (error, { id, ...tx }, context: any) => {
-      if (context?.previous) {
-        queryClient.setQueryData(TRANSACTIONS_KEY, context.previous);
+      if (context) {
+        queryClient.setQueryData(transactionsKey, context.previous ?? []);
       }
       if (isNetworkError(error)) {
-        enqueueSyncOp({
+        void enqueueSyncOp(userId, {
           type: "update",
           payload: { id, ...mapTransactionToDb(tx) } as Record<string, unknown>,
-        });
+        }).catch(() => {});
       }
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: transactionsKey });
     },
   });
 
@@ -233,15 +252,15 @@ export function useTransactionsQuery() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       // TODO: move to application service — layer violation
-      const { error } = await supabase.from("transactions").delete().eq("id", id);
+      const { error } = await supabase.from("transactions").delete().eq("id", id).eq("user_id", userId);
       if (error) throw error;
     },
 
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
-      const previous = queryClient.getQueryData<Transaction[]>(TRANSACTIONS_KEY);
+      await queryClient.cancelQueries({ queryKey: transactionsKey });
+      const previous = queryClient.getQueryData<Transaction[]>(transactionsKey);
 
-      queryClient.setQueryData<Transaction[]>(TRANSACTIONS_KEY, (old) =>
+      queryClient.setQueryData<Transaction[]>(transactionsKey, (old) =>
         (old ?? []).filter((t) => t.id !== id)
       );
 
@@ -249,16 +268,16 @@ export function useTransactionsQuery() {
     },
 
     onError: (error, id, context: any) => {
-      if (context?.previous) {
-        queryClient.setQueryData(TRANSACTIONS_KEY, context.previous);
+      if (context) {
+        queryClient.setQueryData(transactionsKey, context.previous ?? []);
       }
       if (isNetworkError(error)) {
-        enqueueSyncOp({ type: "delete", payload: { id } });
+        void enqueueSyncOp(userId, { type: "delete", payload: { id } }).catch(() => {});
       }
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: transactionsKey });
     },
   });
 
@@ -272,7 +291,7 @@ export function useTransactionsQuery() {
       } = await supabase.auth.getUser();
 
       if (userError) throw userError;
-      if (!user) throw new Error("User not authenticated");
+      if (user?.id !== userId) throw new Error("Session changed");
 
       const payloads = transactions.map((tx) => ({
         ...mapNewTransactionToDb(tx),
@@ -288,8 +307,8 @@ export function useTransactionsQuery() {
     },
 
     onMutate: async (newTransactions) => {
-      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
-      const previous = queryClient.getQueryData<Transaction[]>(TRANSACTIONS_KEY);
+      await queryClient.cancelQueries({ queryKey: transactionsKey });
+      const previous = queryClient.getQueryData<Transaction[]>(transactionsKey);
 
       const optimistics: Transaction[] = newTransactions.map((tx) => ({
         id: `optimistic_${crypto.randomUUID()}`,
@@ -315,7 +334,7 @@ export function useTransactionsQuery() {
       }));
 
       queryClient.setQueryData<Transaction[]>(
-        TRANSACTIONS_KEY,
+        transactionsKey,
         (old) => [...optimistics, ...(old ?? [])]
       );
 
@@ -323,44 +342,39 @@ export function useTransactionsQuery() {
     },
 
     onError: (_error, _txs, context: any) => {
-      if (context?.previous) {
-        queryClient.setQueryData(TRANSACTIONS_KEY, context.previous);
+      if (context) {
+        queryClient.setQueryData(transactionsKey, context.previous ?? []);
       }
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: transactionsKey });
     },
   });
 
   // ─── UPDATE INSTALLMENT DATES ─────────────────────────────────────────────
 
   const updateInstallmentDatesMutation = useMutation({
-    mutationFn: async (newDates: { id: string; date: string }[]) => {
-      const results = await Promise.all(
-        // TODO: move to application service — layer violation
-        newDates.map(({ id, date }) =>
-          supabase.from("transactions").update({ date }).eq("id", id)
-        )
-      );
-
-      const errors = results.filter((r) => r.error).map((r) => r.error!);
-      if (errors.length > 0) {
-        throw new Error(
-          `Failed to update ${errors.length} of ${newDates.length} installment dates`
-        );
-      }
+    mutationFn: async (changes: InstallmentDateChange[]) => {
+      const { error } = await supabase.rpc("reschedule_installments", {
+        p_changes: changes.map(({ id, date, invoiceDueDate, previousDate, previousInvoiceDueDate }) => ({
+          id,
+          date,
+          invoice_due_date: invoiceDueDate,
+          previous_date: previousDate,
+          previous_invoice_due_date: previousInvoiceDueDate,
+        })),
+      });
+      if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: transactionsKey }),
   });
 
   const recurringPaymentMutation = useMutation({
     mutationFn: async ({ transactionId, date, isPaid }: { transactionId: string; date: string; isPaid: boolean }) => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
-      if (!user) throw new Error("User not authenticated");
+      if (user?.id !== userId) throw new Error("Session changed");
 
       const { error } = await supabase.from("recurring_overrides").upsert(
         { transaction_id: transactionId, user_id: user.id, override_date: date, is_paid: isPaid },
@@ -368,7 +382,7 @@ export function useTransactionsQuery() {
       );
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: transactionsKey }),
   });
 
   return {

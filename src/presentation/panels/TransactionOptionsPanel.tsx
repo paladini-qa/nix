@@ -196,7 +196,8 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
         description: isEdit
           ? t("transactionOptions.recurring.editFuture.description")
           : t("transactionOptions.recurring.deleteFuture.description"),
-        warning: isEdit ? null : t("transactionOptions.warnings.stopRecurring"),
+        warning: "Temporarily unavailable to protect the history of this series.",
+        disabled: true,
       },
       {
         id: "all" as OptionType,
@@ -429,6 +430,7 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                     transition={{ delay: index * 0.05 }}
                   >
                     <ListItemButton
+                      disabled={"disabled" in option && option.disabled === true}
                       onClick={() => onSelect(option.id)}
                       sx={{
                         borderRadius: "20px",
