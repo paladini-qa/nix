@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Financial audit** — Scope cached queries and offline queue entries to the active account, load every transaction page, and distinguish a failed load from an empty result.
+  - **Modified files** — `src/App.tsx`, `src/infrastructure/database/queryClient.ts`, `src/presentation/hooks/{useSettingsQuery,useTransactionsQuery,useNetworkStatus}.ts`, `src/presentation/layouts/shell/{AppShell,AppViewSwitcher}.tsx`
+- **Dates and cents** — Keep installment totals exact, clamp invoice due dates, retain every recurring charge in an invoice, and include recurring history in the dashboard opening balance. Use invoice dates for dashboard date filters and parse BRL/USD statements without shifting decimal places.
+  - **Modified files** — `src/domain/usecases/{transactionUtils,recurringUtils,dashboardMonthlySeries}.ts`, `src/infrastructure/export/importService.ts`, `src/presentation/hooks/{useCurrency,useFilteredTransactions}.ts`, `src/presentation/views/DashboardMainSection.tsx`
+- **Transaction workflows** — Await save confirmation, retain the draft on failure, restore the mobile creation action, reconnect installment rescheduling and investment actions, and prevent future-only recurring operations from changing history.
+  - **Modified files** — `src/presentation/forms/TransactionForm.tsx`, `src/presentation/layouts/shell/{AppShell,AppViewSwitcher}.tsx`, `src/presentation/panels/TransactionOptionsPanel.tsx`, `src/presentation/views/{SplitsView,TransactionsView}.tsx`
+- **Form and connectivity feedback** — Report unconfirmed writes, align the mobile refresh indicator, repair Zod 4 field errors, and restore the tag form button reference.
+  - **Modified files** — `src/presentation/components/banners/OfflineBanner.tsx`, `src/presentation/components/ui/TagsManager.tsx`, `src/presentation/hooks/{useFormValidation,usePullToRefresh}.ts`, `src/shared/schemas/index.ts`
+- **Audit regression coverage** — Add isolated Chromium scenarios and tests for account isolation, large datasets, dashboard filters, currency and statement amounts, and recurring purchase dates.
+  - **Created files** — `playwright.audit.config.ts`, `e2e/audit/transactions.spec.ts`, `tests/hooks/{useFilteredTransactions.test.ts,useTransactionsQuery.test.tsx}`, `tests/utils/importService.test.ts`
+  - **Modified files** — `tests/hooks/useCurrency.test.ts`, `tests/utils/{dashboardMonthlySeries,recurringUtils,transactionUtils}.test.ts`
+
+### Fixed
+
 - **Dashboard recurrence crash** — Read payment configurations from the settings context and handle missing configurations when building monthly charts.
   - **Modified files** — `src/presentation/views/DashboardMainSection.tsx`, `src/domain/usecases/dashboardMonthlySeries.ts`, `tests/utils/dashboardMonthlySeries.test.ts`
 

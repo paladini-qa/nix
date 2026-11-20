@@ -4,7 +4,7 @@ import { useCurrency } from "@/presentation/hooks/useCurrency";
 
 describe("useCurrency", () => {
   it("should format currency correctly in BRL", () => {
-    const { result } = renderHook(() => useCurrency());
+    const { result } = renderHook(() => useCurrency({ locale: "pt-BR", currency: "BRL" }));
 
     expect(result.current.format(1234.56)).toBe("R$\u00A01.234,56");
     expect(result.current.format(0)).toBe("R$\u00A00,00");
@@ -21,7 +21,7 @@ describe("useCurrency", () => {
   });
 
   it("should format compact values", () => {
-    const { result } = renderHook(() => useCurrency());
+    const { result } = renderHook(() => useCurrency({ locale: "pt-BR", currency: "BRL" }));
 
     const compact1K = result.current.formatCompact(1500);
     expect(compact1K).toContain("mil");
@@ -39,7 +39,7 @@ describe("useCurrency", () => {
   });
 
   it("should return correct currency symbol", () => {
-    const { result } = renderHook(() => useCurrency());
+    const { result } = renderHook(() => useCurrency({ locale: "pt-BR", currency: "BRL" }));
 
     expect(result.current.currencySymbol).toBe("R$");
   });

@@ -36,6 +36,7 @@ const persister = createIDBPersister();
 persistQueryClient({
   queryClient,
   persister,
+  buster: "account-scoped-queries",
   // Invalida o cache persistido se tiver mais de 24h
   maxAge: 1000 * 60 * 60 * 24,
 });

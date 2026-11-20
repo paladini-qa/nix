@@ -5,16 +5,34 @@ export function getBalanceOnDate(
   date: string,
   excludedId?: string,
 ): number {
-  return transactions.reduce((balance, transaction) => {
+  const balanceInCents = transactions.reduce((balance, transaction) => {
     if (transaction.date > date || transaction.id === excludedId) return balance;
-    return balance + (transaction.type === "income" ? transaction.amount : -transaction.amount);
+    const cents = Math.round(transaction.amount * 100);
+    return balance + (transaction.type === "income" ? cents : -cents);
   }, 0);
+  return balanceInCents / 100;
 }
 
-export function getInstallmentAmounts(total: number, count: number) {
-  const regular = Math.round((total / count) * 100) / 100;
-  const remainder = Math.round((total - regular * count) * 100) / 100;
-  return { first: Math.round((regular + remainder) * 100) / 100, regular };
+export const MAX_INSTALLMENTS = 48;
+
+export function getInstallmentAmounts(total: number, count: number): number[] {
+  if (!Number.isInteger(count) || count < 2 || count > MAX_INSTALLMENTS) {
+    throw new RangeError("Invalid installment count");
+  }
+
+  const cents = Math.round(total * 100);
+  const regular = Math.round(cents / count);
+  const first = cents - regular * (count - 1);
+
+  if (first >= 0) {
+    return Array.from({ length: count }, (_, index) => (index === 0 ? first : regular) / 100);
+  }
+
+  // Match the database's cumulative rounding when the first installment
+  // cannot absorb the full adjustment.
+  return Array.from({ length: count }, (_, index) =>
+    (Math.round(cents * (index + 1) / count) - Math.round(cents * index / count)) / 100
+  );
 }
 
 /**
@@ -51,8 +69,8 @@ export function getEffectiveReportDate(
  * Calcula a data de vencimento da fatura para uma transação de cartão.
  *
  * Regras:
- * - Se dia da transação < closingDay → fatura do mês corrente
- * - Se dia da transação >= closingDay → fatura do próximo mês
+ * - Se dia da transação <= closingDay → fatura do mês corrente
+ * - Se dia da transação > closingDay → fatura do próximo mês
  * - O pagamento ocorre no paymentDay do mês de fechamento se paymentDay > closingDay,
  *   ou no mês seguinte ao fechamento se paymentDay <= closingDay.
  *
@@ -109,7 +127,8 @@ export function calculateInvoiceDueDate(
 
   const pm = String(paymentMonth + 1).padStart(2, "0");
   const py = String(paymentYear);
-  const pd = String(config.paymentDay).padStart(2, "0");
+  const lastDay = new Date(paymentYear, paymentMonth + 1, 0).getDate();
+  const pd = String(Math.min(config.paymentDay, lastDay)).padStart(2, "0");
 
   return `${py}-${pm}-${pd}`;
 }

@@ -76,9 +76,8 @@ interface SplitsViewProps {
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onRefreshData?: () => Promise<void>;
   onUpdateInstallmentDates?: (
-    installmentIds: string[],
     newDates: { id: string; date: string }[]
-  ) => Promise<boolean>;
+  ) => Promise<void>;
 }
 
 type SplitStatus = "all" | "in_progress" | "completed";
@@ -172,11 +171,14 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     setDateDialogOpen(true);
   }, []);
 
+  const [dateUpdateError, setDateUpdateError] = useState(false);
+
   // Fecha o Dialog
   const handleCloseDateDialog = useCallback(() => {
     setDateDialogOpen(false);
     setSelectedGroupForDateChange(null);
     setIsUpdatingDates(false);
+    setDateUpdateError(false);
   }, []);
 
   // Calcula as novas datas das parcelas
@@ -220,6 +222,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   const handleSaveDates = useCallback(async () => {
     if (!selectedGroupForDateChange || !onUpdateInstallmentDates) return;
 
+    setDateUpdateError(false);
     setIsUpdatingDates(true);
     try {
       const newDates = calculateNewDates(
@@ -229,10 +232,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         newStartYear
       );
 
-      const installmentIds = selectedGroupForDateChange.installments.map(
-        (i) => i.id
-      );
-      await onUpdateInstallmentDates(installmentIds, newDates);
+      await onUpdateInstallmentDates(newDates);
 
       handleCloseDateDialog();
 
@@ -240,8 +240,8 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       if (onRefreshData) {
         await onRefreshData();
       }
-    } catch (error) {
-      console.error("Erro ao atualizar datas:", error);
+    } catch {
+      setDateUpdateError(true);
     } finally {
       setIsUpdatingDates(false);
     }
@@ -2014,6 +2014,11 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           </Stack>
         </Box>
 
+        {dateUpdateError && (
+          <Box role="alert" sx={{ px: 3, pb: 1, color: "error.main" }}>
+            Algumas datas podem não ter sido atualizadas. Revise as parcelas e tente novamente.
+          </Box>
+        )}
         {/* Footer */}
         <Divider />
         <Box

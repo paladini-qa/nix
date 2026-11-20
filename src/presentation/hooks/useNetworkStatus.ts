@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { onlineManager } from "@tanstack/react-query";
-import { get, set } from "idb-keyval";
+import { get, update } from "idb-keyval";
 
 export interface PendingOp {
   id: string;
@@ -9,42 +9,30 @@ export interface PendingOp {
   timestamp: number;
 }
 
-const QUEUE_KEY = "nix-sync-queue";
+const queueKey = (userId: string) => `nix-sync-queue:${userId}`;
 
-async function readQueue(): Promise<PendingOp[]> {
-  return (await get<PendingOp[]>(QUEUE_KEY)) ?? [];
+export async function enqueueSyncOp(
+  userId: string,
+  op: Omit<PendingOp, "id" | "timestamp">,
+): Promise<void> {
+  const entry = { ...op, id: crypto.randomUUID(), timestamp: Date.now() };
+  await update<PendingOp[]>(queueKey(userId), (queue) => [...(queue ?? []), entry]);
 }
 
-async function writeQueue(ops: PendingOp[]): Promise<void> {
-  await set(QUEUE_KEY, ops);
-}
-
-export async function enqueueSyncOp(op: Omit<PendingOp, "id" | "timestamp">): Promise<void> {
-  const queue = await readQueue();
-  await writeQueue([
-    ...queue,
-    { ...op, id: crypto.randomUUID(), timestamp: Date.now() },
-  ]);
-}
-
-export async function removeSyncOp(id: string): Promise<void> {
-  const queue = await readQueue();
-  await writeQueue(queue.filter((op) => op.id !== id));
-}
-
-export function useNetworkStatus() {
+export function useNetworkStatus(userId: string) {
   const [isOnline, setIsOnline] = useState(onlineManager.isOnline());
   const [pendingCount, setPendingCount] = useState(0);
 
   const refreshPendingCount = useCallback(async () => {
-    const queue = await readQueue();
-    setPendingCount(queue.length);
-  }, []);
+    const queue = await get<PendingOp[]>(queueKey(userId));
+    setPendingCount(queue?.length ?? 0);
+  }, [userId]);
 
   useEffect(() => {
-    refreshPendingCount();
+    void refreshPendingCount();
     const unsub = onlineManager.subscribe(() => {
       setIsOnline(onlineManager.isOnline());
+      void refreshPendingCount();
     });
     return unsub;
   }, [refreshPendingCount]);

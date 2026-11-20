@@ -7,7 +7,6 @@ import { useAppStore } from "@/presentation/hooks/useAppStore";
 import { readRecurringOccurrenceId } from "@/domain/usecases/recurringUtils";
 import { calculateInvoiceDueDate } from "@/domain/usecases/transactionUtils";
 import { useTransactionsQuery } from "@/presentation/hooks/useTransactionsQuery";
-import { useSettingsQuery } from "@/presentation/hooks/useSettingsQuery";
 import { useSettings, useNotification, useConfirmDialog } from "@/presentation/contexts";
 import { Box, CircularProgress, useMediaQuery, useTheme } from "@mui/material";
 import { Session } from "@supabase/supabase-js";
@@ -59,7 +58,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
     deleteTransaction,
     refetch: refetchTransactions,
     updateInstallmentDates
-  } = useTransactionsQuery();
+  } = useTransactionsQuery(session.user.id);
   const { 
     paymentMethods, 
     paymentMethodColors, 
@@ -158,7 +157,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
   const handleDeleteAware = async (idOrTx: string | Transaction) => {
     let tx: Transaction | undefined;
 
-    if (typeof idOrTx === "object" && idOrTx !== null) {
+    if (typeof idOrTx !== "string") {
       tx = idOrTx;
     } else {
       const id = idOrTx;
@@ -207,6 +206,10 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
   };
 
   const handleRecurringEditWithScope = (tx: Transaction, scope: OptionType, virtualDate?: string) => {
+    if (scope === "all_future" && !tx.installmentGroupId) {
+      showError("Alterações apenas nas ocorrências futuras estão temporariamente indisponíveis.");
+      return;
+    }
     setRecurringEditForm({ open: true, transaction: tx, editMode: scope, virtualDate });
   };
 
@@ -338,14 +341,9 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
           if (toDelete) await deleteTransaction(toDelete.id);
           break;
         }
-        case "all_future": {
-          const futureRelated = transactions.filter(
-            (t) => t.recurringGroupId === recurringId && (!virtualDate || t.date >= virtualDate)
-          );
-          await Promise.all(futureRelated.map((t) => deleteTransaction(t.id)));
-          await deleteTransaction(recurringId);
-          break;
-        }
+        case "all_future":
+          showError("A exclusão apenas de ocorrências futuras está temporariamente indisponível.");
+          return;
         case "all": {
           const related = transactions.filter((t) => t.recurringGroupId === recurringId);
           await Promise.all(related.map((t) => deleteTransaction(t.id)));
@@ -413,7 +411,12 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               onDelete={handleDeleteAware}
               onTogglePaid={handleTogglePaid}
               onRefreshData={async () => { await refetchTransactions(); }}
-              onUpdateInstallmentDates={updateInstallmentDates}
+              onUpdateInstallmentDates={(newDates) => updateInstallmentDates(newDates.map(({ id, date }) => {
+                const transaction = transactions.find((tx) => tx.id === id);
+                const config = paymentMethodConfigs.find((item) => item.name === transaction?.paymentMethod);
+                const invoiceDueDate = config ? calculateInvoiceDueDate(date, config) : undefined;
+                return { id, date, invoiceDueDate };
+              }))}
             />
           </Suspense>
         );
@@ -538,7 +541,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
       case "investments":
         return (
           <Suspense fallback={<ViewLoadingMui />}>
-            <InvestmentsView transactions={transactions} isMobile={isMobile} />
+            <InvestmentsView transactions={transactions} isMobile={isMobile} onEdit={handleEditAware} onDelete={handleDeleteAware} />
           </Suspense>
         );
       case "subscriptions":
@@ -554,7 +557,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
           </Suspense>
         );
       case "dashboard":
-        return <DashboardMainSection />;
+        return <DashboardMainSection userId={session.user.id} />;
       default:
         return (
           <Suspense fallback={<TransactionsSkeleton />}>

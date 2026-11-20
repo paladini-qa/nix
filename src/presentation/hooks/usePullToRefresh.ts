@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useMotionValue, useTransform, useAnimation } from "framer-motion";
+import { useMotionValue, useTransform, useAnimation, type MotionValue } from "framer-motion";
 import { hapticMedium, hapticSuccess } from "@/infrastructure/native/capacitorService";
 
 export interface PullToRefreshConfig {
@@ -15,7 +15,7 @@ export interface PullToRefreshConfig {
 
 export interface PullToRefreshReturn {
   /** MotionValue para o deslocamento Y */
-  y: ReturnType<typeof useMotionValue>;
+  y: MotionValue<number>;
   /** Controls para animação programática */
   controls: ReturnType<typeof useAnimation>;
   /** Handler para início do pan/drag */
@@ -29,13 +29,13 @@ export interface PullToRefreshReturn {
   /** Se está refreshando (loading) */
   isRefreshing: boolean;
   /** Progresso do pull (0 a 1) */
-  pullProgress: ReturnType<typeof useTransform>;
+  pullProgress: MotionValue<number>;
   /** Rotação do indicador de loading */
-  indicatorRotation: ReturnType<typeof useTransform>;
+  indicatorRotation: MotionValue<number>;
   /** Opacidade do indicador */
-  indicatorOpacity: ReturnType<typeof useTransform>;
+  indicatorOpacity: MotionValue<number>;
   /** Escala do indicador */
-  indicatorScale: ReturnType<typeof useTransform>;
+  indicatorScale: MotionValue<number>;
   /** Força a atualização programaticamente */
   triggerRefresh: () => Promise<void>;
 }

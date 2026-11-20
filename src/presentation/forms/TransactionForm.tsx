@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useEffectEvent, useMemo, useCallback, useRef } from "react";
 import {
   Drawer,
   Button,
@@ -49,7 +49,7 @@ import {
 import NixButton from "@/presentation/components/radix/Button";
 import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
 import { Transaction, TransactionType, PaymentMethodConfig } from "@/domain/entities";
-import { calculateInvoiceDueDate, formatInvoiceMonth, getBalanceOnDate, getInstallmentAmounts } from "@/domain/usecases/transactionUtils";
+import { calculateInvoiceDueDate, formatInvoiceMonth, getBalanceOnDate, getInstallmentAmounts, MAX_INSTALLMENTS } from "@/domain/usecases/transactionUtils";
 import { formatTransactionAmount, parseTransactionAmount } from "@/domain/usecases/transactionAmount";
 import { CATEGORY_KEYWORDS, MONTHS } from "@/shared/constants";
 import { SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH_MOBILE, TOUCH_TARGET_MIN } from "@/shared/constants/layout";
@@ -77,7 +77,7 @@ interface TransactionFormProps {
   onSave: (
     transaction: Omit<Transaction, "id" | "createdAt">,
     editId?: string
-  ) => void;
+  ) => Promise<void>;
   categories: { income: string[]; expense: string[] };
   paymentMethods: string[];
   editTransaction?: Transaction | null;
@@ -297,7 +297,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [isLoadingAiSuggestion, setIsLoadingAiSuggestion] = useState(false);
 
   // Hook de notificações
-  const { showError, showWarning, showSuccess } = useNotification();
+  const { showError, showWarning } = useNotification();
+  const submittingRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Estado para controlar tab do preview unificado
   const [previewTab, setPreviewTab] = useState<
@@ -376,11 +378,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const invalidAmount = amount.trim() !== "" && parsedAmount === null;
 
   // Calcular saldo após transação
-  const installmentCount = parseInt(installments, 10);
-  const splitAmounts = !editTransaction && hasInstallments && installmentCount >= 2 && parsedAmount !== null
+  const installmentCount = Number(installments);
+  const validInstallmentCount = Number.isInteger(installmentCount) &&
+    installmentCount >= 2 && installmentCount <= MAX_INSTALLMENTS;
+  const splitAmounts = !editTransaction && hasInstallments && validInstallmentCount && parsedAmount !== null
     ? getInstallmentAmounts(parsedAmount, installmentCount)
     : null;
-  const balanceImpact = splitAmounts?.first ?? parsedAmount ?? 0;
+  const balanceImpact = splitAmounts?.[0] ?? parsedAmount ?? 0;
   const balanceDate = effectiveDate?.isValid() ? effectiveDate.format("YYYY-MM-DD") : null;
   const balanceBefore = useMemo(
     () => balanceDate ? getBalanceOnDate(transactions, balanceDate, editTransaction?.id) : 0,
@@ -500,6 +504,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   }, [hasInstallmentsPreview, hasBalancePreview]);
 
+  const getInitialPaymentMethodDay = useEffectEvent((method: string) => getPaymentMethodPaymentDay?.(method));
+
   useEffect(() => {
     if (editTransaction) {
       setDescription(editTransaction.description);
@@ -523,7 +529,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         setInstallmentStartDate(null);
       }
       // Vencimento da fatura: usar valor salvo ou sugerir a partir da data da transação
-      const dueDay = getPaymentMethodPaymentDay?.(editTransaction.paymentMethod);
+      const dueDay = getInitialPaymentMethodDay(editTransaction.paymentMethod);
       if (dueDay != null && dueDay >= 1 && dueDay <= 31) {
         if (editTransaction.invoiceDueDate) {
           const d = dayjs(editTransaction.invoiceDueDate);
@@ -575,7 +581,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     if (!editTransaction && isOpen && initialContext) {
       if (initialContext.paymentMethod) {
         setPaymentMethod(initialContext.paymentMethod);
-        const dueDay = getPaymentMethodPaymentDay?.(initialContext.paymentMethod);
+        const dueDay = getInitialPaymentMethodDay(initialContext.paymentMethod);
         if (dueDay != null && dueDay >= 1 && dueDay <= 31) {
           const { month, year } = getSuggestedInvoiceDueMonthYear(dayjs(), dueDay);
           setInvoiceDueMonth(month);
@@ -592,7 +598,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         setHasInstallments(initialContext.hasInstallments);
       }
     }
-  }, [editTransaction, isOpen, initialContext, getPaymentMethodPaymentDay, getSuggestedInvoiceDueMonthYear]);
+  }, [editTransaction, isOpen, initialContext, getSuggestedInvoiceDueMonthYear]);
 
   // Handler para aplicar sugestão de categoria
   const applySuggestedCategory = useCallback(() => {
@@ -620,8 +626,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     [transactions]
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
 
     // Valor é opcional - pode ser definido depois
     if (!description || !category || !paymentMethod || !date) {
@@ -629,12 +636,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       return;
     }
 
-    const installmentsValue = parseInt(installments);
-    if (
-      hasInstallments &&
-      (isNaN(installmentsValue) || installmentsValue < 2)
-    ) {
-      showError("Parcelas devem ser no mínimo 2.", "Valor inválido");
+    if (hasInstallments && !validInstallmentCount) {
+      showError(`Informe um número inteiro entre 2 e ${MAX_INSTALLMENTS} parcelas.`, "Valor inválido");
       return;
     }
 
@@ -666,37 +669,38 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           : null;
     }
 
-    onSave(
-      {
-        description,
-        amount: finalAmount,
-        type,
-        category,
-        paymentMethod,
-        date: effectiveDate ? effectiveDate.format("YYYY-MM-DD") : date.format("YYYY-MM-DD"),
-        ...(invoiceDueDate !== undefined && { invoiceDueDate }),
-        isRecurring,
-        frequency: isRecurring ? frequency : undefined,
-        installments: hasInstallments ? installmentsValue : undefined,
-        currentInstallment: hasInstallments
-          ? editTransaction?.currentInstallment || 1
-          : undefined,
-        isShared: editTransaction?.isShared ?? false,
-        sharedWith: editTransaction?.sharedWith,
-        iOwe: editTransaction?.iOwe,
-        notes: editTransaction?.notes,
-      },
-      editTransaction?.id || undefined
-    );
-
-    // Mostrar notificação de sucesso e fechar modal
-    showSuccess(
-      editTransaction
-        ? "Transação atualizada com sucesso!"
-        : "Transação criada com sucesso!",
-      "Sucesso"
-    );
-    onClose();
+    submittingRef.current = true;
+    setIsSubmitting(true);
+    try {
+      await onSave(
+        {
+          description,
+          amount: finalAmount,
+          type,
+          category,
+          paymentMethod,
+          date: effectiveDate ? effectiveDate.format("YYYY-MM-DD") : date.format("YYYY-MM-DD"),
+          ...(invoiceDueDate !== undefined && { invoiceDueDate }),
+          isRecurring,
+          frequency: isRecurring ? frequency : undefined,
+          installments: hasInstallments ? installmentCount : undefined,
+          currentInstallment: hasInstallments
+            ? editTransaction?.currentInstallment || 1
+            : undefined,
+          isShared: editTransaction?.isShared ?? false,
+          sharedWith: editTransaction?.sharedWith,
+          iOwe: editTransaction?.iOwe,
+          notes: editTransaction?.notes,
+        },
+        editTransaction?.id || undefined
+      );
+      onClose();
+    } catch {
+      showError("Erro ao salvar transação. Tente novamente.", "Erro ao salvar");
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   // Formatar moeda
@@ -732,7 +736,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       anchor="right"
       className="transaction-form-drawer"
       open={isOpen}
-      onClose={onClose}
+      onClose={isSubmitting ? undefined : onClose}
       elevation={0}
       slotProps={{
         backdrop: {
@@ -803,6 +807,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             }}
           >
             <Typography
+              component="button"
+              type="button"
+              disabled={isSubmitting}
               variant="body2"
               sx={{
                 color: "text.secondary",
@@ -810,6 +817,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 display: "flex",
                 alignItems: "center",
                 gap: 0.5,
+                bgcolor: "transparent",
+                border: 0,
+                p: 0,
                 cursor: "pointer",
                 transition: "color 0.15s ease",
                 "&:hover": {
@@ -834,7 +844,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
           {/* Botão Fechar */}
           <IconButton
+            aria-label="Fechar formulário"
             onClick={onClose}
+            disabled={isSubmitting}
             size="small"
             sx={{
               width: 32,
@@ -1063,21 +1075,23 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             {/* Descrição com Autocomplete */}
             <Box>
               <Autocomplete
+                id="transaction-description"
                 freeSolo
                 options={uniqueDescriptions}
-                value={description}
-                onInputChange={(_, newValue) => setDescription(newValue)}
+                value={null}
+                inputValue={description}
+                onInputChange={(_, newValue, reason) => {
+                  if (reason === "input" || reason === "clear") setDescription(newValue);
+                }}
                 onChange={(_, newValue) => {
-                  if (newValue) {
-                    handleDescriptionSelect(newValue);
-                  }
+                  setDescription(newValue ?? "");
+                  if (newValue) handleDescriptionSelect(newValue);
                 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
                     label="Description"
                     name="transaction-description"
-                    id="transaction-description"
                     required
                     placeholder="Ex: Mercado, Aluguel, Salário..."
                     sx={inputSx}
@@ -1444,7 +1458,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         label="Month"
                         displayEmpty
                         onChange={(e) =>
-                          setOptionalInvoiceReportMonth(e.target.value === "" ? null : Number(e.target.value))
+                          setOptionalInvoiceReportMonth(String(e.target.value) === "" ? null : Number(e.target.value))
                         }
                       >
                         <MenuItem value="">— Do not set</MenuItem>
@@ -1464,7 +1478,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         label="Year"
                         displayEmpty
                         onChange={(e) =>
-                          setOptionalInvoiceReportYear(e.target.value === "" ? null : Number(e.target.value))
+                          setOptionalInvoiceReportYear(String(e.target.value) === "" ? null : Number(e.target.value))
                         }
                       >
                         <MenuItem value="">—</MenuItem>
@@ -1538,7 +1552,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     </Box>
                     <Switch
                       checked={isRecurring}
-                      inputProps={{ "aria-label": "Recurring" }}
+                      slotProps={{ input: { "aria-label": "Recurring" } }}
                       size="small"
                       sx={{
                         "& .MuiSwitch-thumb": {
@@ -1607,7 +1621,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       </Box>
                       <Switch
                         checked={hasInstallments}
-                        inputProps={{ "aria-label": "Installment" }}
+                        slotProps={{ input: { "aria-label": "Installment" } }}
                         size="small"
                         color="warning"
                       />
@@ -1641,7 +1655,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   fullWidth
                   value={installments}
                   onChange={(e) => setInstallments(e.target.value)}
-                  inputProps={{ min: 2, max: 48 }}
+                  inputProps={{ min: 2, max: MAX_INSTALLMENTS, step: 1 }}
                   sx={inputSx}
                 />
               )}
@@ -1720,24 +1734,21 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                           color="warning.main"
                           fontWeight={500}
                         >
-                          {installments}x de
+                          {installmentCount} parcelas
                         </Typography>
                         <Typography
                           variant="h5"
                           fontWeight={700}
                           color="warning.main"
                         >
-                          {formatCurrency(splitAmounts.regular)}
+                          {formatCurrency(Math.min(...splitAmounts))}
+                          {Math.min(...splitAmounts) !== Math.max(...splitAmounts) &&
+                            ` – ${formatCurrency(Math.max(...splitAmounts))}`}
                         </Typography>
                       </Box>
                       <Typography variant="caption" color="text.secondary">
                         Total: {formatCurrency(parsedAmount!)}
                       </Typography>
-                      {splitAmounts.first !== splitAmounts.regular && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          Primeira parcela: {formatCurrency(splitAmounts.first)}
-                        </Typography>
-                      )}
                     </Box>
                   )}
 
@@ -1890,6 +1901,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               variant="soft"
               color="gray"
               onClick={onClose}
+            disabled={isSubmitting}
               type="button"
             >
               Cancelar
@@ -1897,13 +1909,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           )}
           <NixButton
             type="submit"
+            loading={isSubmitting}
             size="medium"
             variant="solid"
             color="purple"
             style={{ flex: 1 }}
           >
             <SaveIcon />{" "}
-            {editTransaction ? "Salvar Alterações" : "Criar Transação"}
+            {isSubmitting ? "Salvando…" : editTransaction ? "Salvar Alterações" : "Criar Transação"}
           </NixButton>
         </Box>
       </form>

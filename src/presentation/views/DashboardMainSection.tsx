@@ -42,7 +42,7 @@ const MOBILE_SHORTCUTS = [
   { view: "fiscal-report" as const,  icon: <FiscalIcon sx={{ fontSize: 20 }} />,         label: "Fiscal",       color: "#ef4444" },
 ];
 
-const DashboardMainSection: React.FC = () => {
+const DashboardMainSection: React.FC<{ userId: string }> = ({ userId }) => {
   const theme = useTheme();
   const { t } = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -59,8 +59,8 @@ const DashboardMainSection: React.FC = () => {
     advancedFilters,
     setFiltersState,
   } = useAppStore();
-  const { data: transactions = [], refetch } = useTransactionsQuery();
-  const { filteredTransactions, summary } = useFilteredTransactions();
+  const { data: transactions = [], refetch } = useTransactionsQuery(userId);
+  const { filteredTransactions, summary } = useFilteredTransactions(transactions, paymentMethodConfigs);
 
   const hasAdvancedFiltersActive =
     advancedFilters.startDate !== null ||
@@ -84,7 +84,7 @@ const DashboardMainSection: React.FC = () => {
   const hasExpenses = filteredTransactions.some(({ type }) => type === "expense");
 
   const firstName = displayName ? displayName.split(" ")[0] : t("dashboard.title");
-  const monthLabel = new Date(filters.year, filters.month - 1).toLocaleDateString("en-US", {
+  const monthLabel = new Date(filters.year, filters.month).toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });

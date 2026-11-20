@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Box, useTheme, alpha } from "@mui/material";
+import React from "react";
+import { Box, alpha } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
-import { WifiOff, CloudUpload, CheckCircle } from "lucide-react";
-
-type SyncState = "offline" | "syncing" | "synced" | "hidden";
+import { WifiOff } from "lucide-react";
 
 interface OfflineBannerProps {
   isOnline: boolean;
@@ -11,74 +9,14 @@ interface OfflineBannerProps {
 }
 
 const OfflineBanner: React.FC<OfflineBannerProps> = ({ isOnline, pendingCount }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
-  const [syncState, setSyncState] = useState<SyncState>("hidden");
-  const [prevOnline, setPrevOnline] = useState(isOnline);
-
-  useEffect(() => {
-    if (!isOnline) {
-      setSyncState("offline");
-    } else if (!prevOnline && isOnline) {
-      // Acabou de voltar online
-      if (pendingCount > 0) {
-        setSyncState("syncing");
-        const timer = setTimeout(() => {
-          setSyncState("synced");
-          setTimeout(() => setSyncState("hidden"), 1800);
-        }, 1600);
-        return () => clearTimeout(timer);
-      } else {
-        setSyncState("synced");
-        const timer = setTimeout(() => setSyncState("hidden"), 1800);
-        return () => clearTimeout(timer);
-      }
-    } else if (isOnline && pendingCount === 0 && syncState === "syncing") {
-      setSyncState("synced");
-      const timer = setTimeout(() => setSyncState("hidden"), 1800);
-      return () => clearTimeout(timer);
-    }
-    setPrevOnline(isOnline);
-  }, [isOnline, pendingCount]);
-
-  useEffect(() => {
-    setPrevOnline(isOnline);
-  }, [isOnline]);
-
-  const config: Record<Exclude<SyncState, "hidden">, {
-    bg: string; border: string; color: string; icon: React.ReactNode; text: string;
-  }> = {
-    offline: {
-      bg:     alpha("#f87171", 0.15),
-      border: alpha("#f87171", 0.25),
-      color:  "#fca5a5",
-      icon: <WifiOff size={14} />,
-      text: pendingCount > 0
-        ? `Offline — ${pendingCount} pending change${pendingCount === 1 ? "" : "s"}`
-        : "No connection",
-    },
-    syncing: {
-      bg:     alpha("#fcd34d", 0.12),
-      border: alpha("#fcd34d", 0.25),
-      color:  "#fcd34d",
-      icon: <CloudUpload size={14} />,
-      text: "Syncing...",
-    },
-    synced: {
-      bg:     alpha("#4ade80", 0.12),
-      border: alpha("#4ade80", 0.22),
-      color:  "#4ade80",
-      icon: <CheckCircle size={14} />,
-      text: "Synced",
-    },
-  };
-
-  const visible = syncState !== "hidden";
-  const cfg = visible ? config[syncState] : null;
+  const visible = !isOnline || pendingCount > 0;
+  const text = isOnline
+    ? "Há alterações sem confirmação. Confira os lançamentos antes de tentar novamente."
+    : "Sem conexão.";
 
   return (
     <AnimatePresence>
-      {visible && cfg && (
+      {visible && (
         <motion.div
           initial={{ opacity: 0, y: -12, scaleY: 0.8 }}
           animate={{ opacity: 1, y: 0, scaleY: 1 }}
@@ -98,6 +36,7 @@ const OfflineBanner: React.FC<OfflineBannerProps> = ({ isOnline, pendingCount })
           }}
         >
           <Box
+            role="status"
             sx={{
               display: "inline-flex",
               alignItems: "center",
@@ -105,20 +44,20 @@ const OfflineBanner: React.FC<OfflineBannerProps> = ({ isOnline, pendingCount })
               px: 1.5,
               py: 0.5,
               borderRadius: "20px",
-              background: cfg.bg,
-              border: `1px solid ${cfg.border}`,
+              background: alpha("#f87171", 0.15),
+              border: `1px solid ${alpha("#f87171", 0.25)}`,
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
-              color: cfg.color,
+              color: "text.primary",
               fontSize: "0.72rem",
               fontWeight: 600,
               letterSpacing: "0.01em",
-              boxShadow: `0 4px 12px -4px ${cfg.border}`,
+              boxShadow: `0 4px 12px -4px ${alpha("#f87171", 0.25)}`,
               userSelect: "none",
             }}
           >
-            {cfg.icon}
-            {cfg.text}
+            <WifiOff size={14} aria-hidden="true" />
+            {text}
           </Box>
         </motion.div>
       )}

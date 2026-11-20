@@ -150,14 +150,9 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
             Tags
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenForm()}
-        >
-          New Tag
-        </Button>
+        <NixButton size="sm" onClick={() => handleOpenForm()}>
+          <AddIcon fontSize="small" /> New Tag
+        </NixButton>
       </Box>
 
       {loading ? (

@@ -1,4 +1,4 @@
-import { Transaction } from "@/domain/entities";
+import { parseTransactionAmount } from "@/domain/usecases/transactionAmount";
 
 export interface ParsedTransactionRow {
   date: string;        // YYYY-MM-DD
@@ -69,8 +69,8 @@ export function parseCSV(content: string): ParsedTransactionRow[] {
     } else if (debitIdx !== -1 || creditIdx !== -1) {
       const debit = debitIdx !== -1 ? parseAmount(cols[debitIdx]?.replace(/"/g, "").trim()) : null;
       const credit = creditIdx !== -1 ? parseAmount(cols[creditIdx]?.replace(/"/g, "").trim()) : null;
-      if (debit && debit > 0) { amount = debit; type = "expense"; }
-      else if (credit && credit > 0) { amount = credit; type = "income"; }
+      if (debit) { amount = Math.abs(debit); type = "expense"; }
+      else if (credit) { amount = Math.abs(credit); type = "income"; }
       else continue;
     } else {
       continue;
@@ -104,8 +104,8 @@ export function parseOFX(content: string): ParsedTransactionRow[] {
     const date = parseOFXDate(dateStr);
     if (!date) continue;
 
-    const rawAmount = parseFloat(amountStr.replace(",", "."));
-    if (isNaN(rawAmount)) continue;
+    const rawAmount = parseAmount(amountStr);
+    if (!rawAmount) continue;
 
     rows.push({
       date,
@@ -179,10 +179,9 @@ function parseOFXDate(raw: string): string | null {
 
 function parseAmount(raw: string | undefined): number | null {
   if (!raw) return null;
-  // Remove espaços, R$, $ e letras
-  const clean = raw.replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
-  const n = parseFloat(clean);
-  return isNaN(n) ? null : n;
+  const text = raw.trim().replace(/^((?:R?\$)\s*)([+-])/, "$2$1");
+  const amount = parseTransactionAmount(text.replace(/^[+-]\s*/, ""));
+  return amount !== null && text.startsWith("-") ? -amount : amount;
 }
 
 function extractOFXField(block: string, field: string): string | null {
