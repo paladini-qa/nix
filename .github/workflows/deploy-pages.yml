@@ -21,6 +21,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      PAGES_ARTIFACT_NAME: github-pages-${{ github.run_attempt }}
 
     steps:
       - name: Checkout
@@ -53,6 +55,7 @@ jobs:
         id: upload
         uses: actions/upload-pages-artifact@v5
         with:
+          name: ${{ env.PAGES_ARTIFACT_NAME }}
           path: dist
 
       - name: Wait for the Pages artifact
@@ -61,8 +64,10 @@ jobs:
           PAGES_ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
         run: |
           for attempt in {1..8}; do
-            if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=github-pages" \
+            if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=$PAGES_ARTIFACT_NAME" \
               --jq '.artifacts[] | select(.expired == false) | .id' | grep -Fxq "$PAGES_ARTIFACT_ID"; then
+              # The Pages action reads a separate artifact service.
+              sleep 10
               exit 0
             fi
             if [ "$attempt" -lt 8 ]; then sleep 5; fi
@@ -73,3 +78,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          artifact_name: ${{ env.PAGES_ARTIFACT_NAME }}
