@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Installment rescheduling** — Save the selected dates in one database operation and reject conflicting or inaccessible rows as a batch. Retrying a completed request preserves its result.
+  - **Created files** — `docs/migrations/20261120154452_reschedule_installments_atomically.sql`, `tests/sql/reschedule_installments.sql`
+  - **Modified files** — `docs/setup.sql`, `docs/REQUIREMENTS.md`, `src/domain/usecases/transactionUtils.ts`, `src/presentation/hooks/useTransactionsQuery.ts`, `src/presentation/layouts/shell/AppViewSwitcher.tsx`, `src/presentation/views/SplitsView.tsx`, `tests/hooks/useTransactionsQuery.test.tsx`, `e2e/audit/transactions.spec.ts`
+
+### Fixed
+
 - **Financial audit** — Scope cached queries and offline queue entries to the active account, load every transaction page, and distinguish a failed load from an empty result.
   - **Modified files** — `src/App.tsx`, `src/infrastructure/database/queryClient.ts`, `src/presentation/hooks/{useSettingsQuery,useTransactionsQuery,useNetworkStatus}.ts`, `src/presentation/layouts/shell/{AppShell,AppViewSwitcher}.tsx`
 - **Dates and cents** — Keep installment totals exact, clamp invoice due dates, retain every recurring charge in an invoice, and include recurring history in the dashboard opening balance. Use invoice dates for dashboard date filters and parse BRL/USD statements without shifting decimal places.

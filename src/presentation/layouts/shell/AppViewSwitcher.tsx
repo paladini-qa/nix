@@ -411,11 +411,11 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               onDelete={handleDeleteAware}
               onTogglePaid={handleTogglePaid}
               onRefreshData={async () => { await refetchTransactions(); }}
-              onUpdateInstallmentDates={(newDates) => updateInstallmentDates(newDates.map(({ id, date }) => {
-                const transaction = transactions.find((tx) => tx.id === id);
+              onUpdateInstallmentDates={(newDates) => updateInstallmentDates(newDates.map((change) => {
+                const transaction = transactions.find((tx) => tx.id === change.id);
                 const config = paymentMethodConfigs.find((item) => item.name === transaction?.paymentMethod);
-                const invoiceDueDate = config ? calculateInvoiceDueDate(date, config) : undefined;
-                return { id, date, invoiceDueDate };
+                const invoiceDueDate = config ? calculateInvoiceDueDate(change.date, config) : undefined;
+                return { ...change, invoiceDueDate };
               }))}
             />
           </Suspense>

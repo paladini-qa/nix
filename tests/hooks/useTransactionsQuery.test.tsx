@@ -6,7 +6,7 @@ import { supabase } from "@/infrastructure/database/supabaseClient";
 import { useTransactionsQuery } from "@/presentation/hooks/useTransactionsQuery";
 
 vi.mock("@/infrastructure/database/supabaseClient", () => ({
-  supabase: { from: vi.fn() },
+  supabase: { from: vi.fn(), rpc: vi.fn() },
 }));
 
 it("paginates past a server cap and isolates old rows when a different user signs in", async () => {
@@ -54,4 +54,29 @@ it("paginates past a server cap and isolates old rows when a different user sign
   expect(result.current.data).toBeUndefined();
   await waitFor(() => expect(result.current.data).toEqual([]));
   expect(requests.at(-1)).toBe("second");
+});
+
+
+it("sends a single rescheduling request containing the original and proposed dates", async () => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { enabled: false } } });
+  const wrapper = ({ children }: PropsWithChildren) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  const rpc = vi.mocked(supabase.rpc);
+  rpc.mockResolvedValueOnce({ data: null, error: null, count: null, status: 204, statusText: "No Content" });
+
+  const { result } = renderHook(() => useTransactionsQuery("first"), { wrapper });
+  await result.current.updateInstallmentDates([
+    { id: "card", date: "2027-01-31", previousDate: "2026-12-31",
+      invoiceDueDate: "2027-02-10", previousInvoiceDueDate: "2027-01-10" },
+    { id: "pix", date: "2027-02-28", previousDate: "2027-01-31" },
+  ]);
+
+  expect(rpc).toHaveBeenCalledExactlyOnceWith("reschedule_installments", {
+    p_changes: [
+      { id: "card", date: "2027-01-31", previous_date: "2026-12-31",
+        invoice_due_date: "2027-02-10", previous_invoice_due_date: "2027-01-10" },
+      { id: "pix", date: "2027-02-28", previous_date: "2027-01-31" },
+    ],
+  });
 });

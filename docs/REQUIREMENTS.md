@@ -49,6 +49,7 @@ Nix Finance is a modern personal finance management application with intelligent
 - **Grouping**: Related installments grouped by `installment_group_id`
 - **Progress Tracking**: View paid and pending installment counts
 - **Group Editing**: Edit all installment payments at once
+- **Rescheduling**: The date dialog updates the selected installments in one database operation. A conflicting date or inaccessible row rejects the whole batch. Repeating an already applied schedule is safe. Amounts and payment status are preserved.
 
 #### Legacy Shared Transactions
 - Existing linked transactions remain editable from transaction and installment views.

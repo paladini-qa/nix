@@ -161,3 +161,64 @@ test("blocks future-only recurrence changes while leaving occurrence actions ava
   await page.getByRole("button", { name: "Edit Assinatura de auditoria" }).click();
   await expect(page.getByRole("button", { name: /Edit this and future ones/i })).toBeDisabled();
 });
+
+test("reschedules all selected installments in one request and keeps the draft on failure", async ({ page }) => {
+  const timestamps = [
+    { id: "00000000-0000-0000-0000-000000000901", date: "2026-11-10", invoice_due_date: "2026-11-20" },
+    { id: "00000000-0000-0000-0000-000000000902", date: "2026-12-10", invoice_due_date: "2026-12-20" },
+  ];
+  const requests: unknown[] = [];
+  await page.addInitScript((sessionUser) => {
+    localStorage.setItem("sb-nix-audit-auth-token", JSON.stringify({
+      user: sessionUser, access_token: "fake-access", refresh_token: "fake-refresh",
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+    }));
+  }, user);
+  await page.route("https://nix-audit.invalid/**", (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (url.pathname.endsWith("/user_settings")) {
+      return route.fulfill({ json: {
+        user_id: user.id, payment_method_configs: [
+          { id: "card", name: "Card", type: "card", closingDay: 12, paymentDay: 20 },
+        ],
+      } });
+    }
+    if (url.pathname.endsWith("/reschedule_installments")) {
+      requests.push(request.postDataJSON());
+      return requests.length === 1
+        ? route.fulfill({ status: 503, json: { message: "Simulated failure" } })
+        : route.fulfill({ status: 204, body: "" });
+    }
+    if (url.pathname.endsWith("/transactions") && !url.searchParams.has("or")) {
+      return route.fulfill({ json: timestamps.map((row, index) => ({
+        ...row, description: "Synthetic purchase", amount: 25.01, user_id: user.id,
+        installments: 2, current_installment: index + 1, is_paid: index === 0,
+        installment_group_id: "00000000-0000-0000-0000-000000000900",
+        type: "expense", category: "Other", payment_method: "Card", created_at: "2026-11-05T13:00:00Z",
+      })).reverse() });
+    }
+    return route.fulfill({ json: [] });
+  });
+
+  await page.goto("/splits");
+  await page.getByRole("button", { name: "Change due dates" }).click();
+  const draft = page.getByRole("dialog", { name: "Change Due Dates" });
+  const dueDay = draft.getByRole("combobox", { name: /Due Day/ });
+  await dueDay.click();
+  await page.getByRole("option", { name: "Day 15", exact: true }).click();
+  await draft.getByRole("button", { name: "Save Changes" }).click();
+  await expect(draft.getByRole("alert")).toBeVisible();
+  await expect(dueDay).toHaveText("Day 15");
+  expect(requests).toEqual([{ p_changes: [
+    { id: timestamps[0].id, date: "2026-11-15", previous_date: "2026-11-10",
+      invoice_due_date: "2026-12-20", previous_invoice_due_date: "2026-11-20" },
+    { id: timestamps[1].id, date: "2026-12-15", previous_date: "2026-12-10",
+      invoice_due_date: "2027-01-20", previous_invoice_due_date: "2026-12-20" },
+  ] }]);
+
+  await draft.getByRole("button", { name: "Save Changes" }).click();
+  await expect(draft).toBeHidden();
+  expect(requests).toHaveLength(2);
+  expect(requests[1]).toEqual(requests[0]);
+});

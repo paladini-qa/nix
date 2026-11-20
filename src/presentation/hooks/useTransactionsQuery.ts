@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, onlineManager } from "@tanstack/react-query";
 import { supabase } from "@/infrastructure/database/supabaseClient";
 import { Transaction } from "@/domain/entities";
+import type { InstallmentDateChange } from "@/domain/usecases/transactionUtils";
 import { enqueueSyncOp } from "@/presentation/hooks/useNetworkStatus";
 import dayjs from "dayjs";
 
@@ -354,22 +355,17 @@ export function useTransactionsQuery(userId: string) {
   // ─── UPDATE INSTALLMENT DATES ─────────────────────────────────────────────
 
   const updateInstallmentDatesMutation = useMutation({
-    mutationFn: async (newDates: { id: string; date: string; invoiceDueDate?: string }[]) => {
-      const results = await Promise.all(
-        // TODO: move to application service — layer violation
-        newDates.map(({ id, date, invoiceDueDate }) =>
-          supabase.from("transactions")
-            .update({ date, ...(invoiceDueDate !== undefined && { invoice_due_date: invoiceDueDate }) })
-            .eq("id", id).eq("user_id", userId).select("id").single()
-        )
-      );
-
-      const errors = results.filter((r) => r.error).map((r) => r.error!);
-      if (errors.length > 0) {
-        throw new Error(
-          `Failed to update ${errors.length} of ${newDates.length} installment dates`
-        );
-      }
+    mutationFn: async (changes: InstallmentDateChange[]) => {
+      const { error } = await supabase.rpc("reschedule_installments", {
+        p_changes: changes.map(({ id, date, invoiceDueDate, previousDate, previousInvoiceDueDate }) => ({
+          id,
+          date,
+          invoice_due_date: invoiceDueDate,
+          previous_date: previousDate,
+          previous_invoice_due_date: previousInvoiceDueDate,
+        })),
+      });
+      if (error) throw error;
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: transactionsKey }),
   });

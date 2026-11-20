@@ -1,5 +1,13 @@
 import type { Transaction, PaymentMethodConfig } from "@/domain/entities";
 
+export interface InstallmentDateChange {
+  id: string;
+  date: string;
+  invoiceDueDate?: string;
+  previousDate: string;
+  previousInvoiceDueDate?: string | null;
+}
+
 export function getBalanceOnDate(
   transactions: readonly Transaction[],
   date: string,
