@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useConfirmDialog, usePrivacy } from "@/presentation/contexts";
 import { useSettings } from "@/presentation/contexts";
 import { Capacitor } from "@capacitor/core";
+import NixButton from "@/presentation/components/radix/Button";
 import ThemeSwitch from "@/presentation/components/ui/ThemeSwitch";
 import {
   Dialog,
@@ -34,9 +35,10 @@ import { supabase } from "@/infrastructure/database/supabaseClient";
 interface ProfileModalProps {
   open: boolean;
   onClose: () => void;
+  onLogout?: () => Promise<void>;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
+const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -164,7 +166,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
       maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
-      aria-label="Profile"
+      slotProps={{ paper: { "aria-label": "Profile" } }}
     >
       {/* Header */}
       <Box
@@ -506,6 +508,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                 Tracks notifications for automatic transaction registration.
               </Typography>
             </Box>
+          )}
+          {onLogout && (
+            <NixButton color="red" variant="soft" onClick={() => void onLogout()}>
+              Logout
+            </NixButton>
           )}
         </Box>
       </DialogContent>

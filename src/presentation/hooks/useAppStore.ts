@@ -1,13 +1,8 @@
 import { create } from "zustand";
-import { AppCurrentView } from "@/shared/types/appView";
 import { Transaction, FilterState } from "@/domain/entities";
 import dayjs from "dayjs";
 
 interface UIState {
-  // Navigation
-  isMobileDrawerOpen: boolean;
-  setIsMobileDrawerOpen: (open: boolean) => void;
-  
   // Modals & Panels
   isFormOpen: boolean;
   setIsFormOpen: (open: boolean) => void;
@@ -50,10 +45,6 @@ export interface AdvancedFiltersState {
 }
 
 export const useAppStore = create<UIState>((set) => ({
-  // Navigation
-  isMobileDrawerOpen: false,
-  setIsMobileDrawerOpen: (open) => set({ isMobileDrawerOpen: open }),
-  
   // Modals & Panels
   isFormOpen: false,
   setIsFormOpen: (open) => set({ isFormOpen: open }),

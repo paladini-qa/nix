@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Mobile transactions** — Show the name, payment method and signed amount in each row. Tap a row for full details, payment status, and edit or delete actions.
+  - **Added file** — `src/presentation/components/ui/MobileTransactionRow.tsx`
+  - **Removed file** — `src/presentation/components/ui/SwipeableTransactionCard.tsx`
+  - **Modified files** — `src/presentation/views/TransactionsView.tsx`, `e2e/audit/transactions.spec.ts`
+- **Mobile navigation** — Remove the side menu, move logout to Profile, keep the bottom bar fixed from the first render, and check page scroll position before pull-to-refresh.
+  - **Removed file** — `src/presentation/layouts/mobile/MobileDrawer.tsx`
+  - **Modified files** — `src/presentation/layouts/mobile/{MobileHeader,MobileNavigation}.tsx`, `src/presentation/layouts/mobile/index.ts`, `src/presentation/layouts/shell/{AppShell,ProfileModal}.tsx`, `src/presentation/hooks/{useAppStore,usePullToRefresh}.ts`, `e2e/audit/transactions.spec.ts`
+
+### Changed
+
 - **Mobile navigation** — Expose the menu and global search in the header and provide a persistent new-transaction action in the bottom bar. The compact month picker leaves room for touch-sized controls on narrow screens.
   - **Modified files** — `src/presentation/layouts/mobile/{MobileDrawer,MobileHeader,MobileNavigation}.tsx`, `src/presentation/components/ui/DateFilter.tsx`, `src/presentation/layouts/shell/AppShell.tsx`, `src/shared/i18n/locales/{en,pt-BR}.ts`, `e2e/audit/transactions.spec.ts`, `src/styles/index.css`
 

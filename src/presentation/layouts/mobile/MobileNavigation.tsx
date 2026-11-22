@@ -7,10 +7,7 @@ import {
   Category as CategoriesIcon,
   Person as ProfileIcon,
 } from "@mui/icons-material";
-import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-
-const MotionBox = motion.create(Box);
 
 const NavItem: React.FC<{
   label: string;
@@ -97,12 +94,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         }}
       />
 
-      <MotionBox
+      <Box
         component="nav"
         aria-label={t("nav.menu")}
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 400, damping: 30, delay: 0.1 }}
         sx={{
           position: "fixed",
           bottom: 0,
@@ -191,7 +185,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             primaryColor={theme.palette.primary.main}
           />
         </Box>
-      </MotionBox>
+      </Box>
     </>
   );
 };
