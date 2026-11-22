@@ -94,7 +94,7 @@ export const usePullToRefresh = ({
 
     // Verifica se está no topo do scroll
     const scrollableParent = document.querySelector('[data-pull-to-refresh-container]');
-    startScrollTop.current = scrollableParent?.scrollTop ?? window.scrollY;
+    startScrollTop.current = Math.max(scrollableParent?.scrollTop ?? 0, window.scrollY);
 
     if (startScrollTop.current <= 0) {
       setIsPulling(true);

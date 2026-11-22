@@ -2,7 +2,7 @@ import NixLogo from "@/presentation/components/ui/NixLogo";
 import React from "react";
 import { Box, useTheme, alpha } from "@mui/material";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Menu, Search } from "lucide-react";
+import { Eye, EyeOff, Search } from "lucide-react";
 import { IconButton } from "@radix-ui/themes";
 import { useTranslation } from "react-i18next";
 import { usePrivacy } from "@/presentation/contexts";
@@ -12,13 +12,12 @@ import DateFilter from "@/presentation/components/ui/DateFilter";
 const MotionBox = motion.create(Box);
 
 interface MobileHeaderProps {
-  onOpenDrawer: () => void;
   onOpenSearch: () => void;
 }
 
 const headerButtonSize = { width: 44, height: 44, flexShrink: 0 };
 
-const MobileHeader: React.FC<MobileHeaderProps> = ({ onOpenDrawer, onOpenSearch }) => {
+const MobileHeader: React.FC<MobileHeaderProps> = ({ onOpenSearch }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -64,18 +63,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ onOpenDrawer, onOpenSearch 
           justifyContent: "flex-start",
         }}
       >
-        <IconButton
-          size="3"
-          variant="ghost"
-          color="gray"
-          onClick={onOpenDrawer}
-          aria-haspopup="dialog"
-          aria-label={t("nav.menu")}
-          style={headerButtonSize}
-        >
-          <Menu size={20} aria-hidden="true" />
-        </IconButton>
-        <NixLogo size={32} />
+        <NixLogo size={36} />
       </MotionBox>
 
       <MotionBox

@@ -14,7 +14,7 @@ import Topbar from "@/presentation/layouts/shell/Topbar";
 import AppViewSwitcher from "@/presentation/layouts/shell/AppViewSwitcher";
 import ProfileModal from "@/presentation/layouts/shell/ProfileModal";
 import GlobalSearch from "@/presentation/panels/GlobalSearch";
-import { MobileHeader, MobileDrawer, MobileNavigation } from "@/presentation/layouts/mobile";
+import { MobileHeader, MobileNavigation } from "@/presentation/layouts/mobile";
 import TransactionForm from "@/presentation/forms/TransactionForm";
 import TransactionOptionsPanel from "@/presentation/panels/TransactionOptionsPanel";
 import SharedOptionsDialog from "@/presentation/components/ui/SharedOptionsDialog";
@@ -46,8 +46,6 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
   const navigate = useNavigate();
 
   const {
-    isMobileDrawerOpen,
-    setIsMobileDrawerOpen,
     isFormOpen,
     setIsFormOpen,
     isSearchOpen,
@@ -286,21 +284,8 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
 
       {isMobile && (
         <>
-          <MobileHeader
-            onOpenDrawer={() => setIsMobileDrawerOpen(true)}
-            onOpenSearch={() => setIsSearchOpen(true)}
-          />
+          <MobileHeader onOpenSearch={() => setIsSearchOpen(true)} />
           <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
-          <MobileDrawer
-            open={isMobileDrawerOpen}
-            onClose={() => setIsMobileDrawerOpen(false)}
-            currentView={currentView}
-            onNavigate={handleNavigate}
-            onLogout={handleLogout}
-            displayName={displayName}
-            userEmail={session.user.email || ""}
-            onOpenProfile={() => setIsProfileModalOpen(true)}
-          />
           <Box
             component="main"
             data-pull-to-refresh-container
@@ -379,7 +364,8 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
       
       <ProfileModal 
         open={isProfileModalOpen} 
-        onClose={() => setIsProfileModalOpen(false)} 
+        onClose={() => setIsProfileModalOpen(false)}
+        onLogout={isMobile ? handleLogout : undefined}
       />
 
       {isSearchOpen && (

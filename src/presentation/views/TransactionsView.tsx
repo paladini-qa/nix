@@ -35,6 +35,11 @@ import {
   Stack,
   Card,
   CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControlLabel,
 } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -46,7 +51,6 @@ import {
   Delete as DeleteIcon,
   Description as FileTextIcon,
   TableChart as FileSpreadsheetIcon,
-  MoreVert as MoreVertIcon,
   UnfoldMore as UnsortedIcon,
   FilterList as FilterIcon,
   AccountBalanceWallet as WalletIcon,
@@ -60,16 +64,14 @@ import {
 } from "@mui/icons-material";
 import TransactionTags from "@/presentation/components/ui/TransactionTags";
 import SearchBar from "@/presentation/components/ui/SearchBar";
-import SwipeableTransactionCard from "@/presentation/components/ui/SwipeableTransactionCard";
-import PullToRefreshIndicator from "@/presentation/components/banners/PullToRefreshIndicator";
+import MobileTransactionRow from "@/presentation/components/ui/MobileTransactionRow";
 import { Transaction, PaymentMethodConfig } from "@/domain/entities";
 import { MONTHS, CREATE_TRANSACTION_BUTTON } from "@/shared/constants";
 import { useNotification } from "@/presentation/contexts";
-import { usePullToRefresh, useLayoutSpacing } from "@/presentation/hooks";
+import { useCurrency, usePrivacyMode, useLayoutSpacing } from "@/presentation/hooks";
 import { useAppStore } from "@/presentation/hooks/useAppStore";
 import EmptyState from "@/presentation/components/ui/EmptyState";
 import NixButton from "@/presentation/components/radix/Button";
-import { motion, AnimatePresence } from "framer-motion";
 import { getEffectiveReportDate } from "@/domain/usecases/transactionUtils";
 import { generateRecurringTransactions } from "@/domain/usecases/recurringUtils";
 
@@ -78,7 +80,7 @@ interface TransactionsViewProps {
   onNewTransaction: () => void;
   onEdit: (transaction: Transaction) => void;
   onDelete: (idOrTx: string | Transaction) => void;
-  onTogglePaid: (id: string, isPaid: boolean) => void;
+  onTogglePaid: (id: string, isPaid: boolean) => void | Promise<void>;
   selectedMonth: number;
   selectedYear: number;
   onDateChange: (month: number, year: number) => void;
@@ -147,10 +149,10 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [mobileActionAnchor, setMobileActionAnchor] = useState<{
-    element: HTMLElement | null;
-    transaction: Transaction | null;
-  }>({ element: null, transaction: null });
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+  const { formatWithSign } = useCurrency();
+  const { formatPrivateValue } = usePrivacyMode();
 
   // Combina transações reais + virtuais, usando invoiceDueDate (ou data calculada
   // pelo config do método de pagamento) para determinar o mês de cada transação.
@@ -306,7 +308,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   });
 
   const mobileListParentRef = useRef<HTMLDivElement>(null);
-  const CARD_ESTIMATE_HEIGHT = 49;
+  const CARD_ESTIMATE_HEIGHT = 61;
   const mobileListVirtualizer = useVirtualizer({
     count: paginatedData.length,
     getScrollElement: () => mobileListParentRef.current,
@@ -539,27 +541,31 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     }
   };
 
-  const formatDateShort = (dateString: string) => {
-    const [, month, day] = dateString.split("-");
-    return `${day}/${month}`;
+  const selectedTransaction = allTransactions.find((transaction) => transaction.id === detailId);
+  const detailInvoiceDate = selectedTransaction && getEffectiveReportDate(selectedTransaction, paymentMethodConfigs);
+  const mobileAmount = (transaction: Transaction) =>
+    formatPrivateValue(formatWithSign(transaction.type === "income" ? transaction.amount : -transaction.amount));
+
+  const handleDetailPaymentChange = async (transaction: Transaction, isPaid: boolean) => {
+    setIsUpdatingPayment(true);
+    try {
+      await onTogglePaid(transaction.id, isPaid);
+    } catch {
+      showError("Unable to update the payment status. Please try again.");
+    } finally {
+      setIsUpdatingPayment(false);
+    }
   };
 
-  // Pull-to-refresh para mobile
-  const {
-    y: pullY,
-    onPanStart,
-    onPan,
-    onPanEnd,
-    isPulling,
-    isRefreshing: isPullRefreshing,
-    indicatorOpacity,
-    indicatorScale,
-    indicatorRotation,
-  } = usePullToRefresh({
-    threshold: 80,
-    onRefresh: handleRefresh,
-    enabled: isMobile && !!onRefreshData,
-  });
+  const renderMobileRow = (transaction: Transaction, index: number) => (
+    <MobileTransactionRow
+      key={transaction.id}
+      transaction={transaction}
+      amount={mobileAmount(transaction)}
+      onOpenDetails={setDetailId}
+      isLast={index === paginatedData.length - 1}
+    />
+  );
 
   // Header com estilo de ordenação
   const headerCellSx = {
@@ -1651,38 +1657,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         )}
       </Paper>
 
-      {/* Mobile Card View with Pull-to-Refresh */}
       {isMobile ? (
-        <Box
-          data-pull-to-refresh-container
-          onTouchStart={onPanStart}
-          onTouchMove={(e) => {
-            const touch = e.touches[0];
-            const target = e.currentTarget;
-            const rect = target.getBoundingClientRect();
-            const offsetY = touch.clientY - rect.top;
-            onPan(e, { offset: { y: offsetY }, velocity: { y: 0 } });
-          }}
-          onTouchEnd={onPanEnd}
-          sx={{
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            gap: 0,
-            pt: isPulling || isPullRefreshing ? 8 : 0,
-            transition: "padding-top 0.2s ease",
-          }}
-        >
-          {/* Pull-to-Refresh Indicator */}
-          <PullToRefreshIndicator
-            opacity={indicatorOpacity}
-            scale={indicatorScale}
-            rotation={indicatorRotation}
-            isRefreshing={isPullRefreshing}
-            isPulling={isPulling}
-            y={pullY}
-          />
-
+        <Box>
           {paginatedData.length > 0 ? (
             <>
               {isMobile && paginatedData.length > 30 ? (
@@ -1723,17 +1699,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                             pb: 0,
                           }}
                         >
-                          <SwipeableTransactionCard
-                            transaction={t}
-                            onEdit={onEdit}
-                            onDelete={onDelete}
-                            onTogglePaid={onTogglePaid}
-                            onOpenMenu={(element, transaction) =>
-                              setMobileActionAnchor({ element, transaction })
-                            }
-                            formatDateShort={formatDateShort}
-                            isLast={virtualRow.index === paginatedData.length - 1}
-                          />
+                          {renderMobileRow(t, virtualRow.index)}
                         </Box>
                       );
                     })}
@@ -1752,35 +1718,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       : "0 4px 20px -4px rgba(99,102,241,0.05)",
                   }}
                 >
-                  <AnimatePresence mode="popLayout">
-                    {paginatedData.map((t, index) => (
-                      <motion.div
-                        key={t.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 30,
-                          delay: index * 0.05,
-                        }}
-                        style={{ marginBottom: 0 }}
-                      >
-                        <SwipeableTransactionCard
-                          transaction={t}
-                          onEdit={onEdit}
-                          onDelete={onDelete}
-                          onTogglePaid={onTogglePaid}
-                          onOpenMenu={(element, transaction) =>
-                            setMobileActionAnchor({ element, transaction })
-                          }
-                          formatDateShort={formatDateShort}
-                          isLast={index === paginatedData.length - 1}
-                        />
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+                  {paginatedData.map(renderMobileRow)}
                 </Paper>
               )}
 
@@ -1877,49 +1815,79 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             />
           )}
 
-          {/* Mobile Action Menu */}
-          <Menu
-            anchorEl={mobileActionAnchor.element}
-            open={Boolean(mobileActionAnchor.element)}
-            onClose={() =>
-              setMobileActionAnchor({ element: null, transaction: null })
-            }
+          <Dialog
+            open={Boolean(selectedTransaction)}
+            onClose={() => setDetailId(null)}
+            fullWidth
+            maxWidth="xs"
+            aria-labelledby="mobile-transaction-title"
           >
-            <MenuItem
-              onClick={() => {
-                if (mobileActionAnchor.transaction) {
-                  onEdit(mobileActionAnchor.transaction);
-                }
-                setMobileActionAnchor({ element: null, transaction: null });
-              }}
-            >
-              <ListItemIcon>
-                <EditIcon fontSize="small" color="primary" />
-              </ListItemIcon>
-              <ListItemText>
-                {mobileActionAnchor.transaction?.isVirtual
-                  ? "Edit Recurring"
-                  : "Edit"}
-              </ListItemText>
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                if (mobileActionAnchor.transaction) {
-                  onDelete(mobileActionAnchor.transaction);
-                }
-                setMobileActionAnchor({ element: null, transaction: null });
-              }}
-            >
-              <ListItemIcon>
-                <DeleteIcon fontSize="small" color="error" />
-              </ListItemIcon>
-              <ListItemText>
-                {mobileActionAnchor.transaction?.isVirtual
-                  ? "Delete Recurring"
-                  : "Delete"}
-              </ListItemText>
-            </MenuItem>
-          </Menu>
+            {selectedTransaction && (
+              <>
+                <DialogTitle id="mobile-transaction-title" sx={{ overflowWrap: "anywhere" }}>
+                  {selectedTransaction.description}
+                </DialogTitle>
+                <DialogContent dividers>
+                  <Typography
+                    variant="h5"
+                    fontWeight={700}
+                    color={selectedTransaction.type === "income" ? "success.main" : "error.main"}
+                  >
+                    {mobileAmount(selectedTransaction)}
+                  </Typography>
+                  <Box
+                    component="dl"
+                    sx={{
+                      my: 2,
+                      display: "grid",
+                      gridTemplateColumns: "auto minmax(0, 1fr)",
+                      gap: 1.25,
+                      "& dt": { color: "text.secondary" },
+                      "& dd": { m: 0, overflowWrap: "anywhere", whiteSpace: "pre-wrap" },
+                    }}
+                  >
+                    <dt>Type</dt><dd>{selectedTransaction.type === "income" ? "Income" : "Expense"}</dd>
+                    <dt>Category</dt><dd>{selectedTransaction.category}</dd>
+                    <dt>Payment method</dt><dd>{selectedTransaction.paymentMethod}</dd>
+                    <dt>Date</dt><dd>{formatDate(selectedTransaction.date)}</dd>
+                    {detailInvoiceDate && (selectedTransaction.invoiceDueDate || detailInvoiceDate !== selectedTransaction.date) && (
+                      <><dt>Invoice due</dt><dd>{formatDate(detailInvoiceDate)}</dd></>
+                    )}
+                    {selectedTransaction.installments && selectedTransaction.installments > 1 && (
+                      <><dt>Installment</dt><dd>{selectedTransaction.currentInstallment ?? 1} / {selectedTransaction.installments}</dd></>
+                    )}
+                    {(selectedTransaction.isRecurring || selectedTransaction.isVirtual) && (
+                      <><dt>Recurrence</dt><dd>{selectedTransaction.frequency === "yearly" ? "Yearly" : selectedTransaction.frequency === "monthly" ? "Monthly" : "Recurring"}</dd></>
+                    )}
+                    {selectedTransaction.isShared && (
+                      <><dt>Shared</dt><dd>{selectedTransaction.sharedWith || "Yes"}</dd></>
+                    )}
+                    {selectedTransaction.notes && <><dt>Notes</dt><dd>{selectedTransaction.notes}</dd></>}
+                  </Box>
+                  <TransactionTags transaction={selectedTransaction} />
+                  <FormControlLabel
+                    label="Paid"
+                    control={<Checkbox
+                      checked={selectedTransaction.isPaid !== false}
+                      disabled={isUpdatingPayment}
+                      onChange={(event) => void handleDetailPaymentChange(selectedTransaction, event.target.checked)}
+                    />}
+                  />
+                </DialogContent>
+                <DialogActions sx={{ px: 2, pb: 2, flexWrap: "wrap", gap: 1 }}>
+                  <NixButton variant="ghost" color="gray" onClick={() => setDetailId(null)}>Close</NixButton>
+                  <NixButton variant="soft" color="red" onClick={() => {
+                    setDetailId(null);
+                    onDelete(selectedTransaction);
+                  }}>Delete</NixButton>
+                  <NixButton onClick={() => {
+                    setDetailId(null);
+                    onEdit(selectedTransaction);
+                  }}>Edit</NixButton>
+                </DialogActions>
+              </>
+            )}
+          </Dialog>
 
         </Box>
       ) : (

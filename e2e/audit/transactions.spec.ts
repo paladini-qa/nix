@@ -119,7 +119,7 @@ test("keeps mobile navigation and transaction creation reachable", async ({ page
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto("/dashboard");
   const header = page.getByRole("banner");
-  const menuButton = header.getByRole("button", { name: "Menu" });
+  await expect(header.getByRole("button", { name: "Menu" })).toHaveCount(0);
   const dateButton = header.getByRole("button", { name: /Choose month/ });
   const searchButton = header.getByRole("button", { name: "Search" });
   await expect(searchButton).toBeVisible();
@@ -128,10 +128,10 @@ test("keeps mobile navigation and transaction creation reachable", async ({ page
   expect(dateBounds!.x + dateBounds!.width).toBeLessThanOrEqual(searchBounds!.x);
   expect(searchBounds!.width).toBeGreaterThanOrEqual(44);
 
-  await menuButton.click();
-  const menu = page.getByRole("dialog", { name: "Nix Finance" });
-  await expect(menu.getByText("Payment Methods", { exact: true })).toBeVisible();
-  await menu.getByRole("button", { name: "Close" }).click({ timeout: 8000 });
+  await page.getByRole("navigation", { name: "Menu" }).getByRole("button", { name: "Perfil" }).click();
+  const profile = page.getByRole("dialog", { name: "Profile" });
+  await expect(profile.getByRole("button", { name: "Logout" })).toBeVisible();
+  await profile.getByRole("button", { name: "Close profile" }).click();
 
   await dateButton.click();
   await page.getByRole("button", { name: "Feb", exact: true }).click();
@@ -255,4 +255,84 @@ test("reschedules all selected installments in one request and keeps the draft o
   await expect(draft).toBeHidden();
   expect(requests).toHaveLength(2);
   expect(requests[1]).toEqual(requests[0]);
+});
+
+test("shows compact mobile rows with full details and a stationary bottom bar", async ({ page }) => {
+  const title = "Pagamento para o fornecedor de serviços da unidade de Vila Nova";
+  const rows = Array.from({ length: 35 }, (_, index) => ({
+    id: `synthetic-${String(99 - index).padStart(2, "0")}`,
+    user_id: user.id,
+    description: index === 0 ? title : `Synthetic expense ${index}`,
+    amount: 128.99,
+    date: index === 0 ? "2026-11-08" : "2026-11-07",
+    invoice_due_date: "2026-11-20",
+    payment_method: "Card",
+    category: "Office",
+    type: "expense",
+    is_paid: false,
+    notes: "Contrato da unidade",
+    installments: 3,
+    current_installment: 2,
+    created_at: "2026-11-05T13:00:00Z",
+  }));
+  await page.clock.setFixedTime(new Date("2026-11-05T15:00:00Z"));
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.addInitScript((sessionUser) => {
+    localStorage.setItem("sb-nix-audit-auth-token", JSON.stringify({
+      user: sessionUser, access_token: "fake-access", refresh_token: "fake-refresh",
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+    }));
+  }, user);
+  await page.route("https://nix-audit.invalid/**", (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (url.pathname.endsWith("/user_settings")) {
+      return route.fulfill({ json: { user_id: user.id, payment_method_configs: [] } });
+    }
+    if (url.pathname.endsWith("/transactions") && request.method() === "PATCH") {
+      const target = rows.find((row) => `eq.${row.id}` === url.searchParams.get("id"))!;
+      Object.assign(target, request.postDataJSON());
+      return route.fulfill({ json: target });
+    }
+    if (url.pathname.endsWith("/transactions") && !url.searchParams.has("or")) {
+      return route.fulfill({ json: rows });
+    }
+    return route.fulfill({ json: [] });
+  });
+
+  await page.goto("/transactions");
+  const navigation = page.getByRole("navigation", { name: "Menu" });
+  const isAnchored = () => navigation.evaluate((element) => ({
+    bottom: Math.round(window.innerHeight - element.getBoundingClientRect().bottom),
+    transform: getComputedStyle(element).transform,
+  }));
+  await expect.poll(isAnchored).toEqual({ bottom: 0, transform: "none" });
+
+  const row = page.getByRole("button", { name: new RegExp(title) });
+  await expect(row).toBeVisible();
+  await expect(row.getByText("Card", { exact: true })).toBeVisible();
+  await expect(row.getByText("Office", { exact: true })).toHaveCount(0);
+  const description = row.getByText(title, { exact: true });
+  expect(await description.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+
+  await row.click();
+  const details = page.getByRole("dialog", { name: title });
+  await expect(details.getByText("Office", { exact: true })).toBeVisible();
+  await expect(details.getByText("20/11/2026", { exact: true })).toBeVisible();
+  await expect(details.getByText("2 / 3", { exact: true })).toBeVisible();
+  await expect(details.getByText("Contrato da unidade", { exact: true })).toBeVisible();
+  const paid = details.getByRole("checkbox", { name: "Paid" });
+  await expect(paid).not.toBeChecked();
+  await paid.check();
+  await expect.poll(() => rows[0].is_paid).toBe(true);
+  await expect(paid).toBeChecked();
+  await expect(details.getByRole("button", { name: "Edit" })).toBeVisible();
+  await expect(details.getByRole("button", { name: "Delete" })).toBeVisible();
+  await details.getByRole("button", { name: "Close", exact: true }).click();
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await expect.poll(isAnchored).toEqual({ bottom: 0, transform: "none" });
+  await page.reload();
+  await expect.poll(isAnchored).toEqual({ bottom: 0, transform: "none" });
 });
