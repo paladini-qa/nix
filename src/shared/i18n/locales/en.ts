@@ -1,6 +1,7 @@
 export default {
   // Common
   common: {
+    chartDataHidden: "Chart data hidden",
     save: "Save",
     cancel: "Cancel",
     delete: "Delete",

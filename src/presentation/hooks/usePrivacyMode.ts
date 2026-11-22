@@ -2,17 +2,17 @@ import { useMemo } from "react";
 import { usePrivacy } from "@/presentation/contexts/PrivacyContext";
 
 /**
- * Hook para aplicar estilos de privacidade em valores monetários.
- * 
- * Retorna estilos CSS para blur e utilitários para exibir valores
- * de forma segura quando o modo de privacidade está ativo.
+ * Hook para mascarar valores monetários no modo de privacidade.
+ *
+ * Os estilos de desfoque continuam disponíveis para consumidores legados.
+ * Para ocultar texto renderizado, use formatPrivateValue.
  * 
  * @example
  * ```tsx
- * const { isPrivacyMode, privacyStyles, formatPrivateValue } = usePrivacyMode();
+ * const { formatPrivateValue } = usePrivacyMode();
  * 
  * return (
- *   <Typography sx={privacyStyles}>
+ *   <Typography>
  *     {formatPrivateValue("R$ 1.234,56")}
  *   </Typography>
  * );
@@ -71,15 +71,10 @@ export const usePrivacyMode = () => {
 
   /**
    * Formata um valor para exibição considerando o modo de privacidade.
-   * Quando ativo, retorna asteriscos em vez do valor real.
+   * O comprimento da máscara é independente do valor.
    */
   const formatPrivateValue = (value: string | number): string => {
-    if (!isPrivacyMode) {
-      return String(value);
-    }
-    // Retorna asteriscos do mesmo comprimento aproximado
-    const length = String(value).length;
-    return "•".repeat(Math.min(length, 12));
+    return isPrivacyMode ? "••••••" : String(value);
   };
 
   /**

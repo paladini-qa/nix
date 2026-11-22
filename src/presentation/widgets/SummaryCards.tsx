@@ -12,7 +12,7 @@ import {
 } from "@mui/icons-material";
 import { FinancialSummary, Transaction } from "@/domain/entities";
 import { getReportDate } from "@/domain/usecases/transactionUtils";
-import { CountUp, formatBRL, formatBRLFull } from "@/presentation/components/motion";
+import { CountUp, formatBRLFull } from "@/presentation/components/motion";
 import { usePrivacyMode } from "@/presentation/hooks";
 
 // Cores semânticas do design system
@@ -33,7 +33,7 @@ interface SummaryCardsProps {
 const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, selectedMonth, selectedYear }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const { privacyStylesStrong } = usePrivacyMode();
+  const { isPrivacyMode, formatPrivateValue } = usePrivacyMode();
 
   // Calcular comparação com mês anterior
   const comparison = useMemo(() => {
@@ -134,6 +134,23 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
     overflow: "hidden",
   };
 
+  const renderAmount = (value: number, color: string, delay: number) => {
+    const sx = {
+      color,
+      fontSize: "26px",
+      fontWeight: 700,
+      letterSpacing: "-0.02em",
+      fontVariantNumeric: "tabular-nums",
+      display: "block",
+    };
+
+    return isPrivacyMode ? (
+      <Typography sx={sx}>{formatPrivateValue(value)}</Typography>
+    ) : (
+      <CountUp value={value} formatter={formatBRLFull} duration={1} delay={delay} sx={sx} />
+    );
+  };
+
   return (
     <Box
       sx={{
@@ -149,24 +166,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
           {isPositive ? "Sobras do Mês" : "Défice Mensal"}
         </Typography>
 
-        <Typography
-          sx={{
-            fontSize: "26px",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-            fontVariantNumeric: "tabular-nums",
-            color: balanceColor,
-            ...privacyStylesStrong,
-          }}
-        >
-          <CountUp
-            value={Math.abs(monthlyFlow)}
-            formatter={formatBRLFull}
-            duration={1.0}
-            delay={0.2}
-            sx={{ color: balanceColor, fontSize: "26px", fontWeight: 700, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", ...privacyStylesStrong }}
-          />
-        </Typography>
+        {renderAmount(Math.abs(monthlyFlow), balanceColor, 0.2)}
 
         <Typography sx={{ ...metaSx, color: balanceColor }}>
           {isPositive ? "● Mandou bem!" : "● Gastando mais que ganha"}
@@ -182,13 +182,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
       <Box sx={cardBase}>
         <Typography sx={labelSx}>Receitas</Typography>
 
-        <CountUp
-          value={summary.totalIncome}
-          formatter={formatBRLFull}
-          duration={1.0}
-          delay={0.3}
-          sx={{ color: COLORS.income, fontSize: "26px", fontWeight: 700, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", display: "block", ...privacyStylesStrong }}
-        />
+        {renderAmount(summary.totalIncome, COLORS.income, 0.3)}
 
         {/* Barra de progresso */}
         <Box sx={progressTrack}>
@@ -197,14 +191,15 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
               height: "100%",
               borderRadius: "99px",
               background: COLORS.income,
-              width: `${comparison.incomeProgress}%`,
+              display: isPrivacyMode ? "none" : "block",
+              width: isPrivacyMode ? 0 : `${comparison.incomeProgress}%`,
               transition: "width 0.8s ease",
             }}
           />
         </Box>
 
         <Typography sx={metaSx}>
-          {comparison.incomeChange !== null
+          {isPrivacyMode ? formatPrivateValue("") : comparison.incomeChange !== null
             ? `${comparison.incomeChange >= 0 ? "+" : ""}${comparison.incomeChange}% vs mês ant.`
             : "Sem dados anteriores"}
         </Typography>
@@ -218,13 +213,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
       <Box sx={cardBase}>
         <Typography sx={labelSx}>Despesas</Typography>
 
-        <CountUp
-          value={summary.totalExpense}
-          formatter={formatBRLFull}
-          duration={1.0}
-          delay={0.4}
-          sx={{ color: COLORS.expense, fontSize: "26px", fontWeight: 700, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", display: "block", ...privacyStylesStrong }}
-        />
+        {renderAmount(summary.totalExpense, COLORS.expense, 0.4)}
 
         <Box sx={progressTrack}>
           <Box
@@ -232,14 +221,15 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
               height: "100%",
               borderRadius: "99px",
               background: COLORS.expense,
-              width: `${comparison.expenseProgress}%`,
+              display: isPrivacyMode ? "none" : "block",
+              width: isPrivacyMode ? 0 : `${comparison.expenseProgress}%`,
               transition: "width 0.8s ease",
             }}
           />
         </Box>
 
         <Typography sx={metaSx}>
-          {comparison.expenseChange !== null
+          {isPrivacyMode ? formatPrivateValue("") : comparison.expenseChange !== null
             ? `${comparison.expenseChange >= 0 ? "+" : ""}${comparison.expenseChange}% vs mês ant.`
             : "Sem dados anteriores"}
         </Typography>

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Privacy mode** — Mask displayed amounts on Dashboard, in transaction totals, rows and details, and in global search. Hide Dashboard chart data and tooltips while the preference is active.
+  - **Modified files** — `src/presentation/contexts/PrivacyContext.tsx`, `src/presentation/hooks/usePrivacyMode.ts`, `src/presentation/panels/GlobalSearch.tsx`, `src/presentation/views/{AnalyticsView,DashboardMainSection,TransactionsView}.tsx`, `src/presentation/widgets/{CategoryBreakdown,RecentTransactionsWidget,SummaryCards}.tsx`, `src/shared/i18n/locales/{en,pt-BR}.ts`, `docs/REQUIREMENTS.md`
+  - **Added files** — `e2e/audit/privacy.spec.ts`, `.github/workflows/ui-regression.yml`
+
 ### Added
 
 - **UI/UX modernization audit** — Document interface and mobile findings, propose shared design standards, and define an incremental rollout for review.

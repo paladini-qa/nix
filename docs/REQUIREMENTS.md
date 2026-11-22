@@ -362,18 +362,16 @@ PLUGGY_CLIENT_SECRET=xxx
 
 ### Privacy Mode
 
-Privacy mode hides financial numbers in public spaces using an animated blur transition.
+Privacy mode replaces the displayed amounts with a fixed mask on Dashboard, Transactions and global search. Dashboard charts show an explanatory message in place of axes, plotted values and tooltips.
 
-- **Activation**: Eye icon in `MobileHeader` or `Alt+P` keyboard shortcut
-- **Persistence**: Stored in `localStorage` under `nix_privacy_mode`
-- **Visuals**: `filter: blur(8px)` with `cubic-bezier(0.4, 0, 0.2, 1)` transition for fluid interpolation
-- **Variants**: `privacyStyles` (blur 8px), `privacyStylesLight` (6px), `privacyStylesStrong` (12px)
+- **Activation** — Eye icon in the mobile header, privacy control in Profile, or Alt+P on desktop.
+- **Persistence** — Stored in localStorage under `nix_privacy_mode`.
+- **Display** — Use `formatPrivateValue` on the final formatted amount. Reveal the current values and charts when the user turns privacy mode off.
 
 ```tsx
-const { privacyStyles, privacyStylesStrong } = usePrivacyMode();
+const { formatPrivateValue } = usePrivacyMode();
 
-// Apply smooth blur filter to any amount text
-<Typography sx={privacyStyles}>{formatCurrency(amount)}</Typography>
+<Typography>{formatPrivateValue(formatCurrency(amount))}</Typography>
 ```
 
 ### Mobile DataTable

@@ -17,8 +17,8 @@ interface PrivacyProviderProps {
 /**
  * PrivacyProvider - Gerencia o modo de privacidade do aplicativo.
  * 
- * Quando ativado, oculta valores monetários com efeito blur para
- * proteger informações sensíveis em ambientes públicos.
+ * Quando ativado, permite que a interface masque valores monetários
+ * em ambientes públicos.
  * 
  * Features:
  * - Persistência no localStorage
@@ -89,12 +89,6 @@ export const PrivacyProvider: React.FC<PrivacyProviderProps> = ({ children }) =>
  * @example
  * ```tsx
  * const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
- * 
- * return (
- *   <Typography sx={isPrivacyMode ? { filter: 'blur(8px)' } : {}}>
- *     R$ 1.234,56
- *   </Typography>
- * );
  * ```
  */
 export const usePrivacy = (): PrivacyContextType => {

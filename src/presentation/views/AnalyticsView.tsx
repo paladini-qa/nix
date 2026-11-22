@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Box,
   Typography,
@@ -36,7 +37,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { PaymentMethodConfig, Transaction } from "@/domain/entities";
-import { useLayoutSpacing } from "@/presentation/hooks";
+import { useLayoutSpacing, usePrivacyMode } from "@/presentation/hooks";
 import { getReportDate } from "@/domain/usecases/transactionUtils";
 import dayjs, { type Dayjs } from "dayjs";
 import { buildDashboardMonthlySeries } from "@/domain/usecases/dashboardMonthlySeries";
@@ -78,6 +79,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   onCategoryClick,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
+  const { isPrivacyMode, formatPrivateValue } = usePrivacyMode();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { gridSpacing } = useLayoutSpacing();
   const isDarkMode = theme.palette.mode === "dark";
@@ -257,6 +260,12 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
     </Box>
   );
 
+  const privateChartMessage = (
+    <Typography color="text.secondary" sx={{ py: 2 }}>
+      {t("common.chartDataHidden")}
+    </Typography>
+  );
+
   return (
     <Box
       ref={containerRef}
@@ -300,7 +309,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Monthly Average (Income)
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
-              {formatCurrency(stats.avgMonthlyIncome)}
+              {formatPrivateValue(formatCurrency(stats.avgMonthlyIncome))}
             </Typography>
           </Paper>
         </Grid>
@@ -334,7 +343,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Monthly Average (Expense)
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
-              {formatCurrency(stats.avgMonthlyExpense)}
+              {formatPrivateValue(formatCurrency(stats.avgMonthlyExpense))}
             </Typography>
           </Paper>
         </Grid>
@@ -368,7 +377,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Taxa de Economia
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#6366f1", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
-              {stats.savingsRate.toFixed(1)}%
+              {formatPrivateValue(`${stats.savingsRate.toFixed(1)}%`)}
             </Typography>
           </Paper>
         </Grid>
@@ -426,7 +435,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         }}
       >
         <SectionHeader icon={<BarChartIcon />} title="Comparativo Mensal" />
-        <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
+        {isPrivacyMode ? privateChartMessage : <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
           <BarChart data={monthlySeries} barGap={4} width={chartWidth} height={isMobile ? 250 : 300}>
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -518,7 +527,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 ))}
               </Bar>
           </BarChart>
-        </Box>
+        </Box>}
       </Paper>
 
       {/* Balance Evolution Line Chart */}
@@ -539,7 +548,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         }}
       >
         <SectionHeader icon={<LineChartIcon />} title="Evolução do Saldo" />
-        <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
+        {isPrivacyMode ? privateChartMessage : <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
           <LineChart data={monthlySeries} width={chartWidth} height={isMobile ? 250 : 300}>
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -662,7 +671,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 activeDot={{ r: 8, fill: "#6366f1", stroke: "#fff", strokeWidth: 2 }}
               />
           </LineChart>
-        </Box>
+        </Box>}
       </Paper>
 
       {/* Cash Flow Area Chart */}
@@ -686,7 +695,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           icon={<TimelineIcon />}
           title="Fluxo de Caixa"
         />
-        <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
+        {isPrivacyMode ? privateChartMessage : <Box sx={{ width: "100%", height: isMobile ? 250 : 300, overflowX: "auto" }}>
           <AreaChart data={monthlySeries} width={chartWidth} height={isMobile ? 250 : 300}>
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -731,7 +740,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 strokeWidth={2}
               />
           </AreaChart>
-        </Box>
+        </Box>}
       </Paper>
 
       {/* Pie Charts Row */}
@@ -758,7 +767,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               icon={<PieChartIcon />}
               title="Expenses by Category"
             />
-            {categoryData.length > 0 ? (
+            {isPrivacyMode ? privateChartMessage : categoryData.length > 0 ? (
               <Box sx={{ width: "100%", height: 280, display: "flex", justifyContent: "center" }}>
                 <PieChart width={isMobile ? chartWidth : Math.min(chartWidth / 2 - 24, 400)} height={280}>
                   <Pie
@@ -844,7 +853,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               icon={<TrendingUpIcon />}
               title="Income by Category"
             />
-            {incomeByCategory.length > 0 ? (
+            {isPrivacyMode ? privateChartMessage : incomeByCategory.length > 0 ? (
               <Box sx={{ width: "100%", height: 280, display: "flex", justifyContent: "center" }}>
                 <PieChart width={isMobile ? chartWidth : Math.min(chartWidth / 2 - 24, 400)} height={280}>
                   <Pie
@@ -957,7 +966,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 <Typography fontWeight={500}>{cat.name}</Typography>
               </Box>
               <Typography fontWeight={600} color="error.main">
-                {formatCurrency(cat.value)}
+                {formatPrivateValue(formatCurrency(cat.value))}
               </Typography>
             </Box>
           ))}
@@ -993,7 +1002,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             icon={<BarChartIcon />}
             title="Expenses: Current Year vs. Previous Year"
           />
-          <Box sx={{ width: "100%", overflowX: "auto" }}>
+          {isPrivacyMode ? privateChartMessage : <Box sx={{ width: "100%", overflowX: "auto" }}>
             <BarChart
               width={Math.max(chartWidth, 300)}
               height={260}
@@ -1023,7 +1032,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               <Bar dataKey="thisYear" name="Current year" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={32} />
               <Bar dataKey="lastYear" name="Previous year" fill={alpha("#6366f1", 0.35)} radius={[4, 4, 0, 0]} maxBarSize={32} />
             </BarChart>
-          </Box>
+          </Box>}
         </Paper>
       )}
     </Box>

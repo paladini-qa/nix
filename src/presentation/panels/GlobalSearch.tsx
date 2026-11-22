@@ -31,6 +31,7 @@ import {
   ArrowForward as ArrowIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
+import { usePrivacyMode } from "@/presentation/hooks";
 import { Transaction } from "@/domain/entities";
 import EmptyState from "@/presentation/components/ui/EmptyState";
 
@@ -68,6 +69,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
+  const { formatPrivateValue } = usePrivacyMode();
 
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -189,8 +191,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      aria-label="Busca global"
-      slotProps={{ paper: { sx: { overflow: "hidden", mt: { sm: -10 } } } }}
+      slotProps={{ paper: { "aria-label": "Busca global", sx: { overflow: "hidden", mt: { sm: -10 } } } }}
     >
       <DialogContent sx={{ p: 0 }}>
         {/* Search Input */}
@@ -378,8 +379,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
                           fontWeight={600}
                           color={tx.type === "income" ? "success.main" : "error.main"}
                         >
-                          {tx.type === "expense" ? "-" : "+"}
-                          {formatCurrency(tx.amount || 0)}
+                          {formatPrivateValue((tx.type === "expense" ? "-" : "+") + formatCurrency(tx.amount || 0))}
                         </Typography>
                       </ListItemButton>
                     </ListItem>

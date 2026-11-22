@@ -31,7 +31,7 @@ const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> = ({
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const { privacyStyles } = usePrivacyMode();
+  const { formatPrivateValue } = usePrivacyMode();
   const { getPaymentMethodConfig, getPaymentMethodColor, getCategoryColor } = useSettings();
 
   // 6 transações mais recentes
@@ -181,10 +181,9 @@ const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> = ({
                       fontWeight: 700,
                       fontVariantNumeric: "tabular-nums",
                       color: isIncome ? "#10b981" : isDark ? "#fafafa" : "#18181b",
-                      ...privacyStyles,
                     }}
                   >
-                    {isIncome ? "+" : "−"}{formatCurrency(tx.amount)}
+                    {formatPrivateValue((isIncome ? "+" : "−") + formatCurrency(tx.amount))}
                   </Typography>
                 </Box>
               </Box>
