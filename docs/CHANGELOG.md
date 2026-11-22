@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **UI/UX modernization audit** — Document interface and mobile findings, propose shared design standards, and define an incremental rollout for review.
+  - **Added files** — `docs/ui-ux/{AUDIT,DESIGN_SYSTEM,MOBILE_REVIEW,IMPLEMENTATION_PLAN}.md` and `docs/ui-ux/evidence/*.png`
+
 ### Changed
 
 - **Mobile transactions** — Show the name, payment method and signed amount in each row. Tap a row for full details, payment status, and edit or delete actions.
