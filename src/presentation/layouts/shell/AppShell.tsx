@@ -83,6 +83,11 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
     navigate(VIEW_ROUTES[view] || VIEW_ROUTES.transactions);
   }, [navigate]);
 
+  const handleOpenNewTransaction = () => {
+    setEditingTransaction(null);
+    setIsFormOpen(true);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
@@ -245,10 +250,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
           <Topbar
             currentView={currentView}
             onOpenSearch={() => setIsSearchOpen(true)}
-            onOpenNewTransaction={() => {
-              setEditingTransaction(null);
-              setIsFormOpen(true);
-            }}
+            onOpenNewTransaction={handleOpenNewTransaction}
           />
           <Box
             component="main"
@@ -287,7 +289,6 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
           <MobileHeader
             onOpenDrawer={() => setIsMobileDrawerOpen(true)}
             onOpenSearch={() => setIsSearchOpen(true)}
-            onOpenProfile={() => setIsProfileModalOpen(true)}
           />
           <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
           <MobileDrawer
@@ -345,6 +346,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
           currentView={currentView}
           onNavigate={handleNavigate}
           onOpenProfile={() => setIsProfileModalOpen(true)}
+          onOpenNewTransaction={handleOpenNewTransaction}
         />
       )}
 

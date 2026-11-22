@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, useTheme, alpha } from "@mui/material";
 import {
+  Add as AddIcon,
   GridView as HomeIcon,
   Receipt as TransactionsIcon,
   Category as CategoriesIcon,
@@ -68,12 +69,14 @@ interface MobileNavigationProps {
   currentView: AppCurrentView;
   onNavigate: (view: AppCurrentView) => void;
   onOpenProfile?: () => void;
+  onOpenNewTransaction: () => void;
 }
 
 const MobileNavigation: React.FC<MobileNavigationProps> = ({
   currentView,
   onNavigate,
   onOpenProfile,
+  onOpenNewTransaction,
 }) => {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -96,6 +99,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
       <MotionBox
         component="nav"
+        aria-label={t("nav.menu")}
         initial={{ y: 100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 400, damping: 30, delay: 0.1 }}
@@ -143,6 +147,31 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             onClick={() => onNavigate("transactions")}
             primaryColor={theme.palette.primary.main}
           />
+
+          <Box sx={{ flex: "1 1 0", display: "flex", justifyContent: "center", minWidth: 48 }}>
+            <Box
+              component="button"
+              type="button"
+              onClick={onOpenNewTransaction}
+              aria-label={t("dashboard.newTransaction")}
+              sx={{
+                width: 48,
+                height: 48,
+                border: 0,
+                borderRadius: "16px",
+                display: "grid",
+                placeItems: "center",
+                bgcolor: "primary.main",
+                color: "primary.contrastText",
+                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.32)}`,
+                cursor: "pointer",
+                touchAction: "manipulation",
+                "&:active": { bgcolor: "primary.dark" },
+              }}
+            >
+              <AddIcon aria-hidden="true" />
+            </Box>
+          </Box>
 
           {/* Categories */}
           <NavItem

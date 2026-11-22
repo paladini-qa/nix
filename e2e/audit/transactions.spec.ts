@@ -102,7 +102,7 @@ test("confirms only saved transactions and supports create, edit and delete", as
   expect(rows).toHaveLength(0);
 });
 
-test("shows a reachable new transaction action on mobile and tablet", async ({ page }) => {
+test("keeps mobile navigation and transaction creation reachable", async ({ page }) => {
   await page.addInitScript((sessionUser) => {
     localStorage.setItem("sb-nix-audit-auth-token", JSON.stringify({
       user: sessionUser, access_token: "fake-access", refresh_token: "fake-refresh",
@@ -114,6 +114,40 @@ test("shows a reachable new transaction action on mobile and tablet", async ({ p
       user_id: user.id, theme_preference: "light", payment_method_configs: DEFAULT_PAYMENT_METHOD_CONFIGS,
     } : [] })
   );
+
+  await page.clock.setFixedTime(new Date("2026-11-05T15:00:00Z"));
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto("/dashboard");
+  const header = page.getByRole("banner");
+  const menuButton = header.getByRole("button", { name: "Menu" });
+  const dateButton = header.getByRole("button", { name: /Choose month/ });
+  const searchButton = header.getByRole("button", { name: "Search" });
+  await expect(searchButton).toBeVisible();
+  const dateBounds = await dateButton.boundingBox();
+  const searchBounds = await searchButton.boundingBox();
+  expect(dateBounds!.x + dateBounds!.width).toBeLessThanOrEqual(searchBounds!.x);
+  expect(searchBounds!.width).toBeGreaterThanOrEqual(44);
+
+  await menuButton.click();
+  const menu = page.getByRole("dialog", { name: "Nix Finance" });
+  await expect(menu.getByText("Payment Methods", { exact: true })).toBeVisible();
+  await menu.getByRole("button", { name: "Close" }).click({ timeout: 8000 });
+
+  await dateButton.click();
+  await page.getByRole("button", { name: "Feb", exact: true }).click();
+  await expect(dateButton).toHaveAccessibleName(/Choose month, Feb/);
+
+  await searchButton.click();
+  const search = page.getByPlaceholder("Buscar transações, navegar para...");
+  await search.fill("transactions");
+  await expect(page.getByRole("dialog").getByText("Transactions", { exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("navigation", { name: "Menu" }).getByRole("button", { name: "New Transaction" }).click();
+  const createDialog = page.getByRole("dialog", { name: "Nova Transação" });
+  await expect(createDialog.getByRole("combobox", { name: "Description" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(createDialog).toBeHidden();
 
   for (const width of [390, 768]) {
     await page.setViewportSize({ width, height: 844 });

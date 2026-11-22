@@ -28,6 +28,7 @@ interface DateFilterProps {
   onDateChange: (month: number, year: number) => void;
   compact?: boolean;
   showIcon?: boolean;
+  pickerOnly?: boolean;
   disabled?: boolean;
   disabledMessage?: string;
 }
@@ -42,6 +43,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
   year,
   onDateChange,
   compact = false,
+  pickerOnly = false,
   disabled = false,
   disabledMessage = "Advanced filters active",
 }) => {
@@ -96,12 +98,17 @@ const DateFilter: React.FC<DateFilterProps> = ({
   /* ── Botão central customizado no mobile ── */
   const mobileDateButton = (
     <Box
+      component="button"
+      type="button"
+      disabled={disabled}
+      aria-label={`Choose month, ${MONTH_LABELS[month]} ${year}`}
       onClick={handleOpenDrawer}
       sx={{
         display: "flex",
         alignItems: "center",
         gap: 0.75,
-        height: btnSize,
+        height: 44,
+        bgcolor: "transparent",
         px: 1.25,
         borderRadius: "10px",
         border: "1px solid",
@@ -160,7 +167,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
         minWidth: 0,
       }}
     >
-      {isMobile ? (
+      {pickerOnly ? mobileDateButton : isMobile ? (
         /* ── Mobile: pílula única com setas + data ── */
         <Box
           sx={{

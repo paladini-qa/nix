@@ -2,8 +2,9 @@ import NixLogo from "@/presentation/components/ui/NixLogo";
 import React from "react";
 import { Box, useTheme, alpha } from "@mui/material";
 import { motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Menu, Search } from "lucide-react";
 import { IconButton } from "@radix-ui/themes";
+import { useTranslation } from "react-i18next";
 import { usePrivacy } from "@/presentation/contexts";
 import { useAppStore } from "@/presentation/hooks/useAppStore";
 import DateFilter from "@/presentation/components/ui/DateFilter";
@@ -11,26 +12,14 @@ import DateFilter from "@/presentation/components/ui/DateFilter";
 const MotionBox = motion.create(Box);
 
 interface MobileHeaderProps {
-  onOpenDrawer?: () => void;
-  onOpenSearch?: () => void;
-  onOpenProfile?: () => void;
+  onOpenDrawer: () => void;
+  onOpenSearch: () => void;
 }
 
-/**
- * MobileHeader - Sleek mobile app bar with hamburger menu
- * 
- * Features:
- * - Hamburger menu button on the left
- * - Centered logo
- * - Logout button on the right
- * - Glassmorphism styling
- * - Touch-friendly tap targets (min 44px)
- */
-const MobileHeader: React.FC<MobileHeaderProps> = ({
-  onOpenDrawer,
-  onOpenSearch,
-  onOpenProfile,
-}) => {
+const headerButtonSize = { width: 44, height: 44, flexShrink: 0 };
+
+const MobileHeader: React.FC<MobileHeaderProps> = ({ onOpenDrawer, onOpenSearch }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
@@ -56,10 +45,11 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         boxShadow: isDarkMode
           ? `0 4px 20px -4px ${alpha("#000000", 0.4)}`
           : `0 4px 20px -4px ${alpha(theme.palette.primary.main, 0.1)}`,
-        display: "flex",
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1fr",
         alignItems: "center",
         minHeight: 64,
-        px: 1.5,
+        px: 1,
         // Respeita status bar nativo (safe area)
         paddingTop: "env(safe-area-inset-top, 0px)",
       }}
@@ -69,13 +59,23 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15, type: "spring", stiffness: 400 }}
         sx={{
-          flex: "1 1 0%",
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-start",
         }}
       >
-        <NixLogo size={40} />
+        <IconButton
+          size="3"
+          variant="ghost"
+          color="gray"
+          onClick={onOpenDrawer}
+          aria-haspopup="dialog"
+          aria-label={t("nav.menu")}
+          style={headerButtonSize}
+        >
+          <Menu size={20} aria-hidden="true" />
+        </IconButton>
+        <NixLogo size={32} />
       </MotionBox>
 
       <MotionBox
@@ -83,7 +83,6 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.16, type: "spring", stiffness: 400 }}
         sx={{
-          flex: "0 0 auto",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -93,7 +92,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           month={filters.month}
           year={filters.year}
           onDateChange={(month, year) => setFilters({ month, year })}
-          compact
+          pickerOnly
         />
       </MotionBox>
 
@@ -102,13 +101,21 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.18, type: "spring", stiffness: 400 }}
         sx={{
-          flex: "1 1 0%",
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
-          gap: 0.5,
         }}
       >
+        <IconButton
+          size="3"
+          variant="ghost"
+          color="gray"
+          onClick={onOpenSearch}
+          aria-label={t("common.search")}
+          style={headerButtonSize}
+        >
+          <Search size={19} aria-hidden="true" />
+        </IconButton>
         <IconButton
           size="3"
           variant={isPrivacyMode ? "soft" : "ghost"}
@@ -116,13 +123,11 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           onClick={togglePrivacyMode}
           aria-label={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
           title={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
-          style={{ width: 38, height: 38 }}
+          style={headerButtonSize}
         >
           {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
         </IconButton>
       </MotionBox>
-
-
     </MotionBox>
   );
 };
