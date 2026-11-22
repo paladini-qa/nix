@@ -10,6 +10,7 @@ import {
 } from "@mui/icons-material";
 import { Transaction, TransactionType } from "@/domain/entities";
 import { useSettings } from "@/presentation/contexts";
+import { usePrivacyMode } from "@/presentation/hooks";
 
 interface CategoryBreakdownProps {
   transactions: Transaction[];
@@ -36,6 +37,7 @@ interface BarRowProps {
 
 const BarRow: React.FC<BarRowProps> = ({ name, amount, total, color, onClick }) => {
   const theme = useTheme();
+  const { isPrivacyMode, formatPrivateValue } = usePrivacyMode();
   const isDark = theme.palette.mode === "dark";
   const bgSubtle = isDark ? "#1c1c22" : "#f4f4f5";
   const pct = total > 0 ? (amount / total) * 100 : 0;
@@ -99,7 +101,8 @@ const BarRow: React.FC<BarRowProps> = ({ name, amount, total, color, onClick }) 
             height: "100%",
             borderRadius: "99px",
             background: color,
-            width: `${pct}%`,
+            display: isPrivacyMode ? "none" : "block",
+            width: isPrivacyMode ? 0 : `${pct}%`,
             transition: "width 0.6s ease",
           }}
         />
@@ -116,7 +119,7 @@ const BarRow: React.FC<BarRowProps> = ({ name, amount, total, color, onClick }) 
           whiteSpace: "nowrap",
         }}
       >
-        {formatCompact(amount)}
+        {formatPrivateValue(formatCompact(amount))}
       </Typography>
     </Box>
   );
@@ -131,6 +134,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const { getCategoryColor } = useSettings();
+  const { formatPrivateValue } = usePrivacyMode();
 
   const bgElev   = isDark ? "#131317" : "#ffffff";
   const border   = isDark ? "#27272d" : "#e4e4e7";
@@ -235,7 +239,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
             color: "#ef4444",
           }}
         >
-          {formatCurrency(totalExpense)}
+          {formatPrivateValue(formatCurrency(totalExpense))}
         </Typography>
       </Box>
     </Box>

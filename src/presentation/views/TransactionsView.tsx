@@ -676,7 +676,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         {t.type === "income" ? <ArrowUpIcon titleAccess="Income" sx={{ fontSize: 16, color: "success.main" }} /> : <ArrowDownIcon titleAccess="Expense" sx={{ fontSize: 16, color: "error.main" }} />}
       </TableCell>
       <TableCell align="right" sx={{ fontFamily: "monospace", fontWeight: 600, color: t.type === "income" ? "success.main" : "error.main" }}>
-        {t.type === "expense" && "- "}{formatCurrency(t.amount || 0)}
+        {formatPrivateValue((t.type === "expense" ? "- " : "") + formatCurrency(t.amount || 0))}
       </TableCell>
       <TableCell align="center" onClick={(event) => event.stopPropagation()}>
         <Box sx={{ display: "flex", justifyContent: "center", gap: 0.5 }}>
@@ -777,7 +777,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   fontVariantNumeric: "tabular-nums",
                 }}
               >
-                {formatCurrency(balance)}
+                {formatPrivateValue(formatCurrency(balance))}
               </Typography>
             </Box>
             <Box
@@ -840,7 +840,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       lineHeight: 1.3,
                     }}
                   >
-                    {formatCurrency(totalIncome)}
+                    {formatPrivateValue(formatCurrency(totalIncome))}
                   </Typography>
                 </Box>
               </Stack>
@@ -886,7 +886,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       lineHeight: 1.3,
                     }}
                   >
-                    {formatCurrency(totalExpense)}
+                    {formatPrivateValue(formatCurrency(totalExpense))}
                   </Typography>
                 </Box>
               </Stack>
@@ -956,7 +956,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   pr: 6,
                 }}
               >
-                {formatCurrency(balance)}
+                {formatPrivateValue(formatCurrency(balance))}
               </Typography>
             </Paper>
           </Grid>
@@ -1021,7 +1021,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   pr: 6,
                 }}
               >
-                {formatCurrency(totalIncome)}
+                {formatPrivateValue(formatCurrency(totalIncome))}
               </Typography>
             </Paper>
           </Grid>
@@ -1086,7 +1086,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   pr: 6,
                 }}
               >
-                {formatCurrency(totalExpense)}
+                {formatPrivateValue(formatCurrency(totalExpense))}
               </Typography>
             </Paper>
           </Grid>
@@ -1801,7 +1801,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       letterSpacing: "-0.02em",
                     }}
                   >
-                    {formatCurrency(balance)}
+                    {formatPrivateValue(formatCurrency(balance))}
                   </Typography>
                 </CardContent>
               </Card>
@@ -1949,7 +1949,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   <TableRow sx={{ bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.3) : alpha(theme.palette.grey[50], 0.5) }}>
                     <TableCell colSpan={6} align="right" sx={{ fontWeight: 600 }}>Filtered Total:</TableCell>
                     <TableCell align="right" sx={{ fontFamily: "monospace", fontWeight: 600, color: balance >= 0 ? "success.main" : "error.main" }}>
-                      {formatCurrency(balance)}
+                      {formatPrivateValue(formatCurrency(balance))}
                     </TableCell>
                     <TableCell />
                   </TableRow>

@@ -1,6 +1,7 @@
 export default {
   // Common
   common: {
+    chartDataHidden: "Dados do gráfico ocultos",
     save: "Salvar",
     cancel: "Cancelar",
     delete: "Excluir",

@@ -185,10 +185,18 @@ export function useTransactionsQuery(userId: string) {
         (old) => [optimistic, ...(old ?? [])]
       );
 
-      return { previous };
+      return { previous, optimisticId: optimistic.id };
     },
 
-    onError: (error, tx, context: any) => {
+    onSuccess: (saved, _tx, context) => {
+      queryClient.setQueryData<Transaction[]>(transactionsKey, (current = []) => {
+        const alreadyLoaded = current.some((transaction) => transaction.id === saved.id);
+        const otherTransactions = current.filter((transaction) => transaction.id !== context.optimisticId);
+        return alreadyLoaded ? otherTransactions : [saved, ...otherTransactions];
+      });
+    },
+
+    onError: (error, tx, context) => {
       if (context) {
         queryClient.setQueryData(transactionsKey, context.previous ?? []);
       }

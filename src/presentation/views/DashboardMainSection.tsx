@@ -26,7 +26,7 @@ import RecentTransactionsWidget from "@/presentation/widgets/RecentTransactionsW
 import { useAppStore } from "@/presentation/hooks/useAppStore";
 import { useTransactionsQuery } from "@/presentation/hooks/useTransactionsQuery";
 import { useFilteredTransactions } from "@/presentation/hooks/useFilteredTransactions";
-import { useCurrency } from "@/presentation/hooks";
+import { useCurrency, usePrivacyMode } from "@/presentation/hooks";
 import { useSettings } from "@/presentation/contexts";
 import { VIEW_ROUTES } from "@/presentation/routes";
 
@@ -47,6 +47,7 @@ const DashboardMainSection: React.FC<{ userId: string }> = ({ userId }) => {
   const { t } = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { format: formatCurrency, formatCompact } = useCurrency();
+  const { formatPrivateValue } = usePrivacyMode();
   const { displayName, paymentMethodConfigs } = useSettings();
   const navigate = useNavigate();
 
@@ -108,16 +109,16 @@ const DashboardMainSection: React.FC<{ userId: string }> = ({ userId }) => {
               {monthLabel}
             </Typography>
             <Typography sx={{ fontSize: 30, fontWeight: 800, mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-              {formatCurrency(summary.balance)}
+              {formatPrivateValue(formatCurrency(summary.balance))}
             </Typography>
             <Stack direction="row" spacing={3} mt={1.5} alignItems="center">
               <Box>
                 <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Income</Typography>
-                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>+{formatCompact(summary.totalIncome)}</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{formatPrivateValue("+" + formatCompact(summary.totalIncome))}</Typography>
               </Box>
               <Box>
                 <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Expenses</Typography>
-                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>−{formatCompact(summary.totalExpense)}</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{formatPrivateValue("−" + formatCompact(summary.totalExpense))}</Typography>
               </Box>
             </Stack>
           </Box>
