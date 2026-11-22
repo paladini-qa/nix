@@ -10,6 +10,9 @@ test("confirms only saved transactions and supports create, edit and delete", as
   let requests = 0;
   let releaseFailure!: () => void;
   const failure = new Promise<void>((resolve) => { releaseFailure = resolve; });
+  let editId: string | undefined;
+  let allowRefetch!: () => void;
+  const refetch = new Promise<void>((resolve) => { allowRefetch = resolve; });
 
   await page.route("https://nix-audit.invalid/**", async (route) => {
     const request = route.request();
@@ -43,7 +46,10 @@ test("confirms only saved transactions and supports create, edit and delete", as
         return route.fulfill({ json: row });
       }
       case "PATCH": {
-        const row = rows.find((candidate) => candidate.id === id)!;
+        editId = id;
+        allowRefetch();
+        const row = rows.find((candidate) => candidate.id === id);
+        if (!row) return route.fulfill({ status: 404, json: { message: "Unknown transaction ID" } });
         Object.assign(row, request.postDataJSON());
         return route.fulfill({ json: row });
       }
@@ -51,7 +57,10 @@ test("confirms only saved transactions and supports create, edit and delete", as
         rows.splice(rows.findIndex((row) => row.id === id), 1);
         return route.fulfill({ status: 204, body: "" });
       default:
-        return route.fulfill({ json: url.searchParams.has("or") ? [] : rows });
+        if (url.searchParams.has("or")) return route.fulfill({ json: [] });
+        // The saved row must be editable even before the background query returns.
+        if (rows.length) await refetch;
+        return route.fulfill({ json: rows });
     }
   });
 
@@ -88,11 +97,12 @@ test("confirms only saved transactions and supports create, edit and delete", as
   await expect(dialog).toBeHidden();
   expect(rows).toMatchObject([{ description, amount: 12.34, is_paid: false }]);
 
-  await page.goto("/transactions");
+  await page.getByRole("complementary").getByText("Transactions", { exact: true }).click();
   await page.getByRole("button", { name: `Edit ${description}` }).click();
   const editDialog = page.getByRole("dialog");
   await editDialog.getByRole("combobox", { name: "Description" }).fill(`${description} editada`);
   await editDialog.getByRole("button", { name: "Salvar Alterações" }).click();
+  await expect.poll(() => editId).toBe(rows[0].id);
   await expect(editDialog).toBeHidden();
   expect(rows).toMatchObject([{ description: `${description} editada`, is_paid: false }]);
 
