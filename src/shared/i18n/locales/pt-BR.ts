@@ -34,6 +34,7 @@ export default {
 
   // Navigation
   nav: {
+    menu: "Menu",
     dashboard: "Painel",
     transactions: "Transações",
     budgets: "Orçamentos",

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Mobile navigation** — Expose the menu and global search in the header and provide a persistent new-transaction action in the bottom bar. The compact month picker leaves room for touch-sized controls on narrow screens.
+  - **Modified files** — `src/presentation/layouts/mobile/{MobileDrawer,MobileHeader,MobileNavigation}.tsx`, `src/presentation/components/ui/DateFilter.tsx`, `src/presentation/layouts/shell/AppShell.tsx`, `src/shared/i18n/locales/{en,pt-BR}.ts`, `e2e/audit/transactions.spec.ts`, `src/styles/index.css`
+
 ### Removed
 
 - **Artificial Intelligence navigation** — Removed the menu entry and shortcut from desktop, mobile, and global search.

@@ -268,6 +268,9 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
       open={open}
       onClose={onClose}
       PaperProps={{
+        role: "dialog",
+        "aria-modal": true,
+        "aria-labelledby": "mobile-menu-title",
         sx: {
           width: MOBILE_DRAWER_WIDTH,
           maxWidth: "85vw",
@@ -295,7 +298,8 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
       {/* Header */}
       <Box
         sx={{
-          height: 80,
+          minHeight: 80,
+          flexShrink: 0,
           display: "flex",
           alignItems: "center",
           gap: 1.5,
@@ -305,6 +309,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
             content: '""',
             position: "absolute",
             bottom: 0,
+            pointerEvents: "none",
             left: 20,
             right: 20,
             height: 1,
@@ -335,6 +340,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         </Box>
         <Box sx={{ flex: 1 }}>
           <Typography
+            id="mobile-menu-title"
             variant="h5"
             sx={{
               fontWeight: 700,
@@ -356,10 +362,12 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           </Typography>
         </Box>
         <IconButton
+          aria-label={t("common.close")}
           onClick={onClose}
           sx={{
             width: 44,
             height: 44,
+            flexShrink: 0,
             color: "text.secondary",
             touchAction: "manipulation",
             transition: "all 0.2s ease",
