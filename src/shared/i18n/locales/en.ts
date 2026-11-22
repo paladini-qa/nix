@@ -41,7 +41,6 @@ export default {
     recurring: "Recurring",
     splits: "Splits",
     settings: "Settings",
-    nixai: "Artificial Intelligence",
     logout: "Logout",
     investments: "Investments",
     subscriptions: "Subscriptions",
