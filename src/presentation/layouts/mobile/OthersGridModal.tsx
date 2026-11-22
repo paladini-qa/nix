@@ -7,7 +7,6 @@ import {
   IconButton,
   useTheme,
   alpha,
-  Button,
   Divider,
 } from "@mui/material";
 import {
@@ -15,7 +14,6 @@ import {
   CreditCard as CreditCardIcon,
   Repeat as RepeatIcon,
   Category as CategoryIcon,
-  AutoAwesome as SparklesIcon,
   AccountBalance as BudgetsIcon,
   BarChart as AnalyticsIcon,
   CalendarMonth as PlanningIcon,
@@ -248,42 +246,6 @@ const OthersGridModal: React.FC<OthersGridModalProps> = ({
               <Typography variant="caption" sx={sectionLabelSx}>Tools</Typography>
               {renderGrid(toolsGridItems, mainGridItems.length + planningGridItems.length)}
             </Box>
-
-            {/* NixAI Button */}
-            <MotionBox
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, type: "spring", stiffness: 400 }}
-            >
-              <Button
-                fullWidth
-                onClick={() => handleItemClick("nixai")}
-                startIcon={<SparklesIcon />}
-                sx={{
-                  py: 1.5,
-                  borderRadius: "16px",
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main ?? theme.palette.primary.dark})`,
-                  color: "white",
-                  fontWeight: 700,
-                  textTransform: "none",
-                  fontSize: "1rem",
-                  boxShadow: `0 4px 16px -4px ${alpha(theme.palette.primary.main, 0.4)}`,
-                  transition: "all 0.2s ease-in-out",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: `0 8px 24px -4px ${alpha(
-                      theme.palette.primary.main,
-                      0.5
-                    )}`,
-                  },
-                  "&:active": {
-                    transform: "translateY(0) scale(0.98)",
-                  },
-                }}
-              >
-                Finance Control AI — Smart Analysis
-              </Button>
-            </MotionBox>
           </MotionBox>
         )}
       </AnimatePresence>

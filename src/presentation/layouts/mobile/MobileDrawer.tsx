@@ -21,7 +21,6 @@ import {
   Person as UserIcon,
   ChevronRight as ChevronRightIcon,
   Close as CloseIcon,
-  AutoAwesome as SparklesIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
   Category as CategoryIcon,
@@ -109,15 +108,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
   ];
 
-
-  // Itens de ferramentas
-  const toolsNavItems: NavItem[] = [
-    { icon: SparklesIcon, label: t("nav.nixai"), id: "nixai" },
-  ];
-
-  // Helper para verificar se é item NixAI
-  const isNixAI = (itemId: string) => itemId === "nixai";
-
   // Handler para navegação (fecha o drawer após navegar)
   const handleNavigate = (view: AppCurrentView) => {
     onNavigate(view);
@@ -133,7 +123,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
   // Renderiza um item de navegação
   const renderNavItem = (item: NavItem) => {
     const isActive = currentView === item.id;
-    const isAIItem = isNixAI(item.id);
 
     return (
       <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
@@ -142,7 +131,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           whileHover={{ x: 4 }}
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
-          className={isAIItem ? "nix-ai-indicator" : undefined}
           sx={{
             borderRadius: "16px",
             py: 1.5,
@@ -150,32 +138,15 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
             minHeight: TOUCH_TARGET_MIN,
             position: "relative",
             overflow: "hidden",
-            // Estilo especial para NixAI
-            ...(isAIItem && !isActive && {
-              background: isDarkMode
-                ? "linear-gradient(135deg, rgba(138, 43, 226, 0.12) 0%, rgba(106, 13, 173, 0.08) 100%)"
-                : "linear-gradient(135deg, rgba(138, 43, 226, 0.06) 0%, rgba(106, 13, 173, 0.04) 100%)",
-              border: `1px solid ${alpha("#8A2BE2", isDarkMode ? 0.2 : 0.1)}`,
-            }),
             ...(isActive && {
               bgcolor: isDarkMode
                 ? alpha(theme.palette.primary.main, 0.15)
                 : alpha(theme.palette.primary.main, 0.08),
-              ...(isAIItem && {
-                background: isDarkMode
-                  ? "linear-gradient(135deg, rgba(138, 43, 226, 0.25) 0%, rgba(106, 13, 173, 0.15) 100%)"
-                  : "linear-gradient(135deg, rgba(138, 43, 226, 0.12) 0%, rgba(106, 13, 173, 0.08) 100%)",
-              }),
             }),
             "&:hover": {
               bgcolor: isDarkMode
                 ? alpha(theme.palette.primary.main, 0.1)
                 : alpha(theme.palette.primary.main, 0.05),
-              ...(isAIItem && {
-                background: isDarkMode
-                  ? "linear-gradient(135deg, rgba(138, 43, 226, 0.2) 0%, rgba(106, 13, 173, 0.12) 100%)"
-                  : "linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(106, 13, 173, 0.06) 100%)",
-              }),
             },
           }}
         >
@@ -206,7 +177,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           <ListItemIcon
             sx={{
               minWidth: 44,
-              color: isActive || isAIItem ? "primary.main" : "text.secondary",
+              color: isActive ? "primary.main" : "text.secondary",
               transition: "color 0.2s ease",
             }}
           >
@@ -220,25 +191,17 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                ...(isAIItem && {
-                  background: "linear-gradient(135deg, #8A2BE2 0%, #6A0DAD 100%)",
-                  color: "#FFFFFF",
-                  boxShadow: "0 4px 12px rgba(138, 43, 226, 0.3)",
-                }),
-                ...(!isAIItem && {
-                  bgcolor: isActive
-                    ? isDarkMode
-                      ? alpha(theme.palette.primary.main, 0.2)
-                      : alpha(theme.palette.primary.main, 0.12)
-                    : "transparent",
-                }),
+                bgcolor: isActive
+                  ? isDarkMode
+                    ? alpha(theme.palette.primary.main, 0.2)
+                    : alpha(theme.palette.primary.main, 0.12)
+                  : "transparent",
                 transition: "all 0.2s ease",
               }}
             >
               <item.icon
                 sx={{
                   fontSize: 24,
-                  ...(isAIItem && { color: "#FFFFFF" }),
                 }}
               />
             </MotionBox>
@@ -422,7 +385,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
       >
         {renderSection("Menu Principal", mainNavItems)}
         {renderSection("Cadastro", registrationNavItems)}
-        {renderSection("Ferramentas", toolsNavItems)}
       </Box>
 
       {/* Footer */}

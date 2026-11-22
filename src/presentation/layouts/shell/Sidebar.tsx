@@ -20,7 +20,6 @@ import {
   CreditCard as CreditCardIcon,
   Category as CategoryIcon,
   Payment as PaymentIcon,
-  Star as BatchRegistrationIcon,
   TrendingUp as InvestmentsIcon,
   Subscriptions as SubscriptionsIcon,
   Description as FiscalIcon,
@@ -92,7 +91,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const mainNavItems: NavItem[] = [
     { icon: DashboardIcon, label: t("nav.dashboard"), id: "dashboard" },
     { icon: WalletIcon, label: t("nav.transactions"), id: "transactions" },
-    { icon: BatchRegistrationIcon, label: t("nav.nixai"), id: "nixai" },
   ];
 
   const resourcesNavItems: NavItem[] = [

@@ -41,7 +41,6 @@ export default {
     recurring: "Recorrentes",
     splits: "Parcelas",
     settings: "Configurações",
-    nixai: "Inteligência Artificial",
     logout: "Sair",
     investments: "Investimentos",
     subscriptions: "Assinaturas",

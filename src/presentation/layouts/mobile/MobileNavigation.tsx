@@ -8,7 +8,6 @@ import {
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { AutoAwesome as NixAIIcon } from "@mui/icons-material";
 
 const MotionBox = motion.create(Box);
 
@@ -144,36 +143,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             onClick={() => onNavigate("transactions")}
             primaryColor={theme.palette.primary.main}
           />
-
-          {/* Nix AI — center gradient circle */}
-          <Box
-            component="button"
-            type="button"
-            aria-label="Nix AI"
-            onClick={() => onNavigate("nixai")}
-            sx={{
-              flex: "0 0 auto",
-              width: 46,
-              height: 46,
-              minWidth: 46,
-              borderRadius: "50%",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              touchAction: "manipulation",
-              WebkitTapHighlightColor: "transparent",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "linear-gradient(135deg, #a855f7, #c084fc)",
-              boxShadow: "0 6px 14px -4px rgba(168,85,247,0.55)",
-              mt: "-10px",
-              transition: "all 0.2s ease",
-              "&:active": { transform: "scale(0.93)" },
-            }}
-          >
-            <NixAIIcon sx={{ fontSize: 20, color: "#fff" }} />
-          </Box>
 
           {/* Categories */}
           <NavItem

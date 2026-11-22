@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **Artificial Intelligence navigation** — Removed the menu entry and shortcut from desktop, mobile, and global search.
+  - **Modified files** — `src/presentation/layouts/shell/Sidebar.tsx`, `src/presentation/layouts/mobile/{MobileDrawer,MobileNavigation,OthersGridModal}.tsx`, `src/presentation/panels/GlobalSearch.tsx`, `src/shared/i18n/locales/{en,pt-BR}.ts`
+
 ### Fixed
 
 - **Pages deployment retries** — Give each attempt its own artifact name and allow time for the Pages artifact service to see the upload.

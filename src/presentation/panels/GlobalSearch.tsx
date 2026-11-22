@@ -23,7 +23,6 @@ import {
   Dashboard as DashboardIcon,
   AccountBalanceWallet as WalletIcon,
   Settings as SettingsIcon,
-  AutoAwesome as SparklesIcon,
   Repeat as RepeatIcon,
   CreditCard as CreditCardIcon,
   PieChart as BudgetIcon,
@@ -51,7 +50,6 @@ type ViewId =
   | "budgets"
   | "accounts"
   | "analytics"
-  | "nixai"
   | "settings";
 
 interface NavigationItem {
@@ -84,7 +82,6 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       { id: "budgets", label: t("nav.budgets"), icon: <BudgetIcon />, keywords: ["orcamento", "limite", "budget"] },
       { id: "accounts", label: t("nav.accounts"), icon: <AccountIcon />, keywords: ["conta", "banco", "carteira"] },
       { id: "analytics", label: "Analytics", icon: <AnalyticsIcon />, keywords: ["grafico", "relatorio", "estatistica"] },
-      { id: "nixai", label: t("nav.nixai"), icon: <SparklesIcon />, keywords: ["ai", "assistente", "inteligencia"] },
       { id: "settings", label: t("nav.settings"), icon: <SettingsIcon />, keywords: ["configuracao", "preferencia"] },
     ],
     [t]
