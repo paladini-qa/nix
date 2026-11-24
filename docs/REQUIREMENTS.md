@@ -164,8 +164,8 @@ Nix Finance is a modern personal finance management application with intelligent
 - **Screen Reader Support**: ARIA-labeled elements for screen readers
 
 #### Internationalization
-- **i18n**: Multi-language support (English fallback)
-- **Unified Language**: Application forced to English to align with repository guidelines
+- **Language** — Brazilian Portuguese (pt-BR) throughout the interface.
+- **Currency** — Display stored amounts in BRL with Brazilian decimal and grouping separators. Default category and payment method labels are localized at display time.
 
 ---
 
@@ -313,7 +313,7 @@ src/
     ├── utils/                       # errorReporting, imageColorUtils, tableStyles
     ├── constants/                   # Application and layout constants
     ├── theme/                       # MUI Theme setup
-    └── i18n/                        # React internationalization (English)
+    └── i18n/                        # React internationalization (Brazilian Portuguese)
 ```
 
 ---

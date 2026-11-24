@@ -63,7 +63,7 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
       setTags(data);
     } catch (err) {
       console.error("Error fetching tags:", err);
-      showError("Failed to load tags");
+      showError("Não foi possível carregar as etiquetas");
     } finally {
       setLoading(false);
     }
@@ -96,13 +96,13 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
           name: formName.trim(),
           color: formColor,
         });
-        showSuccess("Tag updated");
+        showSuccess("Etiqueta atualizada");
       } else {
         await tagService.create(userId, {
           name: formName.trim(),
           color: formColor,
         });
-        showSuccess("Tag created");
+        showSuccess("Etiqueta criada");
       }
       handleCloseForm();
       fetchTags();
@@ -111,15 +111,15 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
       if (err.code === "23505") {
         showError("A tag with this name already exists");
       } else {
-        showError(err.message || "Failed to save tag");
+        showError(err.message || "Não foi possível salvar a etiqueta");
       }
     }
   };
 
   const handleDelete = async (tag: TagWithCount) => {
     const message = tag.transactionCount > 0
-      ? `This tag is used in ${tag.transactionCount} transaction(s). Delete anyway?`
-      : `Delete tag "${tag.name}"?`;
+      ? `Esta etiqueta é usada em ${tag.transactionCount} transações. Deseja excluí-la?`
+      : `Excluir a etiqueta "${tag.name}"?`;
     
     const confirmed = await confirmDelete(tag.name);
     if (!confirmed) return;
@@ -127,10 +127,10 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
     try {
       await tagService.delete(tag.id);
       setTags((prev) => prev.filter((t) => t.id !== tag.id));
-      showSuccess("Tag deleted");
+      showSuccess("Etiqueta excluída");
     } catch (err) {
       console.error("Error deleting tag:", err);
-      showError("Failed to delete tag");
+      showError("Não foi possível excluir a etiqueta");
     }
   };
 
@@ -147,21 +147,21 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <TagIcon color="primary" />
           <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={600}>
-            Tags
+            Etiquetas
           </Typography>
         </Box>
         <NixButton size="sm" onClick={() => handleOpenForm()}>
-          <AddIcon fontSize="small" /> New Tag
+          <AddIcon fontSize="small" /> Nova etiqueta
         </NixButton>
       </Box>
 
       {loading ? (
-        <Typography color="text.secondary">Loading tags...</Typography>
+        <Typography color="text.secondary">Carregando etiquetas...</Typography>
       ) : tags.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 3 }}>
           <TagIcon sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
           <Typography variant="body2" color="text.secondary">
-            No tags yet. Create tags to organize your transactions.
+            Crie etiquetas para organizar suas transações.
           </Typography>
         </Box>
       ) : (
@@ -207,12 +207,12 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
         fullWidth
       >
         <DialogTitle sx={{ pt: 2.5, px: 2.5, pb: 1, fontWeight: 700, fontSize: "1rem" }}>
-          {editingTag ? "Edit Tag" : "New Tag"}
+          {editingTag ? "Editar etiqueta" : "Nova etiqueta"}
         </DialogTitle>
         <DialogContent sx={{ px: 2.5 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
             <TextField
-              label="Tag Name"
+              label="Nome da etiqueta"
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
               placeholder="e.g., Urgent, Personal"
@@ -224,7 +224,7 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
             {/* Color Picker */}
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                Color
+                Cor
               </Typography>
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                 {TAG_COLORS.map((color) => (
@@ -251,10 +251,10 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
             {/* Preview */}
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                Preview
+                Prévia
               </Typography>
               <Chip
-                label={formName || "Tag Name"}
+                label={formName || "Nome da etiqueta"}
                 sx={{
                   bgcolor: formColor,
                   color: "white",
@@ -266,7 +266,7 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
         </DialogContent>
         <DialogActions>
           <NixButton size="medium" variant="soft" color="gray" onClick={handleCloseForm}>
-            Cancel
+            Cancelar
           </NixButton>
           <NixButton
             size="medium"
@@ -275,7 +275,7 @@ const TagsManager: React.FC<TagsManagerProps> = ({ userId }) => {
             onClick={handleSave}
             disabled={!formName.trim()}
           >
-            {editingTag ? "Save" : "Create"}
+            {editingTag ? "Salvar" : "Criar"}
           </NixButton>
         </DialogActions>
       </Dialog>

@@ -103,8 +103,8 @@ const Onboarding: React.FC<OnboardingProps> = ({
   const steps: OnboardingStep[] = [
     {
       id: "transaction",
-      title: "Create your first transaction",
-      description: "Start tracking your finances by adding your first income or expense.",
+      title: "Crie sua primeira transação",
+      description: "Adicione sua primeira receita ou despesa para acompanhar suas finanças.",
       icon: <WalletIcon />,
       action: () => {
         onCreateTransaction();
@@ -116,28 +116,28 @@ const Onboarding: React.FC<OnboardingProps> = ({
     },
     {
       id: "categories",
-      title: "Customize your categories",
-      description: "Set up categories that match your spending habits.",
+      title: "Personalize suas categorias",
+      description: "Crie categorias que reflitam seus hábitos de consumo.",
       icon: <CategoryIcon />,
       action: () => {
         onNavigate("settings");
         markStepCompleted("categories");
         handleComplete();
       },
-      actionLabel: "Go to Settings",
+      actionLabel: "Ir para configurações",
       isCompleted: completedSteps.includes("categories"),
     },
     {
       id: "ai",
-      title: "Meet NixAI",
-      description: "Get personalized financial insights powered by AI.",
+      title: "Conheça a IA do Nix",
+      description: "Receba análises financeiras personalizadas com IA.",
       icon: <SparklesIcon />,
       action: () => {
         onNavigate("nixai");
         markStepCompleted("ai");
         handleComplete();
       },
-      actionLabel: "Try NixAI",
+      actionLabel: "Experimentar a IA do Nix",
       isCompleted: completedSteps.includes("ai"),
     },
   ];
@@ -163,10 +163,10 @@ const Onboarding: React.FC<OnboardingProps> = ({
       >
         <Box>
           <Typography variant="h5" fontWeight="bold">
-            Welcome{displayName ? `, ${displayName}` : ""}! 
+            Bem-vindo{displayName ? `, ${displayName}` : ""}!
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Let's get you started with Nix
+            Primeiros passos no Nix
           </Typography>
         </Box>
         <IconButton onClick={handleSkip} size="small">
@@ -186,7 +186,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
             }}
           >
             <Typography variant="caption" color="text.secondary">
-              Getting Started Progress
+              Progresso dos primeiros passos
             </Typography>
             <Chip
               label={`${completedCount}/${steps.length}`}
@@ -222,18 +222,17 @@ const Onboarding: React.FC<OnboardingProps> = ({
                 sx={{ fontSize: 64, color: "success.main", mb: 2 }}
               />
               <Typography variant="h6" fontWeight="bold" gutterBottom>
-                You're all set!
+                Tudo pronto!
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                You've completed the getting started guide. Enjoy managing your
-                finances with Nix!
+                Você concluiu os primeiros passos. Agora já pode organizar suas finanças no Nix.
               </Typography>
               <Button
                 variant="contained"
                 onClick={handleComplete}
                 endIcon={<ArrowForwardIcon />}
               >
-                Start Using Nix
+                Começar a usar o Nix
               </Button>
             </Box>
           </Fade>
@@ -324,7 +323,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
 
       <DialogActions>
         <Button onClick={handleSkip} color="inherit">
-          Skip for now
+          Pular por enquanto
         </Button>
         {!allCompleted && (
           <Button

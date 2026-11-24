@@ -9,8 +9,8 @@ export interface CurrencyOptions {
 }
 
 const DEFAULT_OPTIONS: CurrencyOptions = {
-  locale: "en-US",
-  currency: "USD",
+  locale: "pt-BR",
+  currency: "BRL",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 };

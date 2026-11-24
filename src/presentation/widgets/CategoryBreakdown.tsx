@@ -1,3 +1,4 @@
+import { categoryLabel } from "@/shared/i18n/labels";
 import React from "react";
 import {
   Box,
@@ -82,7 +83,7 @@ const BarRow: React.FC<BarRowProps> = ({ name, amount, total, color, onClick }) 
           whiteSpace: "nowrap",
         }}
       >
-        {name}
+        {categoryLabel(name)}
       </Typography>
 
       {/* Barra de progresso */}

@@ -53,7 +53,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       }
     } catch (err: any) {
       console.error("Error fetching transactions:", err);
-      setError(err.message || "Failed to fetch transactions");
+      setError(err.message || "Não foi possível carregar as transações");
     } finally {
       setLoading(false);
     }
@@ -114,7 +114,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         return null;
       } catch (err: any) {
         console.error("Error adding transaction:", err);
-        setError(err.message || "Failed to add transaction");
+        setError(err.message || "Não foi possível adicionar a transação");
         throw err;
       }
     },
@@ -197,7 +197,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         return [];
       } catch (err: any) {
         console.error("Error adding installment transactions:", err);
-        setError(err.message || "Failed to add installment transactions");
+        setError(err.message || "Não foi possível adicionar as parcelas");
         throw err;
       }
     },
@@ -262,7 +262,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         return null;
       } catch (err: any) {
         console.error("Error updating transaction:", err);
-        setError(err.message || "Failed to update transaction");
+        setError(err.message || "Não foi possível atualizar a transação");
         throw err;
       }
     },
@@ -279,7 +279,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       return true;
     } catch (err: any) {
       console.error("Error deleting transaction:", err);
-      setError(err.message || "Failed to delete transaction");
+      setError(err.message || "Não foi possível excluir a transação");
       throw err;
     }
   }, []);
@@ -300,7 +300,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         return true;
       } catch (err: any) {
         console.error("Error toggling paid status:", err);
-        setError(err.message || "Failed to toggle paid status");
+        setError(err.message || "Não foi possível alterar o status do pagamento");
         throw err;
       }
     },
@@ -434,7 +434,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         return true;
       } catch (err: any) {
         console.error("Error updating installment dates:", err);
-        setError(err.message || "Failed to update installment dates");
+        setError(err.message || "Não foi possível atualizar as datas das parcelas");
         throw err;
       }
     },

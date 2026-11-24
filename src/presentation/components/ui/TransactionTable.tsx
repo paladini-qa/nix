@@ -1,3 +1,4 @@
+import { categoryLabel, paymentMethodLabel } from "@/shared/i18n/labels";
 import React, { useRef, useMemo } from "react";
 import {
   Paper,
@@ -134,7 +135,7 @@ const mobileCardVariants = {
 // ─── Funções puras hoistadas — não recriadas em cada render ───────────────────
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
 const formatDate = (dateString: string) => {
   const [, month, day] = dateString.split("-");
@@ -245,7 +246,7 @@ const MobileTransactionCard = React.memo<MobileCardProps>(({
           </Typography>
           <Box sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "text.disabled" }} />
           <Chip
-            label={transaction.category}
+            label={categoryLabel(transaction.category)}
             size="small"
             sx={{ ...getModernChipSx(catConfig.color, isDarkMode), height: 20, fontSize: 10 }}
           />
@@ -294,8 +295,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       >
         <EmptyState
           type="transactions"
-          title="No transactions found"
-          description="Add your first transaction to start tracking your finances."
+          title="Nenhuma transação encontrada"
+          description="Adicione sua primeira transação para começar a acompanhar suas finanças."
           compact
         />
       </MotionPaper>
@@ -408,11 +409,11 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                   "& th": { borderBottom: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.06) : alpha("#000000", 0.06)}` },
                 }}
               >
-                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>DATE</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>DESCRIPTION</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>CATEGORY</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>PAYMENT</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5, width: 200 }}>AMOUNT</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>DATA</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>DESCRIÇÃO</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>CATEGORIA</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>PAGAMENTO</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5, width: 200 }}>VALOR</TableCell>
               </TableRow>
             </TableHead>
           </Table>
@@ -459,7 +460,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         <Box sx={{ width: 36, height: 36, borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: isDarkMode ? alpha(catConfig.color, 0.15) : catConfig.bgLight }}>
                           <CategoryIcon sx={{ fontSize: 18, color: catConfig.color }} />
                         </Box>
-                        <Typography variant="body2" fontWeight={500} sx={{ color: catConfig.color }}>{transaction.category}</Typography>
+                        <Typography variant="body2" fontWeight={500} sx={{ color: catConfig.color }}>{categoryLabel(transaction.category)}</Typography>
                       </Box>
                     </TableCell>
                     <TableCell component="div">
@@ -471,7 +472,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                           borderRadius="8px"
                           iconSize={14}
                         />
-                        <Typography variant="body2" color="text.secondary" fontWeight={500}>{transaction.paymentMethod}</Typography>
+                        <Typography variant="body2" color="text.secondary" fontWeight={500}>{paymentMethodLabel(transaction.paymentMethod)}</Typography>
                       </Box>
                     </TableCell>
                     <TableCell component="div">
@@ -505,19 +506,19 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             }}
           >
             <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>
-              DATE
+              DATA
             </TableCell>
             <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>
-              DESCRIPTION
+              DESCRIÇÃO
             </TableCell>
             <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>
-              CATEGORY
+              CATEGORIA
             </TableCell>
             <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5 }}>
-              PAYMENT
+              PAGAMENTO
             </TableCell>
             <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: 12, letterSpacing: "0.05em", py: 2.5, width: 200 }}>
-              AMOUNT
+              VALOR
             </TableCell>
           </TableRow>
         </TableHead>
@@ -643,7 +644,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         fontWeight={500}
                         sx={{ color: catConfig.color }}
                       >
-                        {transaction.category}
+                        {categoryLabel(transaction.category)}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -657,7 +658,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         iconSize={14}
                       />
                       <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                        {transaction.paymentMethod}
+                        {paymentMethodLabel(transaction.paymentMethod)}
                       </Typography>
                     </Box>
                   </TableCell>

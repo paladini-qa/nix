@@ -162,6 +162,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
           <CountUp
             value={Math.abs(monthlyFlow)}
             formatter={formatBRLFull}
+          decimals={2}
             duration={1.0}
             delay={0.2}
             sx={{ color: balanceColor, fontSize: "26px", fontWeight: 700, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", ...privacyStylesStrong }}
@@ -185,6 +186,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
         <CountUp
           value={summary.totalIncome}
           formatter={formatBRLFull}
+          decimals={2}
           duration={1.0}
           delay={0.3}
           sx={{ color: COLORS.income, fontSize: "26px", fontWeight: 700, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", display: "block", ...privacyStylesStrong }}
@@ -221,6 +223,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, transactions, sele
         <CountUp
           value={summary.totalExpense}
           formatter={formatBRLFull}
+          decimals={2}
           duration={1.0}
           delay={0.4}
           sx={{ color: COLORS.expense, fontSize: "26px", fontWeight: 700, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", display: "block", ...privacyStylesStrong }}

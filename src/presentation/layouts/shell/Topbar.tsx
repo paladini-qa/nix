@@ -124,7 +124,7 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction, cur
       >
         <SearchIcon sx={{ fontSize: 16, color: "text.disabled", flexShrink: 0 }} />
         <Typography sx={{ fontSize: 13.5, color: "text.disabled", userSelect: "none" }}>
-          Search transactions, categories…
+          Buscar transações e categorias…
         </Typography>
       </Box>
 
@@ -151,7 +151,7 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction, cur
       {/* Theme toggle */}
       <IconButton
         onClick={handleThemeToggle}
-        title={isDark ? "Dark mode — click for light" : "Light mode — click for dark"}
+        title={isDark ? "Tema escuro. Alterar para claro" : "Tema claro. Alterar para escuro"}
         sx={{
           width: 38,
           height: 38,
@@ -186,7 +186,7 @@ const Topbar: React.FC<TopbarProps> = ({ onOpenSearch, onOpenNewTransaction, cur
           },
         }}
       >
-        New
+        Nova
       </Button>
     </Box>
   );

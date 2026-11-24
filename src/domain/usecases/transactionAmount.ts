@@ -1,4 +1,4 @@
-const amountFormatter = new Intl.NumberFormat("en-US", {
+const amountFormatter = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });

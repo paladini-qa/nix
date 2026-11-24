@@ -109,11 +109,11 @@ class ErrorBoundary extends Component<Props, State> {
             </Box>
 
             <Typography variant="h5" fontWeight="bold" gutterBottom>
-              Oops! Something went wrong
+              Algo deu errado
             </Typography>
 
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              We're sorry, but something unexpected happened. Please try again or reload the page.
+              Ocorreu um erro inesperado. Tente novamente ou recarregue a página.
             </Typography>
 
             {process.env.NODE_ENV === "development" && this.state.error && (
@@ -151,13 +151,13 @@ class ErrorBoundary extends Component<Props, State> {
                 startIcon={<RefreshIcon />}
                 onClick={this.handleRetry}
               >
-                Try Again
+                Tentar novamente
               </Button>
               <Button
                 variant="contained"
                 onClick={this.handleReload}
               >
-                Reload Page
+                Recarregar página
               </Button>
             </Box>
           </Paper>

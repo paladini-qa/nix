@@ -109,7 +109,7 @@ function DataTable<T>({
   data,
   columns,
   keyExtractor,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Buscar...",
   searchFields,
   onSearch,
   externalSearchTerm,
@@ -125,7 +125,7 @@ function DataTable<T>({
   renderMobileCard,
   stickyHeader = false,
   maxHeight,
-  emptyMessage = "No data found",
+  emptyMessage = "Nenhum dado encontrado",
   emptyIcon,
   loading = false,
   toolbarActions,
@@ -437,7 +437,7 @@ function DataTable<T>({
 
         {/* Botão de filtros */}
         {filters && (
-          <Tooltip title={showFilters ? "Hide filters" : "Show filters"}>
+          <Tooltip title={showFilters ? "Ocultar filtros" : "Mostrar filtros"}>
             <Button
               variant={showFilters ? "contained" : "outlined"}
               size="small"
@@ -452,7 +452,7 @@ function DataTable<T>({
                 }),
               }}
             >
-              Filters
+              Filtros
               {activeFiltersCount > 0 && (
                 <Chip
                   label={activeFiltersCount}
@@ -536,7 +536,7 @@ function DataTable<T>({
         // Vista desktop em tabela
         <TableContainer
           role="region"
-          aria-label={title || "Data table"}
+          aria-label={title || "Tabela de dados"}
           sx={{
             maxHeight: maxHeight,
             ...(stickyHeader && {

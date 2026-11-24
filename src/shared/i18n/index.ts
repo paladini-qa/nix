@@ -1,13 +1,10 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 
-import en from "@/shared/i18n/locales/en";
 import ptBR from "@/shared/i18n/locales/pt-BR";
 
 // Recursos de tradução
 const resources = {
-  en: { translation: en },
   "pt-BR": { translation: ptBR },
 };
 
@@ -16,8 +13,8 @@ i18n
   .use(initReactI18next) // Integração com React
   .init({
     resources,
-    lng: "en", // Idioma ativo forçado para Inglês
-    fallbackLng: "en", // Idioma padrão
+    lng: "pt-BR",
+    fallbackLng: "pt-BR",
     debug: process.env.NODE_ENV === "development",
 
     interpolation: {
@@ -31,27 +28,22 @@ i18n
 
 export default i18n;
 
-// Helper para obter o idioma atual (sempre inglês)
+// Idioma da interface
 export const getBrowserLanguage = (): string => {
-  return "en";
+  return "pt-BR";
 };
 
-// Helper para sincronizar o idioma (sempre inglês)
+// Restaura o idioma da interface
 export const syncWithBrowserLanguage = async () => {
-  if (i18n.language !== "en") {
-    await i18n.changeLanguage("en");
+  if (i18n.language !== "pt-BR") {
+    await i18n.changeLanguage("pt-BR");
   }
 };
 
 // Idiomas disponíveis (para referência/UI)
 export const availableLanguages = [
-  { code: "en", name: "English", flag: "" },
+  { code: "pt-BR", name: "Português (Brasil)", flag: "" },
 ];
 
 // Tipo para idiomas
-export type Language = "en" | "pt-BR";
-
-
-
-
-
+export type Language = "pt-BR";

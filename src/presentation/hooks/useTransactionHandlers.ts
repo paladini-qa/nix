@@ -950,7 +950,7 @@ export const useTransactionHandlers = ({
         }
       } catch (err) {
         console.error("Error saving transaction:", err);
-        showError("Error saving transaction. Please try again.", "Save Error");
+        showError("Erro ao salvar a transação. Tente novamente.", "Erro ao salvar");
       }
     },
     [session, transactions, setTransactions, showError]
@@ -976,23 +976,23 @@ export const useTransactionHandlers = ({
       if (relatedTransaction) {
         const isExpense = transactionToDelete.type === "expense";
         const relatedType = isExpense
-          ? "income (reimbursement)"
+          ? "receita (reembolso)"
           : "original expense";
         const relatedDesc = relatedTransaction.description;
 
         const result = await choice({
-          title: "Delete Linked Transaction",
-          message: `This transaction has a related ${relatedType}:\n"${relatedDesc}"\n\nWhat would you like to do?`,
+          title: "Excluir transação vinculada",
+          message: `Esta transação tem um lançamento vinculado (${relatedType}):\n"${relatedDesc}"\n\nO que deseja fazer?`,
           variant: "warning",
           choices: [
             {
-              label: "Delete Both",
+              label: "Excluir ambas",
               value: "both",
               variant: "contained",
               color: "error",
             },
             {
-              label: "Delete Only This One",
+              label: "Excluir só esta",
               value: "this",
               variant: "outlined",
               color: "warning",
@@ -1004,11 +1004,11 @@ export const useTransactionHandlers = ({
         deleteRelated = result === "both";
       } else {
         const confirmed = await confirm({
-          title: "Delete Transaction",
+          title: "Excluir transação",
           message:
-            "Are you sure you want to delete this transaction? This action cannot be undone.",
-          confirmText: "Delete",
-          cancelText: "Cancel",
+            "Deseja excluir esta transação? Essa ação não pode ser desfeita.",
+          confirmText: "Excluir",
+          cancelText: "Cancelar",
           variant: "danger",
         });
 
@@ -1059,8 +1059,8 @@ export const useTransactionHandlers = ({
       } catch (err) {
         console.error("Error deleting transaction:", err);
         showError(
-          "Error deleting transaction. Please try again.",
-          "Delete Error"
+          "Erro ao excluir a transação. Tente novamente.",
+          "Erro ao excluir"
         );
       }
     },
@@ -1140,7 +1140,7 @@ export const useTransactionHandlers = ({
           )
         );
       } catch (err) {
-        console.error("Error paying all transactions:", err);
+        console.error("Erro ao pagar todas as transações:", err);
         showError("Erro ao marcar transações como pagas");
       }
     },

@@ -1,3 +1,4 @@
+import { categoryLabel, paymentMethodLabel } from "@/shared/i18n/labels";
 import React, { useState, useMemo, useCallback, useRef } from "react";
 import {
   Box,
@@ -457,9 +458,9 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   }, [groupedSplits]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("pt-BR", {
       style: "currency",
-      currency: "USD",
+      currency: "BRL",
     }).format(value);
   };
 
@@ -467,17 +468,17 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     const [year, month] = dateString.split("-");
     const months = [
       "Jan",
-      "Feb",
+      "Fev",
       "Mar",
-      "Apr",
-      "May",
+      "Abr",
+      "Maio",
       "Jun",
       "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
+      "Ago",
+      "Set",
+      "Out",
       "Nov",
-      "Dec",
+      "Dez",
     ];
     return `${months[parseInt(month) - 1]} ${year}`;
   };
@@ -485,7 +486,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   const formatDateFull = (dateString: string) => {
     const [year, month, day] = dateString.split("-");
     const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -502,17 +503,17 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     const [year, month] = dateString.split("-");
     const months = [
       "Jan",
-      "Feb",
+      "Fev",
       "Mar",
-      "Apr",
-      "May",
+      "Abr",
+      "Maio",
       "Jun",
       "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
+      "Ago",
+      "Set",
+      "Out",
       "Nov",
-      "Dec",
+      "Dez",
     ];
     return `${months[parseInt(month) - 1]} ${year}`;
   };
@@ -619,22 +620,22 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             {/* Amount section */}
             <Box sx={{ mb: 1.5 }}>
               <Typography sx={{ fontSize: 10, fontWeight: 700, color: "text.disabled", textTransform: "uppercase", letterSpacing: "0.1em", mb: 0.5 }}>
-                {group.category}
+                {categoryLabel(group.category)}
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15, color: isIncome ? "#10b981" : "text.primary" }}>
                 {isIncome ? "+" : "-"}{formatCurrency(group.totalAmount)}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
                 {formatDateShort(group.startDate)} → {formatDateShort(group.endDate)}
-                {!isCompleted && ` · Remaining: ${formatCurrency(group.totalAmount - group.paidAmount)}`}
+                {!isCompleted && ` · Restante: ${formatCurrency(group.totalAmount - group.paidAmount)}`}
               </Typography>
             </Box>
 
             {/* Progress bar */}
             <Box sx={{ mb: relatedTransactions.length > 0 ? 1.5 : 0 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">{group.paymentMethod}</Typography>
-                <Typography variant="caption" fontWeight={600} color={accentColor}>{Math.round(progress)}% paid</Typography>
+                <Typography variant="caption" color="text.secondary">{paymentMethodLabel(group.paymentMethod)}</Typography>
+                <Typography variant="caption" fontWeight={600} color={accentColor}>{Math.round(progress)}% pago</Typography>
               </Box>
               <LinearProgress
                 variant="determinate"
@@ -654,7 +655,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <ArrowUpIcon fontSize="small" color="success" />
-                    <Typography variant="body2" fontWeight={500}>Shared with {group.sharedWith}</Typography>
+                    <Typography variant="body2" fontWeight={500}>Compartilhada com {group.sharedWith}</Typography>
                   </Box>
                   <Typography variant="body2" fontWeight={700} color="success.main">
                     +{formatCurrency(relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0))}
@@ -699,11 +700,11 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               sx={{ textTransform: "none", color: "text.secondary", fontSize: 12, p: 0, minWidth: 0, "&:hover": { background: "none", opacity: 0.75 } }}
             >
-              {isExpanded ? "Hide" : `View ${actualInstallmentCount} installments`}
+              {isExpanded ? "Ocultar" : `Ver ${actualInstallmentCount} parcelas`}
             </Button>
             <Box sx={{ display: "flex", gap: 0.5 }}>
               {onUpdateInstallmentDates && (
-                <Tooltip title="Change due dates">
+                <Tooltip title="Alterar vencimentos">
                   <IconButton
                     size="small"
                     onClick={(e) => { e.stopPropagation(); handleOpenDateDialog(group); }}
@@ -764,7 +765,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                         sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                       >
                         <ArrowDownIcon fontSize="small" />
-                        Expense
+                        Despesa
                       </Box>
                     }
                   />
@@ -774,7 +775,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                         sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                       >
                         <ArrowUpIcon fontSize="small" />
-                        Shared
+                        Compartilhada
                       </Box>
                     }
                   />
@@ -791,7 +792,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                   sx={{ display: "flex", alignItems: "center", gap: 1 }}
                 >
                   <VisibilityIcon fontSize="small" color="primary" />
-                  All {actualInstallmentCount} installments
+                  Todas as {actualInstallmentCount} parcelas
                 </Typography>
 
                 {isMobile ? (
@@ -911,16 +912,16 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                           sx={getHeaderCellSx(theme, isDarkMode)}
                           padding="checkbox"
                         >
-                          Paid
+                          Pago
                         </TableCell>
                         <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
                           #
                         </TableCell>
                         <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                          Date
+                          Data
                         </TableCell>
                         <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                          Period
+                          Período
                         </TableCell>
                         <TableCell
                           sx={{
@@ -928,7 +929,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                             textAlign: "right",
                           }}
                         >
-                          Amount
+                          Valor
                         </TableCell>
                         <TableCell
                           sx={{
@@ -944,7 +945,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                             textAlign: "center",
                           }}
                         >
-                          Actions
+                          Ações
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -1015,21 +1016,21 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                             <TableCell align="center">
                               {isPaid ? (
                                 <Chip
-                                  label="Paid"
+                                  label="Pago"
                                   size="small"
                                   color="success"
                                   sx={{ height: 22 }}
                                 />
                               ) : isCurrent ? (
                                 <Chip
-                                  label="Current"
+                                  label="Atual"
                                   size="small"
                                   color="primary"
                                   sx={{ height: 22 }}
                                 />
                               ) : (
                                 <Chip
-                                  label="Pending"
+                                  label="Pendente"
                                   size="small"
                                   variant="outlined"
                                   sx={{ height: 22, opacity: 0.7 }}
@@ -1037,7 +1038,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                               )}
                             </TableCell>
                             <TableCell align="center">
-                              <Tooltip title="Edit">
+                              <Tooltip title="Editar">
                                 <IconButton
                                   size="small"
                                   onClick={() => onEdit(t)}
@@ -1046,7 +1047,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                                   <EditIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Delete">
+                              <Tooltip title="Excluir">
                                 <IconButton
                                   size="small"
                                   onClick={() => onDelete(t.id)}
@@ -1087,10 +1088,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                         color="text.secondary"
                         fontWeight={500}
                       >
-                        Installment Summary
+                        Resumo das parcelas
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {group.paidCount}/{actualInstallmentCount} installments paid
+                        {group.paidCount}/{actualInstallmentCount} parcelas pagas
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: "right" }}>
@@ -1099,7 +1100,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                         color="text.secondary"
                         display="block"
                       >
-                        Remaining:{" "}
+                        Restante:{" "}
                         {formatCurrency(group.totalAmount - group.paidAmount)}
                       </Typography>
                       <Typography
@@ -1125,7 +1126,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                     sx={{ display: "flex", alignItems: "center", gap: 1 }}
                   >
                     <VisibilityIcon fontSize="small" color="success" />
-                    Shared Installments
+                    Parcelas compartilhadas
                   </Typography>
 
                   {isMobile ? (
@@ -1209,7 +1210,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                               +{formatCurrency(t.amount || 0)}
                             </Typography>
                             <Chip
-                              label={isPaid ? "Received" : "Pending"}
+                              label={isPaid ? "Recebido" : "Pendente"}
                               size="small"
                               color={isPaid ? "success" : "warning"}
                               sx={{ height: 20, fontSize: 10 }}
@@ -1226,7 +1227,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                             sx={getHeaderCellSx(theme, isDarkMode)}
                             padding="checkbox"
                           >
-                            Received
+                            Recebido
                           </TableCell>
                           <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
                             #
@@ -1310,10 +1311,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                                 <Chip
                                   label={
                                     isPaid
-                                      ? "Received"
+                                      ? "Recebido"
                                       : isCurrent
-                                      ? "Current"
-                                      : "Pending"
+                                      ? "Atual"
+                                      : "Pendente"
                                   }
                                   size="small"
                                   color={
@@ -1355,7 +1356,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                     >
                       <Typography variant="body2" color="text.secondary">
                         {relatedTransactions.filter((t) => t.isPaid).length}/
-                        {relatedTransactions.length} installments received
+                        {relatedTransactions.length} parcelas recebidas
                       </Typography>
                       <Typography
                         variant="h6"
@@ -1399,10 +1400,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       <Box sx={{ display: "flex", alignItems: "flex-end", gap: "14px", flexWrap: "wrap" }}>
         <Box>
           <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            Splits
+            Parcelas
           </Typography>
           <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
-            Manage your installment purchases
+            Gerencie suas compras parceladas
           </Typography>
         </Box>
         <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1412,10 +1413,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             onClick={onNewTransaction}
             sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
           >
-            {isMobile ? "New" : "New purchase"}
+            {isMobile ? "Nova" : "Nova compra"}
           </Button>
           {onRefreshData && (
-            <Tooltip title="Refresh">
+            <Tooltip title="Atualizar">
               <IconButton
                 onClick={handleRefresh}
                 disabled={isRefreshing}
@@ -1466,12 +1467,12 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               <ScheduleIcon sx={{ fontSize: 20 }} />
             </Box>
             <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              In Progress
+              Em andamento
             </Typography>
             <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#f59e0b", fontVariantNumeric: "tabular-nums" }}>
               {stats.inProgressCount}
             </Typography>
-            <Typography variant="caption" color="text.secondary">active installments</Typography>
+            <Typography variant="caption" color="text.secondary">parcelas ativas</Typography>
           </Paper>
         </Grid>
 
@@ -1505,12 +1506,12 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               <CheckCircleIcon sx={{ fontSize: 20 }} />
             </Box>
             <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Completed
+              Concluídas
             </Typography>
             <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981", fontVariantNumeric: "tabular-nums" }}>
               {stats.completedCount}
             </Typography>
-            <Typography variant="caption" color="text.secondary">paid installments</Typography>
+            <Typography variant="caption" color="text.secondary">parcelas pagas</Typography>
           </Paper>
         </Grid>
 
@@ -1544,12 +1545,12 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               <TrendingDownIcon sx={{ fontSize: 20 }} />
             </Box>
             <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              To Pay
+              A pagar
             </Typography>
             <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
               {formatCurrency(stats.totalRemaining)}
             </Typography>
-            <Typography variant="caption" color="text.secondary">total remaining</Typography>
+            <Typography variant="caption" color="text.secondary">restante</Typography>
           </Paper>
         </Grid>
 
@@ -1583,12 +1584,12 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               <CheckCircleIcon sx={{ fontSize: 20 }} />
             </Box>
             <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Total Paid
+              Total pago
             </Typography>
             <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7", fontVariantNumeric: "tabular-nums", pr: 6 }}>
               {formatCurrency(stats.totalPaid)}
             </Typography>
-            <Typography variant="caption" color="text.secondary">of {formatCurrency(stats.totalAll)}</Typography>
+            <Typography variant="caption" color="text.secondary">de {formatCurrency(stats.totalAll)}</Typography>
           </Paper>
         </Grid>
       </Grid>
@@ -1617,7 +1618,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
         <SearchBar
           value={searchTerm}
           onChange={setSearchTerm}
-          placeholder="Search..."
+          placeholder="Buscar..."
           minWidth={180}
         />
 
@@ -1639,24 +1640,24 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 setFilterStatus(e.target.value as SplitStatus)
               }
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="in_progress">In Progress</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="in_progress">Em andamento</MenuItem>
+              <MenuItem value="completed">Concluídas</MenuItem>
             </Select>
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 100 }}>
-            <InputLabel>Type</InputLabel>
+            <InputLabel>Tipo</InputLabel>
             <Select
               value={filterType}
-              label="Type"
+              label="Tipo"
               onChange={(e: SelectChangeEvent) =>
                 setFilterType(e.target.value as "all" | "income" | "expense")
               }
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="income">Income</MenuItem>
-              <MenuItem value="expense">Expense</MenuItem>
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="income">Receita</MenuItem>
+              <MenuItem value="expense">Despesa</MenuItem>
             </Select>
           </FormControl>
 
@@ -1693,8 +1694,8 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       ) : (
         <EmptyState
           type="recurring"
-          title="No installments found"
-          description="Create an installment transaction to manage it here"
+          title="Nenhuma parcela encontrada"
+          description="Crie uma transação parcelada para gerenciá-la aqui"
           compact
         />
       )}
@@ -1717,7 +1718,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           <ListItemIcon>
             <EditIcon fontSize="small" color="primary" />
           </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
+          <ListItemText>Editar</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -1729,7 +1730,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           <ListItemIcon>
             <DeleteIcon fontSize="small" color="error" />
           </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
+          <ListItemText>Excluir</ListItemText>
         </MenuItem>
       </Menu>
 
@@ -1799,7 +1800,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               </Box>
               <Box>
                 <Typography id="installment-dates-title" variant="h6" fontWeight={600}>
-                  Change Due Dates
+                  Alterar vencimentos
                 </Typography>
                 <Typography
                   variant="body2"
@@ -1812,7 +1813,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               </Box>
             </Box>
             <IconButton
-              aria-label="Close due dates"
+              aria-label="Fechar vencimentos"
               disabled={isUpdatingDates}
               onClick={handleCloseDateDialog}
               size="small"
@@ -1840,13 +1841,13 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              Configure the due day and start month to recalculate the dates for all{" "}
+              Defina o dia do vencimento e o mês inicial para recalcular as datas de todas as{" "}
               <Typography
                 component="span"
                 fontWeight={600}
                 color="primary.main"
               >
-                {selectedGroupForDateChange?.totalInstallments} installments
+                {selectedGroupForDateChange?.totalInstallments} parcelas
               </Typography>
               .
             </Typography>
@@ -1860,17 +1861,17 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           <Stack spacing={3}>
             {/* Dia de vencimento */}
             <FormControl fullWidth>
-              <InputLabel id="installment-due-day">Due Day</InputLabel>
+              <InputLabel id="installment-due-day">Dia do vencimento</InputLabel>
               <Select
                 labelId="installment-due-day"
                 value={newDueDay}
-                label="Due Day"
+                label="Dia do vencimento"
                 onChange={(e) => setNewDueDay(Number(e.target.value))}
                 sx={{ borderRadius: "12px" }}
               >
                 {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                   <MenuItem key={day} value={day}>
-                    Day {day}
+                    Dia {day}
                   </MenuItem>
                 ))}
               </Select>
@@ -1878,36 +1879,36 @@ const SplitsView: React.FC<SplitsViewProps> = ({
 
             {/* Mês de início */}
             <FormControl fullWidth>
-              <InputLabel id="installment-start-month">Start Month</InputLabel>
+              <InputLabel id="installment-start-month">Mês inicial</InputLabel>
               <Select
                 labelId="installment-start-month"
                 value={newStartMonth}
-                label="Start Month"
+                label="Mês inicial"
                 onChange={(e) => setNewStartMonth(Number(e.target.value))}
                 sx={{ borderRadius: "12px" }}
               >
-                <MenuItem value={1}>January</MenuItem>
-                <MenuItem value={2}>February</MenuItem>
-                <MenuItem value={3}>March</MenuItem>
-                <MenuItem value={4}>April</MenuItem>
-                <MenuItem value={5}>May</MenuItem>
-                <MenuItem value={6}>June</MenuItem>
-                <MenuItem value={7}>July</MenuItem>
-                <MenuItem value={8}>August</MenuItem>
-                <MenuItem value={9}>September</MenuItem>
-                <MenuItem value={10}>October</MenuItem>
-                <MenuItem value={11}>November</MenuItem>
-                <MenuItem value={12}>December</MenuItem>
+                <MenuItem value={1}>Janeiro</MenuItem>
+                <MenuItem value={2}>Fevereiro</MenuItem>
+                <MenuItem value={3}>Março</MenuItem>
+                <MenuItem value={4}>Abril</MenuItem>
+                <MenuItem value={5}>Maio</MenuItem>
+                <MenuItem value={6}>Junho</MenuItem>
+                <MenuItem value={7}>Julho</MenuItem>
+                <MenuItem value={8}>Agosto</MenuItem>
+                <MenuItem value={9}>Setembro</MenuItem>
+                <MenuItem value={10}>Outubro</MenuItem>
+                <MenuItem value={11}>Novembro</MenuItem>
+                <MenuItem value={12}>Dezembro</MenuItem>
               </Select>
             </FormControl>
 
             {/* Ano de início */}
             <FormControl fullWidth>
-              <InputLabel id="installment-start-year">Start Year</InputLabel>
+              <InputLabel id="installment-start-year">Ano inicial</InputLabel>
               <Select
                 labelId="installment-start-year"
                 value={newStartYear}
-                label="Start Year"
+                label="Ano inicial"
                 onChange={(e) => setNewStartYear(Number(e.target.value))}
                 sx={{ borderRadius: "12px" }}
               >
@@ -1935,7 +1936,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                   }}
                 >
                   <VisibilityIcon fontSize="small" color="primary" />
-                  Preview of New Dates
+                  Prévia das novas datas
                 </Typography>
                 <Paper
                   elevation={0}
@@ -1953,13 +1954,13 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
-                          Installment
+                          Parcela
                         </TableCell>
                         <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
-                          Current Date
+                          Data atual
                         </TableCell>
                         <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
-                          New Date
+                          Nova data
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -2050,7 +2051,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
             onClick={handleCloseDateDialog}
             disabled={isUpdatingDates}
           >
-            Cancel
+            Cancelar
           </NixButton>
           <NixButton
             size="medium"
@@ -2063,7 +2064,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
               "Updating..."
             ) : (
               <>
-                <CalendarMonthIcon /> Save Changes
+                <CalendarMonthIcon /> Salvar alterações
               </>
             )}
           </NixButton>

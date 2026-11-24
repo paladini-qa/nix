@@ -121,7 +121,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
 
   const handleChangeEmail = async () => {
     if (!newEmail.trim() || !newEmail.includes("@")) {
-      setErrorMessage("Please enter a valid email address.");
+      setErrorMessage("Informe um endereço de e-mail válido.");
       setEmailStatus("error");
       return;
     }
@@ -133,17 +133,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
       setEmailStatus("sent");
       setNewEmail("");
     } catch (err: any) {
-      setErrorMessage(err.message || "Error updating email address.");
+      setErrorMessage(err.message || "Erro ao atualizar o endereço de e-mail.");
       setEmailStatus("error");
     }
   };
 
   const handleResetPassword = async () => {
     const confirmed = await confirm({
-      title: "Reset Password",
-      message: `A password reset email will be sent to ${userEmail}. Do you want to continue?`,
-      confirmText: "Send email",
-      cancelText: "Cancel",
+      title: "Redefinir senha",
+      message: `Enviaremos um e-mail de redefinição de senha para ${userEmail}. Deseja continuar?`,
+      confirmText: "Enviar e-mail",
+      cancelText: "Cancelar",
       variant: "warning",
     });
     if (!confirmed) return;
@@ -154,7 +154,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
       if (error) throw error;
       setPasswordStatus("sent");
     } catch (err: any) {
-      setErrorMessage(err.message || "Error sending recovery email.");
+      setErrorMessage(err.message || "Erro ao enviar o e-mail de recuperação.");
       setPasswordStatus("error");
     }
   };
@@ -166,7 +166,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
       maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
-      slotProps={{ paper: { "aria-label": "Profile" } }}
+      slotProps={{ paper: { "aria-label": "Perfil" } }}
     >
       {/* Header */}
       <Box
@@ -182,7 +182,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
         }}
       >
         <IconButton
-          aria-label="Close profile"
+          aria-label="Fechar perfil"
           onClick={onClose}
           sx={{
             position: "absolute",
@@ -219,7 +219,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
         </Avatar>
 
         <Typography variant="h4" fontWeight={700} sx={{ letterSpacing: "-0.02em", mb: 0.5 }}>
-          {displayName || "User"}
+          {displayName || "Usuário"}
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
           {userEmail}
@@ -269,7 +269,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                   variant="subtitle1"
                   sx={{ fontWeight: 600, color: isPrivacyMode ? "primary.main" : "text.secondary" }}
                 >
-                  Privacy Mode
+                  Modo de privacidade
                 </Typography>
               </Box>
               <Button
@@ -286,7 +286,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                   }),
                 }}
               >
-                {isPrivacyMode ? "Enabled" : "Disabled"}
+                {isPrivacyMode ? "Ativado" : "Desativado"}
               </Button>
             </Box>
             <ThemeSwitch value={themePreference} onChange={setThemePreference} />
@@ -311,8 +311,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                 <EditIcon fontSize="small" color="primary" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={600}>Display Name</Typography>
-                <Typography variant="caption" color="text.secondary">What you want to be called</Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Nome de exibição</Typography>
+                <Typography variant="caption" color="text.secondary">Como você prefere ser chamado?</Typography>
               </Box>
             </Box>
             <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -323,7 +323,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                 autoComplete="name"
                 value={localDisplayName}
                 onChange={(e) => setLocalDisplayName(e.target.value)}
-                placeholder="Type your name..."
+                placeholder="Digite seu nome..."
                 onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
                 sx={inputSx}
               />
@@ -348,7 +348,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                     : `0 4px 14px -4px ${alpha(theme.palette.primary.main, 0.4)}`,
                 }}
               >
-                {nameStatus === "saved" ? "Saved!" : "Save"}
+                {nameStatus === "saved" ? "Salvo!" : "Salvar"}
               </Button>
             </Box>
           </Box>
@@ -372,11 +372,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                 <MailIcon fontSize="small" color="info" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={600}>Change Email</Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Alterar e-mail</Typography>
               </Box>
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2, ml: 6.5 }}>
-              Confirmation will be sent to both email addresses.
+              A confirmação será enviada para os dois endereços de e-mail.
             </Typography>
             <Box sx={{ display: "flex", gap: 1.5 }}>
               <TextField
@@ -387,7 +387,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                 type="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="new@email.com"
+                placeholder="novo@email.com"
                 onKeyDown={(e) => e.key === "Enter" && handleChangeEmail()}
                 sx={inputSx}
               />
@@ -413,7 +413,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                   )}`,
                 }}
               >
-                {emailStatus === "sent" ? "Sent!" : "Change"}
+                {emailStatus === "sent" ? "Enviado!" : "Alterar"}
               </Button>
             </Box>
           </Box>
@@ -437,11 +437,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                 <KeyIcon fontSize="small" color="warning" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={600}>Reset Password</Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Redefinir senha</Typography>
               </Box>
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2, ml: 6.5 }}>
-              Recovery link will be sent to {userEmail}
+              O link de recuperação será enviado para {userEmail}
             </Typography>
             <Button
               fullWidth
@@ -476,7 +476,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                 },
               }}
             >
-              {passwordStatus === "sent" ? "Email Sent!" : "Send Recovery Link"}
+              {passwordStatus === "sent" ? "E-mail enviado!" : "Enviar link de recuperação"}
             </Button>
           </Box>
 
@@ -502,16 +502,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
                     sx={{ width: 20, height: 20, borderRadius: 0 }}
                   />
                 </Box>
-                <Typography variant="subtitle1" fontWeight={600}>Google Wallet Sync</Typography>
+                <Typography variant="subtitle1" fontWeight={600}>Sincronização com a Carteira do Google</Typography>
               </Box>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, mb: 2, ml: 6.5 }}>
-                Tracks notifications for automatic transaction registration.
+                Acompanha notificações para cadastrar transações automaticamente.
               </Typography>
             </Box>
           )}
           {onLogout && (
             <NixButton color="red" variant="soft" onClick={() => void onLogout()}>
-              Logout
+              Sair
             </NixButton>
           )}
         </Box>

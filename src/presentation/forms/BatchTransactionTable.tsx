@@ -1,3 +1,4 @@
+import { categoryLabel, paymentMethodLabel } from "@/shared/i18n/labels";
 import React, { useState, useMemo } from "react";
 import {
   Box,
@@ -108,7 +109,7 @@ function rowNeedsAttention(row: EditableBatchRow): boolean {
 }
 
 const formatCurrency = (value: number) =>
-  value.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 // ─── Mobile Card ──────────────────────────────────────────────────────────────
 
@@ -139,7 +140,7 @@ const MobileBatchRow: React.FC<MobileBatchRowProps> = ({
   const typeColor = isIncome ? theme.palette.success.main : theme.palette.error.main;
 
   const formattedDate = row.date
-    ? new Date(row.date + "T00:00:00").toLocaleDateString("en-US", {
+    ? new Date(row.date + "T00:00:00").toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "short",
       })
@@ -330,7 +331,7 @@ const MobileBatchRow: React.FC<MobileBatchRowProps> = ({
             <Typography variant="caption" sx={{ fontSize: 11, lineHeight: 1.3 }}>
               {expanded
                 ? "Menos detalhes"
-                : `${row.category} · ${row.paymentMethod} · ${formattedDate}`}
+                : `${categoryLabel(row.category)} · ${paymentMethodLabel(row.paymentMethod)} · ${formattedDate}`}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               {row.confidence !== undefined && row.confidence < CONFIDENCE_LOW && (
@@ -368,7 +369,7 @@ const MobileBatchRow: React.FC<MobileBatchRowProps> = ({
                 >
                   {(isIncome ? categories.income : categories.expense).map((c) => (
                     <MenuItem key={c} value={c} sx={{ fontSize: 13 }}>
-                      {c}
+                      {categoryLabel(c)}
                     </MenuItem>
                   ))}
                 </Select>
@@ -384,7 +385,7 @@ const MobileBatchRow: React.FC<MobileBatchRowProps> = ({
                 >
                   {paymentMethods.map((m) => (
                     <MenuItem key={m} value={m} sx={{ fontSize: 13 }}>
-                      {m}
+                      {paymentMethodLabel(m)}
                     </MenuItem>
                   ))}
                 </Select>
@@ -519,7 +520,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
   const summaryBar = (
     <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap", alignItems: "center" }}>
       <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ mr: 0.5 }}>
-        {rows.length} {rows.length === 1 ? "transaction" : "transactions"}
+        {rows.length} {rows.length === 1 ? "transação" : "transações"}
       </Typography>
       {summary.expenses > 0 && (
         <Chip
@@ -622,10 +623,10 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
           <ReceiptIcon sx={{ fontSize: 16, color: NIX_PURPLE, opacity: 0.8 }} />
           <Box>
             <Typography variant="caption" fontWeight={700} color="text.primary" display="block">
-              Link to invoice
+              Vincular à fatura
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>
-              Optional — sets the card invoice month/year
+              Opcional. Define o mês e o ano da fatura do cartão.
             </Typography>
           </Box>
         </Box>
@@ -649,11 +650,11 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
       <Collapse in={useBatchInvoice}>
         <Box sx={{ display: "flex", gap: 1, mt: 1.5, alignItems: "center" }}>
           <FormControl size="small" sx={{ minWidth: 80 }}>
-            <InputLabel sx={{ fontSize: 12 }}>Month</InputLabel>
+            <InputLabel sx={{ fontSize: 12 }}>Mês</InputLabel>
             <Select
               value={batchInvoiceMonth}
               onChange={(e) => setBatchInvoiceMonth(Number(e.target.value))}
-              label="Month"
+              label="Mês"
               sx={{ fontSize: 13, borderRadius: "10px" }}
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
@@ -667,11 +668,11 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
             /
           </Typography>
           <FormControl size="small" sx={{ minWidth: 90 }}>
-            <InputLabel sx={{ fontSize: 12 }}>Year</InputLabel>
+            <InputLabel sx={{ fontSize: 12 }}>Ano</InputLabel>
             <Select
               value={batchInvoiceYear}
               onChange={(e) => setBatchInvoiceYear(Number(e.target.value))}
-              label="Year"
+              label="Ano"
               sx={{ fontSize: 13, borderRadius: "10px" }}
             >
               {yearOptions.map((y) => (
@@ -705,7 +706,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
           px: 2,
         }}
       >
-        Cancel
+        Cancelar
       </Button>
       <Button
         variant="contained"
@@ -727,7 +728,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
           transition: "all 0.2s ease",
         }}
       >
-        Confirm ({validRows.length})
+        Confirmar ({validRows.length})
         {validRows.length > 0 && summary.expenses + summary.income > 0 && (
           <Typography
             component="span"
@@ -891,12 +892,12 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                 padding="none"
                 sx={{ ...headerCellSx, width: 4, p: 0, minWidth: 4 }}
               />
-              <TableCell sx={headerCellSx}>Description</TableCell>
-              <TableCell sx={headerCellSx}>Amount</TableCell>
-              <TableCell sx={headerCellSx}>Type</TableCell>
-              <TableCell sx={headerCellSx}>Category</TableCell>
-              <TableCell sx={headerCellSx}>Payment</TableCell>
-              <TableCell sx={headerCellSx}>Date</TableCell>
+              <TableCell sx={headerCellSx}>Descrição</TableCell>
+              <TableCell sx={headerCellSx}>Valor</TableCell>
+              <TableCell sx={headerCellSx}>Tipo</TableCell>
+              <TableCell sx={headerCellSx}>Categoria</TableCell>
+              <TableCell sx={headerCellSx}>Pagamento</TableCell>
+              <TableCell sx={headerCellSx}>Data</TableCell>
               <TableCell sx={{ ...headerCellSx, width: 40 }} />
             </TableRow>
           </TableHead>
@@ -943,7 +944,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                           title={
                             row.confidence !== undefined && row.confidence < CONFIDENCE_LOW
                               ? `Low AI confidence: ${Math.round(row.confidence * 100)}%`
-                              : "Value not filled"
+                              : "Valor não informado"
                           }
                         >
                           <WarningIcon
@@ -955,7 +956,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                         size="small"
                         value={row.description}
                         onChange={(e) => updateRow(index, "description", e.target.value)}
-                        placeholder="Description"
+                        placeholder="Descrição"
                         fullWidth
                         variant="standard"
                         sx={{
@@ -984,7 +985,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                           e.target.value === "" ? null : e.target.value
                         )
                       }
-                      placeholder="0.00"
+                      placeholder="0,00"
                       inputProps={{ min: 0, step: 0.01 }}
                       error={requireAmount && (row.amount == null || row.amount <= 0)}
                       variant="standard"
@@ -1015,7 +1016,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                         renderValue={(v) => (
                           <Chip
                             size="small"
-                            label={v === "income" ? "Income" : "Expense"}
+                            label={v === "income" ? "Receita" : "Despesa"}
                             sx={{
                               height: 22,
                               fontSize: 11,
@@ -1032,10 +1033,10 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                         )}
                       >
                         <MenuItem value="expense" sx={{ fontSize: 13 }}>
-                          Expense
+                          Despesa
                         </MenuItem>
                         <MenuItem value="income" sx={{ fontSize: 13 }}>
-                          Income
+                          Receita
                         </MenuItem>
                       </Select>
                     </FormControl>
@@ -1055,7 +1056,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                           : categories.expense
                         ).map((c) => (
                           <MenuItem key={c} value={c} sx={{ fontSize: 13 }}>
-                            {c}
+                            {categoryLabel(c)}
                           </MenuItem>
                         ))}
                       </Select>
@@ -1075,7 +1076,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                       >
                         {paymentMethods.map((m) => (
                           <MenuItem key={m} value={m} sx={{ fontSize: 13 }}>
-                            {m}
+                            {paymentMethodLabel(m)}
                           </MenuItem>
                         ))}
                       </Select>
@@ -1115,7 +1116,7 @@ const BatchTransactionTable: React.FC<BatchTransactionTableProps> = ({
                           bgcolor: alpha(theme.palette.error.main, 0.08),
                         },
                       }}
-                      aria-label="Remove row"
+                      aria-label="Remover linha"
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>

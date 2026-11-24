@@ -196,7 +196,7 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
         description: isEdit
           ? t("transactionOptions.recurring.editFuture.description")
           : t("transactionOptions.recurring.deleteFuture.description"),
-        warning: "Temporarily unavailable to protect the history of this series.",
+        warning: "Temporariamente indisponível para preservar o histórico da série.",
         disabled: true,
       },
       {
@@ -280,7 +280,7 @@ const TransactionOptionsPanel: React.FC<TransactionOptionsPanelProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="h6" fontWeight={600}>
-                      {isEdit ? "Edit Transaction" : "Delete Transaction"}
+                      {isEdit ? "Editar transação" : "Excluir transação"}
                     </Typography>
                     {/* Mostrar qual mês está sendo editado - usa virtualDate para recorrentes */}
                     {(transaction.virtualDate || transaction.date) && (

@@ -3,8 +3,11 @@ import { ThemeProvider, CssBaseline, Paper, PaperProps } from "@mui/material";
 import { Theme } from "@radix-ui/themes";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import "dayjs/locale/en";
+import dayjs from "dayjs";
+import "dayjs/locale/pt-br";
+import { ptBR as datePickerPtBR } from "@mui/x-date-pickers/locales";
 import { createTheme, Theme as MuiTheme } from "@mui/material/styles";
+import { ptBR as materialPtBR } from "@mui/material/locale";
 import { Session } from "@supabase/supabase-js";
 import {
   NotificationProvider,
@@ -12,6 +15,8 @@ import {
   PrivacyProvider,
   SettingsProvider,
 } from "@/presentation/contexts";
+
+dayjs.locale("pt-br");
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -40,7 +45,7 @@ const AppProviders: React.FC<AppProvidersProps> = ({
   darkMode,
   muiTheme,
 }) => {
-  const theme = useMemo(() => createTheme(muiTheme, {
+  const theme = useMemo(() => createTheme(muiTheme, materialPtBR, {
     components: { MuiDialog: { defaultProps: { PaperComponent: DialogPaper } } },
   }), [muiTheme]);
 
@@ -48,7 +53,7 @@ const AppProviders: React.FC<AppProvidersProps> = ({
     <Theme appearance={darkMode ? "dark" : "light"} accentColor="purple" radius="large">
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br" localeText={datePickerPtBR.components.MuiLocalizationProvider.defaultProps.localeText}>
           <SettingsProvider session={session}>
             <NotificationProvider>
               <ConfirmDialogProvider>

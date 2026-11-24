@@ -57,49 +57,55 @@ test("confirms only saved transactions and supports create, edit and delete", as
 
   await page.clock.setFixedTime(new Date("2026-11-05T15:00:00Z"));
   await page.goto("/");
-  await page.getByLabel("Email", { exact: true }).fill(user.email);
-  await page.getByLabel("Password", { exact: true }).fill("fake-password");
+  await page.getByLabel("E-mail", { exact: true }).fill(user.email);
+  await page.getByLabel("Senha", { exact: true }).fill("fake-password");
   await page.locator('button[type="submit"]').click();
   await expect(page).toHaveURL(/dashboard/);
-  await page.getByRole("button", { name: "New", exact: true }).click();
+  await page.getByRole("button", { name: "Nova", exact: true }).click();
 
   const dialog = page.getByRole("dialog", { name: "Nova Transação" });
-  const descriptionInput = dialog.getByRole("combobox", { name: "Description" });
+  const descriptionInput = dialog.getByRole("combobox", { name: "Descrição" });
   await descriptionInput.pressSequentially(description);
   await expect(descriptionInput).toHaveValue(description);
   await dialog.locator("#transaction-amount").fill("12,34");
-  await dialog.getByRole("combobox", { name: "Category" }).click();
-  await page.getByRole("option", { name: "Food", exact: true }).click();
-  await dialog.getByRole("combobox", { name: "Payment Method" }).click();
+  await dialog.getByRole("combobox", { name: "Categoria" }).click();
+  await page.getByRole("option", { name: "Alimentação", exact: true }).click();
+  await dialog.getByRole("combobox", { name: "Método de pagamento" }).click();
   await page.getByRole("option", { name: "Pix", exact: true }).click();
 
-  await expect(dialog.getByRole("combobox", { name: "Description" })).toHaveValue(description);
+  await expect(dialog.getByRole("combobox", { name: "Descrição" })).toHaveValue(description);
   await dialog.getByRole("button", { name: "Criar Transação" }).click();
   await expect(dialog.getByRole("button", { name: "Salvando…" })).toBeDisabled();
   await expect.poll(() => requests).toBe(1);
   await dialog.locator("form").dispatchEvent("submit", { bubbles: true, cancelable: true });
   releaseFailure();
   await expect(page.getByText("Erro ao salvar transação. Tente novamente.")).toBeVisible();
-  await expect(dialog.getByRole("combobox", { name: "Description" })).toHaveValue(description);
+  await expect(dialog.getByRole("combobox", { name: "Descrição" })).toHaveValue(description);
   expect(rows).toHaveLength(0);
   expect(requests).toBe(1);
 
+  const savedRows = page.waitForResponse((response) =>
+    response.request().method() === "GET" &&
+    response.url().includes("/rest/v1/transactions") &&
+    !new URL(response.url()).searchParams.has("or")
+  );
   await dialog.getByRole("button", { name: "Criar Transação" }).click();
+  await savedRows;
   await expect(dialog).toBeHidden();
-  expect(rows).toMatchObject([{ description, amount: 12.34, is_paid: false }]);
+  expect(rows).toMatchObject([{ description, amount: 12.34, is_paid: false, category: "Food" }]);
 
   await page.goto("/transactions");
-  await page.getByRole("button", { name: `Edit ${description}` }).click();
+  await page.getByRole("button", { name: `Editar ${description}` }).click();
   const editDialog = page.getByRole("dialog");
-  await editDialog.getByRole("combobox", { name: "Description" }).fill(`${description} editada`);
+  await editDialog.getByRole("combobox", { name: "Descrição" }).fill(`${description} editada`);
   await editDialog.getByRole("button", { name: "Salvar Alterações" }).click();
   await expect(editDialog).toBeHidden();
   expect(rows).toMatchObject([{ description: `${description} editada`, is_paid: false }]);
 
-  await page.getByRole("button", { name: `Delete ${description} editada` }).click();
+  await page.getByRole("button", { name: `Excluir ${description} editada` }).click();
   await page.getByRole("dialog").getByRole("button", { name: /delete|excluir/i }).click();
-  await expect(page.getByRole("button", { name: `Edit ${description} editada` })).toHaveCount(0);
-  expect(rows).toHaveLength(0);
+  await expect(page.getByRole("button", { name: `Editar ${description} editada` })).toHaveCount(0);
+  await expect.poll(() => rows.length).toBe(0);
 });
 
 test("keeps mobile navigation and transaction creation reachable", async ({ page }) => {
@@ -120,8 +126,8 @@ test("keeps mobile navigation and transaction creation reachable", async ({ page
   await page.goto("/dashboard");
   const header = page.getByRole("banner");
   await expect(header.getByRole("button", { name: "Menu" })).toHaveCount(0);
-  const dateButton = header.getByRole("button", { name: /Choose month/ });
-  const searchButton = header.getByRole("button", { name: "Search" });
+  const dateButton = header.getByRole("button", { name: /Selecionar mês/ });
+  const searchButton = header.getByRole("button", { name: "Buscar" });
   await expect(searchButton).toBeVisible();
   const dateBounds = await dateButton.boundingBox();
   const searchBounds = await searchButton.boundingBox();
@@ -129,33 +135,33 @@ test("keeps mobile navigation and transaction creation reachable", async ({ page
   expect(searchBounds!.width).toBeGreaterThanOrEqual(44);
 
   await page.getByRole("navigation", { name: "Menu" }).getByRole("button", { name: "Perfil" }).click();
-  const profile = page.getByRole("dialog", { name: "Profile" });
-  await expect(profile.getByRole("button", { name: "Logout" })).toBeVisible();
-  await profile.getByRole("button", { name: "Close profile" }).click();
+  const profile = page.getByRole("dialog", { name: "Perfil" });
+  await expect(profile.getByRole("button", { name: "Sair" })).toBeVisible();
+  await profile.getByRole("button", { name: "Fechar perfil" }).click();
 
   await dateButton.click();
-  await page.getByRole("button", { name: "Feb", exact: true }).click();
-  await expect(dateButton).toHaveAccessibleName(/Choose month, Feb/);
+  await page.getByRole("button", { name: "Fev", exact: true }).click();
+  await expect(dateButton).toHaveAccessibleName(/Selecionar mês, Fev/);
 
   await searchButton.click();
   const search = page.getByPlaceholder("Buscar transações, navegar para...");
-  await search.fill("transactions");
-  await expect(page.getByRole("dialog").getByText("Transactions", { exact: true })).toBeVisible();
+  await search.fill("Transações");
+  await expect(page.getByRole("dialog").getByText("Transações", { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
 
-  await page.getByRole("navigation", { name: "Menu" }).getByRole("button", { name: "New Transaction" }).click();
+  await page.getByRole("navigation", { name: "Menu" }).getByRole("button", { name: "Nova Transação" }).click();
   const createDialog = page.getByRole("dialog", { name: "Nova Transação" });
-  await expect(createDialog.getByRole("combobox", { name: "Description" })).toBeVisible();
+  await expect(createDialog.getByRole("combobox", { name: "Descrição" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(createDialog).toBeHidden();
 
   for (const width of [390, 768]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/transactions");
-    await page.getByRole("button", { name: "New", exact: true }).click();
+    await page.getByRole("button", { name: "Nova", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Nova Transação" });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("combobox", { name: "Description" })).toBeVisible();
+    await expect(dialog.getByRole("combobox", { name: "Descrição" })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
   }
@@ -188,12 +194,12 @@ test("blocks future-only recurrence changes while leaving occurrence actions ava
   });
 
   await page.goto("/transactions");
-  await page.getByRole("button", { name: "Delete Assinatura de auditoria" }).click();
-  await expect(page.getByRole("button", { name: /Stop the recurrence/i })).toBeDisabled();
-  await expect(page.getByRole("button", { name: /Delete only this occurrence/i })).toBeEnabled();
+  await page.getByRole("button", { name: "Excluir Assinatura de auditoria" }).click();
+  await expect(page.getByRole("button", { name: /Parar a recorrência/i })).toBeDisabled();
+  await expect(page.getByRole("button", { name: /Excluir apenas esta ocorrência/i })).toBeEnabled();
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Edit Assinatura de auditoria" }).click();
-  await expect(page.getByRole("button", { name: /Edit this and future ones/i })).toBeDisabled();
+  await page.getByRole("button", { name: "Editar Assinatura de auditoria" }).click();
+  await expect(page.getByRole("button", { name: /Editar esta e as futuras/i })).toBeDisabled();
 });
 
 test("reschedules all selected installments in one request and keeps the draft on failure", async ({ page }) => {
@@ -236,14 +242,14 @@ test("reschedules all selected installments in one request and keeps the draft o
   });
 
   await page.goto("/splits");
-  await page.getByRole("button", { name: "Change due dates" }).click();
-  const draft = page.getByRole("dialog", { name: "Change Due Dates" });
-  const dueDay = draft.getByRole("combobox", { name: /Due Day/ });
+  await page.getByRole("button", { name: "Alterar vencimentos" }).click();
+  const draft = page.getByRole("dialog", { name: "Alterar vencimentos" });
+  const dueDay = draft.getByRole("combobox", { name: /Dia do vencimento/ });
   await dueDay.click();
-  await page.getByRole("option", { name: "Day 15", exact: true }).click();
-  await draft.getByRole("button", { name: "Save Changes" }).click();
+  await page.getByRole("option", { name: "Dia 15", exact: true }).click();
+  await draft.getByRole("button", { name: "Salvar alterações" }).click();
   await expect(draft.getByRole("alert")).toBeVisible();
-  await expect(dueDay).toHaveText("Day 15");
+  await expect(dueDay).toHaveText("Dia 15");
   expect(requests).toEqual([{ p_changes: [
     { id: timestamps[0].id, date: "2026-11-15", previous_date: "2026-11-10",
       invoice_due_date: "2026-12-20", previous_invoice_due_date: "2026-11-20" },
@@ -251,7 +257,7 @@ test("reschedules all selected installments in one request and keeps the draft o
       invoice_due_date: "2027-01-20", previous_invoice_due_date: "2026-12-20" },
   ] }]);
 
-  await draft.getByRole("button", { name: "Save Changes" }).click();
+  await draft.getByRole("button", { name: "Salvar alterações" }).click();
   await expect(draft).toBeHidden();
   expect(requests).toHaveLength(2);
   expect(requests[1]).toEqual(requests[0]);
@@ -319,16 +325,17 @@ test("shows compact mobile rows with full details and a stationary bottom bar", 
   const details = page.getByRole("dialog", { name: title });
   await expect(details.getByText("Office", { exact: true })).toBeVisible();
   await expect(details.getByText("20/11/2026", { exact: true })).toBeVisible();
+  await expect(details.getByText(/R\$\s*128,99/)).toBeVisible();
   await expect(details.getByText("2 / 3", { exact: true })).toBeVisible();
   await expect(details.getByText("Contrato da unidade", { exact: true })).toBeVisible();
-  const paid = details.getByRole("checkbox", { name: "Paid" });
+  const paid = details.getByRole("checkbox", { name: "Pago" });
   await expect(paid).not.toBeChecked();
   await paid.check();
   await expect.poll(() => rows[0].is_paid).toBe(true);
   await expect(paid).toBeChecked();
-  await expect(details.getByRole("button", { name: "Edit" })).toBeVisible();
-  await expect(details.getByRole("button", { name: "Delete" })).toBeVisible();
-  await details.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(details.getByRole("button", { name: "Editar" })).toBeVisible();
+  await expect(details.getByRole("button", { name: "Excluir" })).toBeVisible();
+  await details.getByRole("button", { name: "Fechar", exact: true }).click();
 
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);

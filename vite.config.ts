@@ -63,7 +63,8 @@ export default defineConfig(({ mode }) => {
         manifest: {
           name: "Nix Finance",
           short_name: "Nix",
-          description: "Smart Personal Finance Manager",
+          description: "Gestão inteligente de finanças pessoais",
+          lang: "pt-BR",
           theme_color: "#7548F8",
           background_color: "#F5F3FF",
           display: "standalone",

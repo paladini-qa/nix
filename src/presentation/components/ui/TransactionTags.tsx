@@ -120,7 +120,7 @@ const TransactionTags: React.FC<TransactionTagsProps> = ({
       {showShared && t.type === "income" && t.relatedTransactionId && (
         <Chip
           icon={<PeopleIcon />}
-          label="Shared"
+          label="Compartilhada"
           size="small"
           sx={getPillChipSx(theme.palette.info.main)}
         />
@@ -130,7 +130,7 @@ const TransactionTags: React.FC<TransactionTagsProps> = ({
       {showRecurring && (t.isRecurring || t.isVirtual || t.recurringGroupId) && (
         <Chip
           icon={<AutorenewIcon />}
-          label="Auto"
+          label="Automático"
           size="small"
           sx={getPillChipSx(theme.palette.info.main)}
         />

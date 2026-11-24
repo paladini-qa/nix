@@ -1,3 +1,4 @@
+import { categoryLabel, paymentMethodLabel } from "@/shared/i18n/labels";
 import React, { useState, useMemo, useContext, useRef } from "react";
 import {
   Box,
@@ -293,11 +294,11 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                 iconSize={22}
               />
               <Typography variant="h5" fontWeight="bold">
-                {paymentMethod}
+                {paymentMethodLabel(paymentMethod)}
               </Typography>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Transactions for {MONTHS[selectedMonth]} {selectedYear}
+              Transações de {MONTHS[selectedMonth]} {selectedYear}
             </Typography>
           </Box>
       </Box>
@@ -336,17 +337,17 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             </Box>
             <Box>
               <Typography variant="subtitle1" fontWeight={600}>
-                Bill: {formatCurrency(invoiceTotal)}
+                Fatura: {formatCurrency(invoiceTotal)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {unpaidCount === 1
-                  ? "1 pending transaction"
-                  : `${unpaidCount} pending transactions`}{" "}
+                  ? "1 transação pendente"
+                  : `${unpaidCount} transações pendentes`}{" "}
                 ·{" "}
                 <strong style={{ color: "#f59e0b" }}>
                   {formatCurrency(unpaidExpenseAmount)}
                 </strong>{" "}
-                to pay
+                a pagar
               </Typography>
             </Box>
           </Box>
@@ -364,7 +365,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               },
             }}
           >
-            Pay Full Bill
+            Pagar fatura completa
           </Button>
         </Paper>
       )}
@@ -403,10 +404,10 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             </Box>
             <Box>
               <Typography variant="subtitle1" fontWeight={600} color="#10b981">
-                Bill paid · {formatCurrency(invoiceTotal)}
+                Fatura paga · {formatCurrency(invoiceTotal)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                All transactions for this month are paid!
+                Todas as transações deste mês estão pagas!
               </Typography>
             </Box>
           </Box>
@@ -430,7 +431,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               variant="overline"
               color={balance >= 0 ? "#10b981" : "#ef4444"}
             >
-              Current Balance
+              Saldo atual
             </Typography>
             <Typography
               variant="h5"
@@ -450,7 +451,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             }}
           >
             <Typography variant="overline" color="#ef4444">
-              Expenses
+              Despesas
             </Typography>
             <Typography variant="h5" fontWeight="bold" color="#ef4444">
               {formatCurrency(totalExpense)}
@@ -472,23 +473,23 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
         <SearchBar
           value={searchTerm}
           onChange={setSearchTerm}
-          placeholder="Search..."
+          placeholder="Buscar..."
           minWidth={150}
         />
 
         <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Category</InputLabel>
+          <InputLabel>Categoria</InputLabel>
           <Select
             value={filterCategory}
-            label="Category"
+            label="Categoria"
             onChange={(e: SelectChangeEvent) =>
               setFilterCategory(e.target.value)
             }
           >
-            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="all">Todos</MenuItem>
             {availableCategories.map((cat) => (
               <MenuItem key={cat} value={cat}>
-                {cat}
+                {categoryLabel(cat)}
               </MenuItem>
             ))}
           </Select>
@@ -503,9 +504,9 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               setFilterPaid(e.target.value as "all" | "paid" | "unpaid")
             }
           >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="paid">Paid</MenuItem>
-            <MenuItem value="unpaid">Unpaid</MenuItem>
+            <MenuItem value="all">Todos</MenuItem>
+            <MenuItem value="paid">Pago</MenuItem>
+            <MenuItem value="unpaid">Não pago</MenuItem>
           </Select>
         </FormControl>
       </Paper>
@@ -650,7 +651,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                           •
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {t.category}
+                          {categoryLabel(t.category)}
                         </Typography>
                       </Box>
                       <TransactionTags transaction={t} />
@@ -680,7 +681,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               sx={{ p: 4, textAlign: "center", borderRadius: "16px" }}
             >
               <Typography color="text.secondary" fontStyle="italic">
-                No transactions with {paymentMethod} for this period.
+                Nenhuma transação com {paymentMethodLabel(paymentMethod)} neste período.
               </Typography>
             </Card>
           )}
@@ -702,7 +703,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                 }}
               >
                 <Typography variant="body2" fontWeight={600}>
-                  Total ({filteredTransactions.length} transactions)
+                  Total ({filteredTransactions.length} transações)
                 </Typography>
                 <Typography
                   variant="body1"
@@ -734,13 +735,13 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             <TableHead>
               <TableRow>
                 <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                  Date
+                  Data
                 </TableCell>
                 <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                  Description
+                  Descrição
                 </TableCell>
                 <TableCell sx={getHeaderCellSx(theme, isDarkMode)}>
-                  Category
+                  Categoria
                 </TableCell>
                 <TableCell
                   sx={{
@@ -748,7 +749,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     textAlign: "center",
                   }}
                 >
-                  Type
+                  Tipo
                 </TableCell>
                 <TableCell
                   sx={{
@@ -764,7 +765,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     textAlign: "right",
                   }}
                 >
-                  Amount
+                  Valor
                 </TableCell>
                 {(onEdit || onDelete) && (
                   <TableCell
@@ -774,7 +775,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                       width: 100,
                     }}
                   >
-                    Actions
+                    Ações
                   </TableCell>
                 )}
               </TableRow>
@@ -810,7 +811,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={t.category}
+                        label={categoryLabel(t.category)}
                         size="small"
                         variant="outlined"
                       />
@@ -909,7 +910,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                               </Tooltip>
                             )}
                             {onDelete && (
-                              <Tooltip title={t.isVirtual ? "Delete occurrence" : "Delete"}>
+                              <Tooltip title={t.isVirtual ? "Excluir ocorrência" : "Excluir"}>
                                 <IconButton
                                   size="small"
                                   onClick={() => handleDelete(t)}
@@ -937,7 +938,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     sx={{ textAlign: "center", py: 6 }}
                   >
                     <Typography color="text.secondary" fontStyle="italic">
-                      No transactions with {paymentMethod} for this period.
+                      Nenhuma transação com {paymentMethodLabel(paymentMethod)} neste período.
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -950,7 +951,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
                     colSpan={5}
                     sx={{ textAlign: "right", fontWeight: 600 }}
                   >
-                    Total ({filteredTransactions.length} transactions):
+                    Total ({filteredTransactions.length} transações):
                   </TableCell>
                   <TableCell
                     sx={{
@@ -999,13 +1000,13 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
             </ListItemIcon>
             <ListItemText>
               {mobileActionAnchor.transaction?.isVirtual
-                ? "Edit Occurrence"
+                ? "Editar ocorrência"
                 : mobileActionAnchor.transaction?.isRecurring
-                ? "Edit Recurring"
+                ? "Editar recorrência"
                 : mobileActionAnchor.transaction?.installments &&
                   mobileActionAnchor.transaction.installments > 1
-                ? "Edit Splits"
-                : "Edit"}
+                ? "Editar parcelas"
+                : "Editar"}
             </ListItemText>
           </MenuItem>
         )}
@@ -1022,7 +1023,7 @@ const PaymentMethodDetailView: React.FC<PaymentMethodDetailViewProps> = ({
               <DeleteIcon fontSize="small" color="error" />
             </ListItemIcon>
             <ListItemText>
-              {mobileActionAnchor.transaction?.isVirtual ? "Delete Occurrence" : "Delete"}
+              {mobileActionAnchor.transaction?.isVirtual ? "Excluir ocorrência" : "Excluir"}
             </ListItemText>
           </MenuItem>
         )}

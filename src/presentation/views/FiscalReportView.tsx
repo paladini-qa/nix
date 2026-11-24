@@ -1,3 +1,5 @@
+import { MONTHS } from "@/shared/constants";
+import { categoryLabel } from "@/shared/i18n/labels";
 import React, { useMemo, useRef } from "react";
 import {
   Box,
@@ -34,12 +36,8 @@ interface FiscalReportViewProps {
 }
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
 
 const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => {
   const theme = useTheme();
@@ -105,16 +103,16 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
 
   // Export CSV
   const exportCSV = () => {
-    const headers = ["Month", "Income", "Expenses", "Balance"];
+    const headers = ["Mês", "Receita (R$)", "Despesas (R$)", "Saldo (R$)"];
     const rows = monthlyData.map((m) =>
-      [m.name, m.income.toFixed(2), m.expense.toFixed(2), m.balance.toFixed(2)].join(";")
+      [m.name, m.income.toFixed(2).replace(".", ","), m.expense.toFixed(2).replace(".", ","), m.balance.toFixed(2).replace(".", ",")].join(";")
     );
-    const totalsRow = `Annual Total;${annualTotals.income.toFixed(2)};${annualTotals.expense.toFixed(2)};${annualTotals.balance.toFixed(2)}`;
+    const totalsRow = `Total anual;${annualTotals.income.toFixed(2).replace(".", ",")};${annualTotals.expense.toFixed(2).replace(".", ",")};${annualTotals.balance.toFixed(2).replace(".", ",")}`;
     const csv = [headers.join(";"), ...rows, "", totalsRow].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `fiscal-report-${selectedYear}.csv`;
+    link.download = `relatorio-fiscal-${selectedYear}.csv`;
     link.click();
   };
 
@@ -124,23 +122,23 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
 
   const summaryCards = [
     {
-      label: "Income",
+      label: "Receita",
       value: formatCurrency(annualTotals.income),
       color: "#10b981",
       bgColor: alpha("#10b981", 0.12),
       icon: <IncomeIcon sx={{ fontSize: 20 }} />,
-      sub: `Total in ${selectedYear}`,
+      sub: `Total em ${selectedYear}`,
     },
     {
-      label: "Expenses",
+      label: "Despesas",
       value: formatCurrency(annualTotals.expense),
       color: "#ef4444",
       bgColor: alpha("#ef4444", 0.12),
       icon: <ExpenseIcon sx={{ fontSize: 20 }} />,
-      sub: `Total in ${selectedYear}`,
+      sub: `Total em ${selectedYear}`,
     },
     {
-      label: "Balance",
+      label: "Saldo",
       value: formatCurrency(annualTotals.balance),
       color: annualTotals.balance >= 0 ? "#a855f7" : "#f59e0b",
       bgColor: annualTotals.balance >= 0 ? alpha("#a855f7", 0.12) : alpha("#f59e0b", 0.12),
@@ -165,13 +163,13 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
         {/* Header */}
         <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "14px", mb: "22px" }}>
           <Box>
-            <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>Fiscal Report</Typography>
-            <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>Annual summary of income, expenses and balance</Typography>
+            <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>Relatório fiscal</Typography>
+            <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>Resumo anual de receitas, despesas e saldo</Typography>
           </Box>
           <Stack direction="row" spacing={1} className="no-print" flexWrap="wrap">
             <FormControl size="small" sx={{ minWidth: 100 }}>
-              <InputLabel>Year</InputLabel>
-              <Select value={selectedYear} label="Year" onChange={(e) => setSelectedYear(Number(e.target.value))}>
+              <InputLabel>Ano</InputLabel>
+              <Select value={selectedYear} label="Ano" onChange={(e) => setSelectedYear(Number(e.target.value))}>
                 {availableYears.map((y) => <MenuItem key={y} value={y}>{y}</MenuItem>)}
               </Select>
             </FormControl>
@@ -243,16 +241,16 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
         {/* Monthly breakdown */}
         <Paper elevation={0} sx={{ borderRadius: "16px", border: `1px solid ${theme.palette.divider}` }}>
           <Box sx={{ p: 2.5, pb: 1 }}>
-            <Typography variant="subtitle2" fontWeight={700}>Monthly Summary</Typography>
+            <Typography variant="subtitle2" fontWeight={700}>Resumo mensal</Typography>
           </Box>
           <TableContainer>
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ "& th": { fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "text.secondary" } }}>
-                  <TableCell>Month</TableCell>
-                  <TableCell align="right" sx={{ color: `${theme.palette.success.main} !important` }}>Income</TableCell>
-                  <TableCell align="right" sx={{ color: `${theme.palette.error.main} !important` }}>Expenses</TableCell>
-                  <TableCell align="right">Balance</TableCell>
+                  <TableCell>Mês</TableCell>
+                  <TableCell align="right" sx={{ color: `${theme.palette.success.main} !important` }}>Receita</TableCell>
+                  <TableCell align="right" sx={{ color: `${theme.palette.error.main} !important` }}>Despesas</TableCell>
+                  <TableCell align="right">Saldo</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -298,13 +296,13 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
           <Paper elevation={0} sx={{ borderRadius: "16px", border: `1px solid ${theme.palette.divider}`, flex: 1, minWidth: 260 }}>
             <Box sx={{ p: 2.5, pb: 1, display: "flex", alignItems: "center", gap: 1 }}>
               <ExpenseIcon sx={{ fontSize: 18, color: "error.main" }} />
-              <Typography variant="subtitle2" fontWeight={700}>Expenses by Category</Typography>
+              <Typography variant="subtitle2" fontWeight={700}>Despesas por categoria</Typography>
             </Box>
             <TableContainer>
               <Table size="small">
                 <TableHead>
                   <TableRow sx={{ "& th": { fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "text.secondary" } }}>
-                    <TableCell>Category</TableCell>
+                    <TableCell>Categoria</TableCell>
                     <TableCell align="right">Total</TableCell>
                     <TableCell align="right">%</TableCell>
                   </TableRow>
@@ -313,7 +311,7 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
                   {expenseByCategory.map(([cat, amount]) => (
                     <TableRow key={cat} sx={{ "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.03) } }}>
                       <TableCell sx={{ fontSize: 13 }}>
-                        <Chip label={cat} size="small" sx={{ height: 20, fontSize: 10, borderRadius: "6px" }} />
+                        <Chip label={categoryLabel(cat)} size="small" sx={{ height: 20, fontSize: 10, borderRadius: "6px" }} />
                       </TableCell>
                       <TableCell align="right" sx={{ fontFamily: "monospace", fontSize: 13, color: "error.main" }}>
                         {formatCurrency(amount)}
@@ -332,13 +330,13 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
           <Paper elevation={0} sx={{ borderRadius: "16px", border: `1px solid ${theme.palette.divider}`, flex: 1, minWidth: 260 }}>
             <Box sx={{ p: 2.5, pb: 1, display: "flex", alignItems: "center", gap: 1 }}>
               <IncomeIcon sx={{ fontSize: 18, color: "success.main" }} />
-              <Typography variant="subtitle2" fontWeight={700}>Income by Category</Typography>
+              <Typography variant="subtitle2" fontWeight={700}>Receitas por categoria</Typography>
             </Box>
             <TableContainer>
               <Table size="small">
                 <TableHead>
                   <TableRow sx={{ "& th": { fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "text.secondary" } }}>
-                    <TableCell>Category</TableCell>
+                    <TableCell>Categoria</TableCell>
                     <TableCell align="right">Total</TableCell>
                     <TableCell align="right">%</TableCell>
                   </TableRow>
@@ -347,7 +345,7 @@ const FiscalReportView: React.FC<FiscalReportViewProps> = ({ transactions }) => 
                   {incomeByCategory.map(([cat, amount]) => (
                     <TableRow key={cat} sx={{ "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.03) } }}>
                       <TableCell sx={{ fontSize: 13 }}>
-                        <Chip label={cat} size="small" sx={{ height: 20, fontSize: 10, borderRadius: "6px" }} />
+                        <Chip label={categoryLabel(cat)} size="small" sx={{ height: 20, fontSize: 10, borderRadius: "6px" }} />
                       </TableCell>
                       <TableCell align="right" sx={{ fontFamily: "monospace", fontSize: 13, color: "success.main" }}>
                         {formatCurrency(amount)}

@@ -26,7 +26,7 @@ export const useWalletSync = (onTransactionDetected: (transaction: WalletTransac
       setIsEnabled(enabled);
       return enabled;
     } catch (e) {
-      console.error('Failed to check notification access', e);
+      console.error('Não foi possível verificar o acesso às notificações', e);
       return false;
     }
   }, []);
@@ -36,7 +36,7 @@ export const useWalletSync = (onTransactionDetected: (transaction: WalletTransac
     try {
       await WalletNotification.requestNotificationAccess();
     } catch (e) {
-      console.error('Failed to request notification access', e);
+      console.error('Não foi possível solicitar acesso às notificações', e);
     }
   }, []);
 

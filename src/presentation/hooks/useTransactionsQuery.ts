@@ -141,7 +141,7 @@ export function useTransactionsQuery(userId: string) {
       } = await supabase.auth.getUser();
 
       if (userError) throw userError;
-      if (user?.id !== userId) throw new Error("Session changed");
+      if (user?.id !== userId) throw new Error("A sessão mudou");
 
       const payload = { ...mapNewTransactionToDb(tx), user_id: user.id };
 
@@ -291,7 +291,7 @@ export function useTransactionsQuery(userId: string) {
       } = await supabase.auth.getUser();
 
       if (userError) throw userError;
-      if (user?.id !== userId) throw new Error("Session changed");
+      if (user?.id !== userId) throw new Error("A sessão mudou");
 
       const payloads = transactions.map((tx) => ({
         ...mapNewTransactionToDb(tx),
@@ -374,7 +374,7 @@ export function useTransactionsQuery(userId: string) {
     mutationFn: async ({ transactionId, date, isPaid }: { transactionId: string; date: string; isPaid: boolean }) => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
-      if (user?.id !== userId) throw new Error("Session changed");
+      if (user?.id !== userId) throw new Error("A sessão mudou");
 
       const { error } = await supabase.from("recurring_overrides").upsert(
         { transaction_id: transactionId, user_id: user.id, override_date: date, is_paid: isPaid },

@@ -3,8 +3,8 @@ import { renderHook } from "@testing-library/react";
 import { useCurrency } from "@/presentation/hooks/useCurrency";
 
 describe("useCurrency", () => {
-  it("should format currency correctly in BRL", () => {
-    const { result } = renderHook(() => useCurrency({ locale: "pt-BR", currency: "BRL" }));
+  it("should format currency in BRL by default", () => {
+    const { result } = renderHook(() => useCurrency());
 
     expect(result.current.format(1234.56)).toBe("R$\u00A01.234,56");
     expect(result.current.format(0)).toBe("R$\u00A00,00");

@@ -8,6 +8,9 @@ import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import androidx.core.app.NotificationManagerCompat;
 
+import java.text.NumberFormat;
+import java.util.Currency;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,7 +72,7 @@ public class WalletNotificationService extends NotificationListenerService {
         // Create channel for Android O+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             android.app.NotificationChannel channel = new android.app.NotificationChannel(
-                channelId, "Google Wallet Sync", android.app.NotificationManager.IMPORTANCE_HIGH);
+                channelId, "Sincronização com a Carteira do Google", android.app.NotificationManager.IMPORTANCE_HIGH);
             notificationManager.createNotificationChannel(channel);
         }
 
@@ -84,10 +87,25 @@ public class WalletNotificationService extends NotificationListenerService {
         android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(
             this, 0, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);
 
+        String currencyCode;
+        switch (currency) {
+            case "R$": currencyCode = "BRL"; break;
+            case "$": currencyCode = "USD"; break;
+            case "€": currencyCode = "EUR"; break;
+            case "£": currencyCode = "GBP"; break;
+            default: currencyCode = currency;
+        }
+        NumberFormat amountFormatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"));
+        try {
+            amountFormatter.setCurrency(Currency.getInstance(currencyCode));
+        } catch (IllegalArgumentException ignored) {
+            // Keep the Brazilian default for notifications without a recognized currency.
+        }
+
         Notification notification = new androidx.core.app.NotificationCompat.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_menu_save) // Use a better icon if available
             .setContentTitle("Nova transação detectada")
-            .setContentText(merchant + ": " + currency + " " + amount)
+            .setContentText(merchant + ": " + amountFormatter.format(amount))
             .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

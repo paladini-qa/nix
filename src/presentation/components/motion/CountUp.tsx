@@ -80,7 +80,7 @@ const CountUp: React.FC<CountUpProps> = ({
       return `${prefix}${formatter(rounded)}${suffix}`;
     }
     
-    return `${prefix}${rounded.toLocaleString()}${suffix}`;
+    return `${prefix}${rounded.toLocaleString("pt-BR")}${suffix}`;
   });
 
   // Observe when component comes into view
@@ -172,24 +172,24 @@ export const useCountUp = (
 };
 
 /**
- * Currency formatter for US Dollars
+ * Formata valores em reais sem centavos
  */
 export const formatBRL = (value: number): string => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("pt-BR", {
     style: "currency",
-    currency: "USD",
+    currency: "BRL",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
 };
 
 /**
- * Currency formatter with decimals for US Dollars
+ * Formata valores em reais com centavos
  */
 export const formatBRLFull = (value: number): string => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("pt-BR", {
     style: "currency",
-    currency: "USD",
+    currency: "BRL",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);

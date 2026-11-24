@@ -43,7 +43,7 @@ export function useFormValidation<T extends z.ZodSchema>(
         return { message: "", hasError: false };
       } catch (error) {
         if (error instanceof z.ZodError) {
-          const message = error.issues[0]?.message || "Invalid value";
+          const message = error.issues[0]?.message || "Valor inválido";
           setErrors((prev) => ({ ...prev, [field]: message }));
           return { message, hasError: true };
         }
@@ -86,7 +86,7 @@ export function useFormValidation<T extends z.ZodSchema>(
         return true;
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "An error occurred";
+          error instanceof Error ? error.message : "Ocorreu um erro";
         setSubmitError(message);
         return false;
       } finally {

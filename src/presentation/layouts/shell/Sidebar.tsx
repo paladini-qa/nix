@@ -94,16 +94,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const resourcesNavItems: NavItem[] = [
-    { icon: PaymentIcon, label: "Payments", id: "paymentMethods" },
+    { icon: PaymentIcon, label: "Pagamentos", id: "paymentMethods" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
-    { icon: CreditCardIcon, label: "Splits", id: "splits" },
-    { icon: CategoryIcon, label: "Categories", id: "categories" },
+    { icon: CreditCardIcon, label: "Parcelas", id: "splits" },
+    { icon: CategoryIcon, label: "Categorias", id: "categories" },
     { icon: SubscriptionsIcon, label: t("nav.subscriptions"), id: "subscriptions" },
   ];
 
   const toolsNavItems: NavItem[] = [
     { icon: InvestmentsIcon, label: t("nav.investments"), id: "investments" },
-    { icon: FiscalIcon, label: "Fiscal Report", id: "fiscal-report" },
+    { icon: FiscalIcon, label: "Relatório fiscal", id: "fiscal-report" },
   ];
 
   const renderNavItem = (
@@ -205,7 +205,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 Nix Finance
               </Typography>
               <Typography sx={{ fontSize: 11, color: "text.disabled", fontWeight: 500 }}>
-                {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                {new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
               </Typography>
             </Box>
           </Box>
@@ -214,7 +214,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Main Section */}
         <Box sx={{ px: "12px", pb: "4px", pt: "10px" }}>
           <Typography sx={{ px: "10px", pb: "8px", pt: "6px", fontSize: "10.5px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "text.disabled" }}>
-            Main
+            Principal
           </Typography>
           <List disablePadding>
             {mainNavItems.map((item, idx) => (
@@ -228,7 +228,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Resources Section */}
         <Box sx={{ px: "12px", pb: "4px", pt: "6px" }}>
           <Typography sx={{ px: "10px", pb: "8px", pt: "6px", fontSize: "10.5px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "text.disabled" }}>
-            Resources
+            Recursos
           </Typography>
           <List disablePadding>
             {resourcesNavItems.map((item, idx) => (
@@ -242,7 +242,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Tools Section */}
         <Box sx={{ px: "12px", pb: "4px", pt: "6px" }}>
           <Typography sx={{ px: "10px", pb: "8px", pt: "6px", fontSize: "10.5px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "text.disabled" }}>
-            Tools
+            Ferramentas
           </Typography>
           <List disablePadding>
             {toolsNavItems.map((item, idx) => (
@@ -300,10 +300,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography sx={{ fontWeight: 600, fontSize: 13, color: "text.primary", lineHeight: 1.3 }} noWrap>
-              {displayName || "User"}
+              {displayName || "Usuário"}
             </Typography>
             <Typography sx={{ fontSize: 11.5, color: "text.disabled", lineHeight: 1.3 }} noWrap>
-              Pro plan
+              Plano Pro
             </Typography>
           </Box>
           <ChevronRightIcon sx={{ color: "text.disabled", fontSize: 14, flexShrink: 0 }} />
