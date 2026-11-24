@@ -34,11 +34,11 @@ const AdvancedFilters = lazy(() => import("@/presentation/panels/AdvancedFilters
 const AnalyticsView = lazy(() => import("./AnalyticsView"));
 
 const MOBILE_SHORTCUTS = [
-  { view: "splits" as const,         icon: <SplitsIcon sx={{ fontSize: 20 }} />,        label: "Splits",       color: "#6366f1" },
-  { view: "recurring" as const,      icon: <RecurringIcon sx={{ fontSize: 20 }} />,      label: "Recurring",    color: "#f59e0b" },
-  { view: "investments" as const,    icon: <InvestmentsIcon sx={{ fontSize: 20 }} />,    label: "Investments",  color: "#22c55e" },
-  { view: "subscriptions" as const,  icon: <SubscriptionsIcon sx={{ fontSize: 20 }} />,  label: "Subscriptions",color: "#ec4899" },
-  { view: "paymentMethods" as const, icon: <PaymentMethodsIcon sx={{ fontSize: 20 }} />, label: "Payments",     color: "#0ea5e9" },
+  { view: "splits" as const,         icon: <SplitsIcon sx={{ fontSize: 20 }} />,        label: "Parcelas",       color: "#6366f1" },
+  { view: "recurring" as const,      icon: <RecurringIcon sx={{ fontSize: 20 }} />,      label: "Recorrentes",    color: "#f59e0b" },
+  { view: "investments" as const,    icon: <InvestmentsIcon sx={{ fontSize: 20 }} />,    label: "Investimentos",  color: "#22c55e" },
+  { view: "subscriptions" as const,  icon: <SubscriptionsIcon sx={{ fontSize: 20 }} />,  label: "Assinaturas",color: "#ec4899" },
+  { view: "paymentMethods" as const, icon: <PaymentMethodsIcon sx={{ fontSize: 20 }} />, label: "Pagamentos",     color: "#0ea5e9" },
   { view: "fiscal-report" as const,  icon: <FiscalIcon sx={{ fontSize: 20 }} />,         label: "Fiscal",       color: "#ef4444" },
 ];
 
@@ -84,7 +84,7 @@ const DashboardMainSection: React.FC<{ userId: string }> = ({ userId }) => {
   const hasExpenses = filteredTransactions.some(({ type }) => type === "expense");
 
   const firstName = displayName ? displayName.split(" ")[0] : t("dashboard.title");
-  const monthLabel = new Date(filters.year, filters.month).toLocaleDateString("en-US", {
+  const monthLabel = new Date(filters.year, filters.month).toLocaleDateString("pt-BR", {
     month: "long",
     year: "numeric",
   });
@@ -112,11 +112,11 @@ const DashboardMainSection: React.FC<{ userId: string }> = ({ userId }) => {
             </Typography>
             <Stack direction="row" spacing={3} mt={1.5} alignItems="center">
               <Box>
-                <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Income</Typography>
+                <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Receita</Typography>
                 <Typography sx={{ fontWeight: 700, fontSize: 13 }}>+{formatCompact(summary.totalIncome)}</Typography>
               </Box>
               <Box>
-                <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Expenses</Typography>
+                <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Despesas</Typography>
                 <Typography sx={{ fontWeight: 700, fontSize: 13 }}>−{formatCompact(summary.totalExpense)}</Typography>
               </Box>
             </Stack>

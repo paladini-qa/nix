@@ -1,3 +1,4 @@
+import { categoryLabel } from "@/shared/i18n/labels";
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import {
   Box,
@@ -41,7 +42,7 @@ import { getReportDate } from "@/domain/usecases/transactionUtils";
 import dayjs, { type Dayjs } from "dayjs";
 import { buildDashboardMonthlySeries } from "@/domain/usecases/dashboardMonthlySeries";
 import EmptyState from "@/presentation/components/ui/EmptyState";
-import { formatCurrency } from "@/shared/utils/formatters";
+import { formatCompactCurrency, formatCurrency } from "@/shared/utils/formatters";
 
 interface AdvancedFiltersInfo {
   startDate: Dayjs | null;
@@ -297,7 +298,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             }}
           >
             <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600, position: "relative", zIndex: 1 }}>
-              Monthly Average (Income)
+              Média mensal de receitas
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#059669", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {formatCurrency(stats.avgMonthlyIncome)}
@@ -331,7 +332,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             }}
           >
             <Typography variant="overline" sx={{ color: "text.secondary", letterSpacing: "0.08em", fontSize: isMobile ? 10 : 11, fontWeight: 600, position: "relative", zIndex: 1 }}>
-              Monthly Average (Expense)
+              Média mensal de despesas
             </Typography>
             <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 700, color: "#DC2626", letterSpacing: "-0.02em", position: "relative", zIndex: 1 }}>
               {formatCurrency(stats.avgMonthlyExpense)}
@@ -461,7 +462,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 }}
               />
               <YAxis
-                tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                tickFormatter={formatCompactCurrency}
                 tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
                 axisLine={{
                   stroke: alpha(theme.palette.text.secondary, 0.2),
@@ -470,7 +471,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               <Tooltip
                 formatter={(value: number, name: string) => [
                   formatCurrency(value),
-                  <span style={{ color: name === "Expenses" ? "#ef4444" : "#10b981" }}>{name}</span>
+                  <span style={{ color: name === "Despesas" ? "#ef4444" : "#10b981" }}>{name}</span>
                 ]}
                 contentStyle={{
                   backgroundColor: isDarkMode ? alpha("#1e1e2e", 0.95) : alpha("#ffffff", 0.95),
@@ -488,16 +489,16 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                   <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{ width: 12, height: 12, backgroundColor: "#ef4444", borderRadius: 2 }} />
-                      <span style={{ color: "#ef4444", fontSize: 12 }}>Expenses</span>
+                      <span style={{ color: "#ef4444", fontSize: 12 }}>Despesas</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{ width: 12, height: 12, backgroundColor: "#10b981", borderRadius: 2 }} />
-                      <span style={{ color: "#10b981", fontSize: 12 }}>Income</span>
+                      <span style={{ color: "#10b981", fontSize: 12 }}>Receita</span>
                     </div>
                   </div>
                 )}
               />
-              <Bar dataKey="expense" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]}>
                 {monthlySeries.map((entry, index) => (
                   <Cell 
                     key={`expense-${index}`} 
@@ -507,7 +508,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                   />
                 ))}
               </Bar>
-              <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="income" name="Receita" fill="#10b981" radius={[4, 4, 0, 0]}>
                 {monthlySeries.map((entry, index) => (
                   <Cell 
                     key={`income-${index}`} 
@@ -574,7 +575,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 }}
               />
               <YAxis
-                tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                tickFormatter={formatCompactCurrency}
                 tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
                 axisLine={{
                   stroke: alpha(theme.palette.text.secondary, 0.2),
@@ -597,10 +598,10 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13 }}>
                         <div style={{ color: "#10b981" }}>
-                          Income: {formatCurrency(data.income)}
+                          Receitas: {formatCurrency(data.income)}
                         </div>
                         <div style={{ color: "#ef4444" }}>
-                          Expenses: {formatCurrency(data.expense)}
+                          Despesas: {formatCurrency(data.expense)}
                         </div>
                         <div style={{ 
                           color: data.monthBalance >= 0 ? "#10b981" : "#ef4444",
@@ -608,13 +609,13 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                           paddingTop: 4,
                           marginTop: 4,
                         }}>
-                          Monthly Balance: {formatCurrency(data.monthBalance)}
+                          Saldo mensal: {formatCurrency(data.monthBalance)}
                         </div>
                         <div style={{ 
                           color: data.balance >= 0 ? "#6366f1" : "#ef4444",
                           fontWeight: 600,
                         }}>
-                          Accumulated Balance: {formatCurrency(data.balance)}
+                          Saldo acumulado: {formatCurrency(data.balance)}
                         </div>
                       </div>
                     </div>
@@ -701,9 +702,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 interval={0}
               />
               <YAxis
-                tickFormatter={(value) =>
-                  value > 0 ? `${(value / 1000).toFixed(1)}k` : "0"
-                }
+                tickFormatter={formatCompactCurrency}
                 tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
                 axisLine={{
                   stroke: alpha(theme.palette.text.secondary, 0.2),
@@ -756,7 +755,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           >
             <SectionHeader
               icon={<PieChartIcon />}
-              title="Expenses by Category"
+              title="Despesas por categoria"
             />
             {categoryData.length > 0 ? (
               <Box sx={{ width: "100%", height: 280, display: "flex", justifyContent: "center" }}>
@@ -795,7 +794,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                           }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                               <div style={{ width: 10, height: 10, backgroundColor: color, borderRadius: 2 }} />
-                              <span style={{ color, fontWeight: 600 }}>{data.name}</span>
+                              <span style={{ color, fontWeight: 600 }}>{categoryLabel(String(data.name))}</span>
                             </div>
                             <div style={{ color: theme.palette.text.primary, marginTop: 4 }}>
                               {formatCurrency(data.value as number)}
@@ -806,6 +805,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                     />
                   <Legend
                     layout="vertical"
+                    formatter={(value) => categoryLabel(String(value))}
                     verticalAlign="middle"
                     align="right"
                     wrapperStyle={{ fontSize: "12px" }}
@@ -815,7 +815,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             ) : (
               <Box sx={{ py: 4, textAlign: "center" }}>
                 <Typography color="text.secondary">
-                  No expenses in the period
+                  Nenhuma despesa no período
                 </Typography>
               </Box>
             )}
@@ -842,7 +842,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           >
             <SectionHeader
               icon={<TrendingUpIcon />}
-              title="Income by Category"
+              title="Receitas por categoria"
             />
             {incomeByCategory.length > 0 ? (
               <Box sx={{ width: "100%", height: 280, display: "flex", justifyContent: "center" }}>
@@ -881,7 +881,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                         }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <div style={{ width: 10, height: 10, backgroundColor: color, borderRadius: 2 }} />
-                            <span style={{ color, fontWeight: 600 }}>{data.name}</span>
+                            <span style={{ color, fontWeight: 600 }}>{categoryLabel(String(data.name))}</span>
                           </div>
                           <div style={{ color: theme.palette.text.primary, marginTop: 4 }}>
                             {formatCurrency(data.value as number)}
@@ -892,6 +892,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                   />
                   <Legend
                     layout="vertical"
+                    formatter={(value) => categoryLabel(String(value))}
                     verticalAlign="middle"
                     align="right"
                     wrapperStyle={{ fontSize: "12px" }}
@@ -901,7 +902,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             ) : (
               <Box sx={{ py: 4, textAlign: "center" }}>
                 <Typography color="text.secondary">
-                  No income in the period
+                  Nenhuma receita no período
                 </Typography>
               </Box>
             )}
@@ -954,7 +955,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                     minWidth: 32,
                   }}
                 />
-                <Typography fontWeight={500}>{cat.name}</Typography>
+                <Typography fontWeight={500}>{categoryLabel(cat.name)}</Typography>
               </Box>
               <Typography fontWeight={600} color="error.main">
                 {formatCurrency(cat.value)}
@@ -965,8 +966,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             <Box sx={{ py: 2 }}>
               <EmptyState
                 type="transactions"
-                title="No expenses registered"
-                description="There are no expenses to display in the chart"
+                title="Nenhuma despesa registrada"
+                description="Nenhuma despesa para exibir no gráfico"
                 compact
               />
             </Box>
@@ -991,7 +992,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         >
           <SectionHeader
             icon={<BarChartIcon />}
-            title="Expenses: Current Year vs. Previous Year"
+            title="Despesas do ano atual e do ano anterior"
           />
           <Box sx={{ width: "100%", overflowX: "auto" }}>
             <BarChart
@@ -1004,7 +1005,7 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} />
               <YAxis
                 tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
-                tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+                tickFormatter={formatCompactCurrency}
                 axisLine={false}
                 tickLine={false}
                 width={48}
@@ -1020,8 +1021,8 @@ const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="thisYear" name="Current year" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={32} />
-              <Bar dataKey="lastYear" name="Previous year" fill={alpha("#6366f1", 0.35)} radius={[4, 4, 0, 0]} maxBarSize={32} />
+              <Bar dataKey="thisYear" name="Ano atual" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={32} />
+              <Bar dataKey="lastYear" name="Ano anterior" fill={alpha("#6366f1", 0.35)} radius={[4, 4, 0, 0]} maxBarSize={32} />
             </BarChart>
           </Box>
         </Paper>

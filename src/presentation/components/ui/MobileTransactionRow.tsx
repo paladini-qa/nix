@@ -1,4 +1,5 @@
 import { Box, ButtonBase, Typography } from "@mui/material";
+import { paymentMethodLabel } from "@/shared/i18n/labels";
 import type { Transaction } from "@/domain/entities";
 
 interface MobileTransactionRowProps {
@@ -39,7 +40,7 @@ export default function MobileTransactionRow({
           {transaction.description}
         </Typography>
         <Typography component="span" variant="caption" color="text.secondary" display="block">
-          {transaction.paymentMethod}
+          {paymentMethodLabel(transaction.paymentMethod)}
         </Typography>
       </Box>
       <Typography

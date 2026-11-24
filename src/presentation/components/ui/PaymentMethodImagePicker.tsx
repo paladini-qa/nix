@@ -98,8 +98,8 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
       fullWidth
     >
       <DialogTitle sx={{ fontWeight: 700, pb: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        Payment Method Image
-        <IconButton size="small" aria-label="Close image picker" onClick={onClose}>
+        Imagem do método de pagamento
+        <IconButton size="small" aria-label="Fechar seletor de imagens" onClick={onClose}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
@@ -111,9 +111,9 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
           sx={{ mb: 2, "& .MuiTab-root": { textTransform: "none", fontWeight: 600 } }}
         >
           {isImageSearchConfigured() && (
-            <Tab label="Search on Google Images" value={0} />
+            <Tab label="Buscar no Google Imagens" value={0} />
           )}
-          <Tab label="Insert Direct URL" value={1} />
+          <Tab label="Inserir URL direta" value={1} />
         </Tabs>
 
         {/* ── SEARCH TAB ── */}
@@ -143,7 +143,7 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
                 disabled={loading || !query.trim()}
                 sx={{ borderRadius: "10px", px: 3, textTransform: "none", whiteSpace: "nowrap" }}
               >
-                {loading ? <CircularProgress size={18} color="inherit" /> : "Search"}
+                {loading ? <CircularProgress size={18} color="inherit" /> : "Buscar"}
               </Button>
             </Box>
 
@@ -236,7 +236,7 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
               >
                 <SearchIcon sx={{ fontSize: 40, opacity: 0.3 }} />
                 <Typography sx={{ fontSize: 13 }}>
-                  Search by bank name or credit card brand to find the logo
+                  Busque pelo nome do banco ou pela bandeira do cartão para encontrar o logotipo
                 </Typography>
               </Box>
             )}
@@ -257,17 +257,17 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
                 }}
               >
                 <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: "warning.main", mb: 0.5 }}>
-                  Google Search not configured
+                  Busca do Google indisponível
                 </Typography>
                 <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                  Define <code>VITE_GOOGLE_CSE_API_KEY</code> and <code>VITE_GOOGLE_CSE_CX</code> in the{" "}
-                  <code>.env</code> to enable search. For now, paste the image URL below.
+                  Definir <code>VITE_GOOGLE_CSE_API_KEY</code> and <code>VITE_GOOGLE_CSE_CX</code> in the{" "}
+                  <code>.env</code> para habilitar a busca. Por enquanto, cole o endereço da imagem abaixo.
                 </Typography>
               </Box>
             )}
 
             <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 1.5 }}>
-              Open Google Images, right-click the desired image → "Copy image address" and paste it below.
+              No Google Imagens, clique com o botão direito sobre a imagem, selecione Copiar endereço da imagem e cole abaixo.
             </Typography>
 
             <TextField
@@ -327,18 +327,18 @@ const PaymentMethodImagePicker: React.FC<PaymentMethodImagePickerProps> = ({
             variant="soft"
             style={{ marginInlineEnd: "auto" }}
           >
-            Remove Image
+            Remover imagem
           </NixButton>
         )}
         <NixButton variant="soft" color="gray" onClick={onClose}>
-          Cancel
+          Cancelar
         </NixButton>
         <NixButton
           variant="solid"
           onClick={handleConfirm}
           disabled={!canConfirm}
         >
-          Use this image
+          Usar esta imagem
         </NixButton>
       </DialogActions>
     </Dialog>

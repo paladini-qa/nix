@@ -21,8 +21,8 @@ describe("transaction amount", () => {
   );
 
   it("formats whole amounts and cents without changing their value", () => {
-    expect(formatTransactionAmount(12)).toBe("12.00");
-    expect(formatTransactionAmount(1234.5)).toBe("1,234.50");
+    expect(formatTransactionAmount(12)).toBe("12,00");
+    expect(formatTransactionAmount(1234.5)).toBe("1.234,50");
     expect(parseTransactionAmount(formatTransactionAmount(1234.56))).toBe(1234.56);
   });
 });

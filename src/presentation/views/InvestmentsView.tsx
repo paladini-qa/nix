@@ -54,7 +54,7 @@ import type { Transaction } from "@/domain/entities";
 import { getReportDate } from "@/domain/usecases/transactionUtils";
 import { useLayoutSpacing } from "@/presentation/hooks";
 import EmptyState from "@/presentation/components/ui/EmptyState";
-import { formatCurrency, formatDate, getMonthLabel } from "@/shared/utils/formatters";
+import { formatCompactCurrency, formatCurrency, formatDate, getMonthLabel } from "@/shared/utils/formatters";
 
 interface InvestmentsViewProps {
   transactions: Transaction[];
@@ -177,13 +177,13 @@ const InvestmentRow: React.FC<{
           align="right"
           sx={{ color: "success.main", fontWeight: 600, fontSize: 13, whiteSpace: "nowrap" }}
         >
-          {formatCurrency(group.totalDeposited, "en-US", "USD", 2)}
+          {formatCurrency(group.totalDeposited)}
         </TableCell>
         <TableCell
           align="right"
           sx={{ color: "#6366f1", fontWeight: 600, fontSize: 13, whiteSpace: "nowrap" }}
         >
-          {formatCurrency(group.totalReturns, "en-US", "USD", 2)}
+          {formatCurrency(group.totalReturns)}
         </TableCell>
         {!isSmall && (
           <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
@@ -193,7 +193,7 @@ const InvestmentRow: React.FC<{
               color={isPositive ? "success.main" : "error.main"}
             >
               {isPositive ? "+" : ""}
-              {formatCurrency(group.netBalance, "en-US", "USD", 2)}
+              {formatCurrency(group.netBalance)}
             </Typography>
           </TableCell>
         )}
@@ -234,22 +234,22 @@ const InvestmentRow: React.FC<{
                     <TableCell
                       sx={{ fontWeight: 600, fontSize: 11, color: "text.secondary" }}
                     >
-                      Month
+                      Mês
                     </TableCell>
                     <TableCell
                       align="right"
                       sx={{ fontWeight: 600, fontSize: 11, color: "success.main" }}
                     >
-                      Contributions
+                      Aportes
                     </TableCell>
                     <TableCell
                       align="right"
                       sx={{ fontWeight: 600, fontSize: 11, color: "#6366f1" }}
                     >
-                      Returns
+                      Rendimentos
                     </TableCell>
                         <TableCell sx={{ fontWeight: 600, fontSize: 11, color: "text.secondary" }}>
-                      Transactions
+                      Transações
                     </TableCell>
                     <TableCell sx={{ width: 80 }} />
                   </TableRow>
@@ -262,7 +262,7 @@ const InvestmentRow: React.FC<{
                         align="center"
                         sx={{ color: "text.secondary", fontSize: 12, py: 2 }}
                       >
-                        No transactions for the selected filter
+                        Nenhuma transação para o filtro selecionado
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -276,7 +276,7 @@ const InvestmentRow: React.FC<{
                             color: m.deposits > 0 ? "success.main" : "text.disabled",
                           }}
                         >
-                          {m.deposits > 0 ? formatCurrency(m.deposits, "en-US", "USD", 2) : "—"}
+                          {m.deposits > 0 ? formatCurrency(m.deposits) : "—"}
                         </TableCell>
                         <TableCell
                           align="right"
@@ -285,7 +285,7 @@ const InvestmentRow: React.FC<{
                             color: m.returns > 0 ? "#6366f1" : "text.disabled",
                           }}
                         >
-                          {m.returns > 0 ? formatCurrency(m.returns, "en-US", "USD", 2) : "—"}
+                          {m.returns > 0 ? formatCurrency(m.returns) : "—"}
                         </TableCell>
                         <TableCell>
                           <Stack spacing={0.3}>
@@ -308,7 +308,7 @@ const InvestmentRow: React.FC<{
                                   }}
                                 >
                                   {tx.type === "income" ? "+" : "−"}
-                                  {formatCurrency(tx.amount, "en-US", "USD", 2)}
+                                  {formatCurrency(tx.amount)}
                                 </Typography>
                               </Box>
                             ))}
@@ -534,21 +534,21 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
 
   const summaryCards = [
     {
-      label: "Total Contributed",
+      label: "Total aportado",
       value: formatCurrency(totalDeposited),
       icon: <TrendingUpIcon />,
       color: "#10b981",
       accent: "#10b981",
     },
     {
-      label: "Total Returns",
+      label: "Total de rendimentos",
       value: formatCurrency(totalReturns),
       icon: <TrendingUpIcon />,
       color: "#6366f1",
       accent: "#6366f1",
     },
     {
-      label: "Net Balance",
+      label: "Saldo líquido",
       value: `${netBalance >= 0 ? "+" : ""}${formatCurrency(netBalance)}`,
       icon: <BalanceIcon />,
       color: netBalance >= 0 ? "#10b981" : "#ef4444",
@@ -581,10 +581,10 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "14px", mb: "22px" }}>
         <Box>
           <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            Investments
+            Investimentos
           </Typography>
           <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
-            Track contributions, returns and portfolio growth
+            Acompanhe aportes, rendimentos e a evolução da carteira
           </Typography>
         </Box>
       </Box>
@@ -613,7 +613,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
           >
             <FilterIcon sx={{ fontSize: 16, color: activeFiltersCount > 0 ? "primary.main" : "text.secondary" }} />
             <Typography variant="caption" fontWeight={600} color={activeFiltersCount > 0 ? "primary.main" : "text.secondary"}>
-              Filters
+              Filtros
             </Typography>
             {activeFiltersCount > 0 && (
               <Chip
@@ -640,7 +640,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
               }),
             }}
           >
-            Filters
+            Filtros
             {activeFiltersCount > 0 && (
               <Chip
                 label={activeFiltersCount}
@@ -656,7 +656,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
           <Stack direction="row" gap={0.75} flexWrap="wrap">
             {period !== "all" && (
               <Chip
-                label={period === "3m" ? "3 months" : period === "6m" ? "6 months" : "1 year"}
+                label={period === "3m" ? "3 meses" : period === "6m" ? "6 meses" : "1 ano"}
                 onDelete={() => setPeriod("all")}
                 size="small"
                 sx={{ borderRadius: "10px", bgcolor: alpha("#6366f1", 0.1), color: "#6366f1" }}
@@ -664,7 +664,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
             )}
             {typeFilter !== "all" && (
               <Chip
-                label={typeFilter === "expense" ? "Contributions" : "Returns"}
+                label={typeFilter === "expense" ? "Aportes" : "Rendimentos"}
                 onDelete={() => setTypeFilter("all")}
                 size="small"
                 sx={{
@@ -703,7 +703,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 1.5 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <FilterIcon fontSize="small" color="primary" />
-              <Typography variant="subtitle1" fontWeight={700}>Filters</Typography>
+              <Typography variant="subtitle1" fontWeight={700}>Filtros</Typography>
               {activeFiltersCount > 0 && (
                 <Chip label={activeFiltersCount} size="small" color="primary" sx={{ height: 20, minWidth: 20, fontSize: 11, "& .MuiChip-label": { px: 0.75 } }} />
               )}
@@ -711,7 +711,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               {activeFiltersCount > 0 && (
                 <Button size="small" onClick={() => { setPeriod("all"); setTypeFilter("all"); }} sx={{ textTransform: "none", fontSize: 12, color: "error.main", minWidth: "auto" }}>
-                  Clear
+                  Limpar
                 </Button>
               )}
               <IconButton size="small" onClick={() => setShowFilters(false)} sx={{ color: "text.secondary" }}>
@@ -723,13 +723,13 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
           <Stack spacing={2.5} sx={{ p: 2.5, pb: 5 }}>
             <Box>
               <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 }}>
-                Period
+                Período
               </Typography>
               <Stack direction="row" gap={1}>
                 {(["3m", "6m", "1y", "all"] as PeriodFilter[]).map((p) => (
                   <Chip
                     key={p}
-                    label={p === "3m" ? "3 months" : p === "6m" ? "6 months" : p === "1y" ? "1 year" : "All"}
+                    label={p === "3m" ? "3 meses" : p === "6m" ? "6 meses" : p === "1y" ? "1 ano" : "Todos"}
                     onClick={() => setPeriod(p)}
                     variant={period === p ? "filled" : "outlined"}
                     size="medium"
@@ -747,13 +747,13 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 }}>
-                Type
+                Tipo
               </Typography>
               <Stack direction="row" gap={1}>
                 {(["all", "expense", "income"] as TypeFilter[]).map((val) => (
                   <Chip
                     key={val}
-                    label={val === "all" ? "All" : val === "expense" ? "Contributions" : "Returns"}
+                    label={val === "all" ? "Todos" : val === "expense" ? "Aportes" : "Rendimentos"}
                     onClick={() => setTypeFilter(val)}
                     variant={typeFilter === val ? "filled" : "outlined"}
                     size="medium"
@@ -788,13 +788,13 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
           >
             <Box>
               <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 }}>
-                Period
+                Período
               </Typography>
               <Stack direction="row" gap={1}>
                 {(["3m", "6m", "1y", "all"] as PeriodFilter[]).map((p) => (
                   <Chip
                     key={p}
-                    label={p === "3m" ? "3 months" : p === "6m" ? "6 months" : p === "1y" ? "1 year" : "All"}
+                    label={p === "3m" ? "3 meses" : p === "6m" ? "6 meses" : p === "1y" ? "1 ano" : "Todos"}
                     onClick={() => setPeriod(p)}
                     variant={period === p ? "filled" : "outlined"}
                     size="medium"
@@ -811,13 +811,13 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 }}>
-                Type
+                Tipo
               </Typography>
               <Stack direction="row" gap={1}>
                 {(["all", "expense", "income"] as TypeFilter[]).map((val) => (
                   <Chip
                     key={val}
-                    label={val === "all" ? "All" : val === "expense" ? "Contributions" : "Returns"}
+                    label={val === "all" ? "Todos" : val === "expense" ? "Aportes" : "Rendimentos"}
                     onClick={() => setTypeFilter(val)}
                     variant={typeFilter === val ? "filled" : "outlined"}
                     size="medium"
@@ -836,7 +836,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
             {activeFiltersCount > 0 && (
               <Box sx={{ display: "flex", alignItems: "flex-end", height: "100%" }}>
                 <Button size="small" onClick={() => { setPeriod("all"); setTypeFilter("all"); }} sx={{ textTransform: "none", fontSize: 12, color: "error.main" }}>
-                  Clear filters
+                  Limpar filtros
                 </Button>
               </Box>
             )}
@@ -847,8 +847,8 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
       {!hasData ? (
         <EmptyState
           type="generic"
-          title="No investments found"
-          description="Add transactions with the category 'Investments' to track your portfolio."
+          title="Nenhum investimento encontrado"
+          description="Adicione transações na categoria Investimentos para acompanhar sua carteira."
         />
       ) : (
         <>
@@ -875,7 +875,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <Box>
                   <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    Net Balance
+                    Saldo líquido
                   </Typography>
                   <Typography sx={{ fontSize: 28, fontWeight: 800, color: netBalance >= 0 ? "#10b981" : "#ef4444", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
                     {netBalance >= 0 ? "+" : ""}{formatCurrency(netBalance)}
@@ -920,7 +920,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                     </Box>
                     <Box>
                       <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                        Contributed
+                        Aportado
                       </Typography>
                       <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
                         {formatCurrency(totalDeposited)}
@@ -949,7 +949,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                     </Box>
                     <Box>
                       <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                        Returns
+                        Rendimentos
                       </Typography>
                       <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1 }}>
                         {formatCurrency(totalReturns)}
@@ -1041,7 +1041,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
             {/* Evolution chart */}
             <Grid size={{ xs: 12, md: 7 }}>
               <Paper elevation={0} sx={paperSx("#6366f1")}>
-                <SectionHeader icon={<TimelineIcon />} title="Accumulated Wealth" />
+                <SectionHeader icon={<TimelineIcon />} title="Patrimônio acumulado" />
                 {monthlyData.length > 0 ? (
                   <Box sx={{ width: "100%", height: isMobile ? 220 : 260, overflowX: "auto" }}>
                     <AreaChart
@@ -1075,14 +1075,14 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                         axisLine={{ stroke: alpha(theme.palette.text.secondary, 0.2) }}
                       />
                       <YAxis
-                        tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                        tickFormatter={formatCompactCurrency}
                         tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
                         tickLine={false}
                         axisLine={false}
                         width={52}
                       />
                       <RechartsTooltip
-                        formatter={(value: number) => [formatCurrency(value), "Accumulated Wealth"]}
+                        formatter={(value: number) => [formatCurrency(value), "Patrimônio acumulado"]}
                         contentStyle={tooltipContentStyle}
                         labelStyle={{ color: theme.palette.text.primary, fontWeight: 600, marginBottom: 4 }}
                         wrapperStyle={{ zIndex: 9999 }}
@@ -1096,7 +1096,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                       <Area
                         type="monotone"
                         dataKey="balance"
-                        name="Accumulated Wealth"
+                        name="Patrimônio acumulado"
                         stroke={theme.palette.primary.main}
                         fill="url(#balanceGradient)"
                         strokeWidth={2}
@@ -1108,7 +1108,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                 ) : (
                   <Box display="flex" alignItems="center" justifyContent="center" height={220}>
                     <Typography variant="body2" color="text.secondary">
-                      Insufficient data
+                      Dados insuficientes
                     </Typography>
                   </Box>
                 )}
@@ -1118,7 +1118,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
             {/* Monthly bar chart */}
             <Grid size={{ xs: 12, md: 5 }}>
               <Paper elevation={0} sx={paperSx("#10b981")}>
-                <SectionHeader icon={<BarChartIcon />} title="Contributions vs Returns" />
+                <SectionHeader icon={<BarChartIcon />} title="Aportes e rendimentos" />
                 {barData.length > 0 ? (
                   <Box sx={{ width: "100%", height: isMobile ? 220 : 260, overflowX: "auto" }}>
                     <BarChart
@@ -1138,7 +1138,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                         axisLine={{ stroke: alpha(theme.palette.text.secondary, 0.2) }}
                       />
                       <YAxis
-                        tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                        tickFormatter={formatCompactCurrency}
                         tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
                         tickLine={false}
                         axisLine={false}
@@ -1174,7 +1174,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                                 }}
                               />
                               <span style={{ color: "#10b981", fontSize: 12 }}>
-                                Contributions
+                                Aportes
                               </span>
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -1187,7 +1187,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                                 }}
                               />
                               <span style={{ color: "#6366f1", fontSize: 12 }}>
-                                Returns
+                                Rendimentos
                               </span>
                             </div>
                           </div>
@@ -1195,14 +1195,14 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                       />
                       <Bar
                         dataKey="deposits"
-                        name="Contributions"
+                        name="Aportes"
                         fill={isDark ? alpha("#10b981", 0.7) : "#10b981"}
                         radius={[4, 4, 0, 0]}
                         maxBarSize={32}
                       />
                       <Bar
                         dataKey="returns"
-                        name="Returns"
+                        name="Rendimentos"
                         fill={isDark ? alpha("#6366f1", 0.7) : "#6366f1"}
                         radius={[4, 4, 0, 0]}
                         maxBarSize={32}
@@ -1212,7 +1212,7 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                 ) : (
                   <Box display="flex" alignItems="center" justifyContent="center" height={220}>
                     <Typography variant="body2" color="text.secondary">
-                      No data in this period
+                      Nenhum dado neste período
                     </Typography>
                   </Box>
                 )}
@@ -1242,18 +1242,18 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                   <ShowChartIcon />
                 </Box>
                 <Typography variant="h6" fontWeight={600}>
-                  Investments
+                  Investimentos
                 </Typography>
               </Box>
               <Typography variant="caption" color="text.secondary">
-                {investmentGroups.length} active asset{investmentGroups.length !== 1 ? "s" : ""}
+                {investmentGroups.length} ativo{investmentGroups.length !== 1 ? "s" : ""}
               </Typography>
             </Box>
             <Divider />
             {investmentGroups.length === 0 ? (
               <Box p={4} textAlign="center">
                 <Typography variant="body2" color="text.secondary">
-                  No investments for the selected filter
+                  Nenhum investimento para o filtro selecionado
                 </Typography>
               </Box>
             ) : (
@@ -1262,22 +1262,22 @@ const InvestmentsView: React.FC<InvestmentsViewProps> = ({ transactions, isMobil
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 40 }} />
-                      <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>Asset</TableCell>
+                      <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>Ativo</TableCell>
                       <TableCell
                         align="right"
                         sx={{ fontWeight: 600, fontSize: 12, color: "success.main" }}
                       >
-                        Contributed
+                        Aportado
                       </TableCell>
                       <TableCell
                         align="right"
                         sx={{ fontWeight: 600, fontSize: 12, color: "#6366f1" }}
                       >
-                        Returns
+                        Rendimentos
                       </TableCell>
                       {!isSmall && (
                         <TableCell align="right" sx={{ fontWeight: 600, fontSize: 12 }}>
-                          Balance
+                          Saldo
                         </TableCell>
                       )}
                       {!isSmall && (

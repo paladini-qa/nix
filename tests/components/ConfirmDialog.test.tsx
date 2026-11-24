@@ -31,10 +31,10 @@ describe("ConfirmDialogProvider", () => {
     await user.click(screen.getByRole("button", { name: "Start" }));
     const first = screen.getByRole("dialog", { name: "First confirmation" });
     expect(first).toHaveAccessibleDescription("First message");
-    expect(within(first).getByRole("button", { name: "Cancel" })).toHaveFocus();
+    expect(within(first).getByRole("button", { name: "Cancelar" })).toHaveFocus();
     await user.keyboard("{Escape}");
     const second = screen.getByRole("dialog", { name: "Second confirmation" });
-    await user.click(within(second).getByRole("button", { name: "Confirm" }));
+    await user.click(within(second).getByRole("button", { name: "Confirmar" }));
     expect(results).toEqual([false, true]);
   });
 });

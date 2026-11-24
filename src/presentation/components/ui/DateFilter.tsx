@@ -15,7 +15,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
-import "dayjs/locale/en";
+import "dayjs/locale/pt-br";
 import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
@@ -34,8 +34,8 @@ interface DateFilterProps {
 }
 
 const MONTH_LABELS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan", "Fev", "Mar", "Abr", "Maio", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
 ];
 
 const DateFilter: React.FC<DateFilterProps> = ({
@@ -45,7 +45,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
   compact = false,
   pickerOnly = false,
   disabled = false,
-  disabledMessage = "Advanced filters active",
+  disabledMessage = "Filtros avançados ativos",
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -101,7 +101,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
       component="button"
       type="button"
       disabled={disabled}
-      aria-label={`Choose month, ${MONTH_LABELS[month]} ${year}`}
+      aria-label={`Selecionar mês, ${MONTH_LABELS[month]} ${year}`}
       onClick={handleOpenDrawer}
       sx={{
         display: "flex",
@@ -142,7 +142,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
       onChange={handleDateChange}
       disabled={disabled}
       minDate={dayjs("2026-01-01")}
-      format="MMMM YYYY"
+      format="MMMMM [de] YYYY"
       slotProps={{
         textField: {
           size: "small",
@@ -294,7 +294,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
   );
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
       {disabled ? (
         <Tooltip title={disabledMessage} arrow>
           <span>{filterContent}</span>

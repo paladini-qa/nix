@@ -71,25 +71,25 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
       id: "this_only" as SharedEditOption,
       icon: <PersonIcon />,
       color: theme.palette.info.main,
-      title: isEdit ? "Edit this one only" : "Delete this one only",
-      description: `Only the ${isExpense ? "expense" : "income"} will be ${isEdit ? "edited" : "deleted"}, the related counterpart remains unchanged`,
+      title: isEdit ? "Editar só esta" : "Excluir só esta",
+      description: `Apenas a ${isExpense ? "despesa" : "receita"} será ${isEdit ? "editada" : "excluída"}.`,
       warning: null,
     },
     {
       id: "related_only" as SharedEditOption,
       icon: <SwapIcon />,
       color: theme.palette.warning.main,
-      title: isEdit ? "Edit the related only" : "Delete the related only",
-      description: `Only the ${isExpense ? "friend's income" : "original expense"} will be ${isEdit ? "edited" : "deleted"}`,
+      title: isEdit ? "Editar só a vinculada" : "Excluir só a vinculada",
+      description: `Apenas a ${isExpense ? "receita da outra pessoa" : "despesa original"} será ${isEdit ? "editada" : "excluída"}.`,
       warning: null,
     },
     {
       id: "both" as SharedEditOption,
       icon: <PeopleIcon />,
       color: theme.palette.error.main,
-      title: isEdit ? "Edit both" : "Delete both",
-      description: `Both linked transactions will be ${isEdit ? "edited" : "deleted"} simultaneously`,
-      warning: isEdit ? null : "This action cannot be undone",
+      title: isEdit ? "Editar ambas" : "Excluir ambas",
+      description: `As duas transações vinculadas serão ${isEdit ? "editadas" : "excluídas"}.`,
+      warning: isEdit ? null : "Essa ação não pode ser desfeita",
     },
   ];
 
@@ -157,14 +157,14 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="h6" fontWeight={600}>
-                      {isEdit ? "Edit Shared" : "Delete Shared"}
+                      {isEdit ? "Editar compartilhamento" : "Excluir compartilhamento"}
                     </Typography>
                     <Typography 
                       variant="body2" 
                       fontWeight={500}
                       color="text.secondary"
                     >
-                      Linked transaction with friend
+                      Transação vinculada a outra pessoa
                     </Typography>
                   </Box>
                 </Box>
@@ -197,7 +197,7 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
                   <Chip
                     size="small"
                     icon={<SwapIcon sx={{ fontSize: 14 }} />}
-                    label="Shared Transaction"
+                    label="Transação compartilhada"
                     sx={{
                       bgcolor: alpha(theme.palette.secondary.main, isDarkMode ? 0.15 : 0.1),
                       color: "secondary.main",
@@ -210,7 +210,7 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
                   />
                   <Chip
                     size="small"
-                    label={isExpense ? "Expense" : "Income"}
+                    label={isExpense ? "Despesa" : "Receita"}
                     sx={{
                       bgcolor: alpha(
                         isExpense ? theme.palette.error.main : theme.palette.success.main,
@@ -244,7 +244,7 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
                     }}
                   >
                     <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ fontSize: 11 }}>
-                      {isExpense ? "My Expense" : "My Income"}
+                      {isExpense ? "Minha despesa" : "Minha receita"}
                     </Typography>
                     <Typography 
                       variant="body2" 
@@ -265,9 +265,9 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
                       sx={{ mt: 0.5 }}
                     >
                       {isExpense ? "-" : "+"}
-                      {new Intl.NumberFormat("en-US", {
+                      {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
-                        currency: "USD",
+                        currency: "BRL",
                       }).format(thisAmount)}
                     </Typography>
                   </Box>
@@ -296,7 +296,7 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
                     }}
                   >
                     <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ fontSize: 11 }}>
-                      {isExpense ? "Friend's Income" : "Original Expense"}
+                      {isExpense ? "Receita da outra pessoa" : "Despesa original"}
                     </Typography>
                     <Typography 
                       variant="body2" 
@@ -317,9 +317,9 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
                       sx={{ mt: 0.5 }}
                     >
                       {!isExpense ? "-" : "+"}
-                      {new Intl.NumberFormat("en-US", {
+                      {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
-                        currency: "USD",
+                        currency: "BRL",
                       }).format(relatedAmount)}
                     </Typography>
                   </Box>
@@ -339,7 +339,7 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
                   fontSize: 11,
                 }}
               >
-                Choose an option
+                Selecione uma opção
               </Typography>
 
               <List sx={{ mt: 1 }}>
@@ -454,7 +454,7 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
               >
                 <InfoIcon sx={{ fontSize: 18, color: "info.main", mt: 0.25 }} />
                 <Typography variant="caption" color="info.main" sx={{ lineHeight: 1.4 }}>
-                  Shared expenses maintain a link with your friend's balance. Changes can affect the amounts owed or receivable.
+                  Despesas compartilhadas estão vinculadas ao saldo da outra pessoa. As alterações podem afetar valores a pagar ou receber.
                 </Typography>
               </Box>
 
@@ -473,7 +473,7 @@ const SharedOptionsDialog: React.FC<SharedOptionsDialogProps> = ({
                   },
                 }}
               >
-                Cancel
+                Cancelar
               </Button>
             </Box>
           </MotionBox>

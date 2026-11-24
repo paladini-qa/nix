@@ -135,11 +135,11 @@ const NixAIChatBubble: React.FC<NixAIChatBubbleProps> = ({
         whileTap={{ scale: 0.94 }}
         sx={{ pointerEvents: "all" }}
       >
-        <Tooltip title={open ? "Fechar Finance Control AI" : "Abrir Finance Control AI"} placement="left">
+        <Tooltip title={open ? "Fechar IA do Nix" : "Abrir IA do Nix"} placement="left">
           <Box
             component="button"
             onClick={toggle}
-            aria-label="Nix AI chat"
+            aria-label="Chat da IA do Nix"
             sx={{
               width: BUBBLE_SIZE,
               height: BUBBLE_SIZE,

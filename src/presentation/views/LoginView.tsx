@@ -97,7 +97,7 @@ const LoginView: React.FC = () => {
     e.preventDefault();
     if (!email || !password) return;
     if (isSignUp && !displayName.trim()) {
-      setError("Please enter your name.");
+      setError("Informe seu nome.");
       return;
     }
 
@@ -122,7 +122,7 @@ const LoginView: React.FC = () => {
         }
 
         setMessage(
-          "Account created! Check your email to confirm (or log in if confirmation is disabled)."
+          "Conta criada! Confira seu e-mail para confirmar o cadastro ou entre se a confirmação estiver desativada."
         );
         setIsSignUp(false);
         setDisplayName("");
@@ -145,8 +145,16 @@ const LoginView: React.FC = () => {
           sessionStorage.setItem("nix_temp_session", "true");
         }
       }
-    } catch (err: any) {
-      setError(err.message || "An error occurred.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "";
+      if (message === "Invalid login credentials") {
+        setError("E-mail ou senha incorretos.");
+      } else if (message === "Email not confirmed") {
+        setError("Confirme seu e-mail para entrar.");
+      } else {
+        setError(isSignUp ? "Não foi possível criar a conta. Confira os dados e tente novamente."
+          : "Não foi possível entrar. Tente novamente.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -312,7 +320,7 @@ const LoginView: React.FC = () => {
                 backgroundClip: "text",
               }}
             >
-              {isSignUp ? "Create Account" : "Welcome Back"}
+              {isSignUp ? "Criar conta" : "Bem-vindo de volta"}
             </Typography>
             <Typography
               variant="body2"
@@ -320,8 +328,8 @@ const LoginView: React.FC = () => {
               sx={{ fontWeight: 500 }}
             >
               {isSignUp
-                ? "Start managing your finances with care"
-                : "Your smart financial control"}
+                ? "Comece a organizar suas finanças"
+                : "Seu controle financeiro inteligente"}
             </Typography>
           </Box>
 
@@ -370,7 +378,7 @@ const LoginView: React.FC = () => {
             {isSignUp && (
               <TextField
                 fullWidth
-                label="Your Name"
+                label="Seu nome"
                 id="name"
                 name="name"
                 autoComplete="name"
@@ -378,7 +386,7 @@ const LoginView: React.FC = () => {
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="John Doe"
+                placeholder="Maria Silva"
                 required
                 InputProps={{
                   startAdornment: (
@@ -391,14 +399,14 @@ const LoginView: React.FC = () => {
                 inputProps={{
                   name: "name",
                   id: "name",
-                  "aria-label": "Your Name",
+                  "aria-label": "Seu nome",
                 }}
               />
             )}
 
             <TextField
               fullWidth
-              label="Email"
+              label="E-mail"
               id="email"
               name="email"
               autoComplete="username"
@@ -406,7 +414,7 @@ const LoginView: React.FC = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
+              placeholder="voce@email.com"
               required
               InputProps={{
                 startAdornment: (
@@ -419,13 +427,13 @@ const LoginView: React.FC = () => {
               inputProps={{
                 name: "email",
                 id: "email",
-                "aria-label": "Email",
+                "aria-label": "E-mail",
               }}
             />
 
             <TextField
               fullWidth
-              label="Password"
+              label="Senha"
               id="password"
               name="password"
               autoComplete={isSignUp ? "new-password" : "current-password"}
@@ -443,7 +451,7 @@ const LoginView: React.FC = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                       size="small"
@@ -470,7 +478,7 @@ const LoginView: React.FC = () => {
                 name: "password",
                 id: "password",
                 minLength: 6,
-                "aria-label": "Password",
+                "aria-label": "Senha",
               }}
             />
 
@@ -506,7 +514,7 @@ const LoginView: React.FC = () => {
                       userSelect: "none",
                     }}
                   >
-                    Keep me connected
+                    Manter sessão ativa
                   </Typography>
                 }
                 sx={{
@@ -560,10 +568,10 @@ const LoginView: React.FC = () => {
               }}
             >
               {isLoading
-                ? "Loading..."
+                ? "Carregando..."
                 : isSignUp
-                  ? "Create Account"
-                  : "Log In"}
+                  ? "Criar conta"
+                  : "Entrar"}
             </Button>
 
             {/* Toggle Link */}
@@ -590,8 +598,8 @@ const LoginView: React.FC = () => {
                 }}
               >
                 {isSignUp
-                  ? "Already have an account? Log in here"
-                  : "Don't have an account? Sign up"}
+                  ? "Já tem uma conta? Entre aqui"
+                  : "Não tem uma conta? Cadastre-se"}
               </Link>
             </Box>
           </form>
@@ -642,7 +650,7 @@ const LoginView: React.FC = () => {
                   fontSize: "0.7rem",
                 }}
               >
-                Analytics with Gemini AI
+                Análises com a IA Gemini
               </Typography>
             </Box>
           </Box>
@@ -666,7 +674,7 @@ const LoginView: React.FC = () => {
             fontWeight={500}
             sx={{ fontSize: "0.7rem" }}
           >
-            Your data is protected with encryption
+            Seus dados são protegidos por criptografia
           </Typography>
         </Box>
       </Box>

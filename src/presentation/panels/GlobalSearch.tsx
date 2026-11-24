@@ -1,3 +1,5 @@
+import { formatDate } from "@/shared/utils/formatters";
+import { categoryLabel, paymentMethodLabel } from "@/shared/i18n/labels";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Dialog,
@@ -81,7 +83,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       { id: "recurring", label: t("nav.recurring"), icon: <RepeatIcon />, keywords: ["recorrente", "mensal", "fixo"] },
       { id: "budgets", label: t("nav.budgets"), icon: <BudgetIcon />, keywords: ["orcamento", "limite", "budget"] },
       { id: "accounts", label: t("nav.accounts"), icon: <AccountIcon />, keywords: ["conta", "banco", "carteira"] },
-      { id: "analytics", label: "Analytics", icon: <AnalyticsIcon />, keywords: ["grafico", "relatorio", "estatistica"] },
+      { id: "analytics", label: "Análises", icon: <AnalyticsIcon />, keywords: ["grafico", "relatorio", "estatistica"] },
       { id: "settings", label: t("nav.settings"), icon: <SettingsIcon />, keywords: ["configuracao", "preferencia"] },
     ],
     [t]
@@ -108,8 +110,8 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       .filter(
         (tx) =>
           tx.description.toLowerCase().includes(q) ||
-          tx.category.toLowerCase().includes(q) ||
-          tx.paymentMethod.toLowerCase().includes(q)
+          (tx.category.toLowerCase().includes(q) || categoryLabel(tx.category).toLowerCase().includes(q)) ||
+          (tx.paymentMethod.toLowerCase().includes(q) || paymentMethodLabel(tx.paymentMethod).toLowerCase().includes(q))
       )
       .slice(0, 8);
   }, [query, transactions]);
@@ -359,12 +361,12 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
                               }}
                             >
                               <Chip
-                                label={tx.category}
+                                label={categoryLabel(tx.category)}
                                 size="small"
                                 sx={{ height: 20, fontSize: 10 }}
                               />
                               <Typography variant="caption" color="text.secondary">
-                                {new Date(tx.date).toLocaleDateString("pt-BR")}
+                                {formatDate(tx.date)}
                               </Typography>
                             </Box>
                           }

@@ -285,7 +285,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                 },
               }}
             >
-              Primary
+              Principal
             </Button>
             <Button
               size="small"
@@ -302,7 +302,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                 },
               }}
             >
-              Secondary
+              Secundária
             </Button>
           </Box>
 
@@ -320,7 +320,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
           {/* Saturation Slider */}
           <Box sx={{ px: 1, mb: 1 }}>
             <Typography variant="caption" color="text.secondary">
-              Saturation
+              Saturação
             </Typography>
             <Slider
               size="small"
@@ -343,7 +343,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
           {/* Lightness Slider */}
           <Box sx={{ px: 1, mb: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              Lightness
+              Luminosidade
             </Typography>
             <Slider
               size="small"
@@ -375,7 +375,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
             }}
           >
             <Typography variant="caption" sx={{ color: "#fff", fontWeight: 600, textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>
-              Preview
+              Prévia
             </Typography>
           </Box>
         </Paper>

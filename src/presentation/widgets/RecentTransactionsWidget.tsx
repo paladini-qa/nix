@@ -1,3 +1,4 @@
+import { paymentMethodLabel } from "@/shared/i18n/labels";
 import React from "react";
 import {
   Box,
@@ -169,7 +170,7 @@ const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> = ({
                   <Typography
                     sx={{ fontSize: 12, color: text2, mt: "1px" }}
                   >
-                    {formatDate(tx.date)} · {tx.paymentMethod}
+                    {formatDate(tx.date)} · {paymentMethodLabel(tx.paymentMethod)}
                   </Typography>
                 </Box>
 

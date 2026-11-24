@@ -48,7 +48,7 @@ const AutoCategorizationRules: React.FC<AutoCategorizationRulesProps> = ({ categ
     setRules((prev) => [...prev, newRule]);
     setPattern("");
     setCategory("");
-    showSuccess(`Rule added: "${pattern}" → ${category}`);
+    showSuccess(`Regra adicionada: "${pattern}" → ${category}`);
   }, [pattern, category, type, showSuccess]);
 
   const handleDelete = useCallback((id: string) => {
@@ -76,10 +76,10 @@ const AutoCategorizationRules: React.FC<AutoCategorizationRulesProps> = ({ categ
         </Box>
         <Box>
           <Typography variant="subtitle2" fontWeight={700}>
-            Auto-Categorization Rules
+            Regras de categorização automática
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Automatically categorize transactions by description
+            Categorize transações automaticamente pela descrição
           </Typography>
         </Box>
       </Box>
@@ -95,20 +95,20 @@ const AutoCategorizationRules: React.FC<AutoCategorizationRulesProps> = ({ categ
         }}
       >
         <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ mb: 1.5, display: "block", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-          New Rule
+          Nova regra
         </Typography>
         <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
           <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>Type</InputLabel>
-            <Select value={type} label="Type" onChange={(e) => { setType(e.target.value as "income" | "expense"); setCategory(""); }}>
-              <MenuItem value="expense">Expense</MenuItem>
-              <MenuItem value="income">Income</MenuItem>
+            <InputLabel>Tipo</InputLabel>
+            <Select value={type} label="Tipo" onChange={(e) => { setType(e.target.value as "income" | "expense"); setCategory(""); }}>
+              <MenuItem value="expense">Despesa</MenuItem>
+              <MenuItem value="income">Receita</MenuItem>
             </Select>
           </FormControl>
 
           <TextField
             size="small"
-            label="Contains in description"
+            label="Trecho da descrição"
             value={pattern}
             onChange={(e) => setPattern(e.target.value)}
             placeholder="e.g. Netflix, Uber..."
@@ -117,8 +117,8 @@ const AutoCategorizationRules: React.FC<AutoCategorizationRulesProps> = ({ categ
           />
 
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>Category</InputLabel>
-            <Select value={category} label="Category" onChange={(e) => setCategory(e.target.value)}>
+            <InputLabel>Categoria</InputLabel>
+            <Select value={category} label="Categoria" onChange={(e) => setCategory(e.target.value)}>
               {availableCategories.map((c) => (
                 <MenuItem key={c} value={c}>{c}</MenuItem>
               ))}
@@ -132,7 +132,7 @@ const AutoCategorizationRules: React.FC<AutoCategorizationRulesProps> = ({ categ
             onClick={handleAdd}
             disabled={!pattern.trim() || !category}
           >
-            <AddIcon /> Add
+            <AddIcon /> Adicionar
           </NixButton>
         </Box>
       </Paper>
@@ -140,7 +140,7 @@ const AutoCategorizationRules: React.FC<AutoCategorizationRulesProps> = ({ categ
       {/* Rules List */}
       {rules.length === 0 ? (
         <Typography variant="body2" color="text.disabled" sx={{ textAlign: "center", py: 2 }}>
-          No rules configured.
+          Nenhuma regra configurada.
         </Typography>
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
@@ -158,7 +158,7 @@ const AutoCategorizationRules: React.FC<AutoCategorizationRulesProps> = ({ categ
               }}
             >
               <Chip
-                label={rule.type === "expense" ? "Expense" : "Income"}
+                label={rule.type === "expense" ? "Despesa" : "Receita"}
                 size="small"
                 sx={{
                   height: 20,
@@ -183,7 +183,7 @@ const AutoCategorizationRules: React.FC<AutoCategorizationRulesProps> = ({ categ
                   border: "none",
                 }}
               />
-              <Tooltip title="Remove rule">
+              <Tooltip title="Remover regra">
                 <IconButton
                   size="small"
                   color="error"

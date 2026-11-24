@@ -1,3 +1,4 @@
+import { categoryLabel } from "@/shared/i18n/labels";
 import { getRecurringOccurrenceId, getRecurringOccurrenceValue } from "@/domain/usecases/recurringUtils";
 import NixButton from "@/presentation/components/radix/Button";
 import React, { useState, useMemo, useCallback, useRef } from "react";
@@ -221,11 +222,11 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     const name = `"${displayTransaction.description}"`;
     switch (scope) {
       case "single":
-        return `The occurrence of ${name}${occurrence ? ` on ${occurrence.formattedDate}` : ""} will be permanently deleted.`;
+        return `A ocorrência de ${name}${occurrence ? ` em ${occurrence.formattedDate}` : ""} será excluída permanentemente.`;
       case "all_future":
-        return `This and all future occurrences of ${name} will be permanently deleted.`;
+        return `Esta e todas as ocorrências futuras de ${name} serão excluídas permanentemente.`;
       case "all":
-        return `All occurrences of ${name} (past and future) will be deleted. This action cannot be undone.`;
+        return `Todas as ocorrências passadas e futuras de ${name} serão excluídas. Essa ação não pode ser desfeita.`;
     }
   };
 
@@ -393,7 +394,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       }
     }
 
-    return nextDate.toLocaleDateString("en-US", {
+    return nextDate.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "short",
     });
@@ -409,17 +410,17 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     const occurrences: RecurringOccurrence[] = [];
     const months = [
       "Jan",
-      "Feb",
+      "Fev",
       "Mar",
-      "Apr",
-      "May",
+      "Abr",
+      "Maio",
       "Jun",
       "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
+      "Ago",
+      "Set",
+      "Out",
       "Nov",
-      "Dec",
+      "Dez",
     ];
 
     const modifiedTransactions = transactions.filter(
@@ -472,7 +473,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
         occurrences.push({
           date: txToUse.date,
-          formattedDate: txDate.toLocaleDateString("en-US", {
+          formattedDate: txDate.toLocaleDateString("pt-BR", {
             day: "2-digit",
             month: "short",
             year: "numeric",
@@ -575,7 +576,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
         occurrences.push({
           date: finalDate,
-          formattedDate: finalDateObj.toLocaleDateString("en-US", {
+          formattedDate: finalDateObj.toLocaleDateString("pt-BR", {
             day: "2-digit",
             month: "short",
             year: "numeric",
@@ -653,7 +654,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
         occurrences.push({
           date: finalDate,
-          formattedDate: finalDateObj.toLocaleDateString("en-US", {
+          formattedDate: finalDateObj.toLocaleDateString("pt-BR", {
             day: "2-digit",
             month: "short",
             year: "numeric",
@@ -677,15 +678,15 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("pt-BR", {
       style: "currency",
-      currency: "USD",
+      currency: "BRL",
     }).format(value);
   };
 
   const formatDate = (dateString: string) => {
     const date = parseLocalDate(dateString);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -808,10 +809,10 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 />
               </Box>
               <Typography sx={{ fontSize: 10, fontWeight: 500, color: "text.secondary", mt: 0.25 }}>
-                {t.category}
+                {categoryLabel(t.category)}
               </Typography>
               <Typography sx={{ fontSize: 10, color: "text.disabled", mt: 0.25 }}>
-                Next: {getNextOccurrence(t)}
+                Próxima: {getNextOccurrence(t)}
               </Typography>
             </Box>
 
@@ -829,7 +830,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <Chip
-                  label={t.isPaid ? "Paid" : "Pend"}
+                  label={t.isPaid ? "Pago" : "Pend"}
                   size="small"
                   onClick={(e) => { e.stopPropagation(); onTogglePaid(t.id, !t.isPaid); }}
                   sx={{
@@ -922,7 +923,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 </Tooltip>
               </Box>
               <Chip
-                label={t.frequency === "monthly" ? "Monthly" : "Yearly"}
+                label={t.frequency === "monthly" ? "Mensal" : "Anual"}
                 size="small"
                 sx={{
                   height: 22,
@@ -950,7 +951,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                   mb: 0.5,
                 }}
               >
-                {t.category}
+                {categoryLabel(t.category)}
               </Typography>
               <Typography
                 sx={{
@@ -964,7 +965,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 {isIncome ? "+" : ""}{formatCurrency(t.amount || 0)}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                Next: {getNextOccurrence(t)} · {calculateOccurrences(t)} occurrences
+                Próxima: {getNextOccurrence(t)} · {calculateOccurrences(t)} ocorrências
               </Typography>
             </Box>
 
@@ -980,7 +981,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             >
               {/* Paid/Pending chip */}
               <Chip
-                label={t.isPaid ? "Paid" : "Pending"}
+                label={t.isPaid ? "Pago" : "Pendente"}
                 size="small"
                 onClick={(e) => { e.stopPropagation(); onTogglePaid(t.id, !t.isPaid); }}
                 sx={{
@@ -1001,7 +1002,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
               {/* Edit + Delete */}
               <Box sx={{ display: "flex", gap: 0.5 }}>
-                <Tooltip title="Edit series">
+                <Tooltip title="Editar série">
                   <IconButton
                     size="small"
                     onClick={(e) => { e.stopPropagation(); onEditSeries(t); }}
@@ -1019,7 +1020,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                     <EditIcon sx={{ fontSize: 15 }} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete">
+                <Tooltip title="Excluir">
                   <IconButton
                     size="small"
                     onClick={(e) => { e.stopPropagation(); openDeleteOptions(t); }}
@@ -1101,7 +1102,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 {selectedRecurring.description}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {selectedRecurring.category} · {selectedRecurring.frequency === "monthly" ? "Monthly" : "Yearly"} · {formatCurrency(selectedRecurring.amount || 0)}
+                {categoryLabel(selectedRecurring.category)} · {selectedRecurring.frequency === "monthly" ? "Mensal" : "Anual"} · {formatCurrency(selectedRecurring.amount || 0)}
               </Typography>
             </Box>
           </Box>
@@ -1112,7 +1113,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               onClick={() => onEditSeries(selectedRecurring)}
               sx={{ borderRadius: "10px", textTransform: "none" }}
             >
-              Edit series
+              Editar série
             </Button>
             <Button
               variant="outlined"
@@ -1121,7 +1122,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               onClick={() => openDeleteOptions(selectedRecurring)}
               sx={{ borderRadius: "10px", textTransform: "none" }}
             >
-              Delete
+              Excluir
             </Button>
           </Box>
         </Box>
@@ -1138,7 +1139,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         >
           {occurrencesList.length === 0 ? (
             <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography color="text.secondary">No occurrences found</Typography>
+              <Typography color="text.secondary">Nenhuma ocorrência encontrada</Typography>
             </Box>
           ) : (
             occurrencesList.map((occ, index) => {
@@ -1172,7 +1173,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                       </Typography>
                       {occ.isCurrent && (
                         <Typography sx={{ fontSize: 10, fontWeight: 700, color: theme.palette.primary.main, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                          Current
+                          Atual
                         </Typography>
                       )}
                     </Box>
@@ -1193,7 +1194,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
 
                     {/* Paid/Pending chip */}
                     <Chip
-                      label={isPaid ? "Paid" : "Pending"}
+                      label={isPaid ? "Pago" : "Pendente"}
                       size="small"
                       onClick={() => {
                         if (occ.isModified && occ.modifiedTransaction) {
@@ -1222,7 +1223,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                     />
 
                     {/* Edit */}
-                    <Tooltip title="Edit occurrence">
+                    <Tooltip title="Editar ocorrência">
                       <IconButton
                         size="small"
                         onClick={() => openEditOptions(selectedRecurring, occ)}
@@ -1239,7 +1240,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                     </Tooltip>
 
                     {/* Delete */}
-                    <Tooltip title="Delete occurrence">
+                    <Tooltip title="Excluir ocorrência">
                       <IconButton
                         size="small"
                         onClick={() => openDeleteOptions(selectedRecurring, occ)}
@@ -1294,9 +1295,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               <DeleteIcon sx={{ fontSize: 28, color: "error.main" }} />
             </Box>
             <Typography variant="h6" fontWeight={700} fontSize="1rem" lineHeight={1.3}>
-              {deleteConfirm.scope === "single" ? "Delete occurrence" :
-               deleteConfirm.scope === "all_future" ? "Delete this and future ones" :
-               "Delete entire series"}
+              {deleteConfirm.scope === "single" ? "Excluir ocorrência" :
+               deleteConfirm.scope === "all_future" ? "Excluir esta e as futuras" :
+               "Excluir a série inteira"}
             </Typography>
           </Box>
         </DialogTitle>
@@ -1313,7 +1314,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             onClick={() => setDeleteConfirm((prev) => ({ ...prev, open: false }))}
             disabled={deleteConfirm.isLoading}
           >
-            Cancel
+            Cancelar
           </NixButton>
           <NixButton
             onClick={handleDeleteConfirm}
@@ -1321,7 +1322,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             variant="solid"
             disabled={deleteConfirm.isLoading}
           >
-            {deleteConfirm.isLoading ? "Deleting..." : "Delete"}
+            {deleteConfirm.isLoading ? "Excluindo..." : "Excluir"}
           </NixButton>
         </DialogActions>
       </Dialog>
@@ -1347,10 +1348,10 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       <Box sx={{ display: "flex", alignItems: "flex-end", gap: "14px", flexWrap: "wrap" }}>
         <Box>
           <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            Recurring
+            Recorrentes
           </Typography>
           <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
-            Income & expenses that repeat each cycle
+            Receitas e despesas que se repetem a cada ciclo
           </Typography>
         </Box>
         <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1360,10 +1361,10 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             onClick={onNewTransaction}
             sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
           >
-            New recurring
+            Nova recorrência
           </Button>
           {onRefreshData && (
-            <Tooltip title="Refresh">
+            <Tooltip title="Atualizar">
               <IconButton
                 onClick={handleRefresh}
                 disabled={isRefreshing}
@@ -1409,7 +1410,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Box>
               <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Estimated Monthly Balance
+                Saldo mensal estimado
               </Typography>
               <Typography sx={{ fontSize: 28, fontWeight: 800, color: stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
                 {stats.monthlyBalance >= 0 ? "+" : ""}{formatCurrency(stats.monthlyBalance)}
@@ -1454,7 +1455,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Monthly Flow
+                    Fluxo mensal
                   </Typography>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "success.main", mt: 0.1, display: "block", lineHeight: 1.15 }}>
                     +{formatCurrency(stats.monthlyIncome)}
@@ -1486,7 +1487,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Annual Impact
+                    Impacto anual
                   </Typography>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
                     {formatCurrency(stats.annualizedBalance)}
@@ -1518,13 +1519,13 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Transactions
+                    Transações
                   </Typography>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
                     {stats.total} total
                   </Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem" }}>
-                    {stats.incomeCount} Inc | {stats.expenseCount} Exp
+                    {stats.incomeCount} Rec. | {stats.expenseCount} Desp.
                   </Typography>
                 </Box>
               </Box>
@@ -1573,7 +1574,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                   {stats.incomeCount} income
                 </Typography>
                 <Typography variant="caption" sx={{ color: "#ef4444" }}>
-                  {stats.expenseCount} expenses
+                  {stats.expenseCount} despesas
                 </Typography>
               </Box>
             </Paper>
@@ -1609,7 +1610,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 <TrendingUpIcon sx={{ fontSize: 20 }} />
               </Box>
               <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                Monthly
+                Mensal
               </Typography>
               <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
                 {formatCurrency(stats.monthlyBalance)}
@@ -1655,7 +1656,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 <InfiniteIcon sx={{ fontSize: 20 }} />
               </Box>
               <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                Yearly
+                Anual
               </Typography>
               <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: stats.annualizedBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
                 {formatCurrency(stats.annualizedBalance)}
@@ -1701,7 +1702,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
                 <CalendarIcon sx={{ fontSize: 20 }} />
               </Box>
               <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                Total Impact
+                Impacto total
               </Typography>
               <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7", fontVariantNumeric: "tabular-nums", pr: 6 }}>
                 {formatCurrency(stats.annualizedBalance)}
@@ -1738,56 +1739,56 @@ const RecurringView: React.FC<RecurringViewProps> = ({
         <SearchBar
           value={searchTerm}
           onChange={setSearchTerm}
-          placeholder="Search..."
+          placeholder="Buscar..."
           minWidth={180}
         />
 
         <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", flex: 1 }}>
           <FormControl size="small" sx={{ minWidth: 100 }}>
-            <InputLabel>Type</InputLabel>
+            <InputLabel>Tipo</InputLabel>
             <Select
               value={filterType}
-              label="Type"
+              label="Tipo"
               onChange={(e: SelectChangeEvent) =>
                 setFilterType(e.target.value as "all" | "income" | "expense")
               }
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="income">Income</MenuItem>
-              <MenuItem value="expense">Expense</MenuItem>
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="income">Receita</MenuItem>
+              <MenuItem value="expense">Despesa</MenuItem>
             </Select>
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>Frequency</InputLabel>
+            <InputLabel>Frequência</InputLabel>
             <Select
               value={filterFrequency}
-              label="Frequency"
+              label="Frequência"
               onChange={(e: SelectChangeEvent) =>
                 setFilterFrequency(
                   e.target.value as "all" | "monthly" | "yearly"
                 )
               }
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="monthly">Monthly</MenuItem>
-              <MenuItem value="yearly">Yearly</MenuItem>
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="monthly">Mensal</MenuItem>
+              <MenuItem value="yearly">Anual</MenuItem>
             </Select>
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Category</InputLabel>
+            <InputLabel>Categoria</InputLabel>
             <Select
               value={filterCategory}
-              label="Category"
+              label="Categoria"
               onChange={(e: SelectChangeEvent) =>
                 setFilterCategory(e.target.value)
               }
             >
-              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="all">Todos</MenuItem>
               {allCategories.map((category) => (
                 <MenuItem key={category} value={category}>
-                  {category}
+                  {categoryLabel(category)}
                 </MenuItem>
               ))}
             </Select>
@@ -1799,8 +1800,8 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       {recurringTransactions.length === 0 ? (
         <EmptyState
           type="recurring"
-          title="No recurring transactions found"
-          description="Create a recurring transaction to manage it here"
+          title="Nenhuma transação recorrente encontrada"
+          description="Crie uma transação recorrente para gerenciá-la aqui"
           compact
         />
       ) : shouldVirtualize ? (
@@ -1863,8 +1864,8 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           </ListItemIcon>
           <ListItemText>
             {mobileMenuAnchor.transaction?.isPaid
-              ? "Mark as Pending"
-              : "Mark as Paid"}
+              ? "Marcar como pendente"
+              : "Marcar como pago"}
           </ListItemText>
         </MenuItem>
         <MenuItem
@@ -1877,7 +1878,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           <ListItemIcon>
             <EditIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Edit series</ListItemText>
+          <ListItemText>Editar série</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -1889,7 +1890,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           <ListItemIcon>
             <DeleteIcon fontSize="small" color="error" />
           </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
+          <ListItemText>Excluir</ListItemText>
         </MenuItem>
       </Menu>
 
@@ -1919,8 +1920,8 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             </ListItemIcon>
             <ListItemText>
               {mobileOccurrenceMenuAnchor.transaction?.isPaid
-                ? "Mark as Pending"
-                : "Mark as Paid"}
+                ? "Marcar como pendente"
+                : "Marcar como pago"}
             </ListItemText>
           </MenuItem>
         )}
@@ -1934,7 +1935,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           <ListItemIcon>
             <EditIcon fontSize="small" color="primary" />
           </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
+          <ListItemText>Editar</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -1946,7 +1947,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
           <ListItemIcon>
             <DeleteIcon fontSize="small" color="error" />
           </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
+          <ListItemText>Excluir</ListItemText>
         </MenuItem>
       </Menu>
 
@@ -1999,9 +2000,9 @@ const RecurringView: React.FC<RecurringViewProps> = ({
               <DeleteIcon sx={{ fontSize: 28, color: "error.main" }} />
             </Box>
             <Typography variant="h6" fontWeight={700} fontSize="1rem" lineHeight={1.3}>
-              {deleteConfirm.scope === "single" ? "Delete occurrence" :
-               deleteConfirm.scope === "all_future" ? "Delete this and future ones" :
-               "Delete entire series"}
+              {deleteConfirm.scope === "single" ? "Excluir ocorrência" :
+               deleteConfirm.scope === "all_future" ? "Excluir esta e as futuras" :
+               "Excluir a série inteira"}
             </Typography>
           </Box>
         </DialogTitle>
@@ -2018,7 +2019,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             onClick={() => setDeleteConfirm((prev) => ({ ...prev, open: false }))}
             disabled={deleteConfirm.isLoading}
           >
-            Cancel
+            Cancelar
           </NixButton>
           <NixButton
             onClick={handleDeleteConfirm}
@@ -2026,7 +2027,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             variant="solid"
             disabled={deleteConfirm.isLoading}
           >
-            {deleteConfirm.isLoading ? "Deleting..." : "Delete"}
+            {deleteConfirm.isLoading ? "Excluindo..." : "Excluir"}
           </NixButton>
         </DialogActions>
       </Dialog>

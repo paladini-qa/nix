@@ -250,7 +250,7 @@ const BatchRegistrationView: React.FC<BatchRegistrationViewProps> = ({
             paymentMethod: paymentMethods[0] || "",
             date: row.date || new Date().toISOString().split("T")[0],
             confidence: 1,
-            rawInput: "Imported from file",
+            rawInput: "Importado de arquivo",
           }));
           await processBatch(batch);
           setSuccessMessage(`${batch.length} transação(ões) extraída(s) do arquivo.`);

@@ -33,12 +33,13 @@ const WalletDraftBanner: React.FC<WalletDraftBannerProps> = ({
     };
   }, [draft, onDismiss]);
 
+  const detectedCurrency = draft?.currency;
+  const currencyAliases = { "R$": "BRL", "$": "USD", "€": "EUR", "£": "GBP" } as const;
+  const currency = detectedCurrency && Object.hasOwn(currencyAliases, detectedCurrency)
+    ? currencyAliases[detectedCurrency as keyof typeof currencyAliases]
+    : detectedCurrency?.match(/^[A-Z]{3}$/) ? detectedCurrency : "BRL";
   const formattedAmount = draft
-    ? new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: draft.currency || "BRL",
-        minimumFractionDigits: 2,
-      }).format(draft.amount)
+    ? new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(draft.amount)
     : "";
 
   return (
@@ -117,7 +118,7 @@ const WalletDraftBanner: React.FC<WalletDraftBannerProps> = ({
                     mb: 0.25,
                   }}
                 >
-                  Google Wallet detected
+                  Carteira do Google detectada
                 </Box>
                 <Box
                   sx={{
@@ -173,7 +174,7 @@ const WalletDraftBanner: React.FC<WalletDraftBannerProps> = ({
                     "&:active": { transform: "scale(0.95)" },
                   }}
                 >
-                  Register
+                  Cadastrar
                   <ArrowRight size={13} />
                 </Box>
 

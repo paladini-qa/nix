@@ -29,7 +29,7 @@ interface SubscriptionDetectorProps {
 }
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
 const SubscriptionDetector: React.FC<SubscriptionDetectorProps> = ({
   transactions,
@@ -99,10 +99,10 @@ const SubscriptionDetector: React.FC<SubscriptionDetectorProps> = ({
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography variant="body2" fontWeight={700} color="text.primary">
-              Possible subscriptions detected
+              Possíveis assinaturas identificadas
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {subscriptions.length} service{subscriptions.length > 1 ? "s" : ""} with recurring pattern
+              {subscriptions.length} service{subscriptions.length > 1 ? "s" : ""} com padrão recorrente
             </Typography>
           </Box>
           <Chip
@@ -158,11 +158,11 @@ const SubscriptionDetector: React.FC<SubscriptionDetectorProps> = ({
                       </Typography>
                     </Box>
                     <Typography variant="body2" fontWeight={700} sx={{ color: theme.palette.error.main, flexShrink: 0, ...privacyStyles }}>
-                      {formatCurrency(sub.amount)}/month
+                      {formatCurrency(sub.amount)}/mês
                     </Typography>
                     <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
                       {onMarkAsRecurring && (
-                        <Tooltip title="Mark as recurring">
+                        <Tooltip title="Marcar como recorrente">
                           <Button
                             size="small"
                             variant="outlined"
@@ -179,7 +179,7 @@ const SubscriptionDetector: React.FC<SubscriptionDetectorProps> = ({
                         onClick={() => handleDismiss(sub.description)}
                         sx={{ minWidth: 0, px: 1, py: 0.25, fontSize: 10, borderRadius: "8px", height: 24, color: "text.disabled" }}
                       >
-                        Dismiss
+                        Dispensar
                       </Button>
                     </Box>
                   </Box>

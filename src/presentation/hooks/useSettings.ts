@@ -102,7 +102,7 @@ export function useSettings() {
       }
     } catch (err: any) {
       console.error("Error fetching settings:", err);
-      setError(err.message || "Failed to fetch settings");
+      setError(err.message || "Não foi possível carregar as configurações");
     } finally {
       setLoading(false);
     }
@@ -126,7 +126,7 @@ export function useSettings() {
         if (error) throw error;
       } catch (err: any) {
         console.error("Error saving settings:", err);
-        setError(err.message || "Failed to save settings");
+        setError(err.message || "Não foi possível salvar as configurações");
         throw err;
       }
     },
@@ -212,7 +212,7 @@ export function useSettings() {
         if (error) throw error;
       } catch (err: any) {
         console.error("Error saving theme preference:", err);
-        setError(err.message || "Failed to save theme preference");
+        setError(err.message || "Não foi possível salvar o tema");
       }
     },
     []
@@ -230,7 +230,7 @@ export function useSettings() {
       if (error) throw error;
     } catch (err: any) {
       console.error("Error saving display name:", err);
-      setError(err.message || "Failed to save display name");
+      setError(err.message || "Não foi possível salvar o nome de exibição");
     }
   }, []);
 
@@ -259,7 +259,7 @@ export function useSettings() {
         });
       } catch (err: any) {
         console.error("Error saving category colors:", err);
-        setError(err.message || "Failed to save category colors");
+        setError(err.message || "Não foi possível salvar as cores das categorias");
       }
     },
     [categoryColors]
@@ -282,7 +282,7 @@ export function useSettings() {
         });
       } catch (err: any) {
         console.error("Error saving payment method colors:", err);
-        setError(err.message || "Failed to save payment method colors");
+        setError(err.message || "Não foi possível salvar as cores dos métodos de pagamento");
       }
     },
     [paymentMethodColors]
@@ -327,7 +327,7 @@ export function useSettings() {
       });
     } catch (err: any) {
       console.error("Error resetting settings:", err);
-      setError(err.message || "Failed to reset settings");
+      setError(err.message || "Não foi possível restaurar as configurações");
     }
   }, []);
 

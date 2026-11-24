@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Brazilian Portuguese and BRL** — Localize primary and auxiliary screens, navigation, dates, financial values, charts, and exports. Display built-in categories and payment methods in Portuguese while preserving their saved names.
+  - **Modified files** — `src/presentation`, `src/shared/{constants,i18n,utils/formatters.ts}`, `src/domain/usecases/transactionAmount.ts`, `src/infrastructure/ai/geminiService.ts`, `android/app/src/main/java/com/nix/finance/WalletNotificationService.java`, `vite.config.ts`, `e2e/audit/transactions.spec.ts`, `tests/hooks/useCurrency.test.ts`, `tests/utils/transactionAmount.test.ts`, `tests/components/ConfirmDialog.test.tsx`
+  - **Added files** — `src/shared/i18n/labels.ts`, `e2e/audit/localization.spec.ts`
+
 ### Added
 
 - **UI/UX modernization audit** — Document interface and mobile findings, propose shared design standards, and define an incremental rollout for review.

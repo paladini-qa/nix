@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/shared/utils/formatters";
+import { categoryLabel } from "@/shared/i18n/labels";
 import { GoogleGenAI } from "@google/genai";
 import { Transaction, ParsedTransaction, TransactionType } from "@/domain/entities";
 import { getReportDate } from "@/domain/usecases/transactionUtils";
@@ -12,7 +14,7 @@ export const isGeminiConfigured = (): boolean => GEMINI_API_KEY.length > 0;
 
 /** User-facing copy when Smart Input / Nix AI is used without API key */
 export const GEMINI_NOT_CONFIGURED_MESSAGE =
-  "Configure GEMINI_API_KEY in your .env file to use Finance Control AI and Smart Input.";
+  "Configure GEMINI_API_KEY no arquivo .env para usar a IA do Nix e o cadastro inteligente.";
 
 const ai = new GoogleGenAI({
   apiKey: GEMINI_API_KEY || "placeholder-key-not-used",
@@ -978,51 +980,42 @@ export const chatWithNixAI = async (
   // Build conversation context
   const historyContext = conversationHistory
     .slice(-10) // Last 10 messages for context
-    .map((m) => `${m.role === "user" ? "User" : "NixAI"}: ${m.content}`)
+    .map((m) => `${m.role === "user" ? "Usuário" : "IA do Nix"}: ${m.content}`)
     .join("\n");
 
-  const systemPrompt = `You are Finance Control AI, an intelligent and friendly personal finance assistant for the Finance Control app.
-You have access to the user's financial data and can help them understand their finances, provide insights, and give recommendations.
+  const systemPrompt = `Você é o assistente de finanças pessoais do Nix.
+Responda em português do Brasil e apresente os valores em reais, no formato R$ 1.234,56.
+Seja direto, cordial e sem julgamentos. Apoie suas respostas nos dados fornecidos.
+Use formatação Markdown quando ajudar a leitura. Se faltarem dados, diga isso.
 
-IMPORTANT GUIDELINES:
-- Be concise but helpful
-- Use markdown formatting for better readability
-- Use emojis sparingly but appropriately
-- When discussing money, always be encouraging and non-judgmental
-- If asked about specific transactions, refer to the data provided
-- Provide actionable advice when possible
-- If you don't have enough data to answer, say so politely
+CONTEXTO FINANCEIRO:
+- Receitas acumuladas: ${formatCurrency(totalIncome)}
+- Despesas acumuladas: ${formatCurrency(totalExpense)}
+- Saldo acumulado: ${formatCurrency(totalIncome - totalExpense)}
+- Receitas do mês atual: ${formatCurrency(currentMonthIncome)}
+- Despesas do mês atual: ${formatCurrency(currentMonthExpense)}
+- Saldo do mês atual: ${formatCurrency(currentMonthIncome - currentMonthExpense)}
+- Total de transações: ${transactions.length}
 
-USER'S FINANCIAL CONTEXT:
-- Total Income (all time): $${totalIncome.toFixed(2)}
-- Total Expenses (all time): $${totalExpense.toFixed(2)}
-- Overall Balance: $${(totalIncome - totalExpense).toFixed(2)}
-- Current Month Income: $${currentMonthIncome.toFixed(2)}
-- Current Month Expenses: $${currentMonthExpense.toFixed(2)}
-- Current Month Balance: $${(currentMonthIncome - currentMonthExpense).toFixed(
-    2
-  )}
-- Total Transactions: ${transactions.length}
-
-Category Spending Breakdown:
+Despesas por categoria:
 ${Object.entries(categoryExpenses)
   .sort(([, a], [, b]) => b - a)
-  .map(([cat, amount]) => `- ${cat}: $${amount.toFixed(2)}`)
+  .map(([cat, amount]) => `- ${categoryLabel(cat)}: ${formatCurrency(amount)}`)
   .join("\n")}
 
-Recent Transactions (last 50):
+Últimas 50 transações:
 ${JSON.stringify(recentTransactions, null, 2)}
 
-${historyContext ? `\nPREVIOUS CONVERSATION:\n${historyContext}\n` : ""}
+${historyContext ? `\nCONVERSA ANTERIOR:\n${historyContext}\n` : ""}
 
-Now respond to the user's message:`;
+Responda à mensagem do usuário:`;
 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-pro",
-      contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nUser: ${userMessage}` }] }],
+      contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nUsuário: ${userMessage}` }] }],
     });
-    return response.text || "I'm sorry, I couldn't process that request.";
+    return response.text || "Não consegui processar esse pedido.";
   } catch (error) {
     checkAndThrowGeminiError(error);
     console.error("Error in NixAI chat:", error);
@@ -1196,7 +1189,7 @@ export const getFinancialInsights = async (
 ): Promise<string> => {
   throwIfGeminiNotConfigured();
   if (transactions.length === 0) {
-    return "There are not enough transactions in this period to generate an analysis.";
+    return "Não há transações suficientes neste período para gerar uma análise.";
   }
 
   // Simplify data to reduce token usage and noise
@@ -1210,7 +1203,7 @@ export const getFinancialInsights = async (
 
   const prompt = `
     Act as an experienced personal financial consultant.
-    Analyze the following financial data for ${month} ${year}.
+    Analyze the following financial data for ${month} ${year}. Respond in Brazilian Portuguese and use BRL formatting, e.g. R$ 1.234,56.
     
     Data (JSON):
     ${JSON.stringify(simpleData)}
@@ -1229,31 +1222,31 @@ export const getFinancialInsights = async (
       model: "gemini-2.5-pro",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
-    return response.text || "Unable to generate insights at this time.";
+    return response.text || "Não foi possível gerar a análise agora.";
   } catch (error) {
     checkAndThrowGeminiError(error);
     console.error("Error fetching Gemini insights:", error);
-    return "An error occurred while connecting to the AI. Please try again later.";
+    return "Ocorreu um erro ao conectar com a IA. Tente novamente mais tarde.";
   }
 };
 /**
  * Gera um título curto e criativo para a conversa baseado na primeira mensagem
  */
 export const generateChatTitle = async (firstMessage: string): Promise<string> => {
-  if (!isGeminiConfigured()) return "New Conversation";
+  if (!isGeminiConfigured()) return "Nova conversa";
   
   try {
-    const prompt = `Generate a short and creative title (maximum 4 words) in English for a conversation that starts with the following input: "${firstMessage}". Respond with only the title, without quotes or ending punctuation. If it is audio or an image, generate something generic related to finance.`;
+    const prompt = `Generate a short and creative title (maximum 4 words) in Brazilian Portuguese for a conversation that starts with the following input: "${firstMessage}". Respond with only the title, without quotes or ending punctuation. If it is audio or an image, generate something generic related to finance.`;
     
     const response = await ai.models.generateContent({
       model: "gemini-2.5-pro",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
-    return (response.text || "New Conversation").trim();
+    return (response.text || "Nova conversa").trim();
   } catch (error) {
     checkAndThrowGeminiError(error);
     console.error("Error generating chat title:", error);
-    return "New Conversation";
+    return "Nova conversa";
   }
 };

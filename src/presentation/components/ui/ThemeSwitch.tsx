@@ -30,9 +30,9 @@ const ThemeSwitch: React.FC<ThemeSwitchProps> = ({
     icon: React.ReactNode;
     label: string;
   }[] = [
-    { id: "light", icon: <SunIcon fontSize="small" />, label: "Light" },
-    { id: "system", icon: <MonitorIcon fontSize="small" />, label: "System" },
-    { id: "dark", icon: <MoonIcon fontSize="small" />, label: "Dark" },
+    { id: "light", icon: <SunIcon fontSize="small" />, label: "Claro" },
+    { id: "system", icon: <MonitorIcon fontSize="small" />, label: "Sistema" },
+    { id: "dark", icon: <MoonIcon fontSize="small" />, label: "Escuro" },
   ];
 
   const currentOption = options.find((opt) => opt.id === value) || options[1];
@@ -73,11 +73,11 @@ const ThemeSwitch: React.FC<ThemeSwitchProps> = ({
 
   return (
     <FormControl fullWidth size="small">
-      <InputLabel id="theme-select-label">Theme</InputLabel>
+      <InputLabel id="theme-select-label">Tema</InputLabel>
       <Select
         labelId="theme-select-label"
         value={value}
-        label="Theme"
+        label="Tema"
         onChange={handleChange}
         startAdornment={
           <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>

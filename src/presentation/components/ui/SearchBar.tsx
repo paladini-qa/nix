@@ -36,7 +36,7 @@ interface SearchBarProps {
 const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChange,
-  placeholder = "Search...",
+  placeholder = "Buscar...",
   minWidth = 200,
   maxWidth = 320,
   flex = 1,

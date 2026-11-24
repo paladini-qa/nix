@@ -1,3 +1,4 @@
+import { categoryLabel, paymentMethodLabel } from "@/shared/i18n/labels";
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   Box,
@@ -365,12 +366,12 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   const balance = totalIncome - totalExpense;
 
   const getFileName = () => {
-    return `nix-transactions-${MONTHS[selectedMonth]}-${selectedYear}`;
+    return `nix-transacoes-${MONTHS[selectedMonth]}-${selectedYear}`;
   };
 
   const escapeCSVField = (field: string | number): string => {
     const str = String(field);
-    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    if (str.includes(";") || str.includes('"') || /[\r\n]/.test(str)) {
       return `"${str.replace(/"/g, '""')}"`;
     }
     return str;
@@ -378,30 +379,30 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   const exportToCSV = () => {
     if (filteredData.length === 0) {
-      showWarning("No transactions to export.", "Export Failed");
+      showWarning("Nenhuma transação para exportar.", "Falha na exportação");
       return;
     }
 
     const headers = [
-      "Date",
-      "Description",
-      "Category",
-      "Payment Method",
-      "Type",
-      "Amount",
+      "Data",
+      "Descrição",
+      "Categoria",
+      "Método de pagamento",
+      "Tipo",
+      "Valor",
     ];
     const rows = filteredData.map((t) => [
       escapeCSVField(t.date),
       escapeCSVField(t.description),
-      escapeCSVField(t.category),
-      escapeCSVField(t.paymentMethod),
-      escapeCSVField(t.type === "income" ? "Income" : "Expense"),
-      escapeCSVField(t.type === "expense" ? -t.amount : t.amount),
+      escapeCSVField(categoryLabel(t.category)),
+      escapeCSVField(paymentMethodLabel(t.paymentMethod)),
+      escapeCSVField(t.type === "income" ? "Receita" : "Despesa"),
+      escapeCSVField((t.type === "expense" ? -t.amount : t.amount).toFixed(2).replace(".", ",")),
     ]);
 
     const csvContent = [
-      headers.join(","),
-      ...rows.map((r) => r.join(",")),
+      headers.join(";"),
+      ...rows.map((r) => r.join(";")),
     ].join("\n");
     const blob = new Blob(["\ufeff" + csvContent], {
       type: "text/csv;charset=utf-8;",
@@ -417,7 +418,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   const exportToXLSX = async () => {
     if (filteredData.length === 0) {
-      showWarning("No transactions to export.", "Export Failed");
+      showWarning("Nenhuma transação para exportar.", "Falha na exportação");
       return;
     }
 
@@ -426,17 +427,20 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       const XLSX = await import("xlsx");
 
       const data = filteredData.map((t) => ({
-        Date: t.date,
-        Description: t.description,
-        Category: t.category,
-        "Payment Method": t.paymentMethod,
-        Type: t.type === "income" ? "Income" : "Expense",
-        Amount: t.type === "expense" ? -t.amount : t.amount,
+        Data: t.date,
+        Descrição: t.description,
+        Categoria: categoryLabel(t.category),
+        "Método de pagamento": paymentMethodLabel(t.paymentMethod),
+        Tipo: t.type === "income" ? "Receita" : "Despesa",
+        Valor: t.type === "expense" ? -t.amount : t.amount,
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(data);
+      for (let row = 2; row <= data.length + 1; row += 1) {
+        worksheet[`F${row}`].z = '"R$" #,##0.00';
+      }
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Transações");
 
       worksheet["!cols"] = [
         { wch: 12 },
@@ -450,7 +454,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       XLSX.writeFile(workbook, `${getFileName()}.xlsx`);
     } catch (error) {
       console.error("Error exporting to XLSX:", error);
-      showError("Error exporting to XLSX. Please try again.", "Export Error");
+      showError("Erro ao exportar para XLSX. Tente novamente.", "Erro ao exportar");
     } finally {
       setIsExporting(false);
       setAnchorEl(null);
@@ -459,7 +463,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
   const exportToPDF = async () => {
     if (filteredData.length === 0) {
-      showWarning("No transactions to export.", "Export Failed");
+      showWarning("Nenhuma transação para exportar.", "Falha na exportação");
       return;
     }
 
@@ -472,11 +476,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
       doc.setFontSize(18);
       doc.setTextColor(79, 70, 229);
-      doc.text("Nix - Financial Report", 14, 22);
+      doc.text("Nix - Relatório financeiro", 14, 22);
 
       doc.setFontSize(11);
       doc.setTextColor(100);
-      doc.text(`Period: ${MONTHS[selectedMonth]} ${selectedYear}`, 14, 32);
+      doc.text(`Período: ${MONTHS[selectedMonth]} ${selectedYear}`, 14, 32);
 
       doc.setFontSize(10);
       doc.setTextColor(16, 185, 129);
@@ -488,21 +492,21 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         balance >= 0 ? 185 : 68,
         balance >= 0 ? 129 : 68
       );
-      doc.text(`Balance: ${formatCurrency(balance)}`, 140, 42);
+      doc.text(`Saldo: ${formatCurrency(balance)}`, 140, 42);
 
       const tableData = filteredData.map((t) => [
         formatDate(t.date),
         t.description.substring(0, 35) +
           (t.description.length > 35 ? "..." : ""),
-        t.category,
-        t.paymentMethod,
-        t.type === "income" ? "Income" : "Expense",
+        categoryLabel(t.category),
+        paymentMethodLabel(t.paymentMethod),
+        t.type === "income" ? "Receita" : "Despesa",
         (t.type === "expense" ? "- " : "+ ") + formatCurrency(t.amount || 0),
       ]);
 
       (doc as any).autoTable({
         startY: 50,
-        head: [["Date", "Description", "Category", "Method", "Type", "Amount"]],
+        head: [["Data", "Descrição", "Categoria", "Método", "Tipo", "Valor"]],
         body: tableData,
         theme: "striped",
         headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 9 },
@@ -524,7 +528,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         doc.setFontSize(8);
         doc.setTextColor(150);
         doc.text(
-          `Generated by Finance Control - Page ${i} of ${pageCount}`,
+          `Gerado pelo Nix - Página ${i} de ${pageCount}`,
           doc.internal.pageSize.width / 2,
           doc.internal.pageSize.height - 10,
           { align: "center" }
@@ -534,7 +538,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       doc.save(`${getFileName()}.pdf`);
     } catch (error) {
       console.error("Error exporting to PDF:", error);
-      showError("Error exporting to PDF. Please try again.", "Export Error");
+      showError("Erro ao exportar para PDF. Tente novamente.", "Erro ao exportar");
     } finally {
       setIsExporting(false);
       setAnchorEl(null);
@@ -551,7 +555,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
     try {
       await onTogglePaid(transaction.id, isPaid);
     } catch {
-      showError("Unable to update the payment status. Please try again.");
+      showError("Não foi possível alterar o status do pagamento. Tente novamente.");
     } finally {
       setIsUpdatingPayment(false);
     }
@@ -644,11 +648,11 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
   const renderDesktopRow = (t: Transaction, index: number) => (
     <TableRow key={t.id} onClick={() => onEdit(t)} sx={getRowSx(index)}>
       <TableCell align="center" onClick={(event) => event.stopPropagation()}>
-        <Tooltip title={t.isVirtual ? "Mark recurring occurrence" : t.isPaid !== false ? "Paid" : "Not paid"}>
+        <Tooltip title={t.isVirtual ? "Marcar ocorrência recorrente" : t.isPaid !== false ? "Pago" : "Não pago"}>
           <Checkbox
             checked={t.isPaid !== false}
             onChange={(event) => onTogglePaid(t.id, event.target.checked)}
-            inputProps={{ "aria-label": `Payment status for ${t.description}` }}
+            inputProps={{ "aria-label": `Status de pagamento de ${t.description}` }}
             size="small"
             color={t.isVirtual ? "info" : "success"}
             sx={{ p: 0.5 }}
@@ -665,28 +669,28 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
         </Box>
       </TableCell>
       <TableCell>
-        <Chip label={t.category} title={t.category} size="small" variant="outlined" sx={{ height: 20 }} />
+        <Chip label={categoryLabel(t.category)} title={categoryLabel(t.category)} size="small" variant="outlined" sx={{ height: 20 }} />
       </TableCell>
       <TableCell>
-        <Typography variant="caption" color="text.secondary" display="block" noWrap title={t.paymentMethod}>
-          {t.paymentMethod}
+        <Typography variant="caption" color="text.secondary" display="block" noWrap title={paymentMethodLabel(t.paymentMethod)}>
+          {paymentMethodLabel(t.paymentMethod)}
         </Typography>
       </TableCell>
       <TableCell align="center">
-        {t.type === "income" ? <ArrowUpIcon titleAccess="Income" sx={{ fontSize: 16, color: "success.main" }} /> : <ArrowDownIcon titleAccess="Expense" sx={{ fontSize: 16, color: "error.main" }} />}
+        {t.type === "income" ? <ArrowUpIcon titleAccess="Receita" sx={{ fontSize: 16, color: "success.main" }} /> : <ArrowDownIcon titleAccess="Despesa" sx={{ fontSize: 16, color: "error.main" }} />}
       </TableCell>
       <TableCell align="right" sx={{ fontFamily: "monospace", fontWeight: 600, color: t.type === "income" ? "success.main" : "error.main" }}>
         {t.type === "expense" && "- "}{formatCurrency(t.amount || 0)}
       </TableCell>
       <TableCell align="center" onClick={(event) => event.stopPropagation()}>
         <Box sx={{ display: "flex", justifyContent: "center", gap: 0.5 }}>
-          <Tooltip title={t.isVirtual ? "Edit recurring transaction" : "Edit"}>
-            <IconButton size="small" aria-label={`Edit ${t.description}`} onClick={() => onEdit(t)} color="primary">
+          <Tooltip title={t.isVirtual ? "Editar transação recorrente" : "Editar"}>
+            <IconButton size="small" aria-label={`Editar ${t.description}`} onClick={() => onEdit(t)} color="primary">
               <EditIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title={t.isVirtual ? "Delete recurring transaction" : "Delete"}>
-            <IconButton size="small" aria-label={`Delete ${t.description}`} onClick={() => onDelete(t)} color="error">
+          <Tooltip title={t.isVirtual ? "Excluir transação recorrente" : "Excluir"}>
+            <IconButton size="small" aria-label={`Excluir ${t.description}`} onClick={() => onDelete(t)} color="error">
               <DeleteIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
@@ -718,16 +722,16 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
       >
         <Box>
           <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            All Transactions
+            Todas as transações
           </Typography>
           <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
-            {MONTHS[selectedMonth]} {selectedYear} • {filteredData.length} transactions
+            {MONTHS[selectedMonth]} {selectedYear} • {filteredData.length} transações
           </Typography>
         </Box>
 
         {isMobile && (
           <NixButton size="md" onClick={onNewTransaction} style={{ marginInlineStart: "auto" }}>
-            <AddIcon fontSize="small" /> New
+            <AddIcon fontSize="small" /> Nova
           </NixButton>
         )}
       </Box>
@@ -766,7 +770,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   mb: "2px",
                 }}
               >
-                Current Balance
+                Saldo atual
               </Typography>
               <Typography
                 sx={{
@@ -829,7 +833,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       lineHeight: 1.2,
                     }}
                   >
-                    Income
+                    Receita
                   </Typography>
                   <Typography
                     sx={{
@@ -875,7 +879,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       lineHeight: 1.2,
                     }}
                   >
-                    Expenses
+                    Despesas
                   </Typography>
                   <Typography
                     sx={{
@@ -944,7 +948,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   mb: "6px",
                 }}
               >
-                Current Balance
+                Saldo atual
               </Typography>
               <Typography
                 sx={{
@@ -1009,7 +1013,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   mb: "6px",
                 }}
               >
-                Income
+                Receita
               </Typography>
               <Typography
                 sx={{
@@ -1074,7 +1078,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   mb: "6px",
                 }}
               >
-                Expenses
+                Despesas
               </Typography>
               <Typography
                 sx={{
@@ -1195,7 +1199,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Search transactions..."
+            placeholder="Buscar transações..."
             minWidth={isMobile ? 0 : 200}
             maxWidth={isMobile ? 9999 : 320}
             fullWidth={false}
@@ -1372,19 +1376,19 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               <ListItemIcon>
                 <FileTextIcon fontSize="small" color="success" />
               </ListItemIcon>
-              <ListItemText>Export as CSV</ListItemText>
+              <ListItemText>Exportar como CSV</ListItemText>
             </MenuItem>
             <MenuItem onClick={exportToXLSX}>
               <ListItemIcon>
                 <FileSpreadsheetIcon fontSize="small" color="success" />
               </ListItemIcon>
-              <ListItemText>Export as XLSX</ListItemText>
+              <ListItemText>Exportar como XLSX</ListItemText>
             </MenuItem>
             <MenuItem onClick={exportToPDF}>
               <ListItemIcon>
                 <FileTextIcon fontSize="small" color="error" />
               </ListItemIcon>
-              <ListItemText>Export as PDF</ListItemText>
+              <ListItemText>Exportar como PDF</ListItemText>
             </MenuItem>
           </Menu>
         </Box>
@@ -1461,13 +1465,13 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     />
                   )}
                   {filterCategory !== "all" && (
-                    <Chip label={filterCategory} onDelete={() => setFilterCategory("all")} size="small" sx={{ bgcolor: alpha("#8b5cf6", 0.1) }} />
+                    <Chip label={categoryLabel(filterCategory)} onDelete={() => setFilterCategory("all")} size="small" sx={{ bgcolor: alpha("#8b5cf6", 0.1) }} />
                   )}
                   {filterShared !== "all" && (
-                    <Chip label={filterShared === "shared" ? "Shared" : "Not shared"} onDelete={() => setFilterShared("all")} size="small" sx={{ bgcolor: alpha("#06b6d4", 0.1) }} />
+                    <Chip label={filterShared === "shared" ? "Compartilhada" : "Não compartilhada"} onDelete={() => setFilterShared("all")} size="small" sx={{ bgcolor: alpha("#06b6d4", 0.1) }} />
                   )}
                   {filterPaymentStatus !== "all" && (
-                    <Chip label={filterPaymentStatus === "paid" ? "Paid" : "Pending"} onDelete={() => setFilterPaymentStatus("all")} size="small" sx={{ bgcolor: alpha("#f59e0b", 0.1), color: "#f59e0b" }} />
+                    <Chip label={filterPaymentStatus === "paid" ? "Pago" : "Pendente"} onDelete={() => setFilterPaymentStatus("all")} size="small" sx={{ bgcolor: alpha("#f59e0b", 0.1), color: "#f59e0b" }} />
                   )}
                 </Stack>
               )}
@@ -1475,13 +1479,13 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               {/* Type */}
               <Box>
                 <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 }}>
-                  Type
+                  Tipo
                 </Typography>
                 <Stack direction="row" gap={1}>
                   {(["all", "income", "expense"] as const).map((val) => (
                     <Chip
                       key={val}
-                      label={val === "all" ? "All" : val === "income" ? "Income" : "Expenses"}
+                      label={val === "all" ? "Todos" : val === "income" ? "Receita" : "Despesas"}
                       onClick={() => setFilterType(val)}
                       variant={filterType === val ? "filled" : "outlined"}
                       size="medium"
@@ -1508,7 +1512,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   {(["all", "paid", "pending"] as const).map((val) => (
                     <Chip
                       key={val}
-                      label={val === "all" ? "All" : val === "paid" ? "Paid" : "Pending"}
+                      label={val === "all" ? "Todos" : val === "paid" ? "Pago" : "Pendente"}
                       onClick={() => setFilterPaymentStatus(val)}
                       variant={filterPaymentStatus === val ? "filled" : "outlined"}
                       size="medium"
@@ -1528,37 +1532,37 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
 
               {/* Category */}
               <FormControl fullWidth size="small">
-                <InputLabel>Category</InputLabel>
+                <InputLabel>Categoria</InputLabel>
                 <Select
                   value={filterCategory}
-                  label="Category"
+                  label="Categoria"
                   onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}
                   sx={{ borderRadius: "12px" }}
                 >
-                  <MenuItem value="all">All categories</MenuItem>
+                  <MenuItem value="all">Todas as categorias</MenuItem>
                   {availableCategories.map((cat) => (
-                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                    <MenuItem key={cat} value={cat}>{categoryLabel(cat)}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
 
               {/* Shared */}
               <FormControl fullWidth size="small">
-                <InputLabel>Shared</InputLabel>
+                <InputLabel>Compartilhada</InputLabel>
                 <Select
                   value={filterShared}
-                  label="Shared"
+                  label="Compartilhada"
                   onChange={(e: SelectChangeEvent) => setFilterShared(e.target.value as "all" | "shared" | "not_shared")}
                   sx={{ borderRadius: "12px" }}
                 >
-                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="all">Todos</MenuItem>
                   <MenuItem value="shared">
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <GroupIcon fontSize="small" color="info" />
-                      Shared
+                      Compartilhada
                     </Box>
                   </MenuItem>
-                  <MenuItem value="not_shared">Not shared</MenuItem>
+                  <MenuItem value="not_shared">Não compartilhada</MenuItem>
                 </Select>
               </FormControl>
             </Stack>
@@ -1578,66 +1582,66 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               }}
             >
               <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>Type</InputLabel>
+                <InputLabel>Tipo</InputLabel>
                 <Select
                   value={filterType}
-                  label="Type"
+                  label="Tipo"
                   onChange={(e: SelectChangeEvent) => setFilterType(e.target.value as "all" | "income" | "expense")}
                 >
-                  <MenuItem value="all">All Types</MenuItem>
+                  <MenuItem value="all">Todos os tipos</MenuItem>
                   <MenuItem value="income">
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <ArrowUpIcon fontSize="small" color="success" />
-                      Income
+                      Receita
                     </Box>
                   </MenuItem>
                   <MenuItem value="expense">
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <ArrowDownIcon fontSize="small" color="error" />
-                      Expense
+                      Despesa
                     </Box>
                   </MenuItem>
                 </Select>
               </FormControl>
 
               <FormControl size="small" sx={{ minWidth: 140 }}>
-                <InputLabel>Category</InputLabel>
-                <Select value={filterCategory} label="Category" onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}>
-                  <MenuItem value="all">All Categories</MenuItem>
+                <InputLabel>Categoria</InputLabel>
+                <Select value={filterCategory} label="Categoria" onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}>
+                  <MenuItem value="all">Todas as categorias</MenuItem>
                   {availableCategories.map((cat) => (
-                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                    <MenuItem key={cat} value={cat}>{categoryLabel(cat)}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
 
               <FormControl size="small" sx={{ minWidth: 130 }}>
-                <InputLabel>Shared</InputLabel>
-                <Select value={filterShared} label="Shared" onChange={(e: SelectChangeEvent) => setFilterShared(e.target.value as "all" | "shared" | "not_shared")}>
-                  <MenuItem value="all">All</MenuItem>
+                <InputLabel>Compartilhada</InputLabel>
+                <Select value={filterShared} label="Compartilhada" onChange={(e: SelectChangeEvent) => setFilterShared(e.target.value as "all" | "shared" | "not_shared")}>
+                  <MenuItem value="all">Todos</MenuItem>
                   <MenuItem value="shared">
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <GroupIcon fontSize="small" color="info" />
-                      Shared
+                      Compartilhada
                     </Box>
                   </MenuItem>
-                  <MenuItem value="not_shared">Not Shared</MenuItem>
+                  <MenuItem value="not_shared">Não compartilhada</MenuItem>
                 </Select>
               </FormControl>
 
               <FormControl size="small" sx={{ minWidth: 130 }}>
                 <InputLabel>Status</InputLabel>
                 <Select value={filterPaymentStatus} label="Status" onChange={(e: SelectChangeEvent) => setFilterPaymentStatus(e.target.value as "all" | "paid" | "pending")}>
-                  <MenuItem value="all">All Status</MenuItem>
+                  <MenuItem value="all">Todos os status</MenuItem>
                   <MenuItem value="paid">
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <PaidIcon fontSize="small" color="success" />
-                      Paid
+                      Pago
                     </Box>
                   </MenuItem>
                   <MenuItem value="pending">
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <PendingIcon fontSize="small" color="warning" />
-                      Pending
+                      Pendente
                     </Box>
                   </MenuItem>
                 </Select>
@@ -1649,7 +1653,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   onClick={() => { setFilterType("all"); setFilterCategory("all"); setFilterShared("all"); setFilterPaymentStatus("all"); }}
                   sx={{ textTransform: "none" }}
                 >
-                  Clear filters
+                  Limpar filtros
                 </Button>
               )}
             </Box>
@@ -1791,7 +1795,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     fontWeight={600}
                     sx={{ color: "text.secondary" }}
                   >
-                    Balance
+                    Saldo
                   </Typography>
                   <Typography
                     variant="body1"
@@ -1809,8 +1813,8 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
           ) : (
             <EmptyState
               type="transactions"
-              title="No transactions found"
-              description="No transactions found with the current filters."
+              title="Nenhuma transação encontrada"
+              description="Nenhuma transação corresponde aos filtros atuais."
               compact
             />
           )}
@@ -1846,27 +1850,27 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                       "& dd": { m: 0, overflowWrap: "anywhere", whiteSpace: "pre-wrap" },
                     }}
                   >
-                    <dt>Type</dt><dd>{selectedTransaction.type === "income" ? "Income" : "Expense"}</dd>
-                    <dt>Category</dt><dd>{selectedTransaction.category}</dd>
-                    <dt>Payment method</dt><dd>{selectedTransaction.paymentMethod}</dd>
-                    <dt>Date</dt><dd>{formatDate(selectedTransaction.date)}</dd>
+                    <dt>Tipo</dt><dd>{selectedTransaction.type === "income" ? "Receita" : "Despesa"}</dd>
+                    <dt>Categoria</dt><dd>{categoryLabel(selectedTransaction.category)}</dd>
+                    <dt>Método de pagamento</dt><dd>{paymentMethodLabel(selectedTransaction.paymentMethod)}</dd>
+                    <dt>Data</dt><dd>{formatDate(selectedTransaction.date)}</dd>
                     {detailInvoiceDate && (selectedTransaction.invoiceDueDate || detailInvoiceDate !== selectedTransaction.date) && (
-                      <><dt>Invoice due</dt><dd>{formatDate(detailInvoiceDate)}</dd></>
+                      <><dt>Vencimento da fatura</dt><dd>{formatDate(detailInvoiceDate)}</dd></>
                     )}
                     {selectedTransaction.installments && selectedTransaction.installments > 1 && (
-                      <><dt>Installment</dt><dd>{selectedTransaction.currentInstallment ?? 1} / {selectedTransaction.installments}</dd></>
+                      <><dt>Parcela</dt><dd>{selectedTransaction.currentInstallment ?? 1} / {selectedTransaction.installments}</dd></>
                     )}
                     {(selectedTransaction.isRecurring || selectedTransaction.isVirtual) && (
-                      <><dt>Recurrence</dt><dd>{selectedTransaction.frequency === "yearly" ? "Yearly" : selectedTransaction.frequency === "monthly" ? "Monthly" : "Recurring"}</dd></>
+                      <><dt>Recorrência</dt><dd>{selectedTransaction.frequency === "yearly" ? "Anual" : selectedTransaction.frequency === "monthly" ? "Mensal" : "Recorrentes"}</dd></>
                     )}
                     {selectedTransaction.isShared && (
-                      <><dt>Shared</dt><dd>{selectedTransaction.sharedWith || "Yes"}</dd></>
+                      <><dt>Compartilhada</dt><dd>{selectedTransaction.sharedWith || "Yes"}</dd></>
                     )}
-                    {selectedTransaction.notes && <><dt>Notes</dt><dd>{selectedTransaction.notes}</dd></>}
+                    {selectedTransaction.notes && <><dt>Observações</dt><dd>{selectedTransaction.notes}</dd></>}
                   </Box>
                   <TransactionTags transaction={selectedTransaction} />
                   <FormControlLabel
-                    label="Paid"
+                    label="Pago"
                     control={<Checkbox
                       checked={selectedTransaction.isPaid !== false}
                       disabled={isUpdatingPayment}
@@ -1875,15 +1879,15 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                   />
                 </DialogContent>
                 <DialogActions sx={{ px: 2, pb: 2, flexWrap: "wrap", gap: 1 }}>
-                  <NixButton variant="ghost" color="gray" onClick={() => setDetailId(null)}>Close</NixButton>
+                  <NixButton variant="ghost" color="gray" onClick={() => setDetailId(null)}>Fechar</NixButton>
                   <NixButton variant="soft" color="red" onClick={() => {
                     setDetailId(null);
                     onDelete(selectedTransaction);
-                  }}>Delete</NixButton>
+                  }}>Excluir</NixButton>
                   <NixButton onClick={() => {
                     setDetailId(null);
                     onEdit(selectedTransaction);
-                  }}>Edit</NixButton>
+                  }}>Editar</NixButton>
                 </DialogActions>
               </>
             )}
@@ -1910,14 +1914,14 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
             <Table size="small" stickyHeader={isDesktopVirtualized} sx={{ tableLayout: "fixed", minWidth: 720 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ ...headerCellSx, width: 48, textAlign: "center" }}>Paid</TableCell>
-                  {renderSortableHeader("date", "Date", 86)}
-                  {renderSortableHeader("description", "Description")}
-                  {renderSortableHeader("category", "Category", 108)}
-                  {renderSortableHeader("paymentMethod", "Method", 100)}
-                  {renderSortableHeader("type", "Type", 64)}
-                  {renderSortableHeader("amount", "Amount", 110)}
-                  <TableCell sx={{ ...headerCellSx, width: 78, textAlign: "center" }}>Actions</TableCell>
+                  <TableCell sx={{ ...headerCellSx, width: 48, textAlign: "center" }}>Pago</TableCell>
+                  {renderSortableHeader("date", "Data", 86)}
+                  {renderSortableHeader("description", "Descrição")}
+                  {renderSortableHeader("category", "Categoria", 108)}
+                  {renderSortableHeader("paymentMethod", "Método", 100)}
+                  {renderSortableHeader("type", "Tipo", 64)}
+                  {renderSortableHeader("amount", "Valor", 110)}
+                  <TableCell sx={{ ...headerCellSx, width: 78, textAlign: "center" }}>Ações</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1938,7 +1942,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
                     <TableCell colSpan={8} sx={{ textAlign: "center", py: 6 }}>
                       <WalletIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2, display: "block", mx: "auto" }} />
                       <Typography color="text.secondary" fontStyle="italic">
-                        No transactions found with the current filters.
+                        Nenhuma transação corresponde aos filtros atuais.
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -1947,7 +1951,7 @@ const TransactionsView: React.FC<TransactionsViewProps> = ({
               {!isDesktopVirtualized && filteredData.length > 0 && (
                 <TableFooter>
                   <TableRow sx={{ bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.3) : alpha(theme.palette.grey[50], 0.5) }}>
-                    <TableCell colSpan={6} align="right" sx={{ fontWeight: 600 }}>Filtered Total:</TableCell>
+                    <TableCell colSpan={6} align="right" sx={{ fontWeight: 600 }}>Total filtrado:</TableCell>
                     <TableCell align="right" sx={{ fontFamily: "monospace", fontWeight: 600, color: balance >= 0 ? "success.main" : "error.main" }}>
                       {formatCurrency(balance)}
                     </TableCell>

@@ -1,3 +1,4 @@
+import { paymentMethodLabel } from "@/shared/i18n/labels";
 import NixButton from "@/presentation/components/radix/Button";
 import React, { useMemo, useContext, useState } from "react";
 import {
@@ -292,9 +293,9 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   }, [paymentMethodsSummary]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("pt-BR", {
       style: "currency",
-      currency: "USD",
+      currency: "BRL",
     }).format(value);
   };
 
@@ -330,10 +331,10 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       >
         <Box>
           <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            Payment Methods
+            Métodos de pagamento
           </Typography>
           <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
-            Manage your cards and accounts
+            Gerencie seus cartões e contas
           </Typography>
         </Box>
         <Button
@@ -342,7 +343,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
           onClick={handleOpenAddDialog}
           sx={{ ml: "auto", borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
         >
-          New Method
+          Novo método
         </Button>
       </Box>
 
@@ -369,7 +370,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Box>
               <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Total to Pay
+                Total a pagar
               </Typography>
               <Typography sx={{ fontSize: 28, fontWeight: 800, color: stats.totalUnpaid > 0 ? "#ef4444" : "#10b981", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
                 {formatCurrency(stats.totalUnpaid)}
@@ -414,13 +415,13 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Expenses
+                    Despesas
                   </Typography>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
                     {formatCurrency(stats.totalExpenses)}
                   </Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
-                    {stats.totalTransactions} txs.
+                    {stats.totalTransactions} transações
                   </Typography>
                 </Box>
               </Box>
@@ -446,10 +447,10 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Pending
+                    Pendente
                   </Typography>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
-                    {paymentMethodsSummary.reduce((s, m) => s + m.unpaidCount, 0)} bills
+                    {paymentMethodsSummary.reduce((s, m) => s + m.unpaidCount, 0)} faturas
                   </Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
                     open
@@ -478,13 +479,13 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 </Box>
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Active
+                    Ativos
                   </Typography>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
-                    {stats.methodsWithActivity} active
+                    {stats.methodsWithActivity} ativos
                   </Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
-                    of {paymentMethods.length} reg.
+                    de {paymentMethods.length} cadastrados
                   </Typography>
                 </Box>
               </Box>
@@ -526,13 +527,13 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 <CreditCardIcon sx={{ fontSize: 22 }} />
               </Box>
               <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-                Active Methods
+                Métodos ativos
               </Typography>
               <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7" }}>
                 {stats.methodsWithActivity}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                of {paymentMethods.length} registered
+                de {paymentMethods.length} cadastrados
               </Typography>
             </Paper>
           </Grid>
@@ -570,13 +571,13 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 <TrendingDownIcon sx={{ fontSize: 22 }} />
               </Box>
               <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-                Total Expenses
+                Total de despesas
               </Typography>
               <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444" }}>
                 {formatCurrency(stats.totalExpenses)}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                {stats.totalTransactions} transactions
+                {stats.totalTransactions} transações
               </Typography>
             </Paper>
           </Grid>
@@ -614,13 +615,13 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 <WarningIcon sx={{ fontSize: 22 }} />
               </Box>
               <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-                Pending Bills
+                Faturas pendentes
               </Typography>
               <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>
                 {paymentMethodsSummary.reduce((s, m) => s + m.unpaidCount, 0)}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                open charges
+                cobranças em aberto
               </Typography>
             </Paper>
           </Grid>
@@ -658,13 +659,13 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 <WalletIcon sx={{ fontSize: 22 }} />
               </Box>
               <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-                To Pay
+                A pagar
               </Typography>
               <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981" }}>
                 {formatCurrency(stats.totalUnpaid)}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                {stats.totalUnpaid > 0 ? "pending" : "all paid"}
+                {stats.totalUnpaid > 0 ? "pending" : "tudo pago"}
               </Typography>
             </Paper>
           </Grid>
@@ -675,8 +676,8 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
       {paymentMethods.length === 0 ? (
         <Paper elevation={0} sx={{ p: 4, textAlign: "center", borderRadius: "16px", bgcolor: alpha(theme.palette.primary.main, 0.02), border: `1px dashed ${alpha(theme.palette.primary.main, 0.2)}` }}>
           <WalletIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>No methods registered</Typography>
-          <Typography variant="body2" color="text.disabled">Click on "New Method" to start</Typography>
+          <Typography variant="h6" color="text.secondary" gutterBottom>Nenhum método cadastrado</Typography>
+          <Typography variant="body2" color="text.disabled">Selecione Novo método para começar</Typography>
         </Paper>
       ) : (
         <Grid container spacing={gridSpacing}>
@@ -728,11 +729,11 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                     <PaymentMethodIcon imageUrl={config?.imageUrl} colors={colors} type={config?.type} size={40} borderRadius="12px" iconSize={18} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography fontWeight={700} sx={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {method}
+                        {paymentMethodLabel(method)}
                       </Typography>
                       {hasUnpaid && (
                         <Typography sx={{ fontSize: 11, color: "#f59e0b" }}>
-                          {summary!.unpaidCount} pending
+                          {summary!.unpaidCount} pendentes
                         </Typography>
                       )}
                     </Box>
@@ -741,7 +742,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                   {/* Amount */}
                   <Box sx={{ mb: "10px", flex: 1 }}>
                     <Typography sx={{ fontSize: 11, fontWeight: 700, color: "text.disabled", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      This month
+                      Este mês
                     </Typography>
                     <Typography sx={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2, mt: "2px" }}>
                       {summary ? formatCurrency(summary.totalExpense) : "—"}
@@ -750,7 +751,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
                         <CalendarIcon sx={{ fontSize: 11, color: "text.disabled" }} />
                         <Typography variant="caption" color="text.secondary">
-                          Closes {config.closingDay} · Pays {config.paymentDay}
+                          Fecha {config.closingDay} · Pays {config.paymentDay}
                         </Typography>
                       </Box>
                     )}
@@ -765,13 +766,13 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
                     <Box sx={{ display: "flex", gap: 0.5 }}>
                       {useConfigSystem && config && (
-                        <Tooltip title="Edit">
+                        <Tooltip title="Editar">
                           <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleOpenEditDialog(config); }} sx={{ color: "text.secondary", "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.1), color: "primary.main" } }}>
                             <EditIcon sx={{ fontSize: 16 }} />
                           </IconButton>
                         </Tooltip>
                       )}
-                      <Tooltip title="Delete">
+                      <Tooltip title="Excluir">
                         <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleRemoveMethod(method); }} sx={{ color: "text.secondary", "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.1), color: "error.main" } }}>
                           <DeleteIcon sx={{ fontSize: 16 }} />
                         </IconButton>
@@ -794,11 +795,11 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                           "&:hover": { bgcolor: alpha(colors.primary, 0.18) },
                         }}
                       >
-                        Details
+                        Detalhes
                       </Button>
                       {hasUnpaid && (
                         <Button size="small" variant="contained" onClick={(e) => handlePayAll(method, e)} sx={{ textTransform: "none", fontWeight: 700, fontSize: 12, px: 1.5, py: 0.5, borderRadius: "10px", lineHeight: 1.5, background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`, boxShadow: `0 4px 12px -2px ${alpha(colors.primary, 0.4)}`, "&:hover": { background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})` } }}>
-                          Pay
+                          Pagar
                         </Button>
                       )}
                     </Box>
@@ -817,20 +818,20 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>New Payment Method</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>Novo método de pagamento</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: "12px !important" }}>
           <TextField
-            label="Name"
+            label="Nome"
             fullWidth
             size="small"
             value={formConfig.name}
             onChange={(e) => setFormConfig((p) => ({ ...p, name: e.target.value }))}
-            placeholder="e.g. Chase, Bank of America..."
+            placeholder="Ex.: Nubank, Itaú..."
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
           />
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-              Type
+              Tipo
             </Typography>
             <ToggleButtonGroup
               value={formConfig.type}
@@ -852,34 +853,34 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
           {formConfig.type === "card" && (
             <Box sx={{ display: "flex", gap: 2 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Closing day</InputLabel>
+                <InputLabel>Dia de fechamento</InputLabel>
                 <Select
                   value={formConfig.closingDay ?? ""}
-                  label="Closing day"
+                  label="Dia de fechamento"
                   onChange={(e) =>
                     setFormConfig((p) => ({ ...p, closingDay: e.target.value ? Number(e.target.value) : undefined }))
                   }
                   sx={{ borderRadius: "10px" }}
                 >
-                  <MenuItem value=""><em>Select</em></MenuItem>
+                  <MenuItem value=""><em>Selecionar</em></MenuItem>
                   {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                    <MenuItem key={d} value={d}>Day {d}</MenuItem>
+                    <MenuItem key={d} value={d}>Dia {d}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
               <FormControl fullWidth size="small">
-                <InputLabel>Payment day</InputLabel>
+                <InputLabel>Dia do pagamento</InputLabel>
                 <Select
                   value={formConfig.paymentDay ?? ""}
-                  label="Payment day"
+                  label="Dia do pagamento"
                   onChange={(e) =>
                     setFormConfig((p) => ({ ...p, paymentDay: e.target.value ? Number(e.target.value) : undefined }))
                   }
                   sx={{ borderRadius: "10px" }}
                 >
-                  <MenuItem value=""><em>Select</em></MenuItem>
+                  <MenuItem value=""><em>Selecionar</em></MenuItem>
                   {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                    <MenuItem key={d} value={d}>Day {d}</MenuItem>
+                    <MenuItem key={d} value={d}>Dia {d}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -887,12 +888,12 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
           )}
           {formConfig.type === "card" && (
             <Typography variant="caption" color="text.secondary">
-              The bill for each transaction will be automatically calculated based on these days.
+              A fatura de cada transação será calculada automaticamente com base nessas datas.
             </Typography>
           )}
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-              Image
+              Imagem
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               {formConfig.imageUrl && (
@@ -909,21 +910,21 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 onClick={() => { setImagePickerTarget("add"); setImagePickerOpen(true); }}
                 sx={{ borderRadius: "10px", textTransform: "none" }}
               >
-                {formConfig.imageUrl ? "Change image" : "Select image"}
+                {formConfig.imageUrl ? "Alterar imagem" : "Selecionar imagem"}
               </Button>
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
           <NixButton variant="soft" color="gray" onClick={() => setAddDialogOpen(false)}>
-            Cancel
+            Cancelar
           </NixButton>
           <NixButton
             variant="solid"
             onClick={handleAddMethod}
             disabled={!formConfig.name.trim() || (formConfig.type === "card" && (!formConfig.closingDay || !formConfig.paymentDay))}
           >
-            Add
+            Adicionar
           </NixButton>
         </DialogActions>
       </Dialog>
@@ -935,12 +936,12 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Edit Payment Method</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>Editar método de pagamento</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: "12px !important" }}>
           {editingConfig && (
             <>
               <TextField
-                label="Name"
+                label="Nome"
                 fullWidth
                 size="small"
                 value={editingConfig.name}
@@ -949,7 +950,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
               />
               <Box>
                 <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                  Type
+                  Tipo
                 </Typography>
                 <ToggleButtonGroup
                   value={editingConfig.type}
@@ -971,34 +972,34 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
               {editingConfig.type === "card" && (
                 <Box sx={{ display: "flex", gap: 2 }}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Closing day</InputLabel>
+                    <InputLabel>Dia de fechamento</InputLabel>
                     <Select
                       value={editingConfig.closingDay ?? ""}
-                      label="Closing day"
+                      label="Dia de fechamento"
                       onChange={(e) =>
                         setEditingConfig((p) => p ? { ...p, closingDay: e.target.value ? Number(e.target.value) : undefined } : p)
                       }
                       sx={{ borderRadius: "10px" }}
                     >
-                      <MenuItem value=""><em>Select</em></MenuItem>
+                      <MenuItem value=""><em>Selecionar</em></MenuItem>
                       {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                        <MenuItem key={d} value={d}>Day {d}</MenuItem>
+                        <MenuItem key={d} value={d}>Dia {d}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                   <FormControl fullWidth size="small">
-                    <InputLabel>Payment day</InputLabel>
+                    <InputLabel>Dia do pagamento</InputLabel>
                     <Select
                       value={editingConfig.paymentDay ?? ""}
-                      label="Payment day"
+                      label="Dia do pagamento"
                       onChange={(e) =>
                         setEditingConfig((p) => p ? { ...p, paymentDay: e.target.value ? Number(e.target.value) : undefined } : p)
                       }
                       sx={{ borderRadius: "10px" }}
                     >
-                      <MenuItem value=""><em>Select</em></MenuItem>
+                      <MenuItem value=""><em>Selecionar</em></MenuItem>
                       {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                        <MenuItem key={d} value={d}>Day {d}</MenuItem>
+                        <MenuItem key={d} value={d}>Dia {d}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -1006,7 +1007,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
               )}
               <Box>
                 <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                  Image
+                  Imagem
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   {editingConfig.imageUrl && (
@@ -1023,7 +1024,7 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                     onClick={() => { setImagePickerTarget("edit"); setImagePickerOpen(true); }}
                     sx={{ borderRadius: "10px", textTransform: "none" }}
                   >
-                    {editingConfig.imageUrl ? "Change image" : "Select image"}
+                    {editingConfig.imageUrl ? "Alterar imagem" : "Selecionar imagem"}
                   </Button>
                 </Box>
               </Box>
@@ -1032,14 +1033,14 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
         </DialogContent>
         <DialogActions>
           <NixButton variant="soft" color="gray" onClick={() => setEditDialogOpen(false)}>
-            Cancel
+            Cancelar
           </NixButton>
           <NixButton
             variant="solid"
             onClick={handleUpdateMethod}
             disabled={!editingConfig?.name.trim() || (editingConfig?.type === "card" && (!editingConfig?.closingDay || !editingConfig?.paymentDay))}
           >
-            Save
+            Salvar
           </NixButton>
         </DialogActions>
       </Dialog>
