@@ -94,7 +94,7 @@ test("confirms only saved transactions and supports create, edit and delete", as
   await expect(dialog).toBeHidden();
   expect(rows).toMatchObject([{ description, amount: 12.34, is_paid: false, category: "Food" }]);
 
-  await page.goto("/transactions");
+  await page.getByRole("complementary").getByText("Transações", { exact: true }).click();
   await page.getByRole("button", { name: `Editar ${description}` }).click();
   const editDialog = page.getByRole("dialog");
   await editDialog.getByRole("combobox", { name: "Descrição" }).fill(`${description} editada`);
