@@ -12,7 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Android release build** — Install the SDK packages used by Gradle explicitly, so building the APK works after the legacy Android SDK Tools package was removed.
-  - **Modified file** — `.github/workflows/build-apk.yml`
+  - **Modified files** — `.github/workflows/build-apk.yml`, `android/gradlew`
+  - **Added file** — `.gitattributes`
+  - Keep Unix line endings on the Gradle launcher so Linux runners can execute it.
 
 ### Changed
 
