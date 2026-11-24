@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Android release build** — Install the SDK packages used by Gradle explicitly, so building the APK works after the legacy Android SDK Tools package was removed.
+  - **Modified file** — `.github/workflows/build-apk.yml`
+
 ### Changed
 
 - **Brazilian Portuguese and BRL** — Localize primary and auxiliary screens, navigation, dates, financial values, charts, and exports. Display built-in categories and payment methods in Portuguese while preserving their saved names.
