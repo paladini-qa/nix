@@ -421,6 +421,8 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
           <Suspense fallback={<FinancialOverviewSkeleton label="Carregando recorrentes" />}>
             <RecurringView
               transactions={transactions}
+              period={filters}
+              paymentMethodConfigs={paymentMethodConfigs}
               onEditSeries={handleEdit}
               onEditWithScope={handleRecurringEditWithScope}
               onDeleteWithScope={handleDeleteWithScope}

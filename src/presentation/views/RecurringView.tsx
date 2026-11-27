@@ -1,5 +1,5 @@
 import { categoryLabel } from "@/shared/i18n/labels";
-import { getRecurringOccurrenceId, getRecurringOccurrenceValue } from "@/domain/usecases/recurringUtils";
+import { getRecurringMonthTransactions, getRecurringOccurrenceId, getRecurringOccurrenceValue } from "@/domain/usecases/recurringUtils";
 import NixButton from "@/presentation/components/radix/Button";
 import React, { useState, useMemo, useCallback } from "react";
 import {
@@ -44,7 +44,7 @@ import {
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import SearchBar from "@/presentation/components/ui/SearchBar";
-import { Transaction } from "@/domain/entities";
+import type { FilterState, PaymentMethodConfig, Transaction } from "@/domain/entities";
 import { useSettings } from "@/presentation/contexts";
 import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
 import PaymentMethodImagePicker from "@/presentation/components/ui/PaymentMethodImagePicker";
@@ -57,6 +57,8 @@ import { OverviewRowTitle, OverviewTable, overviewDesktopCell, overviewMoneyCell
 
 interface RecurringViewProps {
   transactions: Transaction[];
+  period: FilterState;
+  paymentMethodConfigs: PaymentMethodConfig[];
   onEditSeries: (transaction: Transaction) => void;
   onEditWithScope: (tx: Transaction, scope: OptionType, virtualDate?: string) => void;
   onDeleteWithScope: (tx: Transaction, scope: OptionType, virtualDate?: string) => Promise<void>;
@@ -97,6 +99,8 @@ interface RecurringOccurrence {
 
 const RecurringView: React.FC<RecurringViewProps> = ({
   transactions,
+  period,
+  paymentMethodConfigs,
   onEditSeries,
   onEditWithScope,
   onDeleteWithScope,
@@ -315,27 +319,38 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     const annualizedIncome = monthlyIncome * 12 + yearlyOnlyIncome;
     const annualizedExpense = monthlyExpense * 12 + yearlyOnlyExpense;
 
-    const categoryExpenses = new Map<string, number>();
-    for (const transaction of recurring) {
-      if (transaction.type !== "expense") continue;
-      const multiplier = transaction.frequency === "monthly" ? 12 : transaction.frequency === "yearly" ? 1 : 0;
-      const category = categoryLabel(transaction.category);
-      categoryExpenses.set(category, (categoryExpenses.get(category) ?? 0) + (transaction.amount || 0) * multiplier);
-    }
-
     return {
-      categoryExpenses: Array.from(categoryExpenses, ([label, value]) => ({ label, value })),
       total: recurring.length,
-      monthlyIncome,
-      monthlyExpense,
-      monthlyBalance: monthlyIncome - monthlyExpense,
       annualizedIncome,
-      annualizedExpense,
       annualizedBalance: annualizedIncome - annualizedExpense,
       incomeCount: recurring.filter((t) => t.type === "income").length,
       expenseCount: recurring.filter((t) => t.type === "expense").length,
     };
   }, [transactions]);
+
+  const monthStats = useMemo(() => {
+    const categoryExpenses = new Map<string, number>();
+    let income = 0;
+    let expense = 0;
+
+    for (const transaction of getRecurringMonthTransactions(transactions, period, paymentMethodConfigs)) {
+      const cents = Math.round((transaction.amount || 0) * 100);
+      if (transaction.type === "income") {
+        income += cents;
+      } else {
+        expense += cents;
+        const label = categoryLabel(transaction.category);
+        categoryExpenses.set(label, (categoryExpenses.get(label) ?? 0) + cents);
+      }
+    }
+
+    return {
+      categoryExpenses: Array.from(categoryExpenses, ([label, cents]) => ({ label, value: cents / 100 })),
+      income: income / 100,
+      expense: expense / 100,
+      balance: (income - expense) / 100,
+    };
+  }, [transactions, period, paymentMethodConfigs]);
 
   const parseLocalDate = (dateString: string): Date => {
     const [year, month, day] = dateString.split("-").map(Number);
@@ -964,6 +979,8 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   const accent = isDarkMode ? orbitColors.lavender : palette.primary.dark;
   const expenseColor = isDarkMode ? palette.error.main : palette.error.dark;
   const incomeColor = isDarkMode ? palette.success.main : palette.success.dark;
+  const monthLabel = new Date(period.year, period.month, 1)
+    .toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 
   return (
     <Box sx={overviewPageStyles}>
@@ -973,19 +990,19 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       />
       <Box sx={overviewStatGridStyles}>
         <OverviewStatCard title="Recorrências" value={stats.total} caption={`${stats.incomeCount} ${stats.incomeCount === 1 ? "receita" : "receitas"} · ${stats.expenseCount} ${stats.expenseCount === 1 ? "despesa" : "despesas"}`} icon={<RepeatIcon fontSize="small" />} color={accent} />
-        <OverviewStatCard title="Despesas mensais" value={formatCurrency(stats.monthlyExpense)} caption="Recorrências mensais" icon={<TrendingDownIcon fontSize="small" />} color={expenseColor} />
-        <OverviewStatCard title="Saldo mensal estimado" value={formatCurrency(stats.monthlyBalance)} caption={`Entradas de ${formatCurrency(stats.monthlyIncome)}`} icon={<TrendingUpIcon fontSize="small" />} color={stats.monthlyBalance >= 0 ? incomeColor : expenseColor} />
+        <OverviewStatCard title="Despesas do mês" value={formatCurrency(monthStats.expense)} caption={monthLabel} icon={<TrendingDownIcon fontSize="small" />} color={expenseColor} />
+        <OverviewStatCard title="Saldo estimado do mês" value={formatCurrency(monthStats.balance)} caption={`Entradas de ${formatCurrency(monthStats.income)}`} icon={<TrendingUpIcon fontSize="small" />} color={monthStats.balance >= 0 ? incomeColor : expenseColor} />
         <OverviewStatCard title="Saldo anual estimado" value={formatCurrency(stats.annualizedBalance)} caption={`Entradas de ${formatCurrency(stats.annualizedIncome)}`} icon={<CalendarIcon fontSize="small" />} color={stats.annualizedBalance >= 0 ? incomeColor : expenseColor} />
       </Box>
       <OverviewBreakdown
-        data={stats.categoryExpenses} total={stats.annualizedExpense}
+        data={monthStats.categoryExpenses} total={monthStats.expense}
         title="Distribuição das despesas recorrentes"
-        description="Projeção anual dos gastos que se repetem"
+        description={`Ocorrências de ${monthLabel}`}
         comparisonTitle="Despesas por categoria"
-        comparisonDescription="Valores mensais × 12, mais os valores anuais (R$)"
-        emptyMessage="Sem despesas recorrentes para projetar."
-        valueLabel="Despesa anual estimada"
-        renderInsight={(label, share) => <><strong>{label}</strong> concentra {share} das despesas recorrentes estimadas no ano.</>}
+        comparisonDescription={`Despesas recorrentes de ${monthLabel} (R$)`}
+        emptyMessage="Sem despesas recorrentes no mês selecionado."
+        valueLabel="Despesas do mês"
+        renderInsight={(label, share) => <><strong>{label}</strong> concentra {share} das despesas recorrentes do mês.</>}
       />
       <OverviewTable
         title="Transações recorrentes" description="Abra uma série para consultar suas ocorrências" icon={<RepeatIcon fontSize="small" />}

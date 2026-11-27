@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Recurring charts** — Show recurring expenses by category and estimated balance for the selected month. Include actual and projected occurrences with their occurrence amounts and invoice dates.
+  - **Modified files** — `src/domain/usecases/recurringUtils.ts`, `src/presentation/views/RecurringView.tsx`, `src/presentation/layouts/shell/AppViewSwitcher.tsx`, `tests/utils/recurringUtils.test.ts`, `e2e/audit/transactions.spec.ts`, `docs/REQUIREMENTS.md`
+
 ### Added
 
 - **Profile version update** — Display the installed version and let users check for a web update from the profile. The refresh keeps the current route and stored session. On Android, the button opens the official APK release.

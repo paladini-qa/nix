@@ -175,6 +175,8 @@ test("blocks future-only recurrence changes while leaving occurrence actions ava
       expires_at: Math.floor(Date.now() / 1000) + 3600,
     }));
   }, user);
+  await page.route("https://fonts.googleapis.com/**", (route) => route.abort());
+  await page.route("https://fonts.gstatic.com/**", (route) => route.abort());
   await page.route("https://nix-audit.invalid/**", (route) => {
     const url = new URL(route.request().url());
     if (url.pathname.endsWith("/user_settings")) {
@@ -188,6 +190,7 @@ test("blocks future-only recurrence changes while leaving occurrence actions ava
         date: "2026-11-05", description: "Assinatura de auditoria", type: "expense",
         is_recurring: true, frequency: "monthly", amount: 50, payment_method: "Pix",
         category: "Subscriptions", is_paid: false, created_at: "2026-11-05T13:00:00Z",
+        recurring_overrides: [{ override_date: "2026-12-05", amount: 75, is_paid: null }],
       }] });
     }
     return route.fulfill({ json: [] });
@@ -205,9 +208,21 @@ test("blocks future-only recurrence changes while leaving occurrence actions ava
   await page.goto("/recurring");
   const main = page.getByRole("main");
   await expect(main.getByRole("heading", { level: 1, name: "Recorrentes" })).toBeVisible();
-  await expect(main.getByRole("region", { name: "Distribuição das despesas recorrentes" })).toContainText(/R\$\s*600,00/);
+  const breakdown = main.getByRole("region", { name: "Distribuição das despesas recorrentes" });
+  await expect(breakdown).toContainText("novembro de 2026");
+  await expect(breakdown).toContainText(/R\$\s*50,00/);
   await expect(main.locator(".recharts-surface")).toHaveCount(2);
   for (const chart of await main.locator(".recharts-surface").all()) await expect(chart).toBeVisible();
+
+  await page.getByRole("banner").getByRole("button", { name: /Selecionar mês/ }).click();
+  await page.getByRole("button", { name: "Dez", exact: true }).click();
+  await expect(breakdown).toContainText("dezembro de 2026");
+  await expect(breakdown).toContainText(/R\$\s*75,00/);
+  await expect(main.getByText("Despesas do mês", { exact: true }).locator("..")).toContainText(/R\$\s*75,00/);
+
+  await page.getByRole("banner").getByRole("button", { name: /Selecionar mês/ }).click();
+  await page.getByRole("button", { name: "Out", exact: true }).click();
+  await expect(breakdown).toContainText("Sem despesas recorrentes no mês selecionado.");
 
   const table = main.getByRole("table", { name: "Transações recorrentes" });
   await expect(table.getByRole("row", { name: /Assinatura de auditoria/ })).toContainText("Mensal");

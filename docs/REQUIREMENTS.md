@@ -434,8 +434,8 @@ Reference index of views mapped with their main components and elements.
 - **Title**: Recorrentes
 - **Main elements**:
   - New recurrence and data refresh
-  - Summary cards show recurrence count, monthly recurring expenses and estimated monthly and annual balances.
-  - Donut and bar charts show estimated annual expenses by category. Monthly expenses are multiplied by 12 and added to annually recurring expenses.
+  - Summary cards show the registered series count, the selected month’s expenses and estimated balance, and a separate estimated annual balance.
+  - Donut and bar charts show the selected month's recurring expenses by category. Annual series contribute only in months with an occurrence. Card expenses follow the invoice due date.
   - Sortable table with search and type, frequency and category filters. Open a row to see occurrences. Series actions include editing, deleting, changing the image and updating payment status.
 
 ### 6. Payment Methods (`currentView: "paymentMethods"`)
