@@ -200,6 +200,23 @@ test("blocks future-only recurrence changes while leaving occurrence actions ava
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Editar Assinatura de auditoria" }).click();
   await expect(page.getByRole("button", { name: /Editar esta e as futuras/i })).toBeDisabled();
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/recurring");
+  const main = page.getByRole("main");
+  await expect(main.getByRole("heading", { level: 1, name: "Recorrentes" })).toBeVisible();
+  await expect(main.getByRole("region", { name: "Distribuição das despesas recorrentes" })).toContainText(/R\$\s*600,00/);
+  await expect(main.locator(".recharts-surface")).toHaveCount(2);
+  for (const chart of await main.locator(".recharts-surface").all()) await expect(chart).toBeVisible();
+
+  const table = main.getByRole("table", { name: "Transações recorrentes" });
+  await expect(table.getByRole("row", { name: /Assinatura de auditoria/ })).toContainText("Mensal");
+  await main.getByRole("button", { name: "Ações de Assinatura de auditoria", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Alterar imagem" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await table.getByRole("button", { name: /Assinatura de auditoria.*Mensal/ }).click();
+  await expect(main.getByRole("button", { name: "Editar série", exact: true })).toBeVisible();
+
 });
 
 test("reschedules all selected installments in one request and keeps the draft on failure", async ({ page }) => {
@@ -242,6 +259,25 @@ test("reschedules all selected installments in one request and keeps the draft o
   });
 
   await page.goto("/splits");
+  const main = page.getByRole("main");
+  await expect(main.getByRole("heading", { level: 1, name: "Parcelas" })).toBeVisible();
+  await expect(main.getByRole("region", { name: "Distribuição do saldo em aberto" })).toContainText(/R\$\s*25,01/);
+  await expect(main.locator(".recharts-surface")).toHaveCount(2);
+  for (const chart of await main.locator(".recharts-surface").all()) await expect(chart).toBeVisible();
+
+  const table = main.getByRole("table", { name: "Compras parceladas", exact: true });
+  const originalViewport = page.viewportSize()!;
+  await page.setViewportSize({ width: 375, height: 812 });
+  const group = table.getByRole("button", { name: /Synthetic purchase/ });
+  await expect(group).toHaveAttribute("aria-expanded", "false");
+  await group.click();
+  await expect(group).toHaveAttribute("aria-expanded", "true");
+  await expect(main.getByText("Todas as 2 parcelas")).toBeVisible();
+  await expect(main.getByText("10/11/2026", { exact: true })).toBeVisible();
+  await expect.poll(() => table.evaluate((element) => element.getBoundingClientRect().right)).toBeLessThanOrEqual(375);
+  await group.click();
+  await page.setViewportSize(originalViewport);
+
   await page.getByRole("button", { name: "Alterar vencimentos" }).click();
   const draft = page.getByRole("dialog", { name: "Alterar vencimentos" });
   const dueDay = draft.getByRole("combobox", { name: /Dia do vencimento/ });

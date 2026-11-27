@@ -420,23 +420,23 @@ Reference index of views mapped with their main components and elements.
 
 ### 3. Installments / Credit Splits (`currentView: "splits"`)
 - **Component**: `SplitsView`
-- **File**: `components/SplitsView.tsx`
-- **Title**: Installments | "Manage your credit card installment plans"
+- **File**: `src/presentation/views/SplitsView.tsx`
+- **Title**: Parcelas
 - **Main elements**:
-  - **+ New Transaction**
-  - Search bar, filters for **Status** (In Progress/Completed), **Type** (All), and data refresh
-  - Summary cards: **In Progress** (count), **Completed** (count), **Remaining** (amount), **Total Paid** (amount)
-  - Installment rows: title, category/vendor subtitles, date range, total amount, "X/Yx" progress indicator, "See X installments", and "Edit due dates" options
+  - New purchase and data refresh
+  - Summary cards show groups in progress, completed groups, outstanding amounts and paid amounts across all periods.
+  - Donut and bar charts show outstanding installment amounts by payment method.
+  - Sortable table with search and status/type filters. Open a row to see individual installments and use its calendar action to reschedule due dates.
 
 ### 5. Recurring / Recurring Payments (`currentView: "recurring"`)
 - **Component**: `RecurringView`
-- **File**: `components/RecurringView.tsx`
-- **Title**: Recurring Items | "Manage your regular monthly and annual payments"
+- **File**: `src/presentation/views/RecurringView.tsx`
+- **Title**: Recorrentes
 - **Main elements**:
-  - Data refresh, **+ New Transaction**
-  - Search bar, type filters (All/Income/Expense), frequency filters (All/Monthly/Yearly), and categories
-  - Summary cards: **Total Recurrences** (count), **Monthly Total** (amount), **Annual Total** (amount), **Total Projected Impact** (amount)
-  - Recurring list: title, category, frequency, value, status badge, and "view occurrences"
+  - New recurrence and data refresh
+  - Summary cards show recurrence count, monthly recurring expenses and estimated monthly and annual balances.
+  - Donut and bar charts show estimated annual expenses by category. Monthly expenses are multiplied by 12 and added to annually recurring expenses.
+  - Sortable table with search and type, frequency and category filters. Open a row to see occurrences. Series actions include editing, deleting, changing the image and updating payment status.
 
 ### 6. Payment Methods (`currentView: "paymentMethods"`)
 - **Component**: `PaymentMethodsView` (opens `PaymentMethodDetailView` upon selecting a method)

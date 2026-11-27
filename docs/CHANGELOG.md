@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Recurring transactions and installments** — Adopt the payment-methods overview layout with responsive summary cards, charts in Brazilian reais and sortable tables. Show estimated annual recurring expenses by category and all outstanding installment amounts by payment method.
+  - **Added files** — `src/presentation/widgets/{FinancialOverview,FinancialOverviewTable}.tsx`
+  - **Modified files** — `src/presentation/views/{RecurringView,SplitsView}.tsx`, `src/presentation/widgets/PaymentMethodsOverview.tsx`, `src/presentation/layouts/shell/AppViewSwitcher.tsx`, `e2e/audit/transactions.spec.ts`, `docs/REQUIREMENTS.md`
+  - **Renamed files** — `src/presentation/components/skeletons/PaymentMethodsSkeleton.tsx` to `FinancialOverviewSkeleton.tsx`
+  - **Removed files** — `src/presentation/components/skeletons/ListCardsSkeleton.tsx`
+
+### Changed
+
 - **Payment methods** — Rename the navigation entry and show monthly activity, spending and pending expenses, with a spending breakdown, a sortable summary and links to each method's transactions.
   - **Added files** — `src/presentation/widgets/PaymentMethodsOverview.tsx`, `e2e/audit/payment-methods.spec.ts`
   - **Modified files** — `src/presentation/views/PaymentMethodsView.tsx`, `src/presentation/components/skeletons/PaymentMethodsSkeleton.tsx`, `src/presentation/layouts/shell/{AppViewSwitcher,Sidebar}.tsx`, `src/presentation/widgets/MobileDashboardOverview.tsx`, `src/shared/i18n/locales/pt-BR.ts`, `e2e/audit/mobile-dashboard.spec.ts`, `docs/REQUIREMENTS.md`
