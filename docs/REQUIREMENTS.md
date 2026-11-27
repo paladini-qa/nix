@@ -538,7 +538,7 @@ Reference index of views mapped with their main components and elements.
 - **Conclusion**: Dashboard summary cards and Analytics charts use different data scopes, which explains different values in long-range charts. This is mathematically correct. Showing active month labels in charts is recommended.
 
 #### UI & Mobile Support
-- **Mobile layout** — Fixed header with the dashboard greeting, profile, period picker, privacy and search. The floating dock keeps Dashboard, Transactions, Categories and Profile accessible alongside a separate new-transaction button. Dashboard cards show the balance of paid entries, the selected period’s open card bills and cash flow, and the next 30 days of pending expenses by due date.
+- **Mobile layout** — Fixed header with the dashboard greeting, profile, period picker, privacy and search. The floating dock keeps Dashboard, Transactions, Categories and Profile accessible alongside a separate new-transaction button. The mobile dashboard shows the selected period’s cash flow, a horizontal shortcuts card and the next 30 days of pending expenses by due date.
 - **Desktop layout (≥1024px)**: Left sidebar navigation stays persistent, while main page lists utilize full desktop width for data grids and charts.
 - **Accessibility**: Screen readers are supported via updated `role="button"` and `aria-label` tags in bottom mobile navigations.
 

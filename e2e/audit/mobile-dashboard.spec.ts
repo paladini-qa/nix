@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { DEFAULT_CATEGORIES, DEFAULT_PAYMENT_METHOD_CONFIGS } from "../../src/shared/constants";
 
-test("shows the mobile overview, upcoming bills and a floating dock", async ({ page }) => {
+test("shows the mobile cash flow, shortcut carousel, agenda and floating dock", async ({ page }) => {
   const user = { id: "707781c6-9ac3-449a-a818-f7e46b4c1804", email: "audit@example.test", user_metadata: {} };
   const rows = [
     { description: "Salário", amount: 5000, date: "2026-11-01", type: "income", category: "Salary", is_paid: true },
@@ -41,10 +41,21 @@ test("shows the mobile overview, upcoming bills and a floating dock", async ({ p
   await expect(header.getByRole("button", { name: /Selecionar mês, Nov/ })).toBeVisible();
 
   const card = (title: string) => main.locator("section").filter({ has: page.getByRole("heading", { name: title, exact: true }) });
-  await expect(card("Saldo registrado")).toContainText(/R\$\s*4\.200,00/);
-  await expect(card("Saldo registrado")).toContainText(/R\$\s*2\.965,44/);
-  await expect(card("Faturas em aberto")).toContainText(/R\$\s*1\.234,56/);
-  await expect(card("Fluxo de novembro")).toContainText(/R\$\s*5\.000,00/);
+  await expect(card("Saldo registrado")).toHaveCount(0);
+  await expect(card("Faturas em aberto")).toHaveCount(0);
+  const flow = card("Fluxo de novembro");
+  await expect(flow).toContainText(/R\$\s*5\.000,00/);
+  await expect(flow).toContainText(/R\$\s*2\.164,36/);
+  expect(await flow.evaluate((element) => element.nextElementSibling?.querySelector("h2")?.textContent)).toBe("Atalhos");
+
+  const shortcuts = main.getByRole("region", { name: "Atalhos" });
+  for (const [label, path] of [
+    ["Parcelas", "/splits"], ["Recorrentes", "/recurring"], ["Investimentos", "/investments"],
+    ["Assinaturas", "/subscriptions"], ["Pagamentos", "/payment-methods"], ["Fiscal", "/fiscal-report"],
+  ]) {
+    await expect(shortcuts.getByRole("link", { name: label, exact: true })).toHaveAttribute("href", path);
+  }
+  expect(await shortcuts.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
 
   const upcoming = card("Próximos 30 dias");
   await expect(upcoming.getByRole("listitem")).toHaveCount(3);
@@ -64,8 +75,13 @@ test("shows the mobile overview, upcoming bills and a floating dock", async ({ p
   await expect.poll(dockInsets).toEqual({ x: 12, bottom: 12 });
 
   await header.getByRole("button", { name: "Ocultar valores" }).click();
-  await expect(main).not.toContainText(/1\.234,56|4\.200,00|89,90/);
+  await expect(main).not.toContainText(/1\.234,56|5\.000,00|89,90/);
   await expect(main).toContainText("Valor oculto");
   await nav.getByRole("button", { name: "Nova Transação" }).click();
-  await expect(page.getByRole("dialog", { name: "Nova Transação" })).toBeVisible();
+  const form = page.getByRole("dialog", { name: "Nova Transação" });
+  await expect(form).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(form).toBeHidden();
+  await shortcuts.getByRole("link", { name: "Fiscal" }).click();
+  await expect(page).toHaveURL(/\/fiscal-report$/);
 });

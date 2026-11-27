@@ -8,16 +8,7 @@ import {
   useMediaQuery,
   Skeleton,
   Stack,
-  alpha,
 } from "@mui/material";
-import {
-  CallSplit as SplitsIcon,
-  Repeat as RecurringIcon,
-  TrendingUp as InvestmentsIcon,
-  Star as SubscriptionsIcon,
-  CreditCard as PaymentMethodsIcon,
-  Article as FiscalIcon,
-} from "@mui/icons-material";
 import CategoryBreakdown from "@/presentation/widgets/CategoryBreakdown";
 import SummaryCards from "@/presentation/widgets/SummaryCards";
 import { AdvancedFiltersButton } from "@/presentation/panels/AdvancedFilters";
@@ -27,20 +18,11 @@ import { useAppStore } from "@/presentation/hooks/useAppStore";
 import { useTransactionsQuery } from "@/presentation/hooks/useTransactionsQuery";
 import { useFilteredTransactions } from "@/presentation/hooks/useFilteredTransactions";
 import { usePrivacy, useSettings } from "@/presentation/contexts";
-import MobileDashboardOverview from "@/presentation/widgets/MobileDashboardOverview";
+import MobileDashboardOverview, { MobileDashboardShortcuts } from "@/presentation/widgets/MobileDashboardOverview";
 import { VIEW_ROUTES } from "@/presentation/routes";
 
 const AdvancedFilters = lazy(() => import("@/presentation/panels/AdvancedFilters"));
 const AnalyticsView = lazy(() => import("./AnalyticsView"));
-
-const MOBILE_SHORTCUTS = [
-  { view: "splits" as const,         icon: <SplitsIcon sx={{ fontSize: 20 }} />,        label: "Parcelas",       color: "#6366f1" },
-  { view: "recurring" as const,      icon: <RecurringIcon sx={{ fontSize: 20 }} />,      label: "Recorrentes",    color: "#f59e0b" },
-  { view: "investments" as const,    icon: <InvestmentsIcon sx={{ fontSize: 20 }} />,    label: "Investimentos",  color: "#22c55e" },
-  { view: "subscriptions" as const,  icon: <SubscriptionsIcon sx={{ fontSize: 20 }} />,  label: "Assinaturas",color: "#ec4899" },
-  { view: "paymentMethods" as const, icon: <PaymentMethodsIcon sx={{ fontSize: 20 }} />, label: "Pagamentos",     color: "#0ea5e9" },
-  { view: "fiscal-report" as const,  icon: <FiscalIcon sx={{ fontSize: 20 }} />,         label: "Fiscal",       color: "#ef4444" },
-];
 
 const DashboardMainSection: React.FC<{ userId: string }> = ({ userId }) => {
   const theme = useTheme();
@@ -87,101 +69,24 @@ const DashboardMainSection: React.FC<{ userId: string }> = ({ userId }) => {
 
   return (
     <Box sx={{ maxWidth: { xs: 640, md: "none" }, mx: "auto", px: { xs: 0, md: "28px" }, pt: { xs: 0, md: "24px" }, pb: { xs: 0, md: "60px" } }}>
-      {isMobile && (
-        <>
-          {data ? (
-            <MobileDashboardOverview
-              transactions={transactions}
-              periodTransactions={filteredTransactions}
-              summary={summary}
-              paymentMethodConfigs={paymentMethodConfigs}
-              selectedMonth={filters.month}
-              selectedYear={filters.year}
-              hasDateRange={!!(advancedFilters.startDate || advancedFilters.endDate)}
-              isPrivate={isPrivacyMode}
-              onOpenPaymentMethods={handlePaymentMethodClick}
-              onOpenTransactions={() => navigate(VIEW_ROUTES.transactions)}
-            />
-          ) : isPending && (
-            <Stack spacing={1.5} aria-label="Carregando painel" aria-busy="true">
-              {[126, 96, 144].map((height) => (
-                <Skeleton key={height} variant="rounded" height={height} sx={{ borderRadius: "20px" }} />
-              ))}
-            </Stack>
-          )}
-
-          {/* Shortcuts carousel */}
-          <Box sx={{ position: "relative", mx: -2, mt: 2 }}>
-            {/* Fade gradient → indica mais itens */}
-            <Box
-              sx={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                bottom: 0,
-                width: 40,
-                zIndex: 1,
-                pointerEvents: "none",
-                background: `linear-gradient(to left, ${theme.palette.background.default} 0%, transparent 100%)`,
-              }}
-            />
-          <Box
-            sx={{
-              display: "flex",
-              gap: 1.5,
-              overflowX: "auto",
-              pb: 1.5,
-              px: 2,
-              scrollbarWidth: "none",
-              "&::-webkit-scrollbar": { display: "none" },
-            }}
-          >
-            {MOBILE_SHORTCUTS.map(({ view, icon, label, color }) => (
-              <Box
-                key={view}
-                component="button"
-                type="button"
-                onClick={() => navigate(VIEW_ROUTES[view])}
-                sx={{
-                  flex: "0 0 auto",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 0.75,
-                  px: 0.5,
-                  py: 0,
-                  border: "none",
-                  background: "none",
-                  cursor: "pointer",
-                  touchAction: "manipulation",
-                  WebkitTapHighlightColor: "transparent",
-                  transition: "all 0.18s ease",
-                  "&:active": { transform: "scale(0.93)", opacity: 0.85 },
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: "16px",
-                    background: alpha(color, theme.palette.mode === "dark" ? 0.3 : 0.15),
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: color,
-                  }}
-                >
-                  {icon}
-                </Box>
-                <Typography sx={{ fontSize: 10, fontWeight: 600, color: "text.secondary", whiteSpace: "nowrap" }}>
-                  {label}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-          </Box>
-        </>
-      )}
+      {isMobile && (data ? (
+        <MobileDashboardOverview
+          transactions={transactions}
+          summary={summary}
+          paymentMethodConfigs={paymentMethodConfigs}
+          selectedMonth={filters.month}
+          selectedYear={filters.year}
+          hasDateRange={!!(advancedFilters.startDate || advancedFilters.endDate)}
+          isPrivate={isPrivacyMode}
+          onOpenTransactions={() => navigate(VIEW_ROUTES.transactions)}
+        />
+      ) : (
+        <Stack spacing={1.5} aria-busy={isPending}>
+          {isPending && <Skeleton variant="rounded" height={144} sx={{ borderRadius: "20px" }} />}
+          <MobileDashboardShortcuts />
+          {isPending && <Skeleton variant="rounded" height={96} sx={{ borderRadius: "20px" }} />}
+        </Stack>
+      ))}
 
       {/* Page head — desktop only */}
       {!isMobile && (
