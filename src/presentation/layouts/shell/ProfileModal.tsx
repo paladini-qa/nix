@@ -29,8 +29,12 @@ import {
   Edit as EditIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
+  SystemUpdate as SystemUpdateIcon,
 } from "@mui/icons-material";
 import { supabase } from "@/infrastructure/database/supabaseClient";
+import { refreshWebVersion } from "@/infrastructure/web/appUpdate";
+
+const ANDROID_RELEASES_URL = "https://github.com/paladini-qa/nix/releases/latest";
 
 interface ProfileModalProps {
   open: boolean;
@@ -42,6 +46,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const platform = Capacitor.getPlatform();
   const { confirm } = useConfirmDialog();
   const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
   const { themePreference, setThemePreference, displayName, setDisplayName } = useSettings();
@@ -53,6 +58,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
   const [emailStatus, setEmailStatus] = useState<"idle" | "saving" | "sent" | "error">("idle");
   const [passwordStatus, setPasswordStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "error">("idle");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -156,6 +162,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
     } catch (err: any) {
       setErrorMessage(err.message || "Erro ao enviar o e-mail de recuperação.");
       setPasswordStatus("error");
+    }
+  };
+
+  const handleVersionUpdate = async () => {
+    setUpdateStatus("checking");
+    try {
+      await refreshWebVersion();
+    } catch {
+      setUpdateStatus("error");
     }
   };
 
@@ -290,6 +305,50 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
               </Button>
             </Box>
             <ThemeSwitch value={themePreference} onChange={setThemePreference} />
+          </Box>
+
+          <Box sx={sectionSx}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <SystemUpdateIcon fontSize="small" color="primary" />
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={600}>Versão do Nix</Typography>
+                  <Typography variant="caption" color="text.secondary">v{process.env.APP_VERSION}</Typography>
+                </Box>
+              </Box>
+              {platform === "web" && (
+                <NixButton
+                  size="sm"
+                  variant="soft"
+                  loading={updateStatus === "checking"}
+                  disabled={nameStatus === "saving" || emailStatus === "saving" || passwordStatus === "sending"}
+                  aria-busy={updateStatus === "checking"}
+                  onClick={() => void handleVersionUpdate()}
+                >
+                  {updateStatus === "checking" ? "Verificando versão…" : "Atualizar versão"}
+                </NixButton>
+              )}
+              {platform === "android" && (
+                <NixButton size="sm" variant="soft" asChild>
+                  <a href={ANDROID_RELEASES_URL}>Atualizar versão</a>
+                </NixButton>
+              )}
+            </Box>
+            {updateStatus === "checking" && (
+              <Typography role="status" variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+                Verificando atualizações do Nix…
+              </Typography>
+            )}
+            {updateStatus === "error" && (
+              <Alert severity="error" sx={{ mt: 1.5 }}>
+                Não foi possível atualizar a versão. Confira a conexão e tente novamente.
+              </Alert>
+            )}
+            {platform === "android" && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+                Abre a página oficial para baixar e instalar o APK.
+              </Typography>
+            )}
           </Box>
 
           {/* Display Name */}
@@ -481,7 +540,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, onLogout }) 
           </Box>
 
           {/* Google Wallet Sync — Android only */}
-          {Capacitor.getPlatform() === "android" && (
+          {platform === "android" && (
             <Box sx={sectionSx}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <Box

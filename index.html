@@ -62,6 +62,13 @@
             window.location.pathname.replace(/\/$/, '') + path + query + window.location.hash
           );
         }
+
+        // Remove o parâmetro usado para buscar a versão atual no navegador.
+        var current = new URL(window.location.href);
+        if (current.searchParams.has('nix-update')) {
+          current.searchParams.delete('nix-update');
+          window.history.replaceState(window.history.state, '', current.href);
+        }
       })();
     </script>
   </head>
