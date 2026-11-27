@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Desktop month selector** — Show the localized month name and year without a duplicated numeric month.
+  - **Modified files** — `src/presentation/components/ui/DateFilter.tsx`, `e2e/audit/localization.spec.ts`
+
 ### Changed
 
 - **Mobile dashboard** — Add a personalized header, floating navigation with a separate transaction button, and cards for recorded balance, open card bills, period cash flow and pending commitments for the next 30 days.
