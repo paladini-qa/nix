@@ -10,7 +10,6 @@ import {
   ListItemIcon,
   ListItemText,
   Chip,
-  Grid,
   useMediaQuery,
   useTheme,
   FormControl,
@@ -20,8 +19,6 @@ import {
   Checkbox,
   Tooltip,
   LinearProgress,
-  Button,
-  Collapse,
   Divider,
   Table,
   TableBody,
@@ -35,7 +32,6 @@ import {
   CircularProgress,
   Stack,
 } from "@mui/material";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
@@ -44,31 +40,29 @@ import {
   MoreVert as MoreVertIcon,
   CheckCircle as CheckCircleIcon,
   Schedule as ScheduleIcon,
-  Add as AddIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Visibility as VisibilityIcon,
-  Refresh as RefreshIcon,
   Payments as PaymentsIcon,
   TrendingDown as TrendingDownIcon,
   CalendarMonth as CalendarMonthIcon,
   EventRepeat as EventRepeatIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import TransactionTags from "@/presentation/components/ui/TransactionTags";
 import SearchBar from "@/presentation/components/ui/SearchBar";
 import { getHeaderCellSx } from "@/shared/utils/tableStyles";
 import { Transaction } from "@/domain/entities";
-import { useLayoutSpacing } from "@/presentation/hooks";
 import { TOUCH_TARGET_MIN } from "@/shared/constants/layout";
 import { getReportDate } from "@/domain/usecases/transactionUtils";
-import EmptyState from "@/presentation/components/ui/EmptyState";
 import NixButton from "@/presentation/components/radix/Button";
-import { CREATE_TRANSACTION_BUTTON } from "@/shared/constants";
 import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
 import { useSettings } from "@/presentation/contexts";
 import type { InstallmentDateChange } from "@/domain/usecases/transactionUtils";
-import { hashColor } from "@/shared/utils/imageColorUtils";
+
+import { orbitColors } from "@/shared/theme/colors";
+import { formatCurrency } from "@/shared/utils/formatters";
+import { OverviewBreakdown, OverviewHeader, OverviewStatCard, overviewPageStyles, overviewStatGridStyles } from "@/presentation/widgets/FinancialOverview";
+import { OverviewRowTitle, OverviewTable, overviewDesktopCell, overviewMoneyCell } from "@/presentation/widgets/FinancialOverviewTable";
 
 interface SplitsViewProps {
   transactions: Transaction[];
@@ -88,7 +82,6 @@ interface InstallmentGroup {
   key: string;
   installmentGroupId?: string;
   description: string;
-  originalDescription: string;
   descriptions: string[];
   category: string;
   paymentMethod: string;
@@ -117,7 +110,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { gridSpacing } = useLayoutSpacing();
+  const isCompactTable = useMediaQuery(theme.breakpoints.down("sm"));
   const { getPaymentMethodColor, getPaymentMethodConfig } = useSettings();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -327,7 +320,6 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           key,
           installmentGroupId: t.installmentGroupId,
           description: t.description,
-          originalDescription: t.description,
           descriptions: [t.description],
           category: t.category,
           paymentMethod: t.paymentMethod,
@@ -387,7 +379,6 @@ const SplitsView: React.FC<SplitsViewProps> = ({
           originalDesc = desc;
         }
       });
-      group.originalDescription = originalDesc;
       group.description = originalDesc;
     });
 
@@ -421,16 +412,6 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       );
   }, [groupedSplits, searchTerm, filterType, filterStatus]);
 
-  const SPLITS_VIRTUALIZE_THRESHOLD = 30;
-  const splitsListRef = useRef<HTMLDivElement>(null);
-  const splitsVirtualizer = useVirtualizer({
-    count: filteredGroups.length,
-    getScrollElement: () => splitsListRef.current,
-    estimateSize: () => 180,
-    overscan: 3,
-    enabled: filteredGroups.length > SPLITS_VIRTUALIZE_THRESHOLD,
-  });
-
   // Estatísticas
   const stats = useMemo(() => {
     // Usa o número real de parcelas existentes para determinar status
@@ -448,7 +429,15 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     const totalPaid = groupedSplits.reduce((sum, g) => sum + g.paidAmount, 0);
     const totalAll = groupedSplits.reduce((sum, g) => sum + g.totalAmount, 0);
 
+    const remainingByMethod = new Map<string, number>();
+    for (const group of inProgressGroups) {
+      const label = paymentMethodLabel(group.paymentMethod);
+      const remaining = group.totalAmount - group.paidAmount;
+      remainingByMethod.set(label, (remainingByMethod.get(label) ?? 0) + remaining);
+    }
+
     return {
+      remainingByMethod: Array.from(remainingByMethod, ([label, value]) => ({ label, value })),
       inProgressCount: inProgressGroups.length,
       completedCount: completedGroups.length,
       totalRemaining,
@@ -456,13 +445,6 @@ const SplitsView: React.FC<SplitsViewProps> = ({
       totalAll,
     };
   }, [groupedSplits]);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const formatDateShort = (dateString: string) => {
     const [year, month] = dateString.split("-");
@@ -530,202 +512,100 @@ const SplitsView: React.FC<SplitsViewProps> = ({
     });
   };
 
-  // =============================================
-  // CARD COMPONENT - Design alinhado
-  // =============================================
-  const renderInstallmentCard = (group: InstallmentGroup) => {
+  const { palette: themePalette } = theme;
+  const accent = isDarkMode ? orbitColors.lavender : themePalette.primary.dark;
+  const expenseColor = isDarkMode ? themePalette.error.main : themePalette.error.dark;
+  const incomeColor = isDarkMode ? themePalette.success.main : themePalette.success.dark;
+  const warningColor = isDarkMode ? themePalette.warning.main : themePalette.warning.dark;
+
+  const renderInstallmentRow = (group: InstallmentGroup, index: number) => {
     const isExpanded = expandedGroups.has(group.key);
-    // Usa o número real de parcelas existentes para calcular progresso e status
     const actualInstallmentCount = group.installments.length;
-    const isCompleted = group.paidCount >= actualInstallmentCount;
-    const progress =
-      actualInstallmentCount > 0
-        ? (group.paidCount / actualInstallmentCount) * 100
-        : 0;
     const isIncome = group.type === "income";
-
-    const palette = getPaymentMethodColor(group.paymentMethod);
-    const accentColor = isIncome ? "#059669" : palette.primary;
-
-    // Transações relacionadas (shared)
-    const relatedTransactions = group.installments
-      .map((inst) => getRelatedTransaction(inst))
-      .filter((t): t is Transaction => t !== null);
+    const colors = getPaymentMethodColor(group.paymentMethod);
+    const config = getPaymentMethodConfig(group.paymentMethod);
+    const accentColor = isIncome ? incomeColor : colors.primary;
+    const relatedTransactions = isExpanded ? group.installments
+      .map((installment) => getRelatedTransaction(installment))
+      .filter((transaction): transaction is Transaction => transaction !== null) : [];
+    const openGroup = () => toggleGroup(group.key);
+    const method = paymentMethodLabel(group.paymentMethod);
+    const subtitle = group.descriptions.length > 1
+      ? `${method} · ${group.descriptions.length} descrições`
+      : `${method} · ${categoryLabel(group.category)}`;
 
     return (
-      <Grid key={group.key} size={{ xs: 12, sm: 6, lg: 4 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            height: "100%",
-            borderRadius: "16px",
-            cursor: "default",
-            background: isDarkMode ? alpha(theme.palette.background.paper, 0.7) : alpha("#fff", 0.95),
-            border: `1.5px solid ${alpha(accentColor, isDarkMode ? 0.45 : 0.25)}`,
-            transition: "all 0.2s ease-in-out",
-            overflow: "hidden",
-            "&:hover": {
-              transform: "translateY(-3px)",
-              boxShadow: `0 10px 28px -6px ${alpha(accentColor, 0.3)}`,
-              border: `1.5px solid ${alpha(accentColor, 0.65)}`,
-            },
-          }}
+      <React.Fragment key={group.key}>
+        <TableRow
+          className="overview-row"
+          data-striped={index % 2 === 1}
+          onClick={openGroup}
+          sx={{ cursor: "pointer" }}
         >
-          {/* Main content — clickable for expand */}
-          <Box sx={{ p: 2.5, flex: 1 }} onClick={() => toggleGroup(group.key)} style={{ cursor: "pointer" }}>
-            {/* Header row */}
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
-                <PaymentMethodIcon
-                  imageUrl={getPaymentMethodConfig(group.paymentMethod)?.imageUrl}
-                  colors={palette}
-                  size={36}
-                  borderRadius="10px"
-                  iconSize={18}
-                />
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Tooltip title={group.description}>
-                    <Typography
-                      fontWeight={700}
-                      sx={{ fontSize: 14, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                    >
-                      {group.description}
-                    </Typography>
-                  </Tooltip>
-                  {group.descriptions.length > 1 && (
-                    <Chip label={`+${group.descriptions.length - 1}`} size="small" color="info" variant="outlined" sx={{ height: 16, fontSize: 10, mt: 0.25 }} />
-                  )}
-                </Box>
-              </Box>
-              <Chip
-                icon={isCompleted ? <CheckCircleIcon sx={{ fontSize: 13 }} /> : <ScheduleIcon sx={{ fontSize: 13 }} />}
-                label={`${group.paidCount}/${actualInstallmentCount}x`}
-                size="small"
-                sx={{
-                  height: 22,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  borderRadius: "8px",
-                  flexShrink: 0,
-                  ml: 1,
-                  bgcolor: isCompleted ? alpha("#059669", isDarkMode ? 0.2 : 0.1) : alpha("#F59E0B", isDarkMode ? 0.2 : 0.1),
-                  color: isCompleted ? "#059669" : "#F59E0B",
-                  "& .MuiChip-label": { px: 1.25 },
-                }}
-              />
-            </Box>
-
-            {/* Amount section */}
-            <Box sx={{ mb: 1.5 }}>
-              <Typography sx={{ fontSize: 10, fontWeight: 700, color: "text.disabled", textTransform: "uppercase", letterSpacing: "0.1em", mb: 0.5 }}>
-                {categoryLabel(group.category)}
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15, color: isIncome ? "#10b981" : "text.primary" }}>
-                {isIncome ? "+" : "-"}{formatCurrency(group.totalAmount)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                {formatDateShort(group.startDate)} → {formatDateShort(group.endDate)}
-                {!isCompleted && ` · Restante: ${formatCurrency(group.totalAmount - group.paidAmount)}`}
-              </Typography>
-            </Box>
-
-            {/* Progress bar */}
-            <Box sx={{ mb: relatedTransactions.length > 0 ? 1.5 : 0 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">{paymentMethodLabel(group.paymentMethod)}</Typography>
-                <Typography variant="caption" fontWeight={600} color={accentColor}>{Math.round(progress)}% pago</Typography>
-              </Box>
+          <TableCell className="overview-cell" component="th" scope="row">
+            <OverviewRowTitle
+              title={group.description}
+              subtitle={subtitle}
+              icon={<PaymentMethodIcon imageUrl={config?.imageUrl} colors={colors} type={config?.type} size={29} borderRadius="6px" iconSize={16} />}
+              expanded={isExpanded}
+              onClick={openGroup}
+            />
+          </TableCell>
+          <TableCell className="overview-cell" sx={overviewDesktopCell}>
+            {formatDateShort(group.startDate)} — {formatDateShort(group.endDate)}
+          </TableCell>
+          <TableCell className="overview-cell" sx={overviewDesktopCell}>
+            <Stack direction="row" alignItems="center" gap={1}>
               <LinearProgress
                 variant="determinate"
-                value={progress}
-                sx={{
-                  height: 4,
-                  borderRadius: "4px",
-                  bgcolor: alpha(accentColor, 0.1),
-                  "& .MuiLinearProgress-bar": { borderRadius: "4px", background: `linear-gradient(90deg, ${accentColor}, ${alpha(accentColor, 0.7)})` },
-                }}
+                aria-label={`Progresso de ${group.description}`}
+                value={group.paidCount / actualInstallmentCount * 100}
+                sx={{ flex: 1, height: 8, borderRadius: 8, bgcolor: alpha(accentColor, 0.14), "& .MuiLinearProgress-bar": { bgcolor: accentColor, borderRadius: 8 } }}
               />
-            </Box>
-
-            {/* Shared info */}
-            {relatedTransactions.length > 0 && (
-              <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: alpha("#059669", 0.08), border: `1px solid ${alpha("#059669", 0.2)}` }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <ArrowUpIcon fontSize="small" color="success" />
-                    <Typography variant="body2" fontWeight={500}>Compartilhada com {group.sharedWith}</Typography>
-                  </Box>
-                  <Typography variant="body2" fontWeight={700} color="success.main">
-                    +{formatCurrency(relatedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0))}
-                  </Typography>
-                </Box>
-              </Box>
-            )}
-
-            {/* Tags */}
-            <TransactionTags
-              transaction={{
-                isRecurring: false,
-                frequency: undefined,
-                isVirtual: false,
-                installments: undefined,
-                currentInstallment: undefined,
-                isShared: group.isShared,
-                sharedWith: group.sharedWith,
-                type: group.type,
-                relatedTransactionId: group.relatedTransactionId,
-                isPaid: undefined,
-              }}
-              showRecurring={false}
-              showInstallments={false}
-            />
-          </Box>
-
-          {/* Footer */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-              px: 2.5,
-              py: 1.5,
-            }}
-          >
-            <Button
-              size="small"
-              onClick={(e) => { e.stopPropagation(); toggleGroup(group.key); }}
-              endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              sx={{ textTransform: "none", color: "text.secondary", fontSize: 12, p: 0, minWidth: 0, "&:hover": { background: "none", opacity: 0.75 } }}
-            >
-              {isExpanded ? "Ocultar" : `Ver ${actualInstallmentCount} parcelas`}
-            </Button>
-            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">{group.paidCount}/{actualInstallmentCount} pagas</Typography>
+            </Stack>
+          </TableCell>
+          <TableCell className="overview-cell" sx={{ ...overviewMoneyCell, color: isIncome ? incomeColor : "text.primary" }}>
+            {formatCurrency(isIncome ? group.totalAmount : -group.totalAmount)}
+            <Typography display="block" variant="caption" color="text.secondary" sx={{ display: { xs: "block", sm: "none" } }}>
+              {group.paidCount}/{actualInstallmentCount} pagas
+            </Typography>
+          </TableCell>
+          <TableCell className="overview-cell" align="right">
+            <Stack direction="row" alignItems="center" justifyContent="flex-end">
               {onUpdateInstallmentDates && (
                 <Tooltip title="Alterar vencimentos">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => { e.stopPropagation(); handleOpenDateDialog(group); }}
-                    sx={{ width: 28, height: 28, borderRadius: "8px", color: "text.secondary", "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.1), color: "primary.main" } }}
+                  <IconButton size="small" aria-label="Alterar vencimentos" onClick={(event) => { event.stopPropagation(); handleOpenDateDialog(group); }}
+                    sx={{ width: { xs: 42, sm: 30 }, height: { xs: 42, sm: 30 } }}
                   >
-                    <CalendarMonthIcon sx={{ fontSize: 15 }} />
+                    <CalendarMonthIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
               )}
-            </Box>
-          </Box>
-
-          {/* Expanded Content */}
-          <Collapse in={isExpanded}>
-            <Divider />
+              <IconButton
+                size="small" aria-label={isExpanded ? `Ocultar parcelas de ${group.description}` : `Ver ${actualInstallmentCount} parcelas de ${group.description}`}
+                aria-expanded={isExpanded} onClick={(event) => { event.stopPropagation(); openGroup(); }}
+                sx={{ width: 30, height: 30, display: { xs: "none", sm: "inline-flex" } }}
+              >
+                {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+              </IconButton>
+            </Stack>
+          </TableCell>
+        </TableRow>
+        {isExpanded && (
+          <TableRow>
+            <TableCell colSpan={isCompactTable ? 3 : 5} sx={{ p: 0, borderColor: "divider" }}>
             <Box
               sx={{
                 p: isMobile ? 2 : 2.5,
                 bgcolor: alpha(theme.palette.background.default, 0.5),
               }}
             >
+            {group.isShared && group.sharedWith && (
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                Compartilhada com {group.sharedWith}
+              </Typography>
+            )}
             {/* Tabs for shared transactions */}
             {relatedTransactions.length > 0 && (
               <Box sx={{ mb: 2 }}>
@@ -1376,9 +1256,10 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                 </>
               )}
             </Box>
-          </Collapse>
-        </Paper>
-      </Grid>
+            </TableCell>
+          </TableRow>
+        )}
+      </React.Fragment>
     );
   };
 
@@ -1386,319 +1267,84 @@ const SplitsView: React.FC<SplitsViewProps> = ({
   // MAIN RENDER
   // =============================================
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: isMobile ? 2 : 3,
-        px: { xs: 0, md: "28px" },
-        pt: { xs: 0, md: "24px" },
-        pb: { xs: "180px", md: "60px" },
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "flex-end", gap: "14px", flexWrap: "wrap" }}>
-        <Box>
-          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            Parcelas
-          </Typography>
-          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
-            Gerencie suas compras parceladas
-          </Typography>
-        </Box>
-        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onNewTransaction}
-            sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
-          >
-            {isMobile ? "Nova" : "Nova compra"}
-          </Button>
-          {onRefreshData && (
-            <Tooltip title="Atualizar">
-              <IconButton
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                sx={{ width: 38, height: 38, borderRadius: "10px", border: `1px solid`, borderColor: "divider" }}
-              >
-                <RefreshIcon
-                  sx={{
-                    fontSize: 16,
-                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
-                    "@keyframes spin": { "0%": { transform: "rotate(0deg)" }, "100%": { transform: "rotate(360deg)" } },
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
+    <Box sx={overviewPageStyles}>
+      <OverviewHeader title="Parcelas" description="Gerencie suas compras parceladas"
+        actionLabel="Nova compra" onAdd={onNewTransaction}
+        onRefresh={onRefreshData ? handleRefresh : undefined} refreshing={isRefreshing}
+      />
+      <Box sx={overviewStatGridStyles}>
+        <OverviewStatCard title="Em andamento" value={stats.inProgressCount} caption="Grupos com parcelas em aberto" icon={<ScheduleIcon fontSize="small" />} color={warningColor} />
+        <OverviewStatCard title="Concluídas" value={stats.completedCount} caption="Grupos com parcelas quitadas" icon={<CheckCircleIcon fontSize="small" />} color={incomeColor} />
+        <OverviewStatCard title="Saldo em aberto" value={formatCurrency(stats.totalRemaining)} caption="Valor das parcelas pendentes" icon={<TrendingDownIcon fontSize="small" />} color={expenseColor} />
+        <OverviewStatCard title="Total pago" value={formatCurrency(stats.totalPaid)} caption={`de ${formatCurrency(stats.totalAll)}`} icon={<PaymentsIcon fontSize="small" />} color={accent} />
       </Box>
+      <OverviewBreakdown
+        data={stats.remainingByMethod} total={stats.totalRemaining}
+        title="Distribuição do saldo em aberto"
+        description="Participação de cada método nas parcelas pendentes"
+        comparisonTitle="Parcelas em aberto por método"
+        comparisonDescription="Valores pendentes em todos os períodos (R$)"
+        emptyMessage="Sem parcelas em aberto."
+        valueLabel="Saldo em aberto"
+        renderInsight={(label, share) => <><strong>{label}</strong> concentra {share} do valor das parcelas em aberto.</>}
+      />
+      <OverviewTable
+        title="Compras parceladas" description="Acompanhe o progresso e consulte cada parcela" icon={<PaymentsIcon fontSize="small" />}
+        filters={
+          <>
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Buscar..."
+              minWidth={180}
+            />
 
-      {/* Summary Cards */}
-      <Grid container spacing={gridSpacing}>
-        {/* In Progress */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha("#f59e0b", 0.25)}`
-                : `0 4px 16px -4px ${alpha("#f59e0b", 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute", top: 14, right: 14,
-                width: 38, height: 38, borderRadius: "11px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                bgcolor: alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
-                color: "#f59e0b",
-              }}
-            >
-              <ScheduleIcon sx={{ fontSize: 20 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Em andamento
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#f59e0b", fontVariantNumeric: "tabular-nums" }}>
-              {stats.inProgressCount}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">parcelas ativas</Typography>
-          </Paper>
-        </Grid>
+            <FormControl size="small" sx={{ minWidth: 130 }}>
+              <InputLabel id="splits-filter-status">Status</InputLabel>
+              <Select
+                labelId="splits-filter-status"
+                value={filterStatus}
+                label="Status"
+                onChange={(e: SelectChangeEvent) =>
+                  setFilterStatus(e.target.value as SplitStatus)
+                }
+              >
+                <MenuItem value="all">Todos</MenuItem>
+                <MenuItem value="in_progress">Em andamento</MenuItem>
+                <MenuItem value="completed">Concluídas</MenuItem>
+              </Select>
+            </FormControl>
 
-        {/* Completed */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha("#10b981", 0.25)}`
-                : `0 4px 16px -4px ${alpha("#10b981", 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute", top: 14, right: 14,
-                width: 38, height: 38, borderRadius: "11px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12),
-                color: "#10b981",
-              }}
-            >
-              <CheckCircleIcon sx={{ fontSize: 20 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Concluídas
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981", fontVariantNumeric: "tabular-nums" }}>
-              {stats.completedCount}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">parcelas pagas</Typography>
-          </Paper>
-        </Grid>
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+              <InputLabel id="splits-filter-type">Tipo</InputLabel>
+              <Select
+                labelId="splits-filter-type"
+                value={filterType}
+                label="Tipo"
+                onChange={(e: SelectChangeEvent) =>
+                  setFilterType(e.target.value as "all" | "income" | "expense")
+                }
+              >
+                <MenuItem value="all">Todos</MenuItem>
+                <MenuItem value="income">Receita</MenuItem>
+                <MenuItem value="expense">Despesa</MenuItem>
+              </Select>
+            </FormControl>
 
-        {/* To Pay */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha("#ef4444", 0.25)}`
-                : `0 4px 16px -4px ${alpha("#ef4444", 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute", top: 14, right: 14,
-                width: 38, height: 38, borderRadius: "11px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                bgcolor: alpha("#ef4444", isDarkMode ? 0.2 : 0.12),
-                color: "#ef4444",
-              }}
-            >
-              <TrendingDownIcon sx={{ fontSize: 20 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              A pagar
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-              {formatCurrency(stats.totalRemaining)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">restante</Typography>
-          </Paper>
-        </Grid>
-
-        {/* Total Paid */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: "relative",
-              overflow: "hidden",
-              p: isMobile ? "14px" : "18px",
-              borderRadius: "14px",
-              background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-              border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-              boxShadow: isDarkMode
-                ? `0 4px 16px -4px ${alpha("#a855f7", 0.25)}`
-                : `0 4px 16px -4px ${alpha("#a855f7", 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": { transform: "translateY(-2px)" },
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute", top: 14, right: 14,
-                width: 38, height: 38, borderRadius: "11px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12),
-                color: "#a855f7",
-              }}
-            >
-              <CheckCircleIcon sx={{ fontSize: 20 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-              Total pago
-            </Typography>
-            <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-              {formatCurrency(stats.totalPaid)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">de {formatCurrency(stats.totalAll)}</Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* Filters */}
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: "16px",
-          overflow: "hidden",
-          bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.7)
-            : alpha("#FFFFFF", 0.9),
-          backdropFilter: "blur(20px)",
-          border: `1px solid ${
-            isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-          }`,
-          p: 2,
-          display: "flex",
-          flexDirection: isMobile ? "column" : "row",
-          flexWrap: "wrap",
-          gap: 2,
-          alignItems: isMobile ? "stretch" : "center",
-        }}
-      >
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Buscar..."
-          minWidth={180}
-        />
-
-        <Box
-          sx={{
-            display: "flex",
-            gap: 1.5,
-            flexWrap: "wrap",
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={filterStatus}
-              label="Status"
-              onChange={(e: SelectChangeEvent) =>
-                setFilterStatus(e.target.value as SplitStatus)
-              }
-            >
-              <MenuItem value="all">Todos</MenuItem>
-              <MenuItem value="in_progress">Em andamento</MenuItem>
-              <MenuItem value="completed">Concluídas</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 100 }}>
-            <InputLabel>Tipo</InputLabel>
-            <Select
-              value={filterType}
-              label="Tipo"
-              onChange={(e: SelectChangeEvent) =>
-                setFilterType(e.target.value as "all" | "income" | "expense")
-              }
-            >
-              <MenuItem value="all">Todos</MenuItem>
-              <MenuItem value="income">Receita</MenuItem>
-              <MenuItem value="expense">Despesa</MenuItem>
-            </Select>
-          </FormControl>
-
-        </Box>
-      </Paper>
-
-      {/* Installment Groups */}
-      {filteredGroups.length > 0 ? (
-        filteredGroups.length > SPLITS_VIRTUALIZE_THRESHOLD ? (
-          <Box ref={splitsListRef} sx={{ maxHeight: "70vh", overflow: "auto" }}>
-            <Box sx={{ height: splitsVirtualizer.getTotalSize(), position: "relative" }}>
-              {splitsVirtualizer.getVirtualItems().map((virtualRow) => (
-                <Box
-                  key={filteredGroups[virtualRow.index].key}
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    transform: `translateY(${virtualRow.start}px)`,
-                    pb: 2,
-                  }}
-                >
-                  {renderInstallmentCard(filteredGroups[virtualRow.index])}
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        ) : (
-        <Grid container spacing={gridSpacing}>
-          {filteredGroups.map((group) => renderInstallmentCard(group))}
-        </Grid>
-        )
-      ) : (
-        <EmptyState
-          type="recurring"
-          title="Nenhuma parcela encontrada"
-          description="Crie uma transação parcelada para gerenciá-la aqui"
-          compact
-        />
-      )}
+          </>
+        }
+        filterKey={JSON.stringify([searchTerm, filterStatus, filterType])}
+        rows={filteredGroups}
+        emptyMessage="Nenhuma parcela encontrada."
+        columns={[
+          { title: "Compra", sortBy: (group) => group.description },
+          { title: "Período", desktopOnly: true, sortBy: (group) => group.startDate },
+          { title: "Progresso", desktopOnly: true, sortBy: (group) => group.paidCount / group.installments.length },
+          { title: "Valor total", sortBy: (group) => group.type === "income" ? group.totalAmount : -group.totalAmount },
+          { title: "Ações" },
+        ]}
+        renderRow={renderInstallmentRow}
+      />
 
       {/* Mobile Action Menu */}
       <Menu

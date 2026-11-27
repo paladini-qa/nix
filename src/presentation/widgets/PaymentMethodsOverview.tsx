@@ -1,22 +1,19 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import {
   Box, ButtonBase, IconButton, Menu, MenuItem, Paper, Stack, Table, TableBody,
-  TableCell, TableFooter, TableHead, TableRow, TableSortLabel, Typography, alpha, useMediaQuery, useTheme,
+  TableCell, TableFooter, TableHead, TableRow, TableSortLabel, Typography, alpha, useTheme,
 } from "@mui/material";
 import {
-  ArrowRight, CalendarCheck, ChevronRight, CreditCard, Info, Layers, MoreHorizontal,
+  ArrowRight, CalendarCheck, ChevronRight, CreditCard, Layers, MoreHorizontal,
   TrendingDown, TriangleAlert,
 } from "lucide-react";
-import {
-  Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart,
-  Tooltip, XAxis, YAxis,
-} from "recharts";
 import type { ColorConfig, PaymentMethodConfig } from "@/domain/entities";
 import NixButton from "@/presentation/components/radix/Button";
 import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
 import { paymentMethodLabel } from "@/shared/i18n/labels";
 import { orbitColors } from "@/shared/theme/colors";
-import { formatCompactCurrency, formatCurrency } from "@/shared/utils/formatters";
+import { formatCurrency } from "@/shared/utils/formatters";
+import { OverviewBreakdown, OverviewStatCard, getOverviewChartColors, overviewPanelStyles, overviewStatGridStyles } from "./FinancialOverview";
 
 export interface PaymentMethodSummary {
   name: string;
@@ -39,17 +36,8 @@ interface PaymentMethodsOverviewProps {
 }
 
 const formatShare = new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 1 });
-const formatAxis = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
 const collator = new Intl.Collator("pt-BR", { sensitivity: "base" });
 
-const panelStyles = {
-  border: "1px solid",
-  borderColor: "divider",
-  borderRadius: "var(--radius-card)",
-  bgcolor: "background.paper",
-};
-
-const chartSize = { width: "100%", height: "100%" };
 const mobileHidden = { display: { xs: "none", sm: "table-cell" } };
 
 type SortKey = "label" | "totalExpense" | "share" | "expenseCount";
@@ -77,51 +65,13 @@ function ShareBar({ value, color }: { value: number; color: string }) {
   );
 }
 
-function StatCard({ title, value, caption, icon, color, valueColor = color }: {
-  title: string;
-  value: string | number;
-  caption: string;
-  icon: ReactNode;
-  color: string;
-  valueColor?: string;
-}) {
-  return (
-    <Paper elevation={0} sx={{ ...panelStyles, p: 1.5, position: "relative", minWidth: 0 }}>
-      <Box sx={{
-        position: "absolute", top: { xs: 10, md: 13 }, right: { xs: 10, md: 13 },
-        display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: 2,
-        color, bgcolor: alpha(color, 0.14),
-      }}>
-        {icon}
-      </Box>
-      <Typography sx={{
-        fontSize: 10, fontWeight: 750, letterSpacing: "0.045em", textTransform: "uppercase",
-        pr: 3.75, minHeight: 25, display: "flex", alignItems: "center",
-      }}>
-        {title}
-      </Typography>
-      <Typography sx={{
-        fontSize: { xs: 19, sm: 22, md: 25 }, fontWeight: 750, lineHeight: 1.12, color: valueColor,
-        fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere",
-      }}>
-        {value}
-      </Typography>
-      <Typography sx={{ mt: 0.5, color: "text.secondary", fontSize: 12 }}>{caption}</Typography>
-    </Paper>
-  );
-}
-
 export default function PaymentMethodsOverview({
   methods, getConfig, getColors, onSelect, onEdit, onRemove, onPayAll,
 }: PaymentMethodsOverviewProps) {
-  const { palette, breakpoints } = useTheme();
-  const compactChart = useMediaQuery(breakpoints.down("sm"));
+  const { palette } = useTheme();
   const dark = palette.mode === "dark";
   const accent = dark ? orbitColors.lavender : palette.primary.dark;
-  const paletteBySpend = [
-    orbitColors.primary, palette.info.dark, palette.info.light, orbitColors.lavender,
-    palette.success.dark, palette.warning.dark, palette.error.main,
-  ];
+  const paletteBySpend = getOverviewChartColors(palette);
   const [sort, setSort] = useState<{ key: SortKey; direction: "asc" | "desc" }>({
     key: "totalExpense", direction: "desc",
   });
@@ -151,8 +101,6 @@ export default function PaymentMethodsOverview({
     const order = key === "label" ? collator.compare(a.label, b.label) : a[key] - b[key];
     return order * (sort.direction === "asc" ? 1 : -1) || collator.compare(a.label, b.label);
   });
-  const spending = ranked.filter((method) => method.totalExpense > 0);
-  const leader = spending[0];
   const selected = actionMenu && methods.find((method) => method.name === actionMenu.name);
   const selectedConfig = selected && getConfig(selected.name);
   const menuAction = (action: () => void) => {
@@ -162,103 +110,26 @@ export default function PaymentMethodsOverview({
 
   return (
     <>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" }, gap: { xs: 1, md: 2.5 } }}>
-        <StatCard title="Métodos ativos" value={totals.active} caption={`de ${methods.length} cadastrados`} icon={<CreditCard size={16} />} color={accent} />
-        <StatCard title="Total de despesas" value={formatCurrency(totals.spend)} caption={`${totals.count} ${totals.count === 1 ? "transação" : "transações"}`} icon={<TrendingDown size={16} />} color={dark ? palette.error.main : palette.error.dark} />
-        <StatCard title="Cobranças pendentes" value={totals.pending} caption="despesas em aberto" icon={<TriangleAlert size={16} />} color={dark ? palette.warning.main : palette.warning.dark} valueColor={palette.text.primary} />
-        <StatCard title="Total a pagar" value={formatCurrency(totals.toPay)} caption="no período" icon={<CalendarCheck size={16} />} color={dark ? palette.success.main : palette.success.dark} />
+      <Box sx={overviewStatGridStyles}>
+        <OverviewStatCard title="Métodos ativos" value={totals.active} caption={`de ${methods.length} cadastrados`} icon={<CreditCard size={16} />} color={accent} />
+        <OverviewStatCard title="Total de despesas" value={formatCurrency(totals.spend)} caption={`${totals.count} ${totals.count === 1 ? "transação" : "transações"}`} icon={<TrendingDown size={16} />} color={dark ? palette.error.main : palette.error.dark} />
+        <OverviewStatCard title="Cobranças pendentes" value={totals.pending} caption="despesas em aberto" icon={<TriangleAlert size={16} />} color={dark ? palette.warning.main : palette.warning.dark} valueColor={palette.text.primary} />
+        <OverviewStatCard title="Total a pagar" value={formatCurrency(totals.toPay)} caption="no período" icon={<CalendarCheck size={16} />} color={dark ? palette.success.main : palette.success.dark} />
       </Box>
 
-      <Paper component="section" aria-labelledby="payment-spending-title" elevation={0} sx={{ ...panelStyles, p: { xs: 1.75, md: 2.5 }, borderColor: alpha(orbitColors.primary, 0.46) }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" }, gap: { xs: 2.5, md: 3 } }}>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography id="payment-spending-title" component="h2" fontSize={17} fontWeight={750}>Distribuição dos gastos</Typography>
-            <Typography variant="body2" color="text.secondary">Participação de cada método no total de despesas do mês</Typography>
-            {leader ? (
-              <Box sx={{
-                display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(130px, 0.85fr) minmax(0, 1fr)" },
-                alignItems: "center", gap: 1.5, mt: 1,
-              }}>
-                <Box sx={{ height: { xs: 172, sm: 204, xl: 221 }, position: "relative", minWidth: 0 }}>
-                  <PieChart responsive style={chartSize} accessibilityLayer={false}>
-                    <Pie data={spending} dataKey="totalExpense" nameKey="label" innerRadius="70%" outerRadius="97%" stroke="none" isAnimationActive={false}>
-                      {spending.map((method) => <Cell key={method.name} fill={method.color} />)}
-                    </Pie>
-                  </PieChart>
-                  <Box sx={{ position: "absolute", inset: 0, display: "grid", placeContent: "center", textAlign: "center", pointerEvents: "none" }}>
-                    <Typography sx={{ fontSize: { xs: 16, xl: 21 }, fontWeight: 750, letterSpacing: "-0.03em" }}>{formatCurrency(totals.spend)}</Typography>
-                    <Typography variant="caption" color="text.secondary">Total</Typography>
-                  </Box>
-                </Box>
-                <Box component="ul" sx={{ m: 0, p: 0, listStyle: "none", maxHeight: { xs: 196, xl: 221 }, overflowY: "auto" }}>
-                  {spending.map((method) => (
-                    <Box component="li" key={method.name} sx={{
-                      display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto 46px", gap: 1,
-                      alignItems: "center", py: 0.9, fontSize: 13,
-                      "&:not(:last-of-type)": { borderBottom: "1px solid", borderColor: "divider" },
-                    }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
-                        <Box aria-hidden="true" sx={{ width: 11, height: 11, borderRadius: "50%", flexShrink: 0, bgcolor: method.color }} />
-                        <Box component="span" title={method.label} sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{method.label}</Box>
-                      </Box>
-                      <Box component="span" sx={{ whiteSpace: "nowrap" }}>{formatCurrency(method.totalExpense)}</Box>
-                      <Box component="span" sx={{ textAlign: "right", color: "text.secondary", whiteSpace: "nowrap" }}>{formatShare.format(method.share)}</Box>
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-            ) : (
-              <Box sx={{ minHeight: 135, display: "grid", placeItems: "center", textAlign: "center" }}>
-                <Typography variant="body2" color="text.secondary">Sem despesas com os métodos cadastrados no período.</Typography>
-              </Box>
-            )}
-          </Box>
+      <OverviewBreakdown
+        data={ranked.map(({ name, label, totalExpense, color }) => ({ id: name, label, value: totalExpense, color }))}
+        total={totals.spend}
+        title="Distribuição dos gastos"
+        description="Participação de cada método no total de despesas do mês"
+        comparisonTitle="Gastos por método"
+        comparisonDescription="Comparativo de despesas no período (R$)"
+        emptyMessage="Sem despesas com os métodos cadastrados no período."
+        valueLabel="Total gasto"
+        renderInsight={(label, share) => <><strong>{label}</strong> representa a maior fatia dos gastos do mês ({share}).</>}
+      />
 
-          {leader && (
-            <Box sx={{ minWidth: 0, pl: { lg: 3 }, borderLeft: { lg: "1px solid" }, borderColor: { lg: "divider" } }}>
-              <Typography component="h2" fontSize={17} fontWeight={750}>Gastos por método</Typography>
-              <Typography variant="body2" color="text.secondary">Comparativo de despesas no período (R$)</Typography>
-              <Box sx={{ mt: 1, overflowX: "auto" }}>
-                <Box sx={{ height: { xs: 196, xl: 221 }, minWidth: 49 + spending.length * (compactChart ? 52 : 96) }}>
-                  <BarChart responsive style={chartSize} data={spending} margin={{ top: 20, right: 4, bottom: 1, left: 0 }} accessibilityLayer title="Gastos por método">
-                    <CartesianGrid vertical={false} stroke={palette.divider} strokeDasharray="3 4" />
-                    <XAxis
-                      dataKey="label" tickLine={false} axisLine={{ stroke: palette.divider }} interval={0}
-                      tick={{ fontSize: 11, fill: palette.text.secondary }}
-                      tickFormatter={(name: string) => name.length > (compactChart ? 8 : 12) ? `${name.slice(0, compactChart ? 7 : 11)}…` : name}
-                    />
-                    <YAxis width={49} tickCount={5} tickLine={false} axisLine={{ stroke: palette.divider }}
-                      tick={{ fontSize: 11, fill: palette.text.secondary }} tickFormatter={(n: number) => formatAxis.format(n)}
-                    />
-                    <Tooltip formatter={(value) => [formatCurrency(Number(value)), "Total gasto"]} cursor={{ fill: palette.action.hover }} contentStyle={{ background: palette.background.paper, borderColor: palette.divider, color: palette.text.primary }} />
-                    <Bar dataKey="totalExpense" maxBarSize={104} radius={[5, 5, 0, 0]} isAnimationActive={false}>
-                      {spending.map((method) => <Cell key={method.name} fill={method.color} />)}
-                      <LabelList position="top" fill={palette.text.primary} fontSize={compactChart ? 9 : 11}
-                        formatter={(value) => compactChart ? formatCompactCurrency(Number(value)) : formatCurrency(Number(value))}
-                      />
-                    </Bar>
-                  </BarChart>
-                </Box>
-              </Box>
-            </Box>
-          )}
-        </Box>
-
-        {leader && (
-          <Box sx={{
-            display: "flex", alignItems: "center", gap: 1.25, mt: 2.5, px: 1.5, py: 1.1,
-            border: "1px solid", borderColor: alpha(orbitColors.primary, 0.55),
-            borderRadius: "var(--radius-button-sm)", bgcolor: alpha(orbitColors.primary, dark ? 0.18 : 0.08),
-          }}>
-            <Box sx={{ color: accent, display: "flex", flexShrink: 0 }}><Info size={19} /></Box>
-            <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>
-              <strong>{leader.label}</strong> representa a maior fatia dos gastos do mês ({formatShare.format(leader.share)}).
-            </Typography>
-          </Box>
-        )}
-      </Paper>
-
-      <Paper component="section" aria-labelledby="payment-table-title" elevation={0} sx={{ ...panelStyles, overflow: "hidden" }}>
+      <Paper component="section" aria-labelledby="payment-table-title" elevation={0} sx={{ ...overviewPanelStyles, overflow: "hidden" }}>
         <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" gap={1.5} sx={{ p: { xs: 1.5, md: 2 } }}>
           <Stack direction="row" alignItems="center" gap={1.25}>
             <Box sx={{ width: 34, height: 34, borderRadius: 2, display: "grid", placeItems: "center", color: accent, bgcolor: alpha(orbitColors.primary, 0.17), flexShrink: 0 }}>

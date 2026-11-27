@@ -1,8 +1,8 @@
 import { Box, Skeleton } from "@mui/material";
 
-export default function PaymentMethodsSkeleton() {
+export default function FinancialOverviewSkeleton({ label }: { label: string }) {
   return (
-    <Box role="status" aria-label="Carregando métodos de pagamento" sx={{ px: { xs: 0, md: 3 }, display: "grid", gap: 2 }}>
+    <Box role="status" aria-label={label} sx={{ px: { xs: 0, md: 3 }, display: "grid", gap: 2 }}>
       <Skeleton variant="text" width={245} height={42} />
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" }, gap: { xs: 1, md: 2.5 } }}>
         {[1, 2, 3, 4].map((card) => (

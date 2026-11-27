@@ -13,8 +13,7 @@ import { Session } from "@supabase/supabase-js";
 
 // Skeletons
 import TransactionsSkeleton from "@/presentation/components/skeletons/TransactionsSkeleton";
-import ListCardsSkeleton from "@/presentation/components/skeletons/ListCardsSkeleton";
-import PaymentMethodsSkeleton from "@/presentation/components/skeletons/PaymentMethodsSkeleton";
+import FinancialOverviewSkeleton from "@/presentation/components/skeletons/FinancialOverviewSkeleton";
 import CategoriesSkeleton from "@/presentation/components/skeletons/CategoriesSkeleton";
 
 // Lazy views
@@ -400,7 +399,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
         );
       case "splits":
         return (
-          <Suspense fallback={<ListCardsSkeleton />}>
+          <Suspense fallback={<FinancialOverviewSkeleton label="Carregando parcelas" />}>
             <SplitsView
               transactions={transactions}
               onNewTransaction={handleNewTransaction}
@@ -419,7 +418,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
         );
       case "recurring":
         return (
-          <Suspense fallback={<ListCardsSkeleton />}>
+          <Suspense fallback={<FinancialOverviewSkeleton label="Carregando recorrentes" />}>
             <RecurringView
               transactions={transactions}
               onEditSeries={handleEdit}
@@ -470,7 +469,7 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
         );
       case "paymentMethods":
         return (
-          <Suspense fallback={<PaymentMethodsSkeleton />}>
+          <Suspense fallback={<FinancialOverviewSkeleton label="Carregando métodos de pagamento" />}>
             {selectedPaymentMethod ? (
               <PaymentMethodDetailView
                 paymentMethod={selectedPaymentMethod}

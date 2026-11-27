@@ -1,8 +1,7 @@
 import { categoryLabel } from "@/shared/i18n/labels";
 import { getRecurringOccurrenceId, getRecurringOccurrenceValue } from "@/domain/usecases/recurringUtils";
 import NixButton from "@/presentation/components/radix/Button";
-import React, { useState, useMemo, useCallback, useRef } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -16,8 +15,9 @@ import {
   useTheme,
   useMediaQuery,
   Divider,
-  Grid,
   FormControl,
+  TableCell,
+  TableRow,
   InputLabel,
   Select,
   SelectChangeEvent,
@@ -41,20 +41,19 @@ import {
   CalendarMonth as CalendarIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as UnpaidIcon,
-  Refresh as RefreshIcon,
-  AllInclusive as InfiniteIcon,
   ArrowBack as ArrowBackIcon,
-  Add as AddIcon,
 } from "@mui/icons-material";
 import SearchBar from "@/presentation/components/ui/SearchBar";
 import { Transaction } from "@/domain/entities";
-import { useLayoutSpacing } from "@/presentation/hooks";
-import EmptyState from "@/presentation/components/ui/EmptyState";
 import { useSettings } from "@/presentation/contexts";
 import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
 import PaymentMethodImagePicker from "@/presentation/components/ui/PaymentMethodImagePicker";
 import { extractDominantColor, hashColor } from "@/shared/utils/imageColorUtils";
 import { Image as ImageIcon } from "@mui/icons-material";
+import { orbitColors } from "@/shared/theme/colors";
+import { formatCurrency } from "@/shared/utils/formatters";
+import { OverviewBreakdown, OverviewHeader, OverviewStatCard, overviewPageStyles, overviewStatGridStyles } from "@/presentation/widgets/FinancialOverview";
+import { OverviewRowTitle, OverviewTable, overviewDesktopCell, overviewMoneyCell } from "@/presentation/widgets/FinancialOverviewTable";
 
 interface RecurringViewProps {
   transactions: Transaction[];
@@ -108,8 +107,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const isLargeDesktop = useMediaQuery(theme.breakpoints.up("lg"));
-  const { gridSpacing } = useLayoutSpacing();
   const { getSubscriptionImage, updateSubscriptionImage, getSubscriptionColor, updateSubscriptionColor } = useSettings();
 
   const [imgPickerOpen, setImgPickerOpen] = useState(false);
@@ -123,7 +120,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     "all" | "monthly" | "yearly"
   >("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedRecurringId, setSelectedRecurringId] = useState<string | null>(null);
 
@@ -300,28 +296,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     relatedTransactionIds,
   ]);
 
-  // Virtualização do grid de cards para listas longas
-  const RECURRING_VIRTUALIZE_THRESHOLD = 20;
-  const cols = isMobile ? 1 : isLargeDesktop ? 3 : 2;
-  const shouldVirtualize = recurringTransactions.length > RECURRING_VIRTUALIZE_THRESHOLD;
-
-  const virtualGridRows = useMemo(() => {
-    if (!shouldVirtualize) return [];
-    const rows: Transaction[][] = [];
-    for (let i = 0; i < recurringTransactions.length; i += cols) {
-      rows.push(recurringTransactions.slice(i, i + cols));
-    }
-    return rows;
-  }, [recurringTransactions, cols, shouldVirtualize]);
-
-  const listParentRef = useRef<HTMLDivElement>(null);
-  const rowVirtualizer = useVirtualizer({
-    count: virtualGridRows.length,
-    getScrollElement: () => listParentRef.current,
-    estimateSize: () => 220,
-    overscan: 2,
-  });
-
   // Estatísticas
   const stats = useMemo(() => {
     const recurring = transactions.filter((t) => t.isRecurring && !t.isVirtual);
@@ -341,7 +315,16 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     const annualizedIncome = monthlyIncome * 12 + yearlyOnlyIncome;
     const annualizedExpense = monthlyExpense * 12 + yearlyOnlyExpense;
 
+    const categoryExpenses = new Map<string, number>();
+    for (const transaction of recurring) {
+      if (transaction.type !== "expense") continue;
+      const multiplier = transaction.frequency === "monthly" ? 12 : transaction.frequency === "yearly" ? 1 : 0;
+      const category = categoryLabel(transaction.category);
+      categoryExpenses.set(category, (categoryExpenses.get(category) ?? 0) + (transaction.amount || 0) * multiplier);
+    }
+
     return {
+      categoryExpenses: Array.from(categoryExpenses, ([label, value]) => ({ label, value })),
       total: recurring.length,
       monthlyIncome,
       monthlyExpense,
@@ -359,26 +342,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     return new Date(year, month - 1, day);
   };
 
-  const calculateOccurrences = (transaction: Transaction): number => {
-    const startDate = parseLocalDate(transaction.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (startDate > today) return 0;
-
-    const monthsDiff =
-      (today.getFullYear() - startDate.getFullYear()) * 12 +
-      (today.getMonth() - startDate.getMonth());
-
-    if (transaction.frequency === "monthly") {
-      return Math.max(1, monthsDiff + 1);
-    } else if (transaction.frequency === "yearly") {
-      return Math.max(1, today.getFullYear() - startDate.getFullYear() + 1);
-    }
-    return 1;
-  };
-
-  const getNextOccurrence = (transaction: Transaction): string => {
+  const getNextOccurrence = (transaction: Transaction): Date => {
     const startDate = parseLocalDate(transaction.date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -394,10 +358,7 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       }
     }
 
-    return nextDate.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "short",
-    });
+    return nextDate;
   };
 
   // Gera lista de ocorrências futuras (12 meses/anos)
@@ -677,31 +638,12 @@ const RecurringView: React.FC<RecurringViewProps> = ({
     return occurrences;
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
-
   const formatDate = (dateString: string) => {
     const date = parseLocalDate(dateString);
     return date.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "short",
       year: "numeric",
-    });
-  };
-
-  const toggleExpand = (id: string) => {
-    setExpandedItems((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
     });
   };
 
@@ -729,321 +671,6 @@ const RecurringView: React.FC<RecurringViewProps> = ({
       transaction: null,
       occurrence: null,
     });
-  };
-
-  // =============================================
-  // CARD
-  // =============================================
-  const renderRecurringCard = (t: Transaction) => {
-    const isIncome = t.type === "income";
-    const savedColor = getSubscriptionColor(t.description);
-    const palette = savedColor ?? hashColor(t.description);
-
-    return (
-      <Grid key={t.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-        {isMobile ? (
-          <Paper
-            elevation={0}
-            onClick={() => setSelectedRecurringId(t.id)}
-            sx={{
-              p: 1.25,
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              borderRadius: "12px",
-              cursor: "pointer",
-              background: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.7)
-                : alpha("#fff", 0.95),
-              border: `1px solid ${alpha(palette.primary, isDarkMode ? 0.35 : 0.15)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": {
-                border: `1px solid ${alpha(palette.primary, 0.5)}`,
-              },
-            }}
-          >
-            {/* Left: Icon */}
-            <Box
-              sx={{ position: "relative", cursor: "pointer", flexShrink: 0 }}
-              onClick={(e) => { e.stopPropagation(); setImgPickerTarget(t.description); setImgPickerOpen(true); }}
-            >
-              <PaymentMethodIcon
-                imageUrl={getSubscriptionImage(t.description)}
-                colors={palette}
-                size={34}
-                borderRadius="8px"
-                iconSize={16}
-              />
-              <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, borderRadius: "8px", bgcolor: "rgba(0,0,0,0.35)", transition: "opacity 0.15s", "&:hover": { opacity: 1 } }}>
-                <ImageIcon sx={{ color: "#fff", fontSize: 12 }} />
-              </Box>
-            </Box>
-
-            {/* Middle: Title, Category, Next Occurrence */}
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography
-                  fontWeight={700}
-                  sx={{
-                    fontSize: 13.5,
-                    lineHeight: 1.2,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {t.description}
-                </Typography>
-                <Chip
-                  label={t.frequency === "monthly" ? "M" : "Y"}
-                  size="small"
-                  sx={{
-                    height: 16,
-                    fontSize: 9,
-                    fontWeight: 700,
-                    borderRadius: "4px",
-                    bgcolor: alpha(palette.primary, isDarkMode ? 0.2 : 0.1),
-                    color: palette.primary,
-                    "& .MuiChip-label": { px: 0.75 },
-                  }}
-                />
-              </Box>
-              <Typography sx={{ fontSize: 10, fontWeight: 500, color: "text.secondary", mt: 0.25 }}>
-                {categoryLabel(t.category)}
-              </Typography>
-              <Typography sx={{ fontSize: 10, color: "text.disabled", mt: 0.25 }}>
-                Próxima: {getNextOccurrence(t)}
-              </Typography>
-            </Box>
-
-            {/* Right: Amount & Status/Actions */}
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0, gap: 0.5 }}>
-              <Typography
-                sx={{
-                  fontSize: 14.5,
-                  fontWeight: 800,
-                  letterSpacing: "-0.01em",
-                  color: isIncome ? "#10b981" : "text.primary",
-                }}
-              >
-                {isIncome ? "+" : ""}{formatCurrency(t.amount || 0)}
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <Chip
-                  label={t.isPaid ? "Pago" : "Pend"}
-                  size="small"
-                  onClick={(e) => { e.stopPropagation(); onTogglePaid(t.id, !t.isPaid); }}
-                  sx={{
-                    height: 18,
-                    fontSize: 9.5,
-                    fontWeight: 700,
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    border: "none",
-                    bgcolor: t.isPaid
-                      ? alpha("#10b981", isDarkMode ? 0.2 : 0.12)
-                      : alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
-                    color: t.isPaid ? "#10b981" : "#f59e0b",
-                    "& .MuiChip-label": { px: 0.75 },
-                    "&:hover": { opacity: 0.8 },
-                  }}
-                />
-
-                <IconButton
-                  size="small"
-                  onClick={(e) => { e.stopPropagation(); onEditSeries(t); }}
-                  sx={{ width: 22, height: 22, color: "text.secondary", p: 0 }}
-                >
-                  <EditIcon sx={{ fontSize: 12 }} />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={(e) => { e.stopPropagation(); openDeleteOptions(t); }}
-                  sx={{ width: 22, height: 22, color: "text.secondary", p: 0 }}
-                >
-                  <DeleteIcon sx={{ fontSize: 12 }} />
-                </IconButton>
-              </Box>
-            </Box>
-          </Paper>
-        ) : (
-          <Paper
-            elevation={0}
-            onClick={() => setSelectedRecurringId(t.id)}
-            sx={{
-              p: 2.5,
-              display: "flex",
-              flexDirection: "column",
-              height: "100%",
-              borderRadius: "16px",
-              cursor: "pointer",
-              background: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.7)
-                : alpha("#fff", 0.95),
-              border: `1.5px solid ${alpha(palette.primary, isDarkMode ? 0.45 : 0.25)}`,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": {
-                transform: "translateY(-3px)",
-                boxShadow: `0 10px 28px -6px ${alpha(palette.primary, 0.3)}`,
-                border: `1.5px solid ${alpha(palette.primary, 0.65)}`,
-              },
-            }}
-          >
-            {/* Header */}
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
-                <Box
-                  sx={{ position: "relative", cursor: "pointer", flexShrink: 0 }}
-                  onClick={(e) => { e.stopPropagation(); setImgPickerTarget(t.description); setImgPickerOpen(true); }}
-                >
-                  <PaymentMethodIcon
-                    imageUrl={getSubscriptionImage(t.description)}
-                    colors={palette}
-                    size={36}
-                    borderRadius="10px"
-                    iconSize={18}
-                  />
-                  <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, borderRadius: "10px", bgcolor: "rgba(0,0,0,0.35)", transition: "opacity 0.15s", "&:hover": { opacity: 1 } }}>
-                    <ImageIcon sx={{ color: "#fff", fontSize: 14 }} />
-                  </Box>
-                </Box>
-                <Tooltip title={t.description}>
-                  <Typography
-                    fontWeight={700}
-                    sx={{
-                      fontSize: 14,
-                      lineHeight: 1.2,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {t.description}
-                  </Typography>
-                </Tooltip>
-              </Box>
-              <Chip
-                label={t.frequency === "monthly" ? "Mensal" : "Anual"}
-                size="small"
-                sx={{
-                  height: 22,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  borderRadius: "8px",
-                  flexShrink: 0,
-                  ml: 1,
-                  bgcolor: alpha(palette.primary, isDarkMode ? 0.2 : 0.1),
-                  color: palette.primary,
-                  "& .MuiChip-label": { px: 1.25 },
-                }}
-              />
-            </Box>
-
-            {/* Amount section */}
-            <Box sx={{ mb: 1.5, flex: 1 }}>
-              <Typography
-                sx={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "text.disabled",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  mb: 0.5,
-                }}
-              >
-                {categoryLabel(t.category)}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: 20,
-                  fontWeight: 800,
-                  letterSpacing: "-0.02em",
-                  lineHeight: 1.15,
-                  color: isIncome ? "#10b981" : "text.primary",
-                }}
-              >
-                {isIncome ? "+" : ""}{formatCurrency(t.amount || 0)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                Próxima: {getNextOccurrence(t)} · {calculateOccurrences(t)} ocorrências
-              </Typography>
-            </Box>
-
-            {/* Footer */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                pt: 1.5,
-              }}
-            >
-              {/* Paid/Pending chip */}
-              <Chip
-                label={t.isPaid ? "Pago" : "Pendente"}
-                size="small"
-                onClick={(e) => { e.stopPropagation(); onTogglePaid(t.id, !t.isPaid); }}
-                sx={{
-                  height: 24,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  border: "none",
-                  bgcolor: t.isPaid
-                    ? alpha("#10b981", isDarkMode ? 0.2 : 0.12)
-                    : alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
-                  color: t.isPaid ? "#10b981" : "#f59e0b",
-                  "& .MuiChip-label": { px: 1.25 },
-                  "&:hover": { opacity: 0.8 },
-                }}
-              />
-
-              {/* Edit + Delete */}
-              <Box sx={{ display: "flex", gap: 0.5 }}>
-                <Tooltip title="Editar série">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => { e.stopPropagation(); onEditSeries(t); }}
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "8px",
-                      color: "text.secondary",
-                      "&:hover": {
-                        bgcolor: alpha(theme.palette.primary.main, 0.1),
-                        color: "primary.main",
-                      },
-                    }}
-                  >
-                    <EditIcon sx={{ fontSize: 15 }} />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Excluir">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => { e.stopPropagation(); openDeleteOptions(t); }}
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "8px",
-                      color: "text.secondary",
-                      "&:hover": {
-                        bgcolor: alpha(theme.palette.error.main, 0.1),
-                        color: "error.main",
-                      },
-                    }}
-                  >
-                    <DeleteIcon sx={{ fontSize: 15 }} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </Box>
-          </Paper>
-        )}
-      </Grid>
-    );
   };
 
   // =============================================
@@ -1333,510 +960,149 @@ const RecurringView: React.FC<RecurringViewProps> = ({
   // =============================================
   // MAIN RENDER
   // =============================================
+  const { palette } = theme;
+  const accent = isDarkMode ? orbitColors.lavender : palette.primary.dark;
+  const expenseColor = isDarkMode ? palette.error.main : palette.error.dark;
+  const incomeColor = isDarkMode ? palette.success.main : palette.success.dark;
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: isMobile ? 2 : 3,
-        px: { xs: 0, md: "28px" },
-        pt: { xs: 0, md: "24px" },
-        pb: { xs: "180px", md: "60px" },
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "flex-end", gap: "14px", flexWrap: "wrap" }}>
-        <Box>
-          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            Recorrentes
-          </Typography>
-          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
-            Receitas e despesas que se repetem a cada ciclo
-          </Typography>
-        </Box>
-        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onNewTransaction}
-            sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
-          >
-            Nova recorrência
-          </Button>
-          {onRefreshData && (
-            <Tooltip title="Atualizar">
-              <IconButton
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                sx={{
-                  width: 38, height: 38,
-                  borderRadius: "10px",
-                  border: `1px solid`,
-                  borderColor: "divider",
-                }}
-              >
-                <RefreshIcon
-                  sx={{
-                    fontSize: 16,
-                    animation: isRefreshing ? "spin 1s linear infinite" : "none",
-                    "@keyframes spin": { "0%": { transform: "rotate(0deg)" }, "100%": { transform: "rotate(360deg)" } },
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
+    <Box sx={overviewPageStyles}>
+      <OverviewHeader title="Recorrentes" description="Receitas e despesas que se repetem a cada ciclo"
+        actionLabel="Nova recorrência" onAdd={onNewTransaction}
+        onRefresh={onRefreshData ? handleRefresh : undefined} refreshing={isRefreshing}
+      />
+      <Box sx={overviewStatGridStyles}>
+        <OverviewStatCard title="Recorrências" value={stats.total} caption={`${stats.incomeCount} ${stats.incomeCount === 1 ? "receita" : "receitas"} · ${stats.expenseCount} ${stats.expenseCount === 1 ? "despesa" : "despesas"}`} icon={<RepeatIcon fontSize="small" />} color={accent} />
+        <OverviewStatCard title="Despesas mensais" value={formatCurrency(stats.monthlyExpense)} caption="Recorrências mensais" icon={<TrendingDownIcon fontSize="small" />} color={expenseColor} />
+        <OverviewStatCard title="Saldo mensal estimado" value={formatCurrency(stats.monthlyBalance)} caption={`Entradas de ${formatCurrency(stats.monthlyIncome)}`} icon={<TrendingUpIcon fontSize="small" />} color={stats.monthlyBalance >= 0 ? incomeColor : expenseColor} />
+        <OverviewStatCard title="Saldo anual estimado" value={formatCurrency(stats.annualizedBalance)} caption={`Entradas de ${formatCurrency(stats.annualizedIncome)}`} icon={<CalendarIcon fontSize="small" />} color={stats.annualizedBalance >= 0 ? incomeColor : expenseColor} />
       </Box>
+      <OverviewBreakdown
+        data={stats.categoryExpenses} total={stats.annualizedExpense}
+        title="Distribuição das despesas recorrentes"
+        description="Projeção anual dos gastos que se repetem"
+        comparisonTitle="Despesas por categoria"
+        comparisonDescription="Valores mensais × 12, mais os valores anuais (R$)"
+        emptyMessage="Sem despesas recorrentes para projetar."
+        valueLabel="Despesa anual estimada"
+        renderInsight={(label, share) => <><strong>{label}</strong> concentra {share} das despesas recorrentes estimadas no ano.</>}
+      />
+      <OverviewTable
+        title="Transações recorrentes" description="Abra uma série para consultar suas ocorrências" icon={<RepeatIcon fontSize="small" />}
+        filters={
+          <>
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Buscar..."
+              minWidth={180}
+            />
 
-      {isMobile ? (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2.25,
-            position: "relative",
-            overflow: "hidden",
-            background: isDarkMode
-              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.75)} 100%)`
-              : `linear-gradient(135deg, ${alpha("#ffffff", 0.95)} 0%, ${alpha("#f8fafc", 0.95)} 100%)`,
-            backdropFilter: "blur(12px)",
-            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-            borderRadius: "20px",
-            boxShadow: isDarkMode
-              ? "0 4px 20px -4px rgba(0,0,0,0.3)"
-              : `0 4px 20px -4px ${alpha(stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", 0.15)}`,
-          }}
-        >
-          {/* Saldo Mensal */}
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Box>
-              <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Saldo mensal estimado
-              </Typography>
-              <Typography sx={{ fontSize: 28, fontWeight: 800, color: stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
-                {stats.monthlyBalance >= 0 ? "+" : ""}{formatCurrency(stats.monthlyBalance)}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                width: 42,
-                height: 42,
-                borderRadius: "12px",
-                display: "grid",
-                placeItems: "center",
-                bgcolor: alpha(stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", 0.12),
-                color: stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444",
-              }}
-            >
-              <RepeatIcon sx={{ fontSize: 22 }} />
-            </Box>
-          </Box>
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+              <InputLabel id="recurring-filter-type">Tipo</InputLabel>
+              <Select
+                labelId="recurring-filter-type"
+                value={filterType}
+                label="Tipo"
+                onChange={(e: SelectChangeEvent) =>
+                  setFilterType(e.target.value as "all" | "income" | "expense")
+                }
+              >
+                <MenuItem value="all">Todos</MenuItem>
+                <MenuItem value="income">Receita</MenuItem>
+                <MenuItem value="expense">Despesa</MenuItem>
+              </Select>
+            </FormControl>
 
-          <Divider sx={{ borderStyle: "dashed", my: 1.75, opacity: 0.6 }} />
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <InputLabel id="recurring-filter-frequency">Frequência</InputLabel>
+              <Select
+                labelId="recurring-filter-frequency"
+                value={filterFrequency}
+                label="Frequência"
+                onChange={(e: SelectChangeEvent) =>
+                  setFilterFrequency(
+                    e.target.value as "all" | "monthly" | "yearly"
+                  )
+                }
+              >
+                <MenuItem value="all">Todos</MenuItem>
+                <MenuItem value="monthly">Mensal</MenuItem>
+                <MenuItem value="yearly">Anual</MenuItem>
+              </Select>
+            </FormControl>
 
-          {/* Breakdown Section */}
-          <Grid container spacing={2}>
-            {/* Fluxo Mensal */}
-            <Grid size={{ xs: 4 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: alpha("#10b981", 0.1),
-                    color: "#10b981",
-                    flexShrink: 0,
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel id="recurring-filter-category">Categoria</InputLabel>
+              <Select
+                labelId="recurring-filter-category"
+                value={filterCategory}
+                label="Categoria"
+                onChange={(e: SelectChangeEvent) =>
+                  setFilterCategory(e.target.value)
+                }
+              >
+                <MenuItem value="all">Todos</MenuItem>
+                {allCategories.map((category) => (
+                  <MenuItem key={category} value={category}>
+                    {categoryLabel(category)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </>
+        }
+        filterKey={JSON.stringify([searchTerm, filterType, filterFrequency, filterCategory])}
+        rows={recurringTransactions}
+        emptyMessage="Nenhuma transação recorrente encontrada."
+        columns={[
+          { title: "Transação", sortBy: (transaction) => transaction.description },
+          { title: "Frequência", desktopOnly: true, sortBy: (transaction) => transaction.frequency ?? "" },
+          { title: "Próxima", desktopOnly: true, sortBy: (transaction) => getNextOccurrence(transaction).getTime() },
+          { title: "Valor", sortBy: (transaction) => transaction.type === "income" ? transaction.amount : -transaction.amount },
+          { title: "Ações" },
+        ]}
+        renderRow={(transaction, index) => {
+          const isIncome = transaction.type === "income";
+          const frequency = transaction.frequency === "monthly" ? "Mensal" : transaction.frequency === "yearly" ? "Anual" : "—";
+          const colors = getSubscriptionColor(transaction.description) ?? hashColor(transaction.description);
+          const openOccurrences = () => setSelectedRecurringId(transaction.id);
+          return (
+            <TableRow key={transaction.id} className="overview-row" data-striped={index % 2 === 1} onClick={openOccurrences} sx={{ cursor: "pointer" }}>
+              <TableCell className="overview-cell" component="th" scope="row">
+                <OverviewRowTitle
+                  title={transaction.description}
+                  subtitle={categoryLabel(transaction.category)}
+                  mobileDetail={frequency}
+                  icon={<PaymentMethodIcon imageUrl={getSubscriptionImage(transaction.description)} colors={colors} size={29} borderRadius="6px" iconSize={16} />}
+                  onClick={openOccurrences}
+                />
+              </TableCell>
+              <TableCell className="overview-cell" sx={overviewDesktopCell}>{frequency}</TableCell>
+              <TableCell className="overview-cell" sx={overviewDesktopCell}>{getNextOccurrence(transaction).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</TableCell>
+              <TableCell className="overview-cell" sx={{ ...overviewMoneyCell, color: isIncome ? incomeColor : "text.primary" }}>
+                {formatCurrency(isIncome ? transaction.amount : -transaction.amount)}
+                <Typography display="block" variant="caption" color="text.secondary">{transaction.isPaid ? "Pago" : "Pendente"}</Typography>
+              </TableCell>
+              <TableCell className="overview-cell" align="right">
+                <IconButton
+                  size="small" aria-label={`Ações de ${transaction.description}`} aria-haspopup="menu"
+                  aria-expanded={mobileMenuAnchor.transaction?.id === transaction.id}
+                  sx={{ width: { xs: 44, sm: 30 }, height: { xs: 44, sm: 30 } }}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setMobileMenuAnchor({ element: event.currentTarget, transaction });
                   }}
                 >
-                  <TrendingUpIcon sx={{ fontSize: 14 }} />
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Fluxo mensal
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "success.main", mt: 0.1, display: "block", lineHeight: 1.15 }}>
-                    +{formatCurrency(stats.monthlyIncome)}
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "error.main", display: "block" }}>
-                    -{formatCurrency(stats.monthlyExpense)}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-
-            {/* Impacto Anual */}
-            <Grid size={{ xs: 4 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: alpha("#f59e0b", 0.1),
-                    color: "#f59e0b",
-                    flexShrink: 0,
-                  }}
-                >
-                  <CalendarIcon sx={{ fontSize: 14 }} />
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Impacto anual
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
-                    {formatCurrency(stats.annualizedBalance)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
-                    (Monthly×12)+Yearly
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-
-            {/* Cadastradas */}
-            <Grid size={{ xs: 4 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: alpha("#a855f7", 0.1),
-                    color: "#a855f7",
-                    flexShrink: 0,
-                  }}
-                >
-                  <RepeatIcon sx={{ fontSize: 14 }} />
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Transações
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
-                    {stats.total} total
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem" }}>
-                    {stats.incomeCount} Rec. | {stats.expenseCount} Desp.
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
-      ) : (
-        <Grid container spacing={gridSpacing}>
-          {/* Total */}
-          <Grid size={{ xs: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                position: "relative",
-                overflow: "hidden",
-                p: isMobile ? "14px" : "18px",
-                borderRadius: "14px",
-                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-                boxShadow: isDarkMode
-                  ? `0 4px 16px -4px ${alpha("#a855f7", 0.25)}`
-                  : `0 4px 16px -4px ${alpha("#a855f7", 0.15)}`,
-                transition: "all 0.2s ease-in-out",
-                "&:hover": { transform: "translateY(-2px)" },
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute", top: 14, right: 14,
-                  width: 38, height: 38, borderRadius: "11px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12),
-                  color: "#a855f7",
-                }}
-              >
-                <RepeatIcon sx={{ fontSize: 20 }} />
-              </Box>
-              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                Total
-              </Typography>
-              <Typography sx={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7", fontVariantNumeric: "tabular-nums" }}>
-                {stats.total}
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1.5, mt: 0.5 }}>
-                <Typography variant="caption" sx={{ color: "#10b981" }}>
-                  {stats.incomeCount} income
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#ef4444" }}>
-                  {stats.expenseCount} despesas
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
-
-          {/* Mensal */}
-          <Grid size={{ xs: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                position: "relative",
-                overflow: "hidden",
-                p: isMobile ? "14px" : "18px",
-                borderRadius: "14px",
-                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-                boxShadow: isDarkMode
-                  ? `0 4px 16px -4px ${alpha(stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", 0.25)}`
-                  : `0 4px 16px -4px ${alpha(stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", 0.15)}`,
-                transition: "all 0.2s ease-in-out",
-                "&:hover": { transform: "translateY(-2px)" },
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute", top: 14, right: 14,
-                  width: 38, height: 38, borderRadius: "11px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  bgcolor: alpha("#10b981", isDarkMode ? 0.2 : 0.12),
-                  color: "#10b981",
-                }}
-              >
-                <TrendingUpIcon sx={{ fontSize: 20 }} />
-              </Box>
-              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                Mensal
-              </Typography>
-              <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: stats.monthlyBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-                {formatCurrency(stats.monthlyBalance)}
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 0.5 }}>
-                <Typography variant="caption" sx={{ color: "#10b981" }}>
-                  +{formatCurrency(stats.monthlyIncome)}
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#ef4444" }}>
-                  -{formatCurrency(stats.monthlyExpense)}
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
-
-          {/* Anual */}
-          <Grid size={{ xs: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                position: "relative",
-                overflow: "hidden",
-                p: isMobile ? "14px" : "18px",
-                borderRadius: "14px",
-                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-                boxShadow: isDarkMode
-                  ? `0 4px 16px -4px ${alpha("#f59e0b", 0.25)}`
-                  : `0 4px 16px -4px ${alpha("#f59e0b", 0.15)}`,
-                transition: "all 0.2s ease-in-out",
-                "&:hover": { transform: "translateY(-2px)" },
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute", top: 14, right: 14,
-                  width: 38, height: 38, borderRadius: "11px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  bgcolor: alpha("#f59e0b", isDarkMode ? 0.2 : 0.12),
-                  color: "#f59e0b",
-                }}
-              >
-                <InfiniteIcon sx={{ fontSize: 20 }} />
-              </Box>
-              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                Anual
-              </Typography>
-              <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: stats.annualizedBalance >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-                {formatCurrency(stats.annualizedBalance)}
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, mt: 0.5 }}>
-                <Typography variant="caption" sx={{ color: "#10b981" }}>
-                  +{formatCurrency(stats.annualizedIncome)}
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#ef4444" }}>
-                  -{formatCurrency(stats.annualizedExpense)}
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
-
-          {/* Impacto Total */}
-          <Grid size={{ xs: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                position: "relative",
-                overflow: "hidden",
-                p: isMobile ? "14px" : "18px",
-                borderRadius: "14px",
-                background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-                boxShadow: isDarkMode
-                  ? `0 4px 16px -4px ${alpha("#a855f7", 0.25)}`
-                  : `0 4px 16px -4px ${alpha("#a855f7", 0.15)}`,
-                transition: "all 0.2s ease-in-out",
-                "&:hover": { transform: "translateY(-2px)" },
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute", top: 14, right: 14,
-                  width: 38, height: 38, borderRadius: "11px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  bgcolor: alpha("#a855f7", isDarkMode ? 0.2 : 0.12),
-                  color: "#a855f7",
-                }}
-              >
-                <CalendarIcon sx={{ fontSize: 20 }} />
-              </Box>
-              <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "text.secondary", mb: "6px" }}>
-                Impacto total
-              </Typography>
-              <Typography sx={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7", fontVariantNumeric: "tabular-nums", pr: 6 }}>
-                {formatCurrency(stats.annualizedBalance)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                (Monthly × 12) + Yearly
-              </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-      )}
-
-      {/* Filters */}
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: "16px",
-          overflow: "hidden",
-          bgcolor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.7)
-            : alpha("#FFFFFF", 0.9),
-          backdropFilter: "blur(20px)",
-          border: `1px solid ${
-            isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)
-          }`,
-          p: 2,
-          display: "flex",
-          flexDirection: isMobile ? "column" : "row",
-          flexWrap: "wrap",
-          gap: 2,
-          alignItems: isMobile ? "stretch" : "center",
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          );
         }}
-      >
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Buscar..."
-          minWidth={180}
-        />
+      />
 
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", flex: 1 }}>
-          <FormControl size="small" sx={{ minWidth: 100 }}>
-            <InputLabel>Tipo</InputLabel>
-            <Select
-              value={filterType}
-              label="Tipo"
-              onChange={(e: SelectChangeEvent) =>
-                setFilterType(e.target.value as "all" | "income" | "expense")
-              }
-            >
-              <MenuItem value="all">Todos</MenuItem>
-              <MenuItem value="income">Receita</MenuItem>
-              <MenuItem value="expense">Despesa</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>Frequência</InputLabel>
-            <Select
-              value={filterFrequency}
-              label="Frequência"
-              onChange={(e: SelectChangeEvent) =>
-                setFilterFrequency(
-                  e.target.value as "all" | "monthly" | "yearly"
-                )
-              }
-            >
-              <MenuItem value="all">Todos</MenuItem>
-              <MenuItem value="monthly">Mensal</MenuItem>
-              <MenuItem value="yearly">Anual</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Categoria</InputLabel>
-            <Select
-              value={filterCategory}
-              label="Categoria"
-              onChange={(e: SelectChangeEvent) =>
-                setFilterCategory(e.target.value)
-              }
-            >
-              <MenuItem value="all">Todos</MenuItem>
-              {allCategories.map((category) => (
-                <MenuItem key={category} value={category}>
-                  {categoryLabel(category)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-      </Paper>
-
-      {/* Recurring Items List */}
-      {recurringTransactions.length === 0 ? (
-        <EmptyState
-          type="recurring"
-          title="Nenhuma transação recorrente encontrada"
-          description="Crie uma transação recorrente para gerenciá-la aqui"
-          compact
-        />
-      ) : shouldVirtualize ? (
-        <Box
-          ref={listParentRef}
-          sx={{ maxHeight: "70vh", overflow: "auto", pr: 0.5 }}
-        >
-          <Box sx={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}>
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => (
-              <Box
-                key={virtualRow.index}
-                sx={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  transform: `translateY(${virtualRow.start}px)`,
-                  pb: gridSpacing,
-                }}
-              >
-                <Grid container spacing={gridSpacing}>
-                  {virtualGridRows[virtualRow.index].map((t) => renderRecurringCard(t))}
-                </Grid>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      ) : (
-        <Grid container spacing={gridSpacing}>
-          {recurringTransactions.map((t) => renderRecurringCard(t))}
-        </Grid>
-      )}
-
-
-      {/* Mobile Menus */}
+      {/* Ações da série */}
       <Menu
         anchorEl={mobileMenuAnchor.element}
         open={Boolean(mobileMenuAnchor.element)}
@@ -1879,6 +1145,19 @@ const RecurringView: React.FC<RecurringViewProps> = ({
             <EditIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Editar série</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            const transaction = mobileMenuAnchor.transaction;
+            setMobileMenuAnchor({ element: null, transaction: null });
+            if (transaction) {
+              setImgPickerTarget(transaction.description);
+              setImgPickerOpen(true);
+            }
+          }}
+        >
+          <ListItemIcon><ImageIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Alterar imagem</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() => {
