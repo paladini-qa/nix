@@ -440,13 +440,14 @@ Reference index of views mapped with their main components and elements.
 
 ### 6. Payment Methods (`currentView: "paymentMethods"`)
 - **Component**: `PaymentMethodsView` (opens `PaymentMethodDetailView` upon selecting a method)
-- **File**: `components/PaymentMethodsView.tsx`, `PaymentMethodDetailView.tsx`
-- **Title**: Payment Methods | "Manage cards, payment configurations and invoices"
+- **Files**: `src/presentation/views/PaymentMethodsView.tsx`, `src/presentation/widgets/PaymentMethodsOverview.tsx`, `src/presentation/views/PaymentMethodDetailView.tsx`
+- **Navigation and title**: Métodos de pagamento
 - **Main elements**:
-  - Date selectors and pagination
-  - Tabs: **Overview**, **Manage**
-  - Summary cards: **Active Methods** (count), **Total Expenses** (amount), **Total Income** (amount), **Outstanding** (amount)
-  - Payment methods grid: cards for Credit Card, Pix, Caixa Tem, Cash, showing balances, invoice cycles, and "Pay invoice" options
+  - Month uses the shared date selector. Card expenses follow their invoice due date.
+  - Summary cards show methods with activity, total expenses, pending expense count and pending expense amount.
+  - Donut and bar charts compare spending per method and highlight the largest share.
+  - Sortable table shows method images, total spent, share of spending and expense counts. Each row opens the method's transaction details.
+  - Add methods from the header and manage existing methods or mark their pending transactions as paid from row actions.
 
 ### 7. Categories (`currentView: "categories"`)
 - **Component**: `CategoriesView`

@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Payment methods** — Rename the navigation entry and show monthly activity, spending and pending expenses, with a spending breakdown, a sortable summary and links to each method's transactions.
+  - **Added files** — `src/presentation/widgets/PaymentMethodsOverview.tsx`, `e2e/audit/payment-methods.spec.ts`
+  - **Modified files** — `src/presentation/views/PaymentMethodsView.tsx`, `src/presentation/components/skeletons/PaymentMethodsSkeleton.tsx`, `src/presentation/layouts/shell/{AppViewSwitcher,Sidebar}.tsx`, `src/presentation/widgets/MobileDashboardOverview.tsx`, `src/shared/i18n/locales/pt-BR.ts`, `e2e/audit/mobile-dashboard.spec.ts`, `docs/REQUIREMENTS.md`
+
+### Changed
+
 - **Mobile dashboard** — Lead with cash flow. Place the six secondary destinations in a horizontal shortcuts card directly below it, followed by pending expenses.
   - **Modified files** — `src/presentation/views/DashboardMainSection.tsx`, `src/presentation/widgets/MobileDashboardOverview.tsx`, `e2e/audit/mobile-dashboard.spec.ts`, `docs/REQUIREMENTS.md`
 

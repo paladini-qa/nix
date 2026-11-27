@@ -45,7 +45,7 @@ export default {
     logout: "Sair",
     investments: "Investimentos",
     subscriptions: "Assinaturas",
-    paymentMethods: "Pagamentos",
+    paymentMethods: "Métodos de pagamento",
     others: "Outros",
   },
 

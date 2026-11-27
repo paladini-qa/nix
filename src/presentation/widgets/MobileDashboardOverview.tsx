@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from "react";
 import { Box, Button, ButtonBase, Paper, Stack, Typography, alpha, darken, useTheme } from "@mui/material";
 import { Article, CallSplit, CreditCard, Repeat, Star, TrendingUp } from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { visuallyHidden } from "@mui/utils";
 import { ArrowDownLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import dayjs from "dayjs";
@@ -16,7 +17,7 @@ const MOBILE_SHORTCUTS = [
   { to: VIEW_ROUTES.recurring, icon: Repeat, label: "Recorrentes", color: "#f59e0b" },
   { to: VIEW_ROUTES.investments, icon: TrendingUp, label: "Investimentos", color: "#22c55e" },
   { to: VIEW_ROUTES.subscriptions, icon: Star, label: "Assinaturas", color: "#ec4899" },
-  { to: VIEW_ROUTES.paymentMethods, icon: CreditCard, label: "Pagamentos", color: "#0ea5e9" },
+  { to: VIEW_ROUTES.paymentMethods, icon: CreditCard, label: "nav.paymentMethods", color: "#0ea5e9" },
   { to: VIEW_ROUTES["fiscal-report"], icon: Article, label: "Fiscal", color: "#ef4444" },
 ];
 
@@ -48,6 +49,7 @@ function OverviewCard({ children }: { children: ReactNode }) {
 }
 
 export function MobileDashboardShortcuts() {
+  const { t } = useTranslation();
   return (
     <OverviewCard>
       <Typography id="mobile-dashboard-shortcuts" component="h2" fontSize={15} fontWeight={750} mb={1}>Atalhos</Typography>
@@ -74,8 +76,8 @@ export function MobileDashboardShortcuts() {
             })}>
               <Icon sx={{ fontSize: 20 }} />
             </Box>
-            <Typography variant="caption" fontWeight={650} sx={{ fontSize: 10.5, whiteSpace: "nowrap" }}>
-              {label}
+            <Typography variant="caption" fontWeight={650} sx={{ fontSize: 10.5, lineHeight: 1.15, textAlign: "center" }}>
+              {to === VIEW_ROUTES.paymentMethods ? t(label) : label}
             </Typography>
           </ButtonBase>
         ))}

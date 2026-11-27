@@ -1,19 +1,10 @@
-import { paymentMethodLabel } from "@/shared/i18n/labels";
 import NixButton from "@/presentation/components/radix/Button";
-import React, { useMemo, useContext, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Box,
   Typography,
-  Paper,
-  Grid,
   Button,
-  Chip,
-  useMediaQuery,
   useTheme,
-  alpha,
-  IconButton,
-  Tooltip,
-  LinearProgress,
   TextField,
   FormControl,
   Select,
@@ -22,66 +13,37 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Divider,
   ToggleButtonGroup,
   ToggleButton,
   InputLabel,
 } from "@mui/material";
 import {
   CreditCard as CreditCardIcon,
-  CheckCircle as CheckCircleIcon,
-  Receipt as ReceiptIcon,
-  TrendingDown as TrendingDownIcon,
-  Warning as WarningIcon,
   Add as AddIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
   AccountBalanceWallet as WalletIcon,
-  CalendarToday as CalendarIcon,
   Image as ImageIcon,
 } from "@mui/icons-material";
-import { Transaction, ColorConfig, PaymentMethodColors, PaymentMethodConfig } from "@/domain/entities";
-import { useLayoutSpacing } from "@/presentation/hooks";
+import { Transaction, ColorConfig, PaymentMethodConfig } from "@/domain/entities";
 import { getEffectiveReportDate } from "@/domain/usecases/transactionUtils";
 import { generateRecurringTransactions } from "@/domain/usecases/recurringUtils";
 import { useSettings, useConfirmDialog } from "@/presentation/contexts";
-import PaymentMethodIcon from "@/presentation/components/ui/PaymentMethodIcon";
 import { extractDominantColor } from "@/shared/utils/imageColorUtils";
 import PaymentMethodImagePicker from "@/presentation/components/ui/PaymentMethodImagePicker";
-
-// Cores padrão para novos métodos
-const DEFAULT_PAYMENT_COLORS: ColorConfig = {
-  primary: "#6366f1",
-  secondary: "#4f46e5",
-};
+import PaymentMethodsOverview, { type PaymentMethodSummary } from "@/presentation/widgets/PaymentMethodsOverview";
 
 interface PaymentMethodsViewProps {
   transactions: Transaction[];
   paymentMethods: string[];
-  paymentMethodColors: PaymentMethodColors;
-  paymentMethodConfigs?: PaymentMethodConfig[];
+  paymentMethodConfigs: PaymentMethodConfig[];
   selectedMonth: number;
   selectedYear: number;
-  onDateChange: (month: number, year: number) => void;
   onSelectPaymentMethod: (method: string) => void;
   onPayAll: (ids: string[]) => void;
-  onAddPaymentMethod: (method: string) => void;
   onRemovePaymentMethod: (method: string) => void;
   onUpdatePaymentMethodColor: (method: string, colors: ColorConfig) => void;
-  getPaymentMethodPaymentDay?: (method: string) => number | undefined;
-  onUpdatePaymentMethodPaymentDay?: (method: string, day: number | null) => void;
-  onAddPaymentMethodConfig?: (config: Omit<PaymentMethodConfig, "id">) => Promise<void>;
-  onUpdatePaymentMethodConfig?: (config: PaymentMethodConfig) => Promise<void>;
-  onRemovePaymentMethodConfig?: (id: string) => Promise<void>;
-}
-
-interface PaymentMethodSummary {
-  name: string;
-  totalExpense: number;
-  totalIncome: number;
-  transactionCount: number;
-  unpaidCount: number;
-  unpaidAmount: number;
+  onAddPaymentMethodConfig: (config: Omit<PaymentMethodConfig, "id">) => Promise<void>;
+  onUpdatePaymentMethodConfig: (config: PaymentMethodConfig) => Promise<void>;
+  onRemovePaymentMethodConfig: (id: string) => Promise<void>;
 }
 
 const EMPTY_CONFIG: Omit<PaymentMethodConfig, "id"> = {
@@ -94,26 +56,18 @@ const EMPTY_CONFIG: Omit<PaymentMethodConfig, "id"> = {
 const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   transactions,
   paymentMethods,
-  paymentMethodColors,
-  paymentMethodConfigs = [],
+  paymentMethodConfigs,
   selectedMonth,
   selectedYear,
-  onDateChange,
   onSelectPaymentMethod,
   onPayAll,
-  onAddPaymentMethod,
   onRemovePaymentMethod,
   onUpdatePaymentMethodColor,
-  getPaymentMethodPaymentDay,
-  onUpdatePaymentMethodPaymentDay,
   onAddPaymentMethodConfig,
   onUpdatePaymentMethodConfig,
   onRemovePaymentMethodConfig,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { gridSpacing } = useLayoutSpacing();
-  const isDarkMode = theme.palette.mode === "dark";
   const { getPaymentMethodColor } = useSettings();
   const { confirmDelete } = useConfirmDialog();
 
@@ -127,42 +81,37 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [imagePickerTarget, setImagePickerTarget] = useState<"add" | "edit">("add");
 
-  const useConfigSystem = onAddPaymentMethodConfig !== undefined;
-
   const handleOpenAddDialog = () => {
     setFormConfig(EMPTY_CONFIG);
     setAddDialogOpen(true);
   };
 
   const handleOpenEditDialog = (config: PaymentMethodConfig) => {
-    setEditingConfig(config);
     setEditingConfig({ ...config });
     setEditDialogOpen(true);
   };
 
   const handleAddMethod = async () => {
-    if (useConfigSystem) {
-      if (!formConfig.name.trim()) return;
-      const methodName = formConfig.name.trim();
-      await onAddPaymentMethodConfig!({
-        ...formConfig,
-        name: methodName,
-        closingDay: formConfig.type === "card" ? formConfig.closingDay : undefined,
-        paymentDay: formConfig.type === "card" ? formConfig.paymentDay : undefined,
+    if (!formConfig.name.trim()) return;
+    const methodName = formConfig.name.trim();
+    await onAddPaymentMethodConfig({
+      ...formConfig,
+      name: methodName,
+      closingDay: formConfig.type === "card" ? formConfig.closingDay : undefined,
+      paymentDay: formConfig.type === "card" ? formConfig.paymentDay : undefined,
+    });
+    // Extrai cor dominante da imagem em segundo plano
+    if (formConfig.imageUrl) {
+      extractDominantColor(formConfig.imageUrl).then((extracted) => {
+        if (extracted) onUpdatePaymentMethodColor(methodName, extracted);
       });
-      // Extrai cor dominante da imagem em segundo plano
-      if (formConfig.imageUrl) {
-        extractDominantColor(formConfig.imageUrl).then((extracted) => {
-          if (extracted) onUpdatePaymentMethodColor(methodName, extracted);
-        });
-      }
-      setAddDialogOpen(false);
-      setFormConfig(EMPTY_CONFIG);
     }
+    setAddDialogOpen(false);
+    setFormConfig(EMPTY_CONFIG);
   };
 
   const handleUpdateMethod = async () => {
-    if (!editingConfig || !onUpdatePaymentMethodConfig) return;
+    if (!editingConfig) return;
     await onUpdatePaymentMethodConfig({
       ...editingConfig,
       closingDay: editingConfig.type === "card" ? editingConfig.closingDay : undefined,
@@ -181,11 +130,9 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
   const handleRemoveMethod = async (method: string) => {
     const confirmed = await confirmDelete(method);
     if (!confirmed) return;
-    if (useConfigSystem) {
-      const config = paymentMethodConfigs.find((c) => c.name === method);
-      if (config) {
-        await onRemovePaymentMethodConfig!(config.id);
-      }
+    const config = getConfigForMethod(method);
+    if (config) {
+      await onRemovePaymentMethodConfig(config.id);
     } else {
       onRemovePaymentMethod(method);
     }
@@ -217,599 +164,68 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
     return [...baseTransactions, ...virtualTransactions];
   }, [transactions, selectedMonth, selectedYear, paymentMethodConfigs]);
 
-  // Calcula resumo por método de pagamento
-  const paymentMethodsSummary = useMemo<PaymentMethodSummary[]>(() => {
-    const summaryMap = new Map<string, PaymentMethodSummary>();
+  const paymentMethodsSummary = useMemo(() => {
+    const summaryMap = new Map(paymentMethods.map((name): [string, PaymentMethodSummary] => [
+      name,
+      { name, totalExpense: 0, expenseCount: 0, unpaidCount: 0, unpaidAmount: 0, hasActivity: false, hasUnpaidTransactions: false },
+    ]));
 
-    (paymentMethods || []).forEach((method) => {
-      summaryMap.set(method, {
-        name: method,
-        totalExpense: 0,
-        totalIncome: 0,
-        transactionCount: 0,
-        unpaidCount: 0,
-        unpaidAmount: 0,
-      });
-    });
+    for (const transaction of monthTransactions) {
+      const summary = summaryMap.get(transaction.paymentMethod);
+      if (!summary) continue;
+      summary.hasActivity = true;
+      if (!transaction.isPaid) summary.hasUnpaidTransactions = true;
+      if (transaction.type !== "expense") continue;
 
-    (monthTransactions || []).forEach((tx) => {
-      const summary = summaryMap.get(tx.paymentMethod);
-      if (summary) {
-        summary.transactionCount++;
-        if (!tx.isPaid) {
-          summary.unpaidCount++;
-          if (tx.type === "expense") {
-            summary.unpaidAmount += tx.amount || 0;
-          }
-        }
-        if (tx.type === "expense") {
-          summary.totalExpense += tx.amount || 0;
-        } else {
-          summary.totalIncome += tx.amount || 0;
-        }
+      const amount = transaction.amount || 0;
+      summary.expenseCount += 1;
+      summary.totalExpense += amount;
+      if (!transaction.isPaid) {
+        summary.unpaidCount += 1;
+        summary.unpaidAmount += amount;
       }
-    });
+    }
 
-    return Array.from(summaryMap.values())
-      .filter((s) => s.transactionCount > 0 || paymentMethods.includes(s.name))
-      .sort((a, b) => {
-        const aHasTx = a.transactionCount > 0 ? 1 : 0;
-        const bHasTx = b.transactionCount > 0 ? 1 : 0;
-        if (aHasTx !== bHasTx) return bHasTx - aHasTx;
-        return b.totalExpense - a.totalExpense;
-      });
+    return [...summaryMap.values()];
   }, [monthTransactions, paymentMethods]);
 
-  // Estatísticas gerais
-  const stats = useMemo(() => {
-    const totalExpenses = paymentMethodsSummary.reduce(
-      (sum, s) => sum + s.totalExpense,
-      0
-    );
-    const totalIncome = paymentMethodsSummary.reduce(
-      (sum, s) => sum + s.totalIncome,
-      0
-    );
-    const totalUnpaid = paymentMethodsSummary.reduce(
-      (sum, s) => sum + s.unpaidAmount,
-      0
-    );
-    const totalTransactions = paymentMethodsSummary.reduce(
-      (sum, s) => sum + s.transactionCount,
-      0
-    );
-    const methodsWithActivity = paymentMethodsSummary.filter(
-      (s) => s.transactionCount > 0
-    ).length;
-
-    return {
-      totalExpenses,
-      totalIncome,
-      totalUnpaid,
-      totalTransactions,
-      methodsWithActivity,
-      balance: totalIncome - totalExpenses,
-    };
-  }, [paymentMethodsSummary]);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
-
-  const handlePayAll = (method: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handlePayAll = (method: string) => {
     const ids = monthTransactions
-      .filter((t) => !t.isPaid && t.paymentMethod === method)
-      .map((t) => t.id);
+      .filter((transaction) => !transaction.isPaid && transaction.paymentMethod === method)
+      .map((transaction) => transaction.id);
     onPayAll(ids);
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: isMobile ? 2 : 3,
-        px: { xs: 0, md: "28px" },
-        pt: { xs: 0, md: "24px" },
-        pb: { xs: "140px", md: "60px" },
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-end",
-          flexWrap: "wrap",
-          gap: "14px",
-          mb: "22px",
-        }}
-      >
+    <Box sx={{
+      display: "flex", flexDirection: "column", gap: { xs: 2, md: 2.5 },
+      minWidth: 0, px: { xs: 0, md: 3 },
+      pb: { xs: 2, md: 5 },
+    }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>
         <Box>
-          <Typography sx={{ fontSize: { xs: 20, md: 26 }, fontWeight: 700, letterSpacing: "-0.02em" }}>
+          <Typography component="h1" sx={{ fontSize: { xs: 22, md: 26 }, fontWeight: 750, letterSpacing: "-0.025em" }}>
             Métodos de pagamento
           </Typography>
-          <Typography sx={{ color: "text.secondary", fontSize: 13.5, mt: "4px" }}>
+          <Typography variant="body2" color="text.secondary">
             Gerencie seus cartões e contas
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenAddDialog}
-          sx={{ ml: "auto", borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
-        >
+        <NixButton size="sm" onClick={handleOpenAddDialog} style={{ borderRadius: "var(--radius-button-md)" }}>
+          <AddIcon sx={{ fontSize: 17 }} />
           Novo método
-        </Button>
+        </NixButton>
       </Box>
 
-      {/* Summary Cards - Always Visible */}
-      {isMobile ? (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2.25,
-            position: "relative",
-            overflow: "hidden",
-            background: isDarkMode
-              ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.75)} 100%)`
-              : `linear-gradient(135deg, ${alpha("#ffffff", 0.95)} 0%, ${alpha("#f8fafc", 0.95)} 100%)`,
-            backdropFilter: "blur(12px)",
-            border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.07)}`,
-            borderRadius: "20px",
-            boxShadow: isDarkMode
-              ? "0 4px 20px -4px rgba(0,0,0,0.3)"
-              : `0 4px 20px -4px ${alpha(stats.totalUnpaid > 0 ? "#ef4444" : "#10b981", 0.15)}`,
-          }}
-        >
-          {/* A Pagar */}
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Box>
-              <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Total a pagar
-              </Typography>
-              <Typography sx={{ fontSize: 28, fontWeight: 800, color: stats.totalUnpaid > 0 ? "#ef4444" : "#10b981", mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
-                {formatCurrency(stats.totalUnpaid)}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                width: 42,
-                height: 42,
-                borderRadius: "12px",
-                display: "grid",
-                placeItems: "center",
-                bgcolor: alpha(stats.totalUnpaid > 0 ? "#ef4444" : "#10b981", 0.12),
-                color: stats.totalUnpaid > 0 ? "#ef4444" : "#10b981",
-              }}
-            >
-              <WalletIcon sx={{ fontSize: 22 }} />
-            </Box>
-          </Box>
-
-          <Divider sx={{ borderStyle: "dashed", my: 1.75, opacity: 0.6 }} />
-
-          {/* Breakdown Section */}
-          <Grid container spacing={2}>
-            {/* Total Despesas */}
-            <Grid size={{ xs: 4 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: alpha("#ef4444", 0.1),
-                    color: "#ef4444",
-                    flexShrink: 0,
-                  }}
-                >
-                  <TrendingDownIcon sx={{ fontSize: 14 }} />
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Despesas
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
-                    {formatCurrency(stats.totalExpenses)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
-                    {stats.totalTransactions} transações
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-
-            {/* Faturas Pendentes */}
-            <Grid size={{ xs: 4 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: alpha("#f59e0b", 0.1),
-                    color: "#f59e0b",
-                    flexShrink: 0,
-                  }}
-                >
-                  <WarningIcon sx={{ fontSize: 14 }} />
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Pendente
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
-                    {paymentMethodsSummary.reduce((s, m) => s + m.unpaidCount, 0)} faturas
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
-                    open
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-
-            {/* Métodos Ativos */}
-            <Grid size={{ xs: 4 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: alpha("#a855f7", 0.1),
-                    color: "#a855f7",
-                    flexShrink: 0,
-                  }}
-                >
-                  <CreditCardIcon sx={{ fontSize: 14 }} />
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", textTransform: "uppercase", fontWeight: 600, display: "block", lineHeight: 1.1 }}>
-                    Ativos
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 0.1, display: "block", lineHeight: 1.15 }}>
-                    {stats.methodsWithActivity} ativos
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.62rem" }}>
-                    de {paymentMethods.length} cadastrados
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
-      ) : (
-        <Grid container spacing={gridSpacing}>
-          {/* Active Methods */}
-          <Grid size={{ xs: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: "18px",
-                borderRadius: "14px",
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                background: isDarkMode
-                  ? alpha(theme.palette.background.paper, 0.8)
-                  : "#ffffff",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 14,
-                  right: 14,
-                  width: 38,
-                  height: 38,
-                  borderRadius: "11px",
-                  display: "grid",
-                  placeItems: "center",
-                  bgcolor: alpha("#a855f7", 0.12),
-                  color: "#a855f7",
-                }}
-              >
-                <CreditCardIcon sx={{ fontSize: 22 }} />
-              </Box>
-              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-                Métodos ativos
-              </Typography>
-              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#a855f7" }}>
-                {stats.methodsWithActivity}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                de {paymentMethods.length} cadastrados
-              </Typography>
-            </Paper>
-          </Grid>
-
-          {/* Total Expenses */}
-          <Grid size={{ xs: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: "18px",
-                borderRadius: "14px",
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                background: isDarkMode
-                  ? alpha(theme.palette.background.paper, 0.8)
-                  : "#ffffff",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 14,
-                  right: 14,
-                  width: 38,
-                  height: 38,
-                  borderRadius: "11px",
-                  display: "grid",
-                  placeItems: "center",
-                  bgcolor: alpha("#ef4444", 0.12),
-                  color: "#ef4444",
-                }}
-              >
-                <TrendingDownIcon sx={{ fontSize: 22 }} />
-              </Box>
-              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-                Total de despesas
-              </Typography>
-              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#ef4444" }}>
-                {formatCurrency(stats.totalExpenses)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                {stats.totalTransactions} transações
-              </Typography>
-            </Paper>
-          </Grid>
-
-          {/* Pending Bills */}
-          <Grid size={{ xs: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: "18px",
-                borderRadius: "14px",
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                background: isDarkMode
-                  ? alpha(theme.palette.background.paper, 0.8)
-                  : "#ffffff",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 14,
-                  right: 14,
-                  width: 38,
-                  height: 38,
-                  borderRadius: "11px",
-                  display: "grid",
-                  placeItems: "center",
-                  bgcolor: alpha("#f59e0b", 0.12),
-                  color: "#f59e0b",
-                }}
-              >
-                <WarningIcon sx={{ fontSize: 22 }} />
-              </Box>
-              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-                Faturas pendentes
-              </Typography>
-              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>
-                {paymentMethodsSummary.reduce((s, m) => s + m.unpaidCount, 0)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                cobranças em aberto
-              </Typography>
-            </Paper>
-          </Grid>
-
-          {/* To Pay */}
-          <Grid size={{ xs: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: "18px",
-                borderRadius: "14px",
-                border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                background: isDarkMode
-                  ? alpha(theme.palette.background.paper, 0.8)
-                  : "#ffffff",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 14,
-                  right: 14,
-                  width: 38,
-                  height: 38,
-                  borderRadius: "11px",
-                  display: "grid",
-                  placeItems: "center",
-                  bgcolor: alpha("#10b981", 0.12),
-                  color: "#10b981",
-                }}
-              >
-                <WalletIcon sx={{ fontSize: 22 }} />
-              </Box>
-              <Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", mb: "6px" }}>
-                A pagar
-              </Typography>
-              <Typography sx={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#10b981" }}>
-                {formatCurrency(stats.totalUnpaid)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                {stats.totalUnpaid > 0 ? "pending" : "tudo pago"}
-              </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-      )}
-
-      {/* Unified Payment Methods Grid */}
-      {paymentMethods.length === 0 ? (
-        <Paper elevation={0} sx={{ p: 4, textAlign: "center", borderRadius: "16px", bgcolor: alpha(theme.palette.primary.main, 0.02), border: `1px dashed ${alpha(theme.palette.primary.main, 0.2)}` }}>
-          <WalletIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>Nenhum método cadastrado</Typography>
-          <Typography variant="body2" color="text.disabled">Selecione Novo método para começar</Typography>
-        </Paper>
-      ) : (
-        <Grid container spacing={gridSpacing}>
-          {paymentMethodsSummary.map((summaryItem) => {
-            const method = summaryItem.name;
-            const colors = getPaymentMethodColor(method);
-            const summary = summaryItem;
-            const config = getConfigForMethod(method);
-            const isCard = config?.type === "card";
-            const hasUnpaid = (summary?.unpaidCount ?? 0) > 0;
-            const percentage = stats.totalExpenses > 0 && summary
-              ? (summary.totalExpense / stats.totalExpenses) * 100 : 0;
-
-            return (
-              <Grid key={method} size={{ xs: 12, sm: 6, lg: 4 }}>
-                <Paper
-                  elevation={0}
-                  onClick={() => onSelectPaymentMethod(method)}
-                  sx={{
-                    p: "16px",
-                    cursor: "pointer",
-                    display: "flex",
-                    flexDirection: "column",
-                    height: "100%",
-                    borderRadius: "14px",
-                    background: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : "#ffffff",
-                    border: `1px solid ${isDarkMode ? alpha("#FFFFFF", 0.08) : alpha("#000000", 0.06)}`,
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
-                    position: "relative",
-                    overflow: "hidden",
-                    transition: "all 0.2s ease-in-out",
-                    "&:hover": { transform: "translateY(-2px)", boxShadow: `0 10px 28px -6px ${alpha(colors.primary, 0.25)}` },
-                  }}
-                >
-                  {/* Top color stripe */}
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 4,
-                      background: `linear-gradient(90deg, ${colors.primary}, ${alpha(colors.primary, 0.5)})`,
-                    }}
-                  />
-
-                  {/* Header */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: "10px", mt: "6px" }}>
-                    <PaymentMethodIcon imageUrl={config?.imageUrl} colors={colors} type={config?.type} size={40} borderRadius="12px" iconSize={18} />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography fontWeight={700} sx={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {paymentMethodLabel(method)}
-                      </Typography>
-                      {hasUnpaid && (
-                        <Typography sx={{ fontSize: 11, color: "#f59e0b" }}>
-                          {summary!.unpaidCount} pendentes
-                        </Typography>
-                      )}
-                    </Box>
-                  </Box>
-
-                  {/* Amount */}
-                  <Box sx={{ mb: "10px", flex: 1 }}>
-                    <Typography sx={{ fontSize: 11, fontWeight: 700, color: "text.disabled", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      Este mês
-                    </Typography>
-                    <Typography sx={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2, mt: "2px" }}>
-                      {summary ? formatCurrency(summary.totalExpense) : "—"}
-                    </Typography>
-                    {isCard && config?.closingDay && config?.paymentDay && (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
-                        <CalendarIcon sx={{ fontSize: 11, color: "text.disabled" }} />
-                        <Typography variant="caption" color="text.secondary">
-                          Fecha {config.closingDay} · Pays {config.paymentDay}
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-
-                  {/* Progress bar */}
-                  <Box sx={{ height: 6, borderRadius: "99px", bgcolor: alpha(colors.primary, 0.12), overflow: "hidden", mb: "12px" }}>
-                    <Box sx={{ height: "100%", borderRadius: "99px", width: `${Math.min(percentage, 100)}%`, bgcolor: colors.primary, transition: "width 0.3s" }} />
-                  </Box>
-
-                  {/* Footer */}
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
-                    <Box sx={{ display: "flex", gap: 0.5 }}>
-                      {useConfigSystem && config && (
-                        <Tooltip title="Editar">
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleOpenEditDialog(config); }} sx={{ color: "text.secondary", "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.1), color: "primary.main" } }}>
-                            <EditIcon sx={{ fontSize: 16 }} />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      <Tooltip title="Excluir">
-                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleRemoveMethod(method); }} sx={{ color: "text.secondary", "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.1), color: "error.main" } }}>
-                          <DeleteIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                    <Box sx={{ display: "flex", gap: "6px" }}>
-                      <Button
-                        size="small"
-                        onClick={(e) => { e.stopPropagation(); onSelectPaymentMethod(method); }}
-                        sx={{
-                          textTransform: "none",
-                          fontWeight: 600,
-                          fontSize: 12,
-                          px: 1.5,
-                          py: 0.5,
-                          borderRadius: "10px",
-                          bgcolor: alpha(colors.primary, 0.1),
-                          color: colors.primary,
-                          lineHeight: 1.5,
-                          "&:hover": { bgcolor: alpha(colors.primary, 0.18) },
-                        }}
-                      >
-                        Detalhes
-                      </Button>
-                      {hasUnpaid && (
-                        <Button size="small" variant="contained" onClick={(e) => handlePayAll(method, e)} sx={{ textTransform: "none", fontWeight: 700, fontSize: 12, px: 1.5, py: 0.5, borderRadius: "10px", lineHeight: 1.5, background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`, boxShadow: `0 4px 12px -2px ${alpha(colors.primary, 0.4)}`, "&:hover": { background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})` } }}>
-                          Pagar
-                        </Button>
-                      )}
-                    </Box>
-                  </Box>
-                </Paper>
-              </Grid>
-            );
-          })}
-        </Grid>
-      )}
+      <PaymentMethodsOverview
+        methods={paymentMethodsSummary}
+        getConfig={getConfigForMethod}
+        getColors={getPaymentMethodColor}
+        onSelect={onSelectPaymentMethod}
+        onEdit={handleOpenEditDialog}
+        onRemove={handleRemoveMethod}
+        onPayAll={handlePayAll}
+      />
 
       {/* Dialog: Adicionar método */}
       <Dialog
@@ -842,11 +258,11 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
             >
               <ToggleButton value="cash" sx={{ flex: 1, borderRadius: "10px 0 0 10px", textTransform: "none" }}>
                 <WalletIcon fontSize="small" sx={{ mr: 0.75 }} />
-                Cash
+                À vista
               </ToggleButton>
               <ToggleButton value="card" sx={{ flex: 1, borderRadius: "0 10px 10px 0", textTransform: "none" }}>
                 <CreditCardIcon fontSize="small" sx={{ mr: 0.75 }} />
-                Card
+                Cartão
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
@@ -961,11 +377,11 @@ const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({
                 >
                   <ToggleButton value="cash" sx={{ flex: 1, borderRadius: "10px 0 0 10px", textTransform: "none" }}>
                     <WalletIcon fontSize="small" sx={{ mr: 0.75 }} />
-                    Cash
+                    À vista
                   </ToggleButton>
                   <ToggleButton value="card" sx={{ flex: 1, borderRadius: "0 10px 10px 0", textTransform: "none" }}>
                     <CreditCardIcon fontSize="small" sx={{ mr: 0.75 }} />
-                    Card
+                    Cartão
                   </ToggleButton>
                 </ToggleButtonGroup>
               </Box>
