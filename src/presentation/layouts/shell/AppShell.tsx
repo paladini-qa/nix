@@ -284,7 +284,11 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
 
       {isMobile && (
         <>
-          <MobileHeader onOpenSearch={() => setIsSearchOpen(true)} />
+          <MobileHeader
+            isDashboard={currentView === "dashboard"}
+            onOpenProfile={() => setIsProfileModalOpen(true)}
+            onOpenSearch={() => setIsSearchOpen(true)}
+          />
           <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} />
           <Box
             component="main"
@@ -295,9 +299,7 @@ const AppShell: React.FC<AppShellProps> = ({ session }) => {
               pt: currentView === "nixai"
                 ? "calc(64px + env(safe-area-inset-top, 0px))"
                 : "calc(64px + env(safe-area-inset-top, 0px) + 16px)",
-              pb: currentView === "nixai"
-                ? "calc(80px + env(safe-area-inset-bottom, 0px))"
-                : "calc(80px + env(safe-area-inset-bottom, 0px))",
+              pb: "calc(88px + env(safe-area-inset-bottom, 0px))",
               width: "100%",
               overflowX: "hidden",
               overflowY: isFormOpen || currentView === "nixai" ? "hidden" : "auto",

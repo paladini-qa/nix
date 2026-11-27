@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Mobile dashboard** — Add a personalized header, floating navigation with a separate transaction button, and cards for recorded balance, open card bills, period cash flow and pending commitments for the next 30 days.
+  - **Added files** — `src/presentation/widgets/MobileDashboardOverview.tsx`, `e2e/audit/mobile-dashboard.spec.ts`
+  - **Modified files** — `src/presentation/layouts/mobile/{MobileHeader,MobileNavigation}.tsx`, `src/presentation/layouts/shell/AppShell.tsx`, `src/presentation/views/DashboardMainSection.tsx`, `src/presentation/components/ui/DateFilter.tsx`, `e2e/audit/transactions.spec.ts`
+
 ### Fixed
 
 - **Android release build** — Install the SDK packages used by Gradle explicitly, so building the APK works after the legacy Android SDK Tools package was removed.

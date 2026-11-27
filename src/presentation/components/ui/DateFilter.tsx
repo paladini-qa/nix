@@ -17,6 +17,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
 import {
+  ExpandMore as ExpandMoreIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   CalendarMonth as CalendarIcon,
@@ -29,6 +30,7 @@ interface DateFilterProps {
   compact?: boolean;
   showIcon?: boolean;
   pickerOnly?: boolean;
+  headerStyle?: boolean;
   disabled?: boolean;
   disabledMessage?: string;
 }
@@ -44,6 +46,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
   onDateChange,
   compact = false,
   pickerOnly = false,
+  headerStyle = false,
   disabled = false,
   disabledMessage = "Filtros avançados ativos",
 }) => {
@@ -109,27 +112,28 @@ const DateFilter: React.FC<DateFilterProps> = ({
         gap: 0.75,
         height: 44,
         bgcolor: "transparent",
-        px: 1.25,
+        px: headerStyle ? 0.75 : 1.25,
         borderRadius: "10px",
-        border: "1px solid",
+        border: headerStyle ? 0 : "1px solid",
         borderColor: "divider",
         cursor: disabled ? "default" : "pointer",
         userSelect: "none",
         transition: "all 0.15s ease",
-        minWidth: 100,
+        minWidth: headerStyle ? 62 : 100,
         justifyContent: "center",
         "&:active": disabled
           ? undefined
           : { bgcolor: alpha(theme.palette.primary.main, 0.08) },
       }}
     >
-      <CalendarIcon sx={{ fontSize: 13, color: "text.secondary", flexShrink: 0 }} />
+      {!headerStyle && <CalendarIcon sx={{ fontSize: 13, color: "text.secondary", flexShrink: 0 }} />}
       <Typography
         fontWeight={700}
         sx={{ fontSize: 12, lineHeight: 1, color: "text.primary", letterSpacing: 0.1 }}
       >
-        {MONTH_LABELS[month]}/{year}
+        {MONTH_LABELS[month]}{(!headerStyle || year !== new Date().getFullYear()) && `/${headerStyle ? String(year).slice(-2) : year}`}
       </Typography>
+      {headerStyle && <ExpandMoreIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
     </Box>
   );
 
