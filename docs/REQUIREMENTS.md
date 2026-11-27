@@ -504,6 +504,7 @@ Reference index of views mapped with their main components and elements.
   - **Main Menu**: Nix AI, Dashboard, Transactions, Splits, Recurring, Payment Methods, Categories
   - **Planning**: Budgets, Goals, Planning
   - **Controls**: Privacy Mode toggle (`Alt+P`), Theme Selector (Light/Dark/System), User profile, and Logout trigger
+  - **Profile** displays the installed version. **Atualizar versão** applies the available web update and reopens the current screen with the stored session. On Android, the action opens the official APK release.
 
 ---
 

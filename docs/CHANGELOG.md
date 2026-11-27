@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Profile version update** — Display the installed version and let users check for a web update from the profile. The refresh keeps the current route and stored session. On Android, the button opens the official APK release.
+  - **Added files** — `src/infrastructure/web/appUpdate.ts`, `e2e/audit/profile-update.spec.ts`
+  - **Modified files** — `index.html`, `src/presentation/layouts/shell/ProfileModal.tsx`, `docs/REQUIREMENTS.md`
+
 ### Changed
 
 - **Recurring transactions and installments** — Adopt the payment-methods overview layout with responsive summary cards, charts in Brazilian reais and sortable tables. Show estimated annual recurring expenses by category and all outstanding installment amounts by payment method.
