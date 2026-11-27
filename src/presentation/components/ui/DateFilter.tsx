@@ -146,7 +146,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
       onChange={handleDateChange}
       disabled={disabled}
       minDate={dayjs("2026-01-01")}
-      format="MMMMM [de] YYYY"
+      format="MMMM [de] YYYY"
       slotProps={{
         textField: {
           size: "small",

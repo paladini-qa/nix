@@ -42,6 +42,8 @@ test("shows Portuguese and reais on the main screens and in the fiscal CSV", asy
   const realAmount = /R\$\s*1\.234,56/;
   await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
+  await expect(page.getByRole("group").filter({ has: page.getByRole("spinbutton", { name: "Mês" }) }))
+    .toHaveText(/^novembro de 2026\u200b*$/i);
   await expect(main.getByText("Comparativo Mensal")).toBeVisible();
   await expect(main).toContainText(realAmount);
 
