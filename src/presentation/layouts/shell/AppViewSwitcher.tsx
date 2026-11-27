@@ -61,18 +61,15 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
   } = useTransactionsQuery(session.user.id);
   const { 
     paymentMethods, 
-    paymentMethodColors, 
     paymentMethodConfigs,
     categories,
     categoryColors,
     addCategory,
     removeCategory,
     updateCategoryColor,
-    addPaymentMethod,
     removePaymentMethod,
     updatePaymentMethodColor,
     getPaymentMethodPaymentDay,
-    updatePaymentMethodPaymentDay,
     addPaymentMethodConfig,
     updatePaymentMethodConfig,
     removePaymentMethodConfig,
@@ -493,18 +490,13 @@ const AppViewSwitcher: React.FC<AppViewSwitcherProps> = ({ currentView: propView
               <PaymentMethodsView
                 transactions={transactions}
                 paymentMethods={paymentMethods}
-                paymentMethodColors={paymentMethodColors}
                 paymentMethodConfigs={paymentMethodConfigs}
                 selectedMonth={filters.month}
                 selectedYear={filters.year}
-                onDateChange={(month, year) => setFilters({ month, year })}
                 onSelectPaymentMethod={setSelectedPaymentMethod}
                 onPayAll={handlePayAll}
-                onAddPaymentMethod={addPaymentMethod}
                 onRemovePaymentMethod={removePaymentMethod}
                 onUpdatePaymentMethodColor={updatePaymentMethodColor}
-                getPaymentMethodPaymentDay={getPaymentMethodPaymentDay}
-                onUpdatePaymentMethodPaymentDay={updatePaymentMethodPaymentDay}
                 onAddPaymentMethodConfig={addPaymentMethodConfig}
                 onUpdatePaymentMethodConfig={updatePaymentMethodConfig}
                 onRemovePaymentMethodConfig={removePaymentMethodConfig}

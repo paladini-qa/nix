@@ -51,7 +51,7 @@ test("shows the mobile cash flow, shortcut carousel, agenda and floating dock", 
   const shortcuts = main.getByRole("region", { name: "Atalhos" });
   for (const [label, path] of [
     ["Parcelas", "/splits"], ["Recorrentes", "/recurring"], ["Investimentos", "/investments"],
-    ["Assinaturas", "/subscriptions"], ["Pagamentos", "/payment-methods"], ["Fiscal", "/fiscal-report"],
+    ["Assinaturas", "/subscriptions"], ["Métodos de pagamento", "/payment-methods"], ["Fiscal", "/fiscal-report"],
   ]) {
     await expect(shortcuts.getByRole("link", { name: label, exact: true })).toHaveAttribute("href", path);
   }

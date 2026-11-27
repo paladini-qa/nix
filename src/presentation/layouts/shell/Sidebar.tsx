@@ -94,7 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const resourcesNavItems: NavItem[] = [
-    { icon: PaymentIcon, label: "Pagamentos", id: "paymentMethods" },
+    { icon: PaymentIcon, label: t("nav.paymentMethods"), id: "paymentMethods" },
     { icon: RepeatIcon, label: t("nav.recurring"), id: "recurring" },
     { icon: CreditCardIcon, label: "Parcelas", id: "splits" },
     { icon: CategoryIcon, label: "Categorias", id: "categories" },
