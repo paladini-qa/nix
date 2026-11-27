@@ -273,6 +273,7 @@ test("reschedules all selected installments in one request and keeps the draft o
   await group.click();
   await expect(group).toHaveAttribute("aria-expanded", "true");
   await expect(main.getByText("Todas as 2 parcelas")).toBeVisible();
+  await expect(main.getByText("10/11/2026", { exact: true })).toBeVisible();
   await expect.poll(() => table.evaluate((element) => element.getBoundingClientRect().right)).toBeLessThanOrEqual(375);
   await group.click();
   await page.setViewportSize(originalViewport);

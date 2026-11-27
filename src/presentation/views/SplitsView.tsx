@@ -60,7 +60,7 @@ import { useSettings } from "@/presentation/contexts";
 import type { InstallmentDateChange } from "@/domain/usecases/transactionUtils";
 
 import { orbitColors } from "@/shared/theme/colors";
-import { formatCurrency } from "@/shared/utils/formatters";
+import { formatCurrency, formatDate } from "@/shared/utils/formatters";
 import { OverviewBreakdown, OverviewHeader, OverviewStatCard, overviewPageStyles, overviewStatGridStyles } from "@/presentation/widgets/FinancialOverview";
 import { OverviewRowTitle, OverviewTable, overviewDesktopCell, overviewMoneyCell } from "@/presentation/widgets/FinancialOverviewTable";
 
@@ -690,7 +690,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                             p: 1.5,
                             display: "flex",
                             alignItems: "center",
-                            gap: 1,
+                            gap: { xs: 0.5, sm: 1 },
                             opacity: isPaid ? 0.6 : 1,
                             bgcolor:
                               isCurrent && !isPaid
@@ -716,6 +716,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                             sx={{
                               width: 28,
                               height: 28,
+                              flexShrink: 0,
                               borderRadius: "8px",
                               display: "flex",
                               alignItems: "center",
@@ -741,6 +742,8 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                           </Box>
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography
+                              component="time"
+                              dateTime={t.date}
                               variant="body2"
                               fontWeight={isCurrent ? 600 : 500}
                               sx={{
@@ -749,7 +752,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                                   : "none",
                               }}
                             >
-                              {formatDateFull(t.date)}
+                              {formatDate(t.date)}
                             </Typography>
                             {isCurrent && !isPaid && (
                               <Chip
@@ -759,15 +762,15 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                                 sx={{ height: 16, fontSize: 9, mt: 0.5 }}
                               />
                             )}
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color={isIncome ? "success.main" : "warning.main"}
+                              sx={{ ...overviewMoneyCell, fontSize: 12 }}
+                            >
+                              {formatCurrency(t.amount || 0)}
+                            </Typography>
                           </Box>
-                          <Typography
-                            variant="body2"
-                            fontWeight={600}
-                            color={isIncome ? "success.main" : "warning.main"}
-                            sx={{ fontFamily: "monospace", fontSize: 12 }}
-                          >
-                            {formatCurrency(t.amount || 0)}
-                          </Typography>
                           <IconButton
                             size="small"
                             onClick={(e) => {
@@ -1024,7 +1027,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                               p: 1.5,
                               display: "flex",
                               alignItems: "center",
-                              gap: 1,
+                              gap: { xs: 0.5, sm: 1 },
                               opacity: isPaid ? 0.6 : 1,
                               bgcolor:
                                 isCurrent && !isPaid
@@ -1050,6 +1053,7 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                               sx={{
                                 width: 28,
                                 height: 28,
+                                flexShrink: 0,
                                 borderRadius: "8px",
                                 display: "flex",
                                 alignItems: "center",
@@ -1073,22 +1077,24 @@ const SplitsView: React.FC<SplitsViewProps> = ({
                                 #{t.currentInstallment}
                               </Typography>
                             </Box>
-                            <Box sx={{ flex: 1 }}>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
                               <Typography
+                                component="time"
+                                dateTime={t.date}
                                 variant="body2"
                                 fontWeight={isCurrent ? 600 : 500}
                               >
-                                {formatDateFull(t.date)}
+                                {formatDate(t.date)}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                fontWeight={600}
+                                color="success.main"
+                                sx={{ ...overviewMoneyCell, fontSize: 12 }}
+                              >
+                                +{formatCurrency(t.amount || 0)}
                               </Typography>
                             </Box>
-                            <Typography
-                              variant="body2"
-                              fontWeight={600}
-                              color="success.main"
-                              sx={{ fontFamily: "monospace", fontSize: 12 }}
-                            >
-                              +{formatCurrency(t.amount || 0)}
-                            </Typography>
                             <Chip
                               label={isPaid ? "Recebido" : "Pendente"}
                               size="small"
