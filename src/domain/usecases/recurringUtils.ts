@@ -1,5 +1,5 @@
 import { Transaction, FilterState, PaymentMethodConfig } from "@/domain/entities";
-import { calculateInvoiceDueDate } from "@/domain/usecases/transactionUtils";
+import { calculateInvoiceDueDate, getEffectiveReportDate } from "@/domain/usecases/transactionUtils";
 
 export function getRecurringOccurrenceId(transactionId: string, date: string): string {
   return `${transactionId}_recurring_${date}`;
@@ -84,3 +84,22 @@ export const generateRecurringTransactions = (
 
   return virtualTransactions;
 };
+
+export function getRecurringMonthTransactions(
+  transactions: Transaction[],
+  period: FilterState,
+  paymentMethodConfigs: PaymentMethodConfig[],
+): Transaction[] {
+  const month = `${period.year}-${String(period.month + 1).padStart(2, "0")}`;
+  const recorded = transactions.filter((tx) => !tx.isVirtual && (tx.isRecurring || tx.recurringGroupId));
+  const projected = generateRecurringTransactions(recorded, period, paymentMethodConfigs);
+
+  return [...recorded, ...projected]
+    .filter((tx) => {
+      if (tx.isRecurring && !tx.isVirtual && tx.excludedDates?.includes(tx.date)) return false;
+      return getEffectiveReportDate(tx, paymentMethodConfigs).slice(0, 7) === month;
+    })
+    .map((tx) => tx.isRecurring && !tx.isVirtual
+      ? { ...tx, ...getRecurringOccurrenceValue(tx, tx.date) }
+      : tx);
+}

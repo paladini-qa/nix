@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateRecurringTransactions, readRecurringOccurrenceId } from "@/domain/usecases/recurringUtils";
+import { generateRecurringTransactions, getRecurringMonthTransactions, readRecurringOccurrenceId } from "@/domain/usecases/recurringUtils";
 import type { Transaction, FilterState, PaymentMethodConfig } from "@/domain/entities";
 
 // ---------------------------------------------------------------------------
@@ -480,4 +480,47 @@ it("keeps both purchases when a short month moves two occurrences into one invoi
     ["2026-01-31", "2026-02-28"],
     ["2026-02-28", "2026-02-28"],
   ]);
+});
+
+describe("getRecurringMonthTransactions", () => {
+  it("counts one occurrence per series for the selected month, including edits and annual charges", () => {
+    const rent = makeRecurring({
+      id: "rent", date: "2026-10-05", amount: 1400,
+      excludedDates: ["2026-12-05", "2027-01-05"],
+      recurringOverrides: [{ date: "2026-11-05", amount: 1450, isPaid: null }],
+    });
+    const annual = makeRecurring({ id: "annual", date: "2025-12-15", frequency: "yearly", amount: 300 });
+    const edited = makeRecurring({
+      id: "edited", date: "2026-12-07", amount: 1475, isRecurring: false, recurringGroupId: rent.id,
+    });
+    const unrelated = makeRecurring({ id: "other", date: "2026-11-05", amount: 1400, isRecurring: false });
+    const transactions = [rent, annual, edited, unrelated];
+
+    expect(getRecurringMonthTransactions(transactions, makeFilter(9, 2026), noPmConfigs))
+      .toMatchObject([{ id: "rent", amount: 1400 }]);
+    expect(getRecurringMonthTransactions(transactions, makeFilter(10, 2026), noPmConfigs))
+      .toMatchObject([{ id: "rent_recurring_2026-11-05", amount: 1450 }]);
+    expect(getRecurringMonthTransactions(transactions, makeFilter(11, 2026), noPmConfigs))
+      .toMatchObject([{ id: "edited", amount: 1475 }, { id: "annual_recurring_2026-12-15", amount: 300 }]);
+    expect(getRecurringMonthTransactions(transactions, makeFilter(0, 2027), noPmConfigs)).toEqual([]);
+  });
+
+  it("uses the invoice month for both the initial charge and virtual card occurrences", () => {
+    const series = makeRecurring({ date: "2026-10-20", paymentMethod: "Card", amount: 80 });
+    const configs: PaymentMethodConfig[] = [
+      { id: "card", name: "Card", type: "card", closingDay: 10, paymentDay: 25 },
+    ];
+    const real = makeRecurring({
+      id: "edited", date: "2026-11-20", invoiceDueDate: "2026-12-25",
+      paymentMethod: "Card", isRecurring: false, recurringGroupId: series.id, amount: 85,
+    });
+
+    expect(getRecurringMonthTransactions([series, real], makeFilter(9, 2026), configs)).toEqual([]);
+    expect(getRecurringMonthTransactions([series, real], makeFilter(10, 2026), configs))
+      .toMatchObject([{ id: series.id, amount: 80 }]);
+    expect(getRecurringMonthTransactions([series, real], makeFilter(11, 2026), configs))
+      .toMatchObject([{ id: real.id, amount: 85 }]);
+    expect(getRecurringMonthTransactions([series, real], makeFilter(0, 2027), configs))
+      .toMatchObject([{ date: "2026-12-20", invoiceDueDate: "2027-01-25", amount: 80 }]);
+  });
 });
