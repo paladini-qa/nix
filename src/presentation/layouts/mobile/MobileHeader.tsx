@@ -1,123 +1,79 @@
-import NixLogo from "@/presentation/components/ui/NixLogo";
-import React from "react";
-import { Box, useTheme, alpha } from "@mui/material";
-import { motion } from "framer-motion";
+import { Avatar, Box, IconButton, Typography, alpha } from "@mui/material";
 import { Eye, EyeOff, Search } from "lucide-react";
-import { IconButton } from "@radix-ui/themes";
 import { useTranslation } from "react-i18next";
-import { usePrivacy } from "@/presentation/contexts";
-import { useAppStore } from "@/presentation/hooks/useAppStore";
+import NixLogo from "@/presentation/components/ui/NixLogo";
 import DateFilter from "@/presentation/components/ui/DateFilter";
-
-const MotionBox = motion.create(Box);
+import { usePrivacy, useSettings } from "@/presentation/contexts";
+import { useAppStore } from "@/presentation/hooks/useAppStore";
 
 interface MobileHeaderProps {
+  isDashboard: boolean;
+  onOpenProfile: () => void;
   onOpenSearch: () => void;
 }
 
-const headerButtonSize = { width: 44, height: 44, flexShrink: 0 };
-
-const MobileHeader: React.FC<MobileHeaderProps> = ({ onOpenSearch }) => {
+export default function MobileHeader({ isDashboard, onOpenProfile, onOpenSearch }: MobileHeaderProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const isDarkMode = theme.palette.mode === "dark";
+  const { displayName } = useSettings();
   const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
   const { filters, setFilters } = useAppStore();
+  const firstName = displayName?.trim().split(/\s+/)[0];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+  const privacyLabel = isPrivacyMode ? "Mostrar valores" : "Ocultar valores";
 
   return (
-    <MotionBox
+    <Box
       component="header"
-      initial={{ y: -80 }}
-      animate={{ y: 0 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      sx={{
+      sx={(theme) => ({
         position: "fixed",
         top: 0,
-        left: 0,
-        right: 0,
+        insetInline: 0,
         zIndex: 1100,
-        // Glassmorphism via CSS vars do design system
-        bgcolor: "var(--nix-glass-bg)",
-        backdropFilter: "blur(var(--nix-glass-blur)) saturate(180%)",
-        WebkitBackdropFilter: "blur(var(--nix-glass-blur)) saturate(180%)",
-        borderBottom: "1px solid var(--nix-glass-border)",
-        boxShadow: isDarkMode
-          ? `0 4px 20px -4px ${alpha("#000000", 0.4)}`
-          : `0 4px 20px -4px ${alpha(theme.palette.primary.main, 0.1)}`,
-        display: "grid",
-        gridTemplateColumns: "1fr auto 1fr",
-        alignItems: "center",
-        minHeight: 64,
-        px: 1,
-        // Respeita status bar nativo (safe area)
+        bgcolor: alpha(theme.palette.background.default, 0.96),
+        backdropFilter: "blur(12px)",
+        borderBottom: "1px solid",
+        borderColor: alpha(theme.palette.text.primary, 0.06),
         paddingTop: "env(safe-area-inset-top, 0px)",
-      }}
+      })}
     >
-      <MotionBox
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15, type: "spring", stiffness: 400 }}
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-start",
-        }}
-      >
-        <NixLogo size={36} />
-      </MotionBox>
+      <Box sx={{
+        mx: "auto", maxWidth: 640, px: 1.5, minHeight: 64, display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) auto auto", alignItems: "center",
+      }}>
+        {isDashboard ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
+            <IconButton onClick={onOpenProfile} aria-label="Abrir perfil" sx={{ width: 44, height: 44, flexShrink: 0 }}>
+              <Avatar sx={(theme) => ({
+                width: 34, height: 34, bgcolor: alpha(theme.palette.primary.main, 0.15),
+                color: "primary.main", fontSize: 15, fontWeight: 700,
+              })}>
+                {firstName ? firstName[0].toLocaleUpperCase("pt-BR") : <NixLogo size={28} />}
+              </Avatar>
+            </IconButton>
+            <Typography component="h1" fontWeight={700} sx={{ fontSize: 15, lineHeight: 1.25, overflowWrap: "anywhere", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2, overflow: "hidden" }}>
+              {greeting}{firstName ? `, ${firstName}` : ""}
+            </Typography>
+          </Box>
+        ) : <NixLogo size={36} />}
 
-      <MotionBox
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.16, type: "spring", stiffness: 400 }}
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
         <DateFilter
           month={filters.month}
           year={filters.year}
           onDateChange={(month, year) => setFilters({ month, year })}
           pickerOnly
+          headerStyle
         />
-      </MotionBox>
 
-      <MotionBox
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.18, type: "spring", stiffness: 400 }}
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-        }}
-      >
-        <IconButton
-          size="3"
-          variant="ghost"
-          color="gray"
-          onClick={onOpenSearch}
-          aria-label={t("common.search")}
-          style={headerButtonSize}
-        >
-          <Search size={19} aria-hidden="true" />
-        </IconButton>
-        <IconButton
-          size="3"
-          variant={isPrivacyMode ? "soft" : "ghost"}
-          color={isPrivacyMode ? "purple" : "gray"}
-          onClick={togglePrivacyMode}
-          aria-label={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
-          title={isPrivacyMode ? "Mostrar valores" : "Ocultar valores"}
-          style={headerButtonSize}
-        >
-          {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
-        </IconButton>
-      </MotionBox>
-    </MotionBox>
+        <Box sx={{ display: "flex" }}>
+          <IconButton color={isPrivacyMode ? "primary" : "default"} onClick={togglePrivacyMode} aria-label={privacyLabel} sx={{ width: 44, height: 44 }}>
+            {isPrivacyMode ? <EyeOff size={19} /> : <Eye size={19} />}
+          </IconButton>
+          <IconButton onClick={onOpenSearch} aria-label={t("common.search")} sx={{ width: 44, height: 44 }}>
+            <Search size={19} />
+          </IconButton>
+        </Box>
+      </Box>
+    </Box>
   );
-};
-
-export default MobileHeader;
+}

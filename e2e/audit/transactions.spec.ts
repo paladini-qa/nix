@@ -312,7 +312,7 @@ test("shows compact mobile rows with full details and a stationary bottom bar", 
     bottom: Math.round(window.innerHeight - element.getBoundingClientRect().bottom),
     transform: getComputedStyle(element).transform,
   }));
-  await expect.poll(isAnchored).toEqual({ bottom: 0, transform: "none" });
+  await expect.poll(isAnchored).toEqual({ bottom: 12, transform: "none" });
 
   const row = page.getByRole("button", { name: new RegExp(title) });
   await expect(row).toBeVisible();
@@ -339,7 +339,7 @@ test("shows compact mobile rows with full details and a stationary bottom bar", 
 
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-  await expect.poll(isAnchored).toEqual({ bottom: 0, transform: "none" });
+  await expect.poll(isAnchored).toEqual({ bottom: 12, transform: "none" });
   await page.reload();
-  await expect.poll(isAnchored).toEqual({ bottom: 0, transform: "none" });
+  await expect.poll(isAnchored).toEqual({ bottom: 12, transform: "none" });
 });

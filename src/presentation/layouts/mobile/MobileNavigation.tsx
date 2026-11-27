@@ -1,193 +1,114 @@
-import React from "react";
-import { Box, useTheme, alpha } from "@mui/material";
-import {
-  Add as AddIcon,
-  GridView as HomeIcon,
-  Receipt as TransactionsIcon,
-  Category as CategoriesIcon,
-  Person as ProfileIcon,
-} from "@mui/icons-material";
+import type { ReactNode } from "react";
+import { Box, ButtonBase, alpha } from "@mui/material";
+import { Add, CategoryOutlined, HomeOutlined, PersonOutline, ReceiptLongOutlined } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
+import { orbitColors } from "@/shared/theme/colors";
+import type { AppCurrentView } from "@/shared/types/appView";
 
-const NavItem: React.FC<{
+interface NavItemProps {
   label: string;
-  icon: React.ReactNode;
-  isActive: boolean;
+  icon: ReactNode;
+  active?: boolean;
   onClick: () => void;
-  primaryColor: string;
-}> = ({ label, icon, isActive, onClick, primaryColor }) => (
-  <Box
-    component="button"
-    type="button"
-    aria-label={label}
-    onClick={onClick}
-    sx={{
-      border: 0,
-      background: "none",
-      padding: 0,
-      font: "inherit",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 0.25,
-      minWidth: 44,
-      minHeight: 44,
-      flex: "1 1 0",
-      cursor: "pointer",
-      color: isActive ? primaryColor : "text.secondary",
-      transition: "color 0.2s ease",
-      touchAction: "manipulation",
-      WebkitTapHighlightColor: "transparent",
-      "&:active": { opacity: 0.7 },
-    }}
-  >
-    <Box sx={{ fontSize: 22, lineHeight: 1 }}>{icon}</Box>
-    <Box
-      component="span"
-      sx={{
-        fontSize: "0.72rem",
-        fontWeight: isActive ? 700 : 500,
-        lineHeight: 1.2,
-        textAlign: "center",
-        whiteSpace: "nowrap",
-      }}
+}
+
+function NavItem({ label, icon, active, onClick }: NavItemProps) {
+  return (
+    <ButtonBase
+      aria-label={label}
+      aria-current={active ? "page" : undefined}
+      onClick={onClick}
+      sx={(theme) => ({
+        flex: 1,
+        minWidth: 0,
+        minHeight: 48,
+        borderRadius: "24px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 0.25,
+        color: active ? (theme.palette.mode === "dark" ? orbitColors.lavender : "primary.main") : "text.secondary",
+        bgcolor: active ? alpha(theme.palette.primary.main, 0.13) : "transparent",
+        "&.Mui-focusVisible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 },
+      })}
     >
-      {label}
-    </Box>
-  </Box>
-);
-
-const NAV_HEIGHT = 72;
-
-import { AppCurrentView } from "@/shared/types/appView";
+      {icon}
+      <Box component="span" sx={{ fontSize: 10, lineHeight: 1.2, fontWeight: active ? 700 : 500 }}>
+        {label}
+      </Box>
+    </ButtonBase>
+  );
+}
 
 interface MobileNavigationProps {
   currentView: AppCurrentView;
   onNavigate: (view: AppCurrentView) => void;
-  onOpenProfile?: () => void;
+  onOpenProfile: () => void;
   onOpenNewTransaction: () => void;
 }
 
-const MobileNavigation: React.FC<MobileNavigationProps> = ({
+export default function MobileNavigation({
   currentView,
   onNavigate,
   onOpenProfile,
   onOpenNewTransaction,
-}) => {
-  const theme = useTheme();
+}: MobileNavigationProps) {
   const { t } = useTranslation();
 
   return (
-    <>
-      {/* Fade gradient above nav bar */}
+    <Box
+      component="nav"
+      aria-label={t("nav.menu")}
+      sx={{
+        position: "fixed",
+        insetInline: 12,
+        mx: "auto",
+        bottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
+        maxWidth: 376,
+        zIndex: 1200,
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        pointerEvents: "none",
+      }}
+    >
       <Box
-        sx={{
-          position: "fixed",
-          bottom: `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
-          left: 0,
-          right: 0,
-          height: 40,
-          background: `linear-gradient(to bottom, transparent 0%, ${theme.palette.background.default} 100%)`,
-          pointerEvents: "none",
-          zIndex: 1199,
-        }}
-      />
-
-      <Box
-        component="nav"
-        aria-label={t("nav.menu")}
-        sx={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1200,
+        sx={(theme) => ({
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          p: 0.5,
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: "32px",
           bgcolor: alpha(theme.palette.background.paper, 0.96),
-          backdropFilter: "blur(20px) saturate(160%)",
-          WebkitBackdropFilter: "blur(20px) saturate(160%)",
-          borderTop: `1px solid ${theme.palette.divider}`,
-          boxShadow: theme.palette.mode === "dark"
-            ? `0 -4px 20px -4px rgba(0,0,0,0.5)`
-            : `0 -4px 20px -4px rgba(0,0,0,0.06)`,
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          borderRadius: 0,
-        }}
+          backdropFilter: "blur(16px)",
+          boxShadow: `0 6px 24px ${alpha(theme.palette.text.primary, 0.12)}, 0 2px 6px ${alpha(theme.palette.text.primary, 0.08)}`,
+          pointerEvents: "auto",
+        })}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-evenly",
-            height: NAV_HEIGHT,
-            px: 1,
-            position: "relative",
-          }}
-        >
-          {/* Home */}
-          <NavItem
-            label={t("nav.dashboard")}
-            icon={<HomeIcon fontSize="inherit" />}
-            isActive={currentView === "dashboard"}
-            onClick={() => onNavigate("dashboard")}
-            primaryColor={theme.palette.primary.main}
-          />
-
-          {/* Transactions */}
-          <NavItem
-            label={t("nav.transactions")}
-            icon={<TransactionsIcon fontSize="inherit" />}
-            isActive={currentView === "transactions"}
-            onClick={() => onNavigate("transactions")}
-            primaryColor={theme.palette.primary.main}
-          />
-
-          <Box sx={{ flex: "1 1 0", display: "flex", justifyContent: "center", minWidth: 48 }}>
-            <Box
-              component="button"
-              type="button"
-              onClick={onOpenNewTransaction}
-              aria-label={t("dashboard.newTransaction")}
-              sx={{
-                width: 48,
-                height: 48,
-                border: 0,
-                borderRadius: "16px",
-                display: "grid",
-                placeItems: "center",
-                bgcolor: "primary.main",
-                color: "primary.contrastText",
-                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.32)}`,
-                cursor: "pointer",
-                touchAction: "manipulation",
-                "&:active": { bgcolor: "primary.dark" },
-              }}
-            >
-              <AddIcon aria-hidden="true" />
-            </Box>
-          </Box>
-
-          {/* Categories */}
-          <NavItem
-            label="Categorias"
-            icon={<CategoriesIcon fontSize="inherit" />}
-            isActive={currentView === "categories"}
-            onClick={() => onNavigate("categories")}
-            primaryColor={theme.palette.primary.main}
-          />
-
-          {/* Profile */}
-          <NavItem
-            label="Perfil"
-            icon={<ProfileIcon fontSize="inherit" />}
-            isActive={false}
-            onClick={() => onOpenProfile?.()}
-            primaryColor={theme.palette.primary.main}
-          />
-        </Box>
+        <NavItem label={t("nav.dashboard")} icon={<HomeOutlined />} active={currentView === "dashboard"} onClick={() => onNavigate("dashboard")} />
+        <NavItem label={t("nav.transactions")} icon={<ReceiptLongOutlined />} active={currentView === "transactions"} onClick={() => onNavigate("transactions")} />
+        <NavItem label="Categorias" icon={<CategoryOutlined />} active={currentView === "categories"} onClick={() => onNavigate("categories")} />
+        <NavItem label="Perfil" icon={<PersonOutline />} onClick={onOpenProfile} />
       </Box>
-    </>
-  );
-};
 
-export default MobileNavigation;
+      <ButtonBase
+        aria-label={t("dashboard.newTransaction")}
+        onClick={onOpenNewTransaction}
+        sx={(theme) => ({
+          width: 52,
+          height: 52,
+          flexShrink: 0,
+          borderRadius: "50%",
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
+          boxShadow: `0 5px 16px ${alpha(theme.palette.primary.main, 0.32)}`,
+          pointerEvents: "auto",
+          "&.Mui-focusVisible": { outline: "2px solid", outlineColor: "text.primary", outlineOffset: 3 },
+        })}
+      >
+        <Add />
+      </ButtonBase>
+    </Box>
+  );
+}

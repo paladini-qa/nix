@@ -6,6 +6,7 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
+  Skeleton,
   Stack,
   alpha,
 } from "@mui/material";
@@ -20,14 +21,13 @@ import {
 import CategoryBreakdown from "@/presentation/widgets/CategoryBreakdown";
 import SummaryCards from "@/presentation/widgets/SummaryCards";
 import { AdvancedFiltersButton } from "@/presentation/panels/AdvancedFilters";
-import type { AdvancedFiltersState } from "@/presentation/panels/AdvancedFilters";
 import DashboardSkeleton from "@/presentation/components/skeletons/DashboardSkeleton";
 import RecentTransactionsWidget from "@/presentation/widgets/RecentTransactionsWidget";
 import { useAppStore } from "@/presentation/hooks/useAppStore";
 import { useTransactionsQuery } from "@/presentation/hooks/useTransactionsQuery";
 import { useFilteredTransactions } from "@/presentation/hooks/useFilteredTransactions";
-import { useCurrency } from "@/presentation/hooks";
-import { useSettings } from "@/presentation/contexts";
+import { usePrivacy, useSettings } from "@/presentation/contexts";
+import MobileDashboardOverview from "@/presentation/widgets/MobileDashboardOverview";
 import { VIEW_ROUTES } from "@/presentation/routes";
 
 const AdvancedFilters = lazy(() => import("@/presentation/panels/AdvancedFilters"));
@@ -46,20 +46,19 @@ const DashboardMainSection: React.FC<{ userId: string }> = ({ userId }) => {
   const theme = useTheme();
   const { t } = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { format: formatCurrency, formatCompact } = useCurrency();
+  const { isPrivacyMode } = usePrivacy();
   const { displayName, paymentMethodConfigs } = useSettings();
   const navigate = useNavigate();
 
   const { 
     filters, 
-    setIsFormOpen, 
-    setEditingTransaction,
     showAdvancedFilters,
     setShowAdvancedFilters,
     advancedFilters,
     setFiltersState,
   } = useAppStore();
-  const { data: transactions = [], refetch } = useTransactionsQuery(userId);
+  const { data, isPending } = useTransactionsQuery(userId);
+  const transactions = data ?? [];
   const { filteredTransactions, summary } = useFilteredTransactions(transactions, paymentMethodConfigs);
 
   const hasAdvancedFiltersActive =
@@ -84,46 +83,35 @@ const DashboardMainSection: React.FC<{ userId: string }> = ({ userId }) => {
   const hasExpenses = filteredTransactions.some(({ type }) => type === "expense");
 
   const firstName = displayName ? displayName.split(" ")[0] : t("dashboard.title");
-  const monthLabel = new Date(filters.year, filters.month).toLocaleDateString("pt-BR", {
-    month: "long",
-    year: "numeric",
-  });
+  const showAnalysis = !isMobile || !isPrivacyMode;
 
   return (
-    <Box sx={{ px: { xs: 0, md: "28px" }, pt: { xs: 0, md: "24px" }, pb: { xs: 0, md: "60px" } }}>
-      {/* Mobile balance hero */}
+    <Box sx={{ maxWidth: { xs: 640, md: "none" }, mx: "auto", px: { xs: 0, md: "28px" }, pt: { xs: 0, md: "24px" }, pb: { xs: 0, md: "60px" } }}>
       {isMobile && (
         <>
-          <Box
-            sx={{
-              mb: 2,
-              p: 2.5,
-              background: "linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)",
-              color: "white",
-              borderRadius: "20px",
-              boxShadow: "0 12px 40px -8px rgba(168,85,247,0.45)",
-            }}
-          >
-            <Typography sx={{ fontSize: 11, fontWeight: 700, opacity: 0.85, textTransform: "uppercase", letterSpacing: ".08em" }}>
-              {monthLabel}
-            </Typography>
-            <Typography sx={{ fontSize: 30, fontWeight: 800, mt: 0.5, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-              {formatCurrency(summary.balance)}
-            </Typography>
-            <Stack direction="row" spacing={3} mt={1.5} alignItems="center">
-              <Box>
-                <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Receita</Typography>
-                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>+{formatCompact(summary.totalIncome)}</Typography>
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 10, opacity: 0.8, mb: 0.25 }}>Despesas</Typography>
-                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>−{formatCompact(summary.totalExpense)}</Typography>
-              </Box>
+          {data ? (
+            <MobileDashboardOverview
+              transactions={transactions}
+              periodTransactions={filteredTransactions}
+              summary={summary}
+              paymentMethodConfigs={paymentMethodConfigs}
+              selectedMonth={filters.month}
+              selectedYear={filters.year}
+              hasDateRange={!!(advancedFilters.startDate || advancedFilters.endDate)}
+              isPrivate={isPrivacyMode}
+              onOpenPaymentMethods={handlePaymentMethodClick}
+              onOpenTransactions={() => navigate(VIEW_ROUTES.transactions)}
+            />
+          ) : isPending && (
+            <Stack spacing={1.5} aria-label="Carregando painel" aria-busy="true">
+              {[126, 96, 144].map((height) => (
+                <Skeleton key={height} variant="rounded" height={height} sx={{ borderRadius: "20px" }} />
+              ))}
             </Stack>
-          </Box>
+          )}
 
           {/* Shortcuts carousel */}
-          <Box sx={{ position: "relative", mx: -2 }}>
+          <Box sx={{ position: "relative", mx: -2, mt: 2 }}>
             {/* Fade gradient → indica mais itens */}
             <Box
               sx={{
@@ -255,38 +243,40 @@ const DashboardMainSection: React.FC<{ userId: string }> = ({ userId }) => {
         </Suspense>
       )}
 
-      {/* Dash grid: recent transactions (left) + expenses by category (right) */}
-      <Box
-        sx={{
-          mt: "24px",
-          display: "grid",
-          gridTemplateColumns: hasExpenses
-            ? { xs: "minmax(0, 1fr)", lg: "minmax(0, 1.4fr) minmax(0, 1fr)" }
-            : "minmax(0, 1fr)",
-          gap: "18px",
-          alignItems: "start",
-        }}
-      >
-        <RecentTransactionsWidget transactions={filteredTransactions} />
-        <CategoryBreakdown
-          transactions={filteredTransactions}
-          onPaymentMethodClick={handlePaymentMethodClick}
-          onCategoryClick={NOOP}
-        />
-      </Box>
-
-      {/* Analytics section */}
-      <Box sx={{ mt: "24px" }}>
-        <Suspense fallback={<DashboardSkeleton />}>
-          <AnalyticsView
+      {showAnalysis && <>
+        {/* Dash grid: recent transactions (left) + expenses by category (right) */}
+        <Box
+          sx={{
+            mt: "24px",
+            display: "grid",
+            gridTemplateColumns: hasExpenses
+              ? { xs: "minmax(0, 1fr)", lg: "minmax(0, 1.4fr) minmax(0, 1fr)" }
+              : "minmax(0, 1fr)",
+            gap: "18px",
+            alignItems: "start",
+          }}
+        >
+          <RecentTransactionsWidget transactions={filteredTransactions} />
+          <CategoryBreakdown
             transactions={filteredTransactions}
-            allTransactions={transactions}
-            paymentMethodConfigs={paymentMethodConfigs}
-            advancedFilters={advancedFilters}
+            onPaymentMethodClick={handlePaymentMethodClick}
             onCategoryClick={NOOP}
           />
-        </Suspense>
-      </Box>
+        </Box>
+
+        {/* Analytics section */}
+        <Box sx={{ mt: "24px" }}>
+          <Suspense fallback={<DashboardSkeleton />}>
+            <AnalyticsView
+              transactions={filteredTransactions}
+              allTransactions={transactions}
+              paymentMethodConfigs={paymentMethodConfigs}
+              advancedFilters={advancedFilters}
+              onCategoryClick={NOOP}
+            />
+          </Suspense>
+        </Box>
+      </>}
     </Box>
   );
 };
